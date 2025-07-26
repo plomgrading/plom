@@ -4,6 +4,7 @@
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2025 Philip D. Loewen
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -20,20 +21,11 @@
         </div>
         <div class="alert alert-primary pb-0">
             <p>
-                Assessment specification indicates:
+                Assessment specification indicates questions are to be drawn from versions as follows:
                 <ul>
-                    {% if question_labels_html_fix %}
-                        <li>
-                            The following questions will all be taken from source-version 1:
-                            {{ question_labels_html_fix|safe }}.
-                        </li>
-                    {% endif %}
-                    {% if question_labels_html_shuffle %}
-                        <li>
-                            The following questions will be selected randomly from all source-versions:
-                            {{ question_labels_html_shuffle|safe }}.
-                        </li>
-                    {% endif %}
+                    {% for q_label, versions in question_labels_selection_html.items %}
+                        <li>{{ q_label|safe }} - {{ versions }}</li>
+                    {% endfor %}
                 </ul>
             </p>
             {% if student_list_present %}
@@ -255,12 +247,12 @@
             </div>
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Upload a question-version map (advanced)</h4>
+                    <h4 class="card-title">Upload a custom question-version map (advanced)</h4>
                     <div class="card-text">
                         <p>
                             <details>
                                 <summary>
-                                    You can also upload a csv-file containing a question-version map. This is not recommended unless you really know what you are doing.
+                                    You can also upload a csv-file containing a question-version map. This will override the question selection described on the assessment specification.
                                 </summary>
                                 <ul>
                                     <li>

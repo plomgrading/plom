@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 # Example test specification for Plom
 
@@ -39,9 +40,9 @@ doNotMarkPages = [2] # can be an empty list or omitted
 # label = string such as "1", "Q2", or "Exercise 7.3".  Defaults to "Qn" if omitted.
 # pages = [4, 5, 6] - contiguous ordered list of positive integers.
 # mark = positive integer, the marks for this question.
-# select = "shuffle" or "fix" (if omitted, defaults to "shuffle")
-# --> "fix" = question will always be drawn from source-version 1.
-# --> "shuffle" = question will be drawn randomly from one of the source versions.
+# select = [1,2] or 1 (optional)
+# --> if provided, questions will be selected randomly from the specified versions
+# --> if not provided, questions will be drawn randomly from all possible versions
 
 [[question]]
 pages = [3]
@@ -51,10 +52,10 @@ mark = 5
 label = "Q(2)"
 pages = [4]
 mark = 5
-select = "fix"
+select = 1
 
 [[question]]
 label = "Ex.3"
 pages = [5, 6]
 mark = 10
-select = "shuffle"
+select = [1,2]

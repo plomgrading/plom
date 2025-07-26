@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 from copy import deepcopy
 from pathlib import Path
@@ -137,14 +138,12 @@ def test_spec_question_missing_key() -> None:
 
 
 def test_spec_question_select_key_takes_default() -> None:
+    """Ensure select doesn't default to anything if unspecified."""
     r = deepcopy(raw)
-    # the demo spec does not have a select key for Q1.  but leave this
-    # here in case we change the demo spec in the future
     r["question"]["1"].pop("select", None)
-    # make sure pop fails gracefully - see #2558
     s = SpecVerifier(r)
     s.verify()
-    assert s["question"]["1"]["select"] == "shuffle"
+    assert s["question"]["1"].get("select") is None
 
 
 def test_spec_valid_shortname() -> None:
@@ -180,6 +179,15 @@ def test_spec_longname_slash_issue1364() -> None:
 def test_spec_invalid_select() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["select"] = "consult the oracle"
+    with raises(ValueError, match="not an integer"):
+        SpecVerifier(r).verify()
+
+
+def test_spec_invalid_select_empty_list() -> None:
+    r = deepcopy(raw)
+    r["question"]["1"]["select"] = []
+    with raises(ValueError, match="empty list"):
+        SpecVerifier(r).verify()
 
 
 def test_spec_question_label_printer() -> None:
@@ -330,16 +338,6 @@ def test_spec_str_missing_totalMarks() -> None:
     s.verify()
     st = str(s)
     assert "TBD*" not in st
-
-
-def test_spec_str_missing_select_in_q1() -> None:
-    s = SpecVerifier.demo()
-    assert s["question"]["1"].get("select", None) is None
-    st = str(s)
-    assert "shuffle*" in st
-    s.verify()
-    st = str(s)
-    assert "shuffle*" not in st
 
 
 def test_spec_zero_question_issue617() -> None:
