@@ -179,6 +179,15 @@ def test_spec_longname_slash_issue1364() -> None:
 def test_spec_invalid_select() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["select"] = "consult the oracle"
+    with raises(ValueError, match="not an integer"):
+        SpecVerifier(r).verify()
+
+
+def test_spec_invalid_select_empty_list() -> None:
+    r = deepcopy(raw)
+    r["question"]["1"]["select"] = []
+    with raises(ValueError, match="empty list"):
+        SpecVerifier(r).verify()
 
 
 def test_spec_question_label_printer() -> None:

@@ -901,12 +901,17 @@ class SpecVerifier:
                 raise ValueError(
                     f'Question error - select "{select}" is not an integer or a list'
                 )
-            if any(not isinstance(v, int) for v in question["select"]):
+            if any(not isinstance(v, int) for v in select):
                 raise ValueError(
                     f'Question error - select "{select}" contains non-integer elements'
                 )
+            if not select:
+                raise ValueError(
+                    f'Question error - select "{select}" is an empty list.'
+                    " Select must contain integers, or be removed."
+                )
             versions = range(1, numVersions + 1)
-            if any(v not in versions for v in question["select"]):
+            if any(v not in versions for v in select):
                 raise ValueError(
                     f'Question error - select "{select}" contains integers'
                     f'outside the range of numberOfVersions ("{numVersions}")'
