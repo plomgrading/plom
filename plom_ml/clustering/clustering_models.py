@@ -143,6 +143,7 @@ class HMEClusteringModel(ClusteringModel):
 
 
 class AttentionPooling(nn.Module):
+    """Layer for attention pooling."""
     def __init__(self, in_features):
         super().__init__()
         self.attention = nn.Sequential(
