@@ -12,23 +12,9 @@ from PIL import Image
 import cv2
 
 
-class ProjectionHead(nn.Module):
-    def __init__(self, in_dim=512, emb_dim=128, num_classes=101):
-        super().__init__()
-        self.projector = nn.Sequential(
-            nn.Linear(in_dim, emb_dim), nn.ReLU(), nn.Linear(emb_dim, emb_dim)
-        )
-        self.classifier = nn.Linear(emb_dim, num_classes)
-        nn.init.normal_(self.classifier.weight, std=0.01)
-        nn.init.constant_(self.classifier.bias, 0)
-
-    def forward(self, features):
-        emb = self.projector(features)
-        logits = self.classifier(emb)
-        return emb, logits
-
-
 class Embedder(ABC):
+    """Abstract class that embeds features to images for ML tasks."""
+
     @abstractmethod
     def embed(self, images: Sequence[np.ndarray]) -> np.ndarray:
         """Convert a batch of image arrays into a feature matrix.
@@ -45,6 +31,23 @@ class Embedder(ABC):
 class SymbolicEmbedder(Embedder):
     """Embeds images using a ResNet-34 backbone + projection head."""
 
+    class _ProjectionHead(nn.Module):
+        def __init__(self, in_dim=512, emb_dim=128, num_classes=101):
+            super().__init__()
+            self.projector = nn.Sequential(
+                nn.Linear(in_dim, emb_dim),
+                nn.ReLU(),
+                nn.Linear(emb_dim, emb_dim),
+            )
+            self.classifier = nn.Linear(emb_dim, num_classes)
+            nn.init.normal_(self.classifier.weight, std=0.01)
+            nn.init.constant_(self.classifier.bias, 0)
+
+        def forward(self, features):
+            emb = self.projector(features)
+            logits = self.classifier(emb)
+            return emb, logits
+
     def __init__(self, model_path: str, device: torch.device):
         self.device = device
         # Build backbone
@@ -57,7 +60,7 @@ class SymbolicEmbedder(Embedder):
 
         # Build projection head
         self.head = (
-            ProjectionHead(in_dim=512, emb_dim=128, num_classes=229)
+            self._ProjectionHead(in_dim=512, emb_dim=128, num_classes=229)
             .to(self.device)
             .eval()
         )

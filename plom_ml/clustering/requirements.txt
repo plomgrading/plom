@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025 Bryan Tanady
+
 numpy==2.3.2
 opencv_python_headless==4.11.0.86
 Pillow==11.3.0

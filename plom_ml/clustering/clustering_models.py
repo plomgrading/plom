@@ -142,29 +142,32 @@ class HMEClusteringModel(ClusteringModel):
         return dict(zip(list(paper_to_image.keys()), clusterIDs))
 
 
-class AttentionPooling(nn.Module):
-    """Layer for attention pooling."""
-    def __init__(self, in_features):
-        super().__init__()
-        self.attention = nn.Sequential(
-            nn.Linear(in_features, 512), nn.Tanh(), nn.Linear(512, 1), nn.Softmax(dim=1)
-        )
-
-    def forward(self, x):
-        # Input: [batch, channels, height, width]
-        batch, channels, h, w = x.size()
-        # Flatten spatial dimensions: [batch, channels, h*w]
-        flattened = x.view(batch, channels, h * w)
-        # Permute: [batch, h*w, channels]
-        flattened = flattened.permute(0, 2, 1)
-        # Compute attention weights: [batch, h*w, 1]
-        attn_weights = self.attention(flattened)
-        # Weighted sum: [batch, channels]
-        return torch.sum(attn_weights * flattened, dim=1)
-
-
 class MCQClusteringModel(ClusteringModel):
     """Handwritten MCQ clustering model."""
+
+    class _AttentionPooling(nn.Module):
+        """Layer for attention pooling."""
+
+        def __init__(self, in_features):
+            super().__init__()
+            self.attention = nn.Sequential(
+                nn.Linear(in_features, 512),
+                nn.Tanh(),
+                nn.Linear(512, 1),
+                nn.Softmax(dim=1),
+            )
+
+        def forward(self, x):
+            # Input: [batch, channels, height, width]
+            batch, channels, h, w = x.size()
+            # Flatten spatial dimensions: [batch, channels, h*w]
+            flattened = x.view(batch, channels, h * w)
+            # Permute: [batch, h*w, channels]
+            flattened = flattened.permute(0, 2, 1)
+            # Compute attention weights: [batch, h*w, 1]
+            attn_weights = self.attention(flattened)
+            # Weighted sum: [batch, channels]
+            return torch.sum(attn_weights * flattened, dim=1)
 
     def __init__(self):
         self.out_features = 11
@@ -174,7 +177,7 @@ class MCQClusteringModel(ClusteringModel):
         model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
         model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         in_feats = model.fc.in_features
-        model.avgpool = AttentionPooling(in_feats)
+        model.avgpool = self._AttentionPooling(in_feats)
         model.fc = nn.Linear(in_feats, self.out_features)
         model = model.to(device)
 

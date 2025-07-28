@@ -7,6 +7,7 @@ import cv2
 
 
 class ImageProcessingService:
+    """Preprocess images services."""
 
     def addContrast(self, img: np.ndarray, alpha: float, iterations: int) -> np.ndarray:
         """Increase img contrast.

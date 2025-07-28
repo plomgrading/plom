@@ -15,7 +15,10 @@ from .preprocessor import Preprocessor
 
 @lru_cache()
 def get_model(model_type: ClusteringModelType) -> ClusteringModel:
-    """Lazily load and cache one model instance per type, per process."""
+    """Lazily load and cache one model instance per type, per process.
+
+    Note: we use @lru_cache to reduce memory blow-up due to multiple model instantiations.
+    """
     if model_type == ClusteringModelType.MCQ:
         return MCQClusteringModel()
     elif model_type == ClusteringModelType.HME:
