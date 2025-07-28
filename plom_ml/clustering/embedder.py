@@ -3,7 +3,7 @@
 
 import torch
 import torch.nn as nn
-from torchvision import transforms, models
+from torchvision import transforms, models  # type: ignore[import]
 from abc import ABC, abstractmethod
 from typing import Sequence
 import numpy as np
@@ -16,16 +16,16 @@ class Embedder(ABC):
     """Abstract class that embeds features to images for ML tasks."""
 
     @abstractmethod
-    def embed(self, images: Sequence[np.ndarray]) -> np.ndarray:
-        """Convert a batch of image arrays into a feature matrix.
+    def embed(self, image: np.ndarray) -> np.ndarray:
+        """Convert image array into a feature matrix.
 
         Args:
-            images: Sequence of numpy arrays, each shape (H, W) or (H, W, C).
+            image: numpy array image whose features to be generated.
 
         Returns:
-            A numpy array of shape (N, D) where D is embedding dimension.
+            A numpy array of shape (1, D) where D is embedding dimension.
         """
-        ...
+        pass
 
 
 class SymbolicEmbedder(Embedder):
@@ -96,21 +96,20 @@ class SymbolicEmbedder(Embedder):
         if image.dtype != np.uint8:
             image = image.astype(np.uint8)
 
-        # to PIL and transform → Tensor [C, H, W]
+        # to PIL and transform  Tensor [C, H, W]
         pil = Image.fromarray(image, mode="L")
-        t = self.transform(pil)  # [1, H, W] → after Grayscale/ToTensor: [1, H, W]
+        t = self.transform(pil)  # [1, H, W]  after Grayscale/ToTensor: [1, H, W]
         x = t.unsqueeze(0).to(self.device)  # [1, 1, H, W]
 
         # forward
         with torch.no_grad():
-            feats = self.backbone(x)  # → [1, 512]
-            emb, logits = self.head(feats)  # → [1, emb_dim]
+            feats = self.backbone(x)  #  [1, 512]
+            emb, logits = self.head(feats)  #  [1, emb_dim]
 
         probs = torch.sigmoid(logits).cpu().numpy()[0]
 
         probs[probs < CUTOFF_PROB] = 0.0
         # squeeze batch and return
-        # return emb.squeeze(0).cpu().numpy()       # → (emb_dim,)
         return probs
 
 
@@ -120,7 +119,9 @@ class TrOCREmbedder(Embedder):
     def __init__(self, model_path: str, device: torch.device):
         self.device = device
         # Load TrOCR processor and encoder
-        self.processor = TrOCRProcessor.from_pretrained("fhswf/TrOCR_Math_handwritten")
+        self.processor = TrOCRProcessor.from_pretrained(
+            "fhswf/TrOCR_Math_handwritten", use_fast=True
+        )
         self.encoder = (
             torch.load(model_path, map_location=device, weights_only=False)
             .to(self.device)

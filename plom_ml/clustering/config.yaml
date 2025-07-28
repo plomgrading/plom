@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025 Bryan Tanady
+
+# Defines where are the model weights stored
+
+models:
+  hme:
+    symbolic: "model_cache/hme_symbolic.pth"
+    trocr: "model_cache/hme_trOCR.pth"
+  mcq: "model_cache/mcq_model.pth"

@@ -12,13 +12,15 @@ from sklearn.cluster import AgglomerativeClustering
 # torch
 import torch
 import torch.nn as nn
-from torchvision import models, transforms
+from torchvision import models, transforms  # type: ignore[import]
 
 # misc
 from PIL import Image
 from abc import abstractmethod
 import cv2
 import numpy as np
+import yaml  # type: ignore[import]
+import os
 
 
 class ClusteringModel:
@@ -51,8 +53,16 @@ class HMEClusteringModel(ClusteringModel):
     def __init__(self):
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        symbolic_model_path = "model_cache/hme_symbolic.pth"
-        trocr_model_path = "model_cache/hme_trOCR.pth"
+
+        # load model config
+        config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+
+        # load models weight
+        symbolic_model_path = config["models"]["hme"]["symbolic"]
+        trocr_model_path = config["models"]["hme"]["trocr"]
+
         self.symbolic = SymbolicEmbedder(symbolic_model_path, device)
         self.trOCR = TrOCREmbedder(trocr_model_path, device)
 
@@ -87,11 +97,8 @@ class HMEClusteringModel(ClusteringModel):
             A numpy array of clusterId where the order matches with the
             inputs (index 0 provides Id for row 0 of X)
         """
-        best = {
-            "score": -np.inf if metric == "silhouette" else np.inf,
-            "threshold": None,
-            "labels": None,
-        }
+        best_score = -np.inf if metric == "silhouette" else np.inf
+        best_labels = np.array([])
 
         for t in thresholds:
             clustering = AgglomerativeClustering(
@@ -104,17 +111,19 @@ class HMEClusteringModel(ClusteringModel):
 
             if metric == "silhouette":
                 score = silhouette_score(X, labels)
-                # silhouette: higher → better
-                if score > best["score"]:
-                    best.update(score=score, threshold=t, labels=labels)
+                # silhouette: higher -> better
+                if score > best_score:
+                    best_score = score
+                    best_labels = labels
 
             elif metric == "davies":
                 score = davies_bouldin_score(X, labels)
                 # DB index: lower -> better
-                if score < best["score"]:
-                    best.update(score=score, threshold=t, labels=labels)
+                if score < best_score:
+                    best_score = score
+                    best_labels = labels
 
-        return best["labels"]
+        return best_labels
 
     def cluster_papers(self, paper_to_image: dict[int, np.ndarray]) -> dict[int, int]:
         """Cluster the given papers.
@@ -136,7 +145,9 @@ class HMEClusteringModel(ClusteringModel):
         min_thresh = 4
         max_thresh = 10
         thresh_counts = 100
-        thresholds = list(np.linspace(min_thresh, max_thresh, thresh_counts))
+        thresholds = [
+            float(t) for t in np.linspace(min_thresh, max_thresh, thresh_counts)
+        ]
 
         clusterIDs = self.get_best_clustering(X_reduced, thresholds, "davies")
         return dict(zip(list(paper_to_image.keys()), clusterIDs))
@@ -181,9 +192,14 @@ class MCQClusteringModel(ClusteringModel):
         model.fc = nn.Linear(in_feats, self.out_features)
         model = model.to(device)
 
-        model.load_state_dict(
-            torch.load("model_cache/mcq_model.pth", map_location=device)
-        )
+        # load model config
+        config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+
+        # load model weight
+        mcq_model_path = config["models"]["mcq"]
+        model.load_state_dict(torch.load(mcq_model_path, map_location=device))
         model.eval()
 
         self.infer_tf = transforms.Compose(
