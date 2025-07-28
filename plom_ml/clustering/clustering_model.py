@@ -12,7 +12,7 @@ from sklearn.cluster import AgglomerativeClustering
 # torch
 import torch
 import torch.nn as nn
-from torchvision import models, transforms
+from torchvision import models, transforms # type: ignore[import]
 
 # misc
 from PIL import Image

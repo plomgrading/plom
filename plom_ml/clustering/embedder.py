@@ -3,7 +3,7 @@
 
 import torch
 import torch.nn as nn
-from torchvision import transforms, models
+from torchvision import transforms, models # type: ignore[import]
 from abc import ABC, abstractmethod
 import numpy as np
 from transformers import TrOCRProcessor
@@ -119,10 +119,12 @@ class TrOCREmbedder(Embedder):
 
     def __init__(self, model_path: str, device: torch.device):
         self.device = device
-        # Load TrOCR processor and encoder
+        # Load processor for converting images into PyTorch tensors
         self.processor = TrOCRProcessor.from_pretrained(
             "fhswf/TrOCR_Math_handwritten", use_fast=True
         )
+
+        # Feed on the processed tensors then output high-dim features
         self.encoder = (
             torch.load(model_path, map_location=device, weights_only=False)
             .to(self.device)
