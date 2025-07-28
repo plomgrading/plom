@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from torchvision import transforms, models  # type: ignore[import]
 from abc import ABC, abstractmethod
-from typing import Sequence
 import numpy as np
 from transformers import TrOCRProcessor
 from PIL import Image
@@ -103,8 +102,10 @@ class SymbolicEmbedder(Embedder):
 
         # forward
         with torch.no_grad():
-            feats = self.backbone(x)  #  [1, 512]
-            emb, logits = self.head(feats)  #  [1, emb_dim]
+            #  [1, 512]
+            feats = self.backbone(x)
+            #  [1, emb_dim]
+            emb, logits = self.head(feats)
 
         probs = torch.sigmoid(logits).cpu().numpy()[0]
 

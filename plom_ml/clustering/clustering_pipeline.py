@@ -2,7 +2,6 @@
 # Copyright (C) 2025 Bryan Tanady
 
 # plom_ml
-from .model_type import ClusteringModelType
 from .clustering_model import (
     ClusteringModel,
 )
@@ -10,7 +9,7 @@ from .preprocessor import Preprocessor
 
 # misc
 import numpy as np
-from typing import Sequence, Mapping
+from typing import Mapping
 
 
 class ClusteringPipeline:

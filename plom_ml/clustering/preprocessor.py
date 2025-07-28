@@ -5,8 +5,6 @@ from abc import abstractmethod
 import numpy as np
 from .image_processing_service import ImageProcessingService
 import cv2
-from typing import Sequence
-from numpy.typing import NDArray
 
 
 class Preprocessor:
