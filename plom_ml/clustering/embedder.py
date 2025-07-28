@@ -3,7 +3,7 @@
 
 import torch
 import torch.nn as nn
-from torchvision import transforms, models # type: ignore[import]
+from torchvision import transforms, models  # type: ignore[import]
 from abc import ABC, abstractmethod
 import numpy as np
 from transformers import TrOCRProcessor
