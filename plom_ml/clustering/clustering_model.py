@@ -12,14 +12,14 @@ from sklearn.cluster import AgglomerativeClustering
 # torch
 import torch
 import torch.nn as nn
-from torchvision import models, transforms  # type: ignore[import]
+from torchvision import models, transforms
 
 # misc
 from PIL import Image
 from abc import abstractmethod
 import cv2
 import numpy as np
-import yaml  # type: ignore[import]
+import yaml
 import os
 
 

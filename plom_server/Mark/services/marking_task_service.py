@@ -597,7 +597,11 @@ class MarkingTaskService:
 
         # Remove duplicates (preserve order)
         seen = set()
-        tag_texts_unique = [x for x in tag_texts if not (x in seen or seen.add(x))]
+        tag_texts_unique = []
+        for x in tag_texts:
+            if x not in seen:
+                seen.add(x)
+                tag_texts_unique.append(x)
 
         # Get all existing tags for this user
         existing_tags = MarkingTaskTag.objects.filter(

@@ -13,8 +13,8 @@ from plom_ml.clustering.model_type import ClusteringModelType as MLClusteringMod
 class ClusteringModelType(models.TextChoices):
     """Define clustering types supported by plom."""
 
-    MCQ = MLClusteringModelType.MCQ.value, "Multiple choice (A-F, a-f)"
-    HME = MLClusteringModelType.HME.value, "Generic handwritten math expression"
+    MCQ = str(MLClusteringModelType.MCQ.value), "Multiple choice (A-F, a-f)"
+    HME = str(MLClusteringModelType.HME.value), "Generic handwritten math expression"
 
 
 class QuestionClusteringChore(HueyTaskTracker):
