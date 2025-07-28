@@ -11,3 +11,5 @@ from .question_clustering_service import (
     QuestionClusteringJobService,
     QuestionClusteringService,
 )
+
+from .model_loader import get_model

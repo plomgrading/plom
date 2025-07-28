@@ -10,7 +10,7 @@ import huey.api
 from django.db.models import Count
 from django.db.models import QuerySet
 
-# plom models
+# plom db models
 from plom_server.Base.models import User
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 from plom_server.QuestionClustering.models import (
@@ -34,6 +34,7 @@ from plom_server.Papers.services import PaperInfoService
 from plom_server.Rectangles.services import (
     RectangleExtractor,
 )
+from plom_server.QuestionClustering.services.model_loader import get_model
 
 # exception
 from plom_server.QuestionClustering.exceptions.clustering_exception import (
@@ -43,7 +44,7 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
     DuplicateClusteringJobError,
 )
 
-# ML
+# plom_ml
 from plom_ml.clustering.clustering_pipeline import ClusteringPipeline
 from plom_ml.clustering.preprocessor import DiffProcessor
 
@@ -235,13 +236,18 @@ class QuestionClusteringService:
         )
 
         # get paper_num to ref, scanned mapping used for clustering input
+        # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
         paper_to_images = {
-            pn: (ref, rex.get_cropped_scanned_img(pn, rect)) for pn in paper_numbers
+            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img(pn, rect)}
+            for pn in paper_numbers
         }
+
+        # get mcq model
+        model = get_model(model_type=ClusteringModelType.MCQ)
 
         # run clustering pipeline
         clustering_pipeline = ClusteringPipeline(
-            model_type=ClusteringModelType.MCQ,
+            model=model,
             preprocessor=DiffProcessor(dilation_strength=1, invert=False),
         )
         paper_to_clusterId = clustering_pipeline.cluster(paper_to_images)
@@ -269,13 +275,18 @@ class QuestionClusteringService:
         )
 
         # get paper_num to ref, scanned mapping used for clustering input
+        # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
         paper_to_images = {
-            pn: (ref, rex.get_cropped_scanned_img(pn, rect)) for pn in paper_numbers
+            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img(pn, rect)}
+            for pn in paper_numbers
         }
+
+        # load model
+        model = get_model(model_type=ClusteringModelType.HME)
 
         # run clustering pipeline
         clustering_pipeline = ClusteringPipeline(
-            model_type=ClusteringModelType.HME,
+            model=model,
             preprocessor=DiffProcessor(dilation_strength=1, invert=True),
         )
         paper_to_clusterId = clustering_pipeline.cluster(paper_to_images)
@@ -467,7 +478,7 @@ class QuestionClusteringService:
             question_index=question_idx, question_version=version
         )
 
-        clustered_papers = set()
+        paper_nums_in_clusters: set[int] = set()
 
         for i, clusterId in enumerate(cluster_order):
             # get the relevant tasks for every cluster
@@ -480,10 +491,10 @@ class QuestionClusteringService:
             for task in curr_tasks:
                 modify_task_priority(task, priority)
 
-            clustered_papers.update(p.pk for p in curr_papers)
+            paper_nums_in_clusters.update(p.paper_number for p in curr_papers)
 
         # update priority for paper not part of any cluster to 0
-        task_not_in_cluster = tasks.exclude(paper__in=clustered_papers)
+        task_not_in_cluster = tasks.exclude(paper__in=paper_nums_in_clusters)
         for task in task_not_in_cluster:
             modify_task_priority(task, 0)
 
@@ -615,7 +626,7 @@ class QuestionClusteringService:
     @transaction.atomic
     def cluster_ids_to_tags(
         self, question_idx: int, version: int
-    ) -> dict[int, list[tuple[int, str]]]:
+    ) -> dict[int, set[tuple[int, str]]]:
         """Return a mapping from clusterId to a set of tags in the cluster.
 
         NOTE: The tags that are included in the set are those that are shared across all tasks
@@ -652,7 +663,7 @@ class QuestionClusteringService:
             paper_to_tasks[t.paper.paper_number].append(t)
 
         # cluster_id -> set of tag tuples (pk, text) that are common across ALL tasks
-        cluster_to_common_tag = {}
+        cluster_to_common_tag: dict[int, set[tuple[int, str]]] = {}
 
         for cid, papers in cluster_to_papers.items():
             # Get all tasks for this cluster (via its papers)
@@ -661,7 +672,7 @@ class QuestionClusteringService:
                 task_list.extend(paper_to_tasks.get(p.id, []))
 
             if not task_list:
-                cluster_to_common_tag[cid] = []
+                cluster_to_common_tag[cid] = set()
                 continue
 
             # Start with tags from first task, then intersect

@@ -212,10 +212,10 @@ class PreviewSelectedRectsView(ManagerRequiredView):
                 return redirect("question_clustering_jobs_home")
 
         else:
-            for field, errs in form.errors.items():
-                for err in errs:
+            for field, errors in form.errors.items():
+                for error in errors:
                     # associate each error with its field (or None for non-field)
-                    messages.error(request, f"{field}: {err}")
+                    messages.error(request, f"{field}: {error}")
 
             return render(request, "QuestionClustering/show_rectangles.html")
 
