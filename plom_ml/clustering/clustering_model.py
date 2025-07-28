@@ -254,6 +254,8 @@ class MCQClusteringModel(ClusteringModel):
         # merges all “nearby” pieces
         n_labels, _, stats, _ = cv2.connectedComponentsWithStats(closed, connectivity=8)
 
+        bestConfidence, bestFeatures = 0.0, [0] * self.out_features
+
         # get the probs with highest confidence
         for lab in range(1, n_labels):  # skip background
             x, y, w, h, area = stats[lab]
