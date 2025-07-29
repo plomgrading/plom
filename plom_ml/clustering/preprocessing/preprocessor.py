@@ -6,6 +6,7 @@ import numpy as np
 from .image_processing_service import ImageProcessingService
 import cv2
 from plom_ml.clustering.exceptions import MissingRequiredInputKeys
+from typing import Mapping
 
 
 class Preprocessor:
@@ -27,7 +28,7 @@ class Preprocessor:
                 f"{cls.__name__} must define a class-level `input_keys: set[str]`."
             )
 
-    def _validate(self, images: dict[str, np.ndarray]) -> None:
+    def _validate(self, images: Mapping[str, np.ndarray]) -> None:
         """Validate images for processing.
 
         Currently ensures images must contain the keys defined in each subclass's input_keys.
@@ -47,7 +48,7 @@ class Preprocessor:
             )
 
     @abstractmethod
-    def _process(self, images: dict[str, np.ndarray]) -> np.ndarray:
+    def _process(self, images: Mapping[str, np.ndarray]) -> np.ndarray:
         """Internal logic of preprocessing post-validated images.
 
         Args:
@@ -58,7 +59,7 @@ class Preprocessor:
         """
         pass
 
-    def process(self, images: dict[str, np.ndarray]) -> np.ndarray:
+    def process(self, images: Mapping[str, np.ndarray]) -> np.ndarray:
         """Takes one or more images to preprocess it into another image for clustering model input.
 
         Args:
@@ -92,7 +93,7 @@ class DiffProcessor(Preprocessor):
         self.dilation_strength = dilation_strength
         self.invert = invert
 
-    def _process(self, images: dict[str, np.ndarray]) -> np.ndarray:
+    def _process(self, images: Mapping[str, np.ndarray]) -> np.ndarray:
         """Get the "difference" between reference and scanned pages.
 
         images:

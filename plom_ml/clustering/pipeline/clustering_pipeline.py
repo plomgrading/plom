@@ -13,10 +13,10 @@ from typing import Mapping
 
 
 class ClusteringPipeline:
-    """A wrapper to use clustering model for inference that outputs paper_num to clusterId map.
+    """A pipeline for clustering inference composed of clustering model and preprocessor.
 
     Args:
-        model_type: The type of clustering model to use.
+        model: The clustering model used in the pipeline.
         preprocessor: The preprocessing pipeline applied before inference.
     """
 
@@ -25,7 +25,7 @@ class ClusteringPipeline:
         self.model = model
 
     def cluster(
-        self, paper_to_images: Mapping[int, dict[str, np.ndarray]]
+        self, paper_to_images: Mapping[int, Mapping[str, np.ndarray]]
     ) -> dict[int, int]:
         """Cluster the given papers with the given preprocessor and clustering model.
 
@@ -39,7 +39,7 @@ class ClusteringPipeline:
 
 
         Returns:
-            A dictionary mapping the paper number to their cluster id.
+            A dictionary mapping paper number to their cluster id.
         """
         # Preprocess the images
         processed_paper_to_images = {
