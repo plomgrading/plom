@@ -26,7 +26,12 @@ class ImageProcessingService:
         """
         res = img.copy()
         for _ in range(iterations):
-            bg = cv2.GaussianBlur(res, (0, 0), sigmaX=15, sigmaY=15)
+            bg = cv2.GaussianBlur(
+                res,
+                (0, 0),  # kernel (0, 0) auto computes kernel size from sigmas
+                sigmaX=15,
+                sigmaY=15,
+            )
             clean = cv2.addWeighted(res, 1 + alpha, bg, -alpha, 0)
             res = np.clip(clean, 0, 255).astype(np.uint8)
         return res
@@ -37,6 +42,7 @@ class ImageProcessingService:
         """Filter image to only preserve connected components of min_area.
 
         This operation is useful to remove noises by only preserving "large enough" blobs.
+        The filtered blobs are marked as white (255) while others are marked as black (0).
         This operation does not modify the original image and return a copy.
 
         Args:
@@ -46,7 +52,7 @@ class ImageProcessingService:
         Returns:
             A copy image that has filtered all blobs that have area less than min_area.
         """
-        # Compute CCs & stats
+        # Compute connected components & stats
         _, labels, stats, _ = cv2.connectedComponentsWithStats(image, connectivity=8)
 
         # Get all areas
@@ -56,7 +62,7 @@ class ImageProcessingService:
         keep = areas >= min_area  # boolean array
         keep[0] = False  # label 0 is background (drop it)
 
-        # Vectorized filtering in one pass
+        # Vectorized filtering
         filtered = (keep[labels]).astype(np.uint8) * 255
 
         return filtered
@@ -78,8 +84,9 @@ class ImageProcessingService:
                 but increases chances of removing "stuff" from scanned.
 
         Returns:
-            A binarized image of the "difference" between scanned and blank_ref. The difference
-            is given 255 (white) while others are black (0).
+            A binarized image of the "difference" between scanned and blank_ref. Pixels
+            corresponding to differences are set to 255 (white), while unchanged regions
+            are set to 0 (black).
         """
         # Ensure grayscale
         if blank_ref.ndim == 3:
@@ -106,7 +113,7 @@ class ImageProcessingService:
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         dilated_ref = cv2.dilate(binarized_ref, kernel, iterations=dilation_iteration)
 
-        # increase scanned image contrast
+        # increase scanned image contrast so faint handwriting is not lost
         addedContrast = self.addContrast(scanned, alpha=2, iterations=2)
         detail = cv2.GaussianBlur(addedContrast, (0, 0), sigmaX=1.5)
         sharp = cv2.addWeighted(addedContrast, 1.0, detail, -0.2, 0)
@@ -124,7 +131,6 @@ class ImageProcessingService:
         # Remove noises from scanned image
         temp = cv2.morphologyEx(binarized_scanned, cv2.MORPH_OPEN, np.ones((2, 2)))
         cleaned_scanned = cv2.morphologyEx(temp, cv2.MORPH_CLOSE, np.ones((1, 2)))
-
         filtered = self.get_connected_component_only(cleaned_scanned, min_area=50)
 
         # Get the diff between ref and scanned
