@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
-from plom_ml.clustering.model_type import ClusteringModelType
-from plom_ml.clustering.clustering_model import (
+from plom_ml.clustering.model.model_type import ClusteringModelType
+from plom_ml.clustering.model.clustering_model import (
     ClusteringModel,
     MCQClusteringModel,
     HMEClusteringModel,

@@ -45,8 +45,8 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
 )
 
 # plom_ml
-from plom_ml.clustering.clustering_pipeline import ClusteringPipeline
-from plom_ml.clustering.preprocessor import DiffProcessor
+from plom_ml.clustering.pipeline.clustering_pipeline import ClusteringPipeline
+from plom_ml.clustering.preprocessing.preprocessor import DiffProcessor
 
 # misc
 from typing import Optional

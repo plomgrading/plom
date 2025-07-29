@@ -2,10 +2,10 @@
 # Copyright (C) 2025 Bryan Tanady
 
 # plom_ml
-from .clustering_model import (
+from plom_ml.clustering.model.clustering_model import (
     ClusteringModel,
 )
-from .preprocessor import Preprocessor
+from plom_ml.clustering.preprocessing.preprocessor import Preprocessor
 
 # misc
 import numpy as np

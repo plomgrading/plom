@@ -10,7 +10,7 @@ class ImageProcessingService:
     """Preprocess images services."""
 
     def addContrast(self, img: np.ndarray, alpha: float, iterations: int) -> np.ndarray:
-        """Increase img contrast.
+        """Increase image contrast.
 
         This operation does not modify original image.
 

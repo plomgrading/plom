@@ -146,13 +146,10 @@ class TrOCREmbedder(Embedder):
         arr = cv2.resize(arr, IMG_SIZE, interpolation=cv2.INTER_AREA)
         pil = Image.fromarray(arr).convert("RGB")
 
-        # produce a single pixel_values tensor [3, H, W]
-        pixels = self.processor.image_processor(
-            pil, return_tensors="pt"
-        ).pixel_values.squeeze(0)
+        pixels = self.processor.image_processor(pil, return_tensors="pt").pixel_values
 
-        # add batch dim → [1, 3, H, W], move to device
-        x = pixels.unsqueeze(0).to(self.device)
+        # move to device
+        x = pixels.to(self.device)
 
         # forward & grab CLS token
         with torch.no_grad():

@@ -6,7 +6,7 @@ from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.decomposition import PCA
 
 # plom_ml
-from .embedder import SymbolicEmbedder, TrOCREmbedder
+from ..embedder.embedder import SymbolicEmbedder, TrOCREmbedder
 from sklearn.cluster import AgglomerativeClustering
 
 # torch

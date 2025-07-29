@@ -7,14 +7,16 @@ from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import Paper
 from django.db.models import Q
 
-from plom_ml.clustering.model_type import ClusteringModelType as MLClusteringModelType
+from plom_ml.clustering.model.model_type import (
+    ClusteringModelType as MLClusteringModelType,
+)
 
 
 class ClusteringModelType(models.TextChoices):
     """Define clustering types supported by plom."""
 
-    MCQ = str(MLClusteringModelType.MCQ.value), "Multiple choice (A-F, a-f)"
-    HME = str(MLClusteringModelType.HME.value), "Generic handwritten math expression"
+    MCQ = MLClusteringModelType.MCQ.value, "Multiple choice (A-F, a-f)"
+    HME = MLClusteringModelType.HME.value, "Generic handwritten math expression"
 
 
 class QuestionClusteringChore(HueyTaskTracker):
