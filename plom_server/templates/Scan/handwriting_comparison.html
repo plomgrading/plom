@@ -1,0 +1,130 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Deep Shah
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Handwriting Comparison
+{% endblock title %}
+{% block page_heading %}
+    Handwriting Comparison for Extra Page {{ extra_page_index }}
+{% endblock page_heading %}
+{% block main_content %}
+    <style>
+  .comparison-container {
+    display: flex;
+    flex-direction: row;
+    height: 80vh; 
+    width: 100%;
+    gap: 10px;
+  }
+  .panel {
+    flex: 1;
+    border: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-header {
+    background-color: #f8f9fa;
+    padding: 8px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+  }
+  .panel-content {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative; 
+  }
+  .panel-content iframe, .panel-content img {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: contain;
+  }
+  .view-pdf-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 150px;
+    z-index: 10; 
+}
+    </style>
+    <div class="my-2">
+        <button class="btn btn-primary" onclick="window.close()">Return to Bundle View</button>
+    </div>
+    <div class="comparison-container">
+        <div class="panel">
+            <div class="panel-header">
+                Previous Paper:
+                {% if prev_paper_number %}
+                    {{ prev_paper_number }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <div class="panel-content">
+                {# Only render the content if we have a valid index for the first page #}
+                {% if prev_paper_first_page_index is not None %}
+                    <button id="view-pdf-btn-prev"
+                            class="btn btn-secondary btn-sm view-pdf-btn"
+                            onclick="showPdf('prev')">View Full PDF</button>
+                    <img id="img-prev"
+                         src="{% url 'scan_get_rotated_image' bundle_id prev_paper_first_page_index %}" />
+                    <iframe id="iframe-prev" style="display: none;" src=""></iframe>
+                {% else %}
+                    <div class="p-3">No previous paper found in scan order.</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header">Extra Page (Index: {{ extra_page_index }})</div>
+            <div class="panel-content">
+                <img src="{% url 'scan_get_rotated_image' bundle_id extra_page_index %}" />
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header">
+                Next Paper:
+                {% if next_paper_number %}
+                    {{ next_paper_number }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <div class="panel-content">
+                {# Only render the content if we have a valid index for the first page #}
+                {% if next_paper_first_page_index is not None %}
+                    <button id="view-pdf-btn-next"
+                            class="btn btn-secondary btn-sm view-pdf-btn"
+                            onclick="showPdf('next')">View Full PDF</button>
+                    <img id="img-next"
+                         src="{% url 'scan_get_rotated_image' bundle_id next_paper_first_page_index %}" />
+                    <iframe id="iframe-next" style="display: none;" src=""></iframe>
+                {% else %}
+                    <div class="p-3">No next paper found in scan order.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+function showPdf(panelType) {
+  const img = document.getElementById(`img-${panelType}`);
+  const iframe = document.getElementById(`iframe-${panelType}`);
+  const button = document.getElementById(`view-pdf-btn-${panelType}`);
+
+  let pdfUrl;
+  if (panelType === 'prev') {
+    pdfUrl = "{% if prev_paper_number %}{% url 'scan_paper_pdf' bundle_id prev_paper_number %}{% endif %}";
+  } else if (panelType === 'next') {
+    pdfUrl = "{% if next_paper_number %}{% url 'scan_paper_pdf' bundle_id next_paper_number %}{% endif %}";
+  }
+
+  if (pdfUrl) {
+    iframe.src = pdfUrl;
+    img.style.display = 'none';
+    iframe.style.display = 'block';
+    button.style.display = 'none';
+  }
+}
+    </script>
+{% endblock main_content %}
