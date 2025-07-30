@@ -196,7 +196,12 @@ packages = [
     "plom_server.UserManagement.services",
     "plom_server.Visualization",
     "plom_ml",
-    "plom_ml.clustering"
+    "plom_ml.clustering",
+    "plom_ml.clustering.embedding",
+    "plom_ml.clustering.model",
+    "plom_ml.clustering.pipeline",
+    "plom_ml.clustering.preprocessing"
+
 ]
 # TODO: fixtures?  huey?  media?
 
