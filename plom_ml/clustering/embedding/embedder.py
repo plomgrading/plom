@@ -2,13 +2,14 @@
 # Copyright (C) 2025 Bryan Tanady
 
 import torch
-import torch.nn as nn
-from torchvision import transforms, models  # type: ignore[import]
+from torchvision import transforms  # type: ignore[import]
 from abc import ABC, abstractmethod
 import numpy as np
 from transformers import TrOCRProcessor
 from PIL import Image
 import cv2
+
+from plom_ml.clustering.model.model_architecture import MCQClusteringNet, HMESymbolicNet
 
 
 class Embedder(ABC):
@@ -27,49 +28,95 @@ class Embedder(ABC):
         pass
 
 
+class MCQEmbedder(Embedder):
+    """Embed images with MCQ Clustering model."""
+
+    def __init__(self, weight_path, device, out_features):
+        self.device = device
+        self.out_features = out_features
+
+        # init model architecture
+        self.model = MCQClusteringNet(out_features)
+
+        # load model weight
+        self.model.load_state_dict(torch.load(weight_path, map_location=device))
+
+        self.model.to(device)
+        self.model.eval()
+
+        # init inference tf
+        self.infer_tf = transforms.Compose(
+            [
+                transforms.Grayscale(num_output_channels=1),
+                transforms.Resize((64, 64)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,)),
+            ]
+        )
+
+    def embed(self, img: np.ndarray) -> np.ndarray:
+        """Convert image array into a feature matrix.
+
+        Args:
+            image: numpy array image whose features to be generated.
+
+        Returns:
+            A numpy array of shape (1, D) where D is embedding dimension.
+        """
+        # build a structuring element that will bridge any gap
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+
+        # close small gaps so that what were once multiple components
+        # become one big blob in a single connectedComponents call
+        closed = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+
+        # merges all “nearby” pieces
+        n_labels, _, stats, _ = cv2.connectedComponentsWithStats(closed, connectivity=8)
+
+        bestConfidence, bestFeatures = 0.0, [0] * self.out_features
+
+        # get the probs with highest confidence
+        for lab in range(1, n_labels):  # skip background
+            x, y, w, h, area = stats[lab]
+            if area < 100:
+                continue
+
+            crop = img[y : y + h, x : x + w]
+            bestConfidence, bestFeatures = 0.0, [0] * self.out_features
+
+            infer = (
+                self.infer_tf(Image.fromarray(crop)).unsqueeze(0).to(self.device)
+            )  # shape: [1,3,H,W]
+
+            with torch.no_grad():
+                logits = self.model(infer)
+                probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
+
+            confidence = max(probs)
+            if confidence > bestConfidence:
+                bestConfidence = confidence
+                bestFeatures = probs
+        return np.array(bestFeatures)
+
+
 class SymbolicEmbedder(Embedder):
     """Embeds images using a ResNet-34 backbone + projection head."""
 
-    class _ProjectionHead(nn.Module):
-        def __init__(self, in_dim=512, emb_dim=128, num_classes=101):
-            super().__init__()
-            self.projector = nn.Sequential(
-                nn.Linear(in_dim, emb_dim),
-                nn.ReLU(),
-                nn.Linear(emb_dim, emb_dim),
-            )
-            self.classifier = nn.Linear(emb_dim, num_classes)
-            nn.init.normal_(self.classifier.weight, std=0.01)
-            nn.init.constant_(self.classifier.bias, 0)
-
-        def forward(self, features):
-            emb = self.projector(features)
-            logits = self.classifier(emb)
-            return emb, logits
-
     def __init__(self, model_path: str, device: torch.device):
         self.device = device
-        # Build backbone
-        backbone = models.resnet34(weights=models.ResNet34_Weights.IMAGENET1K_V1)
-        backbone.conv1 = torch.nn.Conv2d(
-            1, 64, kernel_size=7, stride=2, padding=3, bias=False
-        )
-        backbone.fc = torch.nn.Identity()
-        self.backbone = backbone.to(self.device).eval()
 
-        # Build projection head
-        self.head = (
-            self._ProjectionHead(in_dim=512, emb_dim=128, num_classes=229)
-            .to(self.device)
-            .eval()
-        )
+        # init model architecture
+        self.model = HMESymbolicNet()
 
         # Load weights
         ckpt = torch.load(model_path, map_location=self.device)
-        self.backbone.load_state_dict(ckpt["backbone_state_dict"])
-        self.head.load_state_dict(ckpt["head_state_dict"])
+        self.model.backbone.load_state_dict(ckpt["backbone_state_dict"])
+        self.model.head.load_state_dict(ckpt["head_state_dict"])
 
-        # Inference transform: grayscale resize + to tensor
+        self.model.to(device)
+        self.model.eval()
+
+        # init infer_tf
         self.transform = transforms.Compose(
             [
                 transforms.Resize((128, 256)),
@@ -103,9 +150,7 @@ class SymbolicEmbedder(Embedder):
         # forward
         with torch.no_grad():
             #  [1, 512]
-            feats = self.backbone(x)
-            #  [1, emb_dim]
-            emb, logits = self.head(feats)
+            emb, logits = self.model.forward(x)
 
         probs = torch.sigmoid(logits).cpu().numpy()[0]
 

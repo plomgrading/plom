@@ -8,7 +8,7 @@ from plom_server.Papers.models import Paper
 from django.db.models import Q
 
 from plom_ml.clustering.model.model_type import (
-    ClusteringModelType as MLClusteringModelType,
+    ClusteringType as MLClusteringModelType,
 )
 
 

@@ -276,8 +276,12 @@
             
 
             submit() {
-                // Alpine will re‐render hidden inputs from `order`
-                this.$refs.form.submit();
+                this.order = Array.from(this.$refs.tbody.children)
+                        .map(tr => tr.dataset.clusterId);
+                 // Wait for Alpine to update the x‑for inputs, then submit
+                this.$nextTick(() => {
+                    this.$refs.form.submit();
+                });
             }
             }));
         });

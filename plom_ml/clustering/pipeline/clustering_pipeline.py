@@ -2,8 +2,8 @@
 # Copyright (C) 2025 Bryan Tanady
 
 # plom_ml
-from plom_ml.clustering.model.clustering_model import (
-    ClusteringModel,
+from plom_ml.clustering.model.clustering_strategy import (
+    ClusteringStrategy,
 )
 from plom_ml.clustering.preprocessing.preprocessor import Preprocessor
 
@@ -20,14 +20,16 @@ class ClusteringPipeline:
         preprocessor: The preprocessing pipeline applied before inference.
     """
 
-    def __init__(self, model: ClusteringModel, preprocessor: Preprocessor):
+    def __init__(
+        self, ClusteringStrategy: ClusteringStrategy, preprocessor: Preprocessor
+    ):
         self.preprocessor = preprocessor
-        self.model = model
+        self.ClusteringStrategy = ClusteringStrategy
 
     def cluster(
         self, paper_to_images: Mapping[int, Mapping[str, np.ndarray]]
     ) -> dict[int, int]:
-        """Cluster the given papers with the given preprocessor and clustering model.
+        """Cluster the given papers with the given preprocessor and ClusteringStrategy.
 
         Args:
             paper_to_images: a dictionary mapping paper number to another dict each represents an image.
@@ -48,4 +50,4 @@ class ClusteringPipeline:
         }
 
         # Feed the processed inputs to the model
-        return self.model.cluster_papers(processed_paper_to_images)
+        return self.ClusteringStrategy.cluster_papers(processed_paper_to_images)

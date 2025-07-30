@@ -12,4 +12,4 @@ from .question_clustering_service import (
     QuestionClusteringService,
 )
 
-from .model_loader import get_model
+from .model_loader import get_ClusteringStrategy

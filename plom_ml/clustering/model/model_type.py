@@ -5,8 +5,8 @@ from enum import StrEnum
 # from enum import Enum
 
 
-class ClusteringModelType(StrEnum):
-    """Defines what clustering models used in clustering pipeline.
+class ClusteringType(StrEnum):
+    """Defines what type of clustering task to tackle on.
 
     Attributes:
         MCQ: Multiple choice question (A-F, a-f).

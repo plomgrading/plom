@@ -34,7 +34,7 @@ from plom_server.Papers.services import PaperInfoService
 from plom_server.Rectangles.services import (
     RectangleExtractor,
 )
-from plom_server.QuestionClustering.services.model_loader import get_model
+from plom_server.QuestionClustering.services.model_loader import get_ClusteringStrategy
 
 # exception
 from plom_server.QuestionClustering.exceptions.clustering_exception import (
@@ -242,12 +242,12 @@ class QuestionClusteringService:
             for pn in paper_numbers
         }
 
-        # get mcq model
-        model = get_model(model_type=ClusteringModelType.MCQ)
+        # get mcq ClusteringStrategy
+        ClusteringStrategy = get_ClusteringStrategy(model_type=ClusteringModelType.MCQ)
 
         # run clustering pipeline
         clustering_pipeline = ClusteringPipeline(
-            model=model,
+            ClusteringStrategy=ClusteringStrategy,
             preprocessor=DiffProcessor(dilation_strength=1, invert=False),
         )
         paper_to_clusterId = clustering_pipeline.cluster(paper_to_images)
@@ -282,11 +282,11 @@ class QuestionClusteringService:
         }
 
         # load model
-        model = get_model(model_type=ClusteringModelType.HME)
+        ClusteringStrategy = get_ClusteringStrategy(model_type=ClusteringModelType.HME)
 
         # run clustering pipeline
         clustering_pipeline = ClusteringPipeline(
-            model=model,
+            ClusteringStrategy=ClusteringStrategy,
             preprocessor=DiffProcessor(dilation_strength=1, invert=True),
         )
         paper_to_clusterId = clustering_pipeline.cluster(paper_to_images)

@@ -23,6 +23,12 @@ class MissingRequiredInputKeys(PreprocessingException):
 
 
 class EmbeddingExceptions(ClusteringException):
-    """Embedding steps related exception."""
+    """Embedding related exception."""
+
+    pass
+
+
+class MissingEmbedderException(EmbeddingExceptions):
+    """Missing embedder that is required to generate feature vector."""
 
     pass

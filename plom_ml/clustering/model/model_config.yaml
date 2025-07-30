@@ -7,4 +7,4 @@ models:
   hme:
     symbolic: "model_cache/hme_symbolic.pth"
     trocr: "model_cache/hme_trOCR.pth"
-  mcq: "model_cache/mcq_model.pth"
+  mcq: "model_cache/mcq_model_test.pth"
