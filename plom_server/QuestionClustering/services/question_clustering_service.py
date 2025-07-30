@@ -242,7 +242,7 @@ class QuestionClusteringService:
             for pn in paper_numbers
         }
 
-        # get mcq ClusteringStrategy
+        # get mcq ClusteringStrategy (use @lru_cache)
         ClusteringStrategy = get_ClusteringStrategy(model_type=ClusteringModelType.MCQ)
 
         # run clustering pipeline
