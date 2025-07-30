@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
-from enum import StrEnum
+# from enum import StrEnum
 
-# from enum import Enum
+from enum import Enum
 
 
 # class ClusteringType(StrEnum):
