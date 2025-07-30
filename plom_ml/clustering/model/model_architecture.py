@@ -130,6 +130,5 @@ class HMESymbolicNet(nn.Module):
             Output tensor of shape (B, out_classes), containing probability for each class and
             for each input sample.
         """
-
         features = self.backbone(x)
         return self.head(features)

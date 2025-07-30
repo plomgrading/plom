@@ -50,7 +50,7 @@ class ClusteringStrategy:
             image: the image whose feature vector will be generated for clustering.
 
         Returns:
-            a 1D array of feature vetor with shape of shape (D,). D is the sum of output
+            a 1D array of feature vector with shape of shape (D,). D is the sum of output
             dimensions from all embedders.
 
         Raises:

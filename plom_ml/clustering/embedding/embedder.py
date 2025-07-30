@@ -58,7 +58,7 @@ class MCQEmbedder(Embedder):
         """Convert image array into a feature matrix.
 
         Args:
-            image: numpy array image whose features to be generated.
+            img: numpy array image whose features to be generated.
 
         Returns:
             A numpy array of shape (1, D) where D is embedding dimension.
