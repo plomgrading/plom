@@ -159,7 +159,7 @@ def makeCover(
     if isinstance(test_num, int):
         text = f"Paper number {test_num:04}"
     else:
-        text = f"Test number {test_num}"
+        text = f"Paper number {test_num}"
     tn_width = font.text_length(text, headersize)
     x = (paper_width - tn_width) / 2
     y = vpos
