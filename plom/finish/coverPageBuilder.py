@@ -157,7 +157,7 @@ def makeCover(
     # tnwriter.color = (0,1,0)
 
     if isinstance(test_num, int):
-        text = f"Test number {test_num:04}"
+        text = f"Paper number {test_num:04}"
     else:
         text = f"Test number {test_num}"
     tn_width = font.text_length(text, headersize)
