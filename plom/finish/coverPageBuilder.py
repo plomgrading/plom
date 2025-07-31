@@ -25,7 +25,7 @@ def makeCover(
     pdfname: pathlib.Path,
     *,
     exam_name: str | None = None,
-    test_num: str | int | None = None,
+    paper_num: str | int | None = None,
     info: tuple[str | None, str | None] | None = None,
     solution: bool = False,
     footer: bool = True,
@@ -33,7 +33,7 @@ def makeCover(
     """Create html page of name ID etc and table of marks.
 
     Args:
-        tab: information about the test that should be put on the
+        tab: information about the paper that should be put on the
             coverpage.  A list of lists where each row is
             ``[qlabel, ver, mark, maxPossibleMark]`` if not solutions or
             ``[qlabel, ver, maxPossibleMark]`` if solutions.
@@ -41,7 +41,7 @@ def makeCover(
 
     Keyword Args:
         exam_name: the "long name" of this assessment.
-        test_num: the test number for which we are making a cover, or
+        paper_num: the paper number for which we are making a cover, or
             ``None`` to omit.
         info: currently a 2-tuple/2-list of student name (str)
             and student id (str).
@@ -152,19 +152,19 @@ def makeCover(
     infowriter.write_text(page)
     vpos += 3 * xxlsize // 2
 
-    # Style and print the test number
-    tnwriter = pymupdf.TextWriter(page.rect)
-    # tnwriter.color = (0,1,0)
+    # Style and print the paper number
+    pnwriter = pymupdf.TextWriter(page.rect)
+    # pnwriter.color = (0,1,0)
 
-    if isinstance(test_num, int):
-        text = f"Paper number {test_num:04}"
+    if isinstance(paper_num, int):
+        text = f"Paper number {paper_num:04}"
     else:
-        text = f"Paper number {test_num}"
-    tn_width = font.text_length(text, headersize)
-    x = (paper_width - tn_width) / 2
+        text = f"Paper number {paper_num}"
+    pn_width = font.text_length(text, headersize)
+    x = (paper_width - pn_width) / 2
     y = vpos
-    tnwriter.append((x, y), text, fontsize=headersize)
-    tnwriter.write_text(page)
+    pnwriter.append((x, y), text, fontsize=headersize)
+    pnwriter.write_text(page)
     vpos += 3 * xxlsize
 
     # Style and print the table of scores

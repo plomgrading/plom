@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2025 Philip D. Loewen
 
 from __future__ import annotations
 
@@ -25,7 +26,7 @@ def download_data_build_cover_page(
     Args:
         msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir: where to save the coverpage.
-        t: Test number.
+        t: Paper number.
         maxMarks: Maxmarks per question, dict str -> int.
 
     Keyword Args:
@@ -54,7 +55,7 @@ def download_data_build_cover_page(
     makeCover(
         arg,
         covername,
-        test_num=t,
+        paper_num=t,
         info=(sname, sid),
         solution=solution,
         exam_name=spec["longName"],
