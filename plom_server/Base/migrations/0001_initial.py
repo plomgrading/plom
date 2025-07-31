@@ -86,6 +86,7 @@ class Migration(migrations.Migration):
                 ("who_can_create_rubrics", models.TextField(default="permissive")),
                 ("who_can_modify_rubrics", models.TextField(default="per-user")),
                 ("feedback_rules", models.JSONField(default=dict)),
+                ("misc", models.JSONField(default=dict)),
             ],
             options={
                 "abstract": False,

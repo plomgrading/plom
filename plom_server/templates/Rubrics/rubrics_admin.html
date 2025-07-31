@@ -17,8 +17,33 @@
 {% endblock page_heading %}
 {% block main_content %}
     {% include "../base/alert_messages.html" with messages=messages %}
-    <div class="card m-2">
+    <div class="card m-2 mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Fractional rubrics</h5>
+        </div>
         <div class="card-body">
+            <p>
+                Some people have strong feelings about non-integer marks.
+                You can allow or disallow their creation by changing these preferences.
+                (Note that this doesn't effect which rubrics can be <em>used</em>).
+            </p>
+            <form method="post" action="{% url 'rubric_fractional_pref' %}">
+                {% csrf_token %}
+                <fieldset>
+                    {% for opt in rubric_fractional_options %}
+                        <div class="form-check ms-{{ opt.indent }}">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="{{ opt.name }}"
+                                   name="{{ opt.name }}"
+                                   {% if opt.checked %}checked{% endif %} />
+                            <label class="form-check-label" for="{{ opt.name }}">{{ opt.label }}</label>
+                        </div>
+                    {% endfor %}
+                </fieldset>
+                <button type="submit" class="btn btn-secondary" name="todo_needed_or_not">Submit</button>
+            </form>
+            <hr />
             <form method="post" action="{% url 'rubric_half' %}">
                 {% csrf_token %}
                 <div class="form-group mr-2">{{ rubric_halfmark_form }}</div>
@@ -33,6 +58,13 @@
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
                 {% if half_point_rubrics %}These rubrics have already been created.{% endif %}
             </p>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-header">
+            <h5 class="card-title">Upload and download rubrics</h5>
+        </div>
+        <div class="card-body">
             <form method="get" action={% url 'rubric_download' %} class="form-inline">
                 {% csrf_token %}
                 <div class="form-group mr-2">

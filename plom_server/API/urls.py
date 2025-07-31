@@ -29,6 +29,7 @@ from .views import (
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,
+    Prenaming,
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
@@ -46,6 +47,7 @@ from .views import (
     SourceDetail,
     SpecificationHandler,
     RectangleExtractorView,
+    PQVmap,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -150,6 +152,11 @@ urlpatterns = [
         SourceOverview.as_view(),
         name="api_source_overview",
     ),
+    path(
+        "api/beta/pqvmap",
+        PQVmap.as_view(),
+        name="pqvmapper",
+    ),
 ]
 
 experimental_router = DefaultRouter(trailing_slash=True)
@@ -181,6 +188,11 @@ urlpatterns += [
         "api/v0/classlist",
         Classlist.as_view(),
         name="api_classlist",
+    ),
+    path(
+        "api/v0/classlist/prenaming",
+        Prenaming.as_view(),
+        name="api_classlist_prenaming",
     ),
     path(
         "rubrics/<int:rid>/tasks",

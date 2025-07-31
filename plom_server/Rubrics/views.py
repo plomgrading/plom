@@ -9,7 +9,6 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
 
-
 import difflib
 import json
 from copy import deepcopy
@@ -33,9 +32,9 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import SettingsModel
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import PapersPrinted
-from .services import RubricService
+from .services import RubricService, RubricPermissionsService
 from .forms import (
-    RubricHalfMarkForm,
+    RubricCreateHalfMarkForm,
     RubricDiffForm,
     RubricFilterForm,
     RubricUploadForm,
@@ -56,17 +55,20 @@ class RubricAdminPageView(ManagerRequiredView):
             return render(request, "Finish/finish_not_printed.html", context=context)
 
         template_name = "Rubrics/rubrics_admin.html"
-        rubric_halfmark_form = RubricHalfMarkForm(request.GET)
+        rubric_create_halfmark_form = RubricCreateHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
+        # TODO: flaky?
         half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
+        rubric_fractional_options = RubricPermissionsService.get_fractional_settings()
         context.update(
             {
                 "rubrics": rubrics,
                 "half_point_rubrics": half_point_rubrics,
-                "rubric_halfmark_form": rubric_halfmark_form,
+                "rubric_fractional_options": rubric_fractional_options,
+                "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
                 "rubric_template_form": template_form,
@@ -75,8 +77,8 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricHalfMarksView(ManagerRequiredView):
-    """Create demo rubrics."""
+class RubricCreateHalfMarksView(ManagerRequiredView):
+    """Create half-point rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
         any_manager = User.objects.filter(groups__name="manager").first()
@@ -85,6 +87,14 @@ class RubricHalfMarksView(ManagerRequiredView):
                 request,
                 "\N{VULGAR FRACTION ONE HALF} mark rubrics could not be created.",
             )
+        return redirect("rubrics_admin")
+
+
+class RubricFractionalPreferencesView(ManagerRequiredView):
+    """Set fractional rubric preferences."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        RubricPermissionsService.change_fractional_settings(request.POST)
         return redirect("rubrics_admin")
 
 
@@ -411,8 +421,10 @@ class DownloadRubricView(ManagerRequiredView):
 
 
 class UploadRubricView(ManagerRequiredView):
+    """Handles uploading of rubrics from data containing in a file."""
+
     def post(self, request: HttpRequest):
-        service = RubricService()
+        """Posting a file of rubric data creates new rubrics."""
         suffix = request.FILES["rubric_file"].name.split(".")[-1]
         username = request.user.username
 
@@ -427,7 +439,7 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
-            service.update_rubric_data(
+            RubricService.create_rubrics_from_file_data(
                 data_string, suffix, by_system=False, requesting_user=username
             )
         except ValueError as e:
@@ -499,20 +511,19 @@ class RubricCreateView(ManagerRequiredView):
             "out_of": form.cleaned_data["out_of"],
             "meta": form.cleaned_data["meta"],
             "question_index": form.cleaned_data["question_index"],
+            "versions": form.cleaned_data["versions"],
+            "parameters": form.cleaned_data["parameters"],
+            "tags": form.cleaned_data["tags"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
         }
         try:
             RubricService.create_rubric(rubric_data)
-
-        except ValueError as e:
+        except (ValueError, PermissionDenied) as e:
             messages.error(request, f"Error: {e}")
-
-        except PermissionDenied as e:
-            messages.error(request, f"Error: {e}")
-
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-
+            # see comments elsewhere about formatting serializer.ValidationError
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric created successfully.")
 
@@ -560,24 +571,17 @@ class RubricEditView(ManagerRequiredView):
         try:
             RubricService.modify_rubric(
                 rid,
-                new_rubric_data=rubric_data,
+                rubric_data,
                 modifying_user=User.objects.get(username=request.user.username),
                 tag_tasks=tag_tasks,
                 is_minor_change=is_minor_change,
             )
-
-        except ValueError as e:
+        except (ValueError, PermissionDenied, PlomConflict) as e:
             messages.error(request, f"Error: {e}")
-
-        except PermissionDenied as e:
-            messages.error(request, f"Error: {e}")
-
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-
-        except PlomConflict as e:
-            messages.error(request, f"Error: {e}")
-
+            # see comments elsewhere about formatting serializer.ValidationError
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric edited successfully.")
 

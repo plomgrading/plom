@@ -10,7 +10,7 @@ out_of = 3
 text = "Newton's law of cooling mentioned but no diff eqn or general solution"
 username = "manager"
 question_index = 4
-versions = [1]
+versions = "1"
 
 [[rubric]]
 kind = "absolute"
@@ -53,7 +53,7 @@ text = "Answer should include units\n(such as \"{param1}\")"
 meta = "Note this rubric differs between versions of the question."
 username = "manager"
 question_index = 4
-versions = []
+versions = ""
 parameters = [["{param1}", ["s", "year", "ms"]]]
 
 

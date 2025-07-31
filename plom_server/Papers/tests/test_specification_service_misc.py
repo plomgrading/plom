@@ -21,9 +21,9 @@ class SpecificationServiceMiscTests(TestCase):
             "doNotMarkPages": [],
             "question": {
                 1: {"pages": [2], "mark": 5},
-                2: {"pages": [3], "mark": 5, "select": "fix"},
-                3: {"pages": [4], "mark": 5, "select": "shuffle"},
-                4: {"pages": [5, 6, 7], "mark": 5, "select": "shuffle"},
+                2: {"pages": [3], "mark": 5, "select": 1},
+                3: {"pages": [4], "mark": 5, "select": [1, 2]},
+                4: {"pages": [5, 6, 7], "mark": 5, "select": [1, 2]},
             },
         }
         s._store_validated_spec(spec_dict)
@@ -32,13 +32,13 @@ class SpecificationServiceMiscTests(TestCase):
     def test_selection_methods_dict(self) -> None:
         d = s.get_selection_method_of_all_questions()
         assert set(d.keys()) == set((1, 2, 3, 4))
-        assert d[2] == "fix"
-        assert d[3] == "shuffle"
-        assert d[4] == "shuffle"
+        assert d[2] == [1]
+        assert d[3] == [1, 2]
+        assert d[4] == [1, 2]
 
-    def test_selection_methods_dict_default_shuffle(self) -> None:
+    def test_selection_methods_dict_default(self) -> None:
         d = s.get_selection_method_of_all_questions()
-        assert d[1] == "shuffle"
+        assert d[1] is None
 
     def test_get_list_of_pages(self) -> None:
         pp = s.get_list_of_pages()

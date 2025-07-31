@@ -204,14 +204,7 @@ class Migration(migrations.Migration):
                 ),
                 ("pages", models.JSONField()),
                 ("mark", models.PositiveIntegerField()),
-                (
-                    "select",
-                    models.CharField(
-                        choices=[("fix", "fix"), ("shuffle", "shuffle")],
-                        default="shuffle",
-                        max_length=7,
-                    ),
-                ),
+                ("select", models.JSONField(null=True)),
                 ("label", models.TextField(null=True)),
                 ("question_index", models.PositiveIntegerField(unique=True)),
             ],

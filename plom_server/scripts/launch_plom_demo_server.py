@@ -201,6 +201,23 @@ def run_django_manage_command(cmd) -> None:
     subprocess.run(split(full_cmd), check=True)
 
 
+def run_plom_cli_command(cmd: str) -> None:
+    """Run the given plom-cli command and wait for return.
+
+    Command must finish successfully (zero return code).
+
+    Args:
+        cmd: the command to run, in a form close to what would be entered
+            after `plom-cli` or `python3 -m plom.cli` on the command line.
+            The full command will be echoed to stdout.
+    """
+    cmd = "python3 -m plom.cli " + cmd
+    print(f"\nIssuing this command: {cmd}\n")
+    # Some gitlab CI environments do not expose plom-cli
+    # (but things are in a bad way if python3 -m doesn't work)
+    subprocess.run(split(cmd), check=True)
+
+
 def popen_django_manage_command(cmd) -> subprocess.Popen:
     """Run the given Django command using a process Popen and return a handle to the process.
 
@@ -245,10 +262,11 @@ def launch_huey_processes() -> list[subprocess.Popen]:
 
 
 def upload_demo_assessment_spec_file() -> None:
-    """Use 'plom_preparation_spec' to upload a demo assessment spec."""
+    """Upload a demo assessment spec."""
     print("Uploading demo assessment spec")
     spec_file = demo_files / "demo_assessment_spec.toml"
-    run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+    # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+    run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
@@ -303,11 +321,12 @@ def build_demo_assessment_source_pdfs() -> None:
 
 
 def upload_demo_assessment_source_files():
-    """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
+    """Upload demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     for v in (1, 2, 3):
         source_pdf = f"assessment_v{v}.pdf"
-        run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+        # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+        run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
 
 
 def upload_demo_solution_files():
@@ -322,7 +341,7 @@ def upload_demo_solution_files():
 
 
 def upload_demo_classlist(length="normal", prename=True):
-    """Use 'plom_preparation_classlist' to the appropriate classlist for the demo."""
+    """Upload a classlist for the demo."""
     if length == "long":
         cl_path = demo_files / "cl_for_long_demo.csv"
     elif length == "plaid":
@@ -332,7 +351,9 @@ def upload_demo_classlist(length="normal", prename=True):
     else:  # for normal
         cl_path = demo_files / "cl_for_demo.csv"
 
-    run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+    run_plom_cli_command("delete-classlist")
+    # run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+    run_plom_cli_command(f"upload-classlist {cl_path}")
 
     if prename:
         run_django_manage_command("plom_preparation_prenaming --enable")
@@ -558,6 +579,7 @@ def upload_the_bundles(length="normal"):
     # now trigger reading of qr-codes
     run_django_manage_command(f"plom_demo_bundles --length {length} --action read")
     run_django_manage_command("plom_staging_bundles wait")
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action map_hw")
 
 
 def push_the_bundles(length):
@@ -798,6 +820,10 @@ def main():
     """The Plom demo script."""
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
+    os.environ["PLOM_SERVER"] = "http://localhost:8000"
+    os.environ["PLOM_USERNAME"] = "manager"
+    os.environ["PLOM_PASSWORD"] = "1234"
 
     saytime("")  # Launch the chatty timer.
 

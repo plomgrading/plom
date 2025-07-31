@@ -1,6 +1,7 @@
 import django.core.validators
 import django.db.models.deletion
 import plom_server.Rubrics.models
+import re
 from django.conf import settings
 from django.db import migrations, models
 
@@ -58,7 +59,21 @@ class Migration(migrations.Migration):
                 ("question_index", models.IntegerField()),
                 ("tags", models.TextField(blank=True, default="", null=True)),
                 ("meta", models.TextField(blank=True, default="", null=True)),
-                ("versions", models.JSONField(blank=True, default=list, null=True)),
+                (
+                    "versions",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        max_length=255,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                re.compile("^\\d+(?:,\\d+)*\\Z"),
+                                code="invalid",
+                                message="Enter only digits separated by commas.",
+                            )
+                        ],
+                    ),
+                ),
                 ("parameters", models.JSONField(blank=True, default=list, null=True)),
                 ("system_rubric", models.BooleanField(blank=True, default=False)),
                 ("published", models.BooleanField(blank=True, default=True)),
