@@ -35,7 +35,8 @@ class ClusteringPipeline:
             paper_to_images: a dictionary mapping paper number to another dict each represents an image.
                 The key of the image depends on the chosen preprocessor.
 
-                Note: images are made as a sequence because We may need more than one input images,
+                Note: paper can be mapped to multiple images because we may need more
+                    than one input images,
                     eg: we need the blank and the scanned representation of the page to
                     extract the handwritten strokes.
 
