@@ -567,6 +567,7 @@ class RubricEditView(ManagerRequiredView):
             "subrevision": rubric.subrevision,
             "tags": form.cleaned_data["tags"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+            "published": form.cleaned_data["published"]
         }
         try:
             RubricService.modify_rubric(
