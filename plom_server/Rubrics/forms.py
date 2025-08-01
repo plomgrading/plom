@@ -114,7 +114,7 @@ class RubricItemForm(forms.ModelForm):
     )
     published = forms.TypedChoiceField(
         choices=((True, "Yes"), (False, "No")),
-        coerce=lambda x: x == "True",  # Converts form value back to a boolean
+        coerce=lambda x: x == "True",
         widget=forms.RadioSelect,
         required=True,
     )
