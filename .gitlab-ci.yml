@@ -547,6 +547,30 @@ webplom_test:
         coverage_format: cobertura
         path: django_coverage.xml
 
+webplom_api_test:
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  before_script:
+    - pip install coverage~=7.9.2
+  script:
+    - export PYTHONPATH=$PWD
+    - export PLOM_DATABASE_BACKEND=sqlite
+    # migrate the test database (skip makemigrations per #3826)
+    - python3 manage.py migrate
+    # run only the API tests and collect coverage for plom_server/API
+    - coverage run --source="plom_server/API" manage.py test plom_server/API/tests
+    # ignore any coverage errors (e.g. OpenCV) and print summary
+    - coverage report -i --precision=2
+    # output Cobertura XML for GitLab
+    - coverage xml -i -o django_api_coverage.xml
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: django_api_coverage.xml
+
 
 webplom_demo:
   services:

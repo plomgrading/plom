@@ -54,9 +54,6 @@ from io import BytesIO
 from unittest.mock import patch
 
 
-
-
-
 class ScanServiceTests(TestCase):
     # This test does unpleasant things, see Issue #2925.
     def setUp(self) -> None:
