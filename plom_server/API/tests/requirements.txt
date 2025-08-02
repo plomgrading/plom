@@ -1,6 +1,0 @@
-Django==5.1.7
-djangorestframework==3.15.2
-packaging==25.0
-pytest==8.3.5
-pytest_mock==3.14.1
-views==0.3
