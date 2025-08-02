@@ -559,7 +559,7 @@ webplom_api_test:
     # migrate the test database (skip makemigrations per #3826)
     - python3 manage.py migrate
     # run only the API tests and collect coverage for plom_server/API
-    - coverage run --source="plom_server/API" manage.py pytest plom_server/API/tests
+    - coverage run --source=plom_server/API -m pytest plom_server/API/tests
     # ignore any coverage errors (e.g. OpenCV) and print summary
     - coverage report -i --precision=2
     # output Cobertura XML for GitLab

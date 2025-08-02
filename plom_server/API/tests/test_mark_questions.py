@@ -29,7 +29,7 @@ import json
 class TestMarkQuestionAPI:
 
     @pytest.fixture(autouse=True)
-    def setup(self, marking_test_setup):
+    def setup(self, marking_test_setup) -> None:
         """For each testcase we call this setup."""
         self.non_auth_client: APIClient = marking_test_setup["non_auth_client"]
         self.auth_client: APIClient = marking_test_setup["auth_client"]
@@ -127,8 +127,8 @@ class TestMarkQuestionAPI:
         )
 
         # Make a stub for validate_and_clean_marking_data function
-        fake_cleaned_data = {}
-        fake_annot_data = {}
+        fake_cleaned_data: dict = {}
+        fake_annot_data: dict = {}
         mocker.patch.object(
             MarkingTaskService,
             MarkingTaskService.validate_and_clean_marking_data.__name__,
