@@ -68,7 +68,7 @@ class TestMarkQuestionAPI:
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     def test_claim_non_existent_task(self):
-        """Test PATCH: /MK/tasks/{code} for non-existant task."""
+        """Test PATCH: /MK/tasks/{code} for non-existent task."""
         code = "q1g1"
         url = reverse("api_mark_task", kwargs={"code": code})
         resp = self.auth_client.patch(url)

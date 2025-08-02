@@ -27,31 +27,13 @@ from plom.tpv_utils import encodePaperPageVersion
 from plom.scan import QRextract, pdfmucker, rotate
 
 from .. import tests as _Scan_tests
-from ..models import StagingBundle, StagingImage
-from ..services import PageImageProcessor, ScanService
 
-
-import pytest
-import tempfile
-from types import SimpleNamespace
-from pathlib import Path
-
-from django.contrib.auth.models import User
-from django.core.files.base import File
-
-import plom_server.Scan.services.scan_service as service
 from plom_server.Scan.services.scan_service import (
-    huey_parent_split_bundle_chore,
-    huey_parent_read_qr_codes_chore,
     StagingBundle,
     StagingImage,
-    PagesToImagesChore,
-    ManageParseQRChore,
+    PageImageProcessor,
+    ScanService,
 )
-from plom_server.Base.models import HueyTaskTracker
-from plom_server.Base.models import BaseImage
-from io import BytesIO
-from unittest.mock import patch
 
 
 class ScanServiceTests(TestCase):
