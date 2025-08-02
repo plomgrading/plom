@@ -13,10 +13,12 @@ from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 
 from typing import Any
 
-import os, django
+import os
+import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plom_server.settings")
 django.setup()
+
 
 @pytest.fixture
 def api_client() -> APIClient:
