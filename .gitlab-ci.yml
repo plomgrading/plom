@@ -530,6 +530,7 @@ webplom_test:
   image: $IM
   before_script:
     - pip install coverage~=7.9.2
+    - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
     - export PLOM_DATABASE_BACKEND=sqlite
