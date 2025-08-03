@@ -11,7 +11,10 @@ import random
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator
+from django.core.validators import (
+    MinValueValidator,
+    validate_comma_separated_integer_list,
+)
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 import django_tables2
@@ -77,15 +80,14 @@ class Rubric(models.Model):
             parameterized rubrics.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
-        versions: a JSON list containing the versions of ``question``
+        versions: a string containing the versions of ``question``
             this rubric is assigned to, a comma-separated list of integers
-            such as ``[1, 3]``.
-            An empty list should be interpreted the same as a list of
+            such as ``1, 3``.
+            An empty string should be interpreted the same as a list of
             all possible values.
             All should be strictly positive and less than the maximum
             number of versions, although this is not enforced at the database
             level.
-            TODO: a future change might remove the brackets and use CharField.
         system_rubric: this Rubric was created by or is otherwise
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
@@ -154,15 +156,13 @@ class Rubric(models.Model):
     question_index = models.IntegerField(null=False, blank=False)
     tags = models.TextField(null=True, blank=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
-    versions = models.JSONField(null=True, blank=True, default=list)
-    # TODO: might be simpler to validate:
-    # but is DB change so careful when doing this, and must be "1, 2" not "[1, 2]"
-    # versions = models.CharField(
-    #     null=False,
-    #     blank=True,
-    #     default='',
-    #     validators=[validate_comma_separated_integer_list]
-    # )
+    versions = models.CharField(
+        null=False,
+        blank=True,
+        default="",
+        max_length=255,
+        validators=[validate_comma_separated_integer_list],
+    )
     parameters = models.JSONField(null=True, blank=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, blank=True, default=False)
@@ -183,6 +183,7 @@ class Rubric(models.Model):
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
     # TODO: how to make this work?  never seems to be called...
+    # TODO: can we do the range checks on versions here?  cheaply?
     # def clean_versions(self):
     #     print(self.cleaned_data["versions"])
     #     print("TODO: ensure positive integers etc")
@@ -253,7 +254,6 @@ class RubricTable(django_tables2.Table):
 
     rid = django_tables2.Column("rid", linkify=True)
     # prevent newlines from rendering in json fields
-    versions = django_tables2.JSONColumn(json_dumps_kwargs={})
     parameters = django_tables2.JSONColumn(json_dumps_kwargs={})
     # TODO: issue #3648, seeking a way to display how often they are used
     # times_used = django_tables2.Column(

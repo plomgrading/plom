@@ -113,19 +113,77 @@ def fractional_part_is_nth(
 ) -> bool:
     """Is the non-zero fractional part an Nth?
 
-    For example, when N is 3, we return True on 4.333333333, 1.666666667,
-    or -1.33333333.
+    For example, when N is 3, we return True on 4.3333333, 1.6666667,
+    or -1.3333333 but False for 0.333 or 1.25:
+    >>> fractional_part_is_nth(4.33333333, 3)
+    True
+
+    >>> fractional_part_is_nth(1.66666667, 3)
+    True
+
+    >>> fractional_part_is_nth(-1.33333333, 3)
+    True
+
+    >>> fractional_part_is_nth(0.333, 3)
+    False
+
+    >>> fractional_part_is_nth(0.25, 3)
+    False
+
+    >>> fractional_part_is_nth(0.25, 4)
+    True
+    """
+    # delegate to a different function which returns a "pinned value"
+    # when an Nth is detected, or None if not.   The "pinned value" is
+    # more accurate but we only return a bool.
+    pinned_value = pin_to_fractional_nth(value, N)
+    if pinned_value is None:
+        return False
+    return True
+
+
+def pin_to_fractional_nth(
+    value: int | float,
+    N: int,
+) -> float | None:
+    """Replace the value with a nearby fraction of Nth.
+
+    For example, when N is 3, we return more accurate values for
+    4.3333333, 1.6666667, or -1.3333333, but None for 0.333 or 1.25:
+    >>> pin_to_fractional_nth(4.3333333, 3)
+    4.333333333333333
+
+    >>> pin_to_fractional_nth(1.6666667, 3)
+    1.6666666666666665
+
+    >>> pin_to_fractional_nth(-1.3333333, 3)
+    -1.3333333333333333
+
+    >>> pin_to_fractional_nth(0.333, 3)
+
+    >>> pin_to_fractional_nth(1.25, 3)
+
+    >>> pin_to_fractional_nth(1.25, 4)
+    1.25
+
+    TODO: maybe we need a `tuple(bool, float | None)` return?
     """
     tol = _frac_value_tolerance
 
     if value < 0:
-        value = -value
+        local_value = -value
+    else:
+        local_value = value
 
-    frac_part = value - math.trunc(value)
+    int_part = math.trunc(local_value)
+    frac_part = local_value - int_part
     for frac in (float(x) / N for x in range(1, N)):
         if frac - tol < frac_part < frac + tol:
-            return True
-    return False
+            if value < 0:
+                return -(int_part + frac)
+            else:
+                return int_part + frac
+    return None
 
 
 def _generate_display_delta(

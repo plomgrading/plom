@@ -10,17 +10,6 @@ from plom_server.Base.tests import config_test
 from ..services import RubricService, RubricPermissionsService
 
 
-def _make_ex():
-    """Simulate input e.g., from client."""
-    return {
-        "username": "xenia",
-        "kind": "neutral",
-        "display_delta": ".",
-        "text": "ABC",
-        "question_index": 1,
-    }
-
-
 class RubricServiceTests_fractional_permissions(TestCase):
     """Tests related to rubric permissions."""
 
@@ -106,3 +95,48 @@ class RubricServiceTests_fractional_permissions(TestCase):
         data_int["revision"] = r["revision"]
         data_int["subrevision"] = r["subrevision"]
         RubricService.modify_rubric(rid, data_int)
+
+    def test_rubric_create_rounds_value_to_accurate_fraction(self) -> None:
+        approx_value = 0.666_666_67
+        accurate_value = 2.0 / 3
+        data = {
+            "kind": "relative",
+            "value": approx_value,
+            "text": "meh",
+            "username": "xenia",
+            "question_index": 1,
+        }
+        RubricPermissionsService.change_fractional_settings(
+            {"allow-third-point-rubrics": "on"}
+        )
+        obj = RubricService._create_rubric(data)
+        self.assertAlmostEqual(obj.value, accurate_value)
+        # AlmostEqual doesn't expose the tolerance
+        self.assertTrue(abs(obj.value - accurate_value) < 1e-15)
+        self.assertTrue(abs(obj.value - approx_value) > 1e-11)
+
+    def test_rubric_modify_rounds_value_to_accurate_fraction(self) -> None:
+        approx_value = 0.666_666_67
+        accurate_value = 2.0 / 3
+        data = {
+            "kind": "relative",
+            "value": 1.0,
+            "text": "meh",
+            "username": "xenia",
+            "question_index": 1,
+        }
+        obj = RubricService._create_rubric(data)
+        rid = obj.rid
+        data = {
+            "kind": "relative",
+            "value": approx_value,
+            "text": "meh",
+            "username": "xenia",
+            "question_index": 1,
+        }
+        RubricPermissionsService.change_fractional_settings(
+            {"allow-third-point-rubrics": "on"}
+        )
+        r = RubricService.modify_rubric(rid, data)
+        self.assertAlmostEqual(r["value"], accurate_value)
+        self.assertTrue(abs(r["value"] - accurate_value) < 1e-15)

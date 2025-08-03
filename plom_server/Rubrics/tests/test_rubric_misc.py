@@ -3,7 +3,7 @@
 
 from django.test import TestCase
 
-from ..services.utils import fractional_part_is_nth
+from ..services.utils import fractional_part_is_nth, pin_to_fractional_nth
 
 
 class RubricServiceTests_misc(TestCase):
@@ -29,3 +29,17 @@ class RubricServiceTests_misc(TestCase):
         self.assertFalse(fractional_part_is_nth(1.33, 3))
         self.assertFalse(fractional_part_is_nth(1.333, 3))
         self.assertTrue(fractional_part_is_nth(1.333333333333, 3))
+
+    def test_fractional_part_accurate_value(self) -> None:
+        pin = pin_to_fractional_nth
+        p = pin(1.1, 10)
+        self.assertIsNotNone(p)
+        assert p is not None  # mypy doesn't know self.assert
+        self.assertAlmostEqual(p, 11.0 / 10)
+        self.assertTrue(abs(p - 11.0 / 10) <= 1e-15)
+
+        p = pin(-1.666666667, 3)
+        self.assertIsNotNone(p)
+        assert p is not None  # mypy doesn't know self.assert
+        self.assertAlmostEqual(p, -5.0 / 3)
+        self.assertTrue(abs(p - -5.0 / 3) <= 1e-15)

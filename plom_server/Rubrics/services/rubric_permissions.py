@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import Any
 
 from plom_server.Base.models import SettingsModel
-from .utils import fractional_part_is_nth
+from .utils import pin_to_fractional_nth
 
 
 log = logging.getLogger("RubricService")
@@ -122,8 +122,12 @@ class RubricPermissionsService:
                     SettingsModel.cset(i, True)
 
     @staticmethod
-    def confirm_allowed_fraction(v: float | int) -> None:
-        """Against the current settings, if a value isn't a supported fraction raise an exception.
+    def pin_to_allowed_fraction(v: float | int) -> float:
+        """Adjust the value if its close enough to a fraction, or raise an exception depending on settings.
+
+        Returns:
+            A floating point number close to the input, provided the input was
+            close enough to an allowed value (an integer or a fraction).
 
         Raises:
             ValueError: that value isn't supported or is currently disallowed.
@@ -131,7 +135,7 @@ class RubricPermissionsService:
         f = v - math.trunc(v)
         if not f:
             # zero fractional part, nothing to do here
-            return
+            return v
 
         s = SettingsModel.load()
         for opt in _frac_opt_table:
@@ -139,13 +143,13 @@ class RubricPermissionsService:
             N = opt["denom"]
             assert isinstance(N, int)  # help mypy
             readable_denom = opt["readable"]
-            if fractional_part_is_nth(v, N):
-                # TODO: the detection uses a tolerance but maybe/probably we should
-                # round to that tolerance
-                if not s.get(name):
-                    raise ValueError(
-                        f"{readable_denom}-point rubrics are currently not allowed"
-                    )
-                return
+            vpin = pin_to_fractional_nth(v, N)
+            if vpin is None:
+                continue
+            if not s.get(name):
+                raise ValueError(
+                    f"{readable_denom}-point rubrics are currently not allowed"
+                )
+            return vpin
         # got all the way through the table, and it wasn't allowed
         raise ValueError(f"Score {v} with fractional part {f} are not supported")

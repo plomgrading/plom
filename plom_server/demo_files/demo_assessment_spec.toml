@@ -20,16 +20,16 @@ mark = 6
 label = "Q(2)"
 pages = [4,5]
 mark = 8
-select = "fix"
+select = 1
 
 [[question]]
 label = "Ex.3"
 pages = [6]
 mark = 4
-select = "shuffle"
+select = [1,2]
 
 [[question]]
 label = "LastQ"
 pages = [7,8]
 mark = 7
-select = "shuffle"
+select = [3]

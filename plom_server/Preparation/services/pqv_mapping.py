@@ -116,7 +116,7 @@ class PQVMappingService:
 
         seed = SpecificationService.get_private_seed()
         pqvmap = make_random_version_map(speck, seed=seed)
-        # kind of hacky: we just increase/decrease the keys
+        # re-index paper numbers using user-specified 'first' - hacky
         pqvmap = {k - 1 + first: v for k, v in pqvmap.items()}
         # bit of a hack to ensure versions match per page
         return _fix_shared_pages(pqvmap)

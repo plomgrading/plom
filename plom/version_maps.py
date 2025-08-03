@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2024 Andrew Rechnitzer
 # Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 """Tools for manipulating version maps."""
 
@@ -98,13 +99,10 @@ def check_version_map(
                         f" number of versions = {num_versions}"
                     )
             if spec:
-                # TODO: unsure about this: maybe we should doc that we ignore "select"
-                # when custom version maps are used.
-                # TODO: revisit this when working on Issue #2261.
-                if spec["question"][str(q)]["select"] == "fix":
-                    if not v == 1:
+                if spec["question"][str(q)].get("select") is not None:
+                    if v not in spec["question"][str(q)]["select"]:
                         raise ValueError(
-                            f'version "{v}" is not 1 but question is "fix" in spec {spec}'
+                            f'version "{v}" is not in question\'s "select" in spec {spec}'
                         )
 
     if not len(rowlens) <= 1:
@@ -137,7 +135,7 @@ def check_version_map(
 
 def make_random_version_map(
     spec, *, seed: str | None = None
-) -> dict[int, dict[int | str, int]]:
+) -> dict[int, dict[str | int, int]]:
     """Build a random version map.
 
     Args:
@@ -155,55 +153,38 @@ def make_random_version_map(
         A dict-of-dicts keyed by paper number (int) and then
         question number (int, but indexed from 1 not 0).  Values are
         integers.
-
-    Raises:
-        KeyError: invalid question selection scheme in spec.
     """
     if seed is not None:
         random.seed(seed)
 
-    # we want to have nearly equal numbers of each version - issue #1470
-    # first make a list which cycles through versions
-    vlist = [(x % spec["numberOfVersions"]) + 1 for x in range(spec["numberToProduce"])]
-    # now assign a copy of this for each question, so qvlist[question][papernum]=version
-    qvlist = [
-        random.sample(vlist, len(vlist)) for q in range(spec["numberOfQuestions"])
-    ]
-    # we use the above when a question is shuffled, else we just use v=1.
-
-    vmap: dict[int, dict[int | str, int]] = {}
-    for t in range(1, spec["numberToProduce"] + 1):
-        vmap[t] = {}
-        for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
-            gs = str(g + 1)  # now a str and 1,2,3,...
-            if spec["question"][gs]["select"] == "fix":
-                # there is only one version so all are version 1
-                vmap[t][g + 1] = 1
-            elif spec["question"][gs]["select"] == "shuffle":
-                # version selected randomly in [1, 2, ..., #versions]
-                # the below is purely random, so uneven distribution of versions
-                # vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
-                # replace with more equal distribution of versions from qvlist above
-                vmap[t][g + 1] = qvlist[g][t - 1]
-                # offset by one due to indices starting from 0
-
-            # TODO: we may enable something like this later
-            # elif spec["question"][gs]["select"] == "param":
-            #    # If caller does not provide a version, all are version 1.
-            #    # Caller can provide a version to group their parameters by any
-            #    # way they wish.  Typically this would be be ease grading, e.g.,
-            #    #   * map negative parameters to v1 and positive to v2.
-            #    #   * map tuples (a,b) with common `b` value to same version.
-            #    # In fact there is no significant difference between `param`
-            #    # and `shuffle` when user data is provided.  But clients or
-            #    # other aspects of the software might behave differently.
-            #    vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
+    # For each question, generate a list of legal versions with even
+    # distribution (#1470)
+    # Note: 0th-entry of this temporary list is unused, but needs to be present for 1-indexing
+    qv_list: list[list[int]] = [[] for i in range(spec["numberOfQuestions"] + 1)]
+    for paper_num in range(1, spec["numberToProduce"] + 1):
+        for q_1index_str, question in spec["question"].items():
+            q_1index = int(q_1index_str)
+            if question.get("select") is None:
+                qv_list[q_1index].append((paper_num % spec["numberOfVersions"]) + 1)
+            # (assume) preferences provided, draw only from those versions
             else:
-                raise KeyError(
-                    'Invalid spec: question {} "select" of "{}" is unexpected'.format(
-                        gs, spec["question"][gs]["select"]
-                    )
-                )
+                version_list = question["select"]
+                num_options = len(question["select"])
+                qv_list[q_1index].append(version_list[paper_num % num_options])
+
+    # shuffle each list of question versions:
+    for v_list in qv_list:
+        random.shuffle(v_list)
+
+    # assign each question version to a paper
+    vmap: dict[int, dict[int | str, int]] = {}
+    for paper_num in range(1, spec["numberToProduce"] + 1):
+        paper_map: dict[int | str, int] = {}
+        for q_1index_str in spec["question"].keys():
+            q_1index = int(q_1index_str)
+            paper_map.update({q_1index: qv_list[q_1index].pop()})
+        vmap[paper_num] = paper_map
+
     return vmap
 
 

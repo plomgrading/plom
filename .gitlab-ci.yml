@@ -364,6 +364,8 @@ doctests:
 
 # Ensure the migrations have been updated
 # needs full dependencies, cannot easily run with other early static analysis
+# Note to devs: if this job is failing, it probably means you have made database changes.
+# You should probably run `./maint/maint-wipe-rebuild-migrations.sh` and commit the results.
 migrations-uptodate:
   stage: test
   needs: ["container-image"]
@@ -470,7 +472,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1451 ]]"
+    - bash -c "[[ $HOWMANY -le 894 ]]"
   allow_failure: true
 
 
