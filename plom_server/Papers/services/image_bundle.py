@@ -96,7 +96,7 @@ class ImageBundleService:
         using bulk ORM calls.
 
         0. Check that preparation has been finished
-        1. Check that all the staging images have page numbers and test numbers
+        1. Check that all the staging images have page numbers and paper numbers
         2. Check that no staging images collide with each other
         3. Check that no staging images collide with any uploaded images
         4. Bulk-create images

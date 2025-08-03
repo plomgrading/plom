@@ -46,7 +46,7 @@ def download_classlist(msgr) -> bool:
 def upload_classlist(csvname: Path, *, msgr) -> bool:
     """Take lines from the given CSV file and add them to the server's classlist.
 
-    Enforce uniqueness of student ID's and test numbers in the upload:
+    Enforce uniqueness of student ID's and paper numbers in the upload:
     Any duplication at all will cancel the entire operation.
 
     Args:

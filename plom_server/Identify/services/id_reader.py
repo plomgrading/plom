@@ -837,7 +837,7 @@ class IDBoxProcessorService:
         return predictions
 
     def _assemble_cost_matrix(self, paper_numbers, student_IDs, probabilities):
-        """Compute the cost matrix between list of tests and list of student IDs.
+        """Compute the cost matrix between list of papers and list of student IDs.
 
         Args:
             paper_numbers (list): int, the ones we want to match.
@@ -880,7 +880,7 @@ class IDBoxProcessorService:
         Args:
             paper_numbers: int, the ones we want to match.
             student_IDs: A list of student ID numbers.
-            probabilities: dict with keys that contain a test number
+            probabilities: dict with keys that contain a paper number
                 and values that contain a probability matrix,
                 which is a list of lists of floats.
 
