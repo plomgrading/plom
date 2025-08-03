@@ -4,8 +4,6 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
@@ -26,7 +24,7 @@ from plom_server.Papers.services import SpecificationService
 from ..services import SourceService
 
 
-class TestSourceUploadForm(forms.Form):
+class SourceUploadForm(forms.Form):
     pdf_file = forms.FileField(
         label="",
         widget=forms.FileInput(attrs={"accept": ".pdf"}),
@@ -36,7 +34,7 @@ class TestSourceUploadForm(forms.Form):
 class SourceManageView(ManagerRequiredView):
     def build_context(self):
         return {
-            "form": TestSourceUploadForm(),
+            "form": SourceUploadForm(),
             "num_versions": SpecificationService.get_n_versions(),
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
