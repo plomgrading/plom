@@ -287,7 +287,7 @@ def main():
             )
     elif args.command == "solutions":
         assemble_solutions(
-            testnum=args.testnum,
+            papernum=args.testnum,
             msgr=(args.server, args.password),
             watermark=args.mark,
             verbose=True,

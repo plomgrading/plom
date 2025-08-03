@@ -155,7 +155,7 @@ def _reassemble_one_paper(
     """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
-        print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
+        print(f">>WARNING<< Paper {t} has an ID of 'None', not reassembling!")
         return None
     outname = outdir / f"{short_name}_{sid}.pdf"
     if skip and outname.exists():
@@ -179,7 +179,7 @@ def reassemble_paper(
     tmpdir: Path | str | None = None,
     skip: bool = False,
 ) -> Path | None:
-    """Reassemble a particular test paper.
+    """Reassemble a particular paper.
 
     Args:
         papernum: which paper number to reassemble.
@@ -198,7 +198,7 @@ def reassemble_paper(
             we already have (Careful: without checking for changes!)
 
     Returns:
-        The full path of the reassembled test pdf, if one was created
+        The full path of the reassembled paper pdf, if one was created
         else None.
 
     Raises:
@@ -261,7 +261,7 @@ def reassemble_all_papers(
     tmpdir: Path | str | None = None,
     skip: bool = False,
 ) -> None:
-    """Reassemble all test papers.
+    """Reassemble all papers.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a

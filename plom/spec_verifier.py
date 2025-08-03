@@ -725,14 +725,14 @@ class SpecVerifier:
         if not re.match(r"[\w\-\.]+$", self.spec["name"]):
             raise ValueError(
                 "Specification error - "
-                "Test name must be alphanumeric string without spaces "
+                "Assessment name must be alphanumeric string without spaces "
                 "(underscores, hyphens, and periods are ok)."
             )
         print('    name "{}" is acceptable{}'.format(self.spec["name"], chk))
 
         if len(self["longName"]) <= 0 or self["longName"].isspace():
             raise ValueError(
-                "Specification error - Test should have nonempty longName."
+                "Specification error - assessment should have nonempty longName."
             )
         print('    has long name "{}"{}'.format(self["longName"], chk))
 
