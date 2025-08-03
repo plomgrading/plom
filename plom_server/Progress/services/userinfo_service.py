@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
-from __future__ import annotations
-
 from datetime import timedelta
-from typing import Union, Any
+from typing import Any
 
 import arrow
 
@@ -267,7 +265,7 @@ class UserInfoServices:
     def get_annotations_based_on_question_and_version(
         self,
         grouped_by_user_annotations: dict[
-            str, dict[tuple[int, int], dict[str, Union[int, str]]]
+            str, dict[tuple[int, int], dict[str, int | str]]
         ],
     ) -> dict[tuple[int, int], dict[str, list]]:
         """Group annotations by question index and version.
