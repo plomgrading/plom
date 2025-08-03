@@ -75,7 +75,7 @@ class Classlist(APIView):
 
         All students in the upload must be not-yet-known to the server.
         If the upload mentions even one student ID that the server
-        already holds, or even a single test number that is already in
+        already holds, or even a single paper number that is already in
         use, the whole operation will be cancelled.
 
         Args:
@@ -124,7 +124,7 @@ class Classlist(APIView):
 
         All students in the upload must be not-yet-known to the server.
         If the upload mentions even one student ID that the server
-        already holds, or even a single test number that is already in
+        already holds, or even a single paper number that is already in
         use, the whole operation will be cancelled.
 
         Args:

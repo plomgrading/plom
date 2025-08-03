@@ -115,7 +115,7 @@ class PQVmap(APIView):
         POST Data:
             number_to_produce: The number of papers to define, or None.
                 (Given None, make the default number.)
-            startn_value: The smallest integer to use for a test number.
+            startn_value: The smallest integer to use for a paper number.
                 (Given None, use integer 1.)
             first_paper_num (optional): Text field from GUI radio buttons
                 that short-circuits defaults for startn_value. Possible values
