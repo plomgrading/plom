@@ -4,6 +4,7 @@
 # Copyright (C) 2024 Philip D Loewen
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Deep Shah
+# Copyright (C) 2025 Colin B. Macdonald
 
 """Generate a PDF with title text and QR codes both indicating scrap.
 
@@ -37,8 +38,6 @@ You can even insert a Python integer-formatting code in those braces.
 E.g., you can say
     python3 plom-make-scrap-sheets.py -t "Scrap paper (seq {:04d})" -n 5
 """
-
-from __future__ import annotations
 
 import argparse
 
