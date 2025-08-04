@@ -10,7 +10,7 @@
 
 All parameters are optional and have sensible defaults. Saying simply
     python3 plom-make-scrap-sheets.py
-will create (or overwrite!) a 2-page file named PLOM-scrap.pdf suitable
+will create (or overwrite!) a 2-page file named `Plom-scrap.pdf` suitable
 for double-sided printing and mass duplication.
 
 Simple mode:
@@ -154,8 +154,8 @@ def configure_parser() -> argparse.ArgumentParser:
         "-O",
         "--outfile",
         type=str,
-        default="PLOM-scrap.pdf",
-        help="filename for output (optional, default PLOM-scrap.pdf)",
+        default="Plom-scrap.pdf",
+        help="filename for output (optional, default Plom-scrap.pdf)",
     )
     parser.add_argument(
         "-d",
