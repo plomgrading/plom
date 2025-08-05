@@ -377,7 +377,6 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
         self.remove_bundle_by_pk(bundle_obj.pk)
 
-    @transaction.atomic
     def get_original_image(self, bundle_id: int, index: int) -> File:
         """Get the original, full-resolution image file from the database."""
         return self.get_image(bundle_id, index).baseimage.image_file

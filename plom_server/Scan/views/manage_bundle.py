@@ -332,8 +332,31 @@ class RecentStagedBundleRedirectView(ScannerRequiredView):
 
 
 class HandwritingComparisonView(ScannerRequiredView):
+    """Provide context for comparing an extra (unassigned) page with neighboring known papers.
+
+    This view identifies the closest previous and next known paper numbers relative to the
+    given extra page index, then finds the first page of each of those papers (if available).
+    """
 
     def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """Render the handwriting comparison view for a specific extra page within a bundle.
+
+        This method:
+        - Retrieves the current (extra) page based on its index.
+        - Finds the closest known pages before and after the extra page.
+        - Attempts to identify the first page of the nearest previous and next known papers.
+        - Prepares context with all relevant page and paper metadata to assist in visual
+        handwriting comparison during re-identification or reattachment tasks.
+
+        Args:
+            request: The incoming HTTP GET request.
+            bundle_id: The ID of the bundle containing scanned pages.
+            index: The page index of the extra (unidentified) page to compare.
+
+        Returns:
+            An HttpResponse rendering the 'handwriting_comparison.html' template with context
+            including the extra page and its neighboring known papers (if any).
+        """
         context = super().build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
@@ -343,6 +366,7 @@ class HandwritingComparisonView(ScannerRequiredView):
         prev_paper_number = None
         nearest_prev_known_index = None
 
+        # WARNING: Potentially inefficient DB access
         for i in range(index - 1, -1, -1):
             page_info = scanner.get_bundle_single_page_info(bundle, i)
             if page_info.get("status") == "known":
@@ -415,11 +439,37 @@ class HandwritingComparisonView(ScannerRequiredView):
         return render(request, "Scan/handwriting_comparison.html", context)
 
 
+# Override the default X-Frame-Options header (which is "DENY" in Django)
+# to allow this view to be embedded in an <iframe> when served from the same origin.
 @method_decorator(xframe_options_sameorigin, name="dispatch")
 class GeneratePaperPDFView(ScannerRequiredView):
+    """Generate and return a PDF version of a single paper within a bundle.
+
+    Retrieves all scanned images associated with a specific paper number in the given
+    bundle, assembles them into a PDF (one image per page), and returns the result as
+    an inline HTTP response.
+    """
+
     def get(
         self, request: HttpRequest, *, bundle_id: int, paper_number: int
     ) -> HttpResponse:
+        """Generate a PDF from the scanned images of a specific paper in a bundle.
+
+        This method:
+        - Retrieves all scanned page metadata from the specified bundle.
+        - Filters the pages belonging to the requested paper number.
+        - Constructs a PDF with one image per page using the scanned images.
+        - If an image file is missing, inserts a placeholder page with an error message.
+        - Returns the PDF as an inline HTTP response for viewing or download.
+
+        Args:
+            request: The HTTP GET request.
+            bundle_id: The ID of the bundle containing the scanned pages.
+            paper_number: The paper number (within the bundle) to generate the PDF for.
+
+        Returns:
+            An HttpResponse containing the generated PDF, served with content type 'application/pdf'.
+        """
         scanner = ScanService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
 

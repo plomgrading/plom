@@ -258,6 +258,34 @@
                                     <form hx-post="{% url 'extralise_image' the_filter bundle_id index %}"
                                           hx-target="#invalidmessage"
                                           hx-swap="innerHTML">
+                                        <!--
+                                            This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
+
+                                            Users can choose how to assign this extra page to a paper:
+                                            1. By selecting adjacent papers (radio buttons),
+                                            2. Or by picking a paper manually from a dropdown list.
+
+                                            Reactive State (via x-data):
+                                            - selection_method: which radio option the user selected ('prev', 'next', 'dropdown')
+                                            - final_paper_number: the actual paper number that will be submitted with the form
+                                            - bundlepapers: true/false toggle controlling whether the dropdown shows bundle-only papers or all papers
+
+                                            - The <input type="hidden"> is bound to final_paper_number using :value.
+                                            This ensures the form always submits the currently selected paper number,
+                                            regardless of whether it was chosen via radio or dropdown.
+
+                                            - Each radio button has:
+                                            • x-model="selection_method" -> binds the chosen method to Alpine state
+                                            • @change="final_paper_number = '...' -> updates the paper number accordingly
+
+                                            - When "Choose from list..." is selected:
+                                            • The dropdown section becomes visible (x-show="selection_method === 'dropdown'")
+                                            • A checkbox lets the user toggle between "papers from this bundle" and "all papers"
+                                            • The appropriate <select> updates final_paper_number via x-model
+
+                                            This approach ensures seamless user interaction with instant feedback,
+                                            without requiring full-page reloads.
+                                          -->
                                         <div x-data="{ selection_method: '', final_paper_number: null, bundlepapers: true }">
                                             <input type="hidden" name="paper_number" :value="final_paper_number">
                                             <p class="fw-bold">Paper:</p>
