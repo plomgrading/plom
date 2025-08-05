@@ -101,7 +101,7 @@ def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
             config["parent_dir"] = Path(path).parent
             return PlomServerConfig(**config)
         except tomllib.TOMLDecodeError as e:
-            raise ValueError(e)
+            raise ValueError(e) from e
 
 
 def read_server_config_from_string(
@@ -113,4 +113,4 @@ def read_server_config_from_string(
         config["parent_dir"] = parent_dir
         return PlomServerConfig(**config)
     except tomllib.TOMLDecodeError as e:
-        raise ValueError(e)
+        raise ValueError(e) from e

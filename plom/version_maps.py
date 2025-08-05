@@ -125,12 +125,12 @@ def check_version_map(
             f" to match the number of rows {len(vm)} of the version map"
         )
     if vm.keys():
-        min_testnum = min(vm.keys())
-        max_testnum = max(vm.keys())
-        if not min_testnum == 1:
-            raise ValueError(f"test_number should start at 1: got {list(vm.keys())}")
-        if not set(vm.keys()) == set(range(min_testnum, max_testnum + 1)):
-            raise ValueError(f"No gaps allowed in test_num: got {list(vm.keys())}")
+        min_papernum = min(vm.keys())
+        max_papernum = max(vm.keys())
+        if not min_papernum == 1:
+            raise ValueError(f"paper number should start at 1: got {list(vm.keys())}")
+        if not set(vm.keys()) == set(range(min_papernum, max_papernum + 1)):
+            raise ValueError(f"No gaps allowed in paper number: got {list(vm.keys())}")
 
 
 def make_random_version_map(
@@ -193,7 +193,7 @@ def undo_json_packing_of_version_map(
 ) -> dict[int, dict[int | str, int]]:
     """JSON must have string keys; undo such to int keys for version map.
 
-    Both the test number and the question number have likely been
+    Both the paper number and the question number have likely been
     converted to strings by an evil JSON: we build a new dict-of-dicts
     with both converted explicitly to integers.
 
@@ -235,7 +235,7 @@ def _version_map_from_csv(
     """Extract the version map from a csv file.
 
     Args:
-        f: a csv file, must have a `test_number` column
+        f: a csv file, must have a `paper_number` column
             and some `q{n}.version` columns.  The number of such columns
             is generally autodetected unless ``num_questions`` kwarg is passed.
             Optionally, there can be an `id.version` column,
@@ -274,7 +274,7 @@ def _version_map_from_csv(
         else:
             N = num_questions
         for line, row in enumerate(reader):
-            # Its called "test_number" on legacy and "paper_number" on webplom
+            # It used to be called "test_number" on legacy and now "paper_number"
             # raise a value error if you cannot find either.
             if "paper_number" in row:
                 papernum = int(row["paper_number"])
@@ -323,7 +323,7 @@ def version_map_from_file(
     """Extract the version map from a csv or json file.
 
     Args:
-        f: If ``.csv`` file, must have a `test_number`
+        f: If ``.csv`` file, must have a `paper_number`
             column and some `q{n}.version` columns.  The number of such
             columns is autodetected.  If ``.json`` file, its a dict of
             dicts.  Either case could, for example, be the output of

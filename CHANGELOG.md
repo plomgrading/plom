@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * The spec has changed format: the `select` key accepts a single integer or a list of integers.  Question versions are randomly drawn from this list.  If omitted, defaults to all versions.
+* The printed papers now say "Paper 0123" not "Test 0123" on top of the page.
 
 ### Fixed
 

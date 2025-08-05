@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
 from io import BytesIO
@@ -128,7 +129,7 @@ class ReassembleService:
         makeCover(
             cover_page_table_data,
             cover_pdf_name,
-            test_num=paper.paper_number,
+            paper_num=paper.paper_number,
             info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
