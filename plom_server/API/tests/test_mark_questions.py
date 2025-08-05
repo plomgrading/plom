@@ -114,7 +114,10 @@ class TestMarkQuestionAPI:
         assert resp.status_code == status.HTTP_409_CONFLICT
 
     def test_submit_malformed_input(self, mocker: pytest_mock.MockerFixture):
-        """Test POST: /MK/tasks/{code} with incorrect code formatting."""
+        """Test POST: /MK/tasks/{code} with incorrect code formatting.
+
+        Ensures that when code is improperly formatted server responds with 400 status.
+        """
         incorrect_code = "q1q2"
         url = reverse("api_mark_task", kwargs={"code": incorrect_code})
 
@@ -142,6 +145,39 @@ class TestMarkQuestionAPI:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_submit_non_existing_task(self, mocker: pytest_mock.MockerFixture):
+        """Test POST: /MK/tasks/{code} where code is valid but refers to non-existing task.
+
+        Ensures that server responds with status 400.
+        """
+        code = "q0001g1"
+        url = reverse("api_mark_task", kwargs={"code": code})
+
+        # Prepare mock file
+        payload = {"dummy": ["data"]}
+        dummy_file = SimpleUploadedFile(
+            "sample.plom",
+            json.dumps(payload).encode("utf-8"),
+            content_type="application/json",
+        )
+
+        # Make a stub for validate_and_clean_marking_data function
+        fake_cleaned_data: dict = {}
+        fake_annot_data: dict = {}
+        mocker.patch.object(
+            MarkingTaskService,
+            MarkingTaskService.validate_and_clean_marking_data.__name__,
+            return_value=(fake_cleaned_data, fake_annot_data),
+        )
+
+        response = self.auth_client.post(
+            url,
+            {"plomfile": dummy_file, "annotation_image": dummy_file, "md5sum": 1},
+            format="multipart",
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # ============== Integration of MarkTaskNextAvailable(APIView) MarkTask(APIView) test =================
 
