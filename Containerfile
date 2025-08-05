@@ -31,12 +31,13 @@ RUN apt-get -y update && \
 
 COPY requirements.txt /src/
 WORKDIR /src
-RUN pip install -U --no-cache-dir pip
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+# RUN pip install -U --no-cache-dir pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Minimal deps for Qt, e.g., to support installing client inside container for testing
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx \
+    apt-get --no-install-recommends -y install libglib2.0-0 libgl1 libxcb-cursor0 \
     libegl1 libxkbcommon0 libdbus-1-3 && \
     apt-get -yq autoclean
 
