@@ -636,7 +636,7 @@ out-of-tree-scratch:
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
-    - pip install -U pytest
+    - pip install --ignore-installed -U pytest
     # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
     - pip install django
     - pwd
