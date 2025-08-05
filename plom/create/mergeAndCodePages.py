@@ -78,7 +78,7 @@ def label_for_top_of_page(paper: str | int, group: str, page: int) -> str:
     """
     if not isinstance(paper, str):
         paper = f"{paper:04}"
-    return f"Test {paper}  {group}  p. {page}"
+    return f"Paper {paper}  {group}  p. {page}"
 
 
 def _create_QRcoded_pdf(
