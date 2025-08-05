@@ -618,16 +618,6 @@ class ScanService:
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
 
-        QR Code:
-        -         Test ID:  00001
-        -        Page Num:  00#
-        -     Version Num:  00#
-        -              NW:  2
-        -              NE:  1
-        -              SW:  3
-        -              SE:  4
-        - Last five digit:  93849
-
         Args:
             bundle_pk: primary key of bundle DB object
         """

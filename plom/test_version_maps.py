@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021, 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 import json
 
@@ -126,7 +127,7 @@ def test_ver_map_fix_has_ver1_only() -> None:
     spec.verify()
     vm = make_random_version_map(spec)
     vm[1][2] = 2
-    with raises(ValueError, match="fix"):
+    with raises(ValueError, match='not in question\'s "select"'):
         check_version_map(vm, spec)
 
 
@@ -166,11 +167,11 @@ def test_ver_map_reproducible() -> None:
     spec_dict["numberToProduce"] = 6
     vm = make_random_version_map(spec_dict, seed="plom")
     saved_vm = {
-        1: {1: 1, 2: 1, 3: 5},
-        2: {1: 1, 2: 1, 3: 2},
-        3: {1: 5, 2: 1, 3: 1},
-        4: {1: 4, 2: 1, 3: 1},
-        5: {1: 3, 2: 1, 3: 4},
-        6: {1: 2, 2: 1, 3: 3},
+        1: {1: 2, 2: 1, 3: 1},
+        2: {1: 2, 2: 1, 3: 2},
+        3: {1: 1, 2: 1, 3: 1},
+        4: {1: 5, 2: 1, 3: 2},
+        5: {1: 4, 2: 1, 3: 2},
+        6: {1: 3, 2: 1, 3: 1},
     }
     assert vm == saved_vm

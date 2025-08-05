@@ -2,8 +2,6 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Andrew Rechnitzer
 
-from __future__ import annotations
-
 from typing import Any
 
 from pytest import raises

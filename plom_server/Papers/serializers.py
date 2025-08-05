@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 import random
 from copy import deepcopy
@@ -22,7 +23,6 @@ class SpecQuestionSerializer(serializers.ModelSerializer):
 
     pages = serializers.ListField(child=serializers.IntegerField(min_value=1))
     mark = serializers.IntegerField(min_value=0)
-    select = serializers.ChoiceField(choices=["fix", "shuffle"], default="shuffle")
     label = serializers.CharField(required=False)
 
     class Meta:
@@ -102,8 +102,11 @@ class SpecSerializer(serializers.ModelSerializer):
         SpecQuestion.objects.all().delete()
 
         questions = validated_data.pop("question")
+        # TODO: the fields aren't directly validated
         for idx, question in questions.items():
             question["question_index"] = int(idx)
+            if isinstance(question.get("select", None), int):
+                question["select"] = [question["select"]]
             SpecQuestion.objects.create(**question)
         return Specification.objects.create(**validated_data)
 

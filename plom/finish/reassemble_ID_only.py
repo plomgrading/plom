@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2023 Colin B. Macdonald
+# Copyright (C) 2018-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -19,20 +19,20 @@ def _parfcn(y):
     Leave coverfname as None to omit it (e.g., when totalling).
 
     Args:
-        y : arguments to testReassembler.reassemble
+        y : arguments to examReassembler.reassemble
     """
     reassemble(*y)
 
 
 def download_page_images(msgr, tmpdir, outdir, short_name, t, sid):
-    """Reassembles a test with a filename that includes the directory and student id.
+    """Reassembles a paper with a filename that includes the directory and student id.
 
     Args:
         msgr (ManagerMessenger): the messenger to the plom server.
         tmpdir (pathlib.Path): where to store the temporary files.
-        outdir (pathlib.Path): where to put the reassembled test.
-        short_name (str): the name of the test.
-        t (int/str): test number.
+        outdir (pathlib.Path): where to put the reassembled paper.
+        short_name (str): the name of the assessment.
+        t (int/str): paper number.
         sid (str): student id.
 
     Returns:
@@ -68,7 +68,7 @@ def main(server=None, pwd=None):
             pagelists = []
             for t in identifiedTests:
                 if identifiedTests[t][0] is None:
-                    print(">>WARNING<< Test {} has no ID".format(t))
+                    print(">>WARNING<< Paper {} has no ID".format(t))
                     continue
                 dat = download_page_images(
                     msgr, tmp, outdir, shortName, t, identifiedTests[t][0]
