@@ -38,8 +38,8 @@ django-tables2==2.7.0
 exif==1.6.1
 imutils==0.5.4
 matplotlib==3.5.3
-numpy==1.21.2
-opencv-python-headless==4.5.4.60
+numpy==1.21.5
+opencv-python-headless==4.7.0.72
 Pillow==10.2.0
 pandas==1.5.0
 pymupdf==1.24.8
