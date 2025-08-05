@@ -5,8 +5,6 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 
-from __future__ import annotations
-
 import csv
 from multiprocessing import Pool
 import os

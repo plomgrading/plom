@@ -7,8 +7,6 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
 import pathlib
 import random
 import time

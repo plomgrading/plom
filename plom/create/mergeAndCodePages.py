@@ -7,8 +7,6 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 
-from __future__ import annotations
-
 import math
 import pathlib
 import tempfile

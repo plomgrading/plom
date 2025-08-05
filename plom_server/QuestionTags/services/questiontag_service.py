@@ -1,11 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
-
-from __future__ import annotations
-from typing import Dict, List
 
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
@@ -194,13 +191,13 @@ class QuestionTagService:
         return QuestionTagLink.objects.exists()
 
     @staticmethod
-    def get_tag_to_question_links() -> Dict[str, List[int]]:
+    def get_tag_to_question_links() -> dict[str, list[int]]:
         """Get a dictionary of pedagogy-tags and their linked questions.
 
         Returns:
             A dict of {tag_name: [list of question-indices]}
         """
-        tag_to_question_list: Dict[str, List[int]] = {}
+        tag_to_question_list: dict[str, list[int]] = {}
         for qtl in QuestionTagLink.objects.all().prefetch_related("question", "tag"):
             # want a dict of (key, list[])
             tag_to_question_list.setdefault(qtl.tag.tag_name, [])
@@ -208,6 +205,6 @@ class QuestionTagService:
         return tag_to_question_list
 
     @staticmethod
-    def get_pedagogy_tag_descriptions() -> Dict[str, str]:
+    def get_pedagogy_tag_descriptions() -> dict[str, str]:
         """Return a dict of {tag_name: tag_description}."""
         return {ptag.tag_name: ptag.description for ptag in PedagogyTag.objects.all()}

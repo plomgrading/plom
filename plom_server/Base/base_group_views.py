@@ -2,12 +2,9 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
 from typing import Any
-
 
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
