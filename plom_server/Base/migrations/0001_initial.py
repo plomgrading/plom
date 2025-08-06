@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="NewSettingsBooleanModel",
+            name="SettingsBooleanModel",
             fields=[
                 (
                     "id",
@@ -88,7 +88,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="NewSettingsModel",
+            name="SettingsModel",
             fields=[
                 (
                     "id",

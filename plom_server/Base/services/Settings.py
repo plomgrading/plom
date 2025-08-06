@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Any
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
-from ..models import NewSettingsModel
+from ..models import SettingsModel
 
 
 def key_value_store_get(key: str, default: bool | Any | None = None) -> Any:
@@ -25,8 +25,8 @@ def key_value_store_get(key: str, default: bool | Any | None = None) -> Any:
         The value associated with that key.
     """
     try:
-        return NewSettingsModel.objects.get(key=key).value
-    except NewSettingsModel.DoesNotExist:
+        return SettingsModel.objects.get(key=key).value
+    except SettingsModel.DoesNotExist:
         return default
 
 
@@ -38,7 +38,7 @@ def key_value_store_set(key: str, value: Any) -> None:
         value: something that can be serialized and stored
             to JSON.
     """
-    obj, created = NewSettingsModel.objects.get_or_create(key=key)
+    obj, created = SettingsModel.objects.get_or_create(key=key)
     obj.value = value
     obj.save()
 

@@ -264,7 +264,9 @@ class Tag(models.Model):
         return str(self.text)
 
 
-class NewSettingsModel(models.Model):
+class SettingsModel(models.Model):
+    """Store settings in key-value pairs where the values can be any JSON."""
+
     key = models.CharField(max_length=64, unique=True)
     value = models.JSONField(default=str)
 
@@ -273,7 +275,9 @@ class NewSettingsModel(models.Model):
         return f"Key-Value setting id {self.id}: {self.key} = {self.value}"
 
 
-class NewSettingsBooleanModel(models.Model):
+class SettingsBooleanModel(models.Model):
+    """Currently unused."""
+
     key = models.CharField(max_length=64, unique=True)
     value = models.BooleanField()
 
