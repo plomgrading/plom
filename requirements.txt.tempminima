@@ -25,7 +25,7 @@ PyQt6-sip==13.1.0
 arrow==1.1.1
 canvasapi==3.0.0
 cryptography==41.0.3
-django==4.2.6
+django==5.1.1
 django-braces==1.15.0
 django-filter==23.2
 django-htmx==1.14.0
