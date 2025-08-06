@@ -214,14 +214,13 @@ class TestMarkQuestionAPI:
 
         This test first claim the task through PATCH: /MK/tasks/{code}, so
         the task status goes from TO_DO to OUT. Then calls POST: /MK/tasks/{code}.
-        Here we mock the mark_task function such that we manually set task statuts to COMPLETE.
+        Here we mock the mark_task function such that we manually set task status to COMPLETE.
 
         This test verifies at the end of the call:
             - status: 200
             - server returns total_task == 1 (there is only 1 task in marking_test_setup)
             - server returns total_tasks_marked == 1 (as a result of the POST API call).
         """
-
         code = "q0001g2"
 
         # claim the task
