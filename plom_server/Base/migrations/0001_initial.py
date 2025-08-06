@@ -103,23 +103,4 @@ class Migration(migrations.Migration):
                 ("value", models.JSONField(default=str)),
             ],
         ),
-        migrations.CreateModel(
-            name="SettingsModel",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("who_can_create_rubrics", models.TextField(default="permissive")),
-                ("who_can_modify_rubrics", models.TextField(default="per-user")),
-            ],
-            options={
-                "abstract": False,
-            },
-        ),
     ]

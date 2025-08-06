@@ -280,26 +280,6 @@ class NewSettingsBooleanModel(models.Model):
     value = models.BooleanField()
 
 
-class SettingsModel(SingletonABCModel):
-    """Global configurable settings."""
-
-    # TODO: intention is a tri-state: "permissive", "per-user", "locked"
-    who_can_create_rubrics = models.TextField(default="permissive")
-    who_can_modify_rubrics = models.TextField(default="per-user")
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the SettingsModel."""
-        obj, created = cls.objects.get_or_create(
-            pk=1,
-            defaults={
-                "who_can_create_rubrics": "permissive",
-                "who_can_modify_rubrics": "per-user",
-            },
-        )
-        return obj
-
-
 class BaseImage(models.Model):
     """Table to store an image (usually a scanned page image).
 

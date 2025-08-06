@@ -8,7 +8,6 @@ from django.contrib import admin
 from .models import (
     BaseImage,
     HueyTaskTracker,
-    SettingsModel,
     NewSettingsModel,
     NewSettingsBooleanModel,
 )
@@ -16,6 +15,5 @@ from .models import (
 # This makes models appear in the admin interface
 admin.site.register(BaseImage)
 admin.site.register(HueyTaskTracker)
-admin.site.register(SettingsModel)
 admin.site.register(NewSettingsModel)
 admin.site.register(NewSettingsBooleanModel)
