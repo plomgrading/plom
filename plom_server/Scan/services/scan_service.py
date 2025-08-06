@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Deep Shah
 
 import hashlib
 import logging
@@ -375,6 +376,10 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
         self.remove_bundle_by_pk(bundle_obj.pk)
+
+    def get_original_image(self, bundle_id: int, index: int) -> File:
+        """Get the original, full-resolution image file from the database."""
+        return self.get_image(bundle_id, index).baseimage.image_file
 
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash: str) -> bool:

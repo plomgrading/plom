@@ -1,0 +1,107 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Deep Shah
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Handwriting Comparison
+{% endblock title %}
+{% block page_heading %}
+    Handwriting Comparison for Extra Page {{ extra_page_index }}
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="my-2">
+        <button class="btn btn-primary" onclick="window.close()">Return to Bundle View</button>
+    </div>
+    <div class="row g-3" style="height: 80vh;">
+        <!-- Previous Paper Panel -->
+        <div class="col-12 col-md-4 h-100">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header text-center fw-bold">
+                    Previous Paper:
+                    {% if prev_paper_number %}
+                        {{ prev_paper_number }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="card-body p-0 position-relative overflow-hidden flex-grow-1">
+                    {% if prev_paper_first_page_index is not None %}
+                        <button id="view-pdf-btn-prev"
+                                class="btn btn-sm btn-secondary position-absolute bottom-0 end-0 m-2 z-3"
+                                onclick="showPdf('prev')">View Full PDF</button>
+                        <img id="img-prev"
+                             class="w-100 h-100 object-fit-contain"
+                             src="{% url 'scan_get_rotated_image' bundle_id prev_paper_first_page_index %}" />
+                        <iframe id="iframe-prev" class="w-100 h-100 border-0" style="display: none;"></iframe>
+                    {% else %}
+                        <div class="p-3">No previous paper found in scan order.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Extra Page Panel -->
+        <div class="col-12 col-md-4 h-100">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header text-center fw-bold">Extra Page (Index: {{ extra_page_index }})</div>
+                <div class="card-body p-0 overflow-hidden flex-grow-1">
+                    <img class="w-100 h-100 object-fit-contain"
+                         src="{% url 'scan_get_rotated_image' bundle_id extra_page_index %}" />
+                </div>
+            </div>
+        </div>
+        <!-- Next Paper Panel -->
+        <div class="col-12 col-md-4 h-100">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header text-center fw-bold">
+                    Next Paper:
+                    {% if next_paper_number %}
+                        {{ next_paper_number }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="card-body p-0 position-relative overflow-hidden flex-grow-1">
+                    {% if next_paper_first_page_index is not None %}
+                        <button id="view-pdf-btn-next"
+                                class="btn btn-sm btn-secondary position-absolute bottom-0 end-0 m-2 z-3"
+                                onclick="showPdf('next')">View Full PDF</button>
+                        <img id="img-next"
+                             class="w-100 h-100 object-fit-contain"
+                             src="{% url 'scan_get_rotated_image' bundle_id next_paper_first_page_index %}" />
+                        <iframe id="iframe-next" class="w-100 h-100 border-0" style="display: none;"></iframe>
+                    {% else %}
+                        <div class="p-3">No next paper found in scan order.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    /*
+    This JavaScript function toggles the display of a full PDF preview for the
+    adjacent paper panels. By default, we show the first page (id page) image
+    preview for faster loading. When the "View Full PDF" button is clicked,
+    we hide the image and instead embed the full paper as a PDF using an iframe.
+    */
+function showPdf(panelType) {
+    const img = document.getElementById(`img-${panelType}`);
+    const iframe = document.getElementById(`iframe-${panelType}`);
+    const button = document.getElementById(`view-pdf-btn-${panelType}`);
+
+    let pdfUrl;
+    if (panelType === 'prev') {
+        pdfUrl = "{% if prev_paper_number %}{% url 'scan_paper_pdf' bundle_id prev_paper_number %}{% endif %}";
+    } else if (panelType === 'next') {
+        pdfUrl = "{% if next_paper_number %}{% url 'scan_paper_pdf' bundle_id next_paper_number %}{% endif %}";
+    }
+
+    if (pdfUrl) {
+        iframe.src = pdfUrl;
+        img.style.display = 'none';
+        iframe.style.display = 'block';
+        button.style.display = 'none';
+    }
+}
+    </script>
+{% endblock main_content %}
