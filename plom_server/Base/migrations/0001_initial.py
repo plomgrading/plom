@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="SettingsModel",
+            name="NewSettingsBooleanModel",
             fields=[
                 (
                     "id",
@@ -83,13 +83,24 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("who_can_create_rubrics", models.TextField(default="permissive")),
-                ("who_can_modify_rubrics", models.TextField(default="per-user")),
-                ("feedback_rules", models.JSONField(default=dict)),
-                ("misc", models.JSONField(default=dict)),
+                ("key", models.CharField(max_length=64, unique=True)),
+                ("value", models.BooleanField()),
             ],
-            options={
-                "abstract": False,
-            },
+        ),
+        migrations.CreateModel(
+            name="NewSettingsModel",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("key", models.CharField(max_length=64, unique=True)),
+                ("value", models.JSONField(default=str)),
+            ],
         ),
     ]

@@ -15,7 +15,6 @@ from django.db import models, transaction
 from django.utils import timezone
 from django_huey import get_queue
 
-from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 # TODO: Using the @signal decorator did not work with both queues
 # from django_huey import signal
@@ -218,8 +217,6 @@ class HueyTaskTracker(models.Model):
 # ---------------------------------
 # Define a singleton model as per
 # https://steelkiwi.com/blog/practical-application-singleton-design-pattern/
-#
-# Then use this to define tables for PrenamingSetting and ClasslistCSV
 # ---------------------------------
 
 
@@ -267,63 +264,18 @@ class Tag(models.Model):
         return str(self.text)
 
 
-class SettingsModel(SingletonABCModel):
-    """Global configurable settings."""
+class NewSettingsModel(models.Model):
+    key = models.CharField(max_length=64, unique=True)
+    value = models.JSONField(default=str)
 
-    # TODO: intention is a tri-state: "permissive", "per-user", "locked"
-    who_can_create_rubrics = models.TextField(default="permissive")
-    who_can_modify_rubrics = models.TextField(default="per-user")
+    def __str__(self):
+        """Convert a key-value setting to a string representation."""
+        return f"Key-Value setting id {self.id}: {self.key} = {self.value}"
 
-    feedback_rules = models.JSONField(default=dict)
 
-    # a general key-value store in JSON
-    misc = models.JSONField(default=dict)
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the SettingsModel."""
-        obj, created = cls.objects.get_or_create(
-            pk=1,
-            defaults={
-                "who_can_create_rubrics": "permissive",
-                "who_can_modify_rubrics": "per-user",
-                "feedback_rules": {},
-                "misc": {},
-            },
-        )
-        return obj
-
-    @classmethod
-    def get_feedback_rules(cls):
-        rules = cls.load().feedback_rules
-        if not rules:
-            return static_feedback_rules
-        return rules
-
-    @classmethod
-    def cget(cls, key, default: bool | None = None):
-        s = cls.load()
-        x = s.misc
-        return x.get(key, default)
-
-    @classmethod
-    def cset(cls, key, value):
-        s = cls.load()
-        x = s.misc
-        x[key] = value
-        s.misc = x
-        s.save()
-
-    def get(self, key, default: bool | None = None):
-        x = self.misc
-        return x.get(key, default)
-
-    def set(self, key, value):
-        # TODO: will the caller need to do a refresh after using this?
-        x = self.misc
-        x[key] = value
-        self.misc = x
-        self.save()
+class NewSettingsBooleanModel(models.Model):
+    key = models.CharField(max_length=64, unique=True)
+    value = models.BooleanField()
 
 
 class BaseImage(models.Model):
