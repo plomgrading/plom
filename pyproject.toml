@@ -95,10 +95,10 @@ dependencies = [
     # "django-silk>=5.2.0",
 
     # plom_ml
-    "scikit-image==0.25.2",
-    "torch==2.7.1",
-    "torchvision==0.22.1",
-    "transformers==4.53.2",
+    "scikit-image>=0.25.2",
+    "torch>=2.7.1",
+    "torchvision>=0.22.1",
+    "transformers>=4.53.2",
 ]
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",

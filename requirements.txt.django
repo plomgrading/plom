@@ -69,3 +69,9 @@ zxing-cpp==2.3.0
 
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems
+
+# plom_ml
+scikit-image==0.25.2
+torch==2.7.1
+torchvision==0.22.1
+transformers==4.53.2

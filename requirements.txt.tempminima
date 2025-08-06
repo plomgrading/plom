@@ -61,3 +61,8 @@ tomlkit==0.11.7
 weasyprint==57.0
 zipfly==6.0.1
 zxing-cpp==1.4.0
+# plom_ml
+scikit-image==0.25.2
+torch==2.7.1
+torchvision==0.22.1
+transformers==4.53.2
