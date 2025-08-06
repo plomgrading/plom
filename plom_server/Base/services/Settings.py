@@ -8,6 +8,14 @@ from plom.feedback_rules import feedback_rules as static_feedback_rules
 from ..models import SettingsModel
 
 
+# If no value is set in the database, we use defaults recorded here
+default_settings = {
+    "who_can_create_rubrics": "permissive",
+    "who_can_modify_rubrics": "per-user",
+    "feedback_rules": deepcopy(static_feedback_rules),
+}
+
+
 def key_value_store_get(key: str, default: bool | Any | None = None) -> Any:
     """Lookup a key to get a value from the key-value store.
 
@@ -47,14 +55,14 @@ def get_feedback_rules():
     """Get a copy of the current value of the feedback rules."""
     rules = key_value_store_get("feedback_rules")
     if not rules:
-        return deepcopy(static_feedback_rules)
+        return default_settings("feedback_rules")
     return rules
 
 
 def get_who_can_create_rubrics() -> str:
     """Get the level of restrictions on who can create rubrics, or a default if not set."""
-    # note default hardcoded here
-    return key_value_store_get("who_can_create_rubrics", "permissive")
+    k = "who_can_create_rubrics"
+    return key_value_store_get(k, default_settings(k))
 
 
 def set_who_can_create_rubrics(x: str) -> None:
@@ -67,8 +75,8 @@ def set_who_can_create_rubrics(x: str) -> None:
 
 def get_who_can_modify_rubrics() -> str:
     """Get the level of restrictions on who can modify rubrics, or a default if not set."""
-    # note default hardcoded here
-    return key_value_store_get("who_can_modify_rubrics", "per-user")
+    k = "who_can_modify_rubrics"
+    return key_value_store_get(k, default_settings(k))
 
 
 def set_who_can_modify_rubrics(x: str) -> None:
