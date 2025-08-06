@@ -29,6 +29,7 @@ from .views import (
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,
+    Prenaming,
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
@@ -187,6 +188,11 @@ urlpatterns += [
         "api/v0/classlist",
         Classlist.as_view(),
         name="api_classlist",
+    ),
+    path(
+        "api/v0/classlist/prenaming",
+        Prenaming.as_view(),
+        name="api_classlist_prenaming",
     ),
     path(
         "rubrics/<int:rid>/tasks",

@@ -337,7 +337,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.9.2
+    - pip install pytest pytest-cov coverage[toml]~=7.10.2
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -364,6 +364,8 @@ doctests:
 
 # Ensure the migrations have been updated
 # needs full dependencies, cannot easily run with other early static analysis
+# Note to devs: if this job is failing, it probably means you have made database changes.
+# You should probably run `./maint/maint-wipe-rebuild-migrations.sh` and commit the results.
 migrations-uptodate:
   stage: test
   needs: ["container-image"]
@@ -392,7 +394,7 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=3.3.10  # codespell:ignore astroid
+    - pip install astroid~=3.3.11  # codespell:ignore astroid
     - pip install pylint~=3.3.7
   script:
     - pylint plom
@@ -410,7 +412,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.16.1
+    - pip install mypy~=1.17.1
   script:
     - mypy --version
     - mypy plom --python-ver 3.10 --install-types --non-interactive || true
@@ -425,7 +427,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.402
+    - pip install pyright~=1.1.403
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -449,7 +451,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.12.2
+    - pip install ruff~=0.12.7
   script:
     - ruff check .
     # ruff format .
@@ -460,7 +462,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.12.2
+    - pip install ruff~=0.12.7
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -470,7 +472,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 889 ]]"
+    - bash -c "[[ $HOWMANY -le 875 ]]"
   allow_failure: true
 
 
@@ -527,7 +529,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.9.2
+    - pip install coverage~=7.10.2
   script:
     - export PYTHONPATH=$PWD
     - export PLOM_DATABASE_BACKEND=sqlite

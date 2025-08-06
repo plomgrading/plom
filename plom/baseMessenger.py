@@ -788,7 +788,7 @@ class BaseMessenger:
 
     # ----------------------
     # ----------------------
-    # Test information
+    # Assessment information
 
     def get_exam_info(self) -> dict[str, Any]:
         """Get a dictionary of information about this assessment.

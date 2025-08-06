@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-204 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from plom.misc_utils import interpolate_questions_over_pages
 
@@ -41,9 +42,9 @@ doNotMarkPages = []
 #
 # Then, also optionally, tell Plom how to select the question from the
 # available versions - either
-#    select = "shuffle" - take randomly from any version, or
-#    select = "fix" - always take from version 1
-# By default Plom will use "shuffle"
+#    select = [1,2] - take randomly from version 1 or version 2
+#    select = 1 - always take from version 1
+# By default Plom will take randomly from all questions
 """
 
         score_per_question = score // questions
