@@ -84,7 +84,10 @@ def marking_test_setup(db, minimum_test_setup: dict[str, Any]) -> dict[str, Any]
         A dict with these keys: [non_auth_client, auth_client, paper, task, tag].
     """
     task = MarkingTask.objects.create(
-        paper=minimum_test_setup["paper"], question_index=2, code="q0001g2"
+        paper=minimum_test_setup["paper"],
+        question_index=2,
+        question_version=1,
+        code="q0001g2",
     )
     tag = MarkingTaskTag.objects.create(text="tag")
     tag.task.add(task)

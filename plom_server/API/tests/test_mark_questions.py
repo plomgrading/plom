@@ -17,6 +17,7 @@ from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 from plom_server.Mark.services import (
     MarkingTaskService,
     page_data,
+    QuestionMarkingService,
 )
 
 # misc
@@ -36,6 +37,18 @@ class TestMarkQuestionAPI:
         self.paper: Paper = marking_test_setup["paper"]
         self.task: MarkingTask = marking_test_setup["task"]
         self.tag: MarkingTaskTag = marking_test_setup["tag"]
+
+        # marking/annot data
+        self.fake_mark_data: dict[str, Any] = {
+            "integrity_check": self.task.pk,
+            "score": 1,
+            "marking_time": 1,
+        }
+        self.dummy_file = SimpleUploadedFile(
+            "sample.png",
+            json.dumps({}).encode("utf-8"),
+            content_type="application/json",
+        )
 
     # ================== MarkTaskNextAvailable(APIView) test =============================
     def test_get_next_available(self):
@@ -121,26 +134,20 @@ class TestMarkQuestionAPI:
         incorrect_code = "q1q2"
         url = reverse("api_mark_task", kwargs={"code": incorrect_code})
 
-        # Prepare mock file
-        payload = {"dummy": ["data"]}
-        dummy_file = SimpleUploadedFile(
-            "sample.plom",
-            json.dumps(payload).encode("utf-8"),
-            content_type="application/json",
-        )
-
         # Make a stub for validate_and_clean_marking_data function
-        fake_cleaned_data: dict = {}
-        fake_annot_data: dict = {}
         mocker.patch.object(
             MarkingTaskService,
             MarkingTaskService.validate_and_clean_marking_data.__name__,
-            return_value=(fake_cleaned_data, fake_annot_data),
+            return_value=(self.fake_mark_data, {}),
         )
 
         response = self.auth_client.post(
             url,
-            {"plomfile": dummy_file, "annotation_image": dummy_file, "md5sum": 1},
+            {
+                "plomfile": self.dummy_file,
+                "annotation_image": self.dummy_file,
+                "md5sum": 1,
+            },
             format="multipart",
         )
 
@@ -182,7 +189,10 @@ class TestMarkQuestionAPI:
     # ============== Integration of MarkTaskNextAvailable(APIView) MarkTask(APIView) test =================
 
     def test_get_zero_task(self):
-        """Test GET: /MK/tasks/available when all tasks have been claimed."""
+        """Test GET: /MK/tasks/available when all tasks have been claimed.
+
+        Ensure server responses with 204 (NO CONTENT).
+        """
         # first test to get available task
         url = reverse("api_mark_task_next")
         resp = self.auth_client.get(url, {"q": self.task.question_index})
@@ -198,3 +208,58 @@ class TestMarkQuestionAPI:
         url = reverse("api_mark_task_next")
         resp = self.auth_client.get(url, {"q": self.task.question_index})
         assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_successful_task_submission(self, mocker: pytest_mock.MockerFixture):
+        """Test POST: /MK/tasks/{code} successful case.
+
+        This test first claim the task through PATCH: /MK/tasks/{code}, so
+        the task status goes from TO_DO to OUT. Then calls POST: /MK/tasks/{code}.
+        Here we mock the mark_task function such that we manually set task statuts to COMPLETE.
+
+        This test verifies at the end of the call:
+            - status: 200
+            - server returns total_task == 1 (there is only 1 task in marking_test_setup)
+            - server returns total_tasks_marked == 1 (as a result of the POST API call).
+        """
+
+        code = "q0001g2"
+
+        # claim the task
+        url = reverse("api_mark_task", kwargs={"code": code})
+        resp = self.auth_client.patch(url)
+        assert resp.status_code == status.HTTP_200_OK
+
+        # submit annotation for the task
+
+        # Make a stub for validate_and_clean_marking_data function
+        mocker.patch.object(
+            MarkingTaskService,
+            MarkingTaskService.validate_and_clean_marking_data.__name__,
+            return_value=(self.fake_mark_data, {}),
+        )
+
+        # Make a stub for mark_task function
+        mocker.patch.object(
+            QuestionMarkingService,
+            QuestionMarkingService.mark_task.__name__,
+        )
+        self.task.status = MarkingTask.COMPLETE
+        self.task.save()
+
+        response = self.auth_client.post(
+            url,
+            {
+                "plomfile": self.dummy_file,
+                "annotation_image": self.dummy_file,
+                "md5sum": 1,
+                "ver": 1,
+                "pg": 2,
+            },
+            format="multipart",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        response_body = response.json()
+
+        assert response_body["total_tasks"] == 1
+        assert response_body["total_tasks_marked"] == 1
