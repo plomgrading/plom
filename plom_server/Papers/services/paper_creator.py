@@ -386,7 +386,13 @@ class PaperCreatorService:
         *,
         force: bool = False,
     ):
-        """Build all the Paper and associated tables from the qv-map, but not the PDF files.
+        """Build additional Papers and associated tables from the qv-map, but not the PDF files.
+
+        This method is used to add additional papers (rather than working
+        from an empty state).  It might be less efficient for a large
+        number of papers, as each work is done sequentially rather than in
+        bulk.  If this becomes a bottleneck, this function could probably
+        be improved.
 
         Args:
             qv_map: For each paper give the question-version map.
