@@ -8,12 +8,12 @@ from django.contrib import admin
 from .models import (
     BaseImage,
     HueyTaskTracker,
-    NewSettingsModel,
-    NewSettingsBooleanModel,
+    SettingsModel,
+    SettingsBooleanModel,
 )
 
 # This makes models appear in the admin interface
 admin.site.register(BaseImage)
 admin.site.register(HueyTaskTracker)
-admin.site.register(NewSettingsModel)
-admin.site.register(NewSettingsBooleanModel)
+admin.site.register(SettingsModel)
+admin.site.register(SettingsBooleanModel)
