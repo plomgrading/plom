@@ -38,7 +38,7 @@ def key_value_store_get(key: str) -> Any:
     try:
         return SettingsModel.objects.get(key=key).value
     except SettingsModel.DoesNotExist:
-        return default_settings(key)
+        return default_settings[key]
 
 
 def key_value_store_set(key: str, value: Any) -> None:
@@ -61,7 +61,7 @@ def key_value_store_reset(key: str) -> None:
         key: a unique string key.
     """
     obj, created = SettingsModel.objects.get_or_create(key=key)
-    obj.value = default_settings(key)
+    obj.value = default_settings[key]
     obj.save()
 
 
