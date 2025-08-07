@@ -14,6 +14,7 @@ import huey
 import huey.api
 
 from plom.plom_exceptions import PlomDatabaseCreationError
+from plom_server.Base.services import Settings
 from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
@@ -24,7 +25,6 @@ from ..models import (
     DNMPage,
     QuestionPage,
     PopulateEvacuateDBChore,
-    NumberOfPapersToProduceSetting,
 )
 
 log = logging.getLogger("PaperCreatorService")
@@ -157,19 +157,20 @@ class PaperCreatorService:
 
     @staticmethod
     def _set_number_to_produce(numberToProduce: int) -> None:
-        nop = NumberOfPapersToProduceSetting.load()
-        nop.number_of_papers = numberToProduce
-        nop.save()
+        Settings.key_value_store_set(
+            "_tmp_number_of_papers_to_produce", numberToProduce
+        )
 
     @staticmethod
     def _increment_number_to_produce() -> None:
-        nop = NumberOfPapersToProduceSetting.load()
-        nop.number_of_papers += 1
-        nop.save()
+        n = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
+        if n is None:
+            n = 0
+        Settings.key_value_store_set("_tmp_number_of_papers_to_produce", n)
 
     @classmethod
     def _reset_number_to_produce(cls) -> None:
-        cls._set_number_to_produce(0)
+        Settings.key_value_store_reset("_tmp_number_of_papers_to_produce")
 
     @staticmethod
     @transaction.atomic()
@@ -411,6 +412,8 @@ class PaperCreatorService:
         for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
             with transaction.atomic(durable=True):
                 # todo: is durable correct?  I want both to fail or both succeed
+
+                # loop hammers the Settings database: how many might we be appending?
                 cls._increment_number_to_produce()
                 cls._create_single_paper_from_qvmapping_and_pages(
                     paper_number,

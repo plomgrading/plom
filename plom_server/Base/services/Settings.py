@@ -16,6 +16,10 @@ default_settings = {
     "prenaming_enabled": False,
     "prenaming_xcoord": 50,
     "prenaming_ycoord": 42,
+    # I recall being unhappy about this setting and its potential for abuse,
+    # so give it a underscore name: IIRC, it is a very transcient notion of
+    # how many papers to produce, and should not be widely trusted/consulted
+    "_tmp_number_of_papers_to_produce": None,
 }
 
 
