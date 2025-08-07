@@ -20,6 +20,7 @@ default_settings = {
     # so give it a underscore name: IIRC, it is a very transcient notion of
     # how many papers to produce, and should not be widely trusted/consulted
     "_tmp_number_of_papers_to_produce": None,
+    "have_papers_been_printed": False,
 }
 
 

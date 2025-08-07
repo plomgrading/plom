@@ -7,31 +7,11 @@
 
 from django.db import models
 
-from plom_server.Base.models import SingletonABCModel
-
 
 class PaperSourcePDF(models.Model):
     version = models.PositiveIntegerField(unique=True)
     source_pdf = models.FileField(upload_to="sourceVersions/")
     hash = models.CharField(null=False, max_length=64)
-
-
-# TODO: consider moving this field to Base.SettingsModel
-class PapersPrintedSettingModel(SingletonABCModel):
-    """Set this once user has printed papers."""
-
-    have_printed_papers = models.BooleanField(default=False, null=False)
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the PapersPrintedSettingModel."""
-        obj, created = cls.objects.get_or_create(
-            pk=1,
-            defaults={
-                "have_printed_papers": False,
-            },
-        )
-        return obj
 
 
 # ---------------------------------
