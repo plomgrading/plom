@@ -13,21 +13,24 @@ default_settings = {
     "who_can_create_rubrics": "permissive",
     "who_can_modify_rubrics": "per-user",
     "feedback_rules": deepcopy(static_feedback_rules),
+    "prenaming_enabled": False,
+    "prenaming_xcoord": 50,
+    "prenaming_ycoord": 42,
 }
 
 
 def key_value_store_get(key: str, default: bool | Any | None = None) -> Any:
     """Lookup a key to get a value from the key-value store.
 
-    If the key does not exist, return ``None`` (can be customized with
-    a kwarg).
+    If the key does not exist, return the per-key default value or ``None``
+    if no default exists (can be customized with a kwarg).
 
     Args:
         key: a unique string key.
 
     Keyword Args:
-        default: if they key does not exist, return this value,
-            which is ``None`` if omitted.
+        default: if they key does not exist and has no default value,
+            return this value, which is ``None`` if omitted.
 
     Returns:
         The value associated with that key.
@@ -35,7 +38,10 @@ def key_value_store_get(key: str, default: bool | Any | None = None) -> Any:
     try:
         return SettingsModel.objects.get(key=key).value
     except SettingsModel.DoesNotExist:
-        return default
+        try:
+            return default_settings(key)
+        except KeyError:
+            return default
 
 
 def key_value_store_set(key: str, value: Any) -> None:
@@ -51,18 +57,25 @@ def key_value_store_set(key: str, value: Any) -> None:
     obj.save()
 
 
+def key_value_store_reset(key: str) -> None:
+    """Reset something in the key-value store to its default value.
+
+    Args:
+        key: a unique string key.
+    """
+    obj, created = SettingsModel.objects.get_or_create(key=key)
+    obj.value = default_settings(key)
+    obj.save()
+
+
 def get_feedback_rules():
     """Get a copy of the current value of the feedback rules."""
-    rules = key_value_store_get("feedback_rules")
-    if not rules:
-        return default_settings("feedback_rules")
-    return rules
+    return key_value_store_get("feedback_rules")
 
 
 def get_who_can_create_rubrics() -> str:
     """Get the level of restrictions on who can create rubrics, or a default if not set."""
-    k = "who_can_create_rubrics"
-    return key_value_store_get(k, default_settings(k))
+    return key_value_store_get("who_can_create_rubrics")
 
 
 def set_who_can_create_rubrics(x: str) -> None:
@@ -75,8 +88,7 @@ def set_who_can_create_rubrics(x: str) -> None:
 
 def get_who_can_modify_rubrics() -> str:
     """Get the level of restrictions on who can modify rubrics, or a default if not set."""
-    k = "who_can_modify_rubrics"
-    return key_value_store_get(k, default_settings(k))
+    return key_value_store_get("who_can_modify_rubrics")
 
 
 def set_who_can_modify_rubrics(x: str) -> None:

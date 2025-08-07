@@ -17,7 +17,7 @@ class PrenameSettingService:
     @staticmethod
     def get_prenaming_setting() -> bool:
         """Get prenaming setting."""
-        return Settings.key_value_store_get("prenaming_enabled", False)
+        return Settings.key_value_store_get("prenaming_enabled")
 
     @staticmethod
     def set_prenaming_setting(enable: bool) -> None:
@@ -33,11 +33,10 @@ class PrenameSettingService:
     @classmethod
     def get_prenaming_config(cls) -> dict:
         """Get prenaming configuration as a dict."""
-        (default_xcoord, default_ycoord) = cls._default_prenaming_coords()
         return {
-            "enabled": cls.get_prenaming_setting(),
-            "xcoord": Settings.key_value_store_get("prenaming_xcoord", default_xcoord),
-            "ycoord": Settings.key_value_store_get("prenaming_ycoord", default_ycoord),
+            "enabled": Settings.key_value_store_get("prenaming_enabled"),
+            "xcoord": Settings.key_value_store_get("prenaming_xcoord"),
+            "ycoord": Settings.key_value_store_get("prenaming_ycoord"),
         }
 
     @classmethod
@@ -52,23 +51,18 @@ class PrenameSettingService:
         Raises:
             PlomDependencyConflict: if the position cannot be modified.
         """
-        (default_xcoord, default_ycoord) = cls._default_prenaming_coords()
-        if xcoord is None:
-            xcoord = default_xcoord
-        if ycoord is None:
-            ycoord = default_ycoord
         with transaction.atomic():
             assert_can_modify_prenaming_config()
-            Settings.key_value_store_set("prenaming_xcoord", xcoord)
-            Settings.key_value_store_set("prenaming_ycoord", ycoord)
-
-    @staticmethod
-    def _default_prenaming_coords() -> tuple[float, float]:
-        """The prenaming default coords."""
-        return (50, 42)
+            if xcoord is None:
+                Settings.key_value_store_reset("prenaming_xcoord")
+            else:
+                Settings.key_value_store_set("prenaming_xcoord", xcoord)
+            if ycoord is None:
+                Settings.key_value_store_reset("prenaming_ycoord")
+            else:
+                Settings.key_value_store_set("prenaming_ycoord", ycoord)
 
     @classmethod
     def reset_prenaming_coords(cls) -> None:
         """Reset prenaming coords to their defaults."""
-        xcoord, ycoord = cls._default_prenaming_coords()
-        cls.set_prenaming_coords(xcoord, ycoord)
+        cls.set_prenaming_coords(None, None)
