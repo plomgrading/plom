@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("key", models.CharField(max_length=64, unique=True)),
-                ("value", models.BooleanField()),
+                ("value", models.BooleanField(null=True)),
             ],
         ),
         migrations.CreateModel(
@@ -100,7 +100,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("key", models.CharField(max_length=64, unique=True)),
-                ("value", models.JSONField(default=str)),
+                ("value", models.JSONField(default=str, null=True)),
             ],
         ),
     ]
