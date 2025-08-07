@@ -19,7 +19,7 @@ default_settings = {
     # I recall being unhappy about this setting and its potential for abuse,
     # so give it a underscore name: IIRC, it is a very transcient notion of
     # how many papers to produce, and should not be widely trusted/consulted
-    "_tmp_number_of_papers_to_produce": None,
+    "_tmp_number_of_papers_to_produce": 0,
     "have_papers_been_printed": False,
 }
 

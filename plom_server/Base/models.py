@@ -268,7 +268,7 @@ class SettingsModel(models.Model):
     """Store settings in key-value pairs where the values can be any JSON."""
 
     key = models.CharField(max_length=64, unique=True)
-    value = models.JSONField(default=str, null=True)
+    value = models.JSONField(default=str)
 
     def __str__(self):
         """Convert a key-value setting to a string representation."""
@@ -279,7 +279,7 @@ class SettingsBooleanModel(models.Model):
     """Currently unused."""
 
     key = models.CharField(max_length=64, unique=True)
-    value = models.BooleanField(null=True)
+    value = models.BooleanField()
 
 
 class BaseImage(models.Model):
