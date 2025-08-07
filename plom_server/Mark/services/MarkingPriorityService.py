@@ -5,7 +5,11 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
-"""Functions for setting and modifying priority for marking tasks."""
+"""Functions for setting and modifying priority for marking tasks.
+
+See also the closely-related
+:class:`plom_server.TaskOrder.services.TaskOrderService`.
+"""
 
 import random
 

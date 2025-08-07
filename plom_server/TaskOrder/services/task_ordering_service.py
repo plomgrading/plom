@@ -6,15 +6,19 @@
 
 from csv import DictReader
 
-# TODO: maybe move MarkingTask to the other service?
 from plom_server.Mark.models import MarkingTask
-from plom_server.Mark.services import marking_priority
+from plom_server.Mark.services import MarkingPriorityService
 from plom_server.Papers.services import SpecificationService
 
 
 class TaskOrderService:
-    """Class for handling task ordering."""
+    """Class for handling task ordering.
 
+    See also the closely-related
+    :py:`plom_server.Mark.services.MarkingPriorityService`.
+    """
+
+    # TODO: consider move to MarkingPriorityService?
     @staticmethod
     def update_priority_ordering(
         order: str,
@@ -31,12 +35,14 @@ class TaskOrderService:
                 (for existing tasks).
         """
         if order == "shuffle":
-            marking_priority.set_marking_piority_shuffle()
+            MarkingPriorityService.set_marking_piority_shuffle()
         elif order == "custom":
             assert custom_order is not None, "must provide custom_order kwarg"
-            marking_priority.set_marking_priority_custom(custom_order=custom_order)
+            MarkingPriorityService.set_marking_priority_custom(
+                custom_order=custom_order
+            )
         else:
-            marking_priority.set_marking_priority_paper_number()
+            MarkingPriorityService.set_marking_priority_paper_number()
 
     @staticmethod
     def _get_task_priorities() -> (

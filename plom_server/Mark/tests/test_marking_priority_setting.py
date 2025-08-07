@@ -9,7 +9,7 @@ from plom_server.Papers.models import Paper
 from plom_server.TaskOrder.services import TaskOrderService
 
 from ..models import MarkingTask
-from ..services import QuestionMarkingService, marking_priority
+from ..services import QuestionMarkingService, MarkingPriorityService
 from . import config_files
 
 
@@ -20,24 +20,24 @@ class MarkingTaskPriorityTests(ConfigTestCase):
     config_file = resources.files(config_files) / "priority_tests.toml"  # type: ignore[assignment]
 
     def test_taskorder_default(self) -> None:
-        strategy = marking_priority.get_mark_priority_strategy()
+        strategy = MarkingPriorityService.get_mark_priority_strategy()
         # default could change, but should be one of these
         self.assertIn(strategy, ("paper_number", "shuffle"))
 
     def test_taskorder_update(self) -> None:
         TaskOrderService.update_priority_ordering("shuffle")
-        strategy = marking_priority.get_mark_priority_strategy()
+        strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "shuffle")
 
         custom_priority = {(1, 1): 1}
         TaskOrderService.update_priority_ordering(
             "custom", custom_order=custom_priority
         )
-        strategy = marking_priority.get_mark_priority_strategy()
+        strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "custom")
 
         TaskOrderService.update_priority_ordering("papernum")
-        strategy = marking_priority.get_mark_priority_strategy()
+        strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "paper_number")
 
     def test_set_priority_papernum(self) -> None:
@@ -49,18 +49,18 @@ class MarkingTaskPriorityTests(ConfigTestCase):
         for task in tasks:
             self.assertEqual(task.marking_priority, n_papers - task.paper.paper_number)
 
-        marking_priority.set_marking_priority_paper_number()
+        MarkingPriorityService.set_marking_priority_paper_number()
         for task in tasks:
             self.assertEqual(task.marking_priority, n_papers - task.paper.paper_number)
 
         self.assertEqual(
-            marking_priority.get_mark_priority_strategy(),
+            MarkingPriorityService.get_mark_priority_strategy(),
             "paper_number",
         )
 
     def test_set_priority_shuffle(self) -> None:
         """Test setting priority to SHUFFLE."""
-        marking_priority.set_marking_piority_shuffle()
+        MarkingPriorityService.set_marking_piority_shuffle()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
         )
@@ -69,12 +69,12 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                 task.marking_priority <= 1000 and task.marking_priority >= 0
             )
 
-        self.assertEqual(marking_priority.get_mark_priority_strategy(), "shuffle")
+        self.assertEqual(MarkingPriorityService.get_mark_priority_strategy(), "shuffle")
 
     def test_set_priority_custom(self) -> None:
         """Test setting priority to CUSTOM."""
         custom_order = {(1, 1): 9, (2, 1): 356, (3, 2): 0}
-        marking_priority.set_marking_priority_custom(custom_order)
+        MarkingPriorityService.set_marking_priority_custom(custom_order)
 
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
@@ -89,7 +89,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                     task.marking_priority, n_papers - task.paper.paper_number
                 )
 
-        self.assertEqual(marking_priority.get_mark_priority_strategy(), "custom")
+        self.assertEqual(MarkingPriorityService.get_mark_priority_strategy(), "custom")
 
     def test_modify_priority(self) -> None:
         """Test modifying the priority of a single task."""
@@ -104,11 +104,11 @@ class MarkingTaskPriorityTests(ConfigTestCase):
             self.assertEqual(task.marking_priority, n_papers - task.paper.paper_number)
         self.assertEqual(QuestionMarkingService.get_first_available_task(), first_task)
         self.assertEqual(
-            marking_priority.get_mark_priority_strategy(),
+            MarkingPriorityService.get_mark_priority_strategy(),
             "paper_number",
         )
 
-        marking_priority.modify_task_priority(last_task, 1000)
+        MarkingPriorityService.modify_task_priority(last_task, 1000)
         last_task.refresh_from_db()
         for task in tasks.all():
             if task == last_task:
@@ -118,4 +118,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                     task.marking_priority, n_papers - task.paper.paper_number
                 )
         self.assertEqual(QuestionMarkingService.get_first_available_task(), last_task)
-        self.assertEqual(marking_priority.get_mark_priority_strategy(), "paper_number")
+        self.assertEqual(
+            MarkingPriorityService.get_mark_priority_strategy(), "paper_number"
+        )
