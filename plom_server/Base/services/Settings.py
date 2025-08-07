@@ -19,29 +19,26 @@ default_settings = {
 }
 
 
-def key_value_store_get(key: str, default: bool | Any | None = None) -> Any:
+def key_value_store_get(key: str) -> Any:
     """Lookup a key to get a value from the key-value store.
 
-    If the key does not exist, return the per-key default value or ``None``
-    if no default exists (can be customized with a kwarg).
+    If the key does not exist *in the database*, return the (per-key)
+    default value.  But if no default value exists, raise a KeyError.
 
     Args:
         key: a unique string key.
 
-    Keyword Args:
-        default: if they key does not exist and has no default value,
-            return this value, which is ``None`` if omitted.
-
     Returns:
         The value associated with that key.
+
+    Raises:
+        KeyError: querying an unknown key, that also doesn't have a
+            default value.
     """
     try:
         return SettingsModel.objects.get(key=key).value
     except SettingsModel.DoesNotExist:
-        try:
-            return default_settings(key)
-        except KeyError:
-            return default
+        return default_settings(key)
 
 
 def key_value_store_set(key: str, value: Any) -> None:
