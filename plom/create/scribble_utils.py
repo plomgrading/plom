@@ -59,7 +59,16 @@ possible_answers = [
     " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
 ]
 
-possible_short_answers = ["2", "-1", "1", "DNE", "infinity", "x+1", "??", ""]
+possible_short_answers = [
+    "2",
+    "-1",
+    "1",
+    "DNE",  # codespell:ignore
+    "infinity",
+    "x+1",
+    "??",
+    "",
+]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
 # and https://www.indifferentlanguages.com/words/extra
@@ -259,6 +268,7 @@ extra_first_names = [
 # Customizable data
 blue = [0, 0, 0.75]
 grey = [0.75, 0.75, 0.75]
+dark_grey = [0.2, 0.2, 0.2]
 name_font_size = 26
 answer_font_size = 18
 
@@ -349,7 +359,7 @@ def scribble_answer_in_box(pdf_doc, page_number, xf, yf):
         answer_rect,
         answer_text,
         fontsize=answer_font_size,
-        color=blue,
+        color=dark_grey,
         fontname=fontname,
         fontfile=fontres,
         align=0,

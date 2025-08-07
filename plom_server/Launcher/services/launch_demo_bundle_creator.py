@@ -606,9 +606,9 @@ class DemoBundleCreationService:
 
                     # scribble on the pages
                     scribble_pages(pdf_document)
-                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.19)
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.18)
                     scribble_answer_in_box(pdf_document, 3, 0.6, 0.44)
-                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.7)
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.71)
                     print(pdf_document[2].rect)
 
                     # insert a qr-code from a previous page after scribbling
