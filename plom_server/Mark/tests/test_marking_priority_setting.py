@@ -25,17 +25,18 @@ class MarkingTaskPriorityTests(ConfigTestCase):
         self.assertIn(strategy, ("paper_number", "shuffle"))
 
     def test_taskorder_update(self) -> None:
-        tos = TaskOrderService()
-        tos.update_priority_ordering("shuffle")
+        TaskOrderService.update_priority_ordering("shuffle")
         strategy = marking_priority.get_mark_priority_strategy()
         self.assertEqual(strategy, "shuffle")
 
         custom_priority = {(1, 1): 1}
-        tos.update_priority_ordering("custom", custom_order=custom_priority)
+        TaskOrderService.update_priority_ordering(
+            "custom", custom_order=custom_priority
+        )
         strategy = marking_priority.get_mark_priority_strategy()
         self.assertEqual(strategy, "custom")
 
-        tos.update_priority_ordering("papernum")
+        TaskOrderService.update_priority_ordering("papernum")
         strategy = marking_priority.get_mark_priority_strategy()
         self.assertEqual(strategy, "paper_number")
 

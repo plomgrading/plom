@@ -4,17 +4,19 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Bryan Tanady
 
+from csv import DictReader
+
+# TODO: maybe move MarkingTask to the other service?
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import marking_priority
 from plom_server.Papers.services import SpecificationService
-from csv import DictReader
 
 
 class TaskOrderService:
     """Class for handling task ordering."""
 
+    @staticmethod
     def update_priority_ordering(
-        self,
         order: str,
         *,
         custom_order: None | dict[tuple[int, int], int] = None,
@@ -36,7 +38,10 @@ class TaskOrderService:
         else:
             marking_priority.set_marking_priority_paper_number()
 
-    def _get_task_priorities(self):
+    @staticmethod
+    def _get_task_priorities() -> (
+        tuple[dict[tuple[int, int], tuple[int, str]], set[int]]
+    ):
         """Get the task priorities dict and set of paper numbers in MarkingTask.
 
         Returns:
@@ -60,9 +65,10 @@ class TaskOrderService:
 
         return task_priorities, paper_numbers
 
+    @classmethod
     def get_paper_number_to_priority_list(
-        self,
-    ) -> dict[int, list[tuple[int | None, int]]]:
+        cls,
+    ) -> dict[int, list[tuple[int, str] | tuple[None, str]]]:
         """Get the mapping from a paper number to the list of (priority, status).
 
         If a marking task is missing, it will be flagged
@@ -73,7 +79,7 @@ class TaskOrderService:
             (priority, status), where the list is sorted in ascending order
             by question index.
         """
-        task_priorities, paper_numbers = self._get_task_priorities()
+        task_priorities, paper_numbers = cls._get_task_priorities()
         total_questions = SpecificationService.get_n_questions()
         missing_flag = (None, "Missing")
 
@@ -91,9 +97,10 @@ class TaskOrderService:
         """Get the CSV header for the task priorities."""
         return ["Paper Number", "Question Index", "Priority Value", "Status"]
 
-    def get_task_priorities_download(self) -> list[dict[str, int]]:
+    @classmethod
+    def get_task_priorities_download(cls) -> list[dict[str, int | str]]:
         """Get the task priorities for download."""
-        task_priorities = self._get_task_priorities()[0]
+        task_priorities = cls._get_task_priorities()[0]
         return [
             {
                 "Paper Number": paper_number,
@@ -107,7 +114,8 @@ class TaskOrderService:
             ) in task_priorities.items()
         ]
 
-    def handle_file_upload(self, csv_data: DictReader) -> dict[tuple[int, int], int]:
+    @staticmethod
+    def handle_file_upload(csv_data: DictReader) -> dict[tuple[int, int], int]:
         """Handle uploaded file data of task priorities.
 
         Args:
