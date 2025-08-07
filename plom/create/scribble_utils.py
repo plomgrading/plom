@@ -45,8 +45,7 @@ possible_answers = [
     "I like to learn. That's an art and a science.  -- Katherine Johnson",
     "You tell me when you want it and where you want it to land, and I'll"
     " do it backwards and tell you when to take off.  -- Katherine Johnson",
-    "Is 5 = 1?  Let's see... multiply both sides by 0.  "
-    "Now 0 = 0 so therefore 5 = 1.",
+    "Is 5 = 1?  Let's see... multiply both sides by 0.  Now 0 = 0 so therefore 5 = 1.",
     "I mean, you could claim that anything's real if the only basis for "
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
     "Mathematics: the only province of the literary world"
@@ -59,6 +58,8 @@ possible_answers = [
     "Understand it well as I may, my comprehension can only be an"
     " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
 ]
+
+possible_short_answers = ["2", "-1", "1", "DNE", "infinity", "x+1", "??", ""]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
 # and https://www.indifferentlanguages.com/words/extra
@@ -335,6 +336,27 @@ def scribble_name_and_id(
     del id_page
 
 
+def scribble_answer_in_box(pdf_doc, page_number, xf, yf):
+    fontname, ttf = "ejx", "ejx_handwriting.ttf"
+    bounding_rect = pdf_doc[page_number].rect
+    # jiggle the position a little and translate the (0,1) coord to pixels
+    x = (xf + (random.random() - 0.5) * 0.05) * bounding_rect.width
+    y = (yf + (random.random() - 0.5) * 0.01) * bounding_rect.height
+    answer_rect = pymupdf.Rect(x, y, x + 100, y + 40)
+    answer_text = random.choice(possible_short_answers)
+    fontres = resources.files(plom.create.fonts) / ttf
+    excess = pdf_doc[page_number - 1].insert_textbox(
+        answer_rect,
+        answer_text,
+        fontsize=answer_font_size,
+        color=blue,
+        fontname=fontname,
+        fontfile=fontres,
+        align=0,
+    )
+    assert excess > 0
+
+
 def scribble_pages(pdf_doc, exclude=(0, 1)):
     """Scribble on most pages of pymupdf pdf_doc.
 
@@ -357,7 +379,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
     # Write some random answers on the pages
     for page_index, pdf_page in enumerate(pdf_doc):
         answer_rect = pymupdf.Rect(
-            100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
+            100 + 30 * random.random(), 200 + 20 * random.random(), 500, 500
         )
         answer_text = random.choice(possible_answers)
 
@@ -413,7 +435,6 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
         build_extra_page_pdf(destination_dir=Path.cwd())
 
     with pymupdf.open(extra_pages_pdf_path) as extra_pages_pdf:
-
         print("Annotating papers with fake student data and scribbling on pages...")
         if which:
             papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
@@ -461,7 +482,6 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
 
         # A complete collection of the pdfs created
         with pymupdf.open() as all_pdf_documents:
-
             for index, f in enumerate(papers_paths):
                 if f in named_papers_paths:
                     print(f"{f.name} - prenamed paper - scribbled")
@@ -615,7 +635,6 @@ def splitFakeFile(outfile, *, parts=3):
     """Split the scribble pdf into specified number of files (defaults to 3)."""
     outfile = Path(outfile)
     with pymupdf.open(outfile) as originalPDF:
-
         if parts < 1:
             raise ValueError("Cannot split PDF into fewer than 1 part")
         if parts > len(originalPDF) // 2:
