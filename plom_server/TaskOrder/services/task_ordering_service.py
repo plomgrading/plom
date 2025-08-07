@@ -19,7 +19,15 @@ class TaskOrderService:
         *,
         custom_order: None | dict[tuple[int, int], int] = None,
     ) -> None:
-        """Update the priority ordering of tasks."""
+        """Update the priority ordering of tasks.
+
+        Args:
+            order: one of "shuffle", "paper_number", or "custom".
+
+        Keyword Args:
+            custom_order: a dictionary specifying a custom task ordering
+                (for existing tasks).
+        """
         if order == "shuffle":
             marking_priority.set_marking_piority_shuffle()
         elif order == "custom":

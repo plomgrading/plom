@@ -8,7 +8,7 @@ from plom_server.Base.tests import ConfigTestCase
 from plom_server.Papers.models import Paper
 from plom_server.TaskOrder.services import TaskOrderService
 
-from ..models import MarkingTask, MarkingTaskPriority
+from ..models import MarkingTask
 from ..services import QuestionMarkingService, marking_priority
 from . import config_files
 
@@ -19,24 +19,25 @@ class MarkingTaskPriorityTests(ConfigTestCase):
     # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
     config_file = resources.files(config_files) / "priority_tests.toml"  # type: ignore[assignment]
 
-    def test_taskorder_update(self) -> None:
-        """Assert that TaskOrderService.update_priority_ordering() updates MarkingTaskPriority."""
-        strategy = MarkingTaskPriority.load().strategy
-        self.assertEqual(strategy, MarkingTaskPriority.PAPER_NUMBER)
+    def test_taskorder_default(self) -> None:
+        strategy = marking_priority.get_mark_priority_strategy()
+        # default could change, but should be one of these
+        self.assertIn(strategy, ("paper_number", "shuffle"))
 
+    def test_taskorder_update(self) -> None:
         tos = TaskOrderService()
         tos.update_priority_ordering("shuffle")
-        strategy = MarkingTaskPriority.load().strategy
-        self.assertEqual(strategy, MarkingTaskPriority.SHUFFLE)
+        strategy = marking_priority.get_mark_priority_strategy()
+        self.assertEqual(strategy, "shuffle")
 
         custom_priority = {(1, 1): 1}
         tos.update_priority_ordering("custom", custom_order=custom_priority)
-        strategy = MarkingTaskPriority.load().strategy
-        self.assertEqual(strategy, MarkingTaskPriority.CUSTOM)
+        strategy = marking_priority.get_mark_priority_strategy()
+        self.assertEqual(strategy, "custom")
 
         tos.update_priority_ordering("papernum")
-        strategy = MarkingTaskPriority.load().strategy
-        self.assertEqual(strategy, MarkingTaskPriority.PAPER_NUMBER)
+        strategy = marking_priority.get_mark_priority_strategy()
+        self.assertEqual(strategy, "paper_number")
 
     def test_set_priority_papernum(self) -> None:
         """Test that PAPER_NUMBER is the default strategy."""
@@ -53,7 +54,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
         self.assertEqual(
             marking_priority.get_mark_priority_strategy(),
-            MarkingTaskPriority.PAPER_NUMBER,
+            "paper_number",
         )
 
     def test_set_priority_shuffle(self) -> None:
@@ -67,9 +68,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                 task.marking_priority <= 1000 and task.marking_priority >= 0
             )
 
-        self.assertEqual(
-            marking_priority.get_mark_priority_strategy(), MarkingTaskPriority.SHUFFLE
-        )
+        self.assertEqual(marking_priority.get_mark_priority_strategy(), "shuffle")
 
     def test_set_priority_custom(self) -> None:
         """Test setting priority to CUSTOM."""
@@ -89,9 +88,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                     task.marking_priority, n_papers - task.paper.paper_number
                 )
 
-        self.assertEqual(
-            marking_priority.get_mark_priority_strategy(), MarkingTaskPriority.CUSTOM
-        )
+        self.assertEqual(marking_priority.get_mark_priority_strategy(), "custom")
 
     def test_modify_priority(self) -> None:
         """Test modifying the priority of a single task."""
@@ -107,9 +104,8 @@ class MarkingTaskPriorityTests(ConfigTestCase):
         self.assertEqual(QuestionMarkingService.get_first_available_task(), first_task)
         self.assertEqual(
             marking_priority.get_mark_priority_strategy(),
-            MarkingTaskPriority.PAPER_NUMBER,
+            "paper_number",
         )
-        self.assertFalse(marking_priority.is_priority_modified())
 
         marking_priority.modify_task_priority(last_task, 1000)
         last_task.refresh_from_db()
@@ -121,8 +117,4 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                     task.marking_priority, n_papers - task.paper.paper_number
                 )
         self.assertEqual(QuestionMarkingService.get_first_available_task(), last_task)
-        self.assertEqual(
-            marking_priority.get_mark_priority_strategy(),
-            MarkingTaskPriority.PAPER_NUMBER,
-        )
-        self.assertTrue(marking_priority.is_priority_modified())
+        self.assertEqual(marking_priority.get_mark_priority_strategy(), "paper_number")
