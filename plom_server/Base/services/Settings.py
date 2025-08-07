@@ -41,6 +41,24 @@ def key_value_store_get(key: str) -> Any:
         return default_settings[key]
 
 
+def key_value_store_get_or_none(key: str) -> Any:
+    """Lookup a key to get a value from the key-value store.
+
+    If the key does not exist *in the database*, and has no default
+    value, return None.
+
+    Args:
+        key: a unique string key.
+
+    Returns:
+        The value associated with that key or None.
+    """
+    try:
+        return key_value_store_get(key)
+    except KeyError:
+        return None
+
+
 def key_value_store_set(key: str, value: Any) -> None:
     """Store something in the key-value store.
 

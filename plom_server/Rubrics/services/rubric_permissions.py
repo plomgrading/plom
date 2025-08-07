@@ -119,7 +119,7 @@ class RubricPermissionsService:
             a = str(opt["name"])
             implies = opt["implies"]
             assert isinstance(implies, list)  # help mypy
-            if Settings.key_value_store_get(a):
+            if Settings.key_value_store_get_or_none(a):
                 for i in implies:
                     Settings.key_value_store_set(i, True)
 
@@ -149,7 +149,7 @@ class RubricPermissionsService:
             if vpin is None:
                 continue
             # TODO: query them all at once for better DB access?
-            if not Settings.key_value_store_get(name):
+            if not Settings.key_value_store_get_or_none(name):
                 raise ValueError(
                     f"{readable_denom}-point rubrics are currently not allowed"
                 )
