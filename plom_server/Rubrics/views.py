@@ -275,7 +275,10 @@ class RubricItemView(UpdateView, ManagerRequiredView):
 
     @staticmethod
     def post(request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting to a rubric item receives data from a form an updates a rubric."""
+        """Posting to a rubric item receives data from a form and updates a rubric.
+
+        TODO: is anyone calling this?
+        """
         form = RubricItemForm(request.POST)
 
         if form.is_valid():
