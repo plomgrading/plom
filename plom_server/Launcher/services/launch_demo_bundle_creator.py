@@ -608,9 +608,9 @@ class DemoBundleCreationService:
                     scribble_pages(pdf_document)
                     # scribble in the answer boxes on p3 of the current demo
                     # magic numbers - need to be updated if demo assessment is changed
-                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.18)
-                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.44)
-                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.71)
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.19)
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.45)
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.72)
 
                     # insert a qr-code from a previous page after scribbling
                     if paper_number in duplicate_qr:

@@ -352,19 +352,16 @@ def scribble_answer_in_box(pdf_doc, page_number, xf, yf):
     # jiggle the position a little and translate the (0,1) coord to pixels
     x = (xf + (random.random() - 0.5) * 0.05) * bounding_rect.width
     y = (yf + (random.random() - 0.5) * 0.01) * bounding_rect.height
-    answer_rect = pymupdf.Rect(x, y, x + 100, y + 40)
     answer_text = random.choice(possible_short_answers)
     fontres = resources.files(plom.create.fonts) / ttf
-    excess = pdf_doc[page_number - 1].insert_textbox(
-        answer_rect,
+    pdf_doc[page_number - 1].insert_text(
+        (x, y),
         answer_text,
         fontsize=answer_font_size,
         color=dark_grey,
         fontname=fontname,
         fontfile=fontres,
-        align=0,
     )
-    assert excess > 0
 
 
 def scribble_pages(pdf_doc, exclude=(0, 1)):
