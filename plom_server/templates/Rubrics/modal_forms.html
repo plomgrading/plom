@@ -6,6 +6,7 @@
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2025 Deep Shah
 -->
 <script>
     function populateFields() {
@@ -183,6 +184,31 @@
                     </div>
                     {% if rid %}
                         <hr />
+                        <div class="my-3">
+                            {{ edit_form.published.errors }}
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <strong class="me-2">Published</strong>
+                                <div class="form-check form-check-inline m-0">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           name="{{ edit_form.published.name }}"
+                                           id="id_published_yes"
+                                           value="True"
+                                           {% if edit_form.published.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_published_yes">Yes</label>
+                                </div>
+                                <div class="form-check form-check-inline m-0">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           name="{{ edit_form.published.name }}"
+                                           id="id_published_no"
+                                           value="False"
+                                           {% if not edit_form.published.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_published_no">No</label>
+                                </div>
+                            </div>
+                            <small class="d-block text-muted mt-1">Published rubrics are usable by markers.</small>
+                        </div>
                         <h5>Existing annotations</h5>
                         <p class="mb-0">Should existing annotations be updated because of this change?</p>
                         <!-- TODO: would like some tooltips or popovers to help explain all this -->
