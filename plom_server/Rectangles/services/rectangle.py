@@ -356,13 +356,13 @@ class RectangleExtractor:
             print("recklessly ignoring the version...")
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
-                .get(page_number=self.page_number, paper=paper_obj)
+                .first(page_number=self.page_number, paper=paper_obj)
                 .image
             )
         else:
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
-                .get(
+                .first(
                     version=self.version, page_number=self.page_number, paper=paper_obj
                 )
                 .image
