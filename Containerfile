@@ -33,7 +33,8 @@ COPY requirements.txt /src/
 WORKDIR /src
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 # RUN pip install -U --no-cache-dir pip
-RUN pip install --no-cache-dir -r requirements.txt
+# --ignore-installed: don't try to uninstall system packages (i.e., "packaging")
+RUN pip install --no-cache-dir --ignore-installed -r requirements.txt
 
 # Minimal deps for Qt, e.g., to support installing client inside container for testing
 RUN apt-get -y update && \
