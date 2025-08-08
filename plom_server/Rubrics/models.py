@@ -275,6 +275,7 @@ class RubricTable(django_tables2.Table):
             "last_modified",
             "revision",
             "subrevision",
+            "published",
             "kind",
             "system_rubric",
             "question_index",
