@@ -6,7 +6,7 @@
 
 from django.db import transaction
 
-from ..models import PrenamingSetting
+from plom_server.Base.services import Settings
 from .preparation_dependency_service import (
     assert_can_enable_disable_prenaming,
     assert_can_modify_prenaming_config,
@@ -14,52 +14,55 @@ from .preparation_dependency_service import (
 
 
 class PrenameSettingService:
-    @transaction.atomic
-    def get_prenaming_setting(self) -> bool:
+    @staticmethod
+    def get_prenaming_setting() -> bool:
         """Get prenaming setting."""
-        p_obj = PrenamingSetting.load()
-        return p_obj.enabled
+        return Settings.key_value_store_get("prenaming_enabled")
 
-    @transaction.atomic
-    def set_prenaming_setting(self, enable: bool) -> None:
+    @staticmethod
+    def set_prenaming_setting(enable: bool) -> None:
         """Use the boolean value of the input parameter to set prenaming.
 
         Raises:
-             PlomDependencyConflict: if modification is disallowed.
+            PlomDependencyConflict: if modification is disallowed.
         """
-        assert_can_enable_disable_prenaming()
+        with transaction.atomic():
+            assert_can_enable_disable_prenaming()
+            Settings.key_value_store_set("prenaming_enabled", enable)
 
-        p_obj = PrenamingSetting.load()
-        p_obj.enabled = enable
-        p_obj.save()
-
-    @transaction.atomic
-    def get_prenaming_config(self) -> dict:
+    @classmethod
+    def get_prenaming_config(cls) -> dict:
         """Get prenaming configuration as a dict."""
-        p_obj = PrenamingSetting.load()
         return {
-            "enabled": p_obj.enabled,
-            "xcoord": p_obj.xcoord,
-            "ycoord": p_obj.ycoord,
+            "enabled": Settings.key_value_store_get("prenaming_enabled"),
+            "xcoord": Settings.key_value_store_get("prenaming_xcoord"),
+            "ycoord": Settings.key_value_store_get("prenaming_ycoord"),
         }
 
-    @transaction.atomic
-    def set_prenaming_coords(self, xcoord: float, ycoord: float) -> None:
+    @classmethod
+    def set_prenaming_coords(cls, xcoord: float | None, ycoord: float | None) -> None:
         """Set prenaming box position to the given vars.
+
+        Args:
+            xcoord: the x-coordinate of the prenaming box to set, or None
+                to use a default.
+            ycoord: similarly, the y-coordinate.
 
         Raises:
             PlomDependencyConflict: if the position cannot be modified.
         """
-        assert_can_modify_prenaming_config()
+        with transaction.atomic():
+            assert_can_modify_prenaming_config()
+            if xcoord is None:
+                Settings.key_value_store_reset("prenaming_xcoord")
+            else:
+                Settings.key_value_store_set("prenaming_xcoord", xcoord)
+            if ycoord is None:
+                Settings.key_value_store_reset("prenaming_ycoord")
+            else:
+                Settings.key_value_store_set("prenaming_ycoord", ycoord)
 
-        p_obj = PrenamingSetting.load()
-        p_obj.xcoord = xcoord
-        p_obj.ycoord = ycoord
-        p_obj.save()
-
-    @transaction.atomic
-    def reset_prenaming_coords(self) -> None:
+    @classmethod
+    def reset_prenaming_coords(cls) -> None:
         """Reset prenaming coords to their defaults."""
-        default_xcoord = PrenamingSetting._meta.get_field("xcoord").get_default()
-        default_ycoord = PrenamingSetting._meta.get_field("ycoord").get_default()
-        self.set_prenaming_coords(default_xcoord, default_ycoord)
+        cls.set_prenaming_coords(None, None)

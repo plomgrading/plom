@@ -8,13 +8,8 @@ import logging
 from django.db import transaction
 from django.db.models import Count
 
-from ..models import (
-    Paper,
-    FixedPage,
-    IDPage,
-    QuestionPage,
-    NumberOfPapersToProduceSetting,
-)
+from plom_server.Base.services import Settings
+from ..models import Paper, FixedPage, IDPage, QuestionPage
 from .paper_creator import PaperCreatorService
 
 log = logging.getLogger("PaperInfoService")
@@ -44,7 +39,9 @@ class PaperInfoService:
     @staticmethod
     def is_paper_database_fully_populated() -> bool:
         """Returns true when number of papers in the database equals the number to produce."""
-        nop = NumberOfPapersToProduceSetting.load().number_of_papers
+        # I recall being unhappy about this setting and its potential for abuse,
+        # so give it a underscore name.
+        nop = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
         db_count = Paper.objects.count()
         return db_count > 0 and db_count == nop
 
@@ -54,7 +51,7 @@ class PaperInfoService:
 
         TODO: currently I think this is unused.
         """
-        nop = NumberOfPapersToProduceSetting.load().number_of_papers
+        nop = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
         db_count = Paper.objects.count()
         return db_count > 0 and db_count < nop
 

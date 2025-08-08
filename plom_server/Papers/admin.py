@@ -15,7 +15,6 @@ from .models.paper_structure import (
     QuestionPage,
 )
 from .models.specifications import (
-    NumberOfPapersToProduceSetting,
     SolnSpecification,
     SolnSpecQuestion,
     Specification,
@@ -26,7 +25,6 @@ from .models.image_bundle import Image, DiscardPage, Bundle
 from .models.reference_image import ReferenceImage
 
 # This makes models appear in the admin interface
-admin.site.register(NumberOfPapersToProduceSetting)
 admin.site.register(Paper)
 admin.site.register(SolnSpecification)
 admin.site.register(SolnSpecQuestion)
