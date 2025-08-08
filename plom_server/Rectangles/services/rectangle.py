@@ -358,15 +358,18 @@ class RectangleExtractor:
             print("recklessly ignoring the version...")
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
-                .filter(page_number=self.page_number, paper=paper_obj)[0]
+                .filter(page_number=self.page_number, paper=paper_obj)
+                .first()
                 .image
             )
         else:
+            # Issue #4003: multiple FixedPages can share an image, don't use "get"
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
                 .filter(
                     version=self.version, page_number=self.page_number, paper=paper_obj
-                )[0]
+                )
+                .first()
                 .image
             )
 

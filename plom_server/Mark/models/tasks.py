@@ -3,14 +3,14 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
-from plom_server.Base.models import Tag, SingletonABCModel
+from plom_server.Base.models import Tag
 from plom_server.Papers.models import Paper
 
 
@@ -25,7 +25,7 @@ class MarkingTask(models.Model):
     marking_priority: int, the priority of this task.
         Default is 0, but when MarkingTask instances are created with
         MarkingTaskService.create_task(), the default is replaced with
-        a value determined by the MarkingTaskPriority strategy enum.
+        a value determined by the current server settings.
 
     assigned_user: reference to User, the user currently attached to
         the task.  Can be null, can change over time. Notice that when
@@ -92,34 +92,6 @@ class MarkingTask(models.Model):
             f"MarkingTask (paper={self.paper.paper_number}, "
             f"question_index={self.question_index})"
         )
-
-
-class MarkingTaskPriority(SingletonABCModel):
-    """Represents the current strategy for ordering tasks.
-
-    Strategy is an enum of PAPER_NUMBER, SHUFFLE, or CUSTOM. The state of
-    MarkingTaskPriority.load().strategy determines if the marking task
-    priority is random, based on paper number, or custom. If custom,
-    the priority will be based on the dict stored in the custom_priority field.
-    """
-
-    StrategyChoices = models.IntegerChoices("Strategy", "PAPER_NUMBER SHUFFLE CUSTOM")
-    PAPER_NUMBER = StrategyChoices.PAPER_NUMBER
-    SHUFFLE = StrategyChoices.SHUFFLE
-    CUSTOM = StrategyChoices.CUSTOM
-
-    strategy = models.IntegerField(
-        null=False, choices=StrategyChoices.choices, default=PAPER_NUMBER
-    )
-    modified = models.BooleanField(default=False, null=False)
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the MarkingTaskPriority model."""
-        obj, created = cls.objects.get_or_create(
-            pk=1, defaults={"strategy": cls.PAPER_NUMBER, "modified": False}
-        )
-        return obj
 
 
 class MarkingTaskTag(Tag):

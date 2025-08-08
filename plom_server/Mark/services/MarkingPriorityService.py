@@ -5,31 +5,28 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
-"""Functions for setting and modifying priority for marking tasks."""
+"""Functions for setting and modifying priority for marking tasks.
+
+See also the closely-related
+:class:`plom_server.TaskOrder.services.TaskOrderService`.
+"""
 
 import random
 
 from django.db import transaction
 from django.db.models import QuerySet
 
+from plom_server.Base.services import Settings
 from plom_server.Papers.models import Paper
-from ..models import MarkingTask, MarkingTaskPriority
+from ..models import MarkingTask
 
 
-@transaction.atomic
-def get_mark_priority_strategy() -> MarkingTaskPriority.StrategyChoices:
+def get_mark_priority_strategy() -> str:
     """Return the current priority strategy for marking tasks."""
-    return MarkingTaskPriority.load().strategy
+    return Settings.key_value_store_get("task_order_strategy")
 
 
-@transaction.atomic
-def is_priority_modified() -> bool:
-    """Return the priority's modified property."""
-    return MarkingTaskPriority.load().modified
-
-
-@transaction.atomic
-def get_tasks_to_update_priority() -> QuerySet[MarkingTask]:
+def _get_tasks_to_update_priority() -> QuerySet[MarkingTask]:
     """Get all the relevant marking tasks for updating priority.
 
     When the priority strategy is changed, all tasks that have
@@ -41,41 +38,30 @@ def get_tasks_to_update_priority() -> QuerySet[MarkingTask]:
 
 
 @transaction.atomic
-def set_marking_priority_strategy(strategy: MarkingTaskPriority.StrategyChoices):
-    """Set the current priority strategy; as a side-effect, set the modified status to False."""
-    assert strategy in MarkingTaskPriority.StrategyChoices, "Invalid priority value."
-
-    priority = MarkingTaskPriority.load()
-    priority.strategy = strategy
-    priority.modified = False
-    priority.save()
-
-
-@transaction.atomic
-def set_marking_piority_shuffle():
+def set_marking_piority_shuffle() -> None:
     """Set the priority to shuffle: every marking task gets a random priority value."""
-    tasks = get_tasks_to_update_priority()
+    tasks = _get_tasks_to_update_priority()
     for task in tasks:
         task.marking_priority = random.randint(0, 1000)
     MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
-    set_marking_priority_strategy(MarkingTaskPriority.SHUFFLE)
+    Settings.key_value_store_set("task_order_strategy", "shuffle")
 
 
 @transaction.atomic
-def set_marking_priority_paper_number():
+def set_marking_priority_paper_number() -> None:
     """Set the priority inversely proportional to the paper number."""
     largest_paper_num = (
         Paper.objects.all().order_by("-paper_number").first().paper_number
     )
-    tasks = get_tasks_to_update_priority()
+    tasks = _get_tasks_to_update_priority()
     for task in tasks:
         task.marking_priority = largest_paper_num - task.paper.paper_number
     MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
-    set_marking_priority_strategy(MarkingTaskPriority.PAPER_NUMBER)
+    Settings.key_value_store_set("task_order_strategy", "paper_number")
 
 
 @transaction.atomic
-def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]):
+def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> None:
     """Set the priority to a custom ordering.
 
     Args:
@@ -88,7 +74,7 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]):
         custom_order, dict
     ), "`custom_order` must be of type dict[tuple[int, int], int]."
 
-    tasks = get_tasks_to_update_priority()
+    tasks = _get_tasks_to_update_priority()
     tasks_to_update = []
     for k, v in custom_order.items():
         paper_number, question_index = k
@@ -102,17 +88,14 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]):
             task_to_update.marking_priority = v
             tasks_to_update.append(task_to_update)
     MarkingTask.objects.bulk_update(tasks_to_update, ["marking_priority"])
-    set_marking_priority_strategy(MarkingTaskPriority.CUSTOM)
+    Settings.key_value_store_set("task_order_strategy", "custom")
 
 
-@transaction.atomic
-def modify_task_priority(task: MarkingTask, new_priority: int):
+def modify_task_priority(task: MarkingTask, new_priority: int) -> None:
     """Modify the priority of a single marking task.
 
-    If successful, set MarkingTaskPriority.modified to true.
+    This is used in unit testing but is currently otherwise unused
+    (probably b/c we use a bulk setting strategy).
     """
     task.marking_priority = new_priority
     task.save()
-    priority_setting = MarkingTaskPriority.load()
-    priority_setting.modified = True
-    priority_setting.save()

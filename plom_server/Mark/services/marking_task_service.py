@@ -23,13 +23,8 @@ from plom.tagging import is_valid_tag_text
 from plom_server.Papers.services import ImageBundleService, PaperInfoService
 from plom_server.Papers.models import Paper
 
-from . import marking_priority, mark_task
-from ..models import (
-    MarkingTask,
-    MarkingTaskTag,
-    MarkingTaskPriority,
-    Annotation,
-)
+from . import MarkingPriorityService, mark_task
+from ..models import MarkingTask, MarkingTaskTag, Annotation
 
 
 class MarkingTaskService:
@@ -90,8 +85,8 @@ class MarkingTaskService:
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
-            strategy = marking_priority.get_mark_priority_strategy()
-            if strategy == MarkingTaskPriority.PAPER_NUMBER:
+            strategy = MarkingPriorityService.get_mark_priority_strategy()
+            if strategy == "paper_number":
                 priority = Paper.objects.count() - paper.paper_number
             else:
                 priority = random.randint(0, 1000)
@@ -150,7 +145,7 @@ class MarkingTaskService:
             priorities[X.code] = X.marking_priority
             existing_tags[X.code] = X.markingtasktag_set.all()
         # get priority strategy for new tasks
-        strategy = marking_priority.get_mark_priority_strategy()
+        strategy = MarkingPriorityService.get_mark_priority_strategy()
         total_papers = Paper.objects.count()
         # create new tasks using any existing priorities
         # unfortunately we need the associated paper-objects
@@ -164,7 +159,7 @@ class MarkingTaskService:
             code = f"q{pn:04}g{qi}"
             if code in priorities:
                 priority = priorities[code]
-            elif strategy == MarkingTaskPriority.PAPER_NUMBER:
+            elif strategy == "paper_number":
                 priority = total_papers - pn
             else:
                 priority = random.randint(0, 1000)

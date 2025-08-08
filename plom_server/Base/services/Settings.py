@@ -10,6 +10,8 @@ from ..models import SettingsModel
 
 # If no value is set in the database, we use defaults recorded here
 default_settings = {
+    "task_order_strategy": "paper_number",
+    "have_papers_been_printed": False,
     "who_can_create_rubrics": "permissive",
     "who_can_modify_rubrics": "per-user",
     "feedback_rules": deepcopy(static_feedback_rules),
@@ -20,7 +22,6 @@ default_settings = {
     # so give it a underscore name: IIRC, it is a very transcient notion of
     # how many papers to produce, and should not be widely trusted/consulted
     "_tmp_number_of_papers_to_produce": 0,
-    "have_papers_been_printed": False,
 }
 
 

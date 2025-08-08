@@ -20,6 +20,12 @@ import plom.create.fonts
 from plom.create import build_extra_page_pdf, with_manager_messenger
 from plom.create import paperdir as _paperdir
 
+possible_fontnames_ttfs = [
+    ("adr", "adr_handwriting.ttf"),
+    ("bt", "bt_handwriting.ttf"),
+    ("ejx", "ejx_handwriting.ttf"),
+]
+
 possible_answers = [
     "I am so sorry, I really did study this... :(",
     "I know this, I just can't explain it",
@@ -328,7 +334,8 @@ def scribble_name_and_id(
         id_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
         # TODO - there should be an assert or something here after insert?
 
-    fontname, ttf = "ejx", "ejx_handwriting.ttf"
+    fontname, ttf = random.choice(possible_fontnames_ttfs)
+
     rect = pymupdf.Rect(
         220 + random.randrange(0, 16), 406 + y_offset, 600, 511 + y_offset
     )
@@ -347,7 +354,7 @@ def scribble_name_and_id(
 
 
 def scribble_answer_in_box(pdf_doc, page_number, xf, yf):
-    fontname, ttf = "ejx", "ejx_handwriting.ttf"
+    fontname, ttf = random.choice(possible_fontnames_ttfs)
     bounding_rect = pdf_doc[page_number].rect
     # jiggle the position a little and translate the (0,1) coord to pixels
     x = (xf + (random.random() - 0.5) * 0.05) * bounding_rect.width
@@ -381,7 +388,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
     # In principle you can put other fonts in plom.create.fonts
     # Can also use "helv" and `None` for the fontfile
     # fontname, ttf = random.choice(...)
-    fontname, ttf = "ejx", "ejx_handwriting.ttf"
+    fontname, ttf = random.choice(possible_fontnames_ttfs)
 
     # Write some random answers on the pages
     for page_index, pdf_page in enumerate(pdf_doc):
