@@ -360,6 +360,7 @@ class RectangleExtractor:
                 .image
             )
         else:
+            # Issue #4003: multiple FixedPages can share an image, don't use "get"
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
                 .first(
