@@ -355,7 +355,7 @@ doctests:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip3 install --upgrade pytest
+    - pip install --ignore-installed -U pytest
   script:
     # TODO how to run only doctests?  here we just ignore-glib on "test_*"
     - pytest --version
