@@ -112,12 +112,7 @@ class RubricItemForm(forms.ModelForm):
         required=False,
         widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
     )
-    published = forms.TypedChoiceField(
-        choices=((True, "Yes"), (False, "No")),
-        coerce=lambda x: x == "True",
-        widget=forms.RadioSelect,
-        required=True,
-    )
+    published = forms.BooleanField(required=False, label="Published", initial=True)
 
     class Meta:
         model = Rubric

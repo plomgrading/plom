@@ -179,28 +179,19 @@
                                         </div>
                                     </div>
                                     <div class="row form-group">
-                                        {{ edit_form.published.errors }}
-                                        <div class="d-flex align-items-center flex-wrap gap-2">
-                                            <div class="form-check form-check-inline m-0">
+                                        <div class="col">
+                                            {{ edit_form.published.errors }}
+                                            <!-- TODO: why not edit_form[dot]published and have it do everything? -->
+                                            <div class="form-check form-check-inline">
                                                 <input class="form-check-input"
-                                                       type="radio"
+                                                       type="checkbox"
                                                        name="{{ edit_form.published.name }}"
-                                                       id="id_published_yes"
-                                                       value="True"
+                                                       id="{{ edit_form.published.id_for_label }}"
                                                        {% if edit_form.published.value %}checked{% endif %}>
-                                                <label class="form-check-label" for="id_published_yes">Published</label>
+                                                <label class="form-check-label" for="{{ edit_form.published.id_for_label }}">Published</label>
                                             </div>
-                                            <div class="form-check form-check-inline m-0">
-                                                <input class="form-check-input"
-                                                       type="radio"
-                                                       name="{{ edit_form.published.name }}"
-                                                       id="id_published_no"
-                                                       value="False"
-                                                       {% if not edit_form.published.value %}checked{% endif %}>
-                                                <label class="form-check-label" for="id_published_no">Unpublished</label>
-                                            </div>
+                                            <small class="d-block text-muted mt-1 mb">Publishing a rubric makes it usable by markers.</small>
                                         </div>
-                                        <small class="d-block text-muted mt-1 mb">Publishing a rubric makes it usable by markers.</small>
                                     </div>
                                 </div>
                             </div>
