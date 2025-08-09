@@ -1210,6 +1210,15 @@ class BaseMessenger:
             generally not the same as the input data, for example, it has an
             key/id.
         """
+        if self.is_server_api_less_than(115):
+            new_rubric = new_rubric.copy()
+            # string of versions to list of versions
+            if new_rubric.get("versions"):
+                verlist = [int(v.strip()) for v in new_rubric["versions"].split(",")]
+            else:
+                verlist = []
+            new_rubric["versions"] = verlist
+
         with self.SRmutex:
             try:
                 response = self.put(
@@ -1316,13 +1325,21 @@ class BaseMessenger:
             try:
                 response = self.get_auth(url)
                 response.raise_for_status()
-                return response.json()
+                rubrics = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 404:
                     raise PlomNoRubric(response.reason) from None
                 raise PlomSeriousException(f"Error getting rubric list: {e}") from None
+        if self.is_server_api_less_than(115):
+            # list of versions to string of versions
+            for r in rubrics:
+                if r.get("versions"):
+                    r["versions"] = ", ".join(r.get("versions"))
+                else:
+                    r["versions"] = ""
+        return rubrics
 
     def _legacy_getRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         with self.SRmutex:
@@ -1359,6 +1376,11 @@ class BaseMessenger:
                 # TODO: annoying b/c downstream needs to detect and not send to arrow
                 r.setdefault("last_modified", "unknown")
                 r.setdefault("modified_by_username", "")
+                # list of versions to string of versions
+                if r.get("versions"):
+                    r["versions"] = ", ".join(r.get("versions"))
+                else:
+                    r["versions"] = ""
             return rubrics
 
     def MmodifyRubric(
@@ -1402,6 +1424,15 @@ class BaseMessenger:
             # we also use "rid" now but legacy still wants "id"
             if "rid" in new_rubric.keys():
                 new_rubric["id"] = str(new_rubric.pop("rid"))
+
+        if self.is_server_api_less_than(115):
+            new_rubric = new_rubric.copy()
+            # string of versions to list of versions
+            if new_rubric.get("versions"):
+                verlist = [int(v.strip()) for v in new_rubric["versions"].split(",")]
+            else:
+                verlist = []
+            new_rubric["versions"] = verlist
 
         params = []
         if minor_change is None:
@@ -1462,6 +1493,12 @@ class BaseMessenger:
             # On legacy servers, `new_rubric` will actually just be the key
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(int(new_rubric))
+        elif self.is_server_api_less_than(115):
+            # list of versions to string of versions
+            if new_rubric.get("versions"):
+                new_rubric["versions"] = ", ".join(new_rubric.get("versions"))
+            else:
+                new_rubric["versions"] = ""
         return new_rubric
 
     def get_pagedata(self, code):
