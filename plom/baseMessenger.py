@@ -44,7 +44,7 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 
-Plom_API_Version = 114  # Our API version
+Plom_API_Version = 115  # Our API version
 Plom_Legacy_Server_API_Version = 60
 
 # We can support earlier servers by special-case code, so
@@ -54,6 +54,7 @@ Supported_Server_API_Versions = [
     112,  # 2024-09
     113,  # 2025-01
     114,  # 2025-05
+    115,  # 2025-09
 ]
 # Brief changelog
 #
@@ -66,6 +67,8 @@ Supported_Server_API_Versions = [
 #    - added "exclusive" option to push:/get_token/
 #    - added "revoke_token" option to delete:/close_user/
 #    - new delete:/get_token/ revokes token
+# * 115
+#    - rubrics versions field uses string instead of list
 
 
 log = logging.getLogger("messenger")
