@@ -50,11 +50,11 @@ def test_rubric_diff_delta() -> None:
 def test_rubric_diff_version_change_issue3295() -> None:
     p = _make_ex()
     r = _make_ex()
-    p.update({"versions": [1]})
-    r.update({"versions": [1, 2]})
+    p.update({"versions": "1"})
+    r.update({"versions": "1, 2"})
     same, diff = diff_rubric(p, r)
     assert not same
-    assert "[1, 2]" in diff
+    assert "1, 2" in diff
 
 
 def test_rubric_diff_tags() -> None:

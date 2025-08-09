@@ -268,13 +268,14 @@ class RubricTable(django_tables2.Table):
         model = Rubric
 
         # which fields to include in the table.  Or omit for all fields
-        # and use equence = (...) to control the order.
+        # and use sequence = (...) to control the order.
         fields = (
             "rid",
             "display_delta",
             "last_modified",
             "revision",
             "subrevision",
+            "published",
             "kind",
             "system_rubric",
             "question_index",
