@@ -9,7 +9,6 @@ import huey
 import huey.api
 from django.db.models import Count
 from django.db.models import QuerySet
-from numpy import unique_inverse
 
 # plom db models
 from plom_server.Base.models import User
