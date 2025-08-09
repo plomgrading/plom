@@ -9,6 +9,7 @@ import huey
 import huey.api
 from django.db.models import Count
 from django.db.models import QuerySet
+from numpy import unique_inverse
 
 # plom db models
 from plom_server.Base.models import User
@@ -26,10 +27,7 @@ from plom_server.QuestionClustering.models import ClusteringModelType
 
 # plom_server services
 from plom_server.Mark.services.marking_task_service import MarkingTaskService
-from plom_server.Mark.services.marking_priority import (
-    get_tasks_to_update_priority,
-    modify_task_priority,
-)
+from plom_server.Mark.services import MarkingPriorityService
 from plom_server.Papers.services import PaperInfoService
 from plom_server.Rectangles.services import (
     RectangleExtractor,
@@ -184,9 +182,7 @@ class QuestionClusteringService:
             clusterId_to_papers[clusterId].add(pn)
 
         with transaction.atomic():
-
             for clusterId, paper_nums in clusterId_to_papers.items():
-
                 # create user facing grouping
                 user_facing_cluster = QVCluster.objects.create(
                     question_idx=question_idx,
@@ -412,8 +408,8 @@ class QuestionClusteringService:
             type=ClusteringGroupType.user_facing,
         ).paper.all()
 
-        all_tasks = get_tasks_to_update_priority().filter(
-            question_index=question_idx, question_version=version
+        all_tasks = MarkingPriorityService.get_tasks_to_update_priority_by_q_v(
+            question_idx, version
         )
 
         unique_priorities = (
@@ -421,7 +417,11 @@ class QuestionClusteringService:
             .values_list("marking_priority", flat=True)
             .distinct()
         )
-        return unique_priorities[0] if len(unique_priorities) == 1 else None
+
+        if unique_priorities.count() == 1:
+            return unique_priorities.first()
+        else:
+            return None
 
     def get_cluster_priority_map(
         self, question_idx: int, version: int
@@ -474,8 +474,8 @@ class QuestionClusteringService:
         ).prefetch_related("paper")
 
         # grab all tasks
-        tasks = get_tasks_to_update_priority().filter(
-            question_index=question_idx, question_version=version
+        tasks = MarkingPriorityService.get_tasks_to_update_priority_by_q_v(
+            question_idx, version
         )
 
         paper_nums_in_clusters: set[int] = set()
@@ -489,14 +489,14 @@ class QuestionClusteringService:
             # update all tasks under that cluster to the same priority val
             priority = len(cluster_order) - i
             for task in curr_tasks:
-                modify_task_priority(task, priority)
+                MarkingPriorityService.modify_task_priority(task, priority)
 
             paper_nums_in_clusters.update(p.paper_number for p in curr_papers)
 
         # update priority for paper not part of any cluster to 0
         task_not_in_cluster = tasks.exclude(paper__in=paper_nums_in_clusters)
         for task in task_not_in_cluster:
-            modify_task_priority(task, 0)
+            MarkingPriorityService.modify_task_priority(task, 0)
 
     def get_clusterid_to_paper_mapping(
         self, question_idx: int, version: int
@@ -699,7 +699,9 @@ class QuestionClusteringService:
             A dict representing the rectangular region and has these
             keys: [top, left, bottom, right].
         """
-        qvc = QVCluster.objects.filter(question_idx=question_idx, version=version)[0]
+        qvc = QVCluster.objects.filter(
+            question_idx=question_idx, version=version
+        ).first()
         return {
             "top": qvc.top,
             "left": qvc.left,

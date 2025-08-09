@@ -37,6 +37,16 @@ def _get_tasks_to_update_priority() -> QuerySet[MarkingTask]:
     return tasks.select_related("paper")
 
 
+def get_tasks_to_update_priority_by_q_v(
+    question_idx: int, version: int
+) -> QuerySet[MarkingTask]:
+    """Get all the relevant marking tasks with given q,v for updating priority."""
+    tasks = _get_tasks_to_update_priority().filter(
+        question_index=question_idx, question_version=version
+    )
+    return tasks.select_related("paper")
+
+
 @transaction.atomic
 def set_marking_piority_shuffle() -> None:
     """Set the priority to shuffle: every marking task gets a random priority value."""
