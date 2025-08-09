@@ -77,6 +77,17 @@ log = logging.getLogger("messenger")
 # requests_log.propagate = True
 
 
+def _fix_114_versions_field_to_str(r: dict[str, Any]) -> dict[str, Any]:
+    """Convert list of versions to string of comma-separated versions."""
+    if r.get("versions"):
+        verstr = ", ".join([str(x) for x in r["versions"]])
+    else:
+        # map [] and None to empty str
+        verstr = ""
+    r["versions"] = verstr
+    return r
+
+
 class BaseMessenger:
     """Basic communication with a Plom Server.
 
@@ -1213,9 +1224,11 @@ class BaseMessenger:
         if self.is_server_api_less_than(115):
             new_rubric = new_rubric.copy()
             # string of versions to list of versions
-            new_rubric["versions"] = [
-                int(v.strip()) for v in new_rubric.get("versions", "").split(",")
-            ]
+            if new_rubric.get("versions"):
+                verlist = [int(v.strip()) for v in new_rubric["versions"].split(",")]
+            else:
+                verlist = []
+            new_rubric["versions"] = verlist
 
         with self.SRmutex:
             try:
@@ -1244,8 +1257,7 @@ class BaseMessenger:
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(int(new_rubric))
         if self.is_server_api_less_than(115):
-            # list of versions to string of versions
-            new_rubric["versions"] = ", ".join(new_rubric.get("versions", []))
+            new_rubric = _fix_114_versions_field_to_str(new_rubric)
         return new_rubric
 
     def MgetOtherRubricUsages(self, rid: int) -> list[dict[str, Any]]:
@@ -1334,9 +1346,8 @@ class BaseMessenger:
                     raise PlomNoRubric(response.reason) from None
                 raise PlomSeriousException(f"Error getting rubric list: {e}") from None
         if self.is_server_api_less_than(115):
-            # list of versions to string of versions
             for r in rubrics:
-                r["versions"] = ", ".join(r.get("versions", []))
+                r = _fix_114_versions_field_to_str(r)
         return rubrics
 
     def _legacy_getRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
@@ -1375,7 +1386,7 @@ class BaseMessenger:
                 r.setdefault("last_modified", "unknown")
                 r.setdefault("modified_by_username", "")
                 # list of versions to string of versions
-                r["versions"] = ", ".join(r.get("versions", []))
+                r = _fix_114_versions_field_to_str(r)
             return rubrics
 
     def MmodifyRubric(
@@ -1489,8 +1500,7 @@ class BaseMessenger:
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(int(new_rubric))
         if self.is_server_api_less_than(115):
-            # list of versions to string of versions
-            new_rubric["versions"] = ", ".join(new_rubric.get("versions", []))
+            new_rubric = _fix_114_versions_field_to_str(new_rubric)
         return new_rubric
 
     def get_pagedata(self, code):
