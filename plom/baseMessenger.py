@@ -1213,11 +1213,9 @@ class BaseMessenger:
         if self.is_server_api_less_than(115):
             new_rubric = new_rubric.copy()
             # string of versions to list of versions
-            if new_rubric.get("versions"):
-                verlist = [int(v.strip()) for v in new_rubric["versions"].split(",")]
-            else:
-                verlist = []
-            new_rubric["versions"] = verlist
+            new_rubric["versions"] = [
+                int(v.strip()) for v in new_rubric.get("versions", "").split(",")
+            ]
 
         with self.SRmutex:
             try:
@@ -1245,6 +1243,9 @@ class BaseMessenger:
             # On legacy servers, `new_rubric` will actually just be the key
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(int(new_rubric))
+        if self.is_server_api_less_than(115):
+            # list of versions to string of versions
+            new_rubric["versions"] = ", ".join(new_rubric.get("versions", []))
         return new_rubric
 
     def MgetOtherRubricUsages(self, rid: int) -> list[dict[str, Any]]:
@@ -1335,10 +1336,7 @@ class BaseMessenger:
         if self.is_server_api_less_than(115):
             # list of versions to string of versions
             for r in rubrics:
-                if r.get("versions"):
-                    r["versions"] = ", ".join(r.get("versions"))
-                else:
-                    r["versions"] = ""
+                r["versions"] = ", ".join(r.get("versions", []))
         return rubrics
 
     def _legacy_getRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
@@ -1377,10 +1375,7 @@ class BaseMessenger:
                 r.setdefault("last_modified", "unknown")
                 r.setdefault("modified_by_username", "")
                 # list of versions to string of versions
-                if r.get("versions"):
-                    r["versions"] = ", ".join(r.get("versions"))
-                else:
-                    r["versions"] = ""
+                r["versions"] = ", ".join(r.get("versions", []))
             return rubrics
 
     def MmodifyRubric(
@@ -1493,12 +1488,9 @@ class BaseMessenger:
             # On legacy servers, `new_rubric` will actually just be the key
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(int(new_rubric))
-        elif self.is_server_api_less_than(115):
+        if self.is_server_api_less_than(115):
             # list of versions to string of versions
-            if new_rubric.get("versions"):
-                new_rubric["versions"] = ", ".join(new_rubric.get("versions"))
-            else:
-                new_rubric["versions"] = ""
+            new_rubric["versions"] = ", ".join(new_rubric.get("versions", []))
         return new_rubric
 
     def get_pagedata(self, code):
