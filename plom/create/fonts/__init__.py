@@ -2,5 +2,6 @@
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2025 Bryan Tanaday
 # Copyright (C) 2025 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 # fonts based on handwriting sample of the above people
