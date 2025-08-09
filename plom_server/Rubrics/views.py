@@ -275,7 +275,10 @@ class RubricItemView(UpdateView, ManagerRequiredView):
 
     @staticmethod
     def post(request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting to a rubric item receives data from a form an updates a rubric."""
+        """Posting to a rubric item receives data from a form and updates a rubric.
+
+        TODO: is anyone calling this?
+        """
         form = RubricItemForm(request.POST)
 
         if form.is_valid():
@@ -495,6 +498,7 @@ class RubricCreateView(ManagerRequiredView):
             "parameters": form.cleaned_data["parameters"],
             "tags": form.cleaned_data["tags"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+            "published": form.cleaned_data["published"],
         }
         try:
             RubricService.create_rubric(rubric_data)
