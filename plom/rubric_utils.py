@@ -338,7 +338,9 @@ def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
     if p.get("versions") != r.get("versions"):
         rval = False
         out += br
-        out += _diff_compact(p.get("versions"), r.get("versions"), label="versions:")
+        out += _diff_compact(
+            p.get("versions", ""), r.get("versions", ""), label="versions:"
+        )
     if p.get("parameters") != r.get("parameters"):
         rval = False
         out += br
