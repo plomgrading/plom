@@ -77,7 +77,7 @@ dependencies = [
     "random-username>=1.0.2",
     "requests",
     "requests-toolbelt",
-    "scikit-learn>=1.4.1",
+    "scikit-learn>=1.4.2",
     "scipy>=1.11.4",
     "seaborn>=0.12.2",
     "segno>=1.5.2",
