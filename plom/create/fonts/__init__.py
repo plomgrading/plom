@@ -7,7 +7,7 @@
 
 """Fonts based on handwriting samples of the people who wrote this module.
 
-To add a new font based on your own handwriting, we're beening using the
+To add a new font based on your own handwriting, we have used the
 tool Handwrite (https://pypi.org/project/handwrite).  Its not necessary
 to commit the PDF/jpeg source, just the resulting font.
 
