@@ -344,3 +344,5 @@ convention = "google"
 '__init__.py' = ['F401', 'E402', 'I001']
 # tests don't need docstrings
 'plom*/**/test*.py' = ['D100', 'D101', 'D102', 'D103', 'D104']
+# Django apps.py seem like boilerplate
+'plom/**/apps.py' = ['D101']
