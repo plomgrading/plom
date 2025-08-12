@@ -5,6 +5,8 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Sarah Oskuei
+# Copyright (C) 2025 Lindsey Daniels
+
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
