@@ -24,6 +24,7 @@ possible_fontnames_ttfs = [
     ("adr", "adr_handwriting.ttf"),
     ("bt", "bt_handwriting.ttf"),
     ("ejx", "ejx_handwriting.ttf"),
+    ("pdl", "pdl_handwriting.ttf"),
 ]
 
 possible_answers = [
