@@ -26,6 +26,7 @@ from plom_server.Mark.models.annotations import Annotation
 
 
 def generate_rid():
+    """Generate a new "rubric id"."""
     # TODO: tricky to avoid a race with this here:
     # count = Rubric.objects.aggregate(Max("rid"))["rid__max"]
     # return 1 if count is None else count + 1

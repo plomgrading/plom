@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023, 2025 Colin B. Macdonald
 
+"""Services of the Plom Server Rubric app."""
+
 from .rubric_service import RubricService
 from .rubric_permissions import RubricPermissionsService
 from .utils import _list_of_rubrics_to_dict_of_dict, _Rubric_to_dict

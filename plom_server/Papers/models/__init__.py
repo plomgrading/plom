@@ -3,6 +3,8 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023, 2025 Colin B. Macdonald
 
+"""Models of the Plom Server Paper app."""
+
 from .image_bundle import (
     Bundle,
     Image,
