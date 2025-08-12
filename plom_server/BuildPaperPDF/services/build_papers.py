@@ -7,8 +7,6 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
 import pathlib
 import random
 import time
@@ -237,7 +235,8 @@ class BuildPapersService:
     def _send_list_of_tasks(self, paper_number_list: list[int]) -> None:
         """Create a new list of chores and enqueue the tasks to Huey to build PDF for papers.
 
-        If there is a existing chore, it will be set to obsolete.
+        If there are any existing chores for those paper numbers, they
+        will be set to obsolete.
 
         Args:
             paper_number_list: which paper number - entries must be unique.
@@ -247,6 +246,10 @@ class BuildPapersService:
             PlomDependencyConflict: if dependencies not met
         """
         assert_can_rebuild_test_pdfs()
+
+        if not paper_number_list:
+            # nothing to do for an empty list
+            return
 
         # get all the qvmap and student-id/name info
         spec = SpecificationService.get_the_spec()
@@ -270,8 +273,7 @@ class BuildPapersService:
                 chore.set_as_obsolete()
             # now make a list of new chores as they are created
             chore_list = []
-            # Quick fix but maybe it should be an error for the_papers to be empty?
-            paper = None
+            paper = None  # ensure there is something to delete
             for paper in the_papers:
                 if prename_config["enabled"] and paper.paper_number in prenamed:
                     student_id, student_name = prenamed[paper.paper_number]

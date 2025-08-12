@@ -54,7 +54,7 @@ def get_parser():
     spCheck = sub.add_parser(
         "status",
         help="How's progress?",
-        description="List progress and which tests that have been completed.",
+        description="List progress and which papers have been completed.",
     )
     spCheck.add_argument(
         "--dangling-check",
@@ -287,7 +287,7 @@ def main():
             )
     elif args.command == "solutions":
         assemble_solutions(
-            testnum=args.testnum,
+            papernum=args.testnum,
             msgr=(args.server, args.password),
             watermark=args.mark,
             verbose=True,

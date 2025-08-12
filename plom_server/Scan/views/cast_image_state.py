@@ -215,14 +215,11 @@ class ExtraliseImageView(ScannerRequiredView):
 
         extra_page_data = request.POST
 
-        if extra_page_data.get("bundleOrArbitrary", "off") == "on":
-            paper_number = extra_page_data.get("bundlePaper", None)
-        else:
-            paper_number = extra_page_data.get("arbitraryPaper", None)
+        paper_number = extra_page_data.get("paper_number", None)
 
         try:
             paper_number = int(paper_number)
-        except ValueError:
+        except (ValueError, TypeError):
             return HttpResponse(
                 """<span class="alert alert-danger">Invalid paper number</span>"""
             )

@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Deep Shah
+# Copyright (C) 2025 Philip D. Loewen
 
 import base64
 from io import BytesIO
@@ -792,7 +793,7 @@ class MinimalPlotService:
         else:
             return get_graph_as_base64(graph_bytes)
 
-    def lollypop_of_pedagogy_tags(
+    def lollipop_of_pedagogy_tags(
         self,
         tag_to_questions,
         question_idx_score_dict,
@@ -800,7 +801,7 @@ class MinimalPlotService:
         *,
         format: str = "base64",
     ) -> BytesIO | str:
-        """Generate a lollypop graph of pedagogy tag scores.
+        """Generate a lollipop graph of pedagogy tag scores.
 
         Args:
             tag_to_questions: dict mapping tag-name to list of questions with that tag.

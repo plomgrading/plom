@@ -496,6 +496,7 @@ class IDBoxProcessorService:
         template_id_box_width = 1250
         # read the given file into an np.array.
         id_box = cv.imread(str(id_box_file))
+        assert id_box is not None, f"Unexpectedly could not read id box {id_box_file}"
         assert len(id_box.shape) in (2, 3), f"Unexpected numpy shape {id_box.shape}"
         # third entry 1 (grayscale) or 3 (colour)
         height: int = id_box.shape[0]
@@ -837,7 +838,7 @@ class IDBoxProcessorService:
         return predictions
 
     def _assemble_cost_matrix(self, paper_numbers, student_IDs, probabilities):
-        """Compute the cost matrix between list of tests and list of student IDs.
+        """Compute the cost matrix between list of papers and list of student IDs.
 
         Args:
             paper_numbers (list): int, the ones we want to match.
@@ -880,7 +881,7 @@ class IDBoxProcessorService:
         Args:
             paper_numbers: int, the ones we want to match.
             student_IDs: A list of student ID numbers.
-            probabilities: dict with keys that contain a test number
+            probabilities: dict with keys that contain a paper number
                 and values that contain a probability matrix,
                 which is a list of lists of floats.
 

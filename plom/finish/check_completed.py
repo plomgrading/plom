@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Forest Kobayashi
 # Copyright (C) 2022 Joey Shi
@@ -125,12 +125,12 @@ def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
             "database who do not seem to be listed in `classlist.csv`."
         )
         for sid, sname, testnum in db_not_cl:
-            print(f"  Test no.: {testnum}\tID: {sid}\tName: {sname}")
+            print(f"  Paper no.: {testnum}\tID: {sid}\tName: {sname}")
 
     if ided_to_None:
         print(f"There are {len(ided_to_None)} papers ID'd to SID None:")
         for sid, sname, papernum in ided_to_None:
-            print(f"  Test no.: {papernum}\tID: {sid}\tName: {sname}")
+            print(f"  Paper no.: {papernum}\tID: {sid}\tName: {sname}")
 
 
 def main(server=None, password=None, dangling_check=False):

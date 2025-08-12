@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Deep Shah
 
 import hashlib
 import logging
@@ -376,6 +377,10 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
         self.remove_bundle_by_pk(bundle_obj.pk)
 
+    def get_original_image(self, bundle_id: int, index: int) -> File:
+        """Get the original, full-resolution image file from the database."""
+        return self.get_image(bundle_id, index).baseimage.image_file
+
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
         """Check if a PDF has already been uploaded.
@@ -617,16 +622,6 @@ class ScanService:
 
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
-
-        QR Code:
-        -         Test ID:  00001
-        -        Page Num:  00#
-        -     Version Num:  00#
-        -              NW:  2
-        -              NE:  1
-        -              SW:  3
-        -              SE:  4
-        - Last five digit:  93849
 
         Args:
             bundle_pk: primary key of bundle DB object

@@ -4,6 +4,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025 Deep Shah
 -->
 <div id="bundlePageFragment">
     <!-- TODO: I would like to use the containers "class col" in the containing file. -->
@@ -230,6 +231,15 @@
                             </div>
                         {% elif current_page.status == 'extra' %}
                             <!-- stuff unique to extra pages  -->
+                            <div>
+                                <a class="btn btn-info mb-3 w-100"
+                                   href="{% url 'scan_compare_handwriting' bundle_id index %}"
+                                   target="_blank"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-title="Open handwriting comparison view in a new tab">
+                                    Compare Handwriting
+                                </a>
+                            </div>
                             {% if current_page.info.paper_number %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
@@ -244,86 +254,142 @@
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
                                           hx-swap="none"
                                           hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
-                                        <div class="input-group">
-                                            <div x-data="{bundlepapers: true}">
-                                                Paper:
+                                        <!--
+                                            This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
+
+                                            Users can choose how to assign this extra page to a paper:
+                                            1. By selecting adjacent papers (radio buttons),
+                                            2. Or by picking a paper manually from a dropdown list.
+
+                                            Reactive State (via x-data):
+                                            - selection_method: which radio option the user selected ('prev', 'next', 'dropdown')
+                                            - final_paper_number: the actual paper number that will be submitted with the form
+                                            - bundlepapers: true/false toggle controlling whether the dropdown shows bundle-only papers or all papers
+
+                                            - The <input type="hidden"> is bound to final_paper_number using :value.
+                                            This ensures the form always submits the currently selected paper number,
+                                            regardless of whether it was chosen via radio or dropdown.
+
+                                            - Each radio button has:
+                                            • x-model="selection_method" -> binds the chosen method to Alpine state
+                                            • @change="final_paper_number = '...' -> updates the paper number accordingly
+
+                                            - When "Choose from list..." is selected:
+                                            • The dropdown section becomes visible (x-show="selection_method === 'dropdown'")
+                                            • A checkbox lets the user toggle between "papers from this bundle" and "all papers"
+                                            • The appropriate <select> updates final_paper_number via x-model
+
+                                            This approach ensures seamless user interaction with instant feedback,
+                                            without requiring full-page reloads.
+                                          -->
+                                        <div x-data="{ selection_method: '', final_paper_number: null, bundlepapers: true }">
+                                            <input type="hidden" name="paper_number" :value="final_paper_number">
+                                            <p class="fw-bold">Paper:</p>
+                                            {% if prev_paper_number %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="radio"
+                                                           name="selection_radio_{{ index }}"
+                                                           value="prev"
+                                                           x-model="selection_method"
+                                                           @change="final_paper_number = '{{ prev_paper_number }}'"
+                                                           id="prev_radio_{{ index }}">
+                                                    <label class="form-check-label" for="prev_radio_{{ index }}">{{ prev_paper_number }} (adjacent paper)</label>
+                                                </div>
+                                            {% endif %}
+                                            {% if next_paper_number %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="radio"
+                                                           name="selection_radio_{{ index }}"
+                                                           value="next"
+                                                           x-model="selection_method"
+                                                           @change="final_paper_number = '{{ next_paper_number }}'"
+                                                           id="next_radio_{{ index }}">
+                                                    <label class="form-check-label" for="next_radio_{{ index }}">{{ next_paper_number }} (adjacent paper)</label>
+                                                </div>
+                                            {% endif %}
+                                            <div class="form-check">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       name="selection_radio_{{ index }}"
+                                                       value="dropdown"
+                                                       x-model="selection_method"
+                                                       @change="final_paper_number = null"
+                                                       id="dropdown_radio_{{ index }}">
+                                                <label class="form-check-label" for="dropdown_radio_{{ index }}">Choose from list...</label>
+                                            </div>
+                                            <div x-show="selection_method === 'dropdown'"
+                                                 style="display: none"
+                                                 class="mt-2 ms-4 border-start ps-3">
                                                 <div class="form-check">
                                                     <input name="bundleOrArbitrary"
                                                            class="form-check-input"
                                                            type="checkbox"
-                                                           x-bind:value="bundlepapers"
-                                                           id="bundlepapers"
-                                                           x-model="bundlepapers">
-                                                    <label class="form-check-label" for="bundlepapers">from this bundle</label>
+                                                           x-model="bundlepapers"
+                                                           id="bundlepapers_toggle_{{ index }}">
+                                                    <label class="form-check-label" for="bundlepapers_toggle_{{ index }}">from this bundle</label>
                                                 </div>
-                                                <div x-show="bundlepapers">
-                                                    <select name="bundlePaper"
-                                                            class="form-select"
-                                                            aria-label="Default select example">
-                                                        <option selected>Paper from bundle</option>
+                                                <div x-show="bundlepapers" class="mt-2">
+                                                    <select class="form-select" x-model="final_paper_number">
+                                                        <option value="" selected>Select paper from bundle...</option>
                                                         {% for pn in bundle_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
                                                     </select>
                                                 </div>
-                                                <div x-show="!bundlepapers">
-                                                    <select name="arbitraryPaper"
-                                                            class="form-select"
-                                                            aria-label="Default select example">
-                                                        <option selected>any produced paper</option>
+                                                <div x-show="!bundlepapers" class="mt-2">
+                                                    <select class="form-select" x-model="final_paper_number">
+                                                        <option value="" selected>Select any produced paper...</option>
                                                         {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
                                                     </select>
                                                 </div>
-                                                <fieldset x-data="{showq: 'choose_q'}" class="mt-2">
-                                                    <div class="form-check">
-                                                        <input name="question_all_dnm"
-                                                               value="choose_q"
-                                                               class="form-check-input"
-                                                               type="radio"
-                                                               id="question_all_dnm1"
-                                                               checked
-                                                               x-model="showq" />
-                                                        <label class="form-check-label" for="question_all_dnm1">Attach to specific question(s):</label>
-                                                    </div>
-                                                    <div class="ms-4">
-                                                        <!-- div class="ms-4" x-show="showq == 'choose_q'" x-transition -->
-                                                        <fieldset>
-                                                            {% for qidx, qlabel, qlabel_html in question_labels_html %}
-                                                                <div class="form-check">
-                                                                    <input name="questions"
-                                                                           class="form-check-input"
-                                                                           type="checkbox"
-                                                                           value="{{ qidx }}"
-                                                                           id="qidx{{ qidx }}"
-                                                                           x-bind:disabled="showq != 'choose_q'" />
-                                                                    <label class="form-check-label" for="qidx{{ qidx }}">{{ qlabel_html | safe }}</label>
-                                                                </div>
-                                                            {% endfor %}
-                                                        </fieldset>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input name="question_all_dnm"
-                                                               value="choose_all"
-                                                               class="form-check-input"
-                                                               type="radio"
-                                                               id="question_all_dnm2"
-                                                               x-model="showq" />
-                                                        <label class="form-check-label" for="question_all_dnm2">
-                                                            Attach to <em>all</em> questions
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input name="question_all_dnm"
-                                                               value="choose_dnm"
-                                                               class="form-check-input"
-                                                               type="radio"
-                                                               id="question_all_dnm3"
-                                                               x-model="showq" />
-                                                        <label class="form-check-label" for="question_all_dnm3">
-                                                            Do not mark <small>(but keep with this paper)</small>
-                                                            <!-- TODO: a link or pop-up with more info would be nice here -->
-                                                        </label>
-                                                    </div>
-                                                </fieldset>
                                             </div>
+                                            <hr>
+                                            <fieldset class="mt-2">
+                                                <p class="fw-bold">Question(s):</p>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_q"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm1_{{ index }}"
+                                                           checked>
+                                                    <label class="form-check-label" for="question_all_dnm1_{{ index }}">Attach to specific question(s):</label>
+                                                </div>
+                                                <div class="ms-4">
+                                                    <fieldset>
+                                                        {% for qidx, qlabel, qlabel_html in question_labels_html %}
+                                                            <div class="form-check">
+                                                                <input name="questions"
+                                                                       class="form-check-input"
+                                                                       type="checkbox"
+                                                                       value="{{ qidx }}"
+                                                                       id="qidx_{{ qidx }}_{{ index }}">
+                                                                <label class="form-check-label" for="qidx_{{ qidx }}_{{ index }}">{{ qlabel_html | safe }}</label>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </fieldset>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_all"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm2_{{ index }}">
+                                                    <label class="form-check-label" for="question_all_dnm2_{{ index }}">
+                                                        Attach to <em>all</em> questions
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_dnm"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm3_{{ index }}">
+                                                    <label class="form-check-label" for="question_all_dnm3_{{ index }}">
+                                                        Do not mark <small>(but keep with this paper)</small>
+                                                    </label>
+                                                </div>
+                                            </fieldset>
                                         </div>
                                         <div class="py-4" id="invalidmessage"></div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>

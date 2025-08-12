@@ -4,6 +4,7 @@
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aidan Murphy
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2025 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -37,6 +38,10 @@
                                 <tr>
                                     <th scope="row">Question idx</th>
                                     <td>{{ latest_rubric.question_index }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Published</th>
+                                    <td>{{ latest_rubric.published }}</td>
                                 </tr>
                                 <tr>
                                     <th scope="row">Kind</th>
