@@ -3,5 +3,6 @@
 # Copyright (C) 2025 Bryan Tanaday
 # Copyright (C) 2025 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Lindsey Daniels
 
-# fonts based on handwriting sample of the above people
+"""Fonts based on handwriting samples of the people who wrote this module."""
