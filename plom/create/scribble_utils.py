@@ -64,6 +64,7 @@ possible_answers = [
     " figured algebra.  -- Sophie Germain",
     "Understand it well as I may, my comprehension can only be an"
     " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
+    "Take chances, make mistakes, get messy. -- Ms Frizzle",
 ]
 
 possible_short_answers = [
