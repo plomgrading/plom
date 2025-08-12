@@ -50,14 +50,13 @@ class MgetRubricPanes(APIView):
     def get(self, request: Request, *, username: str, question: int) -> Response:
         try:
             user = User.objects.get(username=username)
-            pane = RubricService.get_rubric_pane(user, question)
         except User.DoesNotExist:
             return _error_response(
                 f"User {username} doesn't exist",
                 status.HTTP_400_BAD_REQUEST,
             )
-        else:
-            return Response(pane, status=status.HTTP_200_OK)
+        pane = RubricService.get_rubric_pane(user, question)
+        return Response(pane, status=status.HTTP_200_OK)
 
     def put(self, request: Request, *, username: str, question: int) -> Response:
         rs = RubricService()
