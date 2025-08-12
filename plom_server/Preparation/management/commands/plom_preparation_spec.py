@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -11,6 +12,11 @@ from rest_framework import serializers
 
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
+
+
+DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_spec (Issue #3981).
+    Consider using plom-cli subcommands to manipulate the spec.
+    This suite of Django management commands is no longer being maintained."""
 
 
 class Command(BaseCommand):
@@ -97,6 +103,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        self.stdout.write(DeprecationNotice)
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":

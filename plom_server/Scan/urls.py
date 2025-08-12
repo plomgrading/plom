@@ -3,6 +3,8 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Deep Shah
 
 from django.urls import path
 
@@ -18,7 +20,7 @@ from .views import (
     ScannerReassignView,
     ###
     PushedImageView,
-    DiscardWholePaperView,
+    WholePaperView,
     PushedImageRotatedView,
     PushedImageWrapView,
     ###
@@ -46,6 +48,8 @@ from .views import (
     BundlePushCollisionView,
     BundlePushBadErrorView,
     RecentStagedBundleRedirectView,
+    HandwritingComparisonView,
+    GeneratePaperPDFView,
 )
 
 
@@ -81,9 +85,9 @@ urlpatterns = [
         name="pushed_img",
     ),
     path(
-        "discard_whole/<int:paper_number>",
-        DiscardWholePaperView.as_view(),
-        name="scan_discard_whole_paper",
+        "whole_paper/<int:paper_number>",
+        WholePaperView.as_view(),
+        name="scan_whole_paper",
     ),
     path(
         "pushed_img_rot/<int:img_pk>",
@@ -204,5 +208,15 @@ urlpatterns = [
         "bundle_push_error/<int:bundle_id>/",
         BundlePushBadErrorView.as_view(),
         name="scan_bundle_push_error",
+    ),
+    path(
+        "compare-handwriting/<int:bundle_id>/<int:index>/",
+        HandwritingComparisonView.as_view(),
+        name="scan_compare_handwriting",
+    ),
+    path(
+        "paper-pdf/<int:bundle_id>/<int:paper_number>/",
+        GeneratePaperPDFView.as_view(),
+        name="scan_paper_pdf",
     ),
 ]

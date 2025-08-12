@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
@@ -23,17 +25,20 @@ from .routes import (
 )
 
 from .views import (
-    ClasslistHandler,
+    Classlist,
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,
+    Prenaming,
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
+    papersToPrint,
     ScanListBundles,
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
+    FinishUnmarked,
     REPspreadsheet,
     REPidentified,
     REPcompletionStatus,
@@ -41,6 +46,8 @@ from .views import (
     SourceOverview,
     SourceDetail,
     SpecificationHandler,
+    RectangleExtractorView,
+    PQVmap,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -68,6 +75,21 @@ urlpatterns = [
     path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
     # TODO: Issue #3786: eventually remove the "beta" from these provisional URLs
     path(
+        "api/beta/paperstoprint",
+        papersToPrint.as_view(),
+        name="papersToPrint",
+    ),
+    path(
+        "api/beta/paperstoprint/<int:papernumber>",
+        papersToPrint.as_view(),
+        name="papersToPrint-withint",
+    ),
+    path(
+        "api/beta/paperstoprint/<str:action>",
+        papersToPrint.as_view(),
+        name="papersToPrint-withstr",
+    ),
+    path(
         "api/beta/scan/bundles",
         ScanListBundles.as_view(),
         name="api_Scan_bundles",
@@ -87,6 +109,11 @@ urlpatterns = [
         "api/beta/finish/reassembled/<int:papernum>",
         FinishReassembled.as_view(),
         name="api_Finish_reassembled",
+    ),
+    path(
+        "api/beta/finish/unmarked/<int:papernum>",
+        FinishUnmarked.as_view(),
+        name="api_Finish_unmarked",
     ),
     path(
         "REP/spreadsheet",
@@ -113,15 +140,22 @@ urlpatterns = [
         SpecificationHandler.as_view(),
         name="api_spec_handler",
     ),
+    # Django inspects patterns in order, using the first match.
+    # So the more specific one should appear first, as shown here.
+    path(
+        "api/v0/source/<int:version>",
+        SourceDetail.as_view(),
+        name="api_source_detail",
+    ),
     path(
         "api/v0/source",
         SourceOverview.as_view(),
         name="api_source_overview",
     ),
     path(
-        "api/v0/source/<int:version>",
-        SourceDetail.as_view(),
-        name="api_source_detail",
+        "api/beta/pqvmap",
+        PQVmap.as_view(),
+        name="pqvmapper",
     ),
 ]
 
@@ -152,12 +186,22 @@ urlpatterns += [
     ),
     path(
         "api/v0/classlist",
-        ClasslistHandler.as_view(),
-        name="api_classlist_handler",
+        Classlist.as_view(),
+        name="api_classlist",
+    ),
+    path(
+        "api/v0/classlist/prenaming",
+        Prenaming.as_view(),
+        name="api_classlist_prenaming",
     ),
     path(
         "rubrics/<int:rid>/tasks",
         MgetRubricMarkingTasks.as_view(),
         name="api_rubrics_tasks",
+    ),
+    path(
+        "api/rectangle/<int:version>/<int:page_num>/<int:paper_num>",
+        RectangleExtractorView.as_view(),
+        name="api_rectangle_extractor",
     ),
 ]

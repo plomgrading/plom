@@ -12,7 +12,7 @@ from plom_server.Papers.services import SpecificationService
 from .models import Rubric
 
 
-class RubricHalfMarkForm(forms.Form):
+class RubricCreateHalfMarkForm(forms.Form):
     # creates half-mark rubrics
     pass
 
@@ -100,9 +100,8 @@ class RubricItemForm(forms.ModelForm):
         empty_value="",
     )
 
-    # Explicit IntegerField for value for now
-    # TODO: Change this to a DecimalField when ready
-    value = forms.IntegerField(required=True)
+    # Note: DecimalField seems to result in ugly "+3.0" rubrics
+    value = forms.FloatField(required=True)
 
     kind = forms.ChoiceField(
         choices=Rubric.RubricKind.choices,
@@ -113,6 +112,7 @@ class RubricItemForm(forms.ModelForm):
         required=False,
         widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
     )
+    published = forms.BooleanField(required=False, label="Published", initial=True)
 
     class Meta:
         model = Rubric
@@ -127,11 +127,11 @@ class RubricItemForm(forms.ModelForm):
             "parameters",
             "tags",
             "pedagogy_tags",
+            "published",
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),
             "meta": forms.Textarea(attrs={"rows": 2}),
-            "versions": forms.TextInput(),  # default would be Textarea
             "tags": forms.TextInput(),  # default would be Textarea
             "parameters": forms.Textarea(attrs={"rows": 2}),
         }

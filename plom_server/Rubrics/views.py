@@ -9,10 +9,8 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
 
-
 import difflib
 import json
-from copy import deepcopy
 from io import TextIOWrapper, StringIO, BytesIO
 from typing import Any
 
@@ -26,16 +24,15 @@ from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
 
-from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
 
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.Base.models import SettingsModel
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import PapersPrinted
-from .services import RubricService
+from .services import RubricService, RubricPermissionsService
 from .forms import (
-    RubricHalfMarkForm,
+    RubricCreateHalfMarkForm,
     RubricDiffForm,
     RubricFilterForm,
     RubricUploadForm,
@@ -56,17 +53,20 @@ class RubricAdminPageView(ManagerRequiredView):
             return render(request, "Finish/finish_not_printed.html", context=context)
 
         template_name = "Rubrics/rubrics_admin.html"
-        rubric_halfmark_form = RubricHalfMarkForm(request.GET)
+        rubric_create_halfmark_form = RubricCreateHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
+        # TODO: flaky?
         half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
+        rubric_fractional_options = RubricPermissionsService.get_fractional_settings()
         context.update(
             {
                 "rubrics": rubrics,
                 "half_point_rubrics": half_point_rubrics,
-                "rubric_halfmark_form": rubric_halfmark_form,
+                "rubric_fractional_options": rubric_fractional_options,
+                "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
                 "rubric_template_form": template_form,
@@ -75,8 +75,8 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricHalfMarksView(ManagerRequiredView):
-    """Create demo rubrics."""
+class RubricCreateHalfMarksView(ManagerRequiredView):
+    """Create half-point rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
         any_manager = User.objects.filter(groups__name="manager").first()
@@ -88,24 +88,34 @@ class RubricHalfMarksView(ManagerRequiredView):
         return redirect("rubrics_admin")
 
 
+class RubricFractionalPreferencesView(ManagerRequiredView):
+    """Set fractional rubric preferences."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        RubricPermissionsService.change_fractional_settings(request.POST)
+        return redirect("rubrics_admin")
+
+
 class RubricAccessPageView(ManagerRequiredView):
     """Highlevel control of who can modify/create rubrics."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the form for who can modify/create rubrics."""
         template_name = "Rubrics/rubrics_access.html"
 
-        settings = SettingsModel.load()
+        create = Settings.get_who_can_create_rubrics()
+        modify = Settings.get_who_can_modify_rubrics()
 
-        if settings.who_can_create_rubrics == "permissive":
+        if create == "permissive":
             create_checked = (True, False, False)
-        elif settings.who_can_create_rubrics == "locked":
+        elif create == "locked":
             create_checked = (False, False, True)
         else:
             create_checked = (False, True, False)
 
-        if settings.who_can_modify_rubrics == "permissive":
+        if modify == "permissive":
             modify_checked = (True, False, False)
-        elif settings.who_can_modify_rubrics == "locked":
+        elif modify == "locked":
             modify_checked = (False, False, True)
         else:
             modify_checked = (False, True, False)
@@ -125,34 +135,25 @@ class RubricAccessPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Accept changes to who can modify/create rubrics."""
         template_name = "Rubrics/rubrics_access.html"
         create = request.POST.get("create", None)
         modify = request.POST.get("modify", None)
 
-        settings = SettingsModel.load()
+        # These can throw ValueError: do we want a 406?
+        Settings.set_who_can_create_rubrics(create)
+        Settings.set_who_can_modify_rubrics(modify)
 
-        if create not in ("permissive", "per-user", "locked"):
-            # TODO: 406?
-            raise ValueError(f"create={create} is invalid")
-        settings.who_can_create_rubrics = create
-        settings.save()
-
-        if modify not in ("permissive", "per-user", "locked"):
-            # TODO: 406?
-            raise ValueError(f"modify={modify} is invalid")
-        settings.who_can_modify_rubrics = modify
-        settings.save()
-
-        if settings.who_can_create_rubrics == "permissive":
+        if create == "permissive":
             create_checked = (True, False, False)
-        elif settings.who_can_create_rubrics == "locked":
+        elif create == "locked":
             create_checked = (False, False, True)
         else:
             create_checked = (False, True, False)
 
-        if settings.who_can_modify_rubrics == "permissive":
+        if modify == "permissive":
             modify_checked = (True, False, False)
-        elif settings.who_can_modify_rubrics == "locked":
+        elif modify == "locked":
             modify_checked = (False, False, True)
         else:
             modify_checked = (False, True, False)
@@ -274,7 +275,10 @@ class RubricItemView(UpdateView, ManagerRequiredView):
 
     @staticmethod
     def post(request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting to a rubric item receives data from a form an updates a rubric."""
+        """Posting to a rubric item receives data from a form and updates a rubric.
+
+        TODO: is anyone calling this?
+        """
         form = RubricItemForm(request.POST)
 
         if form.is_valid():
@@ -334,10 +338,7 @@ class FeedbackRulesView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/feedback_rules.html"
         context = self.build_context()
-        settings = SettingsModel.load()
-        rules = settings.feedback_rules
-        if not rules:
-            rules = static_feedback_rules
+        rules = Settings.get_feedback_rules()
         context.update(
             {
                 "feedback_rules": _rules_as_list(rules),
@@ -347,15 +348,11 @@ class FeedbackRulesView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/feedback_rules.html"
-        settings = SettingsModel.load()
         # decide if we are resetting or updating the rules from the form
         if request.POST.get("_whut_do") == "reset":
             rules = {}
         else:
-            rules = settings.feedback_rules
-            if not rules:
-                # carefully make a copy so we don't mess with the static data
-                rules = deepcopy(static_feedback_rules)
+            rules = Settings.get_feedback_rules()
             for code in rules.keys():
                 x = request.POST.get(f"{code}-allowed", None)
                 rules[code]["allowed"] = True if x is not None else False
@@ -363,15 +360,11 @@ class FeedbackRulesView(ManagerRequiredView):
                 rules[code]["warn"] = True if x is not None else False
                 x = request.POST.get(f"{code}-dama_allowed", None)
                 rules[code]["dama_allowed"] = True if x is not None else False
-        settings.feedback_rules = rules
-        settings.save()
+        Settings.key_value_store_set("feedback_rules", rules)
 
         # essentially a copy-paste of get from here :(
         context = self.build_context()
-        settings = SettingsModel.load()
-        rules = settings.feedback_rules
-        if not rules:
-            rules = static_feedback_rules
+        Settings.get_feedback_rules()
         context.update(
             {
                 "successful_post": True,
@@ -411,8 +404,10 @@ class DownloadRubricView(ManagerRequiredView):
 
 
 class UploadRubricView(ManagerRequiredView):
+    """Handles uploading of rubrics from data containing in a file."""
+
     def post(self, request: HttpRequest):
-        service = RubricService()
+        """Posting a file of rubric data creates new rubrics."""
         suffix = request.FILES["rubric_file"].name.split(".")[-1]
         username = request.user.username
 
@@ -427,7 +422,7 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
-            service.update_rubric_data(
+            RubricService.create_rubrics_from_file_data(
                 data_string, suffix, by_system=False, requesting_user=username
             )
         except ValueError as e:
@@ -499,20 +494,20 @@ class RubricCreateView(ManagerRequiredView):
             "out_of": form.cleaned_data["out_of"],
             "meta": form.cleaned_data["meta"],
             "question_index": form.cleaned_data["question_index"],
+            "versions": form.cleaned_data["versions"],
+            "parameters": form.cleaned_data["parameters"],
+            "tags": form.cleaned_data["tags"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+            "published": form.cleaned_data["published"],
         }
         try:
             RubricService.create_rubric(rubric_data)
-
-        except ValueError as e:
+        except (ValueError, PermissionDenied) as e:
             messages.error(request, f"Error: {e}")
-
-        except PermissionDenied as e:
-            messages.error(request, f"Error: {e}")
-
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-
+            # see comments elsewhere about formatting serializer.ValidationError
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric created successfully.")
 
@@ -556,28 +551,22 @@ class RubricEditView(ManagerRequiredView):
             "subrevision": rubric.subrevision,
             "tags": form.cleaned_data["tags"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+            "published": form.cleaned_data["published"],
         }
         try:
             RubricService.modify_rubric(
                 rid,
-                new_rubric_data=rubric_data,
+                rubric_data,
                 modifying_user=User.objects.get(username=request.user.username),
                 tag_tasks=tag_tasks,
                 is_minor_change=is_minor_change,
             )
-
-        except ValueError as e:
+        except (ValueError, PermissionDenied, PlomConflict) as e:
             messages.error(request, f"Error: {e}")
-
-        except PermissionDenied as e:
-            messages.error(request, f"Error: {e}")
-
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-
-        except PlomConflict as e:
-            messages.error(request, f"Error: {e}")
-
+            # see comments elsewhere about formatting serializer.ValidationError
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric edited successfully.")
 

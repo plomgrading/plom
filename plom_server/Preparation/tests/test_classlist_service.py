@@ -145,3 +145,33 @@ class TestClasslistService(TestCase):
             self.assertListEqual(warn_err, [])
         (row,) = Service.get_students()
         self.assertEqual(row["student_name"], "Doe, 学生")
+
+    def test_misdetected_dialect_bom_crlf_issue_3938(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfile = Path(tmpdir) / "foo.csv"
+            # tmpfile = Path("/home/cbm") / "foo.csv"
+            with tmpfile.open("wb") as f:
+                f.write(codecs.BOM_UTF8)
+                f.write("id,name\r\n".encode("utf8"))
+                f.write('11111111,"Comma, Separated"\r\n'.encode("utf8"))
+                f.write('12121212,"Lastname, Firstname"\r\n'.encode("utf8"))
+            with tmpfile.open("rb") as f:
+                success, warn_err = Service.validate_and_use_classlist_csv(f)
+            self.assertTrue(success)
+            self.assertListEqual(warn_err, [])
+
+    def test_misdetected_dialect_bom_crlf_issue_3938_example2(self) -> None:
+        # This looks similar to the previous test, but the old sniffer-based code
+        # would fail differently: I think it detect "e" as the separator here.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfile = Path(tmpdir) / "foo.csv"
+            # tmpfile = Path("/home/cbm") / "foo.csv"
+            with tmpfile.open("wb") as f:
+                f.write(codecs.BOM_UTF8)
+                f.write("id,name\r\n".encode("utf8"))
+                f.write('11223344,"Meh, Foo"\r\n'.encode("utf8"))
+                f.write('44332211,"Meh, Bar"\r\n'.encode("utf8"))
+            with tmpfile.open("rb") as f:
+                success, warn_err = Service.validate_and_use_classlist_csv(f)
+            self.assertTrue(success)
+            self.assertListEqual(warn_err, [])

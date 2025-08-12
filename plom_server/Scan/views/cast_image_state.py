@@ -28,7 +28,7 @@ class DiscardImageView(ScannerRequiredView):
         self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
     ) -> HttpResponse:
         try:
-            ScanCastService().discard_image_type_from_bundle_id_and_order(
+            ScanCastService.discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
         except ValueError as e:
@@ -256,14 +256,11 @@ class ExtraliseImageView(ScannerRequiredView):
 
         extra_page_data = request.POST
 
-        if extra_page_data.get("bundleOrArbitrary", "off") == "on":
-            paper_number = extra_page_data.get("bundlePaper", None)
-        else:
-            paper_number = extra_page_data.get("arbitraryPaper", None)
+        paper_number = extra_page_data.get("paper_number", None)
 
         try:
             paper_number = int(paper_number)
-        except ValueError:
+        except (ValueError, TypeError):
             return HttpResponse(
                 """<span class="alert alert-danger">Invalid paper number</span>"""
             )
@@ -311,7 +308,7 @@ class ExtraliseImageView(ScannerRequiredView):
         self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
     ) -> HttpResponse:
         try:
-            ScanCastService().extralise_image_from_bundle_id(
+            ScanCastService.extralise_image_from_bundle_id(
                 request.user, bundle_id, index
             )
         except PlomBundleLockedException:

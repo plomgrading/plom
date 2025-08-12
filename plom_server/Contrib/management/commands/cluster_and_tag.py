@@ -132,6 +132,7 @@ class Command(BaseCommand):
         for p in dir.iterdir():
             if p.stem.split("_")[3] == f"{digit_index}":
                 image = cv.imread(str(p), cv.IMREAD_GRAYSCALE)
+                assert image is not None
                 image = image.flatten()
                 images.append(image)
                 paper_num = p.stem.split("_")[1]

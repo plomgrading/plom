@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -12,6 +13,11 @@ from ...services import (
     PrenameSettingService,
     PapersPrinted,
 )
+
+
+DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_classlist (Issue #3981).
+    Consider using plom-cli subcommands to manipulate the class list.
+    This suite of Django management commands is no longer being maintained."""
 
 
 class Command(BaseCommand):
@@ -137,6 +143,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        self.stdout.write(DeprecationNotice)
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":

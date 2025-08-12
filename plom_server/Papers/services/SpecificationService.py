@@ -26,7 +26,7 @@ from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_spec,
 )
-
+from plom_server.Papers.models import MobilePage
 
 log = logging.getLogger("SpecificationService")
 
@@ -475,6 +475,7 @@ def get_total_marks() -> int:
 
 @transaction.atomic
 def n_pages_for_question(question_index) -> int:
+    """Return the pages used for the given question."""
     question = SpecQuestion.objects.get(question_index=question_index)
     return len(question.pages)
 
@@ -589,40 +590,30 @@ def _render_html_question_label(qidx: int, qlabel: str) -> str:
 
 
 def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
-    """HTML code for rendering a specified list of question labels.
+    """Return a string of question labels, given a list of question indices.
+
+    If the list contains positive integers, return their labels.
+
+    If the list contains the special value MobilePage.DNM_qidx, then return the
+    string ``"Do Not Mark"``.
 
     If the list is empty or the special value ``None``, then return the
     string ``"None"``.
     """
     if not qindices:
         return "None"
+    if MobilePage.DNM_qidx in qindices:
+        return "Do Not Mark"
     T = get_question_labels_str_and_html_map()
+    # return ", ".join(T[qidx][1] for qidx in sorted(qindices)) # Nicer, but breaks CI
     return ", ".join(T[qidx][1] for qidx in qindices)
 
 
-def get_question_selection_method(question_index: int) -> str:
-    """Get the selection method (shuffle/fix) of the given question.
-
-    Args:
-        question_index: question indexed from 1.
+def get_selection_method_of_all_questions() -> dict[int, list[int] | None]:
+    """Get the selection method for all questions.
 
     Returns:
-        The version selection method (shuffle or fix) as string.
-
-    Raises:
-        ObjectDoesNotExist: no question exists with the given index.
-
-    As of Oct 2024, no one is calling this.  Deprecated?
-    """
-    question = SpecQuestion.objects.get(question_index=question_index)
-    return question.select
-
-
-def get_selection_method_of_all_questions() -> dict[int, str]:
-    """Get the selection method (shuffle/fix) all questions.
-
-    Returns:
-        Dict of {q_index: selection} where selection is 'fix' or 'shuffle'.
+        Dict of {q_index: selection} where selection is a list of versions, or None.
     """
     selection_method = {}
     for question in SpecQuestion.objects.all().order_by("question_index"):

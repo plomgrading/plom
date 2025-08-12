@@ -3,8 +3,10 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 import random
 import tempfile
@@ -28,7 +30,7 @@ from plom.finish.examReassembler import reassemble
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
-from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage
+from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage, FixedPage
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ManageScanService
 
@@ -127,7 +129,7 @@ class ReassembleService:
         makeCover(
             cover_page_table_data,
             cover_pdf_name,
-            test_num=paper.paper_number,
+            paper_num=paper.paper_number,
             info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
@@ -204,16 +206,14 @@ class ReassembleService:
             for img in nonmarked
         ]
 
-    def get_annotation_images(self, paper: Paper) -> list[dict[str, Any]]:
+    def get_annotation_images(self, paper: Paper) -> list[str]:
         """Get the paths for a paper's annotation images.
 
         Args:
             paper: a reference to a Paper instance.
 
         Returns:
-            List of dicts, each having keys 'filename' and 'rotation'
-            giving the path to the image and the rotation angle of the
-            image.
+            List of strings/Paths to each annotation.
         """
         marked_pages = []
         mts = MarkingTaskService()
@@ -224,6 +224,99 @@ class ReassembleService:
             annotation = mts.get_latest_annotation(paper.paper_number, qi)
             marked_pages.append(annotation.image.image.path)
         return marked_pages
+
+    def get_unmarked_images(self, paper: Paper) -> list[dict[str, Any]]:
+        """Get paths for a paper's images as they were scanned.
+
+        Args:
+            paper: a reference to a Paper instance
+
+        Returns:
+            List of dicts, each having keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.
+        """
+        nonmarked_fixed = (
+            FixedPage.objects.filter(paper=paper)
+            .prefetch_related("image", "image__baseimage")
+            .order_by("page_number")
+        )
+        nonmarked_mobile = (
+            MobilePage.objects.filter(paper=paper)
+            .prefetch_related("image", "image__baseimage")
+            .order_by("question_index")
+        )
+
+        unmarked = []
+        for page in nonmarked_fixed:
+            if page.image is not None:
+                unmarked.append(
+                    {
+                        "filename": page.image.baseimage.image_file.path,
+                        "rotation": page.image.rotation,
+                    }
+                )
+        for page in nonmarked_mobile:
+            unmarked.append(
+                {
+                    "filename": page.image.baseimage.image_file.path,
+                    "rotation": page.image.rotation,
+                }
+            )
+
+        if not unmarked:
+            raise ValueError(f"Paper {paper.paper_number} has no unmarked images.")
+
+        # distinct("qidx"/"page_number") doesn't work outside of postgres
+        # so deduplicate list this way
+        unmarked_dict = {d["filename"]: d for d in unmarked}
+        unmarked_deduplicated = list(unmarked_dict.values())
+
+        return unmarked_deduplicated
+
+    def get_unmarked_paper(self, papernum: int) -> BytesIO:
+        """Reassemble a particular paper JIT without marker annotations.
+
+        The produced file isn't cached.
+
+        Args:
+            papernum: The papernumber to reassemble.
+
+        Returns:
+            The bytes of a .pdf file, wrapped in a BytesIO object.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=papernum)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number") from None
+
+        unmarked_images = self.get_unmarked_images(paper_obj)
+
+        paper_id = StudentMarkService.get_paper_id_or_none(paper_obj)
+        if not paper_id:
+            pdf_id_metadata = f"paper-{paper_obj.paper_number}"
+        else:
+            pdf_id_metadata = paper_id[0]  # student id
+
+        shortname = SpecificationService.get_shortname()
+
+        # need NamedTempFile otherwise it returns an fd, not compatible with reassemble
+        with tempfile.NamedTemporaryFile() as tf:
+            reassemble(
+                tf.name,
+                shortname,
+                pdf_id_metadata,
+                coverfile=None,
+                id_images=unmarked_images,
+                marked_pages=[],
+                dnm_images=[],
+                nonmarked_images=[],
+            )
+            with open(tf.name, "rb") as pdf_file:
+                pdf_bytestream = BytesIO(pdf_file.read())
+
+        pdf_bytestream.name = f"{shortname}_{pdf_id_metadata}.pdf"
+        return pdf_bytestream
 
     def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:
         """Reassemble a particular paper.

@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Bryan Tanady
@@ -15,7 +15,12 @@ from . import views
 urlpatterns = [
     path("", views.RubricLandingPageView.as_view(), name="rubrics_landing"),
     path("admin/", views.RubricAdminPageView.as_view(), name="rubrics_admin"),
-    path("admin/half/", views.RubricHalfMarksView.as_view(), name="rubric_half"),
+    path("admin/half/", views.RubricCreateHalfMarksView.as_view(), name="rubric_half"),
+    path(
+        "admin/pref/",
+        views.RubricFractionalPreferencesView.as_view(),
+        name="rubric_fractional_pref",
+    ),
     path("admin/access/", views.RubricAccessPageView.as_view(), name="rubrics_access"),
     path(
         "admin/feedback_rules/",

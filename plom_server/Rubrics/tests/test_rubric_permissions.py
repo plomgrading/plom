@@ -12,7 +12,7 @@ from django.test import TestCase
 from model_bakery import baker
 
 from plom_server.Base.tests import config_test
-from plom_server.Base.models import SettingsModel
+from plom_server.Base.services import Settings
 from ..services import RubricService
 
 
@@ -36,9 +36,7 @@ class RubricServiceTests_permissions(TestCase):
         baker.make(User, username="yvonne")
 
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:
-        s = SettingsModel.load()
-        s.who_can_modify_rubrics = "locked"
-        s.save()
+        Settings.set_who_can_modify_rubrics("locked")
         rub = RubricService.create_rubric(_make_ex())
         rid = rub["rid"]
         rub.update({"text": "new text"})
@@ -46,9 +44,7 @@ class RubricServiceTests_permissions(TestCase):
         RubricService.modify_rubric(rid, rub, modifying_user=None)
 
     def test_rubrics_cannot_modify_when_locked(self) -> None:
-        s = SettingsModel.load()
-        s.who_can_modify_rubrics = "locked"
-        s.save()
+        Settings.set_who_can_modify_rubrics("locked")
         rub = RubricService.create_rubric(_make_ex())
         rid = rub["rid"]
         rub.update({"text": "new text"})
@@ -59,9 +55,7 @@ class RubricServiceTests_permissions(TestCase):
             RubricService.modify_rubric(rid, rub, modifying_user="xenia")
 
     def test_rubrics_permissive_cannot_modify_system_rubrics(self) -> None:
-        s = SettingsModel.load()
-        s.who_can_modify_rubrics = "permissive"
-        s.save()
+        Settings.set_who_can_modify_rubrics("permissive")
         rub = _make_ex()
         rub.update({"system_rubric": True})
         rub = RubricService.create_rubric(rub)
@@ -71,9 +65,7 @@ class RubricServiceTests_permissions(TestCase):
             RubricService.modify_rubric(rid, rub, modifying_user="xenia")
 
     def test_rubrics_cannot_create_when_locked(self) -> None:
-        s = SettingsModel.load()
-        s.who_can_create_rubrics = "locked"
-        s.save()
+        Settings.set_who_can_create_rubrics("locked")
         r = _make_ex()
         with self.assertRaises(PermissionDenied):
             RubricService.create_rubric(r, creating_user=r["username"])

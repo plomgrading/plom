@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Deep Shah
 
 import json
 from pathlib import Path
@@ -495,6 +496,7 @@ class IDBoxProcessorService:
         template_id_box_width = 1250
         # read the given file into an np.array.
         id_box = cv.imread(str(id_box_file))
+        assert id_box is not None, f"Unexpectedly could not read id box {id_box_file}"
         assert len(id_box.shape) in (2, 3), f"Unexpected numpy shape {id_box.shape}"
         # third entry 1 (grayscale) or 3 (colour)
         height: int = id_box.shape[0]
@@ -745,7 +747,21 @@ class IDBoxProcessorService:
         self.run_lap_solver(user, student_ids, probabilities)
 
     def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
+        # start by removing any IDs that have already been used
         id_reader_service = IDReaderService()
+        for ided_stu in id_reader_service.get_already_matched_sids():
+            try:
+                student_ids.remove(ided_stu)
+            except ValueError:
+                pass
+        # do not use papers that are already ID'd
+        unidentified_papers = id_reader_service.get_unidentified_papers()
+        papers_to_id = [n for n in unidentified_papers if n in probabilities]
+        if len(papers_to_id) == 0 or len(student_ids) == 0:
+            raise IndexError(
+                f"Greedy assignment is degenerate: {len(papers_to_id)} unidentified "
+                f"machine-read papers and {len(student_ids)} unused students."
+            )
         # Different predictors go here.
         greedy_predictions = self._greedy_predictor(student_ids, probabilities)
         for prediction in greedy_predictions:
@@ -822,7 +838,7 @@ class IDBoxProcessorService:
         return predictions
 
     def _assemble_cost_matrix(self, paper_numbers, student_IDs, probabilities):
-        """Compute the cost matrix between list of tests and list of student IDs.
+        """Compute the cost matrix between list of papers and list of student IDs.
 
         Args:
             paper_numbers (list): int, the ones we want to match.
@@ -865,7 +881,7 @@ class IDBoxProcessorService:
         Args:
             paper_numbers: int, the ones we want to match.
             student_IDs: A list of student ID numbers.
-            probabilities: dict with keys that contain a test number
+            probabilities: dict with keys that contain a paper number
                 and values that contain a probability matrix,
                 which is a list of lists of floats.
 

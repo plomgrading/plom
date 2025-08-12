@@ -23,7 +23,11 @@ from plom.create.mergeAndCodePages import (
     create_QR_codes,
     create_invalid_QR_and_bar_codes,
 )
-from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
+from plom.create.scribble_utils import (
+    scribble_name_and_id,
+    scribble_pages,
+    scribble_answer_in_box,
+)
 from plom.scan import pdfmucker
 
 
@@ -602,6 +606,11 @@ class DemoBundleCreationService:
 
                     # scribble on the pages
                     scribble_pages(pdf_document)
+                    # scribble in the answer boxes on p3 of the current demo
+                    # magic numbers - need to be updated if demo assessment is changed
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.19)
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.45)
+                    scribble_answer_in_box(pdf_document, 3, 0.6, 0.72)
 
                     # insert a qr-code from a previous page after scribbling
                     if paper_number in duplicate_qr:
@@ -676,7 +685,7 @@ class DemoBundleCreationService:
             bundle_path = Path(f"fake_bundle{i + 1}.pdf")
             print(
                 f'  - creating bundle "{bundle_path.name}" from papers '
-                f'{bundle["first_paper"]} to {bundle["last_paper"]}'
+                f"{bundle['first_paper']} to {bundle['last_paper']}"
             )
             first_idx = bundle["first_paper"] - 1
             last_idx = bundle["last_paper"]

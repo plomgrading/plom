@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 import tempfile
 from io import BytesIO
@@ -129,19 +130,26 @@ class PQVMappingView(ManagerRequiredView):
                 "DB papers cannot be created before the assessment specification."
             )
 
-        triples = SpecificationService.get_question_html_label_triples()
-        question_indices = [t[0] for t in triples]
-        fixshuf = SpecificationService.get_selection_method_of_all_questions()
-        labels_fix = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "fix")
-        labels_shf = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "shuffle")
+        question_triples = SpecificationService.get_question_html_label_triples()
+        question_indices = [t[0] for t in question_triples]
+        selection = SpecificationService.get_selection_method_of_all_questions()
+
+        selection_dict = {}
+        # iterate over all questions in the spec
+        for t in question_triples:
+            version_list = selection[t[0]]
+            if version_list is None:
+                selection_dict.update({t[2]: "select from all versions."})
+            else:
+                str_list = list(map(str, version_list))
+                selection_dict.update({t[2]: ", ".join(str_list)})
 
         num_students = StagingStudentService.how_many_students()
 
         context = {
             "question_indices": question_indices,
-            "question_labels_html": triples,
-            "question_labels_html_fix": labels_fix,
-            "question_labels_html_shuffle": labels_shf,
+            "question_labels_html": question_triples,
+            "question_labels_selection_html": selection_dict,
             "prenaming": PrenameSettingService().get_prenaming_setting(),
             "pqv_mapping_present": PaperInfoService.is_paper_database_fully_populated(),
             "number_of_students": num_students,

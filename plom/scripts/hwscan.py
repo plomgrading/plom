@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
 """Plom tools for dealing with student self-submitted scans.
@@ -31,8 +31,7 @@ import argparse
 import os
 from stdiomask import getpass
 
-from plom import __version__
-from plom import Default_Port
+from plom.common import Default_Port, __version__
 from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status

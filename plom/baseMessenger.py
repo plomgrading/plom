@@ -19,8 +19,7 @@ from typing import Any
 import requests
 import urllib3
 
-from plom import __version__
-from plom import Default_Port
+from plom.common import Default_Port, __version__
 from plom.version_maps import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
@@ -45,7 +44,7 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 
-Plom_API_Version = 114  # Our API version
+Plom_API_Version = 115  # Our API version
 Plom_Legacy_Server_API_Version = 60
 
 # We can support earlier servers by special-case code, so
@@ -54,7 +53,8 @@ Supported_Server_API_Versions = [
     Plom_Legacy_Server_API_Version,
     112,  # 2024-09
     113,  # 2025-01
-    114,  # 2025-
+    114,  # 2025-05
+    115,  # 2025-09
 ]
 # Brief changelog
 #
@@ -67,12 +67,25 @@ Supported_Server_API_Versions = [
 #    - added "exclusive" option to push:/get_token/
 #    - added "revoke_token" option to delete:/close_user/
 #    - new delete:/get_token/ revokes token
+# * 115
+#    - rubrics versions field uses string instead of list
 
 
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
+
+
+def _fix_114_versions_field_to_str(r: dict[str, Any]) -> dict[str, Any]:
+    """Convert list of versions to string of comma-separated versions."""
+    if r.get("versions"):
+        verstr = ", ".join([str(x) for x in r["versions"]])
+    else:
+        # map [] and None to empty str
+        verstr = ""
+    r["versions"] = verstr
+    return r
 
 
 class BaseMessenger:
@@ -99,21 +112,23 @@ class BaseMessenger:
         """Initialize a new BaseMessenger.
 
         Args:
-            server: URL or None to default to localhost.
+            server: URL, or None to default to localhost.
 
         Keyword Arguments:
-            port: What port to try to connect to.  Defaults
-                to 41984 if omitted and cannot be determined from the
-                URI string.
-            scheme: What scheme to use to connect.  Defaults
-                to ``"https"`` if omitted and cannot be determined from
-                the URI string.
-            verify_ssl (True/False): controls where SSL certs are
-                checked, see the `requests` library parameter
-                ``Session.verify`` which ultimately receives this.
+            port: Fallback port number to use if the server
+                string does not specify one. If neither of these
+                sources settle the issue, use the default defined
+                in plom.Default_Port.
+            scheme: Fallback scheme (http or https) to use if the server
+                string does not include a scheme prefix. If neither
+                of the above sources settle the issue, defaults to ``"https"``.
+            verify_ssl (True/False): controls whether SSL certs are checked.
+                This is passed through to the ``Session.verify`` parameter
+                in the `requests` library. It has no effect when the
+                connection scheme is http.
             _server_API_version: internal use, for cloning a Messenger.
                 We want to recall the API of the server we are talking
-                to without computing itagain.
+                to without computing it again.
 
         Returns:
             None
@@ -463,7 +478,7 @@ class BaseMessenger:
                 as invalid URL.
         """
         if self.session:
-            log.debug("already have an requests-session")
+            log.debug("already have a requests-session")
         else:
             log.debug("starting a new requests-session")
             self._start_session()
@@ -787,7 +802,7 @@ class BaseMessenger:
 
     # ----------------------
     # ----------------------
-    # Test information
+    # Assessment information
 
     def get_exam_info(self) -> dict[str, Any]:
         """Get a dictionary of information about this assessment.
@@ -1206,6 +1221,15 @@ class BaseMessenger:
             generally not the same as the input data, for example, it has an
             key/id.
         """
+        if self.is_server_api_less_than(115):
+            new_rubric = new_rubric.copy()
+            # string of versions to list of versions
+            if new_rubric.get("versions"):
+                verlist = [int(v.strip()) for v in new_rubric["versions"].split(",")]
+            else:
+                verlist = []
+            new_rubric["versions"] = verlist
+
         with self.SRmutex:
             try:
                 response = self.put(
@@ -1232,6 +1256,8 @@ class BaseMessenger:
             # On legacy servers, `new_rubric` will actually just be the key
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(int(new_rubric))
+        if self.is_server_api_less_than(115):
+            new_rubric = _fix_114_versions_field_to_str(new_rubric)
         return new_rubric
 
     def MgetOtherRubricUsages(self, rid: int) -> list[dict[str, Any]]:
@@ -1312,13 +1338,17 @@ class BaseMessenger:
             try:
                 response = self.get_auth(url)
                 response.raise_for_status()
-                return response.json()
+                rubrics = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 404:
                     raise PlomNoRubric(response.reason) from None
                 raise PlomSeriousException(f"Error getting rubric list: {e}") from None
+        if self.is_server_api_less_than(115):
+            for r in rubrics:
+                r = _fix_114_versions_field_to_str(r)
+        return rubrics
 
     def _legacy_getRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         with self.SRmutex:
@@ -1355,6 +1385,8 @@ class BaseMessenger:
                 # TODO: annoying b/c downstream needs to detect and not send to arrow
                 r.setdefault("last_modified", "unknown")
                 r.setdefault("modified_by_username", "")
+                # list of versions to string of versions
+                r = _fix_114_versions_field_to_str(r)
             return rubrics
 
     def MmodifyRubric(
@@ -1398,6 +1430,15 @@ class BaseMessenger:
             # we also use "rid" now but legacy still wants "id"
             if "rid" in new_rubric.keys():
                 new_rubric["id"] = str(new_rubric.pop("rid"))
+
+        if self.is_server_api_less_than(115):
+            new_rubric = new_rubric.copy()
+            # string of versions to list of versions
+            if new_rubric.get("versions"):
+                verlist = [int(v.strip()) for v in new_rubric["versions"].split(",")]
+            else:
+                verlist = []
+            new_rubric["versions"] = verlist
 
         params = []
         if minor_change is None:
@@ -1458,6 +1499,8 @@ class BaseMessenger:
             # On legacy servers, `new_rubric` will actually just be the key
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(int(new_rubric))
+        if self.is_server_api_less_than(115):
+            new_rubric = _fix_114_versions_field_to_str(new_rubric)
         return new_rubric
 
     def get_pagedata(self, code):

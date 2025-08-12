@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -19,6 +20,35 @@ from .utils import _error_response
 
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
+
+    # DELETE /api/v0/spec
+    def delete(self, request: Request) -> Response:
+        """Clear the current assessment spec.
+
+        Args:
+            request: A Request object
+
+        Returns:
+            A response whose body is empty, with status 204, on success.
+            A response with status 403 if the user is not in the 'manager' group.
+            A response with status 409 if the spec cannot be removed.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can upload an assessment spec',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            SpecificationService.remove_spec()
+        except ObjectDoesNotExist:
+            # existing spec also gives 204
+            pass
+        except PlomDependencyConflict as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # GET /api/v0/spec
     def get(self, request: Request) -> Response:

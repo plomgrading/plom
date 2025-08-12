@@ -94,13 +94,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--action",
             action="store",
-            choices=["build", "upload", "delreup", "read", "wait", "push", "id_hw"],
+            choices=["build", "upload", "delreup", "read", "map_hw", "push", "id_hw"],
             required=True,
             help="""(build) demo bundles,
             (upload) demo bundles,
             (delreup) remove and re-upload the first demo bundle,
             (read) qr-codes in uploaded demo bundles,
-            (wait) for background processing of upload and qr-code reading,
+            (map_hw) map the staged homework bundles, must wait first.
             (push) processed bundles from staging,
             (id_hw) ID pushed demo homework bundles.""",
         )
@@ -152,21 +152,35 @@ class Command(BaseCommand):
             call_command("plom_staging_bundles", "upload", scanner_user, bundle_file)
             sleep(0.5)  # small sleep to not overwhelm huey's db
 
-    def read_qr_codes_in_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
-        """Read QR-codes of the uploaded bundles, and wait for process to finish."""
+    def read_qr_codes_in_bundles(
+        self, demo_config: DemoAllBundlesConfig, *, wait: bool = False
+    ) -> None:
+        """Trigger reads of the QR-codes of the uploaded bundles, by default don't wait."""
         if demo_config.bundles is not None:
             for n in range(len(demo_config.bundles)):
                 bundle_name = f"fake_bundle{n+1}"
                 call_command("plom_staging_bundles", "read_qr", bundle_name)
-                sleep(0.5)  # small sleep to not overwhelm huey's db
-        # no qr codes in the hw bundles, but we map them
-        # according to the config
+                sleep(0.25)
+
+        # TODO: currently we need to read qr codes in the hw bundles
+        if demo_config.hw_bundles is not None:
+            for bundle in demo_config.hw_bundles:
+                paper_number = bundle["paper_number"]
+                bundle_name = f"fake_hw_bundle_{paper_number}"
+                call_command("plom_staging_bundles", "read_qr", bundle_name)
+                sleep(0.25)
+
+        if wait:
+            call_command("plom_staging_bundles", "wait")
+
+    def map_hw(self, demo_config: DemoAllBundlesConfig) -> None:
+        """Map the staged homework bundles, note must wait for QR read before calling."""
         if demo_config.hw_bundles is not None:
             DemoHWBundleCreationService().map_homework_pages(
                 homework_bundles=demo_config.hw_bundles
             )
 
-    def push_and_wait(self):
+    def push_and_wait(self) -> None:
         """Push staged bundles and wait for the process to finish.
 
         Note that only perfect bundles (no errors, and no missing data) are pushed.
@@ -222,5 +236,9 @@ class Command(BaseCommand):
             self.read_qr_codes_in_bundles(demo_config)
         elif options["action"] == "push":
             self.push_and_wait()
+        elif options["action"] == "map_hw":
+            self.map_hw(demo_config)
         elif options["action"] == "id_hw":
             self.direct_id_hw(demo_config)
+        else:
+            raise RuntimeError(f"action {options['action']} not implemented")

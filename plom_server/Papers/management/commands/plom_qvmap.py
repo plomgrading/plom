@@ -4,8 +4,6 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from __future__ import annotations
-
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError

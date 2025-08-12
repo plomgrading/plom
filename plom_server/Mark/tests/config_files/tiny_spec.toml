@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 name = "tiny"
 longName = "tiny exam"
@@ -16,10 +17,9 @@ doNotMarkPages = []
 [[question]]
 pages = [2]
 mark = 1
-select = "shuffle"
 
 
 [[question]]
-pages = [3,4]
+pages = [3, 4]
 mark = 1
-select = "shuffle"
+select = [1, 2]

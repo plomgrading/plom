@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2022 Andrew Rechnitzer
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2023, 2025 Colin B. Macdonald
 
 from pathlib import Path
 import tempfile
@@ -36,7 +36,7 @@ def _assemble_one_soln(
             a filename prefix, e.g., "math107mt1".
         max_marks (dict): the maximum mark for each question, keyed by the
             question number, which seems to be a string.
-        t (int): Test number.
+        t (int): paper number.
         sid (str/None): The student number as a string.  Maybe `None` which
             means that student has no ID (?)  Currently we just skip these.
         watermark (bool): whether to watermark solns with student-id.
@@ -50,7 +50,7 @@ def _assemble_one_soln(
     """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
-        print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
+        print(f">>WARNING<< Paper {t} has an ID of 'None', not reassembling!")
         return
     outname = outdir / f"{short_name}_solutions_{sid}.pdf"
     if skip and outname.exists():
@@ -71,12 +71,12 @@ def _assemble_one_soln(
 
 @with_finish_messenger
 def assemble_solutions(
-    *, msgr, testnum=None, watermark=False, outdir=Path("solutions"), verbose=True
+    *, msgr, papernum=None, watermark=False, outdir=Path("solutions"), verbose=True
 ):
     """Assessemble solution documents.
 
     Keyword Args:
-        testnum (int): which test number to reassemble.
+        papernum (int/None): which paper to reassemble.
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         watermark (bool): whether to watermark solns with student-id.
@@ -118,12 +118,12 @@ def assemble_solutions(
                 f.write(img)
 
         completedTests = msgr.RgetCompletionStatus()
-        # dict testnumber -> [scanned, id'd, #q's marked]
+        # dict paper number -> [scanned, id'd, #q's marked]
         identifiedTests = msgr.getIdentified()
-        # dict testNumber -> [sid, sname]
+        # dict paper number -> [sid, sname]
 
-        if testnum is not None:
-            t = str(testnum)
+        if papernum is not None:
+            t = str(papernum)
             try:
                 completed = completedTests[t]
                 # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
@@ -147,7 +147,7 @@ def assemble_solutions(
                 print(f"Building UP TO {len(completedTests)} solutions...")
             N = 0
             for t, completed in tqdm(completedTests.items()):
-                # check if the given test is scanned and identified
+                # check if the given paper scanned and identified
                 if not (completed[0] and completed[1]):
                     continue
                 # Maybe someone wants only the finished papers?

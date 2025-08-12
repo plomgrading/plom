@@ -23,43 +23,45 @@
     <p>The approximation distribution of marks for the assessment; the student's score is indicated.</p>
     <br>
     <p style="break-before: page;"></p>
-    <h3>Student achievement by topic or learning objective</h3>
-    <img src="data:image/png;base64,{{ pedagogy_tags_graph }}" />
-    <p>
-        {% for ptag, ql_desc in pedagogy_tags.items %}
-            <dl>
-                <dt>
-                    <b>{{ ptag }}</b>
-                </dt>
-                <dd>
-                    {{ ql_desc.1 }}
-                </dd>
-                <dd>
-                    <!-- format list nicely with commas and and -->
-                    {% for ql in ql_desc.0 %}
-                        {% if not forloop.first %}
-                            {% if forloop.last %}
-                                and
-                            {% else %}
-                                ,
+    {% if pedagogy_tags %}
+        <h3>Student achievement by topic or learning objective</h3>
+        <img src="data:image/png;base64,{{ pedagogy_tags_graph }}" />
+        <p>
+            {% for ptag, ql_desc in pedagogy_tags.items %}
+                <dl>
+                    <dt>
+                        <b>{{ ptag }}</b>
+                    </dt>
+                    <dd>
+                        {{ ql_desc.1 }}
+                    </dd>
+                    <dd>
+                        <!-- format list nicely with commas and and -->
+                        {% for ql in ql_desc.0 %}
+                            {% if not forloop.first %}
+                                {% if forloop.last %}
+                                    and
+                                {% else %}
+                                    ,
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
-                        {{ ql|safe }}
-                    {% endfor %}
-                </dd>
-            </dl>
-        {% endfor %}
-    </p>
-    <h4>Explanation of this graph</h4>
-    <p>
-        Each question on this assessment was tagged by the instructor
-        with a topic or learning objective. Above is a graph
-        which indicates your proficiency in the identified topic. The
-        score for each label is calculated as a weighted average of
-        the score on the associated questions.
-    </p>
-    <br>
-    <p style="break-before: page;"></p>
+                            {{ ql|safe }}
+                        {% endfor %}
+                    </dd>
+                </dl>
+            {% endfor %}
+        </p>
+        <h4>Explanation of this graph</h4>
+        <p>
+            Each question on this assessment was tagged by the instructor
+            with a topic or learning objective. Above is a graph
+            which indicates your proficiency in the identified topic. The
+            score for each label is calculated as a weighted average of
+            the score on the associated questions.
+        </p>
+        <br>
+        <p style="break-before: page;"></p>
+    {% endif %}
     <h3>Boxplot of marks by question</h3>
     <p>
         In the boxplots below the distribution of marks for each question is shown.

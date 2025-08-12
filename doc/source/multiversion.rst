@@ -44,8 +44,13 @@ step is the creation of the "QV map" or the "question-version
 mapping", which tells Plom what versions to expect for each question
 and for each paper.
 
-You can have Plom create this mapping automatically, or specify your
-own via a spreadsheet if you have additional requirements.
+You can have Plom create this mapping for you, where the assessment
+specification describes which versions each question may be drawn from.
+
+Alternatively, finer control is possible by uploading a .csv file
+specifying which assessment version should be used for each question
+on each paper. In this case, the versions for each question in the
+assessment specification are overridden.
 
 .. caution::
    Its a good idea to download and backup a copy of your QV-map.  If

@@ -6,6 +6,8 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Deep Shah
 
 import hashlib
 import logging
@@ -34,7 +36,6 @@ import pymupdf
 from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
-from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
     parseTPV,
     parseExtraPageCode,
@@ -46,7 +47,8 @@ from plom.tpv_utils import (
 )
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
-from plom_server.Papers.models import FixedPage
+from plom_server.Papers.models import FixedPage, MobilePage
+from plom_server.Scan.services.cast_service import ScanCastService
 from plom_server.Base.models import HueyTaskTracker, BaseImage
 from ..models import (
     StagingBundle,
@@ -54,7 +56,6 @@ from ..models import (
     StagingThumbnail,
     KnownStagingImage,
     ExtraStagingImage,
-    DiscardStagingImage,
     PagesToImagesChore,
     ManageParseQRChore,
 )
@@ -376,6 +377,10 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
         self.remove_bundle_by_pk(bundle_obj.pk)
 
+    def get_original_image(self, bundle_id: int, index: int) -> File:
+        """Get the original, full-resolution image file from the database."""
+        return self.get_image(bundle_id, index).baseimage.image_file
+
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
         """Check if a PDF has already been uploaded.
@@ -618,16 +623,6 @@ class ScanService:
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
 
-        QR Code:
-        -         Test ID:  00001
-        -        Page Num:  00#
-        -     Version Num:  00#
-        -              NW:  2
-        -              NE:  1
-        -              SW:  3
-        -              SE:  4
-        - Last five digit:  93849
-
         Args:
             bundle_pk: primary key of bundle DB object
         """
@@ -657,54 +652,76 @@ class ScanService:
         bundle_id: int,
         page: int,
         *,
+        user: User,
         papernum: int,
         question_indices: list[int],
     ) -> None:
-        """Maps one page of a bundle onto zero or more questions.
+        """Map one page of a staged bundle onto zero or more questions.
+
+        After mapping, the page will have type EXTRA.
+
+        Any page with one of the types UNKNOWN, ERROR, KNOWN, or DISCARD
+        can be mapped. Only some pages of type EXTRA can be mapped:
+        if the page already has mapping info, the request fails.
+        An exception of type PlomConflict is raised for any request
+        in which the target page is not eligible for mapping.
 
         Args:
-            bundle_id: primary key of bundle DB object.
-            page: one-based (TODO: check) index of the pages in the bundle.
+            bundle_id: unique integer identifier of bundle DB object.
+            page: one-based index of the page in the bundle to be mapped.
 
         Keyword Args:
-            papernum: the number of the test-paper
+            user: who is doing this operation?
+            papernum: the number of the target paper.
             question_indices: a variable-length list of which questions (by
-                one-based question index) to attach the page to.  If empty,
-                it means to drop (discard) the page.
-                TODO: no, it should attach it to the proto DNM group:
-                TODO: https://gitlab.com/plom/plom/-/merge_requests/2771
+                one-based question index) to attach the page to.
+                It is an error if the list is empty.
+                If the list is the singleton [MobilePage.DNM_qidx], the page
+                gets attached to the DNM group for the given papernum.
+                See comments in the code about this interpretation: other parts
+                of the source tree do things differently!!
 
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+            ValueError: May be raised by supporting methods from class ScanCastService.
         """
-        # TODO: is it really necessary to make these here?  should be a model problem
-        root_folder = settings.MEDIA_ROOT / "page_images"
-        print("=" * 88)
-        print(f"DEBUG: explicitly and inappropriately making {root_folder}")
-        print("DEBUG: likely rcalled by plom-cli uploads: ensure unneeded then remove")
-        root_folder.mkdir(exist_ok=True)
+        log.debug(
+            f"Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
+            f"and target papernum={papernum}, question_indices={question_indices}."
+        )
 
-        # TODO: assert the length of question is same as pages in bundle
+        if not question_indices:
+            raise ValueError("You must supply a list of question indices")
 
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
 
-            if not question_indices:
-                # TODO: see MR !2771 for later improvements
-                page_img.image_type = StagingImage.DISCARD
-                page_img.save()
-                DiscardStagingImage.objects.create(
-                    staging_image=page_img, discard_reason="map said drop this page"
-                )
-            else:
-                page_img.image_type = StagingImage.EXTRA
-                # TODO = update the qr-code info in the underlying image
-                page_img.save()
-                ExtraStagingImage.objects.create(
-                    staging_image=page_img,
-                    paper_number=papernum,
-                    question_idx_list=question_indices,
-                )
+            # TODO: Check design assumptions here. We interpret [MobilePage.DNM_qidx]
+            # as DNM. But the downstream bundle-pusher expects [] to indicate DNM.
+            # Shout-out to check_question_list() found in plom/scan/question_list_utils.py,
+            # where competing interpretations can be found.
+            if question_indices == [MobilePage.DNM_qidx]:
+                question_indices = []
+            log.info(
+                f"Mapping page with id {page_img.pk} and type {page_img.image_type} "
+                f"to paper {papernum} with list {question_indices}."
+            )
+            if page_img.image_type != StagingImage.EXTRA:
+                ScanCastService.extralise_image_from_bundle_id(user, bundle_id, page)
+            ScanCastService.assign_extra_page_from_bundle_pk_and_order(
+                user,
+                bundle_id,
+                page,
+                papernum,
+                question_indices,
+            )
+            pi_updated = StagingImage.objects.get(
+                bundle__pk=bundle_id, bundle_order=page
+            )
+            log.debug(
+                f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
+            )
+
             # TODO: Issue #3770.
             # bundle_obj = (
             #     StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
@@ -713,61 +730,46 @@ class ScanService:
             # bundle_obj.has_qr_codes = True
             # bundle_obj.save()
 
-    def map_bundle_pages(
-        self,
-        bundle_pk: int,
-        *,
-        papernum: int,
-        pages_to_question_indices: list[list[int]],
+    @classmethod
+    def discard_staging_bundle_page(
+        cls, bundle_id: int, page: int, *, user: User
     ) -> None:
-        """Maps an entire bundle's pages onto zero or more questions per page.
+        """Discard one page of a staged bundle.
+
+        Any page with one of the types UNKNOWN, ERROR, KNOWN, or DISCARD
+        can be discarded.  This is a frontend to some lower-level routines:
+        at a lower-level it is an error to re-discard an already discarded
+        page so this routine checks and does a no-op if the page is already
+        discarded.
 
         Args:
-            bundle_pk: primary key of bundle DB object.
+            bundle_id: unique integer identifier of bundle DB object.
+            page: one-based index of the page in the bundle to be discarded.
 
         Keyword Args:
-            papernum (int): the number of the test-paper
-            pages_to_question_indices: a list same length
-                as the bundle, each element is variable-length list
-                of which questions (by one-based question index)
-                to attach that page to.  If one of those inner
-                lists is empty, it means to drop (discard) that
-                particular page.
+            user: who is doing this operation?
 
-        Returns:
-            None
+        Raises:
+            ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+            PermissionDenied: not in the scanner group.
+            ValueError: May be raised by supporting methods from class ScanCastService.
         """
-        bundle_obj = (
-            StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
-        )
-
-        # TODO: assert the length of question is same as pages in bundle
+        log.debug(f"Starting discard of bundle_id={bundle_id}, page={page}")
 
         with transaction.atomic():
-            # TODO: how do we walk them in order?
-            for page_img, qlist in zip(
-                bundle_obj.stagingimage_set.all().order_by("bundle_order"),
-                pages_to_question_indices,
-            ):
-                if not qlist:
-                    page_img.image_type = StagingImage.DISCARD
-                    page_img.save()
-                    DiscardStagingImage.objects.create(
-                        staging_image=page_img, discard_reason="map said drop this page"
-                    )
-                    continue
-                page_img.image_type = StagingImage.EXTRA
-                # TODO = update the qr-code info in the underlying image
-                page_img.save()
-                ExtraStagingImage.objects.create(
-                    staging_image=page_img,
-                    paper_number=papernum,
-                    question_idx_list=qlist,
+            page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
+
+            log.info(f"Trying to mark page with id {page_img.pk} for DISCARD.")
+            if page_img.image_type != StagingImage.DISCARD:
+                ScanCastService.discard_image_type_from_bundle_id_and_order(
+                    user, bundle_id, page
                 )
-            # TODO: Issue #3770.
-            # finally - mark the bundle as having had its qr-codes read.
-            bundle_obj.has_qr_codes = True
-            bundle_obj.save()
+            pi_updated = StagingImage.objects.get(
+                bundle__pk=bundle_id, bundle_order=page
+            )
+            log.debug(
+                f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
+            )
 
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk: int) -> int:
@@ -821,6 +823,10 @@ class ScanService:
     @transaction.atomic
     def get_n_known_images(self, bundle: StagingBundle) -> int:
         return bundle.stagingimage_set.filter(image_type=StagingImage.KNOWN).count()
+
+    @transaction.atomic
+    def get_n_unread_images(self, bundle: StagingBundle) -> int:
+        return bundle.stagingimage_set.filter(image_type=StagingImage.UNREAD).count()
 
     @transaction.atomic
     def get_n_unknown_images(self, bundle: StagingBundle) -> int:
@@ -920,71 +926,6 @@ class ScanService:
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
         self.read_qr_codes(bundle_obj.pk)
-
-    @transaction.atomic
-    def map_bundle_pages_cmd(
-        self,
-        *,
-        bundle_name: str | None = None,
-        bundle_id: int | None = None,
-        papernum: int,
-        question_map: str | list[int] | list[list[int]],
-    ) -> None:
-        """Maps an entire bundle's pages onto zero or more questions per page.
-
-        Keyword Args:
-            bundle_name: which bundle by name.
-            bundle_id: which bundle by id; you must specify one but not both
-                of `bundle_name` or `bundle_id`.
-            papernum: which paper.
-            question_map: specifies how pages of this bundle should be mapped
-                onto questions.  In principle it can be many different things,
-                although the current single caller passes only strings.
-                You can pass a single integer, or a list like `[1,2,3]`
-                which updates each page to questions 1, 2 and 3.
-                You can also pass the special string `all` which uploads
-                each page to all questions.
-                If you need to specify questions per page, you can pass a list
-                of lists: each list gives the questions for each page.
-                For example, `[[1],[2],[2],[2],[3]]` would upload page 1 to
-                question 1, pages 2-4 to question 2 and page 5 to question 3.
-                A common case is `-q [[1],[2],[3]]` to upload one page per
-                question.
-                An empty list will "discard" that particular page.
-
-        Returns:
-            None.
-
-        This is the command "front-end" to :method:`map_bundle_pages`,
-        see also docs there.
-        """
-        if bundle_id and bundle_name:
-            raise ValueError("You cannot specify both ID and name")
-        elif bundle_id:
-            try:
-                bundle_obj = StagingBundle.objects.get(pk=bundle_id)
-            except ObjectDoesNotExist as e:
-                raise ValueError(f"Bundle id {bundle_id} does not exist!") from e
-        elif bundle_name:
-            try:
-                bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-            except ObjectDoesNotExist as e:
-                raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
-        else:
-            raise ValueError("You must specify one of ID or name")
-
-        if not bundle_obj.has_page_images:
-            raise ValueError(f"Please wait for {bundle_name} to upload...")
-        # elif bundle_obj.has_qr_codes:
-        #    raise ValueError(f"QR codes for {bundle_name} has been read.")
-        # TODO: ensure papernum exists, here or in the none-cmd?
-
-        numpages = bundle_obj.number_of_pages
-        numquestions = SpecificationService.get_n_questions()
-        mymap = canonicalize_page_question_map(question_map, numpages, numquestions)
-        self.map_bundle_pages(
-            bundle_obj.pk, papernum=papernum, pages_to_question_indices=mymap
-        )
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk: int) -> bool:
@@ -1740,7 +1681,7 @@ def huey_parent_split_bundle_chore(
                 for chore in task_list:
                     log.info("Parent: trying to revoke child chore %s", chore)
                     chore.revoke()
-                raise RuntimeError(f"child task failed QR read: {e}") from e
+                raise RuntimeError(f"child task failed image split: {e}") from e
 
             # remove all the nones to get list of completed tasks
             not_none_result_chunks = [

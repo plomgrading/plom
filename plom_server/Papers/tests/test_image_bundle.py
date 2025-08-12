@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
 from model_bakery import baker
@@ -355,41 +356,112 @@ class ImageBundleTests(TestCase):
             bimg1.image_hash,
         )
 
-    def test_paper_question_ready(self) -> None:
-        ibs = ImageBundleService()
-        paper2 = baker.make(Paper, paper_number=2)
 
-        fp_img_1 = baker.make(Image)
-        fp_img_2 = baker.make(Image)
-        mp_img_1 = baker.make(Image)
-        baker.make(
+class ImageBundleReadyTests(TestCase):
+    """Test 'ready' checking functions."""
+
+    def setUp(self) -> None:
+        # make a spec and a paper
+        spec_dict = {
+            "idPage": 1,
+            "numberOfVersions": 2,
+            "numberOfPages": 12,
+            "totalMarks": 30,
+            "numberOfQuestions": 3,
+            "name": "papers_demo",
+            "longName": "Papers Test",
+            "doNotMarkPages": [2, 3],
+            "question": {
+                "1": {"pages": [4], "mark": 5},
+                "2": {"pages": [5, 6], "mark": 5},
+                "3": {"pages": [7, 8], "mark": 5},
+                "4": {"pages": [9], "mark": 5},
+                "5": {"pages": [10], "mark": 5},
+            },
+        }
+        image_obj = baker.make(Image)
+        SpecificationService._store_validated_spec(spec_dict)
+        self.paper = baker.make(Paper, paper_number=1)
+        self.page2 = baker.make(DNMPage, paper=self.paper, page_number=2)
+        self.page3 = baker.make(DNMPage, paper=self.paper, page_number=3)
+        self.page4 = baker.make(
             QuestionPage,
-            paper=paper2,
-            page_number=2,
+            paper=self.paper,
+            page_number=4,
             question_index=1,
-            version=1,
-            image=fp_img_1,
+            image=image_obj,
         )
-        baker.make(
+        self.page5 = baker.make(
             QuestionPage,
-            paper=paper2,
-            page_number=3,
+            paper=self.paper,
+            page_number=5,
             question_index=2,
-            version=1,
-            image=fp_img_2,
+            image=image_obj,
         )
-        baker.make(
-            QuestionPage, paper=paper2, page_number=4, question_index=2, version=1
+        self.page6 = baker.make(
+            QuestionPage,
+            paper=self.paper,
+            page_number=6,
+            question_index=2,
+            image=image_obj,
         )
-        baker.make(
-            QuestionPage, paper=paper2, page_number=5, question_index=3, version=1
+        self.page7 = baker.make(
+            QuestionPage,
+            paper=self.paper,
+            page_number=7,
+            question_index=3,
+            image=image_obj,
         )
-        baker.make(
-            QuestionPage, paper=paper2, page_number=6, question_index=4, version=1
+        self.page8 = baker.make(
+            QuestionPage, paper=self.paper, page_number=8, question_index=3
         )
-        baker.make(MobilePage, paper=paper2, question_index=4, image=mp_img_1)
+        self.page9 = baker.make(
+            QuestionPage, paper=self.paper, page_number=9, question_index=4
+        )
+        self.extrapage1 = baker.make(
+            MobilePage, paper=self.paper, question_index=4, image=image_obj
+        )
+        self.page10 = baker.make(
+            QuestionPage, paper=self.paper, page_number=10, question_index=5
+        )
+        # questions that are ready: 1,2,4
+        # questions that are not ready: 3,5
+        return super().setUp()
 
-        self.assertTrue(ibs.is_given_paper_question_ready(paper2, 1))
-        self.assertFalse(ibs.is_given_paper_question_ready(paper2, 2))
-        self.assertFalse(ibs.is_given_paper_question_ready(paper2, 3))
-        self.assertTrue(ibs.is_given_paper_question_ready(paper2, 4))
+    def test_are_paper_question_pairs_ready(self) -> None:
+        ibs = ImageBundleService()
+        pq_pairs = [
+            (self.paper.paper_number, 1),
+            (self.paper.paper_number, 2),
+            (self.paper.paper_number, 3),
+            (self.paper.paper_number, 4),
+            (self.paper.paper_number, 5),
+        ]
+        pair_ready = ibs.are_paper_question_pairs_ready(pq_pairs)
+        self.assertTrue(pair_ready[(self.paper.paper_number, 1)])
+        self.assertTrue(pair_ready[(self.paper.paper_number, 2)])
+        self.assertFalse(pair_ready[(self.paper.paper_number, 3)])
+        self.assertTrue(pair_ready[(self.paper.paper_number, 4)])
+        self.assertFalse(pair_ready[(self.paper.paper_number, 5)])
+
+    def test__get_ready_paper_question_pairs(self) -> None:
+        ibs = ImageBundleService()
+        ready_pairs = [
+            (self.paper.paper_number, 1),
+            (self.paper.paper_number, 2),
+            (self.paper.paper_number, 4),
+        ]
+        ready_pairs = sorted(ready_pairs)
+        fetched_pairs = sorted(ibs._get_ready_paper_question_pairs())
+        self.assertTrue(fetched_pairs == ready_pairs)
+
+        # Q3 has one fixed page present and one missing, i.e. not ready
+        # adding a mobilepage shouldn't cause Q3 to be ready
+        baker.make(MobilePage, paper=self.paper, question_index=3)
+        fetched_pairs = sorted(ibs._get_ready_paper_question_pairs())
+        self.assertTrue(fetched_pairs == ready_pairs)
+
+        # check mobile DNM pages aren't considered 'ready'
+        baker.make(MobilePage, paper=self.paper, question_index=MobilePage.DNM_qidx)
+        fetched_pairs = sorted(ibs._get_ready_paper_question_pairs())
+        self.assertTrue(fetched_pairs == ready_pairs)
