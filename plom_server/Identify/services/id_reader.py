@@ -16,6 +16,7 @@ import cv2 as cv
 # import cv2.typing - problems importing this - see MR 3050.
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+# import torch
 from sklearn.ensemble import RandomForestClassifier
 
 from django.conf import settings
@@ -26,7 +27,8 @@ from django_huey import db_task
 import huey
 import huey.api
 
-from plom.idreader.model_utils import load_model, download_model, is_model_present
+from plom.idreader.model_utils import load_model, is_model_present, ensure_model_available
+import onnxruntime as ort
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import Paper
 from plom_server.Papers.services import SpecificationService, PaperInfoService
@@ -610,19 +612,93 @@ class IDBoxProcessorService:
             )
             processed_digits_images_list.append(bordered_image)
         return processed_digits_images_list
+    
+
+    def _np_softmax(self, x: np.ndarray, axis: int = -1) -> np.ndarray:
+        x = x - np.max(x, axis=axis, keepdims=True)
+        e = np.exp(x)
+        return e / np.sum(e, axis=axis, keepdims=True)
+
+    # def get_digit_probabilities(
+    #     self,
+    #     prediction_model: tuple[torch.jit.ScriptModule, torch.device],
+    #     id_box_file: Path,
+    #     num_digits: int,
+    #     *,
+    #     debug: bool = True,
+    # ) -> list[list[float]]:
+    #     """Return a list of probability predictions for the student ID digits on the cropped image.
+
+    #     Args:
+    #         prediction_model PyTorch CNN Prediction model.
+    #         id_box_file (str/pathlib.Path): File path for the image of the ID box.
+    #         num_digits (int): Number of digits in the student ID.
+
+    #     Keyword Args:
+    #         debug (bool): output the trimmed images into "debug_id_reader/"
+
+    #     Returns:
+    #         list: A list of lists of probabilities.  The outer list is over
+    #         the 8 positions.  Inner lists have length 11: the probability
+    #         that the digit is a 0, 1, 2, ..., 9, blank.
+    #         In case of errors it returns an empty list
+    #     """
+    #     model, device = prediction_model
+
+    #     debugdir = None
+    #     id_page_file = Path(id_box_file)
+    #     # TODO - sort out cv.typing
+    #     # ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
+    #     #     id_page_file
+    #     # )
+    #     ID_box = self.resize_ID_box_and_extract_digit_strip(id_page_file)
+    #     if ID_box is None:
+    #         return []
+    #     if debug:
+    #         debugdir = Path(settings.MEDIA_ROOT / "debug_id_reader")
+    #         debugdir.mkdir(exist_ok=True)
+    #         p = debugdir / f"idbox_{id_page_file.stem}.png"
+    #         cv.imwrite(str(p), ID_box)
+    #     processed_digits_images = self.get_digit_images(ID_box, num_digits)
+    #     if len(processed_digits_images) == 0:
+    #         # TODO - put in warning
+    #         # self.stdout.write("Trouble finding digits inside the ID box")
+    #         return []
+    #     if debugdir:
+    #         for n, digit_image in enumerate(processed_digits_images):
+    #             p = debugdir / f"digit_{id_page_file.stem}-pos{n}.png"
+    #             cv.imwrite(str(p), digit_image)
+    #     prob_lists = []
+    #     for digit_image in processed_digits_images:
+    #         # get it into format needed by model predictor
+    #         img_tensor = torch.from_numpy(digit_image.astype(np.float32) / 255.0)
+    #         img_tensor = img_tensor.unsqueeze(0).unsqueeze(0).to(device)
+
+    #         with torch.no_grad():
+    #             output_logits = model(img_tensor)
+
+    #         probabilities = torch.nn.functional.softmax(output_logits, dim=1)
+
+    #         digit_probs = probabilities[0].cpu().tolist()
+    #         prob_lists.append(digit_probs)
+
+    #     return prob_lists
+    
+
+
 
     def get_digit_probabilities(
         self,
-        prediction_model: RandomForestClassifier,
+        prediction_model,
         id_box_file: Path,
         num_digits: int,
         *,
         debug: bool = True,
-    ) -> list[np.ndarray]:
+    ) -> list[list[float]]:
         """Return a list of probability predictions for the student ID digits on the cropped image.
 
         Args:
-            prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
+            prediction_model PyTorch CNN Prediction model.
             id_box_file (str/pathlib.Path): File path for the image of the ID box.
             num_digits (int): Number of digits in the student ID.
 
@@ -631,10 +707,12 @@ class IDBoxProcessorService:
 
         Returns:
             list: A list of lists of probabilities.  The outer list is over
-            the 8 positions.  Inner lists have length 10: the probability
-            that the digit is a 0, 1, 2, ..., 9.
+            the 8 positions.  Inner lists have length 11: the probability
+            that the digit is a 0, 1, 2, ..., 9, blank.
             In case of errors it returns an empty list
         """
+        model, device = prediction_model
+
         debugdir = None
         id_page_file = Path(id_box_file)
         # TODO - sort out cv.typing
@@ -659,12 +737,15 @@ class IDBoxProcessorService:
                 p = debugdir / f"digit_{id_page_file.stem}-pos{n}.png"
                 cv.imwrite(str(p), digit_image)
         prob_lists = []
+        input_name = model.get_inputs()[0].name
+        output_name = model.get_outputs()[0].name
         for digit_image in processed_digits_images:
             # get it into format needed by model predictor
-            digit_vector = np.expand_dims(digit_image, 0)
-            digit_vector = digit_vector.reshape((1, np.prod(digit_image.shape)))
-            number_pred_prob = prediction_model.predict_proba(digit_vector)
-            prob_lists.append(number_pred_prob[0])
+            x = (digit_image.astype(np.float32) / 255.0)[None, None, :, :]
+            logits = model.run([output_name], {input_name: x})[0]
+            probs = self._np_softmax(logits, axis=1)[0].tolist()
+            prob_lists.append(probs)
+
         return prob_lists
 
     def compute_probability_heatmap_for_idbox_images(
@@ -709,15 +790,15 @@ class IDBoxProcessorService:
         The resulting heatmap is saved for use by predictor algorithms.
         """
         if not is_model_present():
-            download_model()
+            ensure_model_available()
         student_id_length = 8
         heatmap = self.compute_probability_heatmap_for_idbox_images(
             id_box_files, student_id_length
         )
 
-        probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
+        # probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
         with open(settings.MEDIA_ROOT / "id_prob_heatmaps.json", "w") as fh:
-            json.dump(probs_as_list, fh, indent="  ")
+            json.dump(heatmap, fh, indent="  ")
         return heatmap
 
     def make_id_predictions(
@@ -743,8 +824,14 @@ class IDBoxProcessorService:
         student_ids = ClasslistService.get_classlist_sids_for_ID_matching()
         if not student_ids:
             raise ValueError("No student IDs provided")
-        self.run_greedy(user, student_ids, probabilities)
-        self.run_lap_solver(user, student_ids, probabilities)
+        
+        sliced_probabilities = {
+            paper_num: [digit_probs[:10] for digit_probs in all_probs]
+            for paper_num, all_probs in probabilities.items()
+        }
+
+        self.run_greedy(user, student_ids, sliced_probabilities)
+        self.run_lap_solver(user, student_ids, sliced_probabilities)
 
     def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used
