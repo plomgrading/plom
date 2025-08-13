@@ -15,7 +15,6 @@ from huggingface_hub import hf_hub_download
 import onnxruntime as ort
 
 
-
 CNN_MODEL_FILENAME = "mnist_emnist_blank_cnn_v1.onnx"
 
 HF_REPO_ID = "deepshah23/digit-blank-classifier-cnn"
@@ -79,7 +78,7 @@ def download_model_from_hf(where=Path("model_cache")):
 
     print(f"Downloading model from Hugging Face repo: {HF_REPO_ID}")
     try:
-    
+
         hf_cached_path = hf_hub_download(
             repo_id=HF_REPO_ID, filename=CNN_MODEL_FILENAME
         )

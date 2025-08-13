@@ -621,11 +621,9 @@ class IDBoxProcessorService:
         e = np.exp(x)
         return e / np.sum(e, axis=axis, keepdims=True)
 
-   
-
     def get_digit_probabilities(
         self,
-        prediction_model: tuple["onnxruntime.InferenceSession", str],,
+        prediction_model: tuple["onnxruntime.InferenceSession", str],
         id_box_file: Path,
         num_digits: int,
         *,
@@ -634,7 +632,7 @@ class IDBoxProcessorService:
         """Return a list of probability predictions for the student ID digits on the cropped image.
 
         Args:
-            prediction_model PyTorch CNN Prediction model.
+            prediction_model: PyTorch CNN Prediction model.
             id_box_file (str/pathlib.Path): File path for the image of the ID box.
             num_digits (int): Number of digits in the student ID.
 
