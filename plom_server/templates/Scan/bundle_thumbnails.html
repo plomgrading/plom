@@ -43,6 +43,10 @@
                         <div class="dropdown">
                             <!-- WET, see <script> tag further down. -->
                             <!-- autocomplete is Firefox-specific fix: https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+                            <!-- ********* Note ********* -->
+                            <!-- 13th of August 2025 - filtering only happens when changing the dropdown -->
+                            <!-- other state changes intentionally don't cause the page thumbnails to filter. -->
+                            <!-- The idea is to give users a chance to review or undo their recent changes. -->
                             <select class="form-select"
                                     onchange="filterPages(this.value)"
                                     autocomplete="off">
