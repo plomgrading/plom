@@ -832,6 +832,16 @@ class IDBoxProcessorService:
 
         self.run_greedy(user, student_ids, sliced_probabilities)
         self.run_lap_solver(user, student_ids, sliced_probabilities)
+        self.run_best_guess_predictor(user, probabilities)
+
+    def run_best_guess_predictor(self, user: User, probabilities: dict) -> None:
+        """Runs the best-guess predictor and saves its results."""
+        id_reader_service = IDReaderService()
+        best_guess_predictions = self._best_guess_predictor(probabilities)
+        for prediction in best_guess_predictions:
+            id_reader_service.add_or_change_ID_prediction(
+                user, prediction[0], prediction[1], prediction[2], "MLBestGuess"
+            )
 
     def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used
@@ -877,6 +887,25 @@ class IDBoxProcessorService:
             id_reader_service.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLLAP"
             )
+
+    def _best_guess_predictor(
+        self, probabilities: dict[int, list[list[float]]]
+    ) -> list[tuple[int, str, float]]:
+        """Generates direct 'best guess' predictions from the full heatmap."""
+        predictions = []
+        for paper_num, prob_lists in probabilities.items():
+            best_guess_id = ""
+            char_probabilities = []
+            for digit_probs in prob_lists:
+                predicted_index = np.argmax(digit_probs)
+                char_probabilities.append(digit_probs[predicted_index])
+                if predicted_index == 10:
+                    best_guess_id += "X"
+                else:
+                    best_guess_id += str(predicted_index)
+            certainty = np.array(char_probabilities).prod() ** (1.0 / len(char_probabilities))
+            predictions.append((paper_num, best_guess_id, round(certainty, 2)))
+        return predictions
 
     def _greedy_predictor(
         self, student_IDs: list[str], probabilities: dict[int, Any]
