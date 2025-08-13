@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024-2025 Andrew Rechnitzer
     Copyright (C) 2024-2025 Colin B. Macdonald
+    Copyright (C) 2024-2025 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -24,7 +25,9 @@
                         hx-delete="{% url 'id_prediction_delete' "MLGreedy" %}">Delete Greedy predictions</button>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">Delete MLBestGuess predictions</button>
+                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">
+                    Delete BestGuess predictions
+                </button>
             </p>
             <span class="alert alert-success my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "Error" %}
@@ -38,7 +41,9 @@
                         hx-delete="{% url 'id_prediction_delete' "MLGreedy" %}">Delete Greedy predictions</button>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">Delete BestGuess predictions</button>
+                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">
+                    Delete BestGuess predictions
+                </button>
             </p>
             <span class="alert alert-warning my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "To Do" %}
@@ -52,7 +57,9 @@
                         hx-delete="{% url 'id_prediction_delete' "MLGreedy" %}">Delete Greedy predictions</button>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">Delete BestGuess predictions</button>
+                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">
+                    Delete BestGuess predictions
+                </button>
             </p>
             <span class="alert alert-info my-4">Reader not yet run.</span>
         {% else %}
