@@ -32,7 +32,18 @@ class ThumbnailContainerFragmentView(ScannerRequiredView):
     """For http requests involving thumbnail container fragments."""
 
     def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        """Renders a thumbnail container for the specified page in a bundle."""
+        """Renders a thumbnail container for the specified page in a bundle.
+
+        Args:
+            request: an incoming http request.
+
+        Keyword Args:
+            bundle_id: which bundle.
+            index: which page, by 1-based index into the bundle.
+
+        Returns:
+            An rendered thubnail fragment.
+        """
         # list of dicts of page info, in bundle order
         scanner = ScanService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
