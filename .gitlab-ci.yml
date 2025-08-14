@@ -785,6 +785,7 @@ minpy_mindeps_django_tests:
   stage: alt_build
   image: python:3.10
   before_script:
+    # Note: Python image based on Debian (can install deps)
     - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make g++ dvipng
