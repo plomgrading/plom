@@ -4,6 +4,7 @@
 # Copyright (C) 2025 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Lindsey Daniels
+# Copyright (C) 2025 Negar Harandi
 
 """Fonts based on handwriting samples of the people who wrote this module.
 
