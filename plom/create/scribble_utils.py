@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Sarah Oskuei
 # Copyright (C) 2025 Lindsey Daniels
+# Copyright (C) 2025 Negar Harandi
 
 """Plom tools for scribbling fake answers on PDF files."""
 
@@ -69,6 +70,7 @@ possible_answers = [
     "Understand it well as I may, my comprehension can only be an"
     " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
     "Take chances, make mistakes, get messy. -- Ms Frizzle",
+    "If learning worked by watching, we’d all be World Cup champions.",
 ]
 
 possible_short_answers = [
