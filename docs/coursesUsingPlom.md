@@ -323,3 +323,23 @@ Approx: 12100 student in at least 28 courses in at least four depts.
 TODO: MICB + PHAS (+other depts? )
 
 Approx: 10k students across 25 courses
+
+
+## 2025S1+S2
+
+| Course       |  Tasks                                 | # students |  Notes                        |
+|----------    |----------------------------------      |:----------:|-------------------------------|
+| Math100      | Midterm+Final                          | 160        |                               |
+| Math101      | Quiz(x4)+Midterm+Final                 | 240        |                               |
+| Math200      | Final                                  | 100        |                               |
+| Math220      | Midterm+Final                          | 70         |                               |
+| Math215/255  | Midterm+Final                          | 80         |                               |
+| Math253      | Quiz(x4)+Final                         | 130        |                               |
+| Math257/316  | Midterm+Final                          | 115        |                               |
+| Math302      | Midterm+Final                          | 115        |                               |
+| Math307      | Midterm+Final                          | 90         |                               |
+| Math317      | Final                                  | 90         |                               |
+
+TODO: BIO + MICB + PHAS (+others?)
+
+Approx: 1100 students over 10 courses

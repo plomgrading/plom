@@ -38,8 +38,9 @@ RUN pip install --no-cache-dir --ignore-installed -r requirements.txt
 
 # Minimal deps for Qt, e.g., to support installing client inside container for testing
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install libglib2.0-0 libgl1 libxcb-cursor0 \
-    libegl1 libxkbcommon0 libdbus-1-3 && \
+    apt-get --no-install-recommends -y install \
+    libgl1 libxcb-cursor0 libegl1 libxkbcommon0 libdbus-1-3 \
+    libglib2.0-0  && \
     apt-get -yq autoclean
 
 COPY . /src
