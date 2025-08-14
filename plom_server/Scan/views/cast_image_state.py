@@ -29,7 +29,7 @@ class DiscardImageView(ScannerRequiredView):
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
-            ScanCastService().discard_image_type_from_bundle_id_and_order(
+            ScanCastService.discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
         except ValueError as e:
@@ -268,7 +268,7 @@ class ExtraliseImageView(ScannerRequiredView):
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         """Cast an existing bundle page to an extra page (unassigned)."""
         try:
-            ScanCastService().extralise_image_from_bundle_id(
+            ScanCastService.extralise_image_from_bundle_id(
                 request.user, bundle_id, index
             )
         except PlomBundleLockedException:
