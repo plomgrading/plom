@@ -27,6 +27,7 @@ possible_fontnames_ttfs = [
     ("bt", "bt_handwriting.ttf"),
     ("ejx", "ejx_handwriting.ttf"),
     ("ld", "ld_handwriting.ttf"),
+    ("nh", "nh_handwriting.ttf"),
     ("pdl", "pdl_handwriting.ttf"),
 ]
 
