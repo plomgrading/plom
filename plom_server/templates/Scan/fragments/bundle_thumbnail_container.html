@@ -6,8 +6,8 @@
     Copyright (C) 2025 Aidan Murphy
 -->
 <div id="pgcontainer-{{ pg.order }}"
-     style="width: 6ch;
-            height: 10ch"
+     style="width: 10ch;
+            height: 15ch"
      data-status="{{ pg.status }}"
      data-paper_number="{{ pg.info.paper_number }}"
      data-bs-toggle="tooltip"
@@ -35,7 +35,7 @@
                              src="{% url 'scan_get_thumbnail' bundle_id pg.order %}?_ts={{ timestamp }}"
                              {% if pg.status == "known" %}fetchpriority="low"{% endif %}
                              loading="lazy"
-                             style="width: 4ch" />
+                             style="width: 7ch" />
                     </div>
                 </div>
                 <div class="card-footer p-0">{{ pg.order }}</div>
