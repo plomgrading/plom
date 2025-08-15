@@ -40,10 +40,10 @@ class ThumbnailContainerFragmentView(ScannerRequiredView):
         # get the specific page we want.
         # TODO: a dict of bundle page dicts keyed by 'order' would be more convenient
         bundle_page = 0
-        for i, item in enumerate(bundle_page_info_list):
+        for item in bundle_page_info_list:
             # TODO: order was originally just for show, but the server is now reusing it
             if int(item["order"]) == index:
-                bundle_page = bundle_page_info_list[i]
+                bundle_page = item
                 break
 
         context = {
