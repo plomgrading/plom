@@ -16,9 +16,6 @@ from plom_ml.clustering.embedding.embedder import (
 )
 from plom_ml.clustering.exceptions import MissingEmbedderException
 
-# torch
-import torch
-
 # misc
 from abc import abstractmethod
 import numpy as np
@@ -87,8 +84,6 @@ class HMEClusteringStrategy(ClusteringStrategy):
     """Handwritten math expression model."""
 
     def __init__(self):
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
         # load model config
         config_path = os.path.join(os.path.dirname(__file__), "model_config.yaml")
         with open(config_path) as f:
@@ -100,8 +95,8 @@ class HMEClusteringStrategy(ClusteringStrategy):
 
         # Init embedders
         self.embedders = [
-            SymbolicEmbedder(symbolic_model_path, device),
-            TrOCREmbedder(trocr_model_path, device),
+            SymbolicEmbedder(symbolic_model_path),
+            TrOCREmbedder(trocr_model_path),
         ]
 
     def get_best_clustering(
@@ -182,8 +177,6 @@ class MCQClusteringStrategy(ClusteringStrategy):
     """Handwritten MCQ clustering model."""
 
     def __init__(self):
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
         # load model config
         config_path = os.path.join(os.path.dirname(__file__), "model_config.yaml")
         with open(config_path) as f:
@@ -195,10 +188,55 @@ class MCQClusteringStrategy(ClusteringStrategy):
         # init embedder
         out_features = 11
         self.embedders = [
-            MCQEmbedder(
-                weight_path=weight_path, device=device, out_features=out_features
-            )
+            MCQEmbedder(weight_path=weight_path, out_features=out_features)
         ]
+
+    def get_best_clustering(
+        self, X: np.ndarray, thresholds: list[float], metric="silhouette"
+    ) -> np.ndarray:
+        """Get the best clustering of X by searching for optimal threshold that maximizes the metric.
+
+        This function defaults with AgglomerativeClustering clustering algorithm.
+
+        Args:
+            X: the feature matrix.
+            thresholds: the choices of distance thresholds.
+            metric: which metric to optimize. Currently supports: "silhouette" and "davies".
+
+        Returns:
+            A numpy array of clusterId where the order matches with the
+            inputs (index 0 provides Id for row 0 of X)
+        """
+        best_score = -np.inf if metric == "silhouette" else np.inf
+        best_labels = np.array([])
+
+        for t in thresholds:
+            clustering = AgglomerativeClustering(
+                n_clusters=None,
+                metric="cosine",
+                linkage="average",
+                distance_threshold=t,
+            )
+            labels = clustering.fit_predict(X)
+            # need at least 2 clusters to score
+            if len(set(labels)) < 2:
+                continue
+
+            if metric == "silhouette":
+                score = silhouette_score(X, labels)
+                # silhouette: higher -> better
+                if score > best_score:
+                    best_score = score
+                    best_labels = labels
+
+            elif metric == "davies":
+                score = davies_bouldin_score(X, labels)
+                # DB index: lower -> better
+                if score < best_score:
+                    best_score = score
+                    best_labels = labels
+
+        return best_labels
 
     def cluster_papers(
         self, paper_to_image: Mapping[int, np.ndarray]
@@ -217,10 +255,8 @@ class MCQClusteringStrategy(ClusteringStrategy):
             [self.get_embeddings(image) for _, image in paper_to_image.items()]
         )
 
-        # cluster on that matrix
-        clustering_model = AgglomerativeClustering(
-            n_clusters=None, distance_threshold=1.0, linkage="ward"
+        thresholds = np.linspace(0.05, 0.7, 50)
+        clusterIDs = self.get_best_clustering(
+            X, thresholds=thresholds, metric="silhouette"
         )
-
-        clusterIDs = clustering_model.fit_predict(X)
         return dict(zip(list(paper_to_image.keys()), clusterIDs))

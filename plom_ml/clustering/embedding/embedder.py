@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
-import torch
 from torchvision import transforms  # type: ignore[import]
 from abc import ABC, abstractmethod
 import numpy as np
 from transformers import TrOCRProcessor
 from PIL import Image
 import cv2
+import onnxruntime as ort
 
 from plom_ml.clustering.model.model_architecture import MCQClusteringNet, HMESymbolicNet
 
@@ -31,18 +31,15 @@ class Embedder(ABC):
 class MCQEmbedder(Embedder):
     """Embed images with MCQ Clustering model."""
 
-    def __init__(self, weight_path, device, out_features):
-        self.device = device
+    def __init__(self, weight_path, out_features):
         self.out_features = out_features
 
-        # init model architecture
-        self.model = MCQClusteringNet(out_features)
+        # init model
+        self.model = ort.InferenceSession(
+            weight_path, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        )
 
-        # load model weight
-        self.model.load_state_dict(torch.load(weight_path, map_location=device))
-
-        self.model.to(device)
-        self.model.eval()
+        self.input_name = self.model.get_inputs()[0].name
 
         # init inference tf
         self.infer_tf = transforms.Compose(
@@ -84,13 +81,12 @@ class MCQEmbedder(Embedder):
             crop = img[y : y + h, x : x + w]
             bestConfidence, bestFeatures = 0.0, [0] * self.out_features
 
-            infer = (
-                self.infer_tf(Image.fromarray(crop)).unsqueeze(0).to(self.device)
-            )  # shape: [1,3,H,W]
+            x_t = self.infer_tf(Image.fromarray(crop)).unsqueeze(0)
 
-            with torch.no_grad():
-                logits = self.model(infer)
-                probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
+            x_np = x_t.numpy().astype(np.float32)
+
+            logits = self.model.run(None, {self.input_name: x_np})[0]
+            probs = np.sqrt(1 / (1 + np.exp(-logits)))[0]
 
             confidence = max(probs)
             if confidence > bestConfidence:
@@ -102,19 +98,13 @@ class MCQEmbedder(Embedder):
 class SymbolicEmbedder(Embedder):
     """Embeds images using a ResNet-34 backbone + projection head."""
 
-    def __init__(self, model_path: str, device: torch.device):
-        self.device = device
+    def __init__(self, model_path: str):
 
-        # init model architecture
-        self.model = HMESymbolicNet()
-
-        # Load weights
-        ckpt = torch.load(model_path, map_location=self.device)
-        self.model.backbone.load_state_dict(ckpt["backbone_state_dict"])
-        self.model.head.load_state_dict(ckpt["head_state_dict"])
-
-        self.model.to(device)
-        self.model.eval()
+        # Load model
+        self.model = ort.InferenceSession(
+            model_path, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        )
+        self.input_name = self.model.get_inputs()[0].name
 
         # init infer_tf
         self.transform = transforms.Compose(
@@ -133,48 +123,36 @@ class SymbolicEmbedder(Embedder):
         Returns:
             1D np.ndarray of length emb_dim (e.g. 128).
         """
-        CUTOFF_PROB = 0.3
-
         # collapse a singleton channel
         if image.ndim == 3 and image.shape[2] == 1:
             image = image[:, :, 0]
+
         # ensure uint8
         if image.dtype != np.uint8:
             image = image.astype(np.uint8)
 
-        # to PIL and transform  Tensor [C, H, W]
         pil = Image.fromarray(image, mode="L")
-        t = self.transform(pil)  # [1, H, W]  after Grayscale/ToTensor: [1, H, W]
-        x = t.unsqueeze(0).to(self.device)  # [1, 1, H, W]
+        x_t = self.transform(pil).unsqueeze(0)
+        x_np = x_t.numpy().astype(np.float32)
+        emb, logits = self.model.run(None, {self.input_name: x_np})
+        probs = np.sqrt(1 / (1 + np.exp(-logits)))[0]
 
-        # forward
-        with torch.no_grad():
-            #  [1, 512]
-            emb, logits = self.model.forward(x)
-
-        probs = torch.sigmoid(logits).cpu().numpy()[0]
-
-        probs[probs < CUTOFF_PROB] = 0.0
-        # squeeze batch and return
         return probs
 
 
 class TrOCREmbedder(Embedder):
     """Embeds images using an 8-bit TrOCR encoder (last_hidden_state CLS token)."""
 
-    def __init__(self, model_path: str, device: torch.device):
-        self.device = device
-        # Load processor for converting images into PyTorch tensors
+    def __init__(self, model_path: str):
+        # Load processor for converting images
         self.processor = TrOCRProcessor.from_pretrained(
             "fhswf/TrOCR_Math_handwritten", use_fast=True
         )
 
-        # Feed on the processed tensors then output high-dim features
-        self.encoder = (
-            torch.load(model_path, map_location=device, weights_only=False)
-            .to(self.device)
-            .eval()
+        self.model = ort.InferenceSession(
+            model_path, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
         )
+        self.input_name = self.model.get_inputs()[0].name
 
     def embed(self, arr: np.ndarray) -> np.ndarray:
         """Embed a single image via the 8-bit TrOCR encoder's [CLS] token.
@@ -185,20 +163,9 @@ class TrOCREmbedder(Embedder):
         Returns:
             1D numpy array of length D (hidden size of the encoder).
         """
-        IMG_SIZE = (512, 256)
-
-        # ensure PIL RGB
-        arr = cv2.resize(arr, IMG_SIZE, interpolation=cv2.INTER_AREA)
         pil = Image.fromarray(arr).convert("RGB")
+        x_t = self.processor.image_processor(pil, return_tensors="pt").pixel_values
+        x_np = x_t.numpy().astype(np.float32)
+        cls_tokens = self.model.run(None, {self.input_name: x_np})[0][0, 0, :]
 
-        pixels = self.processor.image_processor(pil, return_tensors="pt").pixel_values
-
-        # move to device
-        x = pixels.to(self.device)
-
-        # forward & grab CLS token
-        with torch.no_grad():
-            out = self.encoder(x, return_dict=True).last_hidden_state  # (1, seq_len, D)
-            cls_token = out[:, 0, :].cpu().numpy()[0]  # (D,)
-
-        return cls_token
+        return cls_tokens
