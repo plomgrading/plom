@@ -758,7 +758,7 @@ newOS_newdeps_django_tests:
       python3-pip
       iproute2 psmisc file python3-magic git
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip setuptools packaging wheel
+    - python3 -m pip install --upgrade --ignore-installed pip setuptools packaging wheel
     - pip --version
   script:
     # pip install plom-client
