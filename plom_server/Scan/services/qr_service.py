@@ -272,7 +272,7 @@ class QRService:
         if public_code != correct_public_code:
             raise ValueError(
                 f"Public code {public_code} does not match spec {correct_public_code}"
-                " - was a page from a different assessment uploaded? what?"
+                " - was a page from a different assessment uploaded?"
             )
 
         v_on_page = qr_info["page_info"]["version_num"]
