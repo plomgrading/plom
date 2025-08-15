@@ -9,8 +9,6 @@ from PIL import Image
 import cv2
 import onnxruntime as ort
 
-from plom_ml.clustering.model.model_architecture import MCQClusteringNet, HMESymbolicNet
-
 
 class Embedder(ABC):
     """Abstract class that embeds features to images for ML tasks."""
