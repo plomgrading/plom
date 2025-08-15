@@ -6,8 +6,7 @@
     Copyright (C) 2025 Aidan Murphy
 -->
 <div id="pgcontainer-{{ pg.order }}"
-     style="width: 10ch;
-            height: 15ch"
+     style="width: 10ch"
      data-status="{{ pg.status }}"
      data-paper_number="{{ pg.info.paper_number }}"
      data-bs-toggle="tooltip"
@@ -31,7 +30,8 @@
                         <!-- the img width being independent of the page size means small window =/= tiny thumbnails -->
                         <!-- timestamp forces a refresh, otherwise img is loaded from cache (by most browsers) -->
                         <!-- TODO: why do known pages need a lower fetch priority? -->
-                        <img class="img"
+                        <img id="thumbnailimg-{{ pg.order }}"
+                             class="img"
                              src="{% url 'scan_get_thumbnail' bundle_id pg.order %}?_ts={{ timestamp }}"
                              {% if pg.status == "known" %}fetchpriority="low"{% endif %}
                              loading="lazy"

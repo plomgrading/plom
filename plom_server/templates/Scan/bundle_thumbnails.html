@@ -61,13 +61,32 @@
                                 <option>unread pages</option>
                             </select>
                         </div>
+                        <hr />
+                        <div class="container">
+                            <div class="row text-center d-flex align-items-center">
+                                <div class="col-2">
+                                    <i class="bi bi-file-earmark fs-6"></i>
+                                </div>
+                                <div class="col-8">
+                                    <input type="range"
+                                           class="w-100"
+                                           min="3"
+                                           max="12"
+                                           value="10"
+                                           autocomplete="off"
+                                           oninput="resizeThumbnailContainers(this.value)">
+                                </div>
+                                <div class="col-2">
+                                    <i class="bi bi-file-earmark fs-2"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body p-2 pe-0">
                     <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
                     <div class="container overflow-y-scroll p-2" style="max-height:78vh;">
                         <div class="row row-cols-auto gy-1 gx-1">
-                            <!-- autocomplete is Firefox-specific fix: https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
                             {% for pg in pages %}
                                 <!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
                                 <div id="fragmentcontainer-{{ pg.order }}"
@@ -175,6 +194,20 @@
 			function clickThumbnail(bundle_index) {
 				const target_thumbnail = document.getElementById("pgradio-" + bundle_index);
 				target_thumbnail.click();
+			}
+
+			// resize _all_ thumbnail containers
+			function resizeThumbnailContainers(newWidth) {
+				console.log(newWidth);
+				var thumbnailContainers = document.querySelectorAll('div[id^="pgcontainer-"]');
+				var thumbnailImages = document.querySelectorAll('img[id^="thumbnailimg-"]');
+
+				thumbnailContainers.forEach(div => {
+					div.style.width = newWidth + "ch";
+				})
+				thumbnailImages.forEach(img => {
+					img.style.width = newWidth*0.7 + "ch";
+				})
 			}
         </script>
     </div>
