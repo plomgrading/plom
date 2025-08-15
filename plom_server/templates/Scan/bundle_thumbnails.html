@@ -182,7 +182,6 @@
 			// trigger the tooltips in the summary to refresh
 			function refreshBundleSummaryTooltips() {
 				var summaryTooltipTriggerList = document.querySelectorAll('button[id^="paper-btn-"]');
-				console.log(summaryTooltipTriggerList)
 				var updatedTooltipList = [...summaryTooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 			}
 
@@ -199,7 +198,6 @@
 
 			// resize _all_ thumbnail containers
 			function resizeThumbnailContainers(newWidth) {
-				console.log(newWidth);
 				var thumbnailContainers = document.querySelectorAll('div[id^="pgcontainer-"]');
 				var thumbnailImages = document.querySelectorAll('img[id^="thumbnailimg-"]');
 
