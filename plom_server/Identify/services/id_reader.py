@@ -632,7 +632,7 @@ class IDBoxProcessorService:
         """Return a list of probability predictions for the student ID digits on the cropped image.
 
         Args:
-            prediction_model: PyTorch CNN Prediction model.
+            prediction_model: PyTorch CNN Prediction model (ONNX).
             id_box_file (str/pathlib.Path): File path for the image of the ID box.
             num_digits (int): Number of digits in the student ID.
 
