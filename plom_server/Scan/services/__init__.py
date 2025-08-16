@@ -4,6 +4,8 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
+"""Services of the Plom Server Scan app."""
+
 from .scan_service import ScanService
 from .cast_service import ScanCastService
 from .image_process import PageImageProcessor

@@ -5,6 +5,9 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Sarah Oskuei
+# Copyright (C) 2025 Lindsey Daniels
+# Copyright (C) 2025 Negar Harandi
+
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
@@ -24,6 +27,8 @@ possible_fontnames_ttfs = [
     ("adr", "adr_handwriting.ttf"),
     ("bt", "bt_handwriting.ttf"),
     ("ejx", "ejx_handwriting.ttf"),
+    ("ld", "ld_handwriting.ttf"),
+    ("nh", "nh_handwriting.ttf"),
     ("pdl", "pdl_handwriting.ttf"),
 ]
 
@@ -64,6 +69,8 @@ possible_answers = [
     " figured algebra.  -- Sophie Germain",
     "Understand it well as I may, my comprehension can only be an"
     " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
+    "Take chances, make mistakes, get messy. -- Ms Frizzle",
+    "If learning worked by watching, we’d all be World Cup champions.",
 ]
 
 possible_short_answers = [

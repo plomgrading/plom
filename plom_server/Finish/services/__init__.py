@@ -6,6 +6,8 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2025 Aden Chan
 
+"""Services of the Finish app of the Plom Server."""
+
 from .student_marks_service import StudentMarkService
 from .ta_marking_service import TaMarkingService
 from .annotation_data_service import AnnotationDataService

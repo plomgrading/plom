@@ -2,8 +2,10 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Deep Shah
+
+"""Views of the Plom Server Scan app."""
 
 from .scanner_home import (
     ScannerOverview,

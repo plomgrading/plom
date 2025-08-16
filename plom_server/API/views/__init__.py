@@ -19,6 +19,9 @@ from .server_info import (
     ObtainAuthTokenUpdateLastLogin,
 )
 
+from .user_info import UsersInfo
+
+
 from .source_handler import (
     SourceOverview,
     SourceDetail,

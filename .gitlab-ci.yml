@@ -464,15 +464,15 @@ count-no-docstring:
   before_script:
     - pip install ruff~=0.12.8
   script:
+    - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
-    - EXCEPTIONS="D101,D102,D103,D104,D106"
     - ruff check --select $EXCEPTIONS --exit-zero
     - HOWMANY=`ruff check --select $EXCEPTIONS --exit-zero | grep "Found .* errors" | grep -o "[0-9]*"`
     - echo $EXCEPTIONS
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 870 ]]"
+    - bash -c "[[ $HOWMANY -le 797 ]]"
   allow_failure: true
 
 
@@ -741,8 +741,9 @@ newOS_newdeps_django_tests:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
+    PIP_BREAK_SYSTEM_PACKAGES: 1
   stage: alt_build
-  image: ubuntu:22.04
+  image: ubuntu:24.04
   allow_failure: true
   before_script:
     - apt-get update
@@ -750,13 +751,14 @@ newOS_newdeps_django_tests:
     - apt-get --no-install-recommends --yes install
       cmake make g++
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
-      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+      libgl1  libxcb-cursor0 libegl1 libxkbcommon0 libdbus-1-3
+      libsm6 libxrender1
       libpango-1.0-0 libpangocairo-1.0-0
       python3-pytest python3-dev
       python3-pip
       iproute2 psmisc file python3-magic git
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip setuptools packaging wheel
+    - python3 -m pip install --upgrade --ignore-installed pip setuptools packaging wheel
     - pip --version
   script:
     # pip install plom-client
@@ -785,11 +787,13 @@ minpy_mindeps_django_tests:
   stage: alt_build
   image: python:3.10
   before_script:
+    # Note: Python image based on Debian (can install deps)
     - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make g++ dvipng
       texlive-latex-extra latexmk texlive-fonts-recommended
-      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+      libgl1 libxcb-cursor0 libegl1 libxkbcommon0 libdbus-1-3
+      libsm6 libxrender1
       git
     - pip install pytest
   script:

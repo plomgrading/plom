@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024-2025 Aidan Murphy
+# Copyright (C) 2025 Bryan Tanady
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -19,6 +20,18 @@ def get_user_info() -> dict:
         ),
     }
     return users
+
+
+def get_users_groups_info() -> dict[str, list]:
+    """Get a dictionary mapping each user's username to a list of their groups.
+
+    Returns:
+        A dict mapping username to a list of the user's groups.
+    """
+    return {
+        user.username: list(user.groups.values_list("name", flat=True))
+        for user in User.objects.all()
+    }
 
 
 def delete_user(username: str, requester_id: int | None = None) -> str:

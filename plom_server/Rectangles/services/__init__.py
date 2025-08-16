@@ -2,6 +2,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
+"""Services of the Plom Server Rectangle app."""
 
 from .rectangle import (
     RectangleExtractor,
