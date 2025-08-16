@@ -25,7 +25,7 @@ PyQt6-sip==13.1.0
 arrow==1.1.1
 canvasapi==3.0.0
 cryptography==41.0.3
-django==4.2.6
+django==5.1.1
 django-braces==1.15.0
 django-filter==23.2
 django-htmx==1.14.0
@@ -38,8 +38,8 @@ django-tables2==2.7.0
 exif==1.6.1
 imutils==0.5.4
 matplotlib==3.5.3
-numpy==1.21.2
-opencv-python-headless==4.5.4.60
+numpy==1.26.4
+opencv-python-headless==4.7.0.72
 Pillow==10.2.0
 pandas==1.5.0
 pymupdf==1.24.8
@@ -49,8 +49,8 @@ pytest==7.2.0
 pytest-qt==4.2.0
 psycopg[binary]==3.1.8
 random-username==1.0.2
-scikit-learn==1.0.2
-scipy==1.8.1
+scikit-learn==1.4.2
+scipy==1.11.4
 seaborn==0.12.2
 segno>=1.5.2
 stdiomask==0.0.6

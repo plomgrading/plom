@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
@@ -15,14 +15,14 @@ from plom.plom_exceptions import PlomConflict
 from plom_server.Rubrics.services import RubricService
 from plom_server.Mark.serializers.tasks import MarkingTaskSerializer
 
+from plom_server.UserManagement.models import User
+
 from .utils import _error_response
 
 
 class MgetAllRubrics(APIView):
     def get(self, request: Request) -> Response:
-        all_rubric_data = RubricService.get_rubrics_as_dicts(
-            _convert_versions_to_list_of_ints=True
-        )
+        all_rubric_data = RubricService.get_rubrics_as_dicts()
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",
@@ -33,9 +33,7 @@ class MgetAllRubrics(APIView):
 
 class MgetRubricsByQuestion(APIView):
     def get(self, request: Request, *, question: int) -> Response:
-        all_rubric_data = RubricService.get_rubrics_as_dicts(
-            question_idx=question, _convert_versions_to_list_of_ints=True
-        )
+        all_rubric_data = RubricService.get_rubrics_as_dicts(question_idx=question)
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",
@@ -44,9 +42,20 @@ class MgetRubricsByQuestion(APIView):
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 
+# GET: /MK/user/{username}/{question}
+# PUT: /MK/user/{username}/{question}
+
+
 class MgetRubricPanes(APIView):
     def get(self, request: Request, *, username: str, question: int) -> Response:
-        pane = RubricService.get_rubric_pane(request.user, question)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return _error_response(
+                f"User {username} doesn't exist",
+                status.HTTP_400_BAD_REQUEST,
+            )
+        pane = RubricService.get_rubric_pane(user, question)
         return Response(pane, status=status.HTTP_200_OK)
 
     def put(self, request: Request, *, username: str, question: int) -> Response:

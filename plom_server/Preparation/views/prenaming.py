@@ -16,23 +16,20 @@ from django.shortcuts import redirect, render
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Base.base_group_views import ManagerRequiredView
 from ..services import PrenameSettingService, ExamMockerService
-from ..models import PrenamingSetting
 
 
 class PrenamingView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
-        pss = PrenameSettingService()
         try:
-            pss.set_prenaming_setting(True)
+            PrenameSettingService.set_prenaming_setting(True)
             return HttpResponseClientRedirect(reverse("prep_classlist"))
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
 
     def delete(self, request: HttpRequest) -> HttpResponse:
-        pss = PrenameSettingService()
         try:
-            pss.set_prenaming_setting(False)
+            PrenameSettingService.set_prenaming_setting(False)
             return HttpResponseClientRedirect(reverse("prep_classlist"))
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
@@ -65,24 +62,19 @@ class PrenamingConfigView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         success_url = "configure_prenaming"
-        ps_meta = PrenamingSetting._meta
-        pss = PrenameSettingService()
-        # guard inputs
-        x_pos = request.POST.get("xPos")
-        x_pos = float(x_pos) if x_pos else ps_meta.get_field("xcoord").get_default()
-        y_pos = request.POST.get("yPos")
-        y_pos = float(y_pos) if y_pos else ps_meta.get_field("ycoord").get_default()
 
         if "set_config" in request.POST:
+            x_pos = request.POST.get("xPos")
+            y_pos = request.POST.get("yPos")
             try:
-                pss.set_prenaming_coords(x_pos, y_pos)
+                PrenameSettingService.set_prenaming_coords(x_pos, y_pos)
                 return redirect(reverse(success_url))
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))
         elif "reset_config" in request.POST:
             try:
-                pss.reset_prenaming_coords()
+                PrenameSettingService.reset_prenaming_coords()
                 return redirect(reverse(success_url))
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")

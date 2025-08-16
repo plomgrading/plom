@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
 
+from plom_server.Base.services import Settings
 from plom_server.Papers.models import Paper, Bundle
 
 from ..services import PapersPrinted
-from ..models import PapersPrintedSettingModel
 
 from unittest import skip
 
@@ -42,33 +42,23 @@ class PapersPrintedSettingTests(TestCase):
     #     baker.make(Bundle)
     #
     #     self.assertFalse(PapersPrinted.can_status_be_set_false())
-    #
-    # def test_papers_have_been_printed(self) -> None:
-    #     """Test the have_been_printed getter function."""
-    #     self.assertFalse(PapersPrinted.have_papers_been_printed())
-    #
-    #     setting_obj = PapersPrintedSettingModel.load()
-    #     setting_obj.have_printed_papers = True
-    #     setting_obj.save()
-    #
-    #     self.assertTrue(PapersPrinted.have_papers_been_printed())
 
     def test_papers_printed(self) -> None:
         """Test the papers_printed setter function."""
         baker.make(Paper)
 
-        setting_obj = PapersPrintedSettingModel.load()
-        self.assertFalse(setting_obj.have_printed_papers)
+        r = Settings.key_value_store_get("papers_have_been_printed")
+        self.assertFalse(r)
 
         PapersPrinted.set_papers_printed(True)
 
-        setting_obj.refresh_from_db()
-        self.assertTrue(setting_obj.have_printed_papers)
+        r = Settings.key_value_store_get("papers_have_been_printed")
+        self.assertTrue(r)
 
         PapersPrinted.set_papers_printed(False)
 
-        setting_obj.refresh_from_db()
-        self.assertFalse(setting_obj.have_printed_papers)
+        r = Settings.key_value_store_get("papers_have_been_printed")
+        self.assertFalse(r)
 
     def test_setting_raises_papers(self) -> None:
         """Make sure the setting raises an error on being set true while the papers database is empty."""

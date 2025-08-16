@@ -112,6 +112,7 @@ class RubricItemForm(forms.ModelForm):
         required=False,
         widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
     )
+    published = forms.BooleanField(required=False, label="Published", initial=True)
 
     class Meta:
         model = Rubric
@@ -126,6 +127,7 @@ class RubricItemForm(forms.ModelForm):
             "parameters",
             "tags",
             "pedagogy_tags",
+            "published",
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),

@@ -6,6 +6,7 @@
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2025 Deep Shah
 -->
 <script>
     function populateFields() {
@@ -175,6 +176,21 @@
                                             {{ edit_form.pedagogy_tags.errors }}
                                             <label for="{{ edit_form.pedagogy_tags.id_for_label }}">Pedagogy Tags:</label>
                                             {{ edit_form.pedagogy_tags }}
+                                        </div>
+                                    </div>
+                                    <div class="row form-group">
+                                        <div class="col">
+                                            {{ edit_form.published.errors }}
+                                            <!-- TODO: why not edit_form[dot]published and have it do everything? -->
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       name="{{ edit_form.published.name }}"
+                                                       id="{{ edit_form.published.id_for_label }}"
+                                                       {% if edit_form.published.value %}checked{% endif %}>
+                                                <label class="form-check-label" for="{{ edit_form.published.id_for_label }}">Published</label>
+                                            </div>
+                                            <small class="d-block text-muted mt-1 mb">Publishing a rubric makes it usable by markers.</small>
                                         </div>
                                     </div>
                                 </div>

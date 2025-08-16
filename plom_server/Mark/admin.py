@@ -8,7 +8,6 @@ from .models import (
     Annotation,
     AnnotationImage,
     MarkingTask,
-    MarkingTaskPriority,
     MarkingTaskTag,
 )
 
@@ -16,5 +15,4 @@ from .models import (
 admin.site.register(Annotation)
 admin.site.register(AnnotationImage)
 admin.site.register(MarkingTask)
-admin.site.register(MarkingTaskPriority)
 admin.site.register(MarkingTaskTag)
