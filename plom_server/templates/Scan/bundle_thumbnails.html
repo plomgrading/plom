@@ -88,10 +88,11 @@
                 <div class="card-body p-2 pe-0">
                     <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
                     <div class="container overflow-y-scroll p-2" style="max-height:78vh;">
-                        <div class="row row-cols-auto gy-1 gx-1">
+                        <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
                             {% for pg in pages %}
                                 <!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
                                 <div id="fragmentcontainer-{{ pg.order }}"
+                                     class="text-center"
                                      hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
                                      hx-trigger="thumbnailRefresh"
                                      hx-swap="innerHTML"
