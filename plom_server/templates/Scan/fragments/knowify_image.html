@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2025 Aidan Murphy
 -->
 <div class="card p-2" id="bundlePageFragment">
     <!-- HEADER STUFF -->
@@ -10,7 +11,7 @@
             <div class="col-8">
                 <div>
                     <img class="shadow rounded"
-                         src="{% url 'scan_get_rotated_image' bundle_id index %}"
+                         src="{% url 'scan_get_rotated_image' bundle_id index %}?_ts={{ timestamp }}"
                          style="max-height: 100%;
                                 max-width: 100%" />
                 </div>
@@ -19,9 +20,10 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="py-4" id="invalidmessage"></div>
-                        <form hx-post="{% url 'knowify_image' the_filter bundle_id index %}"
+                        <form hx-post="{% url 'knowify_image' bundle_id index %}"
                               hx-target="#invalidmessage"
-                              hx-swap="innerHTML">
+                              hx-swap="none"
+                              hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                             <div class="input-group p-3">
                                 <div x-data="{bundlepapers: true}">
                                     <div class="form-check">
@@ -58,7 +60,7 @@
                             <button class="btn btn-primary" type="submit">Set data</button>
                             <button class="btn btn-danger px-4"
                                     type="button"
-                                    hx-get="{% url 'scan_bundle_page' the_filter bundle_id index %}"
+                                    hx-get="{% url 'scan_bundle_page' bundle_id index %}"
                                     hx-swap="outerHTML"
                                     hx-target="#bundlePageFragment">Cancel</button>
                         </form>

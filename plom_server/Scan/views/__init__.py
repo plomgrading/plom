@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Deep Shah
+# Copyright (C) 2025 Aidan Murphy
 
 """Views of the Plom Server Scan app."""
 
@@ -29,7 +30,9 @@ from .pushed_images import (
 
 from .manage_bundle import (
     GetBundlePageFragmentView,
+    ThumbnailContainerFragmentView,
     BundleThumbnailsView,
+    BundleThumbnailsSummaryFragmentView,
     GetBundleThumbnailView,
     BundleLockView,
     BundlePushCollisionView,
@@ -58,10 +61,4 @@ from .cast_image_state import (
     UnknowifyAllDiscardsHTMXView,
 )
 
-from .rotate_images import (
-    RotateImageOneEighty,
-    RotateImageClockwise,
-    RotateImageCounterClockwise,
-    GetRotatedBundleImageView,
-    GetRotatedPushedImageView,
-)
+from .rotate_images import RotateImageView
