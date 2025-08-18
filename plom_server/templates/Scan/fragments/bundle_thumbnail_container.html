@@ -23,7 +23,7 @@
                value="{{ pg.id }}"
                autocomplete="off">
         <label class="radio-label" for="pgradio-{{ pg.order }}">
-            <div class="card text-center p-1{% if pg.status == 'known' %} bg-success-subtle {% elif pg.status == 'unknown' %} bg-warning-subtle border-warning border-2 {% elif pg.status == 'extra' %} {% if pg.info.paper_number %} bg-primary-subtle {% else %} bg-info-subtle border-info border-2 {% endif %} {% elif pg.status == 'error' %} bg-danger-subtle border-error border-2 {% elif pg.status == 'unread' %} bg-dark-subtle {% elif pg.status == 'discard' %} bg-dark-subtle {% endif %}">
+            <div class="card text-center p-1{% if pg.status == 'known' %} bg-success-subtle {% elif pg.status == 'unknown' %} bg-warning-subtle border-warning border-1 {% elif pg.status == 'extra' %} {% if pg.info.paper_number %} bg-primary-subtle {% else %} bg-info-subtle border-info border-1 {% endif %} {% elif pg.status == 'error' %} bg-danger-subtle border-error border-1 {% elif pg.status == 'unread' %} bg-dark-subtle {% elif pg.status == 'discard' %} bg-dark-subtle {% endif %}">
                 <div class="card-body p-0 d-flex align-items-center">
                     <div class="bundle-thumb">
                         <!-- the img width being independent of the page size means small window =/= tiny thumbnails -->
