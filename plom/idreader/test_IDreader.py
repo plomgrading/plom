@@ -95,7 +95,7 @@ def test_get_digit_box(tmp_path) -> None:
     x = get_digit_prob(model, id_img, 0.05, 0.975, 8, debug=False)
     assert len(x) == 8
     for probs in x:
-        assert len(probs) == 10
+        assert len(probs) == 11
         for p in probs:
             assert 0 <= p <= 1, "Not a probability"
 
