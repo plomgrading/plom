@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (c) 2022 Edith Coates
+# Copyright (c) 2025 Deep Shah
 
 """Use image processing to extract and "read" student numbers.
 
@@ -189,7 +190,13 @@ def _np_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
 
 
 def get_digit_prob(
-    prediction_model, id_page_file, top, bottom, num_digits, *, debug=True
+    prediction_model: ort.InferenceSession,
+    id_page_file,
+    top,
+    bottom,
+    num_digits,
+    *,
+    debug=True,
 ):
     """Return a list of probability predictions for the student ID digits on the cropped image.
 
