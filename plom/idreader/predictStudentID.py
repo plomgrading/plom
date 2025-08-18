@@ -269,7 +269,7 @@ def compute_probabilities(image_file_paths, top, bottom, num_digits):
     Returns:
         dict: A dictionary which involves the probabilities for each image file.
     """
-    prediction_model = load_model()
+    prediction_model, _ = load_model()
 
     # Dictionary of test numbers their digit-probabilities
     probabilities = {}
