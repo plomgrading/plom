@@ -7,7 +7,7 @@ import numpy as np
 from transformers import TrOCRProcessor
 from PIL import Image
 import cv2
-import onnxruntime as ort
+import onnxruntime as ort  # type: ignore[import]
 
 
 class Embedder(ABC):
@@ -83,13 +83,22 @@ class MCQEmbedder(Embedder):
 
             x_np = x_t.numpy().astype(np.float32)
 
+            # onnx session .run returns a list of arrays even if there is only one output
             logits = self.model.run(None, {self.input_name: x_np})[0]
-            probs = np.sqrt(1 / (1 + np.exp(-logits)))[0]
 
+            # convert logits to probability distribution (softmax)
+            probs = np.exp(logits) / np.sum(np.exp(logits))
+
+            # Convert to hellinger space for probability distribution clustering
+            hellinger = np.sqrt(probs)
+
+            # We are running the inference on potentially more than one blob in the scene.
+            # We may hit on noise strokes instead of the real letters, thus we choose to
+            # go with the one blob with highest confidence as a letter.
             confidence = max(probs)
             if confidence > bestConfidence:
                 bestConfidence = confidence
-                bestFeatures = probs
+                bestFeatures = hellinger
         return np.array(bestFeatures)
 
 

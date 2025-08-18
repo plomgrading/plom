@@ -24,6 +24,54 @@ import os
 from typing import Mapping
 
 
+def get_best_clustering(
+    X: np.ndarray, thresholds: np.ndarray, metric="silhouette"
+) -> np.ndarray:
+    """Get the best clustering of X by searching for optimal threshold that maximizes the metric.
+
+    This function defaults with AgglomerativeClustering clustering algorithm. Note that to get
+    more fine-grained clustering one can provide smaller thresholds range. Furthermore, it would
+    be even better if we provide another argument where we force the threshold at a specific value
+    and if that val is None then we do the search.
+
+    Args:
+        X: the feature matrix.
+        thresholds: the choices of distance thresholds.
+        metric: which metric to optimize. Currently supports: "silhouette" and "davies".
+
+    Returns:
+        A numpy array of clusterId where the order matches with the
+        inputs (index 0 provides Id for row 0 of X)
+    """
+    best_score = -np.inf if metric == "silhouette" else np.inf
+    best_labels = np.array([])
+
+    for t in thresholds:
+        clustering = AgglomerativeClustering(
+            n_clusters=None, metric="euclidean", distance_threshold=t
+        )
+        labels = clustering.fit_predict(X)
+        # need at least 2 clusters to score
+        if len(set(labels)) < 2:
+            continue
+
+        if metric == "silhouette":
+            score = silhouette_score(X, labels)
+            # silhouette: higher -> better
+            if score > best_score:
+                best_score = score
+                best_labels = labels
+
+        elif metric == "davies":
+            score = davies_bouldin_score(X, labels)
+            # DB index: lower -> better
+            if score < best_score:
+                best_score = score
+                best_labels = labels
+
+    return best_labels
+
+
 class ClusteringStrategy:
     """Abstract base class for clustering strategy.
 
@@ -99,50 +147,6 @@ class HMEClusteringStrategy(ClusteringStrategy):
             TrOCREmbedder(trocr_model_path),
         ]
 
-    def get_best_clustering(
-        self, X: np.ndarray, thresholds: list[float], metric="silhouette"
-    ) -> np.ndarray:
-        """Get the best clustering of X by searching for optimal threshold that maximizes the metric.
-
-        This function defaults with AgglomerativeClustering clustering algorithm.
-
-        Args:
-            X: the feature matrix.
-            thresholds: the choices of distance thresholds.
-            metric: which metric to optimize. Currently supports: "silhouette" and "davies".
-
-        Returns:
-            A numpy array of clusterId where the order matches with the
-            inputs (index 0 provides Id for row 0 of X)
-        """
-        best_score = -np.inf if metric == "silhouette" else np.inf
-        best_labels = np.array([])
-
-        for t in thresholds:
-            clustering = AgglomerativeClustering(
-                n_clusters=None, metric="euclidean", distance_threshold=t
-            )
-            labels = clustering.fit_predict(X)
-            # need at least 2 clusters to score
-            if len(set(labels)) < 2:
-                continue
-
-            if metric == "silhouette":
-                score = silhouette_score(X, labels)
-                # silhouette: higher -> better
-                if score > best_score:
-                    best_score = score
-                    best_labels = labels
-
-            elif metric == "davies":
-                score = davies_bouldin_score(X, labels)
-                # DB index: lower -> better
-                if score < best_score:
-                    best_score = score
-                    best_labels = labels
-
-        return best_labels
-
     def cluster_papers(
         self, paper_to_image: Mapping[int, np.ndarray]
     ) -> dict[int, int]:
@@ -165,11 +169,9 @@ class HMEClusteringStrategy(ClusteringStrategy):
         min_thresh = 4
         max_thresh = 10
         thresh_counts = 100
-        thresholds = [
-            float(t) for t in np.linspace(min_thresh, max_thresh, thresh_counts)
-        ]
+        thresholds = np.linspace(min_thresh, max_thresh, thresh_counts)
 
-        clusterIDs = self.get_best_clustering(X_reduced, thresholds, "davies")
+        clusterIDs = get_best_clustering(X_reduced, thresholds, "davies")
         return dict(zip(list(paper_to_image.keys()), clusterIDs))
 
 
@@ -191,53 +193,6 @@ class MCQClusteringStrategy(ClusteringStrategy):
             MCQEmbedder(weight_path=weight_path, out_features=out_features)
         ]
 
-    def get_best_clustering(
-        self, X: np.ndarray, thresholds: list[float], metric="silhouette"
-    ) -> np.ndarray:
-        """Get the best clustering of X by searching for optimal threshold that maximizes the metric.
-
-        This function defaults with AgglomerativeClustering clustering algorithm.
-
-        Args:
-            X: the feature matrix.
-            thresholds: the choices of distance thresholds.
-            metric: which metric to optimize. Currently supports: "silhouette" and "davies".
-
-        Returns:
-            A numpy array of clusterId where the order matches with the
-            inputs (index 0 provides Id for row 0 of X)
-        """
-        best_score = -np.inf if metric == "silhouette" else np.inf
-        best_labels = np.array([])
-
-        for t in thresholds:
-            clustering = AgglomerativeClustering(
-                n_clusters=None,
-                metric="cosine",
-                linkage="average",
-                distance_threshold=t,
-            )
-            labels = clustering.fit_predict(X)
-            # need at least 2 clusters to score
-            if len(set(labels)) < 2:
-                continue
-
-            if metric == "silhouette":
-                score = silhouette_score(X, labels)
-                # silhouette: higher -> better
-                if score > best_score:
-                    best_score = score
-                    best_labels = labels
-
-            elif metric == "davies":
-                score = davies_bouldin_score(X, labels)
-                # DB index: lower -> better
-                if score < best_score:
-                    best_score = score
-                    best_labels = labels
-
-        return best_labels
-
     def cluster_papers(
         self, paper_to_image: Mapping[int, np.ndarray]
     ) -> dict[int, int]:
@@ -255,8 +210,8 @@ class MCQClusteringStrategy(ClusteringStrategy):
             [self.get_embeddings(image) for _, image in paper_to_image.items()]
         )
 
-        thresholds = np.linspace(0.05, 0.7, 50)
-        clusterIDs = self.get_best_clustering(
-            X, thresholds=thresholds, metric="silhouette"
-        )
+        # NOTE: this threshold space is empirically tuned with custom dataset
+        # to enforce more fine-grained cluster move the threshold to smaller value range.
+        thresholds = np.linspace(0.05, 0.3, 50)
+        clusterIDs = get_best_clustering(X, thresholds=thresholds, metric="silhouette")
         return dict(zip(list(paper_to_image.keys()), clusterIDs))
