@@ -3,7 +3,6 @@
 
 # sklearn
 from sklearn.metrics import silhouette_score, davies_bouldin_score
-from sklearn.decomposition import PCA
 from sklearn.cluster import AgglomerativeClustering
 
 
@@ -171,7 +170,6 @@ class HMEClusteringStrategy(ClusteringStrategy):
         Returns:
             A dictionary mapping the paper number to their cluster id.
         """
-
         # NOTE: Ideally, I want to normalize probability from self-trained model
         # and embedding from TrOCR before merging and cluster with cosine metric.
         # However, that has worse performance than raw merging of features and
