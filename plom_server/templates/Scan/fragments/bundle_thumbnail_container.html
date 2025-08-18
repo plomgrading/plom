@@ -6,7 +6,6 @@
     Copyright (C) 2025 Aidan Murphy
 -->
 <div id="pgcontainer-{{ pg.order }}"
-     style="width: 10ch"
      data-status="{{ pg.status }}"
      data-paper_number="{{ pg.info.paper_number }}"
      data-bs-toggle="tooltip"
@@ -47,8 +46,6 @@
 	// triggers once when this particular fragment is loaded in browser
 	// necessary for htmx reloads
 	slidervalue = document.getElementById("thumbnailResizeSlider").value;
-	pgcontainer = document.getElementById("pgcontainer-{{ pg.order }}");
 	thumbnailimg = document.getElementById("thumbnailimg-{{ pg.order }}");
-	pgcontainer.style.width = slidervalue + "ch";
 	thumbnailimg.style.width = slidervalue*0.7 + "ch";
 </script>

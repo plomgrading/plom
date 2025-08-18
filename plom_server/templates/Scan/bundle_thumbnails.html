@@ -200,12 +200,7 @@
 
 			// resize _all_ thumbnail containers
 			function resizeThumbnailContainers(newWidth) {
-				var thumbnailContainers = document.querySelectorAll('div[id^="pgcontainer-"]');
 				var thumbnailImages = document.querySelectorAll('img[id^="thumbnailimg-"]');
-
-				thumbnailContainers.forEach(div => {
-					div.style.width = newWidth + "ch";
-				})
 				thumbnailImages.forEach(img => {
 					img.style.width = newWidth*0.7 + "ch";
 				})
