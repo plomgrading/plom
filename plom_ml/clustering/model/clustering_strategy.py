@@ -25,7 +25,10 @@ from typing import Mapping
 
 
 def get_best_clustering(
-    X: np.ndarray, thresholds: np.ndarray, metric="silhouette"
+    X: np.ndarray,
+    thresholds: np.ndarray,
+    distance_metric: str,
+    metric="silhouette",
 ) -> np.ndarray:
     """Get the best clustering of X by searching for optimal threshold that maximizes the metric.
 
@@ -37,7 +40,8 @@ def get_best_clustering(
     Args:
         X: the feature matrix.
         thresholds: the choices of distance thresholds.
-        metric: which metric to optimize. Currently supports: "silhouette" and "davies".
+        distance_metric: What is the distance metric in this context, eg: "euclidean", "cosine"
+        metric: which clustering metric to optimize. Currently supports: "silhouette" and "davies".
 
     Returns:
         A numpy array of clusterId where the order matches with the
@@ -45,10 +49,16 @@ def get_best_clustering(
     """
     best_score = -np.inf if metric == "silhouette" else np.inf
     best_labels = np.array([])
+    best_thresh = -1  # for debug
+
+    linkage = "average" if distance_metric == "cosine" else "ward"
 
     for t in thresholds:
         clustering = AgglomerativeClustering(
-            n_clusters=None, metric="euclidean", distance_threshold=t
+            n_clusters=None,
+            metric=distance_metric,
+            distance_threshold=t,
+            linkage=linkage,
         )
         labels = clustering.fit_predict(X)
         # need at least 2 clusters to score
@@ -61,6 +71,7 @@ def get_best_clustering(
             if score > best_score:
                 best_score = score
                 best_labels = labels
+                best_thresh = t
 
         elif metric == "davies":
             score = davies_bouldin_score(X, labels)
@@ -68,7 +79,9 @@ def get_best_clustering(
             if score < best_score:
                 best_score = score
                 best_labels = labels
+                best_thresh = t
 
+    print(f"Chosen thresh: {best_thresh:.3f}")
     return best_labels
 
 
@@ -171,7 +184,7 @@ class HMEClusteringStrategy(ClusteringStrategy):
         thresh_counts = 100
         thresholds = np.linspace(min_thresh, max_thresh, thresh_counts)
 
-        clusterIDs = get_best_clustering(X_reduced, thresholds, "davies")
+        clusterIDs = get_best_clustering(X_reduced, thresholds, "euclidean", "davies")
         return dict(zip(list(paper_to_image.keys()), clusterIDs))
 
 
@@ -212,6 +225,8 @@ class MCQClusteringStrategy(ClusteringStrategy):
 
         # NOTE: this threshold space is empirically tuned with custom dataset
         # to enforce more fine-grained cluster move the threshold to smaller value range.
-        thresholds = np.linspace(0.05, 0.3, 50)
-        clusterIDs = get_best_clustering(X, thresholds=thresholds, metric="silhouette")
+        thresholds = np.linspace(0.1, 0.5, 50)
+        clusterIDs = get_best_clustering(
+            X, thresholds=thresholds, distance_metric="cosine", metric="silhouette"
+        )
         return dict(zip(list(paper_to_image.keys()), clusterIDs))

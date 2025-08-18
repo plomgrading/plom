@@ -45,7 +45,10 @@ class MCQEmbedder(Embedder):
                 transforms.Grayscale(num_output_channels=1),
                 transforms.Resize((64, 64)),
                 transforms.ToTensor(),
-                transforms.Normalize((0.5,), (0.5,)),
+                transforms.Normalize(
+                    0.5,
+                    0.5,
+                ),
             ]
         )
 
@@ -83,8 +86,14 @@ class MCQEmbedder(Embedder):
 
             x_np = x_t.numpy().astype(np.float32)
 
-            # onnx session .run returns a list of arrays even if there is only one output
-            logits = self.model.run(None, {self.input_name: x_np})[0]
+            # onnx session .run returns a list where each entry represents a tensor for
+            # an output value (there may be multiple outputs, but in this case there is only one).
+            # Therefore, we do [0] to access the only one ouput value in the return list
+            logits_all_batches = self.model.run(None, {self.input_name: x_np})[0]
+
+            # The format now then be come [batch, num_classes], but since there is only 1 batch
+            # it's [1, num_classes] and we will squeeze the batch dim.
+            logits = logits_all_batches[0]
 
             # convert logits to probability distribution (softmax)
             probs = np.exp(logits) / np.sum(np.exp(logits))
