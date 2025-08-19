@@ -95,7 +95,7 @@ dependencies = [
     # "django-silk>=5.2.0",
 
     # plom_ml
-    "scikit-image>=0.25.2",
+    "scikit-image>=0.25.1",
     # "torchvision>=0.20.1",  # TODO?
     "transformers>=4.53.2",
     "onnxruntime>=1.22.1",
