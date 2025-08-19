@@ -17,7 +17,6 @@ from typing import Any
 import requests
 from tqdm import tqdm
 
-from plom.messenger import Messenger
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
@@ -30,6 +29,7 @@ from plom.plom_exceptions import (
     PlomSeriousException,
     PlomVersionMismatchException,
 )
+from .messenger import Messenger
 
 
 log = logging.getLogger("messenger")

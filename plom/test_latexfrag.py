@@ -9,8 +9,7 @@ from pathlib import Path
 from PIL import Image, ImageChops
 
 import plom
-
-from .textools import texFragmentToPNG as processFragment
+from plom.textools import texFragmentToPNG as processFragment
 
 # TODO: this too: pageNotSubmitted
 

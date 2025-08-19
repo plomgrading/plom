@@ -6,7 +6,7 @@ import re
 
 import arrow
 
-from .rubric_utils import diff_rubric, render_rubric_as_html
+from plom.rubric_utils import diff_rubric, render_rubric_as_html
 
 
 def _make_ex():

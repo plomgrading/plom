@@ -125,6 +125,7 @@ packages = [
     "plom.cli",
     "plom.create",
     "plom.create.fonts",
+    "plom.messenger",
     "plom.scan",
     "plom.finish",
     "plom.idreader",

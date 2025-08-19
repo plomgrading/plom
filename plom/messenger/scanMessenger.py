@@ -13,7 +13,7 @@ from plom.plom_exceptions import (
     PlomSeriousException,
     PlomTakenException,
 )
-from plom.baseMessenger import BaseMessenger
+from .base_messenger import BaseMessenger
 
 # TODO: how to do this in subclass?
 # TODO: set username method?
