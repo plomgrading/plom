@@ -7,6 +7,7 @@ from .messenger import Messenger
 from .scanMessenger import ScanMessenger
 from .managerMessenger import ManagerMessenger
 from .base_messenger import Plom_API_Version
+from .plom_admin_messenger import PlomAdminMessenger
 
 # No one should be calling BaseMessenger directly but maybe
 # its useful for typing hints.
