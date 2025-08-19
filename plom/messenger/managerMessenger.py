@@ -25,7 +25,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomUnidentifiedPaperException,
 )
-from plom.baseMessenger import BaseMessenger
+from .base_messenger import BaseMessenger
 
 
 # TODO:
