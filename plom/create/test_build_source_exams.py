@@ -4,8 +4,8 @@
 
 import os
 
+from plom.misc_utils import working_directory
 from .demotools import buildDemoSourceFiles
-from ..misc_utils import working_directory
 
 
 def test_latex_demofiles(tmp_path) -> None:
