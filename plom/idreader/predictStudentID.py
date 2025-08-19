@@ -19,7 +19,7 @@ import numpy as np
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
-import onnxruntime as ort
+import onnxruntime as ort  # type: ignore
 
 from .model_utils import load_model
 
