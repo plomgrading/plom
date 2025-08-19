@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
+from functools import lru_cache
+
 from plom_ml.clustering.model.model_type import ClusteringType
 from plom_ml.clustering.model.clustering_strategy import (
     ClusteringStrategy,
     MCQClusteringStrategy,
     HMEClusteringStrategy,
 )
-
-from functools import lru_cache
 
 
 @lru_cache()

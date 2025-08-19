@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
+from urllib.parse import urlencode
+
 # Django
 from django.http import (
     HttpRequest,
@@ -31,9 +33,6 @@ from plom_server.QuestionClustering.exceptions.clustering_exception import (
 )
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import HueyTaskTracker
-
-# misc
-from urllib.parse import urlencode
 
 
 class Debug(ManagerRequiredView):

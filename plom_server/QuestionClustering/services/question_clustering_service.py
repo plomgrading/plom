@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
+from typing import Optional
+from collections import defaultdict
+from typing import Any
+
 # django
 from django.forms.models import model_to_dict
 from django.db import transaction
@@ -44,11 +48,6 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
 # plom_ml
 from plom_ml.clustering.pipeline.clustering_pipeline import ClusteringPipeline
 from plom_ml.clustering.preprocessing.preprocessor import DiffProcessor
-
-# misc
-from typing import Optional
-from collections import defaultdict
-from typing import Any
 
 
 class QuestionClusteringJobService:
