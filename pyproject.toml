@@ -237,9 +237,8 @@ extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
 generated-members = ["pandas", "cv2.*"]
 # order matters: need errors-only before disable
 errors-only = true
-# TODO: lots of not-an-iterable in plom/db
 # TODO: lots of no-member in plom_server
-disable = ["not-an-iterable", "no-member"]
+disable = ["no-member"]
 output-format = "colorized"
 # we have some in-tree deprecated or to-move code that needs tensorflow
 ignored-modules = ["tensorflow", "api_secrets"]
@@ -297,19 +296,13 @@ module = [
 ignore_missing_imports = true
 
 # hide some things from mypy
-#   - examDB and theServer have strange/confusing import patterns
-#   - tool.py has pyqtProperty stuff that is also confusing to me
-#   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
 [[tool.mypy.overrides]]
-module = [
-    'plom.db.examDB',
-    'plom.server.theServer',
-]
+module = []
 ignore_errors = true
 
 [tool.pyright]
 pythonVersion = "3.12"
-exclude = ['plom/server', '**/_digitHunter.py']
+exclude = ['**/_digitHunter.py']
 # changing to "off" makes this much quieter
 typeCheckingMode = "basic"
 # lots of Django false positives?
