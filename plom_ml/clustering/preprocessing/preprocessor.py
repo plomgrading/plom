@@ -2,11 +2,13 @@
 # Copyright (C) 2025 Bryan Tanady
 
 from abc import abstractmethod
-import numpy as np
-from .image_processing_service import ImageProcessingService
-import cv2
-from plom_ml.clustering.exceptions import MissingRequiredInputKeys
 from typing import Mapping
+
+import numpy as np
+import cv2
+
+from plom_ml.clustering.exceptions import MissingRequiredInputKeys
+from .image_processing_service import ImageProcessingService
 
 
 class Preprocessor:

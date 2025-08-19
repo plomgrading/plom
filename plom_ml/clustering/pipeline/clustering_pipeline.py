@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
-# plom_ml
+from typing import Mapping
+
+import numpy as np
+
 from plom_ml.clustering.model.clustering_strategy import (
     ClusteringStrategy,
 )
 from plom_ml.clustering.preprocessing.preprocessor import Preprocessor
-
-# misc
-import numpy as np
-from typing import Mapping
 
 
 class ClusteringPipeline:
