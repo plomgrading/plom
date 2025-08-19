@@ -1,13 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
-# sklearn
+from abc import abstractmethod
+import os
+from pathlib import Path
+from typing import Mapping
+import yaml
+
+import numpy as np
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.cluster import AgglomerativeClustering
 from huggingface_hub import hf_hub_download
 
-
-# plom_ml
 from plom_ml.clustering.embedding.embedder import (
     Embedder,
     SymbolicEmbedder,
@@ -15,14 +19,6 @@ from plom_ml.clustering.embedding.embedder import (
     MCQEmbedder,
 )
 from plom_ml.clustering.exceptions import MissingEmbedderException
-
-# misc
-from abc import abstractmethod
-import numpy as np
-import yaml
-import os
-from typing import Mapping
-from pathlib import Path
 
 
 def get_best_clustering(

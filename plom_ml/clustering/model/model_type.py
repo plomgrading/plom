@@ -16,16 +16,3 @@ class ClusteringType(str, Enum):
 
     MCQ = "mcq"
     HME = "hme"
-
-
-# temporary to test CI Pipeline
-# class ClusteringType(Enum):
-#     """Defines what clustering models used in clustering pipeline.
-
-#     Attributes:
-#         MCQ: Multiple choice question (A-F, a-f).
-#         HME: Simple handwritten math expression.
-#     """
-
-#     MCQ = 1
-#     HME = 2

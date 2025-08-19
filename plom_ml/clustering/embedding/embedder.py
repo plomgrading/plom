@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
-from torchvision import transforms  # type: ignore[import]
 from abc import ABC, abstractmethod
+
 import numpy as np
-from transformers import TrOCRProcessor
 from PIL import Image
+from torchvision import transforms  # type: ignore[import]
+from transformers import TrOCRProcessor
 import cv2
 import onnxruntime as ort  # type: ignore[import]
 
