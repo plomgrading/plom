@@ -17,7 +17,7 @@ import cv2 as cv
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-import onnxruntime
+import onnxruntime  # type: ignore
 
 from django.conf import settings
 from django.contrib.auth.models import User

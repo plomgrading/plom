@@ -11,8 +11,8 @@ from pathlib import Path
 
 # import torch
 import shutil
-from huggingface_hub import hf_hub_download
-import onnxruntime as ort
+from huggingface_hub import hf_hub_download  # type: ignore
+import onnxruntime as ort  # type: ignore
 
 
 CNN_MODEL_FILENAME = "mnist_emnist_blank_cnn_v1.onnx"

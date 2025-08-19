@@ -10,7 +10,7 @@ import pymupdf
 import numpy as np
 import PIL.Image
 from pytest import raises
-import onnxruntime as ort
+import onnxruntime as ort  # type: ignore
 
 from plom.misc_utils import working_directory
 from .predictStudentID import compute_probabilities
