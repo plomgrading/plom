@@ -80,3 +80,4 @@ bitsandbytes==0.46.1
 scikit-image==0.25.2
 torchvision==0.22.1
 transformers==4.53.2
+huggingface_hub==0.34.3
