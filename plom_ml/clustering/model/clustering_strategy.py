@@ -4,6 +4,7 @@
 # sklearn
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.cluster import AgglomerativeClustering
+from huggingface_hub import hf_hub_download
 
 
 # plom_ml
@@ -21,6 +22,7 @@ import numpy as np
 import yaml
 import os
 from typing import Mapping
+from pathlib import Path
 
 
 def get_best_clustering(
@@ -150,8 +152,34 @@ class HMEClusteringStrategy(ClusteringStrategy):
             config = yaml.safe_load(f)
 
         # load weights path
-        symbolic_model_path = config["models"]["hme"]["symbolic"]
-        trocr_model_path = config["models"]["hme"]["trocr"]
+        symbolic_model_filename = config["models"]["hme_symbolic"]["filename"]
+        trocr_model_filename = config["models"]["hme_trocr"]["filename"]
+
+        symbolic_model_path = Path(f"model_cache/{symbolic_model_filename}")
+        trocr_model_path = Path(f"model_cache/{trocr_model_filename}")
+
+        if not symbolic_model_path.exists():
+            print("Downloading HME symbolic weight")
+            hf_hub_download(
+                repo_id=config["models"]["hme_symbolic"]["repo_id"],
+                filename=symbolic_model_filename,
+                local_dir=symbolic_model_path.parent,
+            )
+            print(
+                "HME symbolic model has been downloaded, saved at: ",
+                symbolic_model_path,
+            )
+
+        if not trocr_model_path.exists():
+            print("Downloading trOCR weight")
+            hf_hub_download(
+                repo_id=config["models"]["hme_trocr"]["repo_id"],
+                filename=trocr_model_filename,
+                local_dir=trocr_model_path.parent,
+            )
+            print(
+                "HME symbolic model has been downloaded, saved at: ", trocr_model_path
+            )
 
         # Init embedders
         self.embedders = [
@@ -203,8 +231,19 @@ class MCQClusteringStrategy(ClusteringStrategy):
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # load weight path
-        weight_path = config["models"]["mcq"]
+        # check if weight has been downloaded
+        weight_filename = config["models"]["mcq"]["filename"]
+        weight_path = Path(f"model_cache/{weight_filename}")
+
+        # download weight if the weight is not present
+        if not Path(weight_path).exists():
+            print("Downloading MCQ clusterer weight")
+            hf_hub_download(
+                repo_id=config["models"]["mcq"]["repo_id"],
+                filename=weight_filename,
+                local_dir=weight_path.parent,
+            )
+            print("Model has been downloaded, saved at: ", weight_path)
 
         # init embedder
         out_features = 11
