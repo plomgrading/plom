@@ -285,7 +285,6 @@ module = [
     'pymupdf',
     'random_username.generate',
     'rest_framework.*',
-    'seaborn',
     'weasyprint',
     'whitenoise',
     'zipfly',
