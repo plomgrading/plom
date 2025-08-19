@@ -54,6 +54,11 @@ Copyright (C) 2025 Bryan Tanady -->
                                    hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})">Remove</a>
                             {% else %}
                                 <i class="bi bi-clock-history text-info"></i>
+                                <a class="btn btn-danger btn-sm"
+                                   hx-delete="{% url 'remove_clustering_job' task.task_id %}"
+                                   hx-target="#tasks-table"
+                                   hx-swap="outerHTML"
+                                   hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})">Remove</a>
                             {% endif %}
                         </td>
                     </tr>
