@@ -88,7 +88,7 @@ class MCQEmbedder(Embedder):
 
             # onnx session .run returns a list where each entry represents a tensor for
             # an output value (there may be multiple outputs, but in this case there is only one).
-            # Therefore, we do [0] to access the only one ouput value in the return list
+            # Therefore, we do [0] to access the only one output value in the return list
             logits_all_batches = self.model.run(None, {self.input_name: x_np})[0]
 
             # The format now then be come [batch, num_classes], but since there is only 1 batch
