@@ -684,7 +684,7 @@ class IDBoxProcessorService:
 
     def compute_probability_heatmap_for_idbox_images(
         self, image_file_paths: dict[int, Path], num_digits: int
-    ) -> dict[int, list[np.ndarray]]:
+    ) -> dict[int, list[list[float]]]:
         """Return probabilities for digits for each paper in the given dictionary of images files.
 
         Args:
