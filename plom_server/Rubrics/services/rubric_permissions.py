@@ -91,7 +91,9 @@ class RubricPermissionsService:
         for opt in rubric_fractional_options:
             name = opt["name"]
             assert isinstance(name, str)
-            opt["checked"] = Settings.key_value_store_get(name)
+            opt["checked"] = (
+                True if Settings.key_value_store_get_or_none(name) else False
+            )
         rubric_fractional_options = [
             opt
             for opt in rubric_fractional_options

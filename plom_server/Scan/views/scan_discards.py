@@ -31,6 +31,8 @@ class ScannerDiscardView(ScannerRequiredView):
 
 
 class ScannerReassignView(ManagerRequiredView):
+    """This is for pushed images?"""
+
     def get(self, request: HttpRequest, *, page_pk: int) -> HttpResponse:
         mss = ManageScanService()
         discard_page_info = mss.get_pushed_discard_page_image_info(page_pk)

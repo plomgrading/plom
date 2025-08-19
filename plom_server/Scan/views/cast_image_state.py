@@ -2,12 +2,13 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
-from django_htmx.http import HttpResponseClientRedirect
+from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Papers.services import SpecificationService, PaperInfoService
@@ -20,13 +21,13 @@ from ..services import (
 
 from plom.plom_exceptions import PlomBundleLockedException
 
+from datetime import datetime
+
 
 class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
-    def post(
-        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
-    ) -> HttpResponse:
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
             ScanCastService.discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
@@ -37,9 +38,10 @@ class DiscardImageView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-        return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            + f"?pop={index}"
+        return render(
+            request,
+            "Scan/fragments/bundle_page_panel.html",
+            {"bundle_id": bundle_id, "index": index},
         )
 
 
@@ -48,16 +50,9 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
         self,
         request: HttpRequest,
         *,
-        the_filter: str,
         bundle_id: int,
-        pop_index: int | None,
     ) -> HttpResponse:
-        """View that discards all unknowns from the given bundle.
-
-        Notice that it optionally takes the index so that when the
-        page is refreshed it can display the correct calling
-        image-index.
-        """
+        """View that discards all unknowns from the given bundle."""
         try:
             ScanCastService().discard_all_unknowns_from_bundle_id(
                 request.user, bundle_id
@@ -68,24 +63,13 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-
-        if pop_index is None:
-            return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            )
-        else:
-            return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-                + f"?pop={pop_index}"
-            )
+        return HttpResponseClientRefresh()
 
 
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
-    def post(
-        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
-    ) -> HttpResponse:
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
             ScanCastService().unknowify_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
@@ -97,9 +81,10 @@ class UnknowifyImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
 
-        return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            + f"?pop={index}"
+        return render(
+            request,
+            "Scan/fragments/bundle_page_panel.html",
+            {"bundle_id": bundle_id, "index": index},
         )
 
 
@@ -108,16 +93,9 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
         self,
         request: HttpRequest,
         *,
-        the_filter: str,
         bundle_id: int,
-        pop_index: int | None,
     ) -> HttpResponse:
-        """View that casts all discards in the given bundle as unknowns.
-
-        Notice that it optionally takes the page-index so that when the
-        page is refreshed it can display the correct calling
-        image-index.
-        """
+        """View that casts all discards in the given bundle as unknowns."""
         try:
             ScanCastService().unknowify_all_discards_from_bundle_id(
                 request.user, bundle_id
@@ -128,24 +106,13 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-
-        if pop_index is None:
-            return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            )
-        else:
-            return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-                + f"?pop={pop_index}"
-            )
+        return HttpResponseClientRefresh()
 
 
 class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
-    def get(
-        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
-    ) -> HttpResponse:
+    def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
@@ -154,6 +121,7 @@ class KnowifyImageView(ScannerRequiredView):
         try:
             check_bundle_object_is_neither_locked_nor_pushed(bundle)
         except PlomBundleLockedException:
+            # TODO: this would confuse me as a user:
             # bounce user back to scanner home page if not allowed to change things
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
@@ -164,19 +132,13 @@ class KnowifyImageView(ScannerRequiredView):
         if index < 0 or index > n_pages:
             raise Http404("Bundle page does not exist.")
 
-        current_page = scanner.get_bundle_single_page_info(bundle, index)
         context.update(
             {
                 "is_pushed": bundle.pushed,
-                "slug": bundle.slug,
                 "bundle_id": bundle_id,
-                "timestamp": bundle.timestamp,
                 "index": index,
                 "total_pages": n_pages,
-                "prev_idx": index - 1,
-                "next_idx": index + 1,
-                "current_page": current_page,
-                "the_filter": the_filter,
+                "timestamp": datetime.now().timestamp(),
             }
         )
 
@@ -195,9 +157,7 @@ class KnowifyImageView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/knowify_image.html", context)
 
-    def post(
-        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
-    ) -> HttpResponse:
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         # TODO - improve this form processing
 
         knowify_page_data = request.POST
@@ -240,18 +200,17 @@ class KnowifyImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
 
-        return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            + f"?pop={index}"
+        return render(
+            request,
+            "Scan/fragments/bundle_page_panel.html",
+            {"bundle_id": bundle_id, "index": index},
         )
 
 
 class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
-    def post(
-        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
-    ) -> HttpResponse:
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         # TODO - improve this form processing
 
         extra_page_data = request.POST
@@ -299,14 +258,15 @@ class ExtraliseImageView(ScannerRequiredView):
                 f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>"""
             )
 
-        return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            + f"?pop={index}"
+        return render(
+            request,
+            "Scan/fragments/bundle_page_panel.html",
+            {"bundle_id": bundle_id, "index": index},
         )
 
-    def put(
-        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
-    ) -> HttpResponse:
+    # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
+    def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """Cast an existing bundle page to an extra page (unassigned)."""
         try:
             ScanCastService.extralise_image_from_bundle_id(
                 request.user, bundle_id, index
@@ -322,13 +282,14 @@ class ExtraliseImageView(ScannerRequiredView):
             # TODO: redirect ala scan_bundle_lock?
             raise
 
-        return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            + f"?pop={index}"
+        return render(
+            request,
+            "Scan/fragments/bundle_page_panel.html",
+            {"bundle_id": bundle_id, "index": index},
         )
 
     def delete(
-        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
+        self, request: HttpRequest, *, bundle_id: int, index: int
     ) -> HttpResponse:
         try:
             ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
@@ -339,7 +300,8 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
 
-        return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
-            + f"?pop={index}"
+        return render(
+            request,
+            "Scan/fragments/bundle_page_panel.html",
+            {"bundle_id": bundle_id, "index": index},
         )
