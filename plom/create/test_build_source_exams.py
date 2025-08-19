@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import os
