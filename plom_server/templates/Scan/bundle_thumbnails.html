@@ -39,7 +39,7 @@
         <div class="col-4">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">
+                    <div class="card-title mb-0">
                         <div class="dropdown">
                             <!-- WET, see <script> tag further down. -->
                             <!-- autocomplete is Firefox-specific fix: https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
@@ -61,36 +61,38 @@
                                 <option>unread pages</option>
                             </select>
                         </div>
-                        <hr />
+                        <hr class="mb-1" />
                         <div class="container">
                             <div class="row text-center d-flex align-items-center">
-                                <div class="col-2">
-                                    <i class="bi bi-file-earmark fs-6"></i>
+                                <div class="col-2 px-1">
+                                    <button class="btn btn-sm btn-outline" onclick="tickSlider(-1)">-</button>
                                 </div>
-                                <div class="col-8">
+                                <div class="col-8 px-1 d-flex align-items-center">
                                     <input id="thumbnailResizeSlider"
                                            type="range"
                                            class="w-100"
                                            min="3"
-                                           max="12"
+                                           max="20"
+                                           step="1"
                                            value="10"
                                            autocomplete="off"
                                            oninput="resizeThumbnailContainers(this.value)">
                                 </div>
-                                <div class="col-2">
-                                    <i class="bi bi-file-earmark fs-2"></i>
+                                <div class="col-2 px-1">
+                                    <button class="btn btn-sm btn-outline" onclick="tickSlider(1)">+</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-2 pe-0">
+                <div class="card-body py-2 px-0">
                     <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
                     <div class="container overflow-y-scroll p-2" style="max-height:78vh;">
-                        <div class="row row-cols-auto gy-1 gx-1">
+                        <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
                             {% for pg in pages %}
                                 <!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
                                 <div id="fragmentcontainer-{{ pg.order }}"
+                                     class="text-center"
                                      hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
                                      hx-trigger="thumbnailRefresh"
                                      hx-swap="innerHTML"
@@ -198,15 +200,15 @@
 
 			// resize _all_ thumbnail containers
 			function resizeThumbnailContainers(newWidth) {
-				var thumbnailContainers = document.querySelectorAll('div[id^="pgcontainer-"]');
 				var thumbnailImages = document.querySelectorAll('img[id^="thumbnailimg-"]');
-
-				thumbnailContainers.forEach(div => {
-					div.style.width = newWidth + "ch";
-				})
 				thumbnailImages.forEach(img => {
 					img.style.width = newWidth*0.7 + "ch";
 				})
+			}
+			function tickSlider(valueChange) {
+				var slider = document.getElementById('thumbnailResizeSlider');
+				slider.value = parseFloat(slider.value) + parseFloat(slider.step)*valueChange;
+				resizeThumbnailContainers(slider.value);
 			}
         </script>
     </div>
