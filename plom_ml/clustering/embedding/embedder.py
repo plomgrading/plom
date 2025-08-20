@@ -30,6 +30,9 @@ class MCQEmbedder(Embedder):
     """Embed images with MCQ Clustering model."""
 
     def __init__(self, weight_path, out_features):
+        # Hiding this import so torch unneeded unless this class instantiated
+        from torchvision import transforms  # type: ignore[import]
+
         self.out_features = out_features
 
         # init model
@@ -120,6 +123,7 @@ class SymbolicEmbedder(Embedder):
     """Embeds images using a ResNet-34 backbone + projection head."""
 
     def __init__(self, model_path: str):
+        from torchvision import transforms  # type: ignore[import]
 
         # Load model
         self.model = ort.InferenceSession(
