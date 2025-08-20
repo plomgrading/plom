@@ -3,6 +3,8 @@
 
 import hashlib
 import re
+import shutil
+import tempfile
 from base64 import b64encode
 from pathlib import Path
 
@@ -68,15 +70,13 @@ table = [
     },
     {
         # Sorttable by Stuart Langridge, https://github.com/stuartlangridge/sorttable
-        # v2  9f7eb9ec586954ed01ae94669d7790868ef27cabcc54187441ca18910af63bcc  sorttable.js
         "name": "sorttable",
         "license": "X11",  # https://www.kryogenix.org/code/browser/sorttable/#licence
-        # No, author blocks direct download:
+        # No, blocks direct download:
         # "js": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
-        # For now, we committed a local copy to our git repo.  Later (TODO) once all these
-        # are downloaded once and cached we should be able to unpack it from the zip live
-        # along with the others.
+        "jsintegrity": "sha256-n3657FhpVO0BrpRmnXeQho7yfKvMVBh0QcoYkQr2O8w=",
         "zip": "https://www.kryogenix.org/code/browser/sorttable/sorttable.zip",
+        "jsfilename": "sorttable.js",
     },
     {
         "name": "select2",
@@ -122,11 +122,25 @@ def check_or_download_file(
 ) -> None:
     """Download if not present, then check file hash."""
     f = save_to / filename
-    if not f.exists():
+    if f.exists():
+        print(f" *  {f}")
+    else:
         print(f"Downloading {f}...")
         download_file(url, save_to, filename=filename)
+    check_file(f, hash=hash)
+
+
+def check_or_download_and_unzip(save_to, filename, zipurl, hash):
+    f = save_to / filename
+    if f.exists():
+        print(f" *  {f}")
     else:
-        print(f)
+        print(f"Downloading {f}...")
+        with tempfile.TemporaryDirectory() as _td:
+            td = Path(_td)
+            download_file(zipurl, td, filename="meh.zip")
+            shutil.unpack_archive(td / "meh.zip", td)
+            shutil.copy(td / filename, save_to)
     check_file(f, hash=hash)
 
 
@@ -136,7 +150,7 @@ def check_file(f, hash: str | None = None):
         sha256 = "sha256-" + b64encode(hashlib.sha256(c).digest()).decode("utf-8")
         sha384 = "sha384-" + b64encode(hashlib.sha384(c).digest()).decode("utf-8")
     if hash is None:
-        print(f"  {sha256}")
+        print(f"    {sha256}")
     elif hash.startswith("sha384-"):
         if hash != sha384:
             raise ValueError(
@@ -144,7 +158,7 @@ def check_file(f, hash: str | None = None):
                 f"records:  {hash}\n"
                 f"download: {sha384}"
             )
-        print(f"  {sha384}")
+        print(f"    {sha384}")
     else:
         if hash != sha256:
             raise ValueError(
@@ -152,7 +166,7 @@ def check_file(f, hash: str | None = None):
                 f"records:  {hash}\n"
                 f"download: {sha256}\n"
             )
-        print(f"  {sha256}")
+        print(f"    {sha256}")
 
 
 def main():
@@ -161,9 +175,13 @@ def main():
     static_css = Path("plom_server/static/css3rdparty")
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
+    print("Checking/downloading vendored JavaScript and CSS:")
     for row in table:
-        if row["name"] == "sorttable":
-            # special case
+        if row.get("zip"):
+            # special case for zip
+            check_or_download_and_unzip(
+                static_js, row["jsfilename"], row["zip"], row.get("jsintegrity")
+            )
             continue
         if row.get("js"):
             check_or_download_file(
