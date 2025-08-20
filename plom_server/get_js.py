@@ -89,7 +89,7 @@ table = [
     {
         # Used only on the login page (?)
         "name": "mdb-ui-kit",
-        "license": "TODO",
+        "license": "MIT",
         "js": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.js",
         "css": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css",
         "jsfilename": "mdb.min.js",
