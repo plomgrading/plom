@@ -97,7 +97,7 @@ table = [
     },
     {
         "name": "JQuery",
-        "license": "TODO",
+        "license": "MIT",
         "js": "https://code.jquery.com/jquery-3.6.0.min.js",
         "jsfilename": "jquery-3.6.0.min.js",
     },
