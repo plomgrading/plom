@@ -171,7 +171,7 @@ def check_file(f, hash: str | None = None):
 
 def download_javascript_and_css_to_static(destdir: None | str = None):
     if destdir is None:
-        destdir = Path("plom_server/static")
+        destdir = "plom_server/static"
     static_js = Path(destdir) / "js3rdparty"
     static_css = Path(destdir) / "css3rdparty"
 
