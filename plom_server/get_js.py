@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
 
+import hashlib
 import re
+from base64 import b64encode
 from pathlib import Path
 
 import requests
@@ -9,8 +11,8 @@ import requests
 # Javascript/CSS 3rd-party-library downloader
 # ===========================================
 #
-# This is not yet used for anything (Issue #2763) but it does try
-# to be a WET table of all our JS/CSS libraries (Issue #2762).
+# This downloads our Javascript and CSS dependencies for local static
+# caching.
 #
 # FAQ: why not learn `npm` or something?  Yes please help.
 #
@@ -21,45 +23,53 @@ import requests
 # That needs to be manually updated.  Actually why bother if local,
 # we could just check here...?
 
+
 table = [
     {
-        "what": "Bootstrap",
+        "name": "Bootstrap-js",
         "license": "MIT",
-        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
         "js": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
-        "integrity": "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
+        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+        "jsintegrity": "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
+        "cssintegrity": "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
+        "jsfilename": "bootstrap.bundle.min.js",
+        "cssfilename": "bootstrap.min.css",
     },
     {
-        "what": "Bootstrap-Icons",
+        "name": "Bootstrap-Icons",
         "license": "MIT",
         "css": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css",
+        "cssfilename": "bootstrap-icons.css",
     },
     {
-        "what": "HTMX",
+        "name": "HTMX",
         "license": "0BSD",
         "js": "https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js",
+        "jsfilename": "htmx.min.js",
     },
     {
-        "what": "Alpine",
+        "name": "Alpine",
         "license": "MIT",
         "js": "https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js",
-        "js-filename": "alpine.js",
+        "jsfilename": "alpine.js",
     },
     {
-        "what": "chart.js",
+        "name": "chart.js",
         "license": "MIT",
         "js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js",
-        "integrity": "sha256-5M9NFEsiJjTy5k/3B81XuVP43ktlsjHNWsa94RRkjk0=",
+        "jsintegrity": "sha256-5M9NFEsiJjTy5k/3B81XuVP43ktlsjHNWsa94RRkjk0=",
+        "jsfilename": "chart.umd.js",
     },
     {
-        "what": "d3.js",
+        "name": "d3.js",
         "license": "BSD",
         "js": "https://d3js.org/d3.v6.min.js",
+        "jsfilename": "d3.v6.min.js",
     },
     {
         # Sorttable by Stuart Langridge, https://github.com/stuartlangridge/sorttable
         # v2  9f7eb9ec586954ed01ae94669d7790868ef27cabcc54187441ca18910af63bcc  sorttable.js
-        "what": "Sorttable",
+        "name": "sorttable",
         "license": "X11",  # https://www.kryogenix.org/code/browser/sorttable/#licence
         # No, author blocks direct download:
         # "js": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
@@ -69,22 +79,27 @@ table = [
         "zip": "https://www.kryogenix.org/code/browser/sorttable/sorttable.zip",
     },
     {
-        "what": "select2",
+        "name": "select2",
         "license": "MIT",
         "js": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
         "css": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+        "jsfilename": "select2.min.js",
+        "cssfilename": "select2.min.css",
     },
     {
         # Used only on the login page (?)
-        "what": "mdb-ui-kit",
+        "name": "mdb-ui-kit",
         "license": "TODO",
         "js": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.js",
         "css": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css",
+        "jsfilename": "mdb.min.js",
+        "cssfilename": "mdb.min.css",
     },
     {
-        "what": "JQuery",
+        "name": "JQuery",
         "license": "TODO",
         "js": "https://code.jquery.com/jquery-3.6.0.min.js",
+        "jsfilename": "jquery-3.6.0.min.js",
     },
 ]
 
@@ -102,15 +117,63 @@ def download_file(url: str, save_to: Path, *, filename: str | None = None) -> No
             f.write(chunk)
 
 
-if __name__ == "__main__":
-    static_js = Path("plom_server/static/3rdpartyjs")
-    static_css = Path("plom_server/static/3rdpartycss")
+def check_or_download_file(
+    url: str, save_to: Path, filename: str, *, hash: str | None = None
+) -> None:
+    """Download if not present, then check file hash."""
+    f = save_to / filename
+    if not f.exists():
+        print(f"Downloading {f}...")
+        download_file(url, save_to, filename=filename)
+    else:
+        print(f)
+    check_file(f, hash=hash)
+
+
+def check_file(f, hash: str | None = None):
+    with f.open("rb") as fh:
+        c = fh.read()
+        sha256 = "sha256-" + b64encode(hashlib.sha256(c).digest()).decode("utf-8")
+        sha384 = "sha384-" + b64encode(hashlib.sha384(c).digest()).decode("utf-8")
+    if hash is None:
+        print(f"  {sha256}")
+    elif hash.startswith("sha384-"):
+        if hash != sha384:
+            raise ValueError(
+                "Downloaded sha384 does not match records!\n"
+                f"records:  {hash}\n"
+                f"download: {sha384}"
+            )
+        print(f"  {sha384}")
+    else:
+        if hash != sha256:
+            raise ValueError(
+                "Downloaded sha384 does not match records!\n"
+                f"records:  {hash}\n"
+                f"download: {sha256}\n"
+            )
+        print(f"  {sha256}")
+
+
+def main():
+    # TODO: maybe we should respect some Django settings to get this path?
+    static_js = Path("plom_server/static/js3rdparty")
+    static_css = Path("plom_server/static/css3rdparty")
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
     for row in table:
-        print(row["what"])
+        if row["name"] == "sorttable":
+            # special case
+            continue
         if row.get("js"):
-            download_file(row["js"], static_js, filename=row.get("js-filename"))
-            # TODO: verify integrity if present
+            check_or_download_file(
+                row["js"], static_js, row["jsfilename"], hash=row.get("jsintegrity")
+            )
         if row.get("css"):
-            download_file(row["css"], static_css)
+            check_or_download_file(
+                row["css"], static_css, row["cssfilename"], hash=row.get("cssintegrity")
+            )
+
+
+if __name__ == "__main__":
+    main()
