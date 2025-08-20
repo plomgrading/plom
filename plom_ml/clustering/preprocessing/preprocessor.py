@@ -85,8 +85,9 @@ class DiffProcessor(Preprocessor):
     Args:
         dilation_strength: larger value makes reference more dilated, such that it's more
             robust to noise, but more likely to erase student's work.
-        invert: set to true to invert the preprocessed output through bitwise_not. Otherwise, there
-            is no inversion applied.
+        invert: False if handwriting is white on black background, True if otherwise.
+                This choice depends on how the models are trained, some may be trained on
+                white text on black background or vice versa.
     """
 
     input_keys = {"ref", "scanned"}

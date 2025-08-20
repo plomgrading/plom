@@ -93,6 +93,8 @@ class ImageProcessingService:
         REF_DILATING_KERN = (4, 4)
 
         # connected pixels under this area are erased, should be under 70
+        # NOTE: For noisy scans, 15 is insufficient, perhaps might want to increase to 30 -50
+        # BUT becareful, this might kill small disconnected handwritings.
         BLOB_MIN_AREA = 15
 
         # Ensure grayscale
