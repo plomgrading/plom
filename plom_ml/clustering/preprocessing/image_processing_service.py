@@ -88,6 +88,13 @@ class ImageProcessingService:
             corresponding to differences are set to 255 (white), while unchanged regions
             are set to 0 (black).
         """
+        # bump this to kill more noise, but if too high, it can erase handwriting near answer boxes
+        # ideal values sit around 2 - 6
+        REF_DILATING_KERN = (4, 4)
+
+        # connected pixels under this area are erased, should be under 70
+        BLOB_MIN_AREA = 15
+
         # Ensure grayscale
         if blank_ref.ndim == 3:
             blank_ref = cv2.cvtColor(blank_ref, cv2.COLOR_BGR2GRAY)
@@ -110,7 +117,7 @@ class ImageProcessingService:
         )
 
         # dilate the inks in ref
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, REF_DILATING_KERN)
         dilated_ref = cv2.dilate(binarized_ref, kernel, iterations=dilation_iteration)
 
         # increase scanned image contrast so faint handwriting is not lost
@@ -131,13 +138,15 @@ class ImageProcessingService:
         # Remove noises from scanned image
         temp = cv2.morphologyEx(binarized_scanned, cv2.MORPH_OPEN, np.ones((2, 2)))
         cleaned_scanned = cv2.morphologyEx(temp, cv2.MORPH_CLOSE, np.ones((1, 2)))
-        filtered = self.get_connected_component_only(cleaned_scanned, min_area=15)
+        filtered = self.get_connected_component_only(
+            cleaned_scanned, min_area=BLOB_MIN_AREA
+        )
 
         # Get the diff between ref and scanned
         diff = cv2.bitwise_and(filtered, cv2.bitwise_not(dilated_ref))
 
         # cleanup noises post-diffing
         cleaned = cv2.morphologyEx(diff, cv2.MORPH_OPEN, np.ones((2, 2)))
-        final = self.get_connected_component_only(cleaned, min_area=15)
+        final = self.get_connected_component_only(cleaned, min_area=BLOB_MIN_AREA)
 
         return final
