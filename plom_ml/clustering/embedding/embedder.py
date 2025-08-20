@@ -55,7 +55,7 @@ class MCQEmbedder(Embedder):
                 - Axis 3: width (64 pixels)
             Values are normalized to [0, 1].
         """
-        img = img.resize((64, 64), Image.BILINEAR)
+        img = img.resize((64, 64), Image.Resampling.BILINEAR)
         x = np.asarray(img, dtype=np.float32) / 255.0  # HxW
         x = (x - 0.5) / 0.5
         x = x[None, :, :].astype(np.float32)
@@ -116,8 +116,9 @@ class MCQEmbedder(Embedder):
                 bestConfidence = confidence
                 bestFeatures = hellinger
 
-        bestFeatures = np.clip(bestFeatures, 1e-8, 1)
-        return np.array(bestFeatures)
+        # avoid 0 which can mess up cosine similarity
+        clipped = np.clip(bestFeatures, 1e-8, 1)
+        return np.array(clipped)
 
 
 class SymbolicEmbedder(Embedder):
@@ -144,7 +145,7 @@ class SymbolicEmbedder(Embedder):
             - Axis 3: width (256 pixels)
         Values are normalized to [0, 1].
         """
-        img = img.resize((256, 128), Image.BILINEAR)
+        img = img.resize((256, 128), Image.Resampling.BILINEAR)
         x = np.asarray(img, dtype=np.float32) / 255.0  # HxW
         x = x[None, :, :].astype(np.float32)
         return np.expand_dims(x, 0)

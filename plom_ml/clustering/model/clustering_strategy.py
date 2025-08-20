@@ -39,6 +39,8 @@ def get_best_clustering(
         thresholds: the choices of distance thresholds.
         distance_metric: What is the distance metric in this context, eg: "euclidean", "cosine"
         metric: which clustering metric to optimize. Currently supports: "silhouette" and "davies".
+            From my experiment, optimizing silhouette tends to provide less duplicated clusterings but
+            each grouping may have less purity.
 
     Returns:
         A numpy array of clusterId where the order matches with the
@@ -48,6 +50,8 @@ def get_best_clustering(
     best_labels = np.array([])
     best_thresh = -1  # for debug
 
+    # Becareful with linkage, I have tuned my thresholds for distance_metric = ward,
+    # and if we change that to "complete" we need to retune again.
     linkage = "average" if distance_metric == "cosine" else "ward"
 
     for t in thresholds:
@@ -207,11 +211,14 @@ class HMEClusteringStrategy(ClusteringStrategy):
             [self.get_embeddings(image) for pn, image in paper_to_image.items()]
         )
 
-        # set up distance threshold search space. Make range to smaller value
-        # if intends for more fine-grained clustering
-        min_thresh = 3.5
-        max_thresh = 6
-        thresh_counts = 40
+        # set up distance threshold search space.
+        # Make range to smaller value if intends for more fine-grained clustering eg: (3.5, 5).
+        # From my experimentation: don't go under 3, otherwise it will be too fine-grained.
+        min_thresh = 4
+        max_thresh = 7
+        thresh_counts = (
+            40  # bumping this up has little impact, 10 - 40 is a reasonable choice
+        )
         thresholds = np.linspace(min_thresh, max_thresh, thresh_counts)
 
         clusterIDs = get_best_clustering(X, thresholds, "euclidean", "davies")
