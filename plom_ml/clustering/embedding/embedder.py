@@ -115,6 +115,8 @@ class MCQEmbedder(Embedder):
             if confidence > bestConfidence:
                 bestConfidence = confidence
                 bestFeatures = hellinger
+
+        bestFeatures = np.clip(bestFeatures, 1e-8, 1)
         return np.array(bestFeatures)
 
 

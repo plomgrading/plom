@@ -209,9 +209,9 @@ class HMEClusteringStrategy(ClusteringStrategy):
 
         # set up distance threshold search space. Make range to smaller value
         # if intends for more fine-grained clustering
-        min_thresh = 4.5
-        max_thresh = 7
-        thresh_counts = 100
+        min_thresh = 3.5
+        max_thresh = 6
+        thresh_counts = 40
         thresholds = np.linspace(min_thresh, max_thresh, thresh_counts)
 
         clusterIDs = get_best_clustering(X, thresholds, "euclidean", "davies")
