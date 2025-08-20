@@ -110,7 +110,7 @@ class ImageProcessingService:
         )
 
         # dilate the inks in ref
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
         dilated_ref = cv2.dilate(binarized_ref, kernel, iterations=dilation_iteration)
 
         # increase scanned image contrast so faint handwriting is not lost
@@ -131,13 +131,13 @@ class ImageProcessingService:
         # Remove noises from scanned image
         temp = cv2.morphologyEx(binarized_scanned, cv2.MORPH_OPEN, np.ones((2, 2)))
         cleaned_scanned = cv2.morphologyEx(temp, cv2.MORPH_CLOSE, np.ones((1, 2)))
-        filtered = self.get_connected_component_only(cleaned_scanned, min_area=50)
+        filtered = self.get_connected_component_only(cleaned_scanned, min_area=15)
 
         # Get the diff between ref and scanned
         diff = cv2.bitwise_and(filtered, cv2.bitwise_not(dilated_ref))
 
         # cleanup noises post-diffing
         cleaned = cv2.morphologyEx(diff, cv2.MORPH_OPEN, np.ones((2, 2)))
-        final = self.get_connected_component_only(cleaned, min_area=50)
+        final = self.get_connected_component_only(cleaned, min_area=15)
 
         return final

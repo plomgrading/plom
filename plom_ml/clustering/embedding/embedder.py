@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from PIL import Image
-from torchvision import transforms  # type: ignore[import]
 from transformers import TrOCRProcessor
 import cv2
 import onnxruntime as ort  # type: ignore[import]
@@ -40,18 +39,25 @@ class MCQEmbedder(Embedder):
 
         self.input_name = self.model.get_inputs()[0].name
 
-        # init inference tf
-        self.infer_tf = transforms.Compose(
-            [
-                transforms.Grayscale(num_output_channels=1),
-                transforms.Resize((64, 64)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    0.5,
-                    0.5,
-                ),
-            ]
-        )
+    def infer_transform(self, img: Image.Image) -> np.ndarray:
+        """Mimic torchvision transform preprocessing of rescaling and ToTensor.
+
+        Args:
+            img: the image to be transformed into tensor like result
+
+        Returns:
+            4D float32 array of shape (1, 1, 64, 64) where:
+                - Axis 0: batch dimension (size 1)
+                - Axis 1: channel dimension (grayscale, size 1)
+                - Axis 2: height (64 pixels)
+                - Axis 3: width (64 pixels)
+            Values are normalized to [0, 1].
+        """
+        img = img.resize((64, 64), Image.BILINEAR)
+        x = np.asarray(img, dtype=np.float32) / 255.0  # HxW
+        x = (x - 0.5) / 0.5
+        x = x[None, :, :].astype(np.float32)
+        return np.expand_dims(x, 0)
 
     def embed(self, img: np.ndarray) -> np.ndarray:
         """Convert image array into a feature matrix.
@@ -83,9 +89,7 @@ class MCQEmbedder(Embedder):
             crop = img[y : y + h, x : x + w]
             bestConfidence, bestFeatures = 0.0, [0] * self.out_features
 
-            x_t = self.infer_tf(Image.fromarray(crop)).unsqueeze(0)
-
-            x_np = x_t.numpy().astype(np.float32)
+            x_np = self.infer_transform(Image.fromarray(crop))
 
             # onnx session .run returns a list where each entry represents a tensor for
             # an output value (there may be multiple outputs, but in this case there is only one).
@@ -123,13 +127,23 @@ class SymbolicEmbedder(Embedder):
         )
         self.input_name = self.model.get_inputs()[0].name
 
-        # init infer_tf
-        self.transform = transforms.Compose(
-            [
-                transforms.Resize((128, 256)),
-                transforms.ToTensor(),  # scales to [0,1]
-            ]
-        )
+    def infer_transform(self, img: Image.Image) -> np.ndarray:
+        """Mimic torchvision transform preprocessing of rescaling and ToTensor.
+
+        Args:
+            img: the image to be transformed into tensor like result
+
+        Returns: 4D float32 array of shape (1, 1, 128, 256) where:
+            - Axis 0: batch dimension (size 1)
+            - Axis 1: channel dimension (grayscale, size 1)
+            - Axis 2: height (128 pixels)
+            - Axis 3: width (256 pixels)
+        Values are normalized to [0, 1].
+        """
+        img = img.resize((256, 128), Image.BILINEAR)
+        x = np.asarray(img, dtype=np.float32) / 255.0  # HxW
+        x = x[None, :, :].astype(np.float32)
+        return np.expand_dims(x, 0)
 
     def embed(self, image: np.ndarray) -> np.ndarray:
         """Embed a single grayscale image into a 1D feature vector.
@@ -149,8 +163,7 @@ class SymbolicEmbedder(Embedder):
             image = image.astype(np.uint8)
 
         pil = Image.fromarray(image, mode="L")
-        x_t = self.transform(pil).unsqueeze(0)
-        x_np = x_t.numpy().astype(np.float32)
+        x_np = self.infer_transform(pil)
         emb, logits = self.model.run(None, {self.input_name: x_np})
         probs = np.sqrt(1 / (1 + np.exp(-logits)))[0]
 
