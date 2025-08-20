@@ -169,10 +169,12 @@ def check_file(f, hash: str | None = None):
         print(f"    {sha256}")
 
 
-def main():
-    # TODO: maybe we should respect some Django settings to get this path?
-    static_js = Path("plom_server/static/js3rdparty")
-    static_css = Path("plom_server/static/css3rdparty")
+def download_javascript_and_css_to_static(destdir: None | str = None):
+    if destdir is None:
+        destdir = Path("plom_server/static")
+    static_js = Path(destdir) / "js3rdparty"
+    static_css = Path(destdir) / "css3rdparty"
+
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
     print("Checking/downloading vendored JavaScript and CSS:")
@@ -194,4 +196,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    download_javascript_and_css_to_static()
