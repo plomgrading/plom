@@ -166,6 +166,11 @@ class HMEClusteringStrategy(ClusteringStrategy):
             The training involves minimum padding (mainly handwritten stuff at the middle).
             Current system feeds the entire selected regions to the system (with diffing), so
             there are potentially a lot of empty spaced that may confuse the model.
+        - Make clustering system location agnostic
+            Sort of related to above. Since we are picking a large region with large empty space,
+            there is bound to be large variance in the handwritten stuff position. There is no escape
+            that this will create some distortion into the generated features, potentially weaken
+            intracluster cohesion.
 
     If things go wrong with current system what to do?:
         - Clustering granularity
