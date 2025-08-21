@@ -177,6 +177,7 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
     static_js = Path(destdir) / "js3rdparty"
     static_css = Path(destdir) / "css3rdparty"
 
+    Path(destdir).mkdir(exist_ok=True)
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
     print("Checking/downloading vendored JavaScript and CSS:")
