@@ -43,7 +43,7 @@ table = [
         "what": "Alpine",
         "license": "MIT",
         "js": "https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js",
-        "js-filename": "apline.js",
+        "js-filename": "alpine.js",
     },
     {
         "what": "chart.js",
@@ -58,9 +58,15 @@ table = [
     },
     {
         # Sorttable by Stuart Langridge, https://github.com/stuartlangridge/sorttable
+        # v2  9f7eb9ec586954ed01ae94669d7790868ef27cabcc54187441ca18910af63bcc  sorttable.js
         "what": "Sorttable",
-        "license": "X11",  # https://github.com/stuartlangridge/sorttable/blob/master/sorttable/sorttable.js
-        "js": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
+        "license": "X11",  # https://www.kryogenix.org/code/browser/sorttable/#licence
+        # No, author blocks direct download:
+        # "js": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
+        # For now, we committed a local copy to our git repo.  Later (TODO) once all these
+        # are downloaded once and cached we should be able to unpack it from the zip live
+        # along with the others.
+        "zip": "https://www.kryogenix.org/code/browser/sorttable/sorttable.zip",
     },
     {
         "what": "select2",
