@@ -41,7 +41,7 @@ def get_best_clustering(
         distance_metric: What is the distance metric in this context, eg: "euclidean", "cosine"
         metric: which clustering metric to optimize. Currently supports: "silhouette" and "davies".
             From my experiment, optimizing silhouette tends to provide less duplicated clusterings but
-            each grouping may have less purity.
+            each grouping may have less purity than davies optimized clustering.
 
     Returns:
         A numpy array of clusterId where the order matches with the
@@ -153,7 +153,7 @@ class HMEClusteringStrategy(ClusteringStrategy):
 
     An ongoing clustering system that I can't guarantee to work in all cases.
 
-    So far, I noticed that it fails in data with minimum infomation eg: single character
+    So far, I noticed that it fails in data with minimum information eg: single character
     '1', '2', 'a' and very small fonts. Furthermore, this system may be somewhat size sensitive
     so it may cluster based on font size instead of purely semantic. One main reason is that
     during training, the vocabulary built for the model differentiates small and capital letter.
