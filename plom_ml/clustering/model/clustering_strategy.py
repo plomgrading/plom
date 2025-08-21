@@ -83,6 +83,11 @@ def get_best_clustering(
                 best_labels = labels
                 best_thresh = t
 
+    if not best_labels:
+        raise NoThresholdFound(
+            f"Can't find any threshold within {thresholds} to produce any clustering"
+        )
+
     print(f"Chosen thresh: {best_thresh:.3f}")
     return best_labels
 

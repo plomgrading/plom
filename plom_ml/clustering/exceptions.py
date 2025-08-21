@@ -10,6 +10,12 @@ class ClusteringException(PlomMLException):
     pass
 
 
+class NoThresholdFound(ClusteringException):
+    """No distance threshold is found for clusterings."""
+
+    pass
+
+
 class PreprocessingException(ClusteringException):
     """Preprocessing steps related exception."""
 
