@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+"""This is an abstracted inference for https://github.com/BryanTanady/plom_ml_clustering."""
 
 from abc import abstractmethod
 import os

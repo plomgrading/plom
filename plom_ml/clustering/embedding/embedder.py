@@ -11,7 +11,11 @@ import onnxruntime as ort  # type: ignore[import]
 
 
 class Embedder(ABC):
-    """Abstract class that embeds features to images for ML tasks."""
+    """Abstract class that generates images embeddings for ML tasks.
+
+    In simple terms: this is the class that uses ML models to generate "some numbers"
+    for images such that they can be grouped based on those numbers.
+    """
 
     @abstractmethod
     def embed(self, image: np.ndarray) -> np.ndarray:
