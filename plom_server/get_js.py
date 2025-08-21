@@ -44,6 +44,7 @@ table = [
         "cssfilename": "bootstrap-icons.css",
     },
     {
+        # Currently needs work to bump past 2.0.0, see Issue #4017
         "name": "HTMX",
         "license": "0BSD",
         "js": "https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js",
