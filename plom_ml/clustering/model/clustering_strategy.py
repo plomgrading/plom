@@ -273,6 +273,9 @@ class MCQClusteringStrategy(ClusteringStrategy):
 
         # NOTE: this threshold space is empirically tuned with custom dataset
         # to enforce more fine-grained cluster move the threshold to smaller value range.
+        # Unlike HME, this range tends to be pretty robust, but that could be because I have less
+        # varying datasets. But if it turns out that we need more fine grain, I would say move
+        # min to 0.05
         thresholds = np.linspace(0.1, 0.5, 50)
         clusterIDs = get_best_clustering(
             X, thresholds=thresholds, distance_metric="cosine", metric="silhouette"
