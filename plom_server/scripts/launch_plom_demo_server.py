@@ -43,6 +43,7 @@ _demo_script_launch_time: None | float = None
 
 
 def saytime(comment: str) -> None:
+    """Echo information about how long we've been running."""
     global _demo_script_launch_time
     now = time.localtime()
 

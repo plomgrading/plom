@@ -132,6 +132,7 @@ def check_or_download_file(
 
 
 def check_or_download_and_unzip(save_to, filename, zipurl, hash):
+    """If file exists, check if hash, else download it by downloading and unpacking a zip."""
     f = save_to / filename
     if f.exists():
         print(f" *  {f}")
@@ -146,6 +147,7 @@ def check_or_download_and_unzip(save_to, filename, zipurl, hash):
 
 
 def check_file(f, hash: str | None = None):
+    """Check if a file matches a hash and echo info to stdout."""
     with f.open("rb") as fh:
         c = fh.read()
         sha256 = "sha256-" + b64encode(hashlib.sha256(c).digest()).decode("utf-8")
@@ -171,6 +173,7 @@ def check_file(f, hash: str | None = None):
 
 
 def download_javascript_and_css_to_static(destdir: None | str = None):
+    """Download javascript to for static caching."""
     if destdir is None:
         # Note: defaults to same dir mentioned in plom_server/settings.py
         destdir = "plom_extra_static"
