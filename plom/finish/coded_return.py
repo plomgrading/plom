@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Aidan Murphy
 
 """Gather reassembled papers with html page for digital return."""
 

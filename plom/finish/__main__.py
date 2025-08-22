@@ -4,6 +4,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2025 Aidan Murphy
 
 """Plom script for post-grading tasks.
 
@@ -139,7 +140,8 @@ def get_parser():
         action="store_true",
         help="""
             Add a 'get solutions' button to the return website.
-            No longer supported.
+            No longer supported. Use `plom-cli` or the web ui for
+            modern Plom.
         """,
     )
     spCodedReturn.add_argument(
