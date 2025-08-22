@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Colin B. Macdonald
+
 """This is an abstracted inference for https://github.com/BryanTanady/plom_ml_clustering."""
 
-from abc import abstractmethod
 import os
+import yaml
+from abc import abstractmethod
 from pathlib import Path
 from typing import Mapping
-import yaml
 
 import numpy as np
 from sklearn.metrics import silhouette_score, davies_bouldin_score
@@ -19,7 +21,7 @@ from plom_ml.clustering.embedding.embedder import (
     TrOCREmbedder,
     MCQEmbedder,
 )
-from plom_ml.clustering.exceptions import MissingEmbedderException
+from plom_ml.clustering.exceptions import MissingEmbedderException, NoThresholdFound
 
 
 def get_best_clustering(
