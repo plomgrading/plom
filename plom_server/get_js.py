@@ -44,6 +44,7 @@ table = [
         "cssfilename": "bootstrap-icons.css",
     },
     {
+        # Currently needs work to bump past 2.0.0, see Issue #4017
         "name": "HTMX",
         "license": "0BSD",
         "js": "https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js",
@@ -171,10 +172,12 @@ def check_file(f, hash: str | None = None):
 
 def download_javascript_and_css_to_static(destdir: None | str = None):
     if destdir is None:
-        destdir = "plom_server/static"
+        # Note: defaults to same dir mentioned in plom_server/settings.py
+        destdir = "plom_extra_static"
     static_js = Path(destdir) / "js3rdparty"
     static_css = Path(destdir) / "css3rdparty"
 
+    Path(destdir).mkdir(exist_ok=True)
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
     print("Checking/downloading vendored JavaScript and CSS:")
