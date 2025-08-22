@@ -23,7 +23,6 @@ from .clear_manager_login import clear_manager_login
 
 from .spreadsheet import pull_spreadsheet
 from .reassemble_completed import reassemble_paper, reassemble_all_papers
-from .assemble_solutions import assemble_solutions
 from .rubric_downloads import download_rubric_files
 from .coded_return import make_coded_return_webpage
 from .audit import audit
@@ -39,7 +38,6 @@ __all__ = [
     "pull_spreadsheet",
     "reassemble_paper",
     "reassemble_all_papers",
-    "assemble_solutions",
     "download_rubric_files",
     "make_coded_return_webpage",
 ]

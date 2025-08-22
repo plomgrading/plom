@@ -40,17 +40,6 @@ def do_renaming(fromdir, todir, sns):
     return numfiles
 
 
-def copy_soln_files(shortname, todir, sns):
-    fromdir = Path("solutions")
-    todir = Path(todir)
-    for sid in sns:
-        fname = "{}_solutions_{}.pdf".format(shortname, sid)
-        if os.path.isfile(fromdir / fname):
-            shutil.copyfile(fromdir / fname, todir / fname)
-        else:
-            print("No solution file for student id = {}".format(sid))
-
-
 def make_coded_return_webpage(
     shortname: str,
     *,
@@ -75,7 +64,7 @@ def make_coded_return_webpage(
         salt (str): instead of random, hash from student ID salted
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
-        solutions (bool): add a solutions link to the website
+        solutions (bool): add a solutions link to the website. Not supported
 
     Returns:
         None.
@@ -124,16 +113,12 @@ def make_coded_return_webpage(
     else:
         print('no pdf files in "{0}"?  Stopping!'.format(fromdir))
         sys.exit(5)
-    # if solutions then copy across the solutions files
     if solutions:
-        print("Copying solution files into place.")
-        copy_soln_files(shortname, codedReturnDir, sns)
+        print('"solutions" option is no longer supported,')
+        print("skipping copying solutions files.")
 
     print("Adding index.html file")
-    if solutions:
-        from .html_view_test_template import htmlsrc_w_solutions as htmlsrc
-    else:
-        from .html_view_test_template import htmlsrc
+    from .html_view_test_template import htmlsrc
 
     htmlsrc = htmlsrc.replace("__COURSENAME__", longname)
     htmlsrc = htmlsrc.replace("__TESTNAME__", shortname)

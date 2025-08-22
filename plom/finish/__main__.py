@@ -31,7 +31,6 @@ from plom.finish import clear_manager_login
 from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
 from plom.finish import reassemble_paper, reassemble_all_papers
-from plom.finish import assemble_solutions
 from plom.finish import download_rubric_files
 from plom.finish import audit
 from plom.finish import make_coded_return_webpage
@@ -140,6 +139,7 @@ def get_parser():
         action="store_true",
         help="""
             Add a 'get solutions' button to the return website.
+            No longer supported.
         """,
     )
     spCodedReturn.add_argument(
@@ -179,6 +179,7 @@ def get_parser():
             If all solution images present, then this will build individualised
             solution PDFs for the students (based on the particular q/v of their
             test.
+            No longer supported
         """,
     )
     spSolution.add_argument(
@@ -286,12 +287,7 @@ def main():
                 tmpdir=args.tmpdir,
             )
     elif args.command == "solutions":
-        assemble_solutions(
-            papernum=args.testnum,
-            msgr=(args.server, args.password),
-            watermark=args.mark,
-            verbose=True,
-        )
+        print("Assembly of solutions is no longer supported.")
     elif args.command == "webpage":
         msgr = start_messenger(args.server, args.password)
         try:
