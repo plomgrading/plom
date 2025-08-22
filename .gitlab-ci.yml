@@ -118,7 +118,7 @@ wet_no_drift:
     - echo $VER1
     - bash -c "[[ x$VER0 == x$VER1 ]]"
 
-# we don't yet manage our CSS/JS libraries very well (Issue #2763)
+
 wet_css_js_3rd_party:
   stage: static_analysis
   image: python:3
@@ -126,8 +126,8 @@ wet_css_js_3rd_party:
     - pip install requests
   script:
     - python3 plom_server/get_js.py
-    - ls plom_server/static/3rdpartyjs/
-    - ls plom_server/static/3rdpartycss/
+    - ls plom_server/static/js3rdparty/
+    - ls plom_server/static/css3rdparty/
 
 
 # By default we assume the target is origin/main but if a MR is open,

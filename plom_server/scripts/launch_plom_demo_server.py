@@ -864,6 +864,8 @@ def main():
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 
+    run_django_manage_command("plom_get_static_javascript")
+
     saytime("Finished making groups and early users, extra pages, and scrap paper.")
 
     if not args.development:

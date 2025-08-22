@@ -28,6 +28,7 @@ ok_no_copyright = [
     "CHANGELOG*",
     "CONTRIBUTORS*",
     "*README.md",
+    "*README.txt",
     "qtCreatorFiles/*.ui",
     "*/uiFiles/ui_*.py",
     ".mailmap",
