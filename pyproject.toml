@@ -9,6 +9,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Deep Shah
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -90,6 +91,8 @@ dependencies = [
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=2.2.1",
+    "onnxruntime>=1.22.1",
+    "huggingface_hub>=0.34.3"
     # "nplusone>=1.0.0",
     # "django-silk>=5.2.0",
 ]
