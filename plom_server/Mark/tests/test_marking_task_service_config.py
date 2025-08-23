@@ -40,9 +40,9 @@ class MarkingTaskTestsWithConfig(TestCase):
         )
 
         self.assertEqual(task1.question_version, question_version1)
-        self.assertAlmostEqual(task1.code, "q0001g1")
+        self.assertEqual(task1.code, "0001g1")
         self.assertEqual(task2.question_version, question_version2)
-        self.assertEqual(task2.code, "q0002g1")
+        self.assertEqual(task2.code, "0002g1")
 
     @config_test()
     def test_marking_task_before_pqvmap(self) -> None:
@@ -97,29 +97,29 @@ class MarkingTaskTestsWithConfig(TestCase):
         user1: User = baker.make(User)
         user2: User = baker.make(User)
 
-        task1 = MarkingTask.objects.get(code="q0001g1")
+        task1 = MarkingTask.objects.get(code="0001g1")
         task1.assigned_user = user1
         task1.status = MarkingTask.OUT
         task1.save()
 
-        task2 = MarkingTask.objects.get(code="q0002g1")
+        task2 = MarkingTask.objects.get(code="0002g1")
 
-        task3 = MarkingTask.objects.get(code="q0003g1")
+        task3 = MarkingTask.objects.get(code="0003g1")
         task3.assigned_user = user1
         task3.status = MarkingTask.COMPLETE
         task3.save()
 
-        task4 = MarkingTask.objects.get(code="q0001g2")
+        task4 = MarkingTask.objects.get(code="0001g2")
         task4.assigned_user = user2
         task4.status = MarkingTask.COMPLETE
         task4.save()
 
-        task5 = MarkingTask.objects.get(code="q0002g2")
+        task5 = MarkingTask.objects.get(code="0002g2")
         task5.assigned_user = user2
         task5.status = MarkingTask.OUT
         task5.save()
 
-        task6 = MarkingTask.objects.get(code="q0003g2")
+        task6 = MarkingTask.objects.get(code="0003g2")
         task6.assigned_user = user1
         task6.status = MarkingTask.OUT_OF_DATE
         task6.save()
@@ -141,9 +141,9 @@ class MarkingTaskTestsWithConfig(TestCase):
         num_to_produce = 2
         auto_init_tasks = true
         """
-        task1 = MarkingTask.objects.get(code="q0001g1")
-        task2 = MarkingTask.objects.get(code="q0001g2")
-        task3 = MarkingTask.objects.get(code="q0002g1")
+        task1 = MarkingTask.objects.get(code="0001g1")
+        task2 = MarkingTask.objects.get(code="0001g2")
+        task3 = MarkingTask.objects.get(code="0002g1")
 
         self.assertEqual(QuestionMarkingService.get_first_available_task(), task1)
 

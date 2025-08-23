@@ -92,9 +92,9 @@ class MarkingTaskServiceTests(TestCase):
             question_index=1,
             question_version=2,
             paper__paper_number=42,
-            code="q0042g1",
+            code="0042g1",
         )
-        code = "q0042g1"
+        code = "0042g1"
         assert task.code == code
         mark_task.get_latest_task(42, 1, question_version=2)
         with self.assertRaisesRegex(ValueError, "wrong version"):

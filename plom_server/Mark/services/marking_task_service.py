@@ -69,7 +69,7 @@ class MarkingTaskService:
         except ValueError as err:
             raise RuntimeError(f"Server does not have a question-version map - {err}")
 
-        task_code = f"q{paper.paper_number:04}g{question_index}"
+        task_code = f"{paper.paper_number:04}g{question_index}"
 
         # other tasks with this code are now 'out of date'
         # as per #3220 do not erase assigned user.
@@ -129,7 +129,7 @@ class MarkingTaskService:
                 a loop.
         """
         # create all the task codes
-        task_codes = [f"q{X[0]:04}g{X[1]}" for X in paper_question_version_list]
+        task_codes = [f"{X[0]:04}g{X[1]}" for X in paper_question_version_list]
         # use this to get all existing marking tasks
         existing_tasks = (
             MarkingTask.objects.filter(code__in=task_codes)
@@ -156,7 +156,7 @@ class MarkingTaskService:
         # finally get on with building things
         new_tasks = []
         for pn, qi, v in paper_question_version_list:
-            code = f"q{pn:04}g{qi}"
+            code = f"{pn:04}g{qi}"
             if code in priorities:
                 priority = priorities[code]
             elif strategy == "paper_number":
@@ -620,7 +620,7 @@ class MarkingTaskService:
 
         Args:
             tag_text: which tag to add, creating it if necessary.
-            code: from which task, for example ``"q0123g5"`` for paper
+            code: from which task, for example ``"0123g5"`` for paper
                 123 question 5.
             user: who is doing the tagging.
                 TODO: record who tagged: Issue #2840.
@@ -643,7 +643,7 @@ class MarkingTaskService:
 
         Args:
             tag_text: which tag to remove.
-            code: from which task, for example ``"q0123g5"`` for paper
+            code: from which task, for example ``"0123g5"`` for paper
                 123 question 5.
 
         Raises:
