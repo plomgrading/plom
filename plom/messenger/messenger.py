@@ -411,7 +411,7 @@ class Messenger(BaseMessenger):
             task = task[1:]
         return task
 
-    def MclaimThisTask(self, code: str, version: int) -> list:
+    def claim_task(self, code: str, version: int) -> list:
         """Claim a task from server and get back metadata.
 
         Args:
@@ -429,6 +429,9 @@ class Messenger(BaseMessenger):
             PlomAuthenticationException:
             PlomSeriousException: generic unexpected error
         """
+        if self.is_server_api_less_than(115):
+            assert not code.startswith("q")
+            code = "q" + code
         with self.SRmutex:
             try:
                 if self.is_legacy_server():
@@ -441,9 +444,6 @@ class Messenger(BaseMessenger):
                         },
                     )
                 else:
-                    if self.is_server_api_less_than(115):
-                        assert not code.startswith("q")
-                        code = "q" + code
                     response = self.patch_auth(f"/MK/tasks/{code}?version={version}")
                 response.raise_for_status()
                 return response.json()
