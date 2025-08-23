@@ -81,4 +81,3 @@ huggingface_hub==0.34.3
 # plom_ml
 scikit-image==0.25.2
 transformers==4.53.2
-huggingface_hub==0.34.3
