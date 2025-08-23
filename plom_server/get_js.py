@@ -81,11 +81,11 @@ table = [
     },
     {
         # SortableJS (note not Sorttable!) https://github.com/SortableJS/Sortable
-        # 0.15.6:  6d0a831fc19b4bae851797ad3393157e861afb7862459c11226359b27e2c4337  Sortable.min.js
         "name": "SortableJS",
         "license": "MIT",
         "js": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
-        # "js": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.x/Sortable.min.js"
+        "jsintegrity": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
+        "jsfilename": "Sortable.min.js",
     },
     {
         "name": "select2",
