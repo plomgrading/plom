@@ -859,7 +859,7 @@ def main():
         msgr = start_messenger(args.server, args.password)
         try:
             # TODO: probably we want something sane like --paper 123 --question 4
-            # task = f"q{paper:04}g{question}"
+            # task = f"{paper:04}g{question}"
             task = args.task
             if args.rm:
                 print(f"Task {task}, removing tags: {args.tags}")

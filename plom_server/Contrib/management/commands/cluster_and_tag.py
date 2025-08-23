@@ -167,7 +167,7 @@ class Command(BaseCommand):
         for i in range(len(clusters)):
             if len(clusters[i]) > 0:
                 for paper_num in clusters[i]:
-                    code = f"q{paper_num}g1"
+                    code = f"{paper_num}g1"
                     text = f"cluster_{i}"
                     try:
                         ms.add_tag_text_from_task_code(text, code, user)
