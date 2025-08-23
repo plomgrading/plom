@@ -2,7 +2,7 @@
 # Copyright (C) 2021, 2023-2025 Colin B. Macdonald
 
 from pytest import raises
-from plom.messenger import Messenger
+from .messenger import Messenger
 
 
 def test_invalid_url_too_many_colons() -> None:
