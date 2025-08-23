@@ -1193,24 +1193,24 @@ class BaseMessenger:
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def create_new_tag(self, tag_text: str):
-        # TODO: I don't think this is implemented server-side
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                "/tags",
-                json={"user": self.user, "token": self.token, "tag_text": tag_text},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code in [406, 409]:
-                raise PlomBadTagError(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    # TODO: I don't think this is implemented server-side
+    # def create_new_tag(self, tag_text: str):
+    #     self.SRmutex.acquire()
+    #     try:
+    #         response = self.patch(
+    #             "/tags",
+    #             json={"user": self.user, "token": self.token, "tag_text": tag_text},
+    #         )
+    #         response.raise_for_status()
+    #         return response.json()
+    #     except requests.HTTPError as e:
+    #         if response.status_code == 401:
+    #             raise PlomAuthenticationException() from None
+    #         if response.status_code in [406, 409]:
+    #             raise PlomBadTagError(response.reason) from None
+    #         raise PlomSeriousException(f"Some other sort of error {e}") from None
+    #     finally:
+    #         self.SRmutex.release()
 
     def McreateRubric(self, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to make a new rubric and get key back.
