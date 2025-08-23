@@ -66,20 +66,39 @@ def unpack_code(code: str) -> tuple[int, int]:
     """Return a tuple of (paper_number, question_index) from a task code string.
 
     Args:
-        code: a task code which is a string like "q0001g1".  Requires code to be
-            at least 4 characters long.  Requires code to start with "q" and
-            contain a "g" somewhere after the second character, but not be the
-            last character and the rest of the characters to be numeric.
+        code: a task code which is a string like "0001g1".  Requires code to be
+            at least 3 characters long.  For legacy reasons, code can optionally
+            start with a "q" which will be discarded.
+            Requires that code contain a "g" somewhere after the first character,
+            but not be the last character and the rest of the characters to be
+            numeric.
+
+    Returns:
+        A tuple of two integers, the paper number and the question index.
+
+    Raises:
+        ValueError: described conditions are not satisfied.
     """
-    assert len(code) >= len("q0g0"), f'code "{code}" has the wrong length'
-    assert code[0] == "q", f'code "{code}" does not start with "q"'
+    if code.startswith("q"):
+        code = code[1:]
 
-    split_index = code.find("g", 2)
+    errbase = f'invalid task code "{code}": '
+    if len(code) < len("0g0"):
+        raise ValueError(errbase + "too short")
 
-    assert split_index != -1, f'"g" must be present in code "{code}"'
-    assert split_index != len(code) - 1, f'"g" cannot be last char in code "{code}"'
+    if "g" not in code:
+        raise ValueError(errbase + 'must contain a "g"')
 
-    paper_number = int(code[1:split_index])
-    question_idx = int(code[split_index + 1 :])
+    left, right = code.split("g")
+
+    try:
+        paper_number = int(left)
+    except ValueError as e:
+        raise ValueError(errbase + f"cannot get paper_number: {e}") from None
+
+    try:
+        question_idx = int(right)
+    except ValueError as e:
+        raise ValueError(errbase + f"cannot get question_idx: {e}") from None
 
     return paper_number, question_idx

@@ -224,10 +224,7 @@ class MarkingTaskService:
             ValueError: invalid code.
             RuntimeError: code valid but task does not exist.
         """
-        try:
-            paper_number, question_idx = mark_task.unpack_code(code)
-        except AssertionError as e:
-            raise ValueError(f"{code} is not a valid task code: {e}") from e
+        paper_number, question_idx = mark_task.unpack_code(code)
         try:
             return mark_task.get_latest_task(paper_number, question_idx)
         except ObjectDoesNotExist as e:
