@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Colin B. Macdonald
 
-import numpy as np
-from skimage.transform import resize
 import cv2
+import numpy as np
+
+# unsure why pylint complains here: I tried it locally
+from skimage.transform import resize  # pylint: disable=no-name-in-module
 
 
 class ImageProcessingService:
