@@ -193,6 +193,7 @@ def wait_for_user_to_type_quit() -> None:
 
 
 def main():
+    """The Plom server script."""
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
@@ -218,6 +219,8 @@ def main():
         run_django_manage_command("plom_make_groups_and_first_users")
         # build extra-page and scrap-paper PDFs
         run_django_manage_command("plom_build_scrap_extra_pdfs")
+
+        run_django_manage_command("plom_get_static_javascript")
 
         if not args.development:
             run_django_manage_command("collectstatic --clear --no-input")

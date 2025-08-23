@@ -239,8 +239,14 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
+# --------------------------------------
+#
+# Something important, see docs
 STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# These are the "source" dirs for static files.  The first one might be readonly (Issue #2932)
+# Second one is a hack to get some oxymoronic "dynamic" static stuff: see extra pages, scrap
+# pages, javascript downloads, etc).
+STATICFILES_DIRS = [BASE_DIR / "static", "plom_extra_static"]
 # Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)

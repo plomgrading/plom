@@ -11,10 +11,10 @@ from typing import Any
 
 from pytest import raises
 
-from .rubric_utils import compute_score_legacy2022 as lg
-from .rubric_utils import compute_score_locabs as s
-from .rubric_utils import compute_score_naive as naive
-from .plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
+from plom.rubric_utils import compute_score_legacy2022 as lg
+from plom.rubric_utils import compute_score_locabs as s
+from plom.rubric_utils import compute_score_naive as naive
+from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
 def test_naive_score() -> None:

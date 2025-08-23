@@ -22,9 +22,6 @@ from typing import Any
 import requests
 from requests_toolbelt import MultipartEncoder
 
-from plom.baseMessenger import BaseMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
@@ -39,12 +36,8 @@ from plom.plom_exceptions import (
     PlomTimeoutError,
     PlomVersionMismatchException,
 )
+from .base_messenger import BaseMessenger
 
-__all__ = [
-    "Messenger",
-    "ManagerMessenger",
-    "ScanMessenger",
-]
 
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")

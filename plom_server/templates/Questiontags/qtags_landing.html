@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Elisa Pan
-    Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2025 Andrew Rechnitzer
 -->
@@ -136,10 +136,9 @@
         </tbody>
     </table>
     {% include "Questiontags/modal_forms.html" %}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-          rel="stylesheet" />
+    <script src="{% static 'js3rdparty/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'js3rdparty/select2.min.js' %}"></script>
+    <link href="{% static 'css3rdparty/select2.min.css' %}" rel="stylesheet" />
     <script>
         $(document).ready(function() {
             $('#tag_id_edit').select2({

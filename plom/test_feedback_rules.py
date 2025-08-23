@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
-from .feedback_rules import feedback_rules
+from plom.feedback_rules import feedback_rules
 
 
 def test_codes_are_strings() -> None:

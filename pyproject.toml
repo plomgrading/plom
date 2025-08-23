@@ -9,6 +9,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Bryan Tanady
+# Copyright (C) 2025 Deep Shah
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -26,9 +27,8 @@ authors = [
     {name = 'Andrew Rechnitzer'},
     {name = 'Colin B. Macdonald'},
 ]
-license = {text = 'AGPLv3+'}
+license = "AGPL-3.0-or-later"
 classifiers=[
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Topic :: Education :: Testing",
     "Development Status :: 3 - Alpha",
     "Operating System :: OS Independent",
@@ -91,14 +91,13 @@ dependencies = [
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=2.2.1",
+    "onnxruntime>=1.22.1",
+    "huggingface_hub>=0.34.3",
     # "nplusone>=1.0.0",
     # "django-silk>=5.2.0",
-
-    # plom_ml
+    # plom_ml stuff
     "scikit-image>=0.25.1",
     "transformers>=4.53.2",
-    "onnxruntime>=1.22.1",
-    "huggingface_hub>=0.34.3"
 ]
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
@@ -132,6 +131,7 @@ packages = [
     "plom.cli",
     "plom.create",
     "plom.create.fonts",
+    "plom.messenger",
     "plom.scan",
     "plom.finish",
     "plom.idreader",
@@ -253,9 +253,8 @@ extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
 generated-members = ["pandas", "cv2.*"]
 # order matters: need errors-only before disable
 errors-only = true
-# TODO: lots of not-an-iterable in plom/db
 # TODO: lots of no-member in plom_server
-disable = ["not-an-iterable", "no-member"]
+disable = ["no-member"]
 output-format = "colorized"
 # we have some in-tree deprecated or to-move code that needs tensorflow
 ignored-modules = ["tensorflow", "api_secrets"]
@@ -299,13 +298,10 @@ module = [
     'django_huey',
     'django_tables2',
     'huey.*',
-    'matplotlib.*',
     'polymorphic.models',
     'pymupdf',
     'random_username.generate',
     'rest_framework.*',
-    'scipy.optimize',
-    'seaborn',
     'weasyprint',
     'whitenoise',
     'zipfly',
@@ -313,19 +309,13 @@ module = [
 ignore_missing_imports = true
 
 # hide some things from mypy
-#   - examDB and theServer have strange/confusing import patterns
-#   - tool.py has pyqtProperty stuff that is also confusing to me
-#   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
 [[tool.mypy.overrides]]
-module = [
-    'plom.db.examDB',
-    'plom.server.theServer',
-]
+module = []
 ignore_errors = true
 
 [tool.pyright]
 pythonVersion = "3.12"
-exclude = ['plom/server', '**/_digitHunter.py']
+exclude = ['**/_digitHunter.py']
 # changing to "off" makes this much quieter
 typeCheckingMode = "basic"
 # lots of Django false positives?

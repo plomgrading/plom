@@ -9,7 +9,7 @@
         <div id="heatmap" class="col-auto"></div>
         <div id="cell_popup" class="col"></div>
     </div>
-    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="{% static 'js3rdparty/d3.v6.min.js' %}"></script>
     <script src="{% static 'js/heatmap.js' %}"></script>
     <script>renderHeatMap({{ data|safe }}, "heatmap");</script>
 {% endblock main_content %}

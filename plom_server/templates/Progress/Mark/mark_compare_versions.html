@@ -5,6 +5,7 @@
     Copyright (C) 2024 Aidan Murphy
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}
     Mark Comparison
 {% endblock title %}
@@ -127,7 +128,7 @@
       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
       const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js" integrity="sha256-5M9NFEsiJjTy5k/3B81XuVP43ktlsjHNWsa94RRkjk0=" crossorigin="anonymous">
+    <script src="{% static 'js3rdparty/chart.umd.js' %}" integrity="sha256-5M9NFEsiJjTy5k/3B81XuVP43ktlsjHNWsa94RRkjk0=" crossorigin="anonymous">
     </script>
     <script>
   var ctx_all = document.getElementById('hist_all');
