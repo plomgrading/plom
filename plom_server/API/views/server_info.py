@@ -19,7 +19,7 @@ from rest_framework import status
 
 from plom_server import Plom_API_Version
 from plom_server import __version__
-from plom_server.Base.models import SettingsModel
+from plom_server.Base.services import Settings
 from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
 from ..permissions import AllowAnyReadOnly
@@ -157,7 +157,7 @@ class ExamInfo(APIView):
         info: dict[str, Any] = {
             # TODO: hardcoded, Issue #2938
             "current_largest_paper_num": 9999,
-            "feedback_rules": SettingsModel.get_feedback_rules(),
+            "feedback_rules": Settings.get_feedback_rules(),
         }
         return Response(info)
 

@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Deep Shah
 
 import hashlib
 import logging
@@ -35,7 +36,6 @@ import pymupdf
 from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
-from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
     parseTPV,
     parseExtraPageCode,
@@ -56,7 +56,6 @@ from ..models import (
     StagingThumbnail,
     KnownStagingImage,
     ExtraStagingImage,
-    DiscardStagingImage,
     PagesToImagesChore,
     ManageParseQRChore,
 )
@@ -378,6 +377,10 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
         self.remove_bundle_by_pk(bundle_obj.pk)
 
+    def get_original_image(self, bundle_id: int, index: int) -> File:
+        """Get the original, full-resolution image file from the database."""
+        return self.get_image(bundle_id, index).baseimage.image_file
+
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
         """Check if a PDF has already been uploaded.
@@ -620,16 +623,6 @@ class ScanService:
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
 
-        QR Code:
-        -         Test ID:  00001
-        -        Page Num:  00#
-        -     Version Num:  00#
-        -              NW:  2
-        -              NE:  1
-        -              SW:  3
-        -              SE:  4
-        - Last five digit:  93849
-
         Args:
             bundle_pk: primary key of bundle DB object
         """
@@ -777,62 +770,6 @@ class ScanService:
             log.debug(
                 f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
             )
-
-    def map_bundle_pages(
-        self,
-        bundle_pk: int,
-        *,
-        papernum: int,
-        pages_to_question_indices: list[list[int]],
-    ) -> None:
-        """Maps an entire bundle's pages onto zero or more questions per page.
-
-        Args:
-            bundle_pk: primary key of bundle DB object.
-
-        Keyword Args:
-            papernum (int): the number of the test-paper
-            pages_to_question_indices: a list same length
-                as the bundle, each element is variable-length list
-                of which questions (by one-based question index)
-                to attach that page to.  If one of those inner
-                lists is empty, it means to drop (discard) that
-                particular page.
-
-        Returns:
-            None
-        """
-        bundle_obj = (
-            StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
-        )
-
-        # TODO: assert the length of question is same as pages in bundle
-
-        with transaction.atomic():
-            # TODO: how do we walk them in order?
-            for page_img, qlist in zip(
-                bundle_obj.stagingimage_set.all().order_by("bundle_order"),
-                pages_to_question_indices,
-            ):
-                if not qlist:
-                    page_img.image_type = StagingImage.DISCARD
-                    page_img.save()
-                    DiscardStagingImage.objects.create(
-                        staging_image=page_img, discard_reason="map said drop this page"
-                    )
-                    continue
-                page_img.image_type = StagingImage.EXTRA
-                # TODO = update the qr-code info in the underlying image
-                page_img.save()
-                ExtraStagingImage.objects.create(
-                    staging_image=page_img,
-                    paper_number=papernum,
-                    question_idx_list=qlist,
-                )
-            # TODO: Issue #3770.
-            # finally - mark the bundle as having had its qr-codes read.
-            bundle_obj.has_qr_codes = True
-            bundle_obj.save()
 
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk: int) -> int:
@@ -989,71 +926,6 @@ class ScanService:
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
         self.read_qr_codes(bundle_obj.pk)
-
-    @transaction.atomic
-    def map_bundle_pages_cmd(
-        self,
-        *,
-        bundle_name: str | None = None,
-        bundle_id: int | None = None,
-        papernum: int,
-        question_map: str | list[int] | list[list[int]],
-    ) -> None:
-        """Maps an entire bundle's pages onto zero or more questions per page.
-
-        Keyword Args:
-            bundle_name: which bundle by name.
-            bundle_id: which bundle by id; you must specify one but not both
-                of `bundle_name` or `bundle_id`.
-            papernum: which paper.
-            question_map: specifies how pages of this bundle should be mapped
-                onto questions.  In principle it can be many different things,
-                although the current single caller passes only strings.
-                You can pass a single integer, or a list like `[1,2,3]`
-                which updates each page to questions 1, 2 and 3.
-                You can also pass the special string `all` which uploads
-                each page to all questions.
-                If you need to specify questions per page, you can pass a list
-                of lists: each list gives the questions for each page.
-                For example, `[[1],[2],[2],[2],[3]]` would upload page 1 to
-                question 1, pages 2-4 to question 2 and page 5 to question 3.
-                A common case is `-q [[1],[2],[3]]` to upload one page per
-                question.
-                An empty list will "discard" that particular page.
-
-        Returns:
-            None.
-
-        This is the command "front-end" to :method:`map_bundle_pages`,
-        see also docs there.
-        """
-        if bundle_id and bundle_name:
-            raise ValueError("You cannot specify both ID and name")
-        elif bundle_id:
-            try:
-                bundle_obj = StagingBundle.objects.get(pk=bundle_id)
-            except ObjectDoesNotExist as e:
-                raise ValueError(f"Bundle id {bundle_id} does not exist!") from e
-        elif bundle_name:
-            try:
-                bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-            except ObjectDoesNotExist as e:
-                raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
-        else:
-            raise ValueError("You must specify one of ID or name")
-
-        if not bundle_obj.has_page_images:
-            raise ValueError(f"Please wait for {bundle_name} to upload...")
-        # elif bundle_obj.has_qr_codes:
-        #    raise ValueError(f"QR codes for {bundle_name} has been read.")
-        # TODO: ensure papernum exists, here or in the none-cmd?
-
-        numpages = bundle_obj.number_of_pages
-        numquestions = SpecificationService.get_n_questions()
-        mymap = canonicalize_page_question_map(question_map, numpages, numquestions)
-        self.map_bundle_pages(
-            bundle_obj.pk, papernum=papernum, pages_to_question_indices=mymap
-        )
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk: int) -> bool:
@@ -1314,9 +1186,6 @@ class ScanService:
             and ``version``.  Finally for extra-pages, it contains
             ``paper_number``, and ``question_idx_list``.
         """
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         # We compute the list in two steps.
         # First we compute a dict of (key, value) (bundle_order, page_information)
         # Second we flatten that dict into an ordered list.
@@ -1332,7 +1201,7 @@ class ScanService:
                 "status": img.image_type.lower(),
                 "info": {},
                 # order is 1-indexed
-                "order": f"{img.bundle_order}".zfill(n_digits),
+                "order": f"{img.bundle_order}",
                 "rotation": img.rotation,
                 "n_qr_read": len(img.parsed_qr),
             }
@@ -1431,8 +1300,6 @@ class ScanService:
     def get_bundle_extra_pages_info(
         self, bundle_obj: StagingBundle
     ) -> dict[int, dict[str, Any]]:
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
 
         pages = {}
         for img in bundle_obj.stagingimage_set.filter(
@@ -1444,7 +1311,7 @@ class ScanService:
                     "paper_number": img.extrastagingimage.paper_number,
                     "question_idx_list": img.extrastagingimage.question_idx_list,
                 },
-                "order": f"{img.bundle_order}".zfill(n_digits),
+                "order": f"{img.bundle_order}",
                 "rotation": img.rotation,
             }
         return pages
@@ -1463,14 +1330,11 @@ class ScanService:
     def get_bundle_single_page_info(
         self, bundle_obj: StagingBundle, index: int
     ) -> dict[str, Any]:
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         img = bundle_obj.stagingimage_set.get(bundle_order=index)
         current_page = {
             "status": img.image_type.lower(),
             # order is 1-indexed
-            "order": f"{img.bundle_order}".zfill(n_digits),
+            "order": f"{img.bundle_order}",
             "rotation": img.rotation,
             "qr_codes": img.parsed_qr,
         }
@@ -1597,9 +1461,6 @@ class ScanService:
     def get_bundle_unknown_pages_info(
         self, bundle_obj: StagingBundle
     ) -> list[dict[str, Any]]:
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         pages = []
         for img in (
             bundle_obj.stagingimage_set.filter(image_type=StagingImage.UNKNOWN)
@@ -1609,7 +1470,7 @@ class ScanService:
             pages.append(
                 {
                     "status": img.image_type,
-                    "order": f"{img.bundle_order}".zfill(n_digits),
+                    "order": f"{img.bundle_order}",
                     "rotation": img.rotation,
                 }
             )
@@ -1630,9 +1491,6 @@ class ScanService:
         self, bundle_obj: StagingBundle
     ) -> list[dict[str, Any]]:
         """Get information about the discard pages within the given staged bundle."""
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         pages = []
         for img in (
             bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD)
@@ -1643,7 +1501,7 @@ class ScanService:
             pages.append(
                 {
                     "status": img.image_type,
-                    "order": f"{img.bundle_order}".zfill(n_digits),
+                    "order": f"{img.bundle_order}",
                     "rotation": img.rotation,
                     "reason": img.discardstagingimage.discard_reason,
                 }

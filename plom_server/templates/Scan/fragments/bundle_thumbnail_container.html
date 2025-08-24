@@ -3,22 +3,49 @@
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
+    Copyright (C) 2025 Aidan Murphy
 -->
-<div class="card-body p-0 d-flex align-items-center"
-     hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
-     hx-swap="innerHTML"
-     hx-target="#updatePage">
-    <div class="bundle-thumb">
-        {% if grab_speed %}
-            <img class="img"
-                 src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
-                 fetchpriority="{{ grab_speed }}"
-                 loading="lazy" />
-        {% else %}
-            <img class="img"
-                 src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
-                 loading="lazy" />
-        {% endif %}
+<div id="pgcontainer-{{ pg.order }}"
+     data-status="{{ pg.status }}"
+     data-paper_number="{{ pg.info.paper_number }}"
+     data-bs-toggle="tooltip"
+     data-bs-placement="top"
+     data-bs-title="{% if pg.status == 'known' %}paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }} {% elif pg.status == 'unknown' %}Unknown page {% elif pg.status == 'extra' %} {% if pg.info.paper_number %}Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }} {% else %}Extra page - no data {% endif %} {% elif pg.status == 'error' %}error: {{ pg.info.reason }} {% elif pg.status == 'unread' %}qr-unread {% elif pg.status == 'discard' %}discard: {{ pg.info.reason }} {% endif %}">
+    <!-- this div handles the click event -->
+    <!-- FIXME: htmx is throttled because it's being triggered twice when clicked -->
+    <div hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
+         hx-swap="innerHTML"
+         hx-trigger="click throttle:200ms"
+         hx-target="#updatePage">
+        <input type="radio"
+               name="page"
+               id="pgradio-{{ pg.order }}"
+               value="{{ pg.id }}"
+               autocomplete="off">
+        <label class="radio-label" for="pgradio-{{ pg.order }}">
+            <div class="card text-center p-1{% if pg.status == 'known' %} bg-success-subtle {% elif pg.status == 'unknown' %} bg-warning-subtle border-warning border-1 {% elif pg.status == 'extra' %} {% if pg.info.paper_number %} bg-primary-subtle {% else %} bg-info-subtle border-info border-1 {% endif %} {% elif pg.status == 'error' %} bg-danger-subtle border-error border-1 {% elif pg.status == 'unread' %} bg-dark-subtle {% elif pg.status == 'discard' %} bg-dark-subtle {% endif %}">
+                <div class="card-body p-0 d-flex align-items-center">
+                    <div class="bundle-thumb">
+                        <!-- the img width being independent of the page size means small window =/= tiny thumbnails -->
+                        <!-- timestamp forces a refresh, otherwise img is loaded from cache (by most browsers) -->
+                        <!-- TODO: why do known pages need a lower fetch priority? -->
+                        <img id="thumbnailimg-{{ pg.order }}"
+                             class="img"
+                             src="{% url 'scan_get_thumbnail' bundle_id pg.order %}?_ts={{ timestamp }}"
+                             {% if pg.status == "known" %}fetchpriority="low"{% endif %}
+                             loading="lazy"
+                             style="width: 7ch" />
+                    </div>
+                </div>
+                <div class="card-footer p-0">{{ pg.order }}</div>
+            </div>
+        </label>
     </div>
 </div>
-<div class="card-footer p-0">{{ pg.order }}</div>
+<script>
+	// triggers once when this particular fragment is loaded in browser
+	// necessary for htmx reloads
+	slidervalue = document.getElementById("thumbnailResizeSlider").value;
+	thumbnailimg = document.getElementById("thumbnailimg-{{ pg.order }}");
+	thumbnailimg.style.width = slidervalue*0.7 + "ch";
+</script>

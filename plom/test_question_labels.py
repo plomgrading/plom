@@ -5,8 +5,8 @@ from copy import deepcopy
 
 from plom.spec_verifier import SpecVerifier
 
-from .question_labels import get_question_label, verbose_question_label
-from .question_labels import check_for_shared_pages
+from plom.question_labels import get_question_label, verbose_question_label
+from plom.question_labels import check_for_shared_pages
 
 
 def test_verbose_question_label() -> None:

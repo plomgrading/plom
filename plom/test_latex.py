@@ -6,7 +6,7 @@ from importlib import resources
 
 import plom
 
-from .textools import buildLaTeX
+from plom.textools import buildLaTeX
 
 
 def test_latex_exam_template() -> None:

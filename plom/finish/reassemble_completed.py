@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2025 Philip D. Loewen
 
 from __future__ import annotations
 
@@ -25,7 +26,7 @@ def download_data_build_cover_page(
     Args:
         msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir: where to save the coverpage.
-        t: Test number.
+        t: Paper number.
         maxMarks: Maxmarks per question, dict str -> int.
 
     Keyword Args:
@@ -54,7 +55,7 @@ def download_data_build_cover_page(
     makeCover(
         arg,
         covername,
-        test_num=t,
+        paper_num=t,
         info=(sname, sid),
         solution=solution,
         exam_name=spec["longName"],
@@ -71,7 +72,7 @@ def _download_page_images(
         msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir: directory to save the temp images.
         num_questions: number of questions.
-        t: Test number.
+        t: paper number.
         which: currently, can ``"id"`` or ``"dnm"``.
 
     Returns:
@@ -102,7 +103,7 @@ def _download_annotation_images(
         msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir: directory to save the temp images.
         num_questions: number of questions.
-        t: Test number.
+        t: paper number.
 
     Returns:
         The filenames of the marked page files.
@@ -130,7 +131,7 @@ def _reassemble_one_paper(
     sid: str | None,
     skip: bool,
 ) -> Path | None:
-    """Reassemble a test paper.
+    """Reassemble a paper.
 
     Args:
         msgr (ManagerMessenger): Messenger object that talks to the server.
@@ -143,18 +144,18 @@ def _reassemble_one_paper(
         max_marks: the maximum mark for each question, keyed by the
             question number, which seems to be a string.
         num_questions: how many questions did the assessment have?
-        t: Test number.
+        t: paper number.
         sid: The student number as a string.  Maybe `None` which
             means that student has no ID (?)  Currently we just skip these.
         skip: whether to skip existing pdf files.
 
     Returns:
-        The full path of the reassembled test pdf, or ``None`` if no pdf
+        The full path of the reassembled pdf, or ``None`` if no pdf
         was made.  In this case, a warning or explanation will be printed.
     """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
-        print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
+        print(f">>WARNING<< Paper {t} has an ID of 'None', not reassembling!")
         return None
     outname = outdir / f"{short_name}_{sid}.pdf"
     if skip and outname.exists():
@@ -171,17 +172,17 @@ def _reassemble_one_paper(
 
 @with_finish_messenger
 def reassemble_paper(
-    testnum: int,
+    papernum: int,
     *,
     msgr,
     outdir: Path | str = Path("reassembled"),
     tmpdir: Path | str | None = None,
     skip: bool = False,
 ) -> Path | None:
-    """Reassemble a particular test paper.
+    """Reassemble a particular paper.
 
     Args:
-        testnum: which test number to reassemble.
+        papernum: which paper number to reassemble.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
@@ -197,7 +198,7 @@ def reassemble_paper(
             we already have (Careful: without checking for changes!)
 
     Returns:
-        The full path of the reassembled test pdf, if one was created
+        The full path of the reassembled paper pdf, if one was created
         else None.
 
     Raises:
@@ -211,7 +212,7 @@ def reassemble_paper(
     max_marks = {str(q): msgr.getMaxMark(q) for q in range(1, num_questions + 1)}
 
     completedTests = msgr.RgetCompletionStatus()
-    t = str(testnum)  # dicts keyed by strings
+    t = str(papernum)  # dicts keyed by strings
     try:
         completed = completedTests[t]
         # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
@@ -225,7 +226,7 @@ def reassemble_paper(
         raise ValueError(f"Paper {t} is not complete: unmarked questions")
 
     identifiedTests = msgr.getIdentified()
-    # dict testNumber -> [sid, sname]
+    # dict paper number -> [sid, sname]
     sid = identifiedTests[t][0]
 
     with tempfile.TemporaryDirectory() as _td:
@@ -245,7 +246,7 @@ def reassemble_paper(
             short_name,
             max_marks,
             num_questions,
-            testnum,
+            papernum,
             sid,
             skip,
         )
@@ -260,7 +261,7 @@ def reassemble_all_papers(
     tmpdir: Path | str | None = None,
     skip: bool = False,
 ) -> None:
-    """Reassemble all test papers.
+    """Reassemble all papers.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
@@ -283,9 +284,9 @@ def reassemble_all_papers(
     max_marks = {str(q): msgr.getMaxMark(q) for q in range(1, num_questions + 1)}
 
     completedTests = msgr.RgetCompletionStatus()
-    # dict testnumber -> [scanned, id'd, #q's marked]
+    # dict paper number -> [scanned, id'd, #q's marked]
     identifiedTests = msgr.getIdentified()
-    # dict testNumber -> [sid, sname]
+    # dict paper number -> [sid, sname]
 
     # This should be a conditional context manager, which can be done
     # using contextlib.ExitStack, but I found the result hard to read.

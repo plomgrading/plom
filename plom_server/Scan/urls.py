@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Deep Shah
 
 from django.urls import path
 
@@ -26,7 +27,9 @@ from .views import (
     SubstituteImageView,
     SubstituteImageWrapView,
     ###
+    BundleThumbnailsSummaryFragmentView,
     BundleThumbnailsView,
+    ThumbnailContainerFragmentView,
     GetBundleView,
     GetBundlePageFragmentView,
     GetBundleThumbnailView,
@@ -38,15 +41,13 @@ from .views import (
     KnowifyImageView,
     UnknowifyImageView,
     UnknowifyAllDiscardsHTMXView,
-    RotateImageClockwise,
-    RotateImageCounterClockwise,
-    RotateImageOneEighty,
-    GetRotatedBundleImageView,
-    GetRotatedPushedImageView,
+    RotateImageView,
     BundleLockView,
     BundlePushCollisionView,
     BundlePushBadErrorView,
     RecentStagedBundleRedirectView,
+    HandwritingComparisonView,
+    GeneratePaperPDFView,
 )
 
 
@@ -108,17 +109,28 @@ urlpatterns = [
     ),
     ##
     path(
-        "bundlepage/<str:the_filter>/<int:bundle_id>/<int:index>/",
+        "bundlepage/<int:bundle_id>/<int:index>/",
         GetBundlePageFragmentView.as_view(),
         name="scan_bundle_page",
     ),
+    # TODO: is this different to RotateImageView?
     path(
         "thumbnails/<int:bundle_id>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
     ),
     path(
-        "thumbnails/<str:the_filter>/<int:bundle_id>",
+        "thumbnail_container/<int:bundle_id>/<int:index>",
+        ThumbnailContainerFragmentView.as_view(),
+        name="single_thumbnail_container",
+    ),
+    path(
+        "thumbnails/summary-fragment/<int:bundle_id>",
+        BundleThumbnailsSummaryFragmentView.as_view(),
+        name="scan_bundle_summary",
+    ),
+    path(
+        "thumbnails/<int:bundle_id>",
         BundleThumbnailsView.as_view(),
         name="scan_bundle_thumbnails",
     ),
@@ -135,61 +147,46 @@ urlpatterns = [
     ),
     path(
         "bundle_rot/<int:bundle_id>/<int:index>/",
-        GetRotatedBundleImageView.as_view(),
+        RotateImageView.as_view(),
         name="scan_get_rotated_image",
     ),
     path(
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"
     ),
     path(
-        "summary/rotated_pushed_img/<int:img_pk>",
-        GetRotatedPushedImageView.as_view(),
-        name="scan_rotated_pushed_img",
-    ),
-    path(
-        "discard/<str:the_filter>/<int:bundle_id>/<int:index>/",
+        "discard/<int:bundle_id>/<int:index>/",
         DiscardImageView.as_view(),
         name="discard_image",
     ),
     path(
-        "discard_unknowns/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
+        "discard_unknowns/<int:bundle_id>/",
         DiscardAllUnknownsHTMXView.as_view(),
         name="discard_all_unknowns",
     ),
     path(
-        "unknowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
+        "unknowify/<int:bundle_id>/<int:index>/",
         UnknowifyImageView.as_view(),
         name="unknowify_image",
     ),
     path(
-        "unknowify_discards/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
+        "unknowify_discards/<int:bundle_id>/",
         UnknowifyAllDiscardsHTMXView.as_view(),
         name="unknowify_all_discards",
     ),
     path(
-        "knowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
+        "knowify/<int:bundle_id>/<int:index>/",
         KnowifyImageView.as_view(),
         name="knowify_image",
     ),
     path(
-        "extralise/<str:the_filter>/<int:bundle_id>/<int:index>/",
+        "extralise/<int:bundle_id>/<int:index>/",
         ExtraliseImageView.as_view(),
         name="extralise_image",
     ),
     path(
-        "rotate/clockwise/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        RotateImageClockwise.as_view(),
-        name="rotate_img_cw",
-    ),
-    path(
-        "rotate/counterclockwise/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        RotateImageCounterClockwise.as_view(),
-        name="rotate_img_ccw",
-    ),
-    path(
-        "rotate/oneeighty/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        RotateImageOneEighty.as_view(),
-        name="rotate_img_one_eighty",
+        "rotate/<int:bundle_id>/<int:index>/<int:rotation>",
+        RotateImageView.as_view(),
+        name="rotate_img",
     ),
     path(
         "bundle_lock/<int:bundle_id>/",
@@ -205,5 +202,15 @@ urlpatterns = [
         "bundle_push_error/<int:bundle_id>/",
         BundlePushBadErrorView.as_view(),
         name="scan_bundle_push_error",
+    ),
+    path(
+        "compare-handwriting/<int:bundle_id>/<int:index>/",
+        HandwritingComparisonView.as_view(),
+        name="scan_compare_handwriting",
+    ),
+    path(
+        "paper-pdf/<int:bundle_id>/<int:paper_number>/",
+        GeneratePaperPDFView.as_view(),
+        name="scan_paper_pdf",
     ),
 ]

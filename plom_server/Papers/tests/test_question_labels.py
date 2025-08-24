@@ -6,7 +6,7 @@ from django.test import TestCase
 from ..services import SpecificationService as serv
 
 
-class SpecficiationServiceQuestionLabelTests(TestCase):
+class SpecificationServiceQuestionLabelTests(TestCase):
     def setUp(self):
         spec_dict = {
             "idPage": 1,

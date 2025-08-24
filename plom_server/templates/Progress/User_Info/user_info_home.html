@@ -7,6 +7,7 @@
     Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}
     Marker progress and quotas
 {% endblock title %}
@@ -68,9 +69,8 @@
             {% endif %}
         </div>
     </div>
-    <!-- TODO: make this table sortable -->
     <div class="table-responsive">
-        <table class="table text-center align-middle">
+        <table class="table text-center align-middle sortable">
             <tr>
                 <th>Username</th>
                 <th>Task Marked</th>
@@ -270,10 +270,9 @@
          data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
          data-username="{{ username }}"></div>
     {% include "./modal_forms.html" %}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-          rel="stylesheet" />
+    <script src="{% static 'js3rdparty/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'js3rdparty/select2.min.js' %}"></script>
+    <link href="{% static 'css3rdparty/select2.min.css' %}" rel="stylesheet" />
     <script>
         $('#editLimit').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);

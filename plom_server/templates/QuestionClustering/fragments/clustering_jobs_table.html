@@ -1,0 +1,71 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2025 Bryan Tanady -->
+<div id="tasks-table"
+     hx-get="{% url 'get_question_clustering_tasks' %}"
+     hx-trigger="every 2s"
+     hx-target="#tasks-table"
+     hx-swap="innerHTML">
+    {% if tasks %}
+        <table class="table table-sm table-bordered text-center w-100">
+            <thead>
+                <tr>
+                    <th>Question Index</th>
+                    <th>Version</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                    <tr id="task-{{ task.task_id }}">
+                        <td>{{ task.question_idx }}</td>
+                        <td>{{ task.version }}</td>
+                        <td>
+                            {{ task.status }}
+                            {% if task.status == "Running" %}
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading…</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.status == "Error" %}
+                                <a class="btn btn-info btn-sm"
+                                   hx-get="{% url 'cluster_error_job_info' task.task_id %}"
+                                   hx-target="#errorModal"
+                                   hx-swap="outerHTML"
+                                   hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal')).show()">
+                                    Detail
+                                </a>
+                                <a class="btn btn-danger btn-sm"
+                                   hx-delete="{% url 'remove_clustering_job' task.task_id %}"
+                                   hx-target="#tasks-table"
+                                   hx-swap="outerHTML"
+                                   hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})?">Remove</a>
+                            {% elif task.status == "Complete" %}
+                                <a class="btn btn-success btn-sm"
+                                   href="{% url 'cluster_groups' task.question_idx task.version task.page_num %}">
+                                    View
+                                </a>
+                                <a class="btn btn-danger btn-sm"
+                                   hx-delete="{% url 'remove_clustering_job' task.task_id %}"
+                                   hx-target="#tasks-table"
+                                   hx-swap="outerHTML"
+                                   hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})">Remove</a>
+                            {% else %}
+                                <i class="bi bi-clock-history text-info"></i>
+                                <a class="btn btn-danger btn-sm"
+                                   hx-delete="{% url 'remove_clustering_job' task.task_id %}"
+                                   hx-target="#tasks-table"
+                                   hx-swap="outerHTML"
+                                   hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})">Remove</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <h6>No clustering jobs</h6>
+    {% endif %}
+</div>

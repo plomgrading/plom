@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024-2025 Colin B. Macdonald
 
-from .misc_utils import format_int_list_with_runs
-from .misc_utils import run_length_encoding
-from .misc_utils import interpolate_questions_over_pages as interp
+from plom.misc_utils import format_int_list_with_runs
+from plom.misc_utils import run_length_encoding
+from plom.misc_utils import interpolate_questions_over_pages as interp
 
 
 endash = "\N{EN DASH}"

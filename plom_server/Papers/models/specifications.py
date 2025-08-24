@@ -29,11 +29,7 @@ class SpecQuestion(models.Model):
 
     pages = models.JSONField()
     mark = models.PositiveIntegerField(null=False)
-    select = models.CharField(
-        choices=[("fix", "fix"), ("shuffle", "shuffle")],
-        default="shuffle",
-        max_length=7,  # length of the string "shuffle"
-    )
+    select = models.JSONField(null=True)
     label = models.TextField(null=True)
     question_index = models.PositiveIntegerField(null=False, unique=True)
 
@@ -134,18 +130,3 @@ class SolnSpecification(SingletonABCModel):
                 does not exist.
         """
         return cls.objects.get(pk=1)
-
-
-class NumberOfPapersToProduceSetting(SingletonABCModel):
-    number_of_papers = models.PositiveIntegerField(default=0, null=False)
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the NumberOfPapersToProduceSetting model."""
-        obj, created = cls.objects.get_or_create(
-            pk=1,
-            defaults={
-                "number_of_papers": 0,
-            },
-        )
-        return obj

@@ -1,0 +1,96 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+-->
+{% extends "base/base.html" %}
+{% load custom_tags %}
+{% block title %}
+    Cluster papers based on written answer
+{% endblock title %}
+{% block page_heading %}
+    Cluster papers based on written answer
+{% endblock page_heading %}
+{% block main_content %}
+    <style>
+        .image-viewer{
+            display: none;
+            overflow-x: scroll;
+        }
+
+        .image-viewer.show{
+            display: flex;
+        }
+
+        /* When there’s exactly one <a> in .image-viewer, center it */
+        .image-viewer > a:only-child {
+            margin: 0 auto;
+        }
+    </style>
+    <div class="flex">
+        <a class="btn btn-success"
+           href="{% url 'question_clustering_jobs_home' %}">clustering jobs</a>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            {% for v in version_list %}
+                <h5 class="card-title">Questions from version {{ v }}</h5>
+                {% for qidx, q_label in q_idx_label_pairs %}
+                    <button class="btn btn-info btn-question"
+                            data-version="{{ v }}"
+                            data-qidx="{{ qidx }}">{{ q_label }}</button>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    <!-- Page image viewer (render all, hide/show dynamically)-->
+    {% for v in version_list %}
+        <div>
+            {% for qidx in q_idx_to_pages %}
+                {% with q_idx_to_pages|get_item:qidx as pages %}
+                    <div class="image-viewer" id="viewer-{{ v }}-{{ qidx }}">
+                        {% for page_num in pages %}
+                            <a href="{% url 'question_clustering_select_rectangle' v qidx page_num %}">
+                                <img class="border w-100"
+                                     style="max-height: 600px;
+                                            max-width: fit-content"
+                                     src="{% url 'reference_image' v page_num %}"
+                                     alt="Preview page for q{{ qidx }} v{{ v }} page {{ page_num }}">
+                            </img>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+{% endfor %}
+<script>
+        // Script controls image viewer show/hidden and highlights the question button that is
+        // currently active
+        document.addEventListener('DOMContentLoaded', function() {
+            const viewers = document.querySelectorAll('.image-viewer');
+            const question_buttons = document.querySelectorAll('.btn-question')
+
+            question_buttons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const v    = btn.dataset.version;
+                    const qidx = btn.dataset.qidx;
+                    const target = document.getElementById(`viewer-${v}-${qidx}`);
+
+                    // hide any currently shown viewer except target
+                    viewers.forEach(vw => {
+                        if (vw !== target) vw.classList.remove('show');
+                    });
+
+                    // remove all buttons highlight except current button
+                    question_buttons.forEach(b => {
+                        if (b !== this) b.classList.remove('btn-danger');
+                    });
+
+                    // toggle current viewer on/off and button color (highlight)
+                    target.classList.toggle('show');
+                    this.classList.toggle('btn-danger')
+                });
+            });
+        });
+</script>
+{% endblock main_content %}

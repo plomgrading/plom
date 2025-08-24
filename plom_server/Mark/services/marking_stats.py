@@ -6,7 +6,7 @@
 # Copyright (C) 2025 Deep Shah
 
 import statistics
-from typing import Any, Tuple, List
+from typing import Any
 
 import arrow
 from numpy import histogram
@@ -19,7 +19,7 @@ from plom_server.Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
 
 
-def generic_stats_dict_from_list(mark_list):
+def _generic_stats_dict_from_list(mark_list):
     stats_dict = {}
     stats_dict["mark_max"] = max(mark_list)
     stats_dict["mark_min"] = min(mark_list)
@@ -60,12 +60,12 @@ class MarkingStatsService:
 
     def get_scores_for_question_version(
         self, question_idx: int, version: int
-    ) -> List[int]:
+    ) -> list[int]:
         """Retrieves a list of all scores for a specific question and version.
 
         From the latest annotations of completed tasks.
         """
-        scores: List[int] = []
+        scores: list[int] = []
 
         completed_tasks = MarkingTask.objects.filter(
             question_index=question_idx,
@@ -157,7 +157,7 @@ class MarkingStatsService:
             )
             # the following don't make sense until something is marked
             mark_list = [X.latest_annotation.score for X in completed_tasks]
-            stats_dict.update(generic_stats_dict_from_list(mark_list))
+            stats_dict.update(_generic_stats_dict_from_list(mark_list))
         return stats_dict
 
     @transaction.atomic
@@ -263,7 +263,7 @@ class MarkingStatsService:
             max_question_mark = SpecificationService.get_question_mark(question)
             data[upk]["histogram"] = score_histogram(mark_list, max_question_mark)
             data[upk]["number"] = len(mark_list)
-            data[upk].update(generic_stats_dict_from_list(mark_list))
+            data[upk].update(_generic_stats_dict_from_list(mark_list))
         return data
 
     @transaction.atomic
@@ -304,7 +304,7 @@ class MarkingStatsService:
             max_question_mark = SpecificationService.get_question_mark(question)
             data[ver]["histogram"] = score_histogram(mark_list, max_question_mark)
             data[ver]["number"] = len(mark_list)
-            data[ver].update(generic_stats_dict_from_list(mark_list))
+            data[ver].update(_generic_stats_dict_from_list(mark_list))
             # get remaining tasks by excluding COMPLETE and OUT_OF_DATE
             # TODO - can we optimise this a bit? one query per version is okay, but can likely do in 1.
             data[ver]["remaining"] = (
@@ -446,7 +446,7 @@ class MarkingStatsService:
 
     def build_report_score_lists(
         self,
-    ) -> Tuple[list[float], dict[int, list[float]]]:
+    ) -> tuple[list[float], dict[int, list[float]]]:
         # get (effectively) all the marks for everything
         # so that we can form all histograms and also
         # a histogram for total marks only for those papers that

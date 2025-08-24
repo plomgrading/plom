@@ -5,7 +5,7 @@
 
 from django.db import transaction
 
-from ..models import PapersPrintedSettingModel
+from plom_server.Base.services import Settings
 from ..services.preparation_dependency_service import (
     assert_can_set_papers_printed,
     assert_can_unset_papers_printed,
@@ -15,8 +15,7 @@ from ..services.preparation_dependency_service import (
 @transaction.atomic
 def have_papers_been_printed() -> bool:
     """Return True if has been marked as 'papers_have_been_printed'."""
-    setting_obj = PapersPrintedSettingModel.load()
-    return setting_obj.have_printed_papers
+    return Settings.key_value_store_get("have_papers_been_printed")
 
 
 def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
@@ -45,9 +44,7 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
         else:  # trying to set papers-are-not-yet-printed
             assert_can_unset_papers_printed()
 
-    setting_obj = PapersPrintedSettingModel.load()
-    setting_obj.have_printed_papers = status
-    setting_obj.save()
+    Settings.key_value_store_set("have_papers_been_printed", status)
 
     if ignore_dependencies:
         return

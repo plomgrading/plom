@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import os
 
+from plom.misc_utils import working_directory
 from .demotools import buildDemoSourceFiles
-from ..misc_utils import working_directory
 
 
 def test_latex_demofiles(tmp_path) -> None:

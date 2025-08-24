@@ -1,0 +1,20 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+-->
+{% if tags %}
+    {% for tag_pk, tag_text in tags %}
+        <span class="badge bg-primary align-middle">
+            {{ tag_text }}
+            <button type="button"
+                    hx-delete="{% url 'remove_tag_from_cluster' %}"
+                    hx-vals='{ "clusterId": "{{ clusterId }}", "tag_pk": "{{ tag_pk }}", "question_idx": "{{ question_idx }}", "version": "{{ version }}" }'
+                    hx-target="#tag-{{ clusterId }}"
+                    class="btn btn-primary p-0">
+                <i class="bi bi-backspace"></i>
+            </button>
+        </span>
+    {% endfor %}
+{% else %}
+    No tags
+{% endif %}

@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025 Bryan Tanady
+
+# Defines where are the model weights stored, references to HuggingFace repos 
+
+models:
+  hme_symbolic: 
+    filename: "hme_symbolic_model.onnx"
+    repo_id: "bryantanady/plom_ml_HME"
+
+  hme_trocr: 
+    filename: "hme_trocr_model.onnx"
+    repo_id: "bryantanady/plom_ml_HME"
+
+  mcq: 
+    filename: "mcq_model.onnx"
+    repo_id: "bryantanady/plom_ml_MCQ"

@@ -1,0 +1,245 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Brennen Chiu
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2024 Winnie Cheung
+    Copyright (C) 2025 Philip D. Loewen
+    Copyright (C) 2025 Aidan Murphy
+-->
+<div class="card mt-2">
+    <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
+    <div class="card-body pb-0"
+         x-data="{show_summary: false}"
+         x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
+        <div>
+            <h5>
+                {% if is_pushed %}
+                    <i class="bi bi-check-square text-success"></i>
+                    Pushed bundle
+                {% else %}
+                    {% if not has_page_images %}
+                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                        Unprocessed bundle
+                    {% elif not finished_reading_qr %}
+                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                        Unread bundle
+                    {% else %}
+                        Staged bundle
+                    {% endif %}
+                {% endif %}
+                <q><tt>{{ slug }}</tt></q>
+                {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
+                    {% if n_collisions %}
+                        contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}.
+                    {% elif n_incomplete == 0 %}
+                        <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
+                        <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
+                        has no pages requiring attention -
+                        <button class="btn btn-success"
+                                hx-confirm="Please confirm that you want to push this bundle."
+                                hx-post="{% url 'scan_push_all' bundle_id %}"
+                                x-bind:disabled="midPush"
+                                @htmx:before-send="midPush=true;">Push</button>
+                    {% else %}
+                        has no problems, but contains incomplete papers. You can
+                        <!-- Issue #3411: provide link to additional info -->
+                        <button class="btn btn-danger"
+                                hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
+                                hx-post="{% url 'scan_push_all' bundle_id %}"
+                                x-bind:disabled="midPush"
+                                @htmx:before-send="midPush=true;">Push</button>
+                        but it is not recommended
+                    {% endif %}
+                {% endif %}
+                {% if not is_perfect %}has pages that require your attention{% endif %}
+            </h5>
+            {% if n_incomplete %}
+                <div class="alert alert-warning">
+                    <details>
+                        <summary>This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}</summary>
+                        {% if is_pushed %}
+                            <ul>
+                                <li>Incomplete papers contain some, but not all their pages.</li>
+                                <li>
+                                    Any question that is missing
+                                    pages <em>will not</em> be
+                                    sent out for marking.
+                                </li>
+                                <li>
+                                    Incomplete papers can indicate
+                                    problems with scanning such as two
+                                    pages stuck together.
+                                </li>
+                                <li>
+                                    Incomplete papers also occur if a paper is
+                                    split across two bundles.  In this
+                                    case, just keep pushing bundles and
+                                    Plom will automatically complete
+                                    these papers when the additional
+                                    pages become available.
+                                </li>
+                            </ul>
+                        {% else %}
+                            <ul>
+                                <li>Incomplete papers contain some, but not all their pages.</li>
+                                <li>
+                                    If you push the incomplete
+                                    papers, you can start marking
+                                    any questions that have all
+                                    their pages.
+                                </li>
+                                <li>
+                                    Incomplete papers can indicate
+                                    problems with scanning such as two
+                                    pages stuck together.
+                                </li>
+                                <li>
+                                    Incomplete papers also occur if a paper is
+                                    split across two bundles.  In this
+                                    case, after you push both bundles the
+                                    paper will become complete automatically.
+                                </li>
+                                <li>
+                                    If you wish, you can always
+                                    decide to delete this bundle
+                                    and rescan the physical
+                                    papers.
+                                </li>
+                            </ul>
+                        {% endif %}
+                    </details>
+                </div>
+            {% endif %}
+            {% if error_pages %}
+                <div class="alert alert-danger">
+                    <details>
+                        <summary>This bundle contains {{ error_pages }} error page{{ error_pages|pluralize }}</summary>
+                        <ul>
+                            <li>This could indicate serious scanning problems.</li>
+                            <li>
+                                Consider fixing any problems with the physical pages,
+                                then delete this PDF and rescan the papers.
+                            </li>
+                            <li>
+                                If there are only a small number of problems, you may
+                                be able to workaround them by casting Error pages to
+                                Known/Extra pages.
+                            </li>
+                        </ul>
+                        <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+                           hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
+                           hx-confirm="Are you sure?">Remove bundle</a>
+                    </details>
+                </div>
+            {% endif %}
+            {% if n_collisions %}
+                <div class="alert alert-danger">
+                    <h5>
+                        {{ n_collisions }} scan{{ n_collisions|pluralize }} in this bundle
+                        show page{{ n_collisions|pluralize }} that have already been pushed.
+                    </h5>
+                    <p>Here are some possible scenarios and remedies.</p>
+                    <ul>
+                        <li>
+                            Some submissions have been rescanned by accident.
+                            <ul>
+                                <li>
+                                    You can delete this bundle
+                                    (e.g., if everything here
+                                    collides with pages you
+                                    already have, or if you want
+                                    to rescan part of it).
+                                </li>
+                                <li>
+                                    You can discard the pages of this
+                                    bundle that collide, as detailed below,
+                                    and then push the remaining pages.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Some submissions have been rescanned intentionally.
+                            <ul>
+                                <li>
+                                    It is possible to replace poor-quality scanned images.
+                                    Decide whether you want to keep
+                                    the image{{ n_collisions|pluralize }}
+                                    in this scan or
+                                    the one{{ n_collisions|pluralize }} pushed earlier.
+                                </li>
+                                <li>
+                                    You can <q>discard</q> the previously-pushed
+                                    page{{ n_collisions|pluralize }} and then come back here to push
+                                    this entire bundle.
+                                </li>
+                                <li>
+                                    You can discard the page{{ n_collisions|pluralize }} of this
+                                    bundle that collide{{ n_collisions|pluralize:"s," }}, as detailed below,
+                                    and then push the remaining pages.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            The system's expectation of unique paper numbers has been violated.
+                            <ul>
+                                <li>
+                                    If different student input appears on pages whose QR codes
+                                    point to the same logical <q>paper</q> in the Plom database,
+                                    there is a substantial problem! Here is
+                                    <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions"
+                                       target="_blank">a further discussion</a>.
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>Colliding image{{ n_collisions|pluralize }} in this bundle: {{ colliding_images_nice_format }}.</p>
+                </div>
+            {% endif %}
+            <p>
+                Bundle <q>{{ slug }}</q> contains {{ total_pages }} page images ...
+                <button class="btn btn-light" x-on:click="show_summary =! show_summary">
+                    <i class="bi bi-chevron-down" x-show="!show_summary"></i>
+                    <i class="bi bi-chevron-up" x-show="show_summary"></i>
+                </button>
+            </p>
+        </div>
+        <div class="card-text" x-show="show_summary" x-transition>
+            <div class="row">
+                <div class="col-4">
+                    <div class="pb-0 alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
+                        {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
+                        <ul>
+                            <li>{{ known_pages }} known pages</li>
+                            {% if known_pages != total_pages %}
+                                <li>{{ unknown_pages }} unknown pages</li>
+                                <li>{{ extra_pages }} extra pages</li>
+                                <li>{{ discard_pages }} discard pages</li>
+                                <li>{{ error_pages }} error pages</li>
+                                <li>{{ unread_pages }} unread pages</li>
+                            {% endif %}
+                            {% if n_collisions != 0 %}<li>[{{ n_collisions }} colliding page{{ n_collisions|pluralize }}]</li>{% endif %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-8 pb-1">
+                    <h5>Bundle Contains:</h5>
+                    {% for paper,pages in papers_pages_list %}
+                        {% with pg=pages|dictsort:"order"|first %}
+                            {% if paper in incomplete_papers_list %}
+                                <button id="paper-btn-{{ paper }}"
+                                        class="btn m-1 btn-warning"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        data-bs-title="Is missing pages: TODO - which pages?"
+                                        onclick="clickThumbnail({{ pg.order }})">paper {{ paper }}</button>
+                            {% else %}
+                                <button class="btn m-1 btn-success" onclick="clickThumbnail({{ pg.order }})">paper {{ paper }}</button>
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

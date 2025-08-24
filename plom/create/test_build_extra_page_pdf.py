@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from pathlib import Path
 
+from plom.misc_utils import working_directory
 from .build_extra_page_with_qrcodes import build_extra_page_pdf
-from ..misc_utils import working_directory
 
 
 def test_extra_page_pdf_no_dir(tmpdir) -> None:

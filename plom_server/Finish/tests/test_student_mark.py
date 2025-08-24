@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -26,9 +27,8 @@ class TestStudentMarkService(TestCase):
             "auto_init_tasks": True,
         }
     )
-    def setUp(self):
+    def setUp(self) -> None:
         self.user0: User = baker.make(User, username="user0")
-        return
 
     def test_is_paper_marked(self) -> None:
         """Are all questions in a paper marked."""
@@ -74,7 +74,7 @@ class TestStudentMarkService(TestCase):
                     image=img,
                     version=1,
                     page_number=pg,
-                    question_index=(pg % 5),
+                    question_index=(pg % 3) + 1,
                 )
             for qn in [1]:
                 ord += 1

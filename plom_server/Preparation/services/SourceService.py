@@ -185,7 +185,8 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
             TODO: I'm still very uncertain about the types of these, see
             also :py:`ScanService.upload_bundle`.  This one is also called by
             `Preparation/management/commands/plom_preparation_source.py`
-            which passes a plain-old open file handle.
+            which passes a plain-old open file handle, although that file
+            is marked as deprecated.
 
     Raises:
         PlomDependencyException: if preparation dependencies prevent modification
