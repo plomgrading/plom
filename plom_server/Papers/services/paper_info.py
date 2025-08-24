@@ -157,9 +157,15 @@ class PaperInfoService:
 
     @staticmethod
     def get_paper_numbers_containing_page(
-        page_number: int, *, version: int | None = None, scanned: bool = True
+        page_number: int,
+        *,
+        version: int | None = None,
+        scanned: bool = True,
+        limit: int | None = None,
     ) -> list[int]:
         """Return a sorted list of paper numbers that contain a particular page number and optionally, version.
+
+        Note: the paper numbers are ensured to be unique
 
         Args:
             page_number: which page number.
@@ -172,6 +178,7 @@ class PaperInfoService:
                 more results (TODO: presumably from all rows of the paper database).
                 but be aware that these papers might be partially (or perhaps, TODO)
                 not all all scanned.
+            limit: At most how many unique papers to be returns. If not provided, then return all papers
         """
         if scanned:
             query = FixedPage.objects.filter(
@@ -182,13 +189,13 @@ class PaperInfoService:
         if version is not None:
             query = query.filter(version=version)
         # Note lazy evaluation: no query should be actually performed until now
-        return sorted(
-            list(
-                query.prefetch_related("paper").values_list(
-                    "paper__paper_number", flat=True
-                )
-            )
+        unsorted = list(
+            query.prefetch_related("paper")
+            .values_list("paper__paper_number", flat=True)
+            .distinct()
         )
+
+        return sorted(unsorted if not limit else unsorted[:limit])
 
     @staticmethod
     def get_pqv_map_dict() -> dict[int, dict[int | str, int]]:

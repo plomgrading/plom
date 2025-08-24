@@ -35,6 +35,7 @@ urlpatterns = [
     path("rectangles/", include("plom_server.Rectangles.urls")),
     path("identify/", include("plom_server.Identify.urls")),
     path("questiontags/", include("plom_server.QuestionTags.urls")),
+    path("question_clustering/", include("plom_server.QuestionClustering.urls")),
 ]
 
 # If debugging/profiling using django-silk, need to add pattern, presumably

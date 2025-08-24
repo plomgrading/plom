@@ -399,6 +399,7 @@ pylint:
   script:
     - pylint plom
     - pylint plom_server
+    - pylint plom_ml
     - pylint contrib
   allow_failure: true
 
@@ -415,10 +416,10 @@ mypy-type-checking:
     - pip install mypy~=1.17.1
   script:
     - mypy --version
-    - mypy plom --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom --python-ver 3.10
-    - mypy plom_server --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom_server --python-ver 3.10
+    - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom plom_server --python-ver 3.10
+    - mypy plom_ml --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom_ml --python-ver 3.10
   allow_failure: true
 
 

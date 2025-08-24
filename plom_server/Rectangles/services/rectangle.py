@@ -256,6 +256,7 @@ def extract_rect_region_from_image(
     )
     # convert the result to a PIL.Image
     resulting_img = Image.fromarray(cv.cvtColor(extracted_rect_img, cv.COLOR_BGR2RGB))
+
     with BytesIO() as fh:
         resulting_img.save(fh, format="png")
         return fh.getvalue()
@@ -283,6 +284,7 @@ class RectangleExtractor:
 
         try:
             rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
+            self.rimg_obj = rimg_obj
         except ReferenceImage.DoesNotExist:
             raise ValueError(f"There is no reference image for v{version} pg{page}.")
 
@@ -399,8 +401,11 @@ class RectangleExtractor:
         zipfile on disc. This could cause problems if large rectangles
         are selected from many pages.
         """
-        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
-            self.page_number, version=self.version, scanned=True
+        # paper_numbers may be duplicated if there are multiple questions on a page
+        paper_numbers = set(
+            PaperInfoService.get_paper_numbers_containing_page(
+                self.page_number, version=self.version, scanned=True
+            )
         )
 
         with zipfile.ZipFile(dest_filename, mode="w") as archive:
@@ -414,6 +419,21 @@ class RectangleExtractor:
                     # do we make an empty zip?  That's no fun.
                     continue
                 archive.writestr(fname, dat)
+
+            # DEBUG BRYAN (TEMP)
+            # need reference
+            if self.rimg_obj.parsed_qr is not None:
+                dat = extract_rect_region_from_image(
+                    Path(self.rimg_obj.image_file.path),
+                    self.rimg_obj.parsed_qr,
+                    left_f,
+                    top_f,
+                    right_f,
+                    bottom_f,
+                    (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
+                )
+                if dat:
+                    archive.writestr("ref.png", dat)
 
     def get_largest_rectangle_contour(
         self, region: None | dict[str, float] = None
@@ -448,6 +468,88 @@ class RectangleExtractor:
             (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
             region=region,
         )
+
+    def get_cropped_ref_img(self, rects: dict[str, float]) -> np.ndarray:
+        """Get numpy array of cropped reference image.
+
+        Args:
+            rects: a dictionary defining the cropped region. Must have these keys:
+            [left, top, right, bottom]
+
+        Returns:
+            A numpy array of the cropped reference image.
+        """
+        expected_keys = {"left", "top", "right", "bottom"}
+        if not expected_keys.issubset(rects):
+            missing = expected_keys - rects.keys()
+            raise KeyError(f"Missing rect keys: {missing}")
+
+        left, top, right, bottom = (
+            rects["left"],
+            rects["top"],
+            rects["right"],
+            rects["bottom"],
+        )
+        if self.rimg_obj.parsed_qr is None:
+            raise ValueError("Reference image does not have parsed_qr data.")
+
+        cropped_ref_bytes = extract_rect_region_from_image(
+            Path(self.rimg_obj.image_file.path),
+            self.rimg_obj.parsed_qr,
+            left,
+            top,
+            right,
+            bottom,
+            (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
+        )
+
+        if cropped_ref_bytes is None:
+            raise ValueError("Failed to extract rectangle region from reference image.")
+
+        # Convert bytes to NumPy array
+        with BytesIO(cropped_ref_bytes) as fh:
+            pil_img = Image.open(fh)
+            cropped_ref = np.array(pil_img)
+
+        return cropped_ref
+
+    def get_cropped_scanned_img(
+        self, paper_num: int, rects: dict[str, float]
+    ) -> np.ndarray:
+        """Get numpy array of a cropped scanned image.
+
+        Args:
+            paper_num: the paper number whose scanned page will be extracted
+            rects: a dictionary defining the cropped region. Must have these keys:
+                [left, top, right, bottom].
+
+        Returns:
+            A numpy array of the cropped scanned image.
+        """
+        expected_keys = {"left", "top", "right", "bottom"}
+        if not expected_keys.issubset(rects):
+            missing = expected_keys - rects.keys()
+            raise KeyError(f"Missing rect keys: {missing}")
+
+        left, top, right, bottom = (
+            rects["left"],
+            rects["top"],
+            rects["right"],
+            rects["bottom"],
+        )
+
+        cropped_scanned_bytes = self.extract_rect_region(
+            paper_num, left, top, right, bottom
+        )
+
+        if cropped_scanned_bytes is None:
+            raise ValueError("Failed to extract rectangle region from scanned image.")
+
+        with BytesIO(cropped_scanned_bytes) as fh:
+            pil_img = Image.open(fh)
+            cropped_scanned = np.array(pil_img)
+
+        return cropped_scanned
 
 
 def get_largest_rectangle_contour_from_image(

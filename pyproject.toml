@@ -8,7 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
 #
 # Copying and distribution of this file, with or without modification,
@@ -92,9 +92,12 @@ dependencies = [
     "zipfly>=6.0.1",
     "zxing-cpp>=2.2.1",
     "onnxruntime>=1.22.1",
-    "huggingface_hub>=0.34.3"
+    "huggingface_hub>=0.34.3",
     # "nplusone>=1.0.0",
     # "django-silk>=5.2.0",
+    # plom_ml stuff
+    "scikit-image>=0.25.1",
+    "transformers>=4.53.2",
 ]
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
@@ -152,6 +155,9 @@ packages = [
     "plom_server.Identify.services",
     "plom_server.QuestionTags",
     "plom_server.QuestionTags.services",
+    "plom_server.QuestionClustering",
+    "plom_server.QuestionClustering.services",
+    "plom_server.QuestionClustering.exceptions",
     "plom_server.Launcher",
     "plom_server.Launcher.services",
     "plom_server.Launcher.management.commands",
@@ -189,6 +195,13 @@ packages = [
     "plom_server.UserManagement",
     "plom_server.UserManagement.services",
     "plom_server.Visualization",
+    "plom_ml",
+    "plom_ml.clustering",
+    "plom_ml.clustering.embedding",
+    "plom_ml.clustering.model",
+    "plom_ml.clustering.pipeline",
+    "plom_ml.clustering.preprocessing"
+
 ]
 # TODO: fixtures?  huey?  media?
 

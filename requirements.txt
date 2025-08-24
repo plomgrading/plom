@@ -45,6 +45,7 @@ matplotlib==3.10.5
 model-bakery==1.20.5
 numpy==2.2.6  # >= 2.3.0 needs Python 3.11
 opencv-python-headless==4.12.0.88
+onnxruntime==1.22.1
 packaging==25.0
 pandas==2.3.1
 passlib==1.7.4
@@ -76,3 +77,7 @@ huggingface_hub==0.34.3
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems
 # django-silk==5.2.0  # for hunting down inefficient db queries
+
+# plom_ml
+scikit-image==0.25.2
+transformers==4.53.2

@@ -80,6 +80,14 @@ table = [
         "jsfilename": "sorttable.js",
     },
     {
+        # SortableJS (note not Sorttable!) https://github.com/SortableJS/Sortable
+        "name": "SortableJS",
+        "license": "MIT",
+        "js": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
+        "jsintegrity": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
+        "jsfilename": "Sortable.min.js",
+    },
+    {
         "name": "select2",
         "license": "MIT",
         "js": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
