@@ -69,6 +69,7 @@ Supported_Server_API_Versions = [
 #    - new delete:/get_token/ revokes token
 # * 115
 #    - rubrics versions field uses string instead of list
+#    - tasks no longer start with "q"
 
 
 log = logging.getLogger("messenger")
@@ -1087,11 +1088,11 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_tags(self, code):
+    def get_tags(self, code: str) -> list[str]:
         """Get a list of tags associated with a paper and question.
 
         Args:
-            code (str): For example "q0009g3" for paper number 9, question 3.
+            code: For example "0009g3" for paper number 9, question 3.
                 TODO: consider passing paper_num and question instead of this
                 nonsense.
 
@@ -1105,6 +1106,9 @@ class BaseMessenger:
             PlomNoPaper: the task was not found (or was poorly formed
                 in the request).
         """
+        if self.is_server_api_less_than(115):
+            assert not code.startswith("q")
+            code = "q" + code
         with self.SRmutex:
             try:
                 response = self.get(
@@ -1120,11 +1124,11 @@ class BaseMessenger:
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def add_single_tag(self, code: str, tag_text: str) -> None:
+    def add_single_tag(self, task: str, tag_text: str) -> None:
         """Add a tag to a task.
 
         Args:
-            code: e.g., like ``q0013g1``, for paper 13 question 1.
+            task: e.g., like ``0013g1``, for paper 13 question 1.
             tag_text: the tag.
 
         Returns:
@@ -1135,10 +1139,13 @@ class BaseMessenger:
             PlomBadTagError: invalid tag (such as disallowed chars).
                 Also no such task, or invalid formed task code.
         """
+        if self.is_server_api_less_than(115):
+            assert not task.startswith("q")
+            task = "q" + task
         with self.SRmutex:
             try:
                 response = self.patch(
-                    f"/tags/{code}",
+                    f"/tags/{task}",
                     json={"user": self.user, "token": self.token, "tag_text": tag_text},
                 )
                 response.raise_for_status()
@@ -1149,12 +1156,12 @@ class BaseMessenger:
                     raise PlomBadTagError(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def remove_single_tag(self, task, tag_text):
+    def remove_single_tag(self, task: str, tag_text: str) -> None:
         """Remove a tag from a task.
 
         Args:
-            task (str): e.g., like ``q0013g1``, for paper 13 question 1.
-            tag_text (str): the tag.
+            task: e.g., like ``0013g1``, for paper 13 question 1.
+            tag_text: the tag.
 
         Returns:
             None
@@ -1163,6 +1170,9 @@ class BaseMessenger:
             PlomAuthenticationException
             PlomConflict: no such task
         """
+        if self.is_server_api_less_than(115):
+            assert not task.startswith("q")
+            task = "q" + task
         with self.SRmutex:
             try:
                 response = self.delete(
@@ -1182,24 +1192,6 @@ class BaseMessenger:
                 if response.status_code == 404:
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-    def create_new_tag(self, tag_text):
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                "/tags",
-                json={"user": self.user, "token": self.token, "tag_text": tag_text},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code in [406, 409]:
-                raise PlomBadTagError(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     def McreateRubric(self, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to make a new rubric and get key back.
@@ -1260,7 +1252,7 @@ class BaseMessenger:
             new_rubric = _fix_114_versions_field_to_str(new_rubric)
         return new_rubric
 
-    def MgetOtherRubricUsages(self, rid: int) -> list[dict[str, Any]]:
+    def get_other_rubric_usages(self, rid: int) -> list[dict[str, Any]]:
         """Retrieve list of paper numbers using the given rubric.
 
         Note: This only returns papers whose most recent annotation
@@ -1270,8 +1262,9 @@ class BaseMessenger:
             rid: The identifier of the rubric.
 
         Returns:
-            The list of tasks using the rubric, or an empty
-            list if no papers are using the rubric.
+            The list of tasks using the rubric, or an empty list if no
+            no papers are using the rubric.  The entries of the list
+            are dicts, with keys include "code", etc.
         """
         if self.is_legacy_server():
             raise PlomNoServerSupportException("Operation not supported in Legacy.")
@@ -1280,13 +1273,19 @@ class BaseMessenger:
             try:
                 response = self.get_auth(url)
                 response.raise_for_status()
-                return response.json()
+                L = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(
                     f"Error getting paper number list: {e}"
                 ) from None
+        if self.is_server_api_less_than(115):
+            # hack off the legacy "q" leading task code char
+            for x in L:
+                assert x["code"].startswith("q")
+                x["code"] = x["code"][1:]
+        return L
 
     def get_one_rubric(self, rid: int) -> dict[str, Any]:
         """Retrieve one rubric.
@@ -1503,12 +1502,16 @@ class BaseMessenger:
             new_rubric = _fix_114_versions_field_to_str(new_rubric)
         return new_rubric
 
-    def get_pagedata(self, code):
-        """Get metadata about the images in this paper."""
+    def get_pagedata(self, papernum: int) -> list:
+        """Get metadata about the images in this paper.
+
+        Args:
+            papernum: which paper.
+        """
         with self.SRmutex:
             try:
                 response = self.get(
-                    f"/pagedata/{code}",
+                    f"/pagedata/{papernum}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -1520,17 +1523,21 @@ class BaseMessenger:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_pagedata_context_question(self, code, questionNumber):
+    def get_pagedata_context_question(self, papernum: int, question_idx: int) -> list:
         """Get metadata about all non-ID page images in this paper, as related to a question.
 
-        For now, questionNumber effects the "included" column...
+        Args:
+            papernum: which paper.
+            question_idx: which question.
+
+        For now, `question_idx` effects the "included" column...
 
         If the paper wasn't scanned, the result will be an empty list.
         """
         with self.SRmutex:
             try:
                 response = self.get(
-                    f"/pagedata/{code}/context/{questionNumber}",
+                    f"/pagedata/{papernum}/context/{question_idx}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()

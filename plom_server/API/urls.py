@@ -173,7 +173,8 @@ urlpatterns += [
         "MK/tasks/available", MarkTaskNextAvailable.as_view(), name="api_mark_task_next"
     ),
     path("MK/tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
-    re_path("MK/tasks/(?P<code>q.+)", MarkTask.as_view(), name="api_mark_task"),
+    # regex: one or more digits, the "g" then onre or more digits
+    re_path(r"MK/tasks/(?P<code>\d+g\d+)", MarkTask.as_view(), name="api_mark_task"),
     path(
         "api/v0/tasks/<int:papernum>/<int:qidx>/reassign/<str:new_username>",
         ReassignTask.as_view(),

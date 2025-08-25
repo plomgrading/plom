@@ -101,6 +101,7 @@ class MarkTask(APIView):
         and it does not match the task, reply with a 417.  If you don't
         send version, we set it to None which means no such check will
         be made: you're claiming the task regardless of what version it is.
+        400 for a poorly formatted request, such as invalid task code.
         """
         data = request.query_params
         version = data.get("version", None)
@@ -108,8 +109,8 @@ class MarkTask(APIView):
             version = int(version)
         try:
             papernum, question_idx = mark_task.unpack_code(code)
-        except AssertionError as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             try:
@@ -177,6 +178,7 @@ class MarkTask(APIView):
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except KeyError as e:
+            # TODO: unclear where KeyError can happen, perhaps delete this case?
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomTaskChangedError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)

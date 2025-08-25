@@ -187,7 +187,7 @@ class Messenger(BaseMessenger):
 
         Returns:
             List of info the tasks.  Each entry is a list of the task
-            string (of the form ``q0002g3``), the score, the time (in
+            string (of the form ``0002g3``), the score, the time (in
             seconds), a list of tags (strings), and an "integrity code".
             An empty list is returned if nothing has been graded by this
             user.
@@ -206,13 +206,18 @@ class Messenger(BaseMessenger):
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
-            return response.json()
+            r = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+        # hack off the legacy "q" leading task code char
+        for x in r:
+            assert x[0].startswith("q")
+            x[0] = x[0][1:]
+        return r
 
     def get_tasks(
         self, qidx: int | None = None, v: int | None = None, *, username: str = ""
@@ -229,7 +234,7 @@ class Messenger(BaseMessenger):
 
         Returns:
             List of info the tasks.  Each entry is a list of the task
-            string (of the form ``q0002g3``), the score, the time (in
+            string (of the form ``0002g3``), the score, the time (in
             seconds), a list of tags (strings), and which user its assigned to.
             An empty list is returned if there are no tasks.
             TODO: right now it might be a list-of-dicts.
@@ -253,11 +258,17 @@ class Messenger(BaseMessenger):
                     url += "?" + "&".join(query_params)
                 response = self.get_auth(url)
                 response.raise_for_status()
-                return response.json()
+                r = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+        if self.is_server_api_less_than(115):
+            # hack off the legacy "q" leading task code char
+            for x in r:
+                assert x[0].startswith("q")
+                x[0] = x[0][1:]
+        return r
 
     def MprogressCount_legacy(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
@@ -345,8 +356,8 @@ class Messenger(BaseMessenger):
                 (Ignored on legacy servers).
 
         Returns:
-            Either the task string or ``None`` indicated no
-            more tasks available.
+            Either the task string of the form "0123g5" or ``None``
+            indicated no more tasks available.
 
         Raises:
             RuntimeError: on legacy servers, can can pass at most
@@ -388,20 +399,23 @@ class Messenger(BaseMessenger):
             if response.status_code == 204:
                 return None
             response.raise_for_status()
-            tgv = response.json()
-            return tgv
+            task = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+        if self.is_server_api_less_than(115):
+            assert task.startswith("q")
+            task = task[1:]
+        return task
 
-    def MclaimThisTask(self, code: str, version: int) -> list:
+    def claim_task(self, code: str, version: int) -> list:
         """Claim a task from server and get back metadata.
 
         Args:
-            code: a task code such as `"q0123g2"`.
+            code: a task code such as `"0123g2"`.
             version: we should know which version we are claiming.
 
         Returns:
@@ -415,6 +429,9 @@ class Messenger(BaseMessenger):
             PlomAuthenticationException:
             PlomSeriousException: generic unexpected error
         """
+        if self.is_server_api_less_than(115):
+            assert not code.startswith("q")
+            code = "q" + code
         with self.SRmutex:
             try:
                 if self.is_legacy_server():
@@ -556,9 +573,9 @@ class Messenger(BaseMessenger):
 
     def MreturnMarkedTask(
         self,
-        code,
-        pg,
-        ver,
+        code: str,
+        q: int,
+        ver: int,
         score,
         marking_time,
         annotated_img,
@@ -569,9 +586,9 @@ class Messenger(BaseMessenger):
         """Upload annotated image and associated data to the server.
 
         Args:
-            code (str): e.g., "q0003g1"
-            pg (int): question number.
-            ver (int): which version.
+            code: e.g., "0003g1"
+            q: question number.
+            ver: which version.
             score: assigned score for the task.
             marking_time (int/float): number of seconds spend on grading
                 the paper.
@@ -585,7 +602,7 @@ class Messenger(BaseMessenger):
 
         Returns:
             A dict of progress information.  See :meth:`get_marking_progress`.
-            There is a a certain aomunt of code duplication to make this
+            There is a a certain amount of code duplication to make this
             happen; consider refactoring to avoid needing this to return anything.
 
         Raises:
@@ -599,8 +616,8 @@ class Messenger(BaseMessenger):
         """
         if self.is_legacy_server():
             n, m = self._MreturnMarkedTask_legacy(
-                code,
-                pg,
+                "q" + code,
+                q,
                 ver,
                 score,
                 marking_time,
@@ -612,7 +629,7 @@ class Messenger(BaseMessenger):
             d = {"total_tasks": m, "total_tasks_marked": n, "user_quota_limit": None}
             return d
         return self._MreturnMarkedTask_webplom(
-            code, pg, ver, score, marking_time, annotated_img, plomfile, integrity_check
+            code, q, ver, score, marking_time, annotated_img, plomfile, integrity_check
         )
 
     def _MreturnMarkedTask_legacy(
@@ -729,7 +746,7 @@ class Messenger(BaseMessenger):
     def _MreturnMarkedTask_webplom(
         self,
         code,
-        pg,
+        q,
         ver,
         score,
         marking_time,
@@ -741,6 +758,9 @@ class Messenger(BaseMessenger):
 
         See :meth:`MreturnMarkedTask` for docs.
         """
+        if self.is_server_api_less_than(115):
+            assert not code.startswith("q")
+            code = "q" + code
         with self.SRmutex:
             try:
                 with (
@@ -748,7 +768,7 @@ class Messenger(BaseMessenger):
                     open(plomfile, "rb") as plom_data_file,
                 ):
                     data = {
-                        "pg": str(pg),
+                        "pg": str(q),
                         "ver": str(ver),
                         "score": str(score),
                         "marking_time": marking_time,
