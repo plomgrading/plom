@@ -29,7 +29,6 @@ ok_no_copyright = [
     "CONTRIBUTORS*",
     "*README.md",
     "*README.txt",
-    "*/ui_files/ui_*.py",
     ".mailmap",
     "*/cl_*.csv",
     "*/demo_assessment_*.csv",
