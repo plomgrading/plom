@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 """Misc utils for interacting with Canvas."""
 
@@ -14,7 +14,8 @@ from typing import Any, Dict, Union
 
 from canvasapi import Canvas
 
-from plom.canvas import __DEFAULT_CANVAS_API_URL__
+
+__DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
 
 
 def get_student_list(course_or_section):
