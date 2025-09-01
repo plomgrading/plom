@@ -97,6 +97,7 @@ class MarkTask(APIView):
 
         Reply with status 200, or 409 if someone else has claimed this
         task, or a 404 if there it not yet such a task (not scanned yet).
+        TODO: doublecheck that 404 is relevant here too!
         If a version query parameter (e.g., "?version=2") was supplied,
         and it does not match the task, reply with a 417.  If you don't
         send version, we set it to None which means no such check will
@@ -139,8 +140,8 @@ class MarkTask(APIView):
             200: returns two integers, first the number of marked papers
             for this question/version and the total number of papers for
             this question/version.
-            400: malformed input of some sort.
-            404: no such task.
+            400: malformed input of some sort, such as poorly formed task code.
+            404: no such task.  TODO: not any more!
             406: integrity fail: client submitted to out-of-date task.
             409: task has changed.
             410: task is gone.

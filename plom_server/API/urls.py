@@ -5,7 +5,7 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Aidan Murphy
 
-from django.urls import include, path, re_path
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views.experimental import (
@@ -173,8 +173,7 @@ urlpatterns += [
         "MK/tasks/available", MarkTaskNextAvailable.as_view(), name="api_mark_task_next"
     ),
     path("MK/tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
-    # regex: one or more digits, the "g" then onre or more digits
-    re_path(r"MK/tasks/(?P<code>\d+g\d+)", MarkTask.as_view(), name="api_mark_task"),
+    path("MK/tasks/<str:code>", MarkTask.as_view(), name="api_mark_task"),
     path(
         "api/v0/tasks/<int:papernum>/<int:qidx>/reassign/<str:new_username>",
         ReassignTask.as_view(),
