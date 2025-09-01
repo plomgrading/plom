@@ -257,7 +257,7 @@ class UserInfoServices:
                             )
                             * 100
                         ),
-                        "date_format": arrow.utcnow()
+                        "average_marking_time_sort_key_hack": arrow.utcnow()
                         .shift(seconds=average_marking_time)
                         .format("YYYYMMDDHHmmss"),
                     }
