@@ -140,6 +140,11 @@ class MarkTask(APIView):
             for this question/version and the total number of papers for
             this question/version.
             400: malformed input of some sort, such as poorly formed task code.
+            404: currently not returned but perhaps in the past this was used
+            instead of 410, in some cases (depending on a regex matching of
+            task codes.  Its possible in the future the server might distinguish
+            between "never existed" (404) and "gone away" (410), so clients should
+            handle both to be future-proof.
             406: integrity fail: client submitted to out-of-date task.
             409: task has changed.
             410: task is non-existent, either never was, or has now gone away.
