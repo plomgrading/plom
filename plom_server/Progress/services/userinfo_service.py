@@ -7,7 +7,6 @@ from datetime import timedelta
 from typing import Any
 
 import arrow
-
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -16,7 +15,7 @@ from django.utils import timezone
 
 from plom_server.Mark.models import Annotation, MarkingTask
 from plom_server.Mark.services import MarkingTaskService
-
+from plom_server.Papers.services import SpecificationService
 from plom_server.UserManagement.models import Quota
 
 
@@ -202,7 +201,7 @@ class UserInfoServices:
     @transaction.atomic
     def get_annotations_based_on_user(
         self, annotations
-    ) -> dict[str, dict[tuple[int, int], dict[str, int | str]]]:
+    ) -> dict[str, list[dict[str, int | str]]]:
         """Retrieve annotations based on the combination of user, question index, and version.
 
         Returns:
@@ -214,24 +213,21 @@ class UserInfoServices:
         count_data: dict[str, dict[tuple[int, int], int]] = dict()
         total_marking_time_data: dict[str, dict[tuple[int, int], int]] = dict()
 
-        for annotation in annotations:
-            key = (annotation.task.question_index, annotation.task.question_version)
-            count_data.setdefault(annotation.user.username, {}).setdefault(key, 0)
-            count_data[annotation.user.username][key] += 1
+        for ann in annotations:
+            key = (ann.task.question_index, ann.task.question_version)
+            count_data.setdefault(ann.user.username, {}).setdefault(key, 0)
+            count_data[ann.user.username][key] += 1
 
-            total_marking_time_data.setdefault(annotation.user.username, {}).setdefault(
-                key, 0
-            )
-            total_marking_time_data[annotation.user.username][
-                key
-            ] += annotation.marking_time
+            total_marking_time_data.setdefault(ann.user.username, {}).setdefault(key, 0)
+            total_marking_time_data[ann.user.username][key] += ann.marking_time
 
-        grouped_by_user: dict[str, dict[tuple[int, int], dict[str, int | str]]] = dict()
+        qlabel_map = SpecificationService.get_question_labels_str_and_html_map()
+        grouped_by_user: dict[str, list[dict[str, int | str]]] = dict()
 
-        for user in count_data:
-            grouped_by_user[user] = dict()
-            for key in count_data[user]:
-                count = count_data[user][key]
+        for user, data in count_data.items():
+            grouped_by_user[user] = []
+            for key, count in data.items():
+                qidx, v = key
                 total_marking_time = total_marking_time_data[user][key]
 
                 if total_marking_time is None:
@@ -241,24 +237,31 @@ class UserInfoServices:
                     total_marking_time / count if count > 0 else 0
                 )
 
-                grouped_by_user[user][key] = {
-                    "annotations_count": count,
-                    "average_marking_time": self.seconds_to_humanize_time(
-                        average_marking_time
-                    ),
-                    "percentage_marked": int(
-                        (
-                            count
-                            / self._get_marking_task_count_based_on_question_and_version(
-                                question=key[0], version=key[1]
+                question_label, question_label_html = qlabel_map[qidx]
+
+                grouped_by_user[user].append(
+                    {
+                        "question_idx": qidx,
+                        "question_version": v,
+                        "question_label_html": question_label_html,
+                        "annotations_count": count,
+                        "average_marking_time": self.seconds_to_humanize_time(
+                            average_marking_time
+                        ),
+                        "percentage_marked": int(
+                            (
+                                count
+                                / self._get_marking_task_count_based_on_question_and_version(
+                                    question=qidx, version=v
+                                )
                             )
-                        )
-                        * 100
-                    ),
-                    "date_format": arrow.utcnow()
-                    .shift(seconds=average_marking_time)
-                    .format("YYYYMMDDHHmmss"),
-                }
+                            * 100
+                        ),
+                        "date_format": arrow.utcnow()
+                        .shift(seconds=average_marking_time)
+                        .format("YYYYMMDDHHmmss"),
+                    }
+                )
 
         return grouped_by_user
 

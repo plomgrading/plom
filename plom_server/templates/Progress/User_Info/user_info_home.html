@@ -165,8 +165,9 @@
             <thead>
                 <tr>
                     <th>Username</th>
-                    <th>Question Index</th>
-                    <th>Question Version</th>
+                    <th>Question</th>
+                    <th>Version</th>
+                    <th>Question (Index , Version)</th>
                     <th>Annotations Count</th>
                     <th>Average Marking Time</th>
                     <th>Percentage Marked</th>
@@ -174,60 +175,24 @@
             </thead>
             <tbody>
                 {% for username, annotations in annotations_grouped_by_user.items %}
-                    {% for question_data, annotation_data in annotations.items %}
+                    {% for data in annotations %}
                         <tr>
                             <td>{{ username }}</td>
-                            <td>{{ question_data.0 }}</td>
-                            <td>{{ question_data.1 }}</td>
-                            <td>{{ annotation_data.annotations_count }}</td>
-                            <td sorttable_customkey={{ annotation_data.date_format }}>
-                                {{ annotation_data.average_marking_time }}
+                            <td>{{ data.question_label_html|safe }}</td>
+                            <td>{{ data.question_version }}</td>
+                            <td>{{ data.question_idx }}, {{ data.question_version }}</td>
+                            <td>{{ data.annotations_count }}</td>
+                            <td sorttable_customkey={{ data.date_format }}>
+                                {{ data.average_marking_time }}
                             </td>
                             <td>
                                 <div class="progress">
                                     <div class="progress-bar"
                                          role="progressbar"
-                                         style="width: {{ annotation_data.percentage_marked }}%"
-                                         aria-valuenow="{{ annotation_data.percentage_marked }}"
+                                         style="width: {{ data.percentage_marked }}%"
+                                         aria-valuenow="{{ data.percentage_marked }}"
                                          aria-valuemin="0"
-                                         aria-valuemax="100">{{ annotation_data.percentage_marked }}%</div>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <div class="table-responsive">
-        <table class="table text-center align-middle sortable">
-            <thead>
-                <tr>
-                    <th>Question (Index , Version)</th>
-                    <th>Username</th>
-                    <th>Annotations Count</th>
-                    <th>Average Marking Time</th>
-                    <th>Percentage Marked</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for question, annotation_data in annotations_grouped_by_question_ver.items %}
-                    {% for annotation in annotation_data.annotations %}
-                        <tr>
-                            <td>{{ question.0 }} , {{ question.1 }}</td>
-                            <td>{{ annotation.marker }}</td>
-                            <td>{{ annotation.annotations_count }}</td>
-                            <td sorttable_customkey={{ annotation.date_format }}>
-                                {{ annotation.average_marking_time }}
-                            </td>
-                            <td>
-                                <div class="progress">
-                                    <div class="progress-bar"
-                                         role="progressbar"
-                                         style="width: {{ annotation.percentage_marked }}%"
-                                         aria-valuenow="{{ annotation.percentage_marked }}"
-                                         aria-valuemin="0"
-                                         aria-valuemax="100">{{ annotation.percentage_marked }}%</div>
+                                         aria-valuemax="100">{{ data.percentage_marked }}%</div>
                                 </div>
                             </td>
                         </tr>
