@@ -515,13 +515,14 @@ no-question-numbers:
   image: python:3.12
   stage: static_analysis
   script:
+    # TODO: consider adding "plom" here too
     - grep plom_server -rie "question.num"
     - echo "Question number is ambiguous; generally we prefer index or the question label"
     - HOW_MANY=`grep plom_server -rie "question.num" | wc -l`
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 15 ]]"
+    - bash -c "[[ $HOW_MANY -le 0 ]]"
   allow_failure: true
 
 
