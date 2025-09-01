@@ -141,10 +141,9 @@ class MarkTask(APIView):
             for this question/version and the total number of papers for
             this question/version.
             400: malformed input of some sort, such as poorly formed task code.
-            404: no such task.  TODO: not any more!
             406: integrity fail: client submitted to out-of-date task.
             409: task has changed.
-            410: task is gone.
+            410: task is non-existent, either never was, or has now gone away.
         """
         mts = MarkingTaskService()
         data = request.POST
@@ -157,8 +156,6 @@ class MarkTask(APIView):
             mark_data, annot_data = mts.validate_and_clean_marking_data(
                 code, data, plomfile_data
             )
-        except ObjectDoesNotExist as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
         except serializers.ValidationError as e:
             # happens automatically but this way we keep the error msg
             return _error_response(e, status.HTTP_400_BAD_REQUEST)

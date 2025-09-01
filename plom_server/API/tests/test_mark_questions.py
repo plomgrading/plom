@@ -156,7 +156,7 @@ class TestMarkQuestionAPI:
     def test_submit_non_existing_task(self, mocker: pytest_mock.MockerFixture):
         """Test POST: /MK/tasks/{code} where code is valid but refers to non-existing task.
 
-        Ensures that server responds with status 400.
+        Ensures that server responds with status 410.
         """
         code = "0001g1"
         url = reverse("api_mark_task", kwargs={"code": code})
@@ -184,7 +184,7 @@ class TestMarkQuestionAPI:
             format="multipart",
         )
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_410_GONE
 
     # ============== Integration of MarkTaskNextAvailable(APIView) MarkTask(APIView) test =================
 
