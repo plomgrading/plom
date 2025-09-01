@@ -169,8 +169,7 @@
                     <th>Username</th>
                     <th>Question</th>
                     <th>Version</th>
-                    <th>Question (Index , Version)</th>
-                    <th>Annotations Count</th>
+                    <th>Annotation Count</th>
                     <th>Average Marking Time</th>
                     <th>Percentage Marked</th>
                 </tr>
@@ -182,7 +181,6 @@
                             <td>{{ username }}</td>
                             <td>{{ data.question_label_html|safe }}</td>
                             <td>{{ data.question_version }}</td>
-                            <td>{{ data.question_idx }}, {{ data.question_version }}</td>
                             <td>{{ data.annotations_count }}</td>
                             <td sorttable_customkey={{ data.average_marking_time_sort_key_hack }}>
                                 {{ data.average_marking_time }}
