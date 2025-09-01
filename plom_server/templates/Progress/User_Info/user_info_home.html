@@ -104,7 +104,7 @@
                         <td>{{ progress.tasks_marked }}</td>
                         <td>{{ progress.tasks_claimed }}</td>
                         <!-- really need custom key here, Issue #4026 -->
-                        <td sorttable_customkey="{% if progress.has_quota_limit %} {{ progress.quota_limit }} {% else %} 0 {% endif %}">
+                        <td sorttable_customkey={{ progress.quota_limit_or_zero }}>
                             {% if progress.has_quota_limit %}
                                 {{ progress.quota_limit }}
                                 <button class="btn btn-outline-primary ms-1"

@@ -101,6 +101,7 @@ class UserInfoServices:
                 "tasks_marked": tasks_marked,
                 "has_quota_limit": has_limit,
                 "quota_limit": limit,
+                "quota_limit_or_zero": limit if has_limit else 0,
                 "would_exceed_default_limit": would_exceed_default_limit,
             }
 
