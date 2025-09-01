@@ -267,6 +267,7 @@ omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
 qt_api = "pyqt6"
+python_files = "test_*.py *_test.py tests.py"
 
 [tool.djlint]
 # TODO: fix then remove from ignore list: H006, H013
