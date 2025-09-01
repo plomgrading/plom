@@ -22,6 +22,7 @@ from plom_server.Papers.models import (
     Bundle,
     IDPage,
     DNMPage,
+    QuestionPage,
 )
 from plom_server.Papers.services import SpecificationService
 from ..models import StagingBundle
@@ -507,8 +508,7 @@ class ManageScanService:
 
         return discards
 
-    @transaction.atomic
-    def get_pages_images_in_paper(self, paper_number: int) -> list[dict[str, Any]]:
+    def get_page_images_in_paper(self, paper_number: int) -> list[dict[str, Any]]:
         """Return the fixed/mobile pages in the paper and their images.
 
         Args:
@@ -537,10 +537,15 @@ class ManageScanService:
             .order_by("page_number")
             .select_related("image")
         ):
+            if isinstance(fp_obj, QuestionPage):
+                qidx_field = qidx_field = fp_obj.question_index
+            else:
+                qidx_field = ""
             dat = {
                 "page_type": "fixed",
                 "page_number": fp_obj.page_number,
                 "page_pk": fp_obj.pk,
+                "question_index": qidx_field,
             }
             if fp_obj.image:
                 dat.update({"image": fp_obj.image.pk})
@@ -554,7 +559,7 @@ class ManageScanService:
         ):
             dat = {
                 "page_type": "mobile",
-                "question_number": mp_obj.question_index,
+                "question_index": mp_obj.question_index,
                 "page_pk": mp_obj.pk,
             }
             dat.update({"image": mp_obj.image.pk})
