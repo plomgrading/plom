@@ -75,14 +75,14 @@ class TestMarkQuestionAPI:
 
     def test_claim_task_invalid_code(self):
         """Test PATCH: /MK/tasks/{code} with invalid code format."""
-        code = "q1c2"
+        code = "1c2"
         url = reverse("api_mark_task", kwargs={"code": code})
         resp = self.auth_client.patch(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     def test_claim_non_existent_task(self):
         """Test PATCH: /MK/tasks/{code} for non-existent task."""
-        code = "q1g1"
+        code = "1g1"
         url = reverse("api_mark_task", kwargs={"code": code})
         resp = self.auth_client.patch(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
@@ -131,7 +131,7 @@ class TestMarkQuestionAPI:
 
         Ensures that when code is improperly formatted server responds with 400 status.
         """
-        incorrect_code = "q1q2"
+        incorrect_code = "1q2"
         url = reverse("api_mark_task", kwargs={"code": incorrect_code})
 
         # Make a stub for validate_and_clean_marking_data function
@@ -158,7 +158,7 @@ class TestMarkQuestionAPI:
 
         Ensures that server responds with status 400.
         """
-        code = "q0001g1"
+        code = "0001g1"
         url = reverse("api_mark_task", kwargs={"code": code})
 
         # Prepare mock file
@@ -221,7 +221,7 @@ class TestMarkQuestionAPI:
             - server returns total_task == 1 (there is only 1 task in marking_test_setup)
             - server returns total_tasks_marked == 1 (as a result of the POST API call).
         """
-        code = "q0001g2"
+        code = "0001g2"
 
         # claim the task
         url = reverse("api_mark_task", kwargs={"code": code})
