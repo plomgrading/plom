@@ -30,7 +30,7 @@ class TaMarkingService:
         keys = [
             "user",
             "paper_number",
-            "question_number",
+            "question_index",
             "question_version",
             "score_given",
             "max_score",
@@ -67,7 +67,7 @@ class TaMarkingService:
                 {
                     "user": task.latest_annotation.user.username,
                     "paper_number": task.paper.paper_number,
-                    "question_number": task.question_index,
+                    "question_index": task.question_index,
                     "question_version": task.question_version,
                     "score_given": task.latest_annotation.score,
                     "max_score": task.latest_annotation.annotation_data["maxMark"],
@@ -93,12 +93,12 @@ class TaMarkingService:
         return csv_io.getvalue()
 
     def get_total_time_spent_on_question(
-        self, question: int, *, version: int = 0
+        self, qidx: int, *, version: int = 0
     ) -> float | None:
         """Get the total time spent on a question by all markers.
 
         Args:
-            question: The question index to get the total time spent on.
+            qidx: The question index to get the total time spent on.
 
         Keyword Args:
             version: The version of the question to get the total time spent on.
@@ -112,19 +112,17 @@ class TaMarkingService:
             None expected
         """
         service = MarkingTaskService()
-        return service.get_tasks_from_question_with_annotation(
-            question, version
-        ).aggregate(Sum("latest_annotation__marking_time"))[
-            "latest_annotation__marking_time__sum"
-        ]
+        return service.get_tasks_from_question_with_annotation(qidx, version).aggregate(
+            Sum("latest_annotation__marking_time")
+        )["latest_annotation__marking_time__sum"]
 
     def get_average_time_spent_on_question(
-        self, question: int, *, version: int = 0
+        self, qidx: int, *, version: int = 0
     ) -> float | None:
         """Get the average time spent on a question by all markers.
 
         Args:
-            question: The question index to get the average time spent on.
+            qidx: The question index to get the average time spent on.
 
         Keyword Args:
             version: The version of the question to get the average time spent on.
@@ -138,19 +136,17 @@ class TaMarkingService:
             None expected
         """
         service = MarkingTaskService()
-        return service.get_tasks_from_question_with_annotation(
-            question, version
-        ).aggregate(Avg("latest_annotation__marking_time"))[
-            "latest_annotation__marking_time__avg"
-        ]
+        return service.get_tasks_from_question_with_annotation(qidx, version).aggregate(
+            Avg("latest_annotation__marking_time")
+        )["latest_annotation__marking_time__avg"]
 
     def get_stdev_time_spent_on_question(
-        self, question: int, *, version: int = 0
+        self, qidx: int, *, version: int = 0
     ) -> float | None:
         """Get the standard deviation of time spent on a question by all markers.
 
         Args:
-            question: The question index to get the standard deviation time spent on.
+            qidx: The question index to get the standard deviation time spent on.
 
         Keyword Args:
             version: The version of the question to get the standard deviation time
@@ -166,11 +162,9 @@ class TaMarkingService:
             None expected
         """
         service = MarkingTaskService()
-        return service.get_tasks_from_question_with_annotation(
-            question, version
-        ).aggregate(StdDev("latest_annotation__marking_time"))[
-            "latest_annotation__marking_time__stddev"
-        ]
+        return service.get_tasks_from_question_with_annotation(qidx, version).aggregate(
+            StdDev("latest_annotation__marking_time")
+        )["latest_annotation__marking_time__stddev"]
 
     def all_marking_times_for_web(self, n_questions: int) -> tuple:
         """Get the total, average and standard deviation of time spent on each question.
