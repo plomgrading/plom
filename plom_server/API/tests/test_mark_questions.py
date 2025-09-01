@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Colin B. Macdonald
 
-# pytest
+import json
+from typing import Any
+
 import pytest
 import pytest_mock
-
-# rest_framework
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
-
-# plom_server
 from plom_server.Papers.models import Paper
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 from plom_server.Mark.services import (
@@ -19,11 +19,6 @@ from plom_server.Mark.services import (
     page_data,
     QuestionMarkingService,
 )
-
-# misc
-from django.core.files.uploadedfile import SimpleUploadedFile
-from typing import Any
-import json
 
 
 @pytest.mark.usefixtures("marking_test_setup")
@@ -50,8 +45,8 @@ class TestMarkQuestionAPI:
             content_type="application/json",
         )
 
-    # ================== MarkTaskNextAvailable(APIView) test =============================
-    def test_get_next_available(self):
+    # ======== MarkTaskNextAvailable(APIView) test ========
+    def test_get_next_available(self) -> None:
         """Test GET: /MK/tasks/available endpoint with valid params.
 
         This test case verifies when there's unclaimed task and:
@@ -71,18 +66,17 @@ class TestMarkQuestionAPI:
         # check it returns the task code
         assert resp.json() == self.task.code
 
-    # ================== MarkTask(APIView) test =============================
-
-    def test_claim_task_invalid_code(self):
+    # ======== MarkTask(APIView) test ========
+    def test_claim_task_invalid_code(self) -> None:
         """Test PATCH: /MK/tasks/{code} with invalid code format."""
         code = "123invalid7"
         url = reverse("api_mark_task", kwargs={"code": code})
         resp = self.auth_client.patch(url)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_claim_non_existent_task(self):
+    def test_claim_non_existent_task(self) -> None:
         """Test PATCH: /MK/tasks/{code} for non-existent task."""
-        code = "1g1"
+        code = "0001g1"
         url = reverse("api_mark_task", kwargs={"code": code})
         resp = self.auth_client.patch(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
@@ -90,7 +84,7 @@ class TestMarkQuestionAPI:
     def test_claim_task_valid_code(
         self,
         mocker: pytest_mock.MockerFixture,
-    ):
+    ) -> None:
         """Test PATCH: /MK/tasks/{code} with valid code.
 
         This test implicitly enforces question_data is obtained from page_data.get_question_pages_list.
@@ -126,7 +120,7 @@ class TestMarkQuestionAPI:
         # ensure 409 status
         assert resp.status_code == status.HTTP_409_CONFLICT
 
-    def test_submit_malformed_input(self, mocker: pytest_mock.MockerFixture):
+    def test_submit_malformed_input(self, mocker: pytest_mock.MockerFixture) -> None:
         """Test POST: /MK/tasks/{code} with incorrect code formatting.
 
         Ensures that when code is improperly formatted server responds with 400 status.
@@ -153,7 +147,7 @@ class TestMarkQuestionAPI:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_submit_non_existing_task(self, mocker: pytest_mock.MockerFixture):
+    def test_submit_non_existing_task(self, mocker: pytest_mock.MockerFixture) -> None:
         """Test POST: /MK/tasks/{code} where code is valid but refers to non-existing task.
 
         Ensures that server responds with status 410.
@@ -186,9 +180,8 @@ class TestMarkQuestionAPI:
 
         assert response.status_code == status.HTTP_410_GONE
 
-    # ============== Integration of MarkTaskNextAvailable(APIView) MarkTask(APIView) test =================
-
-    def test_get_zero_task(self):
+    # ======== Integration of MarkTaskNextAvailable(APIView) MarkTask(APIView) ========
+    def test_get_zero_task(self) -> None:
         """Test GET: /MK/tasks/available when all tasks have been claimed.
 
         Ensure server responses with 204 (NO CONTENT).
@@ -209,7 +202,9 @@ class TestMarkQuestionAPI:
         resp = self.auth_client.get(url, {"q": self.task.question_index})
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-    def test_successful_task_submission(self, mocker: pytest_mock.MockerFixture):
+    def test_successful_task_submission(
+        self, mocker: pytest_mock.MockerFixture
+    ) -> None:
         """Test POST: /MK/tasks/{code} successful case.
 
         This test first claim the task through PATCH: /MK/tasks/{code}, so
