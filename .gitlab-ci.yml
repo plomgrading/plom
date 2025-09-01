@@ -559,6 +559,7 @@ webplom_api_test:
   script:
     - export PYTHONPATH=$PWD
     - export PLOM_DATABASE_BACKEND=sqlite
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
     # migrate the test database (skip makemigrations per #3826)
     - python3 manage.py migrate
     # run only the API tests and collect coverage for plom_server/API
