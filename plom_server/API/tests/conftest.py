@@ -90,7 +90,7 @@ def marking_test_setup(db, minimum_test_setup: dict[str, Any]) -> dict[str, Any]
         paper=minimum_test_setup["paper"],
         question_index=2,
         question_version=1,
-        code="q0001g2",
+        code="0001g2",
     )
     tag = MarkingTaskTag.objects.create(text="tag")
     tag.task.add(task)
