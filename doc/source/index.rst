@@ -46,6 +46,8 @@ Welcome to Plom's documentation!
 
    changelog.md
 
+   glossary
+
 
 ##################
 Indices and tables

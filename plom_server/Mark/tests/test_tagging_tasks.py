@@ -64,7 +64,7 @@ class MarkingTaskServiceTaggingTests(TestCase):
         s = MarkingTaskService()
         user: User = baker.make(User)
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         with self.assertRaisesMessage(serializers.ValidationError, "disallowed char"):
             tag_text = "  spaces and symbols $&<b> "
@@ -76,7 +76,7 @@ class MarkingTaskServiceTaggingTests(TestCase):
         # tag = s._create_tag(user, "hello")
         tag = baker.make(MarkingTaskTag)
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         s.add_tag_text_from_task_code(tag.text, task.code, user)
 
@@ -85,7 +85,7 @@ class MarkingTaskServiceTaggingTests(TestCase):
         user: User = baker.make(User)
         tag = baker.make(MarkingTaskTag)
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         s.add_tag_text_from_task_code(tag.text, task.code, user)
         s.add_tag_text_from_task_code(tag.text, task.code, user)
@@ -96,7 +96,7 @@ class MarkingTaskServiceTaggingTests(TestCase):
         tag1 = baker.make(MarkingTaskTag)
         tag2 = baker.make(MarkingTaskTag)
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         s.add_tag_text_from_task_code(tag1.text, task.code, user)
         s.add_tag_text_from_task_code(tag2.text, task.code, user)
@@ -105,26 +105,26 @@ class MarkingTaskServiceTaggingTests(TestCase):
         s = MarkingTaskService()
         user: User = baker.make(User)
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         s.add_tag_text_from_task_code("a_new_tag", task.code, user)
 
     def test_tag_task_invalid_task_code(self) -> None:
         s = MarkingTaskService()
         user: User = baker.make(User)
-        with self.assertRaisesMessage(ValueError, "not a valid task code"):
+        with self.assertRaisesMessage(ValueError, "invalid task code"):
             s.add_tag_text_from_task_code("hello", "paper_0111_invalid", user)
 
     def test_tag_task_no_such_task_code(self) -> None:
         s = MarkingTaskService()
         user: User = baker.make(User)
         with self.assertRaisesRegex(RuntimeError, "Task .* does not exist"):
-            s.add_tag_text_from_task_code("hello", "q9999g9", user)
+            s.add_tag_text_from_task_code("hello", "9999g9", user)
 
     def test_get_tags_for_task(self) -> None:
         s = MarkingTaskService()
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         tags = s.get_tags_for_task(task.code)
         assert tags == []
@@ -139,13 +139,13 @@ class MarkingTaskServiceTaggingTests(TestCase):
 
     def test_get_tags_for_task_invalid_task(self) -> None:
         s = MarkingTaskService()
-        with self.assertRaisesMessage(ValueError, "not a valid task code"):
+        with self.assertRaisesMessage(ValueError, "invalid task code"):
             s.get_tags_for_task("paper_0111_invalid")
 
     def test_get_tags_for_task_no_such_task(self) -> None:
         s = MarkingTaskService()
         with self.assertRaisesRegex(RuntimeError, "Task .* does not exist"):
-            s.get_tags_for_task("q9999g9")
+            s.get_tags_for_task("9999g9")
 
 
 class MarkingTaskServiceRemovingTaggingTests(TestCase):
@@ -154,7 +154,7 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
     def test_tag_remove_no_such_global_tag(self) -> None:
         s = MarkingTaskService()
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         with self.assertRaisesMessage(ValueError, "No such tag"):
             s.remove_tag_text_from_task_code("no_such_tag_411d1b1443e5", task.code)
@@ -166,7 +166,7 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         user: User = baker.make(User)
         s.get_or_create_tag(user, "hello")
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
+            MarkingTask, question_index=1, paper__paper_number=2, code="0002g1"
         )
         with self.assertRaisesMessage(ValueError, "does not have tag"):
             s.remove_tag_text_from_task_code("hello", task.code)
@@ -176,7 +176,7 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         user: User = baker.make(User)
         s.get_or_create_tag(user, "hello")
 
-        with self.assertRaisesMessage(ValueError, "not a valid task code"):
+        with self.assertRaisesMessage(ValueError, "invalid task code"):
             s.remove_tag_text_from_task_code("hello", "paper_0111_invalid")
 
     def test_tag_remove_no_such_task(self) -> None:
@@ -184,4 +184,4 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         user: User = baker.make(User)
         s.get_or_create_tag(user, "hello")
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
-            s.remove_tag_text_from_task_code("hello", "q9999g9")
+            s.remove_tag_text_from_task_code("hello", "9999g9")

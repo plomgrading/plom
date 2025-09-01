@@ -90,7 +90,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         user0: User = baker.make(User)
         baker.make(
             MarkingTask,
-            code="q0001g1",
+            code="0001g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper1,
@@ -98,7 +98,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
         baker.make(
             MarkingTask,
-            code="q0001g1",
+            code="0001g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper1,
@@ -115,7 +115,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         user0: User = baker.make(User)
         baker.make(
             MarkingTask,
-            code="q0001g2",
+            code="0001g2",
             status=MarkingTask.OUT_OF_DATE,
             assigned_user=user0,
             paper=paper1,
@@ -131,7 +131,7 @@ class MiscIncomingAnnotationsTests(TestCase):
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -183,7 +183,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -201,7 +201,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -227,7 +227,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -255,7 +255,7 @@ class MiscIncomingAnnotationsTests(TestCase):
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -285,7 +285,7 @@ class MiscIncomingAnnotationsTests(TestCase):
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -332,7 +332,7 @@ class MiscIncomingAnnotationsTests(TestCase):
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,

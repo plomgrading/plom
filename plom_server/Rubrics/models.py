@@ -26,6 +26,7 @@ from plom_server.Mark.models.annotations import Annotation
 
 
 def generate_rid():
+    """Generate a new "rubric id"."""
     # TODO: tricky to avoid a race with this here:
     # count = Rubric.objects.aggregate(Max("rid"))["rid__max"]
     # return 1 if count is None else count + 1
@@ -268,13 +269,14 @@ class RubricTable(django_tables2.Table):
         model = Rubric
 
         # which fields to include in the table.  Or omit for all fields
-        # and use equence = (...) to control the order.
+        # and use sequence = (...) to control the order.
         fields = (
             "rid",
             "display_delta",
             "last_modified",
             "revision",
             "subrevision",
+            "published",
             "kind",
             "system_rubric",
             "question_index",

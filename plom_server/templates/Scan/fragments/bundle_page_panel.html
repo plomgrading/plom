@@ -1,0 +1,405 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Brennen Chiu
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025 Deep Shah
+-->
+<div id="bundlePageFragment">
+    <!-- TODO: I would like to use the containers "class col" in the containing file. -->
+    <!-- this way feels repetitive but if I try to flatten they don't stay on one row -->
+    <div class="row">
+        <div class="col-8">
+            <div>
+                <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
+                <!-- timestamp forces a refresh, otherwise img is loaded from cache (by most browsers) -->
+                <img id="selected-page"
+                     class="shadow border rounded"
+                     src="{% url 'scan_get_rotated_image' bundle_id index %}?_ts={{ timestamp }}"
+                     style="max-height: 83vh;
+                            max-width: 100%" />
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header ps-0 pe-0 d-flex justify-content-between align-items-center">
+                    <button type="button"
+                            class="btn btn-secondary mx-2"
+                            onclick="clickThumbnail({{ index|add:-1 }})"
+                            {% if index == 1 %}disabled{% endif %}>
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
+                    <button type="button"
+                            class="btn btn-secondary mx-2"
+                            onclick="clickThumbnail({{ index|add:1 }})"
+                            {% if index == total_pages %}disabled{% endif %}>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="card-body p-2">
+                    {% if current_page.status == 'known' %}
+                        <div class="alert alert-success">
+                            <h6 class="alert-heading">Known</h6>
+                            <ul>
+                                <li>paper: {{ current_page.info.paper_number }}</li>
+                                <li>page: {{ current_page.info.page_number }}</li>
+                                <li>version: {{ current_page.info.version }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                                <li>
+                                    {{ current_page.qr_codes|length }} qr-codes read:
+                                    <button type="button"
+                                            class="btn btn-outline-dark dropdown-toggle"
+                                            data-bs-toggle="dropdown">info</button>
+                                    <ul class="dropdown-menu">
+                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'extra' %}
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">Extra</h6>
+                            <ul>
+                                <li>paper: {{ current_page.info.paper_number }}</li>
+                                <li>questions: {{ current_page.info.question_list_html | safe }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                                {% if current_page.qr_codes %}
+                                    <li>
+                                        {{ current_page.qr_codes|length }} qr-codes read:
+                                        <button type="button"
+                                                class="btn btn-outline-dark dropdown-toggle"
+                                                data-bs-toggle="dropdown">info</button>
+                                        <ul class="dropdown-menu">
+                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                        </ul>
+                                    </li>
+                                {% else %}
+                                    <li>No qr-codes read</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'unknown' %}
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">Unknown</h6>
+                            <ul>
+                                <li>No qr-codes could be read</li>
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'discard' %}
+                        <div class="alert alert-dark">
+                            <h6 class="alert-heading">Discard</h6>
+                            <ul>
+                                <li>{{ current_page.info.reason }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                                {% if current_page.qr_codes %}
+                                    <li>
+                                        {{ current_page.qr_codes|length }} qr-codes read:
+                                        <button type="button"
+                                                class="btn btn-outline-dark dropdown-toggle"
+                                                data-bs-toggle="dropdown">info</button>
+                                        <ul class="dropdown-menu">
+                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                        </ul>
+                                    </li>
+                                {% else %}
+                                    <li>No qr-codes read</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'error' %}
+                        <div class="alert alert-danger">
+                            <h6 class="alert-heading">Error</h6>
+                            <ul>
+                                <li>{{ current_page.info.reason }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                                <li>
+                                    {{ current_page.qr_codes|length }} qr-codes read:
+                                    <button type="button"
+                                            class="btn btn-outline-dark dropdown-toggle"
+                                            data-bs-toggle="dropdown">info</button>
+                                    <ul class="dropdown-menu">
+                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code }}</li>{% endfor %}
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'unread' %}
+                        <div class="alert alert-dark">
+                            <h6 class="alert-heading">Unread</h6>
+                            <ul>
+                                <li>Have not read qr-codes yet</li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                    {% if is_push_locked %}<div class="alert alert-warning text-center">Bundle is locked</div>{% endif %}
+                    {% if not is_pushed and not is_push_locked %}
+                        <!-- add in the stuff we can do before pushing -->
+                        <div>
+                            <div class="d-flex mb-3">
+                                <!-- rotations target the thumbnail container for a swap, then click on them -->
+                                <a class="btn btn-secondary w-75"
+                                   data-bs-toggle="tooltip"
+                                   title="Rotate counter-clockwise"
+                                   hx-post="{% url 'rotate_img' bundle_id index 90 %}"
+                                   hx-target="#selected-page"
+                                   hx-swap="outerHTML"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                    <i class="bi-arrow-counterclockwise fs-5"></i>
+                                </a>
+                                <a class="btn btn-secondary mx-2 w-100"
+                                   data-bs-toggle="tooltip"
+                                   title="Rotate 180"
+                                   hx-post="{% url 'rotate_img' bundle_id index 180 %}"
+                                   hx-target="#selected-page"
+                                   hx-swap="outerHTML"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                    <i class="bi-arrow-repeat fs-5"></i>
+                                </a>
+                                <a class="btn btn-secondary w-75"
+                                   data-bs-toggle="tooltip"
+                                   title="Rotate clockwise"
+                                   hx-post="{% url 'rotate_img' bundle_id index 270 %}"
+                                   hx-target="#selected-page"
+                                   hx-swap="outerHTML"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                    <i class="bi-arrow-clockwise fs-5"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <!-- what we can do depends on the status -->
+                        {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
+                            <div>
+                                <a class="btn btn-danger text-center w-100 mb-3"
+                                   hx-post="{% url 'discard_image' bundle_id index %}"
+                                   hx-swap="none"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                Discard</a>
+                            </div>
+                        {% endif %}
+                        {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
+                            <div>
+                                <a class="btn btn-warning text-center w-100 mb-3"
+                                   hx-put="{% url 'extralise_image' bundle_id index %}"
+                                   hx-swap="none"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                Cast to extra page</a>
+                            </div>
+                        {% endif %}
+                        {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
+                            <div>
+                                <a class="btn btn-outline-success text-center w-100 mb-3"
+                                   hx-get="{% url 'knowify_image' bundle_id index %}"
+                                   hx-target="#bundlePageFragment">Cast to known page</a>
+                            </div>
+                        {% endif %}
+                        {% if current_page.status == 'known' %}
+                            <!-- stuff unique to known pages -->
+                        {% elif current_page.status == 'error' %}
+                            <!-- stuff unique to error pages -->
+                        {% elif current_page.status == 'unread' %}
+                            <!-- cannot do anything with an unread page -->
+                        {% elif current_page.status == 'discard' %}
+                            <!-- stuff unique to discard pages -->
+                            <div>
+                                <a class="btn btn-outline-warning text-center w-100 mb-3"
+                                   hx-post="{% url 'unknowify_image' bundle_id index %}"
+                                   hx-swap="none"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                Cast to unknown page</a>
+                            </div>
+                            <div>
+                                <a class="btn btn-outline-danger text-center w-100 mb-3"
+                                   hx-post="{% url 'unknowify_all_discards' bundle_id %}"
+                                   hx-confirm="This will convert all discarded pages to unknown pages!">
+                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                    Cast all discards to unknown pages
+                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                </a>
+                            </div>
+                        {% elif current_page.status == 'unknown' %}
+                            <!-- stuff unique to unknown pages -->
+                            <div>
+                                <a class="btn btn-danger text-centre w-100 mb-3"
+                                   hx-post="{% url 'discard_all_unknowns' bundle_id %}"
+                                   hx-confirm="This will convert all unknown pages to discarded pages!">
+                                    <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
+                                    Discard all unknown pages
+                                    <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
+                                </a>
+                            </div>
+                        {% elif current_page.status == 'extra' %}
+                            <!-- stuff unique to extra pages  -->
+                            <div>
+                                <a class="btn btn-info mb-3 w-100"
+                                   href="{% url 'scan_compare_handwriting' bundle_id index %}"
+                                   target="_blank"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-title="Open handwriting comparison view in a new tab">
+                                    Compare Handwriting
+                                </a>
+                            </div>
+                            {% if current_page.info.paper_number %}
+                                <div>
+                                    <a class="btn btn-danger text-center w-100 mb-3"
+                                       hx-delete="{% url 'extralise_image' bundle_id index %}"
+                                       hx-swap="none"
+                                       hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                    Clear information</a>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-secondary">
+                                    <h5>Set extra page information</h5>
+                                    <form hx-post="{% url 'extralise_image' bundle_id index %}"
+                                          hx-swap="none"
+                                          hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                        <!--
+                                            This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
+
+                                            Users can choose how to assign this extra page to a paper:
+                                            1. By selecting adjacent papers (radio buttons),
+                                            2. Or by picking a paper manually from a dropdown list.
+
+                                            Reactive State (via x-data):
+                                            - selection_method: which radio option the user selected ('prev', 'next', 'dropdown')
+                                            - final_paper_number: the actual paper number that will be submitted with the form
+                                            - bundlepapers: true/false toggle controlling whether the dropdown shows bundle-only papers or all papers
+
+                                            - The <input type="hidden"> is bound to final_paper_number using :value.
+                                            This ensures the form always submits the currently selected paper number,
+                                            regardless of whether it was chosen via radio or dropdown.
+
+                                            - Each radio button has:
+                                            • x-model="selection_method" -> binds the chosen method to Alpine state
+                                            • @change="final_paper_number = '...' -> updates the paper number accordingly
+
+                                            - When "Choose from list..." is selected:
+                                            • The dropdown section becomes visible (x-show="selection_method === 'dropdown'")
+                                            • A checkbox lets the user toggle between "papers from this bundle" and "all papers"
+                                            • The appropriate <select> updates final_paper_number via x-model
+
+                                            This approach ensures seamless user interaction with instant feedback,
+                                            without requiring full-page reloads.
+                                          -->
+                                        <div x-data="{ selection_method: '', final_paper_number: null, bundlepapers: true }">
+                                            <input type="hidden" name="paper_number" :value="final_paper_number">
+                                            <p class="fw-bold">Paper:</p>
+                                            {% if prev_paper_number %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="radio"
+                                                           name="selection_radio_{{ index }}"
+                                                           value="prev"
+                                                           x-model="selection_method"
+                                                           @change="final_paper_number = '{{ prev_paper_number }}'"
+                                                           id="prev_radio_{{ index }}">
+                                                    <label class="form-check-label" for="prev_radio_{{ index }}">{{ prev_paper_number }} (adjacent paper)</label>
+                                                </div>
+                                            {% endif %}
+                                            {% if next_paper_number %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="radio"
+                                                           name="selection_radio_{{ index }}"
+                                                           value="next"
+                                                           x-model="selection_method"
+                                                           @change="final_paper_number = '{{ next_paper_number }}'"
+                                                           id="next_radio_{{ index }}">
+                                                    <label class="form-check-label" for="next_radio_{{ index }}">{{ next_paper_number }} (adjacent paper)</label>
+                                                </div>
+                                            {% endif %}
+                                            <div class="form-check">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       name="selection_radio_{{ index }}"
+                                                       value="dropdown"
+                                                       x-model="selection_method"
+                                                       @change="final_paper_number = null"
+                                                       id="dropdown_radio_{{ index }}">
+                                                <label class="form-check-label" for="dropdown_radio_{{ index }}">Choose from list...</label>
+                                            </div>
+                                            <div x-show="selection_method === 'dropdown'"
+                                                 style="display: none"
+                                                 class="mt-2 ms-4 border-start ps-3">
+                                                <div class="form-check">
+                                                    <input name="bundleOrArbitrary"
+                                                           class="form-check-input"
+                                                           type="checkbox"
+                                                           x-model="bundlepapers"
+                                                           id="bundlepapers_toggle_{{ index }}">
+                                                    <label class="form-check-label" for="bundlepapers_toggle_{{ index }}">from this bundle</label>
+                                                </div>
+                                                <div x-show="bundlepapers" class="mt-2">
+                                                    <select class="form-select" x-model="final_paper_number">
+                                                        <option value="" selected>Select paper from bundle...</option>
+                                                        {% for pn in bundle_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div x-show="!bundlepapers" class="mt-2">
+                                                    <select class="form-select" x-model="final_paper_number">
+                                                        <option value="" selected>Select any produced paper...</option>
+                                                        {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <fieldset class="mt-2">
+                                                <p class="fw-bold">Question(s):</p>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_q"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm1_{{ index }}"
+                                                           checked>
+                                                    <label class="form-check-label" for="question_all_dnm1_{{ index }}">Attach to specific question(s):</label>
+                                                </div>
+                                                <div class="ms-4">
+                                                    <fieldset>
+                                                        {% for qidx, qlabel, qlabel_html in question_labels_html %}
+                                                            <div class="form-check">
+                                                                <input name="questions"
+                                                                       class="form-check-input"
+                                                                       type="checkbox"
+                                                                       value="{{ qidx }}"
+                                                                       id="qidx_{{ qidx }}_{{ index }}">
+                                                                <label class="form-check-label" for="qidx_{{ qidx }}_{{ index }}">{{ qlabel_html | safe }}</label>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </fieldset>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_all"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm2_{{ index }}">
+                                                    <label class="form-check-label" for="question_all_dnm2_{{ index }}">
+                                                        Attach to <em>all</em> questions
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_dnm"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm3_{{ index }}">
+                                                    <label class="form-check-label" for="question_all_dnm3_{{ index }}">
+                                                        Do not mark <small>(but keep with this paper)</small>
+                                                    </label>
+                                                </div>
+                                            </fieldset>
+                                        </div>
+                                        <div class="py-4" id="invalidmessage"></div>
+                                        <button class="btn btn-primary" type="submit">Save choices</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

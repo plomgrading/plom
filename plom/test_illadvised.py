@@ -6,8 +6,8 @@ from typing import Any
 
 from pytest import raises
 
-from .rubric_utils import check_for_illadvised
-from .rubric_utils import compute_score_locabs as score
+from plom.rubric_utils import check_for_illadvised
+from plom.rubric_utils import compute_score_locabs as score
 
 
 def test_ill_no_warnings() -> None:

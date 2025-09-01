@@ -5,6 +5,9 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Sarah Oskuei
+# Copyright (C) 2025 Lindsey Daniels
+# Copyright (C) 2025 Negar Harandi
+
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
@@ -19,6 +22,15 @@ import plom.create
 import plom.create.fonts
 from plom.create import build_extra_page_pdf, with_manager_messenger
 from plom.create import paperdir as _paperdir
+
+possible_fontnames_ttfs = [
+    ("adr", "adr_handwriting.ttf"),
+    ("bt", "bt_handwriting.ttf"),
+    ("ejx", "ejx_handwriting.ttf"),
+    ("ld", "ld_handwriting.ttf"),
+    ("nh", "nh_handwriting.ttf"),
+    ("pdl", "pdl_handwriting.ttf"),
+]
 
 possible_answers = [
     "I am so sorry, I really did study this... :(",
@@ -45,8 +57,7 @@ possible_answers = [
     "I like to learn. That's an art and a science.  -- Katherine Johnson",
     "You tell me when you want it and where you want it to land, and I'll"
     " do it backwards and tell you when to take off.  -- Katherine Johnson",
-    "Is 5 = 1?  Let's see... multiply both sides by 0.  "
-    "Now 0 = 0 so therefore 5 = 1.",
+    "Is 5 = 1?  Let's see... multiply both sides by 0.  Now 0 = 0 so therefore 5 = 1.",
     "I mean, you could claim that anything's real if the only basis for "
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
     "Mathematics: the only province of the literary world"
@@ -58,6 +69,19 @@ possible_answers = [
     " figured algebra.  -- Sophie Germain",
     "Understand it well as I may, my comprehension can only be an"
     " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
+    "Take chances, make mistakes, get messy. -- Ms Frizzle",
+    "If learning worked by watching, we’d all be World Cup champions.",
+]
+
+possible_short_answers = [
+    "2",
+    "-1",
+    "1",
+    "DNE",  # codespell:ignore
+    "infinity",
+    "x+1",
+    "??",
+    "",
 ]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
@@ -258,6 +282,7 @@ extra_first_names = [
 # Customizable data
 blue = [0, 0, 0.75]
 grey = [0.75, 0.75, 0.75]
+dark_grey = [0.2, 0.2, 0.2]
 name_font_size = 26
 answer_font_size = 18
 
@@ -317,7 +342,8 @@ def scribble_name_and_id(
         id_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
         # TODO - there should be an assert or something here after insert?
 
-    fontname, ttf = "ejx", "ejx_handwriting.ttf"
+    fontname, ttf = random.choice(possible_fontnames_ttfs)
+
     rect = pymupdf.Rect(
         220 + random.randrange(0, 16), 406 + y_offset, 600, 511 + y_offset
     )
@@ -333,6 +359,24 @@ def scribble_name_and_id(
     )
     assert excess > 0
     del id_page
+
+
+def scribble_answer_in_box(pdf_doc, page_number, xf, yf):
+    fontname, ttf = random.choice(possible_fontnames_ttfs)
+    bounding_rect = pdf_doc[page_number].rect
+    # jiggle the position a little and translate the (0,1) coord to pixels
+    x = (xf + (random.random() - 0.5) * 0.05) * bounding_rect.width
+    y = (yf + (random.random() - 0.5) * 0.01) * bounding_rect.height
+    answer_text = random.choice(possible_short_answers)
+    fontres = resources.files(plom.create.fonts) / ttf
+    pdf_doc[page_number - 1].insert_text(
+        (x, y),
+        answer_text,
+        fontsize=answer_font_size,
+        color=dark_grey,
+        fontname=fontname,
+        fontfile=fontres,
+    )
 
 
 def scribble_pages(pdf_doc, exclude=(0, 1)):
@@ -352,12 +396,12 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
     # In principle you can put other fonts in plom.create.fonts
     # Can also use "helv" and `None` for the fontfile
     # fontname, ttf = random.choice(...)
-    fontname, ttf = "ejx", "ejx_handwriting.ttf"
+    fontname, ttf = random.choice(possible_fontnames_ttfs)
 
     # Write some random answers on the pages
     for page_index, pdf_page in enumerate(pdf_doc):
         answer_rect = pymupdf.Rect(
-            100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
+            100 + 30 * random.random(), 200 + 20 * random.random(), 500, 500
         )
         answer_text = random.choice(possible_answers)
 
@@ -413,7 +457,6 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
         build_extra_page_pdf(destination_dir=Path.cwd())
 
     with pymupdf.open(extra_pages_pdf_path) as extra_pages_pdf:
-
         print("Annotating papers with fake student data and scribbling on pages...")
         if which:
             papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
@@ -461,7 +504,6 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
 
         # A complete collection of the pdfs created
         with pymupdf.open() as all_pdf_documents:
-
             for index, f in enumerate(papers_paths):
                 if f in named_papers_paths:
                     print(f"{f.name} - prenamed paper - scribbled")
@@ -615,7 +657,6 @@ def splitFakeFile(outfile, *, parts=3):
     """Split the scribble pdf into specified number of files (defaults to 3)."""
     outfile = Path(outfile)
     with pymupdf.open(outfile) as originalPDF:
-
         if parts < 1:
             raise ValueError("Cannot split PDF into fewer than 1 part")
         if parts > len(originalPDF) // 2:

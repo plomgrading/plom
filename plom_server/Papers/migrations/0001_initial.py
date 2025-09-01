@@ -46,24 +46,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="NumberOfPapersToProduceSetting",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("number_of_papers", models.PositiveIntegerField(default=0)),
-            ],
-            options={
-                "abstract": False,
-            },
-        ),
-        migrations.CreateModel(
             name="Paper",
             fields=[
                 (

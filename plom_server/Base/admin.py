@@ -5,9 +5,15 @@
 
 from django.contrib import admin
 
-from .models import BaseImage, HueyTaskTracker, SettingsModel
+from .models import (
+    BaseImage,
+    HueyTaskTracker,
+    SettingsModel,
+    SettingsBooleanModel,
+)
 
 # This makes models appear in the admin interface
 admin.site.register(BaseImage)
 admin.site.register(HueyTaskTracker)
 admin.site.register(SettingsModel)
+admin.site.register(SettingsBooleanModel)

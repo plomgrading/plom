@@ -1,0 +1,348 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}
+    Cluster groups for {{ question_label }} V{{ version }} Page {{ page_num }}
+{% endblock title %}
+{% block page_heading %}
+    Cluster groups for {{ question_label }} V{{ version }} Page {{ page_num }}
+{% endblock page_heading %}
+{% block main_content %}
+    <!-- navigation button -->
+    <div class="mb-3">
+        <a class="btn btn-success"
+           href="{% url 'question_clustering_jobs_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to question clustering jobs page
+        </a>
+    </div>
+    <!-- Include SortableJS + Alpine + Tablesort -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/tablesort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/sorts/tablesort.number.min.js"></script>
+    <div x-data="{ selected: [], all: false, openMenu: false, ids: [
+        {% for cid in cluster_groups.keys %}
+            '{{ cid }}'
+            {% if not forloop.last %},{% endif %}
+        {% endfor %}
+        ] }">
+        <!-- Clustering cleanup toolbar -->
+        <div class="fixed top-20 left-1/2 transform -translate-x-1/2 shadow-md rounded p-3 z-50 w-auto">
+            <div class="d-flex align-items-center gap-3">
+                <span class="font-medium text-gray-700">
+                    <strong x-text="selected.length"></strong> selected
+                </span>
+                <!-- Left side: main actions -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <!-- Merge -->
+                    <form action="{% url 'merge_clusters' %}"
+                          method="post"
+                          class="d-inline-flex align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                        <input type="hidden" name="version" value="{{ version }}">
+                        <template x-for="id in selected" :key="id">
+                            <input type="hidden" name="selected_clusters" :value="id" />
+                        </template>
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="btn btn-primary"
+                                :disabled="selected.length < 2"
+                                onclick="return confirm('Are you sure merging?');">Merge</button>
+                    </form>
+                    <!-- Delete -->
+                    <form action="{% url 'bulk_delete_clusters' %}"
+                          method="post"
+                          class="d-inline-flex align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                        <input type="hidden" name="version" value="{{ version }}">
+                        <template x-for="id in selected" :key="id">
+                            <input type="hidden" name="selected_clusters" :value="id" />
+                        </template>
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="btn btn-danger"
+                                :disabled="selected.length == 0"
+                                onclick="return confirm('Are you sure deleting the selected clusters?');">
+                            Delete
+                        </button>
+                    </form>
+                    <!-- Reset -->
+                    <form action="{% url 'bulk_reset_clusters' %}"
+                          method="post"
+                          class="d-inline-flex align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                        <input type="hidden" name="version" value="{{ version }}">
+                        <template x-for="id in selected" :key="id">
+                            <input type="hidden" name="selected_clusters" :value="id" />
+                        </template>
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="btn btn-warning"
+                                :disabled="selected.length == 0"
+                                onclick="return confirm('Are you sure resetting the selected clusters?');">
+                            Reset
+                        </button>
+                    </form>
+                </div>
+                <div class="ms-auto"></div>
+                <!-- Right side dropdown -->
+                <div class="position-relative" @click.away="openMenu=false">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            @click.stop="openMenu = !openMenu"
+                            :aria-expanded="openMenu">
+                        <i class="bi bi-three-dots-vertical fs-7"></i>
+                        More actions
+                    </button>
+                    <div x-show="openMenu"
+                         x-transition.opacity.scale.50.origin.top.right
+                         x-cloak
+                         class="dropdown-menu dropdown-menu-end show"
+                         style="display:block;
+                                position:absolute;
+                                right:0;
+                                top:100%;
+                                z-index:2000;
+                                min-width:12rem">
+                        <a class="dropdown-item"
+                           href="#"
+                           title="Set priorities based on table order, higher row has higher priority"
+                           @click.prevent="$dispatch('update-priority'); openMenu=false;">Update priority</a>
+                        <a class="dropdown-item"
+                           href="#"
+                           title="Tag each cluster with cluster_{qidx}_{version}_{clusterId}"
+                           @click.prevent="document.getElementById('bulk-tag-form').submit(); openMenu=false;">
+                            Bulk tagging
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Hidden Bulk Tagging form -->
+            <form id="bulk-tag-form"
+                  action="{% url 'bulk_cluster_tagging' %}"
+                  method="post"
+                  class="d-none">
+                {% csrf_token %}
+                <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                <input type="hidden" name="version" value="{{ version }}">
+                <template x-for="id in selected" :key="id">
+                    <input type="hidden" name="selected_clusters" :value="id" />
+                </template>
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            </form>
+        </div>
+        <!-- form for cluster ordering (priority)  -->
+        {% include "../base/alert_messages.html" with messages=messages %}
+        <div x-data="clusterOrdering()"
+             x-init="init() "
+             @update-priority.window="submit()">
+            <form x-ref="form"
+                  method="post"
+                  action="{% url 'update_cluster_priority' %}">
+                {% csrf_token %}
+                <template x-for="id in order" :key="id">
+                    <input type="hidden" name="cluster_order" :value="id">
+                </template>
+                <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                <input type="hidden" name="version" value="{{ version }}">
+                <!-- Default: sort on descending order of-->
+                <table x-ref="clusterTable"
+                       class="table table-striped table-bordered table-sm mx-auto"
+                       data-sort-default-order="desc"
+                       data-sort-default-col="4">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <!-- select/deselect all checkbox -->
+                            <th class="text-center"  data-sort-method="none">
+                                <input id="master-checkbox" type="checkbox">
+                            </th>
+                            <!-- Preview of image header -->
+                            <th class="text-center" data-sort-method="none">Preview</th>
+                            <!-- Merge count header -->
+                            <th class="text-center" data-sort-method="none"># Merged</th>
+                            <!-- ClusterId header (sortable)-->
+                            <th class="text-center" data-sort-method="number">
+                                <span class="d-flex justify-content-center align-items-center gap-1">
+                                    ClusterId
+                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                                </span>
+                            </th>
+                            <!-- Number of members in the cluster header (sortable)-->
+                            <th class="text-center" data-sort-method="number">
+                                <span class="d-flex justify-content-center align-items-center gap-1">
+                                    # Members
+                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                                </span>
+                            </th>
+                            <!-- cluster priority header (sortable)-->
+                            <th id="priority-col" class="text-center" data-sort-method="number">
+                                <span class="d-flex justify-content-center align-items-center gap-1">
+                                    Priority
+                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                                </span>
+                            </th>
+                            <th class="text-center" data-sort-method="none">Tags</th>
+                            <th class="text-center" data-sort-method="none">Actions</th>
+                            <th class="text-center" data-sort-method="none">&nbsp;</th>
+                        </tr>
+                    </thead>
+                    <tbody x-ref="tbody">
+                        {% for clusterId, count in cluster_groups %}
+                            <tr data-cluster-id="{{ clusterId }}"
+                                :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
+                                <!-- individual row checkbox -->
+                                <td class="text-center align-middle">
+                                    <input type="checkbox"
+                                           name="selected_clusters"
+                                           value="{{ clusterId }}"
+                                           class="form-check-input"
+                                           x-model="selected">
+                                </td>
+                                <!-- Preview img col -->
+                                <td class="align-middle">
+                                    {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                        {% if papers %}
+                                            {% with pn=papers.0 %}
+                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                     class="img-fluid rounded mx-auto d-block"
+                                                     style="max-height:100px"
+                                                     loading="lazy"
+                                                     alt="cluster {{ clusterId }}"
+                                                     onerror="imgError(this)">
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <!-- number of merged components -->
+                                <td class="text-center align-middle">
+                                    {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
+                                </td>
+                                <td class="text-center align-middle">{{ clusterId }}</td>
+                                <td class="text-center align-middle">{{ count }}</td>
+                                {% with priority=cluster_to_priority|get_item:clusterId %}
+                                    <!-- Modify class based on whether the priority is set -->
+                                    <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
+                                        {% if priority %}
+                                            {{ priority }}
+                                        {% else %}
+                                            Unset
+                                        {% endif %}
+                                    </td>
+                                {% endwith %}
+                                <td class="text-center align-middle" id="tag-{{ clusterId }}">
+                                    {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <a class="btn btn-success btn-sm"
+                                       href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
+                                        View members
+                                    </a>
+                                </td>
+                                <td class="text-center align-middle drag-handle" style="cursor:move;">
+                                    <i class="bi bi-list"></i>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('clusterOrdering', () => ({
+            order: [],
+
+            init() {
+                // kick off Sortable
+                const s = Sortable.create(this.$refs.tbody, {
+                handle: '.drag-handle',
+                animation: 150,
+                draggable: 'tr',
+                dataIdAttr: 'data-cluster-id',
+                onEnd: () => this.order = s.toArray(),
+                });
+                this.order = s.toArray();
+            },
+            
+
+            submit() {
+                this.order = Array.from(this.$refs.tbody.children)
+                        .map(tr => tr.dataset.clusterId);
+                 // Wait for Alpine to update the x‑for inputs, then submit
+                this.$nextTick(() => {
+                    this.$refs.form.submit();
+                });
+            }
+            }));
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.querySelector('[x-ref="clusterTable"]');
+            const ts = new Tablesort(table);
+            
+            // Make header icons responsive
+            table.addEventListener('afterSort', () => {
+                table.querySelectorAll('th').forEach(th => {
+                const icon = th.querySelector('.sort-icon');
+                if (!icon) return;
+                icon.classList.remove('bi-chevron-up','bi-chevron-down','bi-chevron-expand');
+                const dir = th.getAttribute('aria-sort');
+                icon.classList.add(
+                    dir === 'ascending'  ? 'bi-chevron-up' :
+                    dir === 'descending' ? 'bi-chevron-down' :
+                                        'bi-chevron-expand'
+                );
+                });
+            });
+            
+            // Sort by priority if there are unset priorities
+            const unset_count = document.querySelectorAll(".unset-priority").length;
+            
+            if (unset_count == 0){
+                const priorityHeader = document.getElementById('priority-col');
+                // Click it to trigger the default sort
+                if (priorityHeader) {
+                    for (let count = 1; count <= 2; count ++) {
+                        if (priorityHeader.getAttribute("aria-sort") == "descending"){
+                            break;
+                        }
+                        priorityHeader.click()
+                    }
+                }
+            }
+            
+            // Master checkbox that selects all checkboxes
+            const master = document.querySelector('#master-checkbox');
+            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
+
+            master.addEventListener('change', function() {
+                    const checked = this.checked;
+                    checkboxes.forEach(cb => {
+                        cb.checked = checked;
+                        cb.dispatchEvent(new Event('change'));
+                    });
+                });
+
+    
+            });
+
+
+        function imgError(image) {
+            const span = document.createElement('span');
+            span.classList.add("alert", "alert-warning", "mx-2", "py-0");
+            span.innerText = "Could not extract rectangle.";
+            image.parentNode.insertBefore(span, image);
+            image.remove();
+            }
+    </script>
+{% endblock main_content %}

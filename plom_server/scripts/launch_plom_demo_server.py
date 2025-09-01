@@ -43,6 +43,7 @@ _demo_script_launch_time: None | float = None
 
 
 def saytime(comment: str) -> None:
+    """Echo information about how long we've been running."""
     global _demo_script_launch_time
     now = time.localtime()
 
@@ -863,6 +864,8 @@ def main():
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
+
+    run_django_manage_command("plom_get_static_javascript")
 
     saytime("Finished making groups and early users, extra pages, and scrap paper.")
 

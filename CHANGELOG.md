@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Papers can be downloaded in their "unmarked" state.
 * Support for fractional rubrics has improved: instructions can set their preferences about fractional rubrics, currently 1/2 and 1/4 points are visible in the UI.
+* The Scan thumbnail app where extra pages are assigned has numerous improvements, including the ability to see the cover sheets of the next and previous papers in the bundle.
 
 ### Removed
 * Several not-very-maintained `manage.py` commands in favour of `plom-cli`, which works remotely over the API.
