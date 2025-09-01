@@ -1,20 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Colin B. Macdonald
+
 """conftest.py is a default configuration file for Pytest.
 
 We use it to define resources that are shared across API testcases.
 """
 
+import os
+from typing import Any
+
+import django
 import pytest
 from rest_framework.test import APIClient
+
 from plom_server.Base.models import User
 from plom_server.Papers.models import Paper
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 
-from typing import Any
-
-import os
-import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plom_server.settings")
 django.setup()
