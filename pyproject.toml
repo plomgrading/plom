@@ -266,8 +266,6 @@ ignored-modules = ["tensorflow", "api_secrets"]
 omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
-# TODO: for now ignore the plom_server folder: it uses its own testing
-addopts = "--ignore plom_server"
 qt_api = "pyqt6"
 
 [tool.djlint]
