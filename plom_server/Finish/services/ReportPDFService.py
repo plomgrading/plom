@@ -152,7 +152,7 @@ def pdf_builder(
                         question_idx,
                         ta_name=marker,
                         ta_df=des._get_ta_data_for_question(
-                            question_index=question_idx, ta_df=scores_for_user
+                            question_idx, ta_df=scores_for_user
                         ),
                         versions=versions,
                     )
