@@ -475,9 +475,8 @@ def get_total_marks() -> int:
 
 @transaction.atomic
 def n_pages_for_question(question_index) -> int:
-    """Return the pages used for the given question."""
-    question = SpecQuestion.objects.get(question_index=question_index)
-    return len(question.pages)
+    """Return the number of pages used for the given question."""
+    return SpecQuestion.objects.filter(question_index=question_index).count()
 
 
 @transaction.atomic

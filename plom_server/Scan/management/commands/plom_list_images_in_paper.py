@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from tabulate import tabulate
 
@@ -17,21 +17,20 @@ class Command(BaseCommand):
     def list_images_in_paper(self, paper_number: int):
         mss = ManageScanService()
         try:
-            page_image_list = mss.get_pages_images_in_paper(paper_number)
+            page_image_list = mss.get_page_images_in_paper(paper_number)
         except ValueError as e:
             raise CommandError(e)
-        headers = ["page_type", "page_number", "question_number", "page_pk", "image_pk"]
+        headers = ["page_type", "page_number", "question_idx", "page_pk", "image_pk"]
         out_list = []
         for pi in page_image_list:
             if pi["image"] is None:
                 pi["image"] = "no image"
             if pi["page_type"] == "fixed":
-                # TODO: dot/blank is ok for DNM/ID, not so good in other cases
                 out_list.append(
                     [
                         pi["page_type"],
                         pi["page_number"],
-                        ".",
+                        pi["question_index"],
                         pi["page_pk"],
                         pi["image"],
                     ]
@@ -40,8 +39,8 @@ class Command(BaseCommand):
                 out_list.append(
                     [
                         pi["page_type"],
-                        ".",
-                        pi["question_number"],
+                        "",
+                        pi["question_index"],
                         pi["page_pk"],
                         pi["image"],
                     ]
