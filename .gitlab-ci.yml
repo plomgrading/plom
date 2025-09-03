@@ -518,7 +518,7 @@ no-question-numbers:
     # TODO: consider adding "plom" here too
     - grep plom_server -rie "question.num" || true
     - echo "Question number is ambiguous; generally we prefer index or the question label"
-    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l`
+    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l || true`
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
