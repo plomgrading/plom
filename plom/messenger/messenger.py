@@ -808,7 +808,7 @@ class Messenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 if response.status_code == 409:
                     raise PlomTaskChangedError(response.reason) from None
-                if response.status_code == 410:
+                if response.status_code in (404, 410):
                     raise PlomTaskDeletedError(response.reason) from None
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None

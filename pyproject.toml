@@ -71,6 +71,7 @@ dependencies = [
     "pymupdf>=1.25.3",
     "PyMySQL>=1.0.2",
     "pytest>=7.2.0",
+    "pytest_mock>=3.14.1",
     "pytest-qt>=4.2.0",
     "PyQt6>=6.2.0",
     "psycopg[binary]>=3.1.8",
@@ -265,9 +266,8 @@ ignored-modules = ["tensorflow", "api_secrets"]
 omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
-# TODO: for now ignore the plom_server folder: it uses its own testing
-addopts = "--ignore plom_server"
 qt_api = "pyqt6"
+python_files = "test_*.py *_test.py tests.py"
 
 [tool.djlint]
 # TODO: fix then remove from ignore list: H006, H013

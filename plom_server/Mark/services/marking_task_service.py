@@ -359,9 +359,10 @@ class MarkingTaskService:
         This is a file system (later object store) hit, which will have some IO cost.
 
         Args:
-            code (str): key of the associated task.
-            data (dict): information about the mark, rubrics, and annotation images.
-            plomfile (str): a JSON field representing annotation data.
+            code: key of the associated task.
+            data: information about the mark, rubrics, and annotation images.
+            plomfile: a JSON field representing annotation data, the contents
+                of the so-called "plom file".
 
         Returns:
             Two things in a tuple;
@@ -428,6 +429,7 @@ class MarkingTaskService:
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
+            # TODO: this looks like direct file access on the server, Issue #3888.
             img_path = pathlib.Path(image_data["server_path"])
             if not img_path.exists():
                 raise serializers.ValidationError("Invalid original-image in request.")
