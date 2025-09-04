@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
 from argparse import RawTextHelpFormatter
 
@@ -31,7 +31,8 @@ components to use is specified by the num_components argument.
 
 The data is read from MEDIA_ROOT / marks.csv (usually "media/marks.csv").
 This file must be created by the finishing process and have the question marks
-labelled as q1_mark, q2_mark, etc. The data is allowed to have NaN values, but
+labelled as Q1_mark, Q2_mark, Q3ab_mark, Q3c_mark, etc.
+The data is allowed to have NaN values, but
 these rows will be dropped before performing PCA. The file's first column must
 be the identifier for the student/paper.
 
@@ -72,6 +73,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # sms = StudentMarkService()
         # spec = Specification.get_the_spec()
+        # TODO: probably wrong path, needs updating?
         csv = settings.MEDIA_ROOT / "marks.csv"
         print(f"Loading data from {csv}")
         try:
@@ -80,7 +82,8 @@ class Command(BaseCommand):
         except OSError as e:
             raise CommandError(e)
         _clean_student_df = _student_marks.dropna()
-        self.question_df = _clean_student_df.filter(regex="q[0-9]*_mark")
+        # Get the mark columns, untested 2025-09
+        self.question_df = _clean_student_df.filter(regex=".*_mark")
 
         num_components = options["num_components"]
 

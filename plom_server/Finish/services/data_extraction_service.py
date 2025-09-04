@@ -198,7 +198,7 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
-        return student_df.filter(regex="q[0-9]*_mark")
+        return student_df.filter(regex=".*_mark")
 
     def _get_question_correlation_heatmap_data(
         self, *, student_df: pd.DataFrame | None = None
@@ -219,15 +219,12 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
-        # TODO: regex likely to break if question labels were used in spreadsheet
-        marks_corr = (
-            student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
-        )
+        marks_corr = student_df.filter(regex=".*_mark").corr(numeric_only=True).round(2)
 
         for i, name in enumerate(marks_corr.columns):
-            qlabel = SpecificationService.get_question_label(i + 1)
-            marks_corr.rename({name: qlabel}, axis=1, inplace=True)
-            marks_corr.rename({name: qlabel}, axis=0, inplace=True)
+            qlabel_only = name.removesuffix("_mark")
+            marks_corr.rename({name: qlabel_only}, axis=1, inplace=True)
+            marks_corr.rename({name: qlabel_only}, axis=0, inplace=True)
 
         return marks_corr
 
