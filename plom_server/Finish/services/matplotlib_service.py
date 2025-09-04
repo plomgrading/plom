@@ -175,8 +175,8 @@ class MatplotlibService:
         self.ensure_all_figures_closed()
 
         qlabel = SpecificationService.get_question_label(question_idx)
-        ver_column = "q" + str(question_idx) + "_version"
-        mark_column = "q" + str(question_idx) + "_mark"
+        ver_column = qlabel + "_version"
+        mark_column = qlabel + "_mark"
         plot_series = []
         if versions:
             if pd.isna(student_df[ver_column].max()):
