@@ -166,7 +166,7 @@ class DataExtractionService:
                 )
             averages.append(_averages)
 
-            return averages
+        return averages
 
     def _get_average_grade_on_question(self, qlabel: str) -> float:
         """Return the average grade on a specific question (not percentage)."""
