@@ -10,8 +10,8 @@
 # Human-readable names of the test - one long, one short.
 #name = "m101mt1"
 #longName = "Midterm 1 for Mathematics 101"
-name = "plomdemo"
-longName = "Midterm Demo using Plom"
+name = "example_mt"
+longName = "Midterm example using Plom"
 
 # Information about the test
 # A test may have one or more versions
