@@ -53,8 +53,9 @@ table = [
     {
         "name": "Alpine",
         "license": "MIT",
-        "js": "https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js",
+        "js": "https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js",
         "jsfilename": "alpine.js",
+        "jsintegrity": "sha256-PtHu0lJIiSHfZeNj1nFd6wTX+Squ255SGZ/fc8seCtM=",
     },
     {
         "name": "chart.js",
