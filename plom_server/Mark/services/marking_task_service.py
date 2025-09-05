@@ -9,6 +9,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 import json
+import logging
 import pathlib
 import random
 from typing import Any
@@ -25,6 +26,9 @@ from plom_server.Papers.models import Paper
 
 from . import MarkingPriorityService, mark_task
 from ..models import MarkingTask, MarkingTaskTag, Annotation
+
+
+log = logging.getLogger("MarkingTaskService")
 
 
 class MarkingTaskService:
@@ -541,12 +545,13 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    @transaction.atomic
     def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
         """Get an existing tag, or create if necessary, based on the given text.
 
         Args:
-            user: the user creating/attaching the tag.
+            user: the user creating the tag, if a new tag needs to be
+                created.  If the tag already exists, we DO NOT update
+                the user.
             tag_text: the text of the tag.
 
         Returns:
@@ -559,11 +564,11 @@ class MarkingTaskService:
             raise serializers.ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-        try:
-            tag_obj = MarkingTaskTag.objects.get(text=tag_text)
-        except MarkingTaskTag.DoesNotExist:
-            # no such tag exists, so create one
-            tag_obj = MarkingTaskTag.objects.create(user=user, text=tag_text)
+        tag_obj, _created = MarkingTaskTag.objects.get_or_create(
+            text=tag_text, defaults={"user": user}
+        )
+        if _created:
+            log.debug('New tag "%d" created by %s', tag_obj, user)
         return tag_obj
 
     @transaction.atomic
