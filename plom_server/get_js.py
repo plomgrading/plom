@@ -30,10 +30,10 @@ table = [
     {
         "name": "Bootstrap-js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
-        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
-        "jsintegrity": "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
-        "cssintegrity": "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
+        "js": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
+        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
+        "jsintegrity": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
+        "cssintegrity": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
         "jsfilename": "bootstrap.bundle.min.js",
         "cssfilename": "bootstrap.min.css",
     },
@@ -59,8 +59,8 @@ table = [
     {
         "name": "chart.js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js",
-        "jsintegrity": "sha256-5M9NFEsiJjTy5k/3B81XuVP43ktlsjHNWsa94RRkjk0=",
+        "js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js",
+        "jsintegrity": "sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=",
         "jsfilename": "chart.umd.js",
     },
     {
