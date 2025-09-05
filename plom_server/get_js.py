@@ -88,6 +88,7 @@ table = [
         "jsfilename": "Sortable.min.js",
     },
     {
+        # TODO: RC version, no release since Jan 2021, consider replacing
         "name": "select2",
         "license": "MIT",
         "js": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
@@ -107,8 +108,9 @@ table = [
     {
         "name": "JQuery",
         "license": "MIT",
-        "js": "https://code.jquery.com/jquery-3.6.0.min.js",
-        "jsfilename": "jquery-3.6.0.min.js",
+        "js": "https://code.jquery.com/jquery-3.6.4.min.js",
+        "jsfilename": "jquery-3.6.4.min.js",
+        "jsintegrity": "sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=",
     },
 ]
 
