@@ -568,6 +568,8 @@ class MarkingTaskService:
             text=tag_text, defaults={"user": user}
         )
         if _created:
+            # "The bank might keep declining 'em. But these hundred dollar cheques,
+            #  I'm signin' 'em."  -- Street Sweeper Social Club re: Issue #2642
             log.debug('New tag "%d" created by %s', tag_obj, user)
         return tag_obj
 
