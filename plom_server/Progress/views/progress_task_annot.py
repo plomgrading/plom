@@ -329,6 +329,11 @@ class MarkingTaskResetView(LeadMarkerOrManagerView):
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
         qi = task_obj.question_index
+        from random import random
+
+        if random() < 0.9:
+            return HttpResponse("helloworld fake error during reset", status=423)
+
         MarkingTaskService().set_paper_marking_task_outdated(
             paper_number=pn, question_index=qi
         )
@@ -352,7 +357,10 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
         new_username = request.POST.get("newUser")
 
         try:
-            raise ValueError("helloworld")
+            from random import random
+
+            if random() < 0.5:
+                raise ValueError("helloworld fake error")
             MarkingTaskService.reassign_task_to_user(
                 task_pk,
                 new_username=new_username,

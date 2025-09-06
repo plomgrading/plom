@@ -28,7 +28,8 @@
                         <button class="btn btn-danger"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 hx-confirm="This will reset the task and mark any current annotations as out of date. Are you sure you wish to proceed?"
-                                hx-put="{% url 'reset_marking_task' task_pk %}">reset</button>
+                                hx-put="{% url 'reset_marking_task' task_pk %}"
+                                hx-target-error="#my-errors">reset</button>
                         &mdash; invalidates any existing marking and creates a new marking task.
                     </p>
                     <span class="dropdown">
