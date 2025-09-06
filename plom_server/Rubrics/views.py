@@ -250,8 +250,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
             RubricService.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         )
         rubric_form = RubricItemForm(instance=rubric)
-        # TODO: does this enumerate serve any purpose?  workaround for...?
-        for _, task in enumerate(marking_tasks):
+        for task in marking_tasks:
             task.latest_annotation.score_str = pprint_score(
                 task.latest_annotation.score
             )
