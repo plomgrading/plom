@@ -273,21 +273,6 @@ class RubricItemView(UpdateView, ManagerRequiredView):
 
         return render(request, template_name, context=context)
 
-    @staticmethod
-    def post(request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting to a rubric item receives data from a form and updates a rubric.
-
-        TODO: is anyone calling this?
-        """
-        form = RubricItemForm(request.POST)
-
-        if form.is_valid():
-            rubric = RubricService.get_rubric_by_rid(rid)
-            for key, value in form.cleaned_data.items():
-                rubric.__setattr__(key, value)
-            rubric.save()
-        return redirect("rubric_item", rid=rid)
-
 
 # TODO: is it weird this isn't a class?
 def compare_rubrics(request: HttpRequest, rid: str) -> HttpResponse:
