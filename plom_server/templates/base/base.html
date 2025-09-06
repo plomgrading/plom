@@ -17,7 +17,10 @@
         <meta charset="utf-8">
         <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- htmx and its extensions -->
         <script src="{% static 'js3rdparty/htmx.js' %}"></script>
+        <script src="{% static 'js3rdparty/response-targets.js' %}"></script>
+        <!-- Alpine.js -->
         <script defer
                 src="{% static 'js3rdparty/alpine.js' %}"
                 integrity="sha256-PtHu0lJIiSHfZeNj1nFd6wTX+Squ255SGZ/fc8seCtM="></script>
@@ -77,7 +80,8 @@
         </title>
     </head>
     <!-- Need the csrf token to enable htmx -->
-    <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+          hx-ext="response-targets">
         <!-- TODO: vh-100 is not quite right: if the page is very long, the sidebar does not extend -->
         <div class="container-fluid p-0 d-flex vh-100">
             <!-- TODO: style max width here stops the hamburger menu from popping up too wide: find better fix -->

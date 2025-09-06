@@ -53,6 +53,15 @@ table = [
         "jsintegrity": "sha384-ksKjJrwjL5VxqAkAZAVOPXvMkwAykMaNYegdixAESVr+KqLkKE8XBDoZuwyWVUDv",
     },
     {
+        "name": "htmx-ext-response-targets",
+        "license": "0BSD",  # ?? probably same as htmx
+        "js": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3/dist/response-targets.js",
+        "jsfilename": "response-targets.js",
+        # "js": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3",
+        # "jsfilename": "response-targets.min.js",
+        "jsintegrity": "sha384-NtTh9TBZ2X/pFpfsVvQOjSsYWmjmqG6h5ioQWVAe2/j3AuTHRmfqvoqp+iOed+I0",
+    },
+    {
         "name": "Alpine",
         "license": "MIT",
         "js": "https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js",

@@ -343,12 +343,16 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
     """Operations for reassigning tasks between users."""
 
     def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
-        """Posting reassigns a task to a possibly different user."""
+        """Posting reassigns a task to a possibly different user.
+
+        Called by HTMX code.  Not clear how to error out...
+        """
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
         new_username = request.POST.get("newUser")
 
         try:
+            raise ValueError("helloworld")
             MarkingTaskService.reassign_task_to_user(
                 task_pk,
                 new_username=new_username,
@@ -361,7 +365,8 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
             print(e)
             # return HttpResponseClientRedirect("some_error_page.html")
             # for now. let's just get the yellow-screen-of-death
-            raise
+            # raise
+            raise Http404(e)
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])
