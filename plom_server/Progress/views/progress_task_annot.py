@@ -350,17 +350,14 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
     def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
         """Posting reassigns a task to a possibly different user.
 
-        Called by HTMX code.  Not clear how to error out...
+        Called by HTMX code.  The errors are intended to be intercepted
+        by the hx-target-error and redirected to a div.
         """
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
         new_username = request.POST.get("newUser")
 
         try:
-            from random import random
-
-            if random() < 0.5:
-                raise ValueError("helloworld fake error")
             MarkingTaskService.reassign_task_to_user(
                 task_pk,
                 new_username=new_username,
@@ -368,13 +365,11 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
                 unassign_others=True,
             )
         except ValueError as e:
-            # TODO: fix Issue #3718
-            print("TODO: Error happened, not sure how to report it: Issue #3718")
-            print(e)
-            # return HttpResponseClientRedirect("some_error_page.html")
-            # for now. let's just get the yellow-screen-of-death
-            # raise
-            return HttpResponse(f"Error: {e}", status=422)
+            # TODO: 404 seems natural but I cannot get hx-target-error to grab it
+            return HttpResponse(f"<b>Error:</b> {e}", status=406)
+        except serializers.ValidationError as e:
+            # This happens when we UNEXPECTEDLY cannot create the tag, maybe 500?
+            return HttpResponse(f"<b>Unexpected Error:</b> {e}", status=422)
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])

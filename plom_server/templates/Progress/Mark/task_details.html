@@ -20,8 +20,10 @@
     <div class="container p-2 border rounded mx-0">
         <div class="row m-2">
             <div class="col">
-                <div id="my-errors">
-                    <!-- target for htmx errors -->
+                <div>
+                    <!-- this is the target for any htmx error messages -->
+                    <!-- p-0 border-0 here tries to hide the div when its empty -->
+                    <div id="my-errors" class="p-0 border-0 alert alert-danger hide"></div>
                 </div>
                 {% if user_is_manager or user_is_lead_marker %}
                     <p>
@@ -46,7 +48,6 @@
                                         <!-- we add the vars here to get this hx-post to look like a form post -->
                                         <span hx-post="{% url 'reassign_marking_task' task_pk %}"
                                               hx-vars="newUser: '{{ user.username }}'"
-                                              hx-target-error="#my-errors"
                                               class="badge text-bg-warning fs-6 align-middle dropdown-item py-2 text-start">{{ user.username }}</span>
                                     </li>
                                 {% endif %}
@@ -67,6 +68,7 @@
                                         <!-- we add the vars here to get this hx-post to look like a form post -->
                                         <span hx-post="{% url 'reassign_marking_task' task_pk %}"
                                               hx-vars="newUser: '{{ user.username }}'"
+                                              hx-target-error="#my-errors"
                                               class="badge text-bg-danger fs-6 align-middle dropdown-item py-2 text-start">{{ user.username }}</span>
                                     </li>
                                 {% endif %}
