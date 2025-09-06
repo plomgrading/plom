@@ -44,11 +44,13 @@ table = [
         "cssfilename": "bootstrap-icons.css",
     },
     {
-        # Currently needs work to bump past 2.0.0, see Issue #4017
         "name": "HTMX",
         "license": "0BSD",
-        "js": "https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js",
-        "jsfilename": "htmx.min.js",
+        "js": "https://unpkg.com/htmx.org@2.0.6/dist/htmx.js",
+        "jsfilename": "htmx.js",
+        # "js": "https://unpkg.com/htmx.org@2.0.6/dist/htmx.min.js",
+        # "jsfilename": "htmx.min.js",
+        "jsintegrity": "sha384-ksKjJrwjL5VxqAkAZAVOPXvMkwAykMaNYegdixAESVr+KqLkKE8XBDoZuwyWVUDv",
     },
     {
         "name": "Alpine",
