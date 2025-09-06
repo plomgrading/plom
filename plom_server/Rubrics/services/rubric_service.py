@@ -141,16 +141,18 @@ def _validate_value(value: int | float, max_mark: int) -> None:
         )
 
 
-def _validate_value_out_of(value, out_of, max_mark) -> None:
+def _validate_value_out_of(
+    value: str | int | float | None, out_of: str | int | float | None, max_mark: int
+) -> None:
     try:
         out_of = float(out_of)
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         raise serializers.ValidationError(
             {"out_of": f"out of {out_of} must be convertible to number: {e}"}
         ) from e
     try:
         value = float(value)
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         raise serializers.ValidationError(
             {"value": f"value {value} must be convertible to number: {e}"}
         ) from e
