@@ -351,10 +351,11 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
         """Posting reassigns a task to a possibly different user.
 
         Called by HTMX code.  The errors are intended to be intercepted
-        by the hx-target-error and redirected to a div.
+        e.g., by `hx-target-error` and redirected to some div.
         """
         if "newUser" not in request.POST:
-            return HttpResponseClientRefresh()
+            return HttpResponse('<b>Error:</b> missing "newUser" variable', status=400)
+
         new_username = request.POST.get("newUser")
 
         try:
