@@ -16,7 +16,7 @@
 
     function getMaximumMarks() {
         var question_dict = JSON.parse('{{ question_max_marks_dict|escapejs }}');
-        var question_idx = document.getElementById("id_question").value;
+        var question_idx = document.getElementById("id_question_index").value;
         return question_dict[question_idx];
     }
 
