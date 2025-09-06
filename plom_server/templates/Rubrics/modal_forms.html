@@ -51,11 +51,14 @@
             valueField.disabled = false;
             valueField.min = -1 * max_value;
             valueField.max = max_value;
+            outOfField.value = ""
             outOfField.readOnly = true;
             outOfField.disabled = true;
         } else {
+            valueField.value = 0
             valueField.readOnly = true;
             valueField.disabled = true;
+            outOfField.value = ""
             outOfField.readOnly = true;
             outOfField.disabled = true;
         }
