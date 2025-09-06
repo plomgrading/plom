@@ -489,6 +489,9 @@ class RubricCreateView(ManagerRequiredView):
             RubricService.create_rubric(rubric_data)
         except (ValueError, PermissionDenied) as e:
             messages.error(request, f"Error: {e}")
+        except TypeError as e:
+            # TODO: quick fix for Issue #3983, need better one?
+            messages.error(request, f"WTF Error: {e}")
         except serializers.ValidationError as e:
             # see comments elsewhere about formatting serializer.ValidationError
             (nicer_err_msgs,) = e.args
