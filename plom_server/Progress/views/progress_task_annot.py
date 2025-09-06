@@ -325,15 +325,17 @@ class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskResetView(LeadMarkerOrManagerView):
-    def put(self, request, task_pk: int):
+    """Operations for resetting a task."""
+
+    def put(self, request: HttpRequest, task_pk: int) -> HttpResponse:
+        """Putting a task id resets it by invalidating any existing marking and making a new task.
+
+        This is currently called by HTMX code.  TODO: its a bit light on error
+        handling, such as what happens if ``task_pk`` does not exist.
+        """
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
         qi = task_obj.question_index
-        from random import random
-
-        if random() < 0.9:
-            return HttpResponse("helloworld fake error during reset", status=423)
-
         MarkingTaskService().set_paper_marking_task_outdated(
             paper_number=pn, question_index=qi
         )
@@ -350,8 +352,8 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
     def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
         """Posting reassigns a task to a possibly different user.
 
-        Called by HTMX code.  The errors are intended to be intercepted
-        e.g., by `hx-target-error` and redirected to some div.
+        Currently called by HTMX code.  The errors are intended to be
+        intercepted e.g., by `hx-target-error` and redirected to some div.
         """
         if "newUser" not in request.POST:
             return HttpResponse('<b>Error:</b> missing "newUser" variable', status=400)
