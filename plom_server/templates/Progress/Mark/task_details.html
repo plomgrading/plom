@@ -20,7 +20,7 @@
     <div class="container p-2 border rounded mx-0">
         <div class="row m-2">
             <div class="col">
-                <div id="errors">
+                <div id="my-errors">
                     <!-- target for htmx errors -->
                 </div>
                 {% if user_is_manager or user_is_lead_marker %}
@@ -45,7 +45,7 @@
                                         <!-- we add the vars here to get this hx-post to look like a form post -->
                                         <span hx-post="{% url 'reassign_marking_task' task_pk %}"
                                               hx-vars="newUser: '{{ user.username }}'"
-                                              hx-target-error="#errors"
+                                              hx-target-error="#my-errors"
                                               class="badge text-bg-warning fs-6 align-middle dropdown-item py-2 text-start">{{ user.username }}</span>
                                     </li>
                                 {% endif %}

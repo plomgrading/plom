@@ -366,7 +366,7 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
             # return HttpResponseClientRedirect("some_error_page.html")
             # for now. let's just get the yellow-screen-of-death
             # raise
-            raise Http404(e)
+            return HttpResponse(f"Error: {e}", status=422)
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])
