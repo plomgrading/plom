@@ -289,25 +289,26 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         return redirect("rubric_item", rid=rid)
 
 
-def compare_rubrics(request, rid):
+# TODO: is it weird this isn't a class?
+def compare_rubrics(request: HttpRequest, rid: str) -> HttpResponse:
     """View for displaying a diff between two rubrics."""
     if request.method == "POST" and request.htmx:
         form = RubricDiffForm(request.POST, rid=rid)
-        if form.is_valid():
-            left = [
-                f'{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}'
-            ]
-            right = [
-                f'{form.cleaned_data["right_compare"].display_delta} | {form.cleaned_data["right_compare"].text}'
-            ]
-            html = difflib.HtmlDiff(wrapcolumn=20).make_table(
-                left,
-                right,
-                f'Rev. {form.cleaned_data["left_compare"].revision}',
-                f'Rev. {form.cleaned_data["right_compare"].revision}',
-            )
-            return render(request, "Rubrics/diff_partial.html", {"diff": html})
-        return JsonResponse({"errors": form.errors}, status=400)
+        if not form.is_valid():
+            return JsonResponse({"errors": form.errors}, status=400)
+        left = [
+            f'{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}'
+        ]
+        right = [
+            f'{form.cleaned_data["right_compare"].display_delta} | {form.cleaned_data["right_compare"].text}'
+        ]
+        html = difflib.HtmlDiff(wrapcolumn=20).make_table(
+            left,
+            right,
+            f'Rev. {form.cleaned_data["left_compare"].revision}',
+            f'Rev. {form.cleaned_data["right_compare"].revision}',
+        )
+        return render(request, "Rubrics/diff_partial.html", {"diff": html})
 
 
 def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
