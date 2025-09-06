@@ -340,7 +340,7 @@ class MarkingTaskResetView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskReassignView(LeadMarkerOrManagerView):
-    """Operations for reassigning tasks betweeb users."""
+    """Operations for reassigning tasks between users."""
 
     def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
         """Posting reassigns a task to a possibly different user."""
