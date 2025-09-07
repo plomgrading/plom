@@ -83,7 +83,7 @@
                                             class="btn btn-secondary">promote</button>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td sorttable_customkey=0>
                                 <!-- autocomplete is Firefox-specific fix:
                                      https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
                                 <div class="form-check form-switch">
@@ -96,7 +96,7 @@
                                 </div>
                                 {% if not user.has_usable_password %}(no password set){% endif %}
                             </td>
-                            <td>
+                            <td sorttable_customkey=0>
                                 {% csrf_token %}
                                 <button hx-delete="{% url 'modify_user' user.username %}"
                                         class="btn btn-danger"
@@ -129,7 +129,7 @@
                 <a class="btn btn-outline-secondary" href="{% url 'disableScanners' %}">Disable all scanners</a>
             </p>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped sortable">
                     <thead>
                         <th>Name</th>
                         <th>Online</th>
@@ -153,7 +153,7 @@
                                 <td>Offline</td>
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
-                            <td>
+                            <td sorttable_customkey=0>
                                 <!-- autocomplete is Firefox-specific fix:
                                      https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
                                 <div class="form-check form-switch">
@@ -166,7 +166,7 @@
                                 </div>
                                 {% if not user.has_usable_password %}(no password set){% endif %}
                             </td>
-                            <td>
+                            <td sorttable_customkey=0>
                                 {% csrf_token %}
                                 <button hx-delete="{% url 'modify_user' user.username %}"
                                         class="btn btn-danger"
@@ -182,7 +182,7 @@
         <div class="card-body">
             <h4 class="card-title">Managers</h4>
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped sortable">
                     <thead>
                         <th>Name</th>
                         <th>Online</th>
@@ -207,7 +207,7 @@
                                 <td>Offline</td>
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
-                            <td>
+                            <td sorttable_customkey=0>
                                 {% csrf_token %}
                                 <button hx-delete="{% url 'modify_user' user.username %}"
                                         class="btn btn-danger"
