@@ -30,10 +30,10 @@ table = [
     {
         "name": "Bootstrap-js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
-        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
-        "jsintegrity": "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
-        "cssintegrity": "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
+        "js": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
+        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
+        "jsintegrity": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
+        "cssintegrity": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
         "jsfilename": "bootstrap.bundle.min.js",
         "cssfilename": "bootstrap.min.css",
     },
@@ -53,14 +53,15 @@ table = [
     {
         "name": "Alpine",
         "license": "MIT",
-        "js": "https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js",
+        "js": "https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js",
         "jsfilename": "alpine.js",
+        "jsintegrity": "sha256-PtHu0lJIiSHfZeNj1nFd6wTX+Squ255SGZ/fc8seCtM=",
     },
     {
         "name": "chart.js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js",
-        "jsintegrity": "sha256-5M9NFEsiJjTy5k/3B81XuVP43ktlsjHNWsa94RRkjk0=",
+        "js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js",
+        "jsintegrity": "sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=",
         "jsfilename": "chart.umd.js",
     },
     {
@@ -88,6 +89,7 @@ table = [
         "jsfilename": "Sortable.min.js",
     },
     {
+        # TODO: RC version, no release since Jan 2021, consider replacing
         "name": "select2",
         "license": "MIT",
         "js": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
@@ -107,8 +109,9 @@ table = [
     {
         "name": "JQuery",
         "license": "MIT",
-        "js": "https://code.jquery.com/jquery-3.6.0.min.js",
-        "jsfilename": "jquery-3.6.0.min.js",
+        "js": "https://code.jquery.com/jquery-3.6.4.min.js",
+        "jsfilename": "jquery-3.6.4.min.js",
+        "jsintegrity": "sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=",
     },
 ]
 
