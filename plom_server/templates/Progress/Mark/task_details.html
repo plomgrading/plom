@@ -20,49 +20,57 @@
     <div class="container p-2 border rounded mx-0">
         <div class="row m-2">
             <div class="col">
+                <div>
+                    <!-- this is the target for any htmx error messages -->
+                    <!-- p-0 border-0 here tries to hide the div when its empty -->
+                    <div id="my-errors" class="p-0 border-0 alert alert-danger hide"></div>
+                </div>
                 {% if user_is_manager or user_is_lead_marker %}
                     <p>
-                        <button class="btn btn-danger"
+                        <button class="btn btn-outline-danger"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 hx-confirm="This will reset the task and mark any current annotations as out of date. Are you sure you wish to proceed?"
-                                hx-put="{% url 'reset_marking_task' task_pk %}">reset</button>
+                                hx-put="{% url 'reset_marking_task' task_pk %}"
+                                hx-target-error="#my-errors">reset</button>
                         &mdash; invalidates any existing marking and creates a new marking task.
                     </p>
                     <span class="dropdown">
-                        <button class="btn btn-warning dropdown-toggle"
+                        <button class="btn btn-outline-primary dropdown-toggle"
                                 type="button"
                                 data-bs-toggle="dropdown"
                                 {% if not lead_markers or status == "Out Of Date" %}disabled{% endif %}
-                                aria-expanded="false">Tag for / reassign to lead marker</button>
+                                aria-expanded="false">Reassign to lead marker</button>
                         <ul class="dropdown-menu">
                             {% for user in lead_markers %}
-                                <!--reassign to any marker except the current one-->
+                                <!--reassign to any lead marker except the current one-->
                                 {% if user.username != username %}
-                                    <li class="p-2">
+                                    <li>
                                         <!-- we add the vars here to get this hx-post to look like a form post -->
-                                        <span hx-post="{% url 'reassign_marking_task' task_pk %}"
-                                              hx-vars="newUser: '{{ user.username }}'"
-                                              class="badge text-bg-warning fs-6 align-middle dropdown-item py-2 text-start">{{ user.username }}</span>
+                                        <a hx-post="{% url 'reassign_marking_task' task_pk %}"
+                                           hx-vars="newUser: '{{ user.username }}'"
+                                           hx-target-error="#my-errors"
+                                           class="dropdown-item">{{ user.username }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
                         </ul>
                     </span>
                     <span class="dropdown">
-                        <button class="btn btn-danger dropdown-toggle"
+                        <button class="btn btn-outline-primary dropdown-toggle"
                                 type="button"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
-                                aria-expanded="false">Tag for / reassign to marker</button>
+                                aria-expanded="false">Reassign to marker</button>
                         <ul class="dropdown-menu">
                             {% for user in all_markers %}
                                 <!--reassign to any marker except the current one-->
                                 {% if user.username != username and user not in lead_markers %}
-                                    <li class="p-2">
+                                    <li>
                                         <!-- we add the vars here to get this hx-post to look like a form post -->
-                                        <span hx-post="{% url 'reassign_marking_task' task_pk %}"
-                                              hx-vars="newUser: '{{ user.username }}'"
-                                              class="badge text-bg-danger fs-6 align-middle dropdown-item py-2 text-start">{{ user.username }}</span>
+                                        <a hx-post="{% url 'reassign_marking_task' task_pk %}"
+                                           hx-vars="newUser: '{{ user.username }}'"
+                                           hx-target-error="#my-errors"
+                                           class="dropdown-item">{{ user.username }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
@@ -97,25 +105,25 @@
                     <button hx-get="{% url 'progress_original_img_wrap' paper_number question_idx %}"
                             hx-target="#imageHere"
                             hx-replace="innerHTML"
-                            class="btn btn-outline-info">Show original images</button>
+                            class="btn btn-outline-secondary">Show original images</button>
                     {% if status == "Complete" %}
                         <button hx-get="{% url 'progress_annotation_img_wrap' paper_number question_idx %}"
                                 hx-target="#imageHere"
                                 hx-replace="innerHTML"
                                 hx-trigger="load, click"
-                                class="btn btn-outline-success">Show annotation</button>
+                                class="btn btn-outline-secondary">Show annotation</button>
                     {% endif %}
                 </p>
                 <span>
                     <span class="dropdown">
-                        <button class="btn btn-success dropdown-toggle"
+                        <button class="btn btn-outline-primary dropdown-toggle"
                                 type="button"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Add tag</button>
                         <ul class="dropdown-menu">
                             <li class="p-2">
-                                <button class="btn btn-info"
+                                <button class="btn btn-outline-primary"
                                         data-bs-toggle="collapse"
                                         data-bs-target="#newTagForm"
                                         aria-expanded="false"
@@ -164,7 +172,7 @@
                 </p>
                 <span>
                     <span class="dropdown">
-                        <button class="btn btn-warning dropdown-toggle"
+                        <button class="btn btn-outline-primary dropdown-toggle"
                                 type="button"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"

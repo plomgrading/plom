@@ -325,7 +325,14 @@ class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskResetView(LeadMarkerOrManagerView):
-    def put(self, request, task_pk: int):
+    """Operations for resetting a task."""
+
+    def put(self, request: HttpRequest, task_pk: int) -> HttpResponse:
+        """Putting a task id resets it by invalidating any existing marking and making a new task.
+
+        This is currently called by HTMX code.  TODO: its a bit light on error
+        handling, such as what happens if ``task_pk`` does not exist.
+        """
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
         qi = task_obj.question_index
@@ -340,12 +347,17 @@ class MarkingTaskResetView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskReassignView(LeadMarkerOrManagerView):
-    """Operations for reassigning tasks betweeb users."""
+    """Operations for reassigning tasks between users."""
 
     def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
-        """Posting reassigns a task to a possibly different user."""
+        """Posting reassigns a task to a possibly different user.
+
+        Currently called by HTMX code.  The errors are intended to be
+        intercepted e.g., by `hx-target-error` and redirected to some div.
+        """
         if "newUser" not in request.POST:
-            return HttpResponseClientRefresh()
+            return HttpResponse('<b>Error:</b> missing "newUser" variable', status=400)
+
         new_username = request.POST.get("newUser")
 
         try:
@@ -356,12 +368,11 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
                 unassign_others=True,
             )
         except ValueError as e:
-            # TODO: fix Issue #3718
-            print("TODO: Error happened, not sure how to report it: Issue #3718")
-            print(e)
-            # return HttpResponseClientRedirect("some_error_page.html")
-            # for now. let's just get the yellow-screen-of-death
-            raise
+            # TODO: 404 seems natural but I cannot get hx-target-error to grab it
+            return HttpResponse(f"<b>Error:</b> {e}", status=406)
+        except serializers.ValidationError as e:
+            # This happens when we UNEXPECTEDLY cannot create the tag, maybe 500?
+            return HttpResponse(f"<b>Unexpected Error:</b> {e}", status=422)
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])
