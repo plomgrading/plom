@@ -126,7 +126,7 @@ class RubricPermissionsService:
                     Settings.key_value_store_set(i, True)
 
     @staticmethod
-    def pin_to_allowed_fraction(v: float | int) -> float:
+    def pin_to_allowed_fraction(v: float | int | str) -> float:
         """Adjust the value if its close enough to a fraction, or raise an exception depending on settings.
 
         Returns:
@@ -136,6 +136,7 @@ class RubricPermissionsService:
         Raises:
             ValueError: that value isn't supported or is currently disallowed.
         """
+        v = float(v)
         f = v - math.trunc(v)
         if not f:
             # zero fractional part, nothing to do here
