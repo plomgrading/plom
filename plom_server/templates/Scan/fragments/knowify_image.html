@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 <div class="card p-2" id="bundlePageFragment">
     <!-- HEADER STUFF -->
@@ -23,7 +24,7 @@
                         <form hx-post="{% url 'knowify_image' bundle_id index %}"
                               hx-target="#invalidmessage"
                               hx-swap="none"
-                              hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                              hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                             <div class="input-group p-3">
                                 <div x-data="{bundlepapers: true}">
                                     <div class="form-check">

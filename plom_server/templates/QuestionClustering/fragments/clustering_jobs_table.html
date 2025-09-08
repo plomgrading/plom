@@ -1,5 +1,8 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later
-Copyright (C) 2025 Bryan Tanady -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+    Copyright (C) 2025 Colin B. Macdonald
+-->
 <div id="tasks-table"
      hx-get="{% url 'get_question_clustering_tasks' %}"
      hx-trigger="every 2s"
@@ -34,7 +37,7 @@ Copyright (C) 2025 Bryan Tanady -->
                                    hx-get="{% url 'cluster_error_job_info' task.task_id %}"
                                    hx-target="#errorModal"
                                    hx-swap="outerHTML"
-                                   hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal')).show()">
+                                   hx-on:htmx:after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal')).show()">
                                     Detail
                                 </a>
                                 <a class="btn btn-danger btn-sm"
