@@ -53,6 +53,7 @@ include plom_server/API/routes/*.py
 include plom_server/API/views/experimental/*.py
 include plom_server/**/tests/*.py
 include plom_server/**/tests/*.png
+include plom_server/**/tests/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.pdf
 include plom_server/Preparation/useful_files_for_testing/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.csv
