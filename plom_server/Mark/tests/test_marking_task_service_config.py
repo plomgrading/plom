@@ -62,8 +62,8 @@ class MarkingTaskTestsWithConfig(TestCase):
         """Test get_first_available_task() with a specified question and version.
 
         Config:
-        test_spec = "config_files/tiny_spec.toml"
-        qvmap = "config_files/tiny_qvmap.toml"
+        test_spec = "tiny_spec.toml"
+        qvmap = "tiny_qvmap.toml"
         auto_init_tasks = true
         """
         task1 = MarkingTask.objects.get(question_index=1, question_version=1)
@@ -90,7 +90,7 @@ class MarkingTaskTestsWithConfig(TestCase):
         """Test MarkingTaskService.user_can_update_task().
 
         Config:
-        test_spec = "config_files/tiny_spec.toml"
+        test_spec = "tiny_spec.toml"
         num_to_produce = 3
         auto_init_tasks = true
         """
@@ -137,7 +137,7 @@ class MarkingTaskTestsWithConfig(TestCase):
         """Test setting task priority by paper number.
 
         Config:
-        test_spec = "config_files/tiny_spec.toml"
+        test_spec = "tiny_spec.toml"
         num_to_produce = 2
         auto_init_tasks = true
         """

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 
-test_spec = "tiny_spec.toml"
-num_to_produce = 5
-auto_init_tasks = true
+# paper_number = [question_1, question_2]
+1 = [1, 1]
+2 = [2, 2]
