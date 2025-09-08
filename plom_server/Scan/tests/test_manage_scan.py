@@ -8,7 +8,7 @@
 from django.test import TestCase
 from model_bakery import baker
 
-from plom_server.Base.tests import config_test
+from plom_server.TestingSupport.config_test import config_test
 from plom_server.Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
 from ..services import ManageScanService
 

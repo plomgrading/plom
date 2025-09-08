@@ -9,13 +9,14 @@ from functools import wraps
 from inspect import getfile
 from pathlib import Path
 
-from plom_server.TestingSupport.services import (
+from django.test import TestCase
+
+from .services import (
     ConfigFileService,
     ConfigPreparationService,
     ConfigTaskService,
     PlomServerConfig,
 )
-from django.test import TestCase
 
 
 class ConfigTestCase(TestCase):
