@@ -88,7 +88,7 @@ class SourceServiceTests(TestCase):
             assert not r
             assert "range" in msg
 
-    @config_test({"test_spec": "config_files/tiny_spec.toml"})
+    @config_test({"test_spec": "tiny_spec.toml"})
     def test_store_source_pdfs_wrong_page_count(self) -> None:
         # we explicitly **unset** papers-printed for testing purposes
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
