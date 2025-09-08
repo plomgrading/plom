@@ -535,8 +535,8 @@ def get_question_labels() -> list[str]:
     """Get the question labels in a list.
 
     Returns:
-        The question labels in a list, in the order of
-        increasing question index.
+        The question labels in a list, in the order of increasing
+        question index.
     """
     return [label for _, label in get_question_index_label_pairs()]
 

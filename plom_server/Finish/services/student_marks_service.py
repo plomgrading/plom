@@ -202,10 +202,10 @@ class StudentMarkService:
             warnings.append("[Not marked]")
             paper_dict["Total"] = None
 
-        for i in SpecificationService.get_question_indices():
-            version, mark = self.get_question_version_and_mark(paper, i)
-            paper_dict[f"q{i}_mark"] = mark
-            paper_dict[f"q{i}_version"] = version
+        for qi, qlabel in SpecificationService.get_question_index_label_pairs():
+            version, mark = self.get_question_version_and_mark(paper, qi)
+            paper_dict[f"{qlabel}_mark"] = mark
+            paper_dict[f"{qlabel}_version"] = version
             # if paper is marked then compute the total
             if paper_marked:
                 assert mark is not None
@@ -373,18 +373,19 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        # keys match those in legacy-plom
-        # see issue #3405
-        # excepting paper_number = PaperNumber
-        # since in legacy was TestNumber (which we avoid in webplom)
         keys = ["StudentID", "StudentName", "PaperNumber", "Total"]
-        q_indices = SpecificationService.get_question_indices()
+        q_labels = SpecificationService.get_question_labels()
         # if the above changed then make sure that the dict-keys also changed
-        for q in q_indices:
-            keys.append(f"q{q}_mark")
+        for q in q_labels:
+            # TODO: we could use spaces if the label already has spaces?
+            # TODO: although this might have some knock-on effects
+            # pad = " " if " " in q else "_"
+            pad = "_"
+            keys.append(f"{q}{pad}mark")
         if version_info:
-            for q in q_indices:
-                keys.append(f"q{q}_version")
+            for q in q_labels:
+                pad = "_"
+                keys.append(f"{q}{pad}version")
         if timing_info:
             keys.extend(["last_update"])
         if warning_info:
@@ -457,8 +458,7 @@ class StudentMarkService:
         all_papers: dict[int, dict[str, Any]] = {}
         # Each entry will be a "row" of the resulting csv
         # so we build a template-csv-row to copy into place.
-        # get question indices:
-        q_indices = SpecificationService.get_question_indices()
+        qlabels = SpecificationService.get_question_labels()
         # now build a dict of all the data index on paper_number
         csv_row_template = {
             "PaperNumber": None,
@@ -470,8 +470,8 @@ class StudentMarkService:
             "last_update": None,
             "warnings": "",
         }
-        csv_row_template.update({f"q{i}_mark": None for i in q_indices})
-        csv_row_template.update({f"q{i}_version": None for i in q_indices})
+        csv_row_template.update({f"{q}_mark": None for q in qlabels})
+        csv_row_template.update({f"{q}_version": None for q in qlabels})
 
         # get all completed ID-tasks
         completed_id_task_info = (
@@ -528,16 +528,17 @@ class StudentMarkService:
             if pn not in all_papers:
                 all_papers[pn] = csv_row_template.copy()
                 all_papers[pn]["PaperNumber"] = pn
+            # qi is a 1-based index
+            q = qlabels[qi - 1]
             # make sure that we have not already put this paper/question into
             # the dictionary as that would indicate that we have more than
             # one complete marking tasks for the same question/version
-            if all_papers[pn][f"q{qi}_mark"] is not None:
+            if all_papers[pn][f"{q}_mark"] is not None:
                 raise RuntimeError(
                     "There should be only one complete marking task for each paper/question."
                 )
-
-            all_papers[pn][f"q{qi}_mark"] = sc
-            all_papers[pn][f"q{qi}_version"] = qv
+            all_papers[pn][f"{q}_mark"] = sc
+            all_papers[pn][f"{q}_version"] = qv
             all_papers[pn]["last_update"] = latter_time(
                 all_papers[pn]["last_update"], lu
             )
@@ -578,7 +579,7 @@ class StudentMarkService:
             if not dat["identified"]:
                 wrn.append("Not identified")
             # check all questions marked
-            scores = [dat[f"q{qi}_mark"] for qi in q_indices]
+            scores = [dat[f"{q}_mark"] for q in qlabels]
             if None in scores:
                 wrn.append("Not marked")
             else:

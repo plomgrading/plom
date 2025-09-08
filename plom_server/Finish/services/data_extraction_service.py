@@ -81,7 +81,8 @@ class DataExtractionService:
 
         Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
         """
-        qs = f"q{question_index}_mark"
+        qlabel = SpecificationService.get_question_label(question_index)
+        qs = f"{qlabel}_mark"
         return {
             "count": self.student_df[qs].count(),
             "max": self.student_df[qs].max(),
@@ -114,26 +115,22 @@ class DataExtractionService:
         self.student_df.dropna(subset=["Total"], inplace=True)
         return self.student_df["Total"].tolist()
 
-    def _get_average_on_question_as_percentage(self, question_index: int) -> float:
+    def _get_average_on_question_as_percentage(self, qidx: int) -> float:
         """Return the average mark on a specific question as a percentage."""
-        return (
-            100
-            * self.student_df[f"q{question_index}_mark"].mean()
-            / SpecificationService.get_question_max_mark(question_index)
-        )
+        qlabel = SpecificationService.get_question_label(qidx)
+        maxmark = SpecificationService.get_question_max_mark(qidx)
+        return 100 * self.student_df[f"{qlabel}_mark"].mean() / maxmark
 
     def _get_average_on_question_version_as_percentage(
         self, question_index: int, version_number: int
     ) -> float:
         """Return the average mark on a specific question as a percentage."""
+        qlabel = SpecificationService.get_question_label(question_index)
+        maxmark = SpecificationService.get_question_max_mark(question_index)
         version_df = self.student_df[
-            (self.student_df[f"q{question_index}_version"] == version_number)
+            (self.student_df[f"{qlabel}_version"] == version_number)
         ]
-        return (
-            100
-            * version_df[f"q{question_index}_mark"].mean()
-            / SpecificationService.get_question_max_mark(question_index)
-        )
+        return 100 * version_df[f"{qlabel}_mark"].mean() / maxmark
 
     def get_averages_on_all_questions_as_percentage(self) -> list[float]:
         """Return the average mark on each question as a percentage."""
@@ -171,26 +168,15 @@ class DataExtractionService:
 
         return averages
 
-    def _get_average_grade_on_question(self, question_index: int) -> float:
-        """Return the average grade on a specific question (not percentage).
-
-        Args:
-            question_index: The question to get the average grade for.
-
-        Returns:
-            The average grade on the question as a float.
-        """
-        return self.student_df[f"q{question_index}_mark"].mean()
+    def _get_average_grade_on_question(self, qlabel: str) -> float:
+        """Return the average grade on a specific question (not percentage)."""
+        return self.student_df[f"{qlabel}_mark"].mean()
 
     def get_average_grade_on_all_questions(self) -> list[tuple[int, str, float]]:
-        """Return the average grade on each question (not percentage).
-
-        Returns:
-            The average grade on each question.
-        """
+        """Return the average grade on each question (not percentage)."""
         averages = []
         for qidx, qlabel in SpecificationService.get_question_index_label_pairs():
-            averages.append((qidx, qlabel, self._get_average_grade_on_question(qidx)))
+            averages.append((qidx, qlabel, self._get_average_grade_on_question(qlabel)))
         return averages
 
     def _get_marks_for_all_questions(
@@ -212,7 +198,7 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
-        return student_df.filter(regex="q[0-9]*_mark")
+        return student_df.filter(regex=".*_mark")
 
     def _get_question_correlation_heatmap_data(
         self, *, student_df: pd.DataFrame | None = None
@@ -233,15 +219,12 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
-        # TODO: regex likely to break if question labels were used in spreadsheet
-        marks_corr = (
-            student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
-        )
+        marks_corr = student_df.filter(regex=".*_mark").corr(numeric_only=True).round(2)
 
         for i, name in enumerate(marks_corr.columns):
-            qlabel = SpecificationService.get_question_label(i + 1)
-            marks_corr.rename({name: qlabel}, axis=1, inplace=True)
-            marks_corr.rename({name: qlabel}, axis=0, inplace=True)
+            qlabel_only = name.removesuffix("_mark")
+            marks_corr.rename({name: qlabel_only}, axis=1, inplace=True)
+            marks_corr.rename({name: qlabel_only}, axis=0, inplace=True)
 
         return marks_corr
 

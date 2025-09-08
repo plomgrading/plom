@@ -2,8 +2,8 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
-name = "plomdemo"
-longName = "Midterm Demo using Plom"
+name = "example_3q"
+longName = "Three-question example using Plom"
 
 numberOfVersions = 2
 numberOfPages = 6

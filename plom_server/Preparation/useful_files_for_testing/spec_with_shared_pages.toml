@@ -3,8 +3,8 @@
 
 # modified an older version of the demo to experiment with shared pages
 
-name = "plomdemo"
-longName = "Midterm Demo using Plom"
+name = "example_shared"
+longName = "Midterm example using shared pages"
 
 numberOfVersions = 2
 numberOfPages = 6
