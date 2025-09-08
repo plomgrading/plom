@@ -250,8 +250,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
             RubricService.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         )
         rubric_form = RubricItemForm(instance=rubric)
-        # TODO: does this enumerate serve any purpose?  workaround for...?
-        for _, task in enumerate(marking_tasks):
+        for task in marking_tasks:
             task.latest_annotation.score_str = pprint_score(
                 task.latest_annotation.score
             )
@@ -273,41 +272,27 @@ class RubricItemView(UpdateView, ManagerRequiredView):
 
         return render(request, template_name, context=context)
 
-    @staticmethod
-    def post(request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting to a rubric item receives data from a form and updates a rubric.
 
-        TODO: is anyone calling this?
-        """
-        form = RubricItemForm(request.POST)
-
-        if form.is_valid():
-            rubric = RubricService.get_rubric_by_rid(rid)
-            for key, value in form.cleaned_data.items():
-                rubric.__setattr__(key, value)
-            rubric.save()
-        return redirect("rubric_item", rid=rid)
-
-
-def compare_rubrics(request, rid):
+# TODO: is it weird this isn't a class?
+def compare_rubrics(request: HttpRequest, rid: str) -> HttpResponse:
     """View for displaying a diff between two rubrics."""
     if request.method == "POST" and request.htmx:
         form = RubricDiffForm(request.POST, rid=rid)
-        if form.is_valid():
-            left = [
-                f'{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}'
-            ]
-            right = [
-                f'{form.cleaned_data["right_compare"].display_delta} | {form.cleaned_data["right_compare"].text}'
-            ]
-            html = difflib.HtmlDiff(wrapcolumn=20).make_table(
-                left,
-                right,
-                f'Rev. {form.cleaned_data["left_compare"].revision}',
-                f'Rev. {form.cleaned_data["right_compare"].revision}',
-            )
-            return render(request, "Rubrics/diff_partial.html", {"diff": html})
-        return JsonResponse({"errors": form.errors}, status=400)
+        if not form.is_valid():
+            return JsonResponse({"errors": form.errors}, status=400)
+        left = [
+            f'{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}'
+        ]
+        right = [
+            f'{form.cleaned_data["right_compare"].display_delta} | {form.cleaned_data["right_compare"].text}'
+        ]
+        html = difflib.HtmlDiff(wrapcolumn=20).make_table(
+            left,
+            right,
+            f'Rev. {form.cleaned_data["left_compare"].revision}',
+            f'Rev. {form.cleaned_data["right_compare"].revision}',
+        )
+        return render(request, "Rubrics/diff_partial.html", {"diff": html})
 
 
 def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:

@@ -27,7 +27,6 @@ urlpatterns = [
         views.FeedbackRulesView.as_view(),
         name="feedback_rules",
     ),
-    path("<int:rid>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("admin/download/", views.DownloadRubricView.as_view(), name="rubric_download"),
     path(
         "admin/download_rubric_template/",
@@ -35,7 +34,8 @@ urlpatterns = [
         name="rubric_template_download",
     ),
     path("admin/upload/", views.UploadRubricView.as_view(), name="rubric_upload"),
+    path("<int:rid>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("<int:rid>/compare", views.compare_rubrics, name="compare_rubrics"),
-    path("rubrics/create", views.RubricCreateView.as_view(), name="rubric_create"),
     path("<int:rid>/edit/", views.RubricEditView.as_view(), name="rubric_edit"),
+    path("create", views.RubricCreateView.as_view(), name="rubric_create"),
 ]
