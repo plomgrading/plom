@@ -44,7 +44,7 @@ class MarkingTaskPriorityTests(TestCase):
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "paper_number")
 
-    @config_test
+    @config_test()
     def test_set_priority_papernum(self) -> None:
         """Test that PAPER_NUMBER is the default strategy.
 
@@ -102,7 +102,7 @@ class MarkingTaskPriorityTests(TestCase):
 
         self.assertEqual(MarkingPriorityService.get_mark_priority_strategy(), "custom")
 
-    @config_test
+    @config_test()
     def test_modify_priority(self) -> None:
         """Test modifying the priority of a single task.
 
