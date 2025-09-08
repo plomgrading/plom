@@ -15,20 +15,22 @@ from ..services import QuestionMarkingService, MarkingPriorityService
 class MarkingTaskPriorityTests(TestCase):
     """Tests for marking task priority."""
 
+    @config_test(
+        {
+            "test_spec": "tiny_spec.toml",
+            "num_to_produce": 5,
+            "auto_init_tasks": True,
+        }
+    )
+    def setUp(self) -> None:
+        pass
+
     def test_taskorder_default(self) -> None:
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         # default could change, but should be one of these
         self.assertIn(strategy, ("paper_number", "shuffle"))
 
-    @config_test()
     def test_taskorder_update(self) -> None:
-        """Test task order updating.
-
-        Config:
-        test_spec = "tiny_spec.toml"
-        num_to_produce = 5
-        auto_init_tasks = true
-        """
         TaskOrderService.update_priority_ordering("shuffle")
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "shuffle")
@@ -44,15 +46,8 @@ class MarkingTaskPriorityTests(TestCase):
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "paper_number")
 
-    @config_test()
     def test_set_priority_papernum(self) -> None:
-        """Test that PAPER_NUMBER is the default strategy.
-
-        Config:
-        test_spec = "tiny_spec.toml"
-        num_to_produce = 5
-        auto_init_tasks = true
-        """
+        """Test that PAPER_NUMBER is the default strategy."""
         n_papers = Paper.objects.count()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
@@ -102,15 +97,8 @@ class MarkingTaskPriorityTests(TestCase):
 
         self.assertEqual(MarkingPriorityService.get_mark_priority_strategy(), "custom")
 
-    @config_test()
     def test_modify_priority(self) -> None:
-        """Test modifying the priority of a single task.
-
-        Config:
-        test_spec = "tiny_spec.toml"
-        num_to_produce = 5
-        auto_init_tasks = true
-        """
+        """Test modifying the priority of a single task."""
         n_papers = Paper.objects.count()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
