@@ -8,7 +8,7 @@
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -48,7 +48,7 @@ class PlomServerConfig:
     """
 
     parent_dir: Path
-    test_spec: Optional[Union[str, Path]] = None
+    test_spec: str | Path | None = None
     # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
     # test_sources: str | list[Path] | list[resources.abc.Traversable] | None = None
     test_sources: str | list[Path] | None = None
@@ -86,7 +86,7 @@ class PlomServerConfig:
                 )
 
 
-def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
+def read_server_config(path: str | Path) -> PlomServerConfig:
     """Create a server config from a TOML file.
 
     Args:
@@ -105,7 +105,7 @@ def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
 
 
 def read_server_config_from_string(
-    config_str: str, parent_dir: Optional[Path] = None
+    config_str: str, parent_dir: Path | None = None
 ) -> PlomServerConfig:
     """Create a server config from a TOML-formatted string."""
     try:
