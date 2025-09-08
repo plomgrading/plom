@@ -36,6 +36,20 @@ class ConfigTestCase(TestCase):
 
 
 def config_test(config_input: str | dict | None = None):
+    """This decorator loads a configuration from dictionary for testing.
+
+    You can apply it to individual methods or to the `setUp()` method of
+    your Test class.
+
+    TODO: it can take its configuration directly, and this is probably
+    the preferred mechanism.
+
+    Some lesser-used or perhaps deprecated features:
+      * The configuration can either be a single string.  TODO: Unused?
+      * the configuration can be read from a special Config: part
+        of the docstring.  This is used, but maybe not popular?
+    """
+
     def config_test_decorator(method):
         @wraps(method)
         def wrapper_config_test(self, *args, **kwargs):
