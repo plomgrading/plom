@@ -11,7 +11,7 @@ from django.test import TestCase
 from model_bakery import baker
 
 from plom_server.Base.services import Settings
-from plom_server.TestingSupport.config_test import config_test
+from plom_server.TestingSupport.utils import config_test
 from ..services import RubricService
 
 

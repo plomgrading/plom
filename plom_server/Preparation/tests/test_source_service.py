@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.conf import settings
 from model_bakery import baker
 
-from plom_server.TestingSupport.config_test import config_test
+from plom_server.TestingSupport.utils import config_test
 from ..services import SourceService, PapersPrinted
 from ..models import PaperSourcePDF
 from .. import useful_files_for_testing as useful_files

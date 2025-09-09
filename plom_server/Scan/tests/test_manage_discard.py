@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from plom_server.TestingSupport.config_test import config_test
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Papers.models import (

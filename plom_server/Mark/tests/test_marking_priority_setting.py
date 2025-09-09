@@ -4,7 +4,7 @@
 
 from django.test import TestCase
 
-from plom_server.TestingSupport.config_test import config_test
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Papers.models import Paper
 from plom_server.TaskOrder.services import TaskOrderService
 
