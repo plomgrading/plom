@@ -255,30 +255,8 @@ class PlomClasslistValidator:
                 )
         return warn
 
-    def check_classlist_against_spec(self, spec, classlist_length: int) -> list[str]:
-        """Validate the classlist-length against spec parameters.
-
-        Args:
-            spec (None/dict/SpecVerifier): an optional test specification,
-                if given then run additional classlist-related tests.
-            classlist_length: the number of students in the classlist.
-
-        Returns:
-            If 'numberToProduce' is positive but less than classlist_length
-            then returns [warning_message], else returns empty list.
-        """
-        if spec is None:
-            return []
-        elif spec["numberToProduce"] == -1:
-            return []
-        elif spec["numberToProduce"] < classlist_length:
-            return [
-                f"Classlist is long. Classlist contains {classlist_length} names, but spec:numberToProduce is {spec['numberToProduce']}"
-            ]
-        return []
-
     def validate_csv(
-        self, filename: Path | str, *, spec=None
+        self, filename: Path | str
     ) -> tuple[bool, list[dict[str, Any]], list[dict[str, Any]]]:
         """Validate the classlist csv and return summaries of any errors and warnings.
 
@@ -286,10 +264,6 @@ class PlomClasslistValidator:
             filename: a csv file from which to try to load the classlist.
                 It must be UTF-8-encoded.  Microsoft's "utf-8-sig" with
                 "FEFF" byte-order-mark is also reluctantly accepted.
-
-        Keyword Args:
-            spec (None/dict/SpecVerifier): an optional test specification,
-                if given then run additional classlist-related tests.
 
         Returns:
             ``(valid, warnings_and_errors, cl_as_list_of_dicts)`` where
@@ -337,9 +311,6 @@ class PlomClasslistValidator:
                     {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
                 )
 
-        # check against spec - only warnings returned
-        for w in self.check_classlist_against_spec(spec, len(cl_as_dicts)):
-            werr.append({"warn_or_err": "warning", "werr_line": 0, "werr_text": w})
         # check the name column - only warnings returned
         for w in self.check_name_column(fullname_field, cl_as_dicts):
             werr.append(
