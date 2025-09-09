@@ -16,7 +16,6 @@ from plom.create.classlistValidator import (
     PlomClasslistValidator,
     fullname_field,
     papernumber_field,
-    sid_field,
 )
 from plom.finish.return_tools import import_canvas_csv
 
@@ -57,7 +56,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # find the id column and clean it up.
     id_column = None
     for c in df.columns:
-        if c.casefold() == sid_field:
+        if c.casefold() == "id":
             id_column = c
             break
     if id_column is None:
@@ -226,11 +225,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column. Student names
-    must be in a *single* 'name' column. There is some flexibility
-    in those titles, see
-
-    - :func:`plom.create.possible_sid_fields`
-    - :func:`plom.create.possible_fullname_fields`
+    must be in a *single* 'name' column.
 
     Alternatively, give a .csv exported from Canvas (experimental!)
 

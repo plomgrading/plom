@@ -13,7 +13,6 @@ from typing import Any, Sequence
 from plom.rules import validateStudentID
 
 # important classlist headers - all casefolded
-sid_field = "id".casefold()
 fullname_field = "name".casefold()
 papernumber_field = "paper_number".casefold()
 
@@ -60,7 +59,7 @@ class PlomClasslistValidator:
             for row in reader:
                 row["_src_line"] = reader.line_num
                 # canonicalize cases, replacing whatever case was there before
-                row[sid_field] = row.pop(id_key)
+                row["id"] = row.pop(id_key)
                 row[fullname_field] = row.pop(name_key)
                 if paper_number_key is not None:
                     row[papernumber_field] = row.pop(paper_number_key)
@@ -95,7 +94,7 @@ class PlomClasslistValidator:
         papernumber_keys: list[str | None] = []
         for x in headers:
             cfx = x.casefold()
-            if cfx == sid_field:
+            if cfx == "id":
                 id_keys.append(x)
             if cfx == fullname_field:
                 fullname_keys.append(x)
@@ -130,24 +129,24 @@ class PlomClasslistValidator:
 
         # We explicitly allow casefolding (but could change our minds?)
         # See #3822 and #1140.
-        # if id_keys != [sid_field]:
+        # if id_keys != ["id"]:
         #     raise ValueError(f"'id' present but incorrect case; header: {headers}")
         # if fullname_keys != [fullname_field]:
         #     raise ValueError(f"'name' present but incorrect case; header: {headers}")
 
         return [id_keys[0], fullname_keys[0], papernumber_keys[0]]
 
-    def check_ID_column(self, id_key, classList) -> tuple[bool, list]:
+    def check_ID_column(self, classList: list[dict]) -> tuple[bool, list]:
         """Check the ID column of the classlist."""
         err = []
         ids_used = defaultdict(list)
         for x in classList:
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = validateStudentID(x[id_key])
+            idv = validateStudentID(x["id"])
             if idv[0] is False:
                 err.append([x["_src_line"], idv[1]])
-            ids_used[x[id_key]].append(x["_src_line"])
+            ids_used[x["id"]].append(x["_src_line"])
         for x, v in ids_used.items():
             if len(v) > 1:
                 if len(str(x)) == 0:  # for #3091 - explicit error for blank ID
@@ -325,7 +324,7 @@ class PlomClasslistValidator:
                     return (validity, werr)
 
         # check the ID column - again, potentially errors here (not just warnings)
-        success, errors = self.check_ID_column(sid_field, cl_as_dicts)
+        success, errors = self.check_ID_column(cl_as_dicts)
         if not success:  # format errors and set invalid
             validity = False
             for e in errors:
@@ -371,8 +370,8 @@ class PlomClasslistValidator:
     def check_is_non_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Read the csv file and check if id and name columns exist.
 
-        1. Check if id is present or any of possible_sid_fields.
-        2. Check if name is preset or any of possible_fullname_fields.
+        1. Check if id is present.
+        2. Check if name is preset.
 
         Arguments:
             csv_file_name: the csv file.
@@ -396,7 +395,7 @@ class PlomClasslistValidator:
         for x in column_names:
             cfx = x.casefold()
             print(">>>> checking ", cfx)
-            if cfx == sid_field:
+            if cfx == "id":
                 id_cols.append(x)
             if cfx == fullname_field:
                 fullname_cols.append(x)
