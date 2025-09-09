@@ -23,8 +23,8 @@ def config_test(config_input: str | dict | None = None):
     You can apply it to individual methods or to the `setUp()` method of
     your Test class.
 
-    TODO: it can take its configuration directly, and this is probably
-    the preferred mechanism.
+    It take its configuration directly as dict which can have various
+    fields which are presumably documented somewhere...
 
     Some lesser-used or perhaps deprecated features:
       * The configuration can either be a single string.  TODO: Unused?
