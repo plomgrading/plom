@@ -291,8 +291,39 @@ class PlomClasslistValidator:
             e = "CSV file seems to be empty (headers only)"
             werr.append({"warn_or_err": "warn", "werr_line": 0, "werr_text": e})
 
+        valid, _werr2 = self.validate(cl_as_dicts)
+        werr.extend(_werr2)
+        return (valid, werr, cl_as_dicts)
+
+    def validate(self, cl_as_dicts) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate a proposed classlist and return summaries of any errors and warnings.
+
+        Args:
+            cl_as_dicts: a list of dicts with fields "id", "name",
+                and "paper_number".
+
+        Returns:
+            ``(valid, warnings_and_errors)`` as described in :method:`validate_csv`.
+        """
+        werr = []
         # collect all errors and warnings before bailing out.
         validity = True
+
+        for row_idx, row in enumerate(cl_as_dicts):
+            for key in ("id", "name", "paper_number"):
+                if key not in row.keys():
+                    validity = False
+                    werr.append(
+                        {
+                            "warn_or_err": "error",
+                            "werr_line": row_idx,
+                            "werr_text": f'Missing "{key}" column',
+                        }
+                    )
+                if not validity:
+                    # bail early as later tests rely on key names
+                    return (validity, werr)
+
         # check the ID column - again, potentially errors here (not just warnings)
         success, errors = self.check_ID_column(sid_field, cl_as_dicts)
         if not success:  # format errors and set invalid
@@ -317,7 +348,7 @@ class PlomClasslistValidator:
                 {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
             )
 
-        return (validity, werr, cl_as_dicts)
+        return (validity, werr)
 
     def check_is_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Detect if a csv file is likely a Canvas-exported classlist.

@@ -100,6 +100,46 @@ def test_two_id_column_same_case_fails_issue3667(tmpdir) -> None:
             assert X in warn_err
 
 
+def test_no_ID_key_fails() -> None:
+    vlad = PlomClasslistValidator()
+    cl = [{"idZ": "12345678", "name": "Doe", "paper_number": 3}]
+    success, warn_err = vlad.validate(cl)
+    assert not success
+    assert len(warn_err) == 1
+    assert warn_err[0]["warn_or_err"] == "error"
+    assert warn_err[0]["werr_line"] == 0
+    assert warn_err[0]["werr_text"].startswith('Missing "id"')
+
+    cl = [{"id": "12345678", "nameZ": "Doe", "paper_number": 3}]
+    success, warn_err = vlad.validate(cl)
+    assert not success
+    assert len(warn_err) == 1
+    assert warn_err[0]["warn_or_err"] == "error"
+    assert warn_err[0]["werr_line"] == 0
+    assert warn_err[0]["werr_text"].startswith('Missing "name"')
+
+    cl = [{"id": "12345678", "name": "Doe", "paper_numberZ": 3}]
+    success, warn_err = vlad.validate(cl)
+    assert not success
+    assert len(warn_err) == 1
+    assert warn_err[0]["warn_or_err"] == "error"
+    assert warn_err[0]["werr_line"] == 0
+    assert warn_err[0]["werr_text"].startswith('Missing "paper_number"')
+
+
+def test_no_ID_key_nonhomogeneous() -> None:
+    vlad = PlomClasslistValidator()
+    cl = [
+        {"id": "12345678", "name": "Doe", "paper_number": 3},
+        {"idZ": "11223344", "name": "Doer", "paper_number": 4},
+    ]
+    success, warn_err = vlad.validate(cl)
+    assert not success
+    assert len(warn_err) == 1
+    assert warn_err[0]["warn_or_err"] == "error"
+    assert warn_err[0]["werr_line"] == 1
+
+
 def test_no_name_column_fails(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
