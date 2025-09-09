@@ -136,7 +136,7 @@ class StagingStudentService:
 
     @classmethod
     def validate_and_use_classlist_csv(
-        cls, in_memory_csv_file: File, ignore_warnings: bool = False
+        cls, in_memory_csv_file: File, *, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate and store the classlist from the in-memory file, if possible, appending to existing classlist.
 
@@ -170,16 +170,49 @@ class StagingStudentService:
         with open(tmp_csv, "wb") as fh:
             for chunk in in_memory_csv_file:
                 fh.write(chunk)
+        r = cls.validate_and_use_real_file_classlist_csv(
+            tmp_csv, ignore_warnings=ignore_warnings
+        )
+        tmp_csv.unlink()
+        return r
+
+    @classmethod
+    def validate_and_use_real_file_classlist_csv(
+        cls, csv_file, *, ignore_warnings: bool = False
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate and store the classlist from a file, if possible, appending to existing classlist.
+
+        If there are no conflicts, this appends to an existing classlist.
+        The operation is atomic so either all new entries in the classlist
+        are added or none are.
+
+        Args:
+            csv_file: a proper normal file thing, not some Django bullshit.
+
+        Keyword Args:
+            ignore_warnings: try to proceed with opening the file even if
+                the validator expressed warnings.
+
+        Returns:
+            a 2-tuple (s,l), where ...
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+            When s is True, the list l may be empty or contain ignored warnings.
+            When s is False, the classlist in the database remains unchanged.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        assert_can_modify_classlist()
 
         vlad = PlomClasslistValidator()
-        success, werr, cl_as_dicts = vlad.validate_csv(tmp_csv)
+        success, werr, cl_as_dicts = vlad.validate_csv(csv_file)
         # success = False means warnings+errors - listed in werr
         # success = True means no errors, but could be warnings in werr.
         # cl_as_dicts has canonical field names "id", "name", and "paper_number".
 
         if (not success) or (werr and not ignore_warnings):
             # errors, or non-ignorable warnings.
-            tmp_csv.unlink()
             return (success, werr)
 
         # Enforce empty-intersection between sets of incoming and known papernums
