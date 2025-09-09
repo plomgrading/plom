@@ -42,9 +42,9 @@ class DemoHWBundleConfig:
 
 @dataclass()
 class PlomServerConfig:
-    """A description of a Plom server's database.
+    """A description of a Plom server's state, used for automated testing.
 
-    Can be saved to a .toml file, or loaded from a toml to quickly spin up a server with a pre-defined state.
+    Can loaded from a dict to quickly configure the database to a pre-defined state.
     """
 
     parent_dir: Path
@@ -68,7 +68,7 @@ class PlomServerConfig:
             f is None for f in all_instance_fields.values()
         ):
             raise PlomConfigError(
-                "A test specification is required in order to build a server."
+                "A specification is required in order to build a server."
             )
 
         if self.bundles is None and self.hw_bundles is None:
