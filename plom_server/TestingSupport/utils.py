@@ -3,8 +3,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
-import pydoc
-import re
 from functools import wraps
 from inspect import getfile
 from pathlib import Path
@@ -28,28 +26,13 @@ def config_test(config_input: str | dict | None = None):
 
     Some lesser-used or perhaps deprecated features:
       * The configuration can either be a single string.  TODO: Unused?
-      * the configuration can be read from a special Config: part
-        of the docstring.  This is used, but maybe not popular?
     """
 
     def config_test_decorator(method):
         @wraps(method)
         def wrapper_config_test(self, *args, **kwargs):
             if config_input is None:
-                docstring = method.__doc__
-                synopsis, config_description = pydoc.splitdoc(docstring)
-                config_description = re.split(r"\n\s*", config_description.strip())
-
-                if config_description[0] != "Config:":
-                    raise RuntimeError(
-                        "Error parsing test method's docstring for server configuration."
-                    )
-
-                config_str = "\n".join(config_description[1:])
-                parent_dir = Path(getfile(method)).parent
-                config = ConfigFileService.read_server_config_from_string(
-                    config_str, parent_dir=parent_dir
-                )
+                raise RuntimeError("No default config is currently defined")
             elif isinstance(config_input, str):
                 config = ConfigFileService.read_server_config(config_input)
             else:
