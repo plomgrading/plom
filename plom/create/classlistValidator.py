@@ -187,7 +187,7 @@ class PlomClasslistValidator:
             """True if input can be converted to an int."""
             try:
                 int(x)
-            except ValueError:
+            except (ValueError, TypeError):
                 return False
             return True
 
@@ -198,7 +198,7 @@ class PlomClasslistValidator:
             """
             try:
                 v = float(x)
-            except ValueError:
+            except (ValueError, TypeError):
                 return False
             return (int(v) == v) and (v >= 0)
 
