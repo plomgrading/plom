@@ -135,31 +135,12 @@ class StagingStudentService:
         StagingStudent.objects.all().delete()
 
     @classmethod
-    def validate_and_use_classlist_csv(
+    def _validate_and_use_classlist_from_open_file_handle(
         cls, in_memory_csv_file: File, *, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
-        """Validate and store the classlist from the in-memory file, if possible, appending to existing classlist.
+        """Validate and store the classlist from an open file, maybe a Django in-memory file, if possible, appending to existing classlist.
 
-        If there are no conflicts, this appends to an existing classlist.
-        The operation is atomic so either all new entries in the classlist
-        are added or none are.
-
-        Args:
-            in_memory_csv_file: some kind of Django file thing.
-
-        Keyword Args:
-            ignore_warnings: try to proceed with opening the file even if
-                the validator expressed warnings.
-
-        Returns:
-            a 2-tuple (s,l), where ...
-            s is the boolean value of the statement "The operation succeeded",
-            l is a list of dicts describing warnings, errors, or notes.
-            When s is True, the list l may be empty or contain ignored warnings.
-            When s is False, the classlist in the database remains unchanged.
-
-        Raises:
-            PlomDependencyConflict: If dependencies not met.
+        See :method:`validate_and_use_classlist_csv`.
         """
         assert_can_modify_classlist()
 
@@ -170,14 +151,16 @@ class StagingStudentService:
         with open(tmp_csv, "wb") as fh:
             for chunk in in_memory_csv_file:
                 fh.write(chunk)
-        r = cls.validate_and_use_real_file_classlist_csv(
-            tmp_csv, ignore_warnings=ignore_warnings
-        )
-        tmp_csv.unlink()
+        try:
+            r = cls.validate_and_use_real_file_classlist_csv(
+                tmp_csv, ignore_warnings=ignore_warnings
+            )
+        finally:
+            tmp_csv.unlink()
         return r
 
     @classmethod
-    def validate_and_use_real_file_classlist_csv(
+    def validate_and_use_classlist_csv(
         cls, csv_file, *, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate and store the classlist from a file, if possible, appending to existing classlist.
@@ -187,7 +170,12 @@ class StagingStudentService:
         are added or none are.
 
         Args:
-            csv_file: a proper normal file thing, not some Django bullshit.
+            csv_file: a proper normal file thing, like a string or a Path,
+                but perhaps not an in-memory "Django file", at least we
+                seem to have problems with those; see
+                :method:`_validate_and_use_classlist_csv_from_open_file_handle`
+                where for reasons I don't fully understand, we make a temp
+                file.
 
         Keyword Args:
             ignore_warnings: try to proceed with opening the file even if

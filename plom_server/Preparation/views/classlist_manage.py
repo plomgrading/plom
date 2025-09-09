@@ -68,8 +68,10 @@ class ClasslistView(ManagerRequiredView):
             return redirect("prep_classlist")
 
         try:
-            success, warn_err = StagingStudentService.validate_and_use_classlist_csv(
-                request.FILES["classlist_csv"], ignore_warnings=ignore_warnings
+            success, warn_err = (
+                StagingStudentService._validate_and_use_classlist_from_open_file_handle(
+                    request.FILES["classlist_csv"], ignore_warnings=ignore_warnings
+                )
             )
             if (not success) or (warn_err and not ignore_warnings):
                 # errors or non-ignorable warnings
