@@ -416,7 +416,7 @@ class PlomClasslistValidator:
             print(f"Columns present = {column_names}")
             return False
         elif len(fullname_cols) > 1:
-            print("Multiple name columns - {fullname_cols}")
+            print(f"Multiple name columns - {fullname_cols}")
             print(f"Columns present = {column_names}")
             return False
 
