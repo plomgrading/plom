@@ -215,6 +215,45 @@ class StagingStudentService:
             # errors, or non-ignorable warnings.
             return (success, werr)
 
+        return cls.validate_and_use_classlist_data(
+            cl_as_dicts, ignore_warnings=ignore_warnings
+        )
+
+    @classmethod
+    def validate_and_use_classlist_data(
+        cls, cl_data: list[dict[str, str | int]], *, ignore_warnings: bool = False
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate and store classlist data, if possible, appending to existing classlist.
+
+        If there are no conflicts, this appends to an existing classlist.
+        The operation is atomic so either all new entries in the classlist
+        are added or none are.
+
+        Args:
+            cl_data: classlist data, a list of dicts with field names
+                "id", "name", and "paper_number".
+
+        Keyword Args:
+            ignore_warnings: try to proceed with the data even if the
+                validator expressed warnings.
+
+        Returns:
+            a 2-tuple (s,l), where ...
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+            When s is True, the list l may be empty or contain ignored warnings.
+            When s is False, the classlist in the database remains unchanged.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        assert_can_modify_classlist()
+
+        vlad = PlomClasslistValidator()
+        success, werr = vlad.validate(cl_data)
+        if (not success) or (werr and not ignore_warnings):
+            return (success, werr)
+
         # Enforce empty-intersection between sets of incoming and known papernums
         # TODO: maybe this can be a constraint at the database level, which would
         # TODO: save a lot of code here and also be more robust.  It appears that
@@ -224,7 +263,7 @@ class StagingStudentService:
         )
         new_paper_numbers = set()
 
-        for row in cl_as_dicts:
+        for row in cl_data:
             # Next line correctly turns '' into -1:
             new_paper_numbers.add(int(row.get("paper_number", "-1") or "-1"))
 
@@ -254,13 +293,13 @@ class StagingStudentService:
             werr.append({"warn_or_err": "Warning", "werr_text": errmsg})
             return success, werr
 
-        # Having developed some trust in the given CSV,
+        # Having developed some trust in the data
         # we transfer its contents into the server's classlist.
         try:
             with transaction.atomic():
                 # The 'atomic' wrapper gives the next loop an all-or-nothing property:
                 # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
-                for row in cl_as_dicts:
+                for row in cl_data:
                     cls._add_student(
                         row["id"],
                         row["name"],
