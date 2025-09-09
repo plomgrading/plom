@@ -209,6 +209,7 @@ class PlomClasslistValidator:
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
             if self.is_paper_number_sentinel(pn):
                 continue  # notice that this handles pn being None.
+            assert pn is not None
 
             where = x.get("_src_line", None)
             if where is None:
