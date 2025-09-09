@@ -118,14 +118,6 @@ def test_no_ID_key_fails() -> None:
     assert warn_err[0]["werr_line"] == 0
     assert warn_err[0]["werr_text"].startswith('Missing "name"')
 
-    cl = [{"id": "12345678", "name": "Doe", "paper_numberZ": 3}]
-    success, warn_err = vlad.validate(cl)
-    assert not success
-    assert len(warn_err) == 1
-    assert warn_err[0]["warn_or_err"] == "error"
-    assert warn_err[0]["werr_line"] == 0
-    assert warn_err[0]["werr_text"].startswith('Missing "paper_number"')
-
 
 def test_no_ID_key_nonhomogeneous() -> None:
     vlad = PlomClasslistValidator()

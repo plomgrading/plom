@@ -294,12 +294,14 @@ class PlomClasslistValidator:
         werr.extend(_werr2)
         return (valid, werr, cl_as_dicts)
 
-    def validate(self, cl_as_dicts) -> tuple[bool, list[dict[str, Any]]]:
+    def validate(
+        self, cl_as_dicts: list[dict[str, str | int]]
+    ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate a proposed classlist and return summaries of any errors and warnings.
 
         Args:
             cl_as_dicts: a list of dicts with fields "id", "name",
-                and "paper_number".
+                and optionally "paper_number".
 
         Returns:
             ``(valid, warnings_and_errors)`` as described in :method:`validate_csv`.
@@ -309,7 +311,7 @@ class PlomClasslistValidator:
         validity = True
 
         for row_idx, row in enumerate(cl_as_dicts):
-            for key in ("id", "name", "paper_number"):
+            for key in ("id", "name"):
                 if key not in row.keys():
                     validity = False
                     werr.append(
