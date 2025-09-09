@@ -138,19 +138,19 @@ class PlomClasslistValidator:
         """Check the ID column of the classlist."""
         err = []
         ids_used = defaultdict(list)
-        for idx, x in enumerate(classlist):
+        for idx, row in enumerate(classlist):
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = validateStudentID(x["id"])
+            idv = validateStudentID(row["id"])
 
-            where = x.get("_src_line", None)
+            where = row.get("_src_line", None)
             if where is None:
                 # don't have _src_line, maybe not from csv file, use 1-index
                 where = idx + 1
 
             if idv[0] is False:
                 err.append([where, idv[1]])
-            ids_used[x["id"]].append(where)
+            ids_used[row["id"]].append(where)
         for x, v in ids_used.items():
             if len(v) > 1:
                 if len(str(x)) == 0:  # for #3091 - explicit error for blank ID
