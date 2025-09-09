@@ -12,11 +12,7 @@ from pathlib import Path
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
 import plom
-from plom.create.classlistValidator import (
-    PlomClasslistValidator,
-    fullname_field,
-    papernumber_field,
-)
+from plom.create.classlistValidator import PlomClasslistValidator
 from plom.finish.return_tools import import_canvas_csv
 
 # Note: file is full of pandas warnings, which I think are false positives
@@ -40,7 +36,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
 
     Returns:
         pandas.DataFrame: data with columns `id` and `name`
-        and possibly `papernum` if you had such a column in the input.
+        and possibly `paper_number` if you had such a column in the input.
         With ``minimalist=True`` kwarg specified, this is all you get,
         otherwise the original columns will be included too, except
         those renamed to create the required columns.
@@ -70,7 +66,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # find the name column and clean it up.
     fullname_column = None
     for c in df.columns:
-        if c.casefold() == fullname_field.casefold():
+        if c.casefold() == "name":
             fullname_column = c
             break
     if fullname_column is None:
@@ -107,7 +103,7 @@ def find_paper_number_column(df, *, make=True):
     # find the paper-number column and clean it up.
     papernumber_column = None
     for c in df.columns:
-        if c.casefold() == papernumber_field.casefold():
+        if c.casefold() == "paper_number":
             papernumber_column = c
             break
     if not papernumber_column:

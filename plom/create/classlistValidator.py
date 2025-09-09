@@ -12,10 +12,6 @@ from typing import Any, Sequence
 
 from plom.rules import validateStudentID
 
-# important classlist headers - all casefolded
-fullname_field = "name".casefold()
-papernumber_field = "paper_number".casefold()
-
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
 
@@ -60,9 +56,9 @@ class PlomClasslistValidator:
                 row["_src_line"] = reader.line_num
                 # canonicalize cases, replacing whatever case was there before
                 row["id"] = row.pop(id_key)
-                row[fullname_field] = row.pop(name_key)
+                row["name"] = row.pop(name_key)
                 if paper_number_key is not None:
-                    row[papernumber_field] = row.pop(paper_number_key)
+                    row["paper_number"] = row.pop(paper_number_key)
                 classAsDicts.append(row)
             return classAsDicts
 
@@ -96,9 +92,9 @@ class PlomClasslistValidator:
             cfx = x.casefold()
             if cfx == "id":
                 id_keys.append(x)
-            if cfx == fullname_field:
+            if cfx == "name":
                 fullname_keys.append(x)
-            if cfx == papernumber_field:
+            if cfx == "paper_number":
                 papernumber_keys.append(x)
 
         # Check for repeated column names, Issue #3667.
@@ -131,7 +127,7 @@ class PlomClasslistValidator:
         # See #3822 and #1140.
         # if id_keys != ["id"]:
         #     raise ValueError(f"'id' present but incorrect case; header: {headers}")
-        # if fullname_keys != [fullname_field]:
+        # if fullname_keys != ["name"]:
         #     raise ValueError(f"'name' present but incorrect case; header: {headers}")
 
         return [id_keys[0], fullname_keys[0], papernumber_keys[0]]
@@ -168,7 +164,9 @@ class PlomClasslistValidator:
         """
         return x in ("", None, "-1", -1)
 
-    def check_paper_number_column(self, papernum_key, classList) -> tuple[bool, list]:
+    def check_paper_number_column(
+        self, classlist: list[dict[str, str | int]]
+    ) -> tuple[bool, list]:
         """Check the papernumber column of the classlist.
 
         Entries must either be blank, or integers >= -1.
@@ -198,8 +196,8 @@ class PlomClasslistValidator:
 
         err = []
         numbers_used = defaultdict(list)
-        for x in classList:
-            pn = x.get(papernum_key, None)
+        for x in classlist:
+            pn = x.get("paper_number", None)
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
             if self.is_paper_number_sentinel(pn):
                 continue  # notice that this handles pn being None.
@@ -208,15 +206,16 @@ class PlomClasslistValidator:
                     err.append(
                         [
                             x["_src_line"],
-                            f"Paper-number {x[papernum_key]} must be a non-negative integer, or blank or '-1' to indicate 'do not prename'",
+                            f"Paper-number {pn} must be a non-negative integer, "
+                            "or blank or '-1' to indicate 'do not prename'",
                         ]
                     )
             else:
-                if is_nearly_a_non_negative_int(x[papernum_key]):
+                if is_nearly_a_non_negative_int(pn):
                     err.append(
                         [
                             x["_src_line"],
-                            f"Paper-number {x[papernum_key]} is nearly, but not quite, a non-negative integer",
+                            f"Paper-number {pn} is nearly, but not quite, a non-negative integer",
                         ]
                     )
                     continue
@@ -224,13 +223,13 @@ class PlomClasslistValidator:
                     err.append(
                         [
                             x["_src_line"],
-                            f"Paper-number {x[papernum_key]} is not a non-negative integer",
+                            f"Paper-number {pn} is not a non-negative integer",
                         ]
                     )
                     continue
 
             # otherwise store the used papernumber.
-            numbers_used[x[papernum_key]].append(x["_src_line"])
+            numbers_used[pn].append(x["_src_line"])
         for x, v in numbers_used.items():
             if len(v) > 1:
                 err.append(
@@ -241,12 +240,12 @@ class PlomClasslistValidator:
         else:
             return (True, [])
 
-    def check_name_column(self, fullname_key, classList) -> list:
+    def check_name_column(self, classlist: list[dict[str, str | int]]) -> list:
         """Check name column return any warnings."""
         warn = []
-        for x in classList:
+        for x in classlist:
             # check non-trivial length after removing spaces and commas
-            tmp = x[fullname_key].replace(" ", "").replace(",", "")
+            tmp = x["name"].replace(" ", "").replace(",", "")
             # warn if name-field is very short
             if len(tmp) < 2:  # TODO - decide a better bound here
                 warn.append(
@@ -335,7 +334,7 @@ class PlomClasslistValidator:
                 )
 
         # check the paperNumber column - again, potentially errors here (not just warnings)
-        success, errors = self.check_paper_number_column(papernumber_field, cl_as_dicts)
+        success, errors = self.check_paper_number_column(cl_as_dicts)
         if not success:  # format errors and set invalid
             validity = False
             for e in errors:
@@ -344,7 +343,7 @@ class PlomClasslistValidator:
                 )
 
         # check the name column - only warnings returned
-        for w in self.check_name_column(fullname_field, cl_as_dicts):
+        for w in self.check_name_column(cl_as_dicts):
             werr.append(
                 {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
             )
@@ -399,9 +398,9 @@ class PlomClasslistValidator:
             print(">>>> checking ", cfx)
             if cfx == "id":
                 id_cols.append(x)
-            if cfx == fullname_field:
+            if cfx == "name":
                 fullname_cols.append(x)
-            if cfx == papernumber_field:
+            if cfx == "paper_number":
                 papernumber_cols.append(x)
 
         if not id_cols:
