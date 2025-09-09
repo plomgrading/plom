@@ -132,17 +132,25 @@ class PlomClasslistValidator:
 
         return [id_keys[0], fullname_keys[0], papernumber_keys[0]]
 
-    def check_ID_column(self, classList: list[dict]) -> tuple[bool, list]:
+    def check_ID_column(
+        self, classlist: list[dict[str, str | int]]
+    ) -> tuple[bool, list]:
         """Check the ID column of the classlist."""
         err = []
         ids_used = defaultdict(list)
-        for x in classList:
+        for idx, x in enumerate(classlist):
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
             idv = validateStudentID(x["id"])
+
+            where = x.get("_src_line", None)
+            if where is None:
+                # don't have _src_line, maybe not from csv file, use 1-index
+                where = idx + 1
+
             if idv[0] is False:
-                err.append([x["_src_line"], idv[1]])
-            ids_used[x["id"]].append(x["_src_line"])
+                err.append([where, idv[1]])
+            ids_used[x["id"]].append(where)
         for x, v in ids_used.items():
             if len(v) > 1:
                 if len(str(x)) == 0:  # for #3091 - explicit error for blank ID
@@ -196,16 +204,22 @@ class PlomClasslistValidator:
 
         err = []
         numbers_used = defaultdict(list)
-        for x in classlist:
+        for idx, x in enumerate(classlist):
             pn = x.get("paper_number", None)
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
             if self.is_paper_number_sentinel(pn):
                 continue  # notice that this handles pn being None.
+
+            where = x.get("_src_line", None)
+            if where is None:
+                # don't have _src_line, maybe not from csv file, use 1-index
+                where = idx + 1
+
             if is_an_int(pn):
                 if int(pn) < 0:
                     err.append(
                         [
-                            x["_src_line"],
+                            where,
                             f"Paper-number {pn} must be a non-negative integer, "
                             "or blank or '-1' to indicate 'do not prename'",
                         ]
@@ -214,7 +228,7 @@ class PlomClasslistValidator:
                 if is_nearly_a_non_negative_int(pn):
                     err.append(
                         [
-                            x["_src_line"],
+                            where,
                             f"Paper-number {pn} is nearly, but not quite, a non-negative integer",
                         ]
                     )
@@ -222,14 +236,14 @@ class PlomClasslistValidator:
                 else:
                     err.append(
                         [
-                            x["_src_line"],
+                            where,
                             f"Paper-number {pn} is not a non-negative integer",
                         ]
                     )
                     continue
 
             # otherwise store the used papernumber.
-            numbers_used[pn].append(x["_src_line"])
+            numbers_used[pn].append(where)
         for x, v in numbers_used.items():
             if len(v) > 1:
                 err.append(
@@ -243,14 +257,16 @@ class PlomClasslistValidator:
     def check_name_column(self, classlist: list[dict[str, str | int]]) -> list:
         """Check name column return any warnings."""
         warn = []
-        for x in classlist:
+        for idx, x in enumerate(classlist):
             # check non-trivial length after removing spaces and commas
             tmp = x["name"].replace(" ", "").replace(",", "")
             # warn if name-field is very short
             if len(tmp) < 2:  # TODO - decide a better bound here
-                warn.append(
-                    [x["_src_line"], f"Name '{tmp}' is very short  - please verify."]
-                )
+                w = x.get("_src_line", None)
+                if w is None:
+                    # don't have _src_line, maybe not from csv file, use 1-index
+                    w = idx + 1
+                warn.append([w, f"Name '{tmp}' is very short  - please verify."])
         return warn
 
     def validate_csv(
