@@ -289,8 +289,8 @@ class StagingStudentService:
                 # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
                 for row in cl_data:
                     cls._add_student(
-                        row["id"],
-                        row["name"],
+                        str(row["id"]),
+                        str(row["name"]),
                         paper_number=row.get("paper_number", None),
                     )
         except IntegrityError as e:
