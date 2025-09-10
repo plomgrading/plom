@@ -249,7 +249,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
     vlad = PlomClasslistValidator()
 
     if not vlad.check_is_canvas_csv(student_csv_file_name):
-        success, warn_err, _ = vlad.validate_csv(student_csv_file_name, spec=spec)
+        success, warn_err, _ = vlad.validate_csv(student_csv_file_name)
 
         if success is False:
             # validation failed, return warning, error list
