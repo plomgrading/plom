@@ -204,14 +204,14 @@ class PlomClasslistValidator:
 
         err = []
         numbers_used = defaultdict(list)
-        for idx, x in enumerate(classlist):
-            pn = x.get("paper_number", None)
+        for idx, row in enumerate(classlist):
+            pn = row.get("paper_number", None)
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
             if self.is_paper_number_sentinel(pn):
                 continue  # notice that this handles pn being None.
             assert pn is not None
 
-            where = x.get("_src_line", None)
+            where = row.get("_src_line", None)
             if where is None:
                 # don't have _src_line, maybe not from csv file, use 1-index
                 where = idx + 1
@@ -259,15 +259,20 @@ class PlomClasslistValidator:
         """Check name column return any warnings."""
         warn = []
         for idx, x in enumerate(classlist):
+            where = x.get("_src_line", None)
+            if where is None:
+                # don't have _src_line, maybe not from csv file, use 1-index
+                where = idx + 1
+
+            tmp = x["name"]
             # check non-trivial length after removing spaces and commas
-            tmp = x["name"].replace(" ", "").replace(",", "")
+            if not isinstance(tmp, str):
+                warn.append([where, f'Name should be str, but "{tmp}" is {type(tmp)}'])
+                continue
+            tmp = tmp.replace(" ", "").replace(",", "")
             # warn if name-field is very short
             if len(tmp) < 2:  # TODO - decide a better bound here
-                w = x.get("_src_line", None)
-                if w is None:
-                    # don't have _src_line, maybe not from csv file, use 1-index
-                    w = idx + 1
-                warn.append([w, f"Name '{tmp}' is very short  - please verify."])
+                warn.append([where, f"Name '{tmp}' is very short  - please verify."])
         return warn
 
     def validate_csv(
@@ -311,7 +316,7 @@ class PlomClasslistValidator:
         return (valid, werr, cl_as_dicts)
 
     def validate(
-        self, cl_as_dicts: list[dict[str, str | int]]
+        self, cl_as_dicts: list[dict[str, Any]]
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate a proposed classlist and return summaries of any errors and warnings.
 

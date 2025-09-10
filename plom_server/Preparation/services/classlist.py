@@ -152,7 +152,7 @@ class StagingStudentService:
             for chunk in in_memory_csv_file:
                 fh.write(chunk)
         try:
-            r = cls.validate_and_use_real_file_classlist_csv(
+            r = cls.validate_and_use_classlist_csv(
                 tmp_csv, ignore_warnings=ignore_warnings
             )
         finally:
