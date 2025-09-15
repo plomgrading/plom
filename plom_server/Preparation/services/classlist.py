@@ -209,7 +209,7 @@ class StagingStudentService:
 
     @classmethod
     def validate_and_use_classlist_data(
-        cls, cl_data: list[dict[str, str | int]], *, ignore_warnings: bool = False
+        cls, cl_data: list[dict[str, Any]], *, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate and store classlist data, if possible, appending to existing classlist.
 
