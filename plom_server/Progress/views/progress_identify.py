@@ -15,7 +15,7 @@ from ..services import ProgressOverviewService
 
 class ProgressIdentifyHome(LeadMarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        context = super().build_context()
+        context = self.build_context()
 
         ids = IDProgressService()
 

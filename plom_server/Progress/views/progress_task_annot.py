@@ -28,10 +28,10 @@ from ..services import ProgressOverviewService
 
 
 class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         mss = MarkingStatsService()
 
-        context = super().build_context()
+        context = self.build_context()
 
         paper = request.GET.get("paper", "*")
         question = request.GET.get("question", "*")

@@ -113,7 +113,7 @@ class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
     def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        context = super().build_context()
+        context = self.build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
         bundle = scanner.get_bundle_from_pk(bundle_id)

@@ -14,8 +14,7 @@ import arrow
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse
-from django.http import Http404, FileResponse
+from django.http import HttpRequest, HttpResponse, Http404, FileResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
