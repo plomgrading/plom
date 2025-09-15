@@ -279,7 +279,7 @@ class RubricCompareView(ManagerRequiredView):
     Called by HTMX.
     """
 
-    def post(request: HttpRequest, rid: str) -> HttpResponse:
+    def post(request: HttpRequest, rid: int) -> HttpResponse:
         """View for displaying a diff between revisions of a Rubric.
 
         Args:

@@ -36,7 +36,7 @@ urlpatterns = [
     path("admin/upload/", views.UploadRubricView.as_view(), name="rubric_upload"),
     path("<int:rid>/", views.RubricItemView.as_view(), name="rubric_item"),
     path(
-        "<int:rid>/compare", views.RubricsCompareView.as_view(), name="compare_rubrics"
+        "<int:rid>/compare", views.RubricCompareView.as_view(), name="compare_rubrics"
     ),
     path("<int:rid>/edit/", views.RubricEditView.as_view(), name="rubric_edit"),
     path("create", views.RubricCreateView.as_view(), name="rubric_create"),
