@@ -162,3 +162,34 @@ class TestClasslistService(TestCase):
             success, warn_err = Service.validate_and_use_classlist_csv(tmp)
             self.assertTrue(success)
             self.assertListEqual(warn_err, [])
+
+    def test_classlist_data_no_csv(self) -> None:
+        d = [{"id": "11111111", "name": "Uno, Ursula", "paper_number": 11}]
+        success, warn_err = Service.validate_and_use_classlist_data(d)
+        self.assertTrue(success)
+
+    def test_classlist_data_error_blanks_IDs(self) -> None:
+        d = [
+            {"id": "11111111", "name": "Uno, Ursula", "paper_number": 11},
+            {"id": "", "name": "Dos", "paper_number": 12},
+            {"id": "", "name": "Tres", "paper_number": 13},
+        ]
+        success, warn_err = Service.validate_and_use_classlist_data(d)
+        self.assertFalse(success)
+        found_it2 = False
+        found_it3 = False
+        for r in warn_err:
+            if r["werr_line"] == 2 and "incorrect length" in r["werr_text"]:
+                found_it2 = True
+            if r["werr_line"] == 3 and "incorrect length" in r["werr_text"]:
+                found_it3 = True
+        self.assertTrue(found_it2)
+        self.assertTrue(found_it3)
+
+        # not sure why its important to have a specific error for
+        # multiple blank IDs.
+        found_it = False
+        for r in warn_err:
+            if "Blank ID appears on multiple lines" in r["werr_text"]:
+                found_it = True
+        self.assertTrue(found_it)
