@@ -273,10 +273,36 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-# TODO: is it weird this isn't a class?
-def compare_rubrics(request: HttpRequest, rid: str) -> HttpResponse:
-    """View for displaying a diff between two rubrics."""
-    if request.method == "POST" and request.htmx:
+class RubricCompareView(ManagerRequiredView):
+    """View for comparing Rubrics.
+
+    Called by HTMX.
+    """
+
+    def post(request: HttpRequest, rid: str) -> HttpResponse:
+        """View for displaying a diff between revisions of a Rubric.
+
+        Args:
+            request: an HTML POST request, which includes more
+                details about which revisions to compare.
+            rid: which overall Rubric are we looking at?
+
+        Returns:
+            On success, you get a fragment of HTML comparing
+            two rubrics.
+            If there are errors, such as asking about non-existent
+            Rubrics, you get a 400 response with error information
+            in JSON.
+            Its an error to call this NOT from HTMX: you get a 418
+            ("I'm a teapot") b/c its a bit odd in this author's
+            opinion to dictate how folks call your code, so a joke
+            response is as good as anything else.
+        """
+        if not request.htmx:
+            return HttpResponse(
+                "Only HTMX requests should post here; no coffee addicts allowed",
+                status=418,
+            )
         form = RubricDiffForm(request.POST, rid=rid)
         if not form.is_valid():
             return JsonResponse({"errors": form.errors}, status=400)
