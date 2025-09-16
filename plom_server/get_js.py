@@ -27,12 +27,18 @@ table = [
     {
         "name": "Bootstrap-js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
-        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
-        "jsintegrity": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
-        "cssintegrity": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
-        "jsfilename": "bootstrap.bundle.min.js",
-        "cssfilename": "bootstrap.min.css",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
+                "filename": "bootstrap.bundle.min.js",
+                "hash": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
+                "filename": "bootstrap.min.css",
+                "hash": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
+            },
+        ],
     },
     {
         "name": "Bootstrap-Icons",
@@ -236,9 +242,13 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
     for row in table:
         if row.get("files"):
             for f in row["files"]:
-                if f["url"].endswith(".css"):
+                if f["filename"].casefold().endswith(".js"):
+                    where = static_js
+                elif f["filename"].casefold().endswith(".css"):
                     where = static_css
-                elif f["url"].endswith(".woff") or f["url"].endswith(".woff2"):
+                elif f["filename"].casefold().endswith(".woff") or f[
+                    "filename"
+                ].casefold().endswith(".woff2"):
                     where = static_css_fonts
                 else:
                     raise RuntimeError(f"unexpected filetype: {f}")
