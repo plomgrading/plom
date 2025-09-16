@@ -34,9 +34,19 @@ table = [
                 "hash": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
             },
             {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js.map",
+                "filename": "bootstrap.bundle.min.js.map",
+                "hash": "sha256-xhEj5YzApLZdc3ugcMSFkRs9vsbXuAK99mKDlavZwIs=",
+            },
+            {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
                 "filename": "bootstrap.min.css",
                 "hash": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css.map",
+                "filename": "bootstrap.min.css.map",
+                "hash": "sha256-SBRPr2qg+zzSznSNlzAjj4iPSrcV8F2r0cmvLFZxmIo=",
             },
         ],
     },
@@ -242,13 +252,16 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
     for row in table:
         if row.get("files"):
             for f in row["files"]:
-                if f["filename"].casefold().endswith(".js"):
+                fncf = f["filename"].casefold()
+                if fncf.endswith(".js"):
                     where = static_js
-                elif f["filename"].casefold().endswith(".css"):
+                elif fncf.endswith(".js.map"):
+                    where = static_js
+                elif fncf.endswith(".css"):
                     where = static_css
-                elif f["filename"].casefold().endswith(".woff") or f[
-                    "filename"
-                ].casefold().endswith(".woff2"):
+                elif fncf.endswith(".css.map"):
+                    where = static_css
+                elif fncf.endswith(".woff") or fncf.endswith(".woff2"):
                     where = static_css_fonts
                 else:
                     raise RuntimeError(f"unexpected filetype: {f}")
