@@ -43,11 +43,9 @@ table = [
     {
         "name": "HTMX",
         "license": "0BSD",
-        "js": "https://unpkg.com/htmx.org@2.0.6/dist/htmx.js",
+        "js": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
         "jsfilename": "htmx.js",
-        # "js": "https://unpkg.com/htmx.org@2.0.6/dist/htmx.min.js",
-        # "jsfilename": "htmx.min.js",
-        "jsintegrity": "sha384-ksKjJrwjL5VxqAkAZAVOPXvMkwAykMaNYegdixAESVr+KqLkKE8XBDoZuwyWVUDv",
+        "jsintegrity": "sha256-8xzDzxYQnXrnW+ppKFQMaKJDvqEjRDIcRNy5fWyIVns=",
     },
     {
         "name": "htmx-ext-response-targets",
