@@ -51,16 +51,16 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css",
-                "hash": "sha256-T/pr6kME0u2kGGg/ViYWhe1HvwCZUDnyflrWLVOTjS0=",
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css",
+                "hash": "sha256-AEMichyFVzMXWbxt2qy7aJsPBxXWiK7IK9BW0tW1zDs=",
             },
             {
-                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff",
-                "hash": "sha256-ux3pibg5cPb05U3hzZdMXLpVtzWC2l4bIlptDt8ClIM=",
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff",
+                "hash": "sha256-9VUTt7WRy4SjuH/w406iTUgx1v7cIuVLkRymS1tUShU=",
             },
             {
-                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff2",
-                "hash": "sha256-R2rfQrQDJQmPz6izarPnaRhrtPbOaiSXU+LhqcIr+Z4=",
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff2",
+                "hash": "sha256-bHVxA2ShylYEJncW9tKJl7JjGf2weM8R4LQqtm/y6mE=",
             },
         ],
     },
