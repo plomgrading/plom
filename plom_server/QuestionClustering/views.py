@@ -202,7 +202,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
 
                 messages.success(
                     request,
-                    f"Started {choice} clustering for {SpecificationService.get_question_label(question_idx)}, V{version}",
+                    f"Started {choice} clustering for {SpecificationService.get_question_label(question_idx)}, v{version}",
                 )
                 return redirect("question_clustering_jobs_home")
 
