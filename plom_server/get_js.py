@@ -21,10 +21,7 @@ import requests
 # Maintenance
 # -----------
 #
-# In many cases, the html file would also list the integrity.
-# That needs to be manually updated.  Actually why bother if local,
-# we could just check here...?
-
+# Bump these sometimes!
 
 table = [
     {
