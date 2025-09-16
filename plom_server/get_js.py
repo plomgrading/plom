@@ -120,10 +120,10 @@ table = [
         "name": "sorttable",
         "license": "X11",  # https://www.kryogenix.org/code/browser/sorttable/#licence
         # No, blocks direct download:
-        # "js": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
-        "jsintegrity": "sha256-n3657FhpVO0BrpRmnXeQho7yfKvMVBh0QcoYkQr2O8w=",
+        # "url": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
+        "hash": "sha256-n3657FhpVO0BrpRmnXeQho7yfKvMVBh0QcoYkQr2O8w=",
         "zip": "https://www.kryogenix.org/code/browser/sorttable/sorttable.zip",
-        "jsfilename": "sorttable.js",
+        "filename": "sorttable.js",
     },
     {
         # SortableJS (note not Sorttable!) https://github.com/SortableJS/Sortable
@@ -298,7 +298,7 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
         elif row.get("zip"):
             # special case for zip
             check_or_download_and_unzip(
-                static_js, row["jsfilename"], row["zip"], row.get("jsintegrity")
+                static_js, row["filename"], row["zip"], row.get("hash")
             )
         else:
             raise RuntimeError(f"unexpected format in row {row}")
