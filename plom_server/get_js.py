@@ -67,38 +67,53 @@ table = [
     {
         "name": "HTMX",
         "license": "0BSD",
-        "js": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
-        "jsfilename": "htmx.js",
-        "jsintegrity": "sha256-OkbJL4z95vvR20hS8JSzBBiOUsgGmk8vejf0kQirF3U=",
+        "files": [
+            {
+                "url": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
+                "hash": "sha256-OkbJL4z95vvR20hS8JSzBBiOUsgGmk8vejf0kQirF3U=",
+            },
+        ],
     },
     {
         "name": "htmx-ext-response-targets",
         "license": "0BSD",  # ?? probably same as htmx
-        "js": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3/dist/response-targets.js",
-        "jsfilename": "response-targets.js",
-        # "js": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3",
-        # "jsfilename": "response-targets.min.js",
-        "jsintegrity": "sha384-NtTh9TBZ2X/pFpfsVvQOjSsYWmjmqG6h5ioQWVAe2/j3AuTHRmfqvoqp+iOed+I0",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3/dist/response-targets.js",
+                "hash": "sha384-NtTh9TBZ2X/pFpfsVvQOjSsYWmjmqG6h5ioQWVAe2/j3AuTHRmfqvoqp+iOed+I0",
+            },
+        ],
     },
     {
         "name": "Alpine",
         "license": "MIT",
-        "js": "https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js",
-        "jsfilename": "alpine.js",
-        "jsintegrity": "sha256-PtHu0lJIiSHfZeNj1nFd6wTX+Squ255SGZ/fc8seCtM=",
+        "files": [
+            {
+                "url": "https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js",
+                "filename": "alpine.js",
+                "hash": "sha256-PtHu0lJIiSHfZeNj1nFd6wTX+Squ255SGZ/fc8seCtM=",
+            },
+        ],
     },
     {
         "name": "chart.js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js",
-        "jsintegrity": "sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=",
-        "jsfilename": "chart.umd.js",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js",
+                "hash": "sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=",
+            },
+        ],
     },
     {
         "name": "d3.js",
         "license": "BSD",
-        "js": "https://d3js.org/d3.v6.min.js",
-        "jsfilename": "d3.v6.min.js",
+        "files": [
+            {
+                "url": "https://d3js.org/d3.v6.min.js",
+                "hash": "sha256-+7jaYCp29O1JusNWHaYtgUn6EhuP0VaFuswhNV06MyI=",
+            },
+        ],
     },
     {
         # Sorttable by Stuart Langridge, https://github.com/stuartlangridge/sorttable
@@ -114,49 +129,67 @@ table = [
         # SortableJS (note not Sorttable!) https://github.com/SortableJS/Sortable
         "name": "SortableJS",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
-        "jsintegrity": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
-        "jsfilename": "Sortable.min.js",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
+                "hash": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
+            }
+        ],
     },
     {
         # Unfortunate that we use both "Tablesort" and "sorttable"; they seem similar
         "name": "Tablesort",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
-        "jsintegrity": "sha256-exTAyB07iPiInEumh/fA2mMNK0dDmoTzRhVoITcKqTA=",
-        "jsfilename": "tablesort.min.js",
-    },
-    {
-        "name": "Tablesort.number",
-        "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/sorts/tablesort.number.min.js",
-        "jsintegrity": "sha256-RrgkMionKOUBO+Hu+0puHGjKv/GK5FiMUKEIBBt9OzI=",
-        "jsfilename": "tablesort.number.min.js",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
+                "hash": "sha256-exTAyB07iPiInEumh/fA2mMNK0dDmoTzRhVoITcKqTA=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/sorts/tablesort.number.min.js",
+                "hash": "sha256-RrgkMionKOUBO+Hu+0puHGjKv/GK5FiMUKEIBBt9OzI=",
+            },
+        ],
     },
     {
         # TODO: RC version, no release since Jan 2021, consider replacing
         "name": "select2",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
-        "css": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
-        "jsfilename": "select2.min.js",
-        "cssfilename": "select2.min.css",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
+                "hash": "sha256-9yRP/2EFlblE92vzCA10469Ctd0jT48HnmmMw5rJZrA=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+                "hash": "sha256-zaSoHBhwFdle0scfGEFUCwggPN7F+ip9XRglo8IWb4w=",
+            },
+        ],
     },
     {
         # Used only on the login page (?)
         "name": "mdb-ui-kit",
         "license": "MIT",
-        "js": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.js",
-        "css": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css",
-        "jsfilename": "mdb.min.js",
-        "cssfilename": "mdb.min.css",
+        "files": [
+            {
+                "url": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.js",
+                "hash": "sha256-y+Pa+MbXsX6NG/fYpJV07UA0o5KW9YaP+YvNoZNTapI=",
+            },
+            {
+                "url": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css",
+                "hash": "sha256-dqc3ralMj9oruQZRUoBCEJqXVmvrulSKRxBIzaJVwpY=",
+            },
+        ],
     },
     {
         "name": "JQuery",
         "license": "MIT",
-        "js": "https://code.jquery.com/jquery-3.6.4.min.js",
-        "jsfilename": "jquery-3.6.4.min.js",
-        "jsintegrity": "sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=",
+        "files": [
+            {
+                "url": "https://code.jquery.com/jquery-3.6.4.min.js",
+                "hash": "sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=",
+            },
+        ],
     },
 ]
 
@@ -262,22 +295,13 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
                 else:
                     raise RuntimeError(f"unexpected filetype: {f}")
                 check_or_download_file(f["url"], where, filename, hash=f.get("hash"))
-            # new style does not mix with old
-            continue
-        if row.get("zip"):
+        elif row.get("zip"):
             # special case for zip
             check_or_download_and_unzip(
                 static_js, row["jsfilename"], row["zip"], row.get("jsintegrity")
             )
-            continue
-        if row.get("js"):
-            check_or_download_file(
-                row["js"], static_js, row["jsfilename"], hash=row.get("jsintegrity")
-            )
-        if row.get("css"):
-            check_or_download_file(
-                row["css"], static_css, row["cssfilename"], hash=row.get("cssintegrity")
-            )
+        else:
+            raise RuntimeError(f"unexpected format in row {row}")
 
 
 if __name__ == "__main__":
