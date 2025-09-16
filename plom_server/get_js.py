@@ -89,9 +89,9 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js",
+                "url": "https://unpkg.com/alpinejs@3.15.0/dist/cdn.min.js",
                 "filename": "alpine.js",
-                "hash": "sha256-PtHu0lJIiSHfZeNj1nFd6wTX+Squ255SGZ/fc8seCtM=",
+                "hash": "sha256-4EHxtjnR5rL8JzbY12OKQJr81ESm7JBEb49ORPo29AY=",
             },
         ],
     },
