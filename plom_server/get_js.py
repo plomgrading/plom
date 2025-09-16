@@ -30,22 +30,18 @@ table = [
         "files": [
             {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
-                "filename": "bootstrap.bundle.min.js",
                 "hash": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
             },
             {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js.map",
-                "filename": "bootstrap.bundle.min.js.map",
                 "hash": "sha256-xhEj5YzApLZdc3ugcMSFkRs9vsbXuAK99mKDlavZwIs=",
             },
             {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
-                "filename": "bootstrap.min.css",
                 "hash": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
             },
             {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css.map",
-                "filename": "bootstrap.min.css.map",
                 "hash": "sha256-SBRPr2qg+zzSznSNlzAjj4iPSrcV8F2r0cmvLFZxmIo=",
             },
         ],
@@ -56,17 +52,14 @@ table = [
         "files": [
             {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css",
-                "filename": "bootstrap-icons.css",
                 "hash": "sha256-T/pr6kME0u2kGGg/ViYWhe1HvwCZUDnyflrWLVOTjS0=",
             },
             {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff",
-                "filename": "bootstrap-icons.woff",
                 "hash": "sha256-ux3pibg5cPb05U3hzZdMXLpVtzWC2l4bIlptDt8ClIM=",
             },
             {
                 "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff2",
-                "filename": "bootstrap-icons.woff2",
                 "hash": "sha256-R2rfQrQDJQmPz6izarPnaRhrtPbOaiSXU+LhqcIr+Z4=",
             },
         ],
@@ -252,22 +245,23 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
     for row in table:
         if row.get("files"):
             for f in row["files"]:
-                fncf = f["filename"].casefold()
-                if fncf.endswith(".js"):
+                filename = f.get("filename")
+                if not filename:
+                    filename = f["url"].split("/")[-1]
+                fcf = filename.casefold()
+                if fcf.endswith(".js"):
                     where = static_js
-                elif fncf.endswith(".js.map"):
+                elif fcf.endswith(".js.map"):
                     where = static_js
-                elif fncf.endswith(".css"):
+                elif fcf.endswith(".css"):
                     where = static_css
-                elif fncf.endswith(".css.map"):
+                elif fcf.endswith(".css.map"):
                     where = static_css
-                elif fncf.endswith(".woff") or fncf.endswith(".woff2"):
+                elif fcf.endswith(".woff") or fcf.endswith(".woff2"):
                     where = static_css_fonts
                 else:
                     raise RuntimeError(f"unexpected filetype: {f}")
-                check_or_download_file(
-                    f["url"], where, f["filename"], hash=f.get("hash")
-                )
+                check_or_download_file(f["url"], where, filename, hash=f.get("hash"))
             # new style does not mix with old
             continue
         if row.get("zip"):
