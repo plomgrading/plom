@@ -45,7 +45,7 @@ table = [
         "license": "0BSD",
         "js": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
         "jsfilename": "htmx.js",
-        "jsintegrity": "sha256-8xzDzxYQnXrnW+ppKFQMaKJDvqEjRDIcRNy5fWyIVns=",
+        "jsintegrity": "sha256-OkbJL4z95vvR20hS8JSzBBiOUsgGmk8vejf0kQirF3U=",
     },
     {
         "name": "htmx-ext-response-targets",
