@@ -97,6 +97,7 @@ table = [
         "jsfilename": "Sortable.min.js",
     },
     {
+        # Unfortunate that we use both "Tablesort" and "sorttable"; they seem similar
         "name": "Tablesort",
         "license": "MIT",
         "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
