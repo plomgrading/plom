@@ -276,6 +276,7 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
     static_css_fonts.mkdir(exist_ok=True)
     print("Checking/downloading vendored JavaScript and CSS:")
     for row in table:
+        assert isinstance(row, dict)
         if row.get("files"):
             for f in row["files"]:
                 filename = f.get("filename")
