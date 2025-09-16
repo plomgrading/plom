@@ -97,6 +97,20 @@ table = [
         "jsfilename": "Sortable.min.js",
     },
     {
+        "name": "Tablesort",
+        "license": "MIT",
+        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/tablesort.min.js",
+        "jsintegrity": "sha256-Jx0M7JUcrmLVFf4w8/DxLiUYaoSbM4hxSSASfKmPhX8=",
+        "jsfilename": "tablesort.min.js",
+    },
+    {
+        "name": "Tablesort.number",
+        "license": "MIT",
+        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/sorts/tablesort.number.min.js",
+        "jsintegrity": "sha256-O2T79xuHjIAu+8IHtcpusfWhrGB3k0wFKemK+aCpUO8=",
+        "jsfilename": "tablesort.number.min.js",
+    },
+    {
         # TODO: RC version, no release since Jan 2021, consider replacing
         "name": "select2",
         "license": "MIT",
