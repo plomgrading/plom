@@ -37,8 +37,23 @@ table = [
     {
         "name": "Bootstrap-Icons",
         "license": "MIT",
-        "css": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css",
-        "cssfilename": "bootstrap-icons.css",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css",
+                "filename": "bootstrap-icons.css",
+                "hash": "sha256-T/pr6kME0u2kGGg/ViYWhe1HvwCZUDnyflrWLVOTjS0=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff",
+                "filename": "bootstrap-icons.woff",
+                "hash": "sha256-ux3pibg5cPb05U3hzZdMXLpVtzWC2l4bIlptDt8ClIM=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff2",
+                "filename": "bootstrap-icons.woff2",
+                "hash": "sha256-R2rfQrQDJQmPz6izarPnaRhrtPbOaiSXU+LhqcIr+Z4=",
+            },
+        ],
     },
     {
         "name": "HTMX",
@@ -189,7 +204,7 @@ def check_file(f, hash: str | None = None):
     elif hash.startswith("sha384-"):
         if hash != sha384:
             raise ValueError(
-                "Downloaded sha384 does not match records!\n"
+                f"Downloaded sha384 for {f} does not match records!\n"
                 f"records:  {hash}\n"
                 f"download: {sha384}"
             )
@@ -197,7 +212,7 @@ def check_file(f, hash: str | None = None):
     else:
         if hash != sha256:
             raise ValueError(
-                "Downloaded sha256 does not match records!\n"
+                f"Downloaded sha256 for {f} does not match records!\n"
                 f"records:  {hash}\n"
                 f"download: {sha256}\n"
             )
@@ -211,12 +226,27 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
         destdir = "plom_extra_static"
     static_js = Path(destdir) / "js3rdparty"
     static_css = Path(destdir) / "css3rdparty"
+    static_css_fonts = Path(destdir) / "css3rdparty/fonts"
 
     Path(destdir).mkdir(exist_ok=True)
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
+    static_css_fonts.mkdir(exist_ok=True)
     print("Checking/downloading vendored JavaScript and CSS:")
     for row in table:
+        if row.get("files"):
+            for f in row["files"]:
+                if f["url"].endswith(".css"):
+                    where = static_css
+                elif f["url"].endswith(".woff") or f["url"].endswith(".woff2"):
+                    where = static_css_fonts
+                else:
+                    raise RuntimeError(f"unexpected filetype: {f}")
+                check_or_download_file(
+                    f["url"], where, f["filename"], hash=f.get("hash")
+                )
+            # new style does not mix with old
+            continue
         if row.get("zip"):
             # special case for zip
             check_or_download_and_unzip(
