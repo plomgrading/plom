@@ -199,7 +199,7 @@ def check_file(f, hash: str | None = None):
     else:
         if hash != sha256:
             raise ValueError(
-                "Downloaded sha384 does not match records!\n"
+                "Downloaded sha256 does not match records!\n"
                 f"records:  {hash}\n"
                 f"download: {sha256}\n"
             )
