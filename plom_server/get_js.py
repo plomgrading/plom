@@ -99,15 +99,15 @@ table = [
     {
         "name": "Tablesort",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/tablesort.min.js",
-        "jsintegrity": "sha256-Jx0M7JUcrmLVFf4w8/DxLiUYaoSbM4hxSSASfKmPhX8=",
+        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
+        "jsintegrity": "sha256-exTAyB07iPiInEumh/fA2mMNK0dDmoTzRhVoITcKqTA=",
         "jsfilename": "tablesort.min.js",
     },
     {
         "name": "Tablesort.number",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/sorts/tablesort.number.min.js",
-        "jsintegrity": "sha256-O2T79xuHjIAu+8IHtcpusfWhrGB3k0wFKemK+aCpUO8=",
+        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/sorts/tablesort.number.min.js",
+        "jsintegrity": "sha256-RrgkMionKOUBO+Hu+0puHGjKv/GK5FiMUKEIBBt9OzI=",
         "jsfilename": "tablesort.number.min.js",
     },
     {
