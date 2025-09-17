@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The printed papers now say "Paper 0123" not "Test 0123" on top of the page.
 * `marks.csv` now respects custom "question labels".
 * The UI of the server now "vendors" most javascript dependencies on startup, for a more standalone server.
+* Improved importing of Rubrics from spreadsheets.
 
 ### Fixed
 * Fix table-sorting by clicking on column headers, in several tables.
