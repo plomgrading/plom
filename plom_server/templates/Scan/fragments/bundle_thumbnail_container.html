@@ -37,7 +37,8 @@
                              style="width: 7ch" />
                     </div>
                 </div>
-                <div class="card-footer p-0">{{ pg.order }}</div>
+                <!-- pg.order is a string, so add:0 changes it to an int -->
+                <div class="card-footer p-0">{{ pg.order|add:0|stringformat:"03d" }}</div>
             </div>
         </label>
     </div>
