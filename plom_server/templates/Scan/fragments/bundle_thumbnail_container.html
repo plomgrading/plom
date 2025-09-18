@@ -42,10 +42,3 @@
         </label>
     </div>
 </div>
-<script>
-	// triggers once when this particular fragment is loaded in browser
-	// necessary for htmx reloads
-	slidervalue = document.getElementById("thumbnailResizeSlider").value;
-	thumbnailimg = document.getElementById("thumbnailimg-{{ pg.order }}");
-	thumbnailimg.style.width = slidervalue*0.7 + "ch";
-</script>
