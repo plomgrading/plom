@@ -96,7 +96,8 @@
                                      hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
                                      hx-trigger="thumbnailRefresh"
                                      hx-swap="innerHTML"
-                                     hx-on:htmx:after-swap="refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})">
+                                     hx-on:htmx:after-swap="refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})"
+                                     hx-on:htmx:after-settle="resizeThumbnailContainer({{ pg.order }})">
                                     {% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
                                 </div>
                             {% endfor %}
@@ -204,6 +205,11 @@
 				thumbnailImages.forEach(img => {
 					img.style.width = newWidth*0.7 + "ch";
 				})
+			}
+			function resizeThumbnailContainer(index) {
+				var thumbnailImage = document.getElementById("thumbnailimg-" + index);
+				var slider = document.getElementById('thumbnailResizeSlider');
+				thumbnailImage.style.width = slider.value*0.7 + "ch";
 			}
 			function tickSlider(valueChange) {
 				var slider = document.getElementById('thumbnailResizeSlider');
