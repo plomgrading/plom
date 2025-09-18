@@ -57,7 +57,7 @@ class StudentMarkService:
         See :func: ManageScanService._get_used_unused_paper_querysets() for
         definitions of used and unused papers.
         """
-        used_papers, _ = ManageScanService()._get_used_unused_paper_querysets()
+        used_papers, _ = ManageScanService._get_used_unused_paper_querysets()
 
         for paper in used_papers:
             if not cls.is_paper_marked(paper):
@@ -240,7 +240,7 @@ class StudentMarkService:
         """
         paper_id_info = self.get_paper_id_or_none(paper)
         is_id = paper_id_info is not None
-        is_scanned = ManageScanService().is_paper_completely_scanned(paper.paper_number)
+        is_scanned = ManageScanService.is_paper_completely_scanned(paper.paper_number)
         n_marked = self.get_n_questions_marked(paper)
         last_modified = self.get_last_updated_timestamp(paper)
 
