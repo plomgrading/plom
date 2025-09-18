@@ -186,9 +186,10 @@ class ManageScanService:
             Prefetch(
                 "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
             ),
+            # Papers/models/structure.py claims MobilePages have no order so sort by pk...
             Prefetch(
                 "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_index"),
+                queryset=MobilePage.objects.order_by("question_index").order_by("pk"),
             ),
             "fixedpage_set__image",
             "mobilepage_set__image",
