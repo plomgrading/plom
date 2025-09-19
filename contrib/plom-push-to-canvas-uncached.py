@@ -42,7 +42,6 @@ the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 """
 
 
-import sys
 import argparse
 import os
 import random
@@ -51,6 +50,7 @@ import time
 from getpass import getpass
 import requests
 from tempfile import NamedTemporaryFile
+from tabulate import tabulate
 from email.message import EmailMessage
 
 import canvasapi
@@ -78,12 +78,12 @@ from plom.plom_exceptions import (
 __script_version__ = "0.6.1"
 
 __DEBUG__ = True
-__TESTING__ = True
 
 __DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
 
 # These are the keys for the json returned by the Plom 'get spreadsheet' API call
 PLOM_STUDENT_ID = "StudentID"
+PLOM_STUDENT_NAME = "StudentName"
 PLOM_MARKS = "Total"
 PLOM_PAPERNUM = "PaperNumber"
 
@@ -112,7 +112,7 @@ def get_parser() -> argparse.ArgumentParser:
         help=f'URL for talking to Canvas, defaults to "{__DEFAULT_CANVAS_API_URL__}".',
     )
     parser.add_argument(
-        "--api_key",
+        "--api-key",
         type=str,
         action="store",
         help="""
@@ -125,7 +125,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Perform a dry-run without writing grades or uploading files.",
+        help="Perform a dry-run without writing grades or uploading files to Canvas.",
     )
     parser.add_argument(
         "--course",
@@ -267,7 +267,7 @@ def verify_canvas_api_key(user_input: str | None = None) -> str:
     This function only checks for existence, not validity.
 
     Args:
-        user_input: a user_input api key.
+        user_input: a user_input canvas api key.
 
     Returns:
         A string, there's no guarantee it's a valid api key.
@@ -285,8 +285,8 @@ def canvas_login(
     """Login to a Canvas server using an API key.
 
     Args:
-        api_url: the server to login to, uses a default if omitted.
-        api_key: the API key.
+        api_url: the Canvas server to login to, uses a default if omitted.
+        api_key: the Canvas API key.
 
     Keyword Args:
         max_attempts: if the credentials fail to authenticate,
@@ -312,7 +312,7 @@ def canvas_login(
 def get_courses_teaching(
     user: canvasapi.current_user.CurrentUser,
 ) -> list[canvasapi.course.Course]:
-    """Get a list of the courses a particular user is teaching.
+    """Get a list of the Canvas courses a particular user is teaching.
 
     Args:
         user: the canvas user to check
@@ -326,6 +326,7 @@ def get_courses_teaching(
         try:
             for enrollee in course.enrollments:
                 if enrollee["user_id"] == user.id:
+                    # observed types are "teacher", "ta", "student", "designer"
                     if enrollee["type"] in ["teacher", "ta"]:
                         courses_teaching += [course]
                     else:
@@ -753,17 +754,6 @@ def main():
     # import dotenv
     # ...
 
-    if __TESTING__:
-        with open("TOKEN.txt", "r") as f:
-            args.api_key = f.read()
-
-        # args.course = 137582
-        # args.assignment = 1669355
-        args.no_section = True
-        args.plom_server = "http://localhost:8000"
-        args.plom_username = "demoManager1"
-        args.plom_password = "demoManager1"
-
     # python doesn't have do-while :/
     canvas_user = None
     while not canvas_user:
@@ -841,24 +831,70 @@ def main():
     for submission in raw_submissions:
         canvas_submissions.update({submission.id: submission})
 
-    # get canvas conversion dict - student id to canvas id (nothing else)
+    # get canvas conversion dict - student id to canvas id
     canvas_ids = get_canvas_id_dict(canvas_course)
 
-    # TODO: remove this
-    sys.exit(0)
-
-    if __TESTING__:
+    if args.dry_run:
         successes = []
+    canvas_absences = []
     canvas_timeouts = []
     plom_timeouts = []
-    for exam_dict in student_marks:
-        # TODO: error handling
+    for _, exam_dict in student_marks.items():
         paper_number = exam_dict[PLOM_PAPERNUM]
         score = exam_dict[PLOM_MARKS]
         student_id = exam_dict[PLOM_STUDENT_ID]
-        student_canvas_id = canvas_ids[student_id]
+        student_name = exam_dict[PLOM_STUDENT_NAME]
+        try:
+            student_canvas_id = canvas_ids[student_id]
+        except KeyError:
+            print(
+                f"student {student_name} - {student_id} (paper #{paper_number})"
+                " couldn't be found on Canvas, skipping."
+            )
+            canvas_absences.append(
+                {
+                    "paper_number": paper_number,
+                    "student_id": student_id,
+                    "error": f"{student_name} couldn't be found on Canvas.",
+                }
+            )
+            continue
+
         student_canvas_submission = canvas_submissions[student_canvas_id]
         assert student_canvas_submission is not None
+
+        if args.dry_run:
+            if args.papers:
+                with NamedTemporaryFile("w+") as f:
+                    try:
+                        get_plom_reassembled(plom_messenger, paper_number, f)
+                        f.seek(0)
+                    except (
+                        PlomAuthenticationException,
+                        PlomNoPermission,
+                        PlomNoPaper,
+                        PlomSeriousException,
+                    ) as e:
+                        print(e)
+                        plom_timeouts.append(
+                            {
+                                "paper_number": paper_number,
+                                "student_id": student_id,
+                                "error": e,
+                            }
+                        )
+                    successes.append(
+                        [f.name, student_id, student_name, student_canvas_id]
+                    )
+            if args.post_grades:
+                successes.append([score, student_id, student_name, student_canvas_id])
+            # UNIMPLEMENTED - no Plom API yet
+            if args.reports:
+                pass
+            # UNIMPLEMENTED - no Plom API yet
+            if args.solutions:
+                pass
+            continue
 
         # no real multithreading in python, so order doesn't really matter here
         if args.papers:
@@ -866,12 +902,7 @@ def main():
                 try:
                     get_plom_reassembled(plom_messenger, paper_number, f)
                     f.seek(0)
-                    with open(f"{f.name}") as newfile:
-                        newfile.write(f.read())
-                    # TODO: uncomment this
-                    # student_canvas_submission.upload_comment(f)
-                    if __TESTING__:
-                        successes.append("downloaded {f.name} for student {student_id}")
+                    student_canvas_submission.upload_comment(f)
                 except (
                     PlomAuthenticationException,
                     PlomNoPermission,
@@ -880,61 +911,60 @@ def main():
                 ) as e:
                     print(e)
                     plom_timeouts.append(
-                        [
-                            f"paper number: {paper_number}",
-                            f"student id: {student_id}",
-                            e,
-                        ]
+                        {
+                            "paper_number": paper_number,
+                            "student_id": student_id,
+                            "error": e,
+                        }
                     )
                 # TODO: should look at the negative response from Canvas
                 except CanvasException as e:
                     print(e)
                     canvas_timeouts.append(
-                        [
-                            f"paper number: {paper_number}",
-                            f"student id: {student_id}",
-                            e,
-                        ]
+                        {
+                            "paper_number": paper_number,
+                            "student_id": student_id,
+                            "error": e,
+                        }
                     )
             time.sleep(random.uniform(0.1, 0.3))
 
         if args.post_grades:
             try:
-                # TODO: uncomment this
-                # student_canvas_submission.edit(submission={'posted_grade'}: score)
-                if __TESTING__:
-                    successes.append("would've uploaded {} for student {student_id}")
+                student_canvas_submission.edit(submission={"posted_grade": score})
             except CanvasException as e:
                 print(e)
                 canvas_timeouts.append(
-                    [f"student score: {score}", f"student id: {student_id}", e]
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": f"{e}\n mark {score} couldn't be uploaded.",
+                    }
                 )
             time.sleep(random.uniform(0.1, 0.3))
 
-    if canvas_timeouts:
-        print("There were some failed uploads to Canvas:")
-        for timeout in canvas_timeouts:
-            print("\t".join(timeout))
+        # no Plom API for this
+        if args.solutions:
+            pass
+
+        # no Plom API for this
+        if args.reports:
+            pass
 
     if plom_timeouts:
         print("There were some failed downloads from Plom:")
-        for timeout in plom_timeouts:
-            print("\t".join(timeout))
+        print(tabulate(plom_timeouts, headers="keys"))
+        print("\n\n")
 
-    if __TESTING__:
-        print("this stuff succeeded:")
-        for success in successes:
-            print(success)
+    if canvas_timeouts:
+        print("There were some failed uploads to Canvas:")
+        print(tabulate(canvas_timeouts, headers="keys"))
+        print("\n\n")
 
-    # no Plom API for this
-    if args.solutions:
-        print("Not implemented yet.")
-        pass
-
-    # no Plom API for this
-    if args.reports:
-        print("Not implemented yet.")
-        pass
+    if args.dry_run:
+        print("These items would've been uploaded to Canvas:")
+        print(tabulate(successes, headers="keys"))
+        print("\n\n")
 
 
 if __name__ == "__main__":
