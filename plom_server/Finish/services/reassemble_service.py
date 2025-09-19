@@ -241,10 +241,12 @@ class ReassembleService:
             .prefetch_related("image", "image__baseimage")
             .order_by("page_number")
         )
+        # Papers/models/structure.py claims MobilePages have no order so sort by id
         nonmarked_mobile = (
             MobilePage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
             .order_by("question_index")
+            .order_by("pk")
         )
 
         unmarked = []

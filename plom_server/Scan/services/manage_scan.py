@@ -186,7 +186,7 @@ class ManageScanService:
             Prefetch(
                 "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
             ),
-            # Papers/models/structure.py claims MobilePages have no order so sort by pk...
+            # Papers/models/structure.py claims MobilePages have no order so sort by id
             Prefetch(
                 "mobilepage_set",
                 queryset=MobilePage.objects.order_by("question_index").order_by("pk"),
@@ -249,7 +249,7 @@ class ManageScanService:
             ),
             Prefetch(
                 "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_index"),
+                queryset=MobilePage.objects.order_by("question_index").order_by("pk"),
             ),
             "fixedpage_set__image",
             "mobilepage_set__image",
@@ -408,11 +408,11 @@ class ManageScanService:
             }
 
     @transaction.atomic
-    def get_pushed_mobile_page_image_info(self, page_pk: int) -> dict[str, Any]:
+    def get_pushed_mobile_page_image_info(self, page_id: int) -> dict[str, Any]:
         """Given the pk of the mobile-page return info about it and its image.
 
         Args:
-            page_pk: the pk of the mobile-page.
+            page_id: the id of the mobile-page.
 
         Returns:
             A dict with keys:
@@ -435,7 +435,7 @@ class ManageScanService:
         Raises:
             None expected.
         """
-        mp_obj = MobilePage.objects.get(pk=page_pk)
+        mp_obj = MobilePage.objects.get(pk=page_id)
         img = mp_obj.image
         # same image might be used for multiple questions - get all those
         q_idx_list = [
