@@ -146,7 +146,7 @@ class ManageScanService:
 
         return complete_papers_queryset, incomplete_papers_queryset
 
-    @staticmethod
+    @classmethod
     def get_number_completed_papers(cls) -> int:
         """Returns the number of complete papers."""
         complete_papers_queryset, __ = cls._get_complete_incomplete_paper_querysets()
@@ -154,7 +154,7 @@ class ManageScanService:
 
     # do not call this in a loop - write a function:
     # def are_papers_completely_scanned(self, paper_nums: list[int]) -> dict[int: bool]
-    @staticmethod
+    @classmethod
     def is_paper_completely_scanned(cls, paper_num: int) -> bool:
         """Check whether the given paper has been completely scanned."""
         complete_papers_queryset, __ = cls._get_complete_incomplete_paper_querysets()
@@ -305,7 +305,7 @@ class ManageScanService:
                 )
         return incomplete
 
-    @staticmethod
+    @classmethod
     def get_number_incomplete_papers(cls) -> int:
         """Return the number of papers partially but not completely scanned."""
         __, incomplete_papers_queryset = cls._get_complete_incomplete_paper_querysets()
