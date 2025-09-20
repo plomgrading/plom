@@ -195,9 +195,12 @@ def get_the_spec() -> dict:
         serializer = SpecSerializer(
             spec, context={"question": SpecQuestion.objects.all()}
         )
-        return serializer.data
+        data = serializer.data
     except Specification.DoesNotExist:
         raise ObjectDoesNotExist("The database does not contain a test specification.")
+    # no publicCode in spec
+    data.pop("publicCode", None)
+    return data
 
 
 def get_the_spec_as_toml(
