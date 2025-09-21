@@ -85,6 +85,7 @@ def _create_QRcoded_pdf(
     qvmap_row: dict[int | str, int],
     tmpdir: pathlib.Path,
     source_versions: dict[int, pathlib.Path],
+    public_code: str,
     *,
     no_qr: bool = False,
     paperstr: str | None = None,
@@ -102,6 +103,7 @@ def _create_QRcoded_pdf(
         source_versions: dict of paths for the source versions, keyed
             by version.  Some can be missing as long as they don't appear
             in the ``qvmap_row``.
+        public_code: a short code to help ensure uniqueness b/w servers.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
@@ -155,7 +157,7 @@ def _create_QRcoded_pdf(
             qr_files = []
         else:
             ver = page_to_version[p]
-            qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
+            qr_files = create_QR_codes(papernum, p, ver, public_code, tmpdir)
 
         label = label_for_top_of_page(
             papernum if paperstr is None else paperstr,
@@ -501,12 +503,14 @@ def make_PDF(
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
+        public_code = spec["publicCode"]
         exam = _create_QRcoded_pdf(
             spec,
             papernum,
             question_versions,
             Path(tmp_dir),
             source_versions,
+            public_code,
             no_qr=no_qr,
             paperstr=paperstr,
         )
