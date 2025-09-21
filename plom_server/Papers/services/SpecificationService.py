@@ -235,11 +235,22 @@ def get_the_spec_as_toml(
     return sv.as_toml_string(_legacy=False)
 
 
-@transaction.atomic
 def get_private_seed() -> str:
     """Return the private seed."""
     spec = Specification.objects.get()
     return spec.privateSeed
+
+
+def get_public_code() -> str | None:
+    """Return the public code or None if there isn't one.
+
+    Returns:
+        The public code or None if the server doesn't have one.
+        TODO: None working?
+        TODO: unit tests.
+    """
+    spec = Specification.objects.get()
+    return spec.publicCode
 
 
 def remove_spec() -> None:
