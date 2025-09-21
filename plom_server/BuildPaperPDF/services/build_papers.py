@@ -231,6 +231,8 @@ class BuildPapersService:
         Raises:
             PlomDependencyConflict: if dependencies not met.
         """
+        assert_can_rebuild_test_pdfs()
+        SpecificationService.get_or_create_new_public_code()
         self._send_list_of_tasks([paper_num])
 
     def _send_list_of_tasks(self, paper_number_list: list[int]) -> None:
@@ -254,6 +256,9 @@ class BuildPapersService:
 
         # get all the qvmap and student-id/name info
         spec = SpecificationService.get_the_spec()
+        public_code = SpecificationService.get_public_code()
+        # TODO: legacy mergeAndCodePages expects public_code in the spec
+        spec["publicCode"] = public_code
         qvmap = PQVMappingService.get_pqv_map_dict()
         prenamed = StagingStudentService.get_prenamed_papers()
         prename_config = PrenameSettingService().get_prenaming_config()
