@@ -166,20 +166,19 @@ Ok, how do I setup SSL certificates?
 How can I clone a server so that it accepts scans intended for another server?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You need three things from the existing server: the server specification `.toml` file,
+You need four things from the existing server: the server specification `.toml` file,
+the "public code" (which is written into the QR codes),
 the question-version map `.csv`, and the classlist.
-Double-check that the `.toml` file contains the ``publicCode``,
-something like: ``publicCode = "123456"`` and write it down.
 
 .. caution::
     One should be very carefully doing this sort of thing: the
-    ``publicCode`` exists to make it difficult to accidentally upload
+    "public code" exists to make it difficult to accidentally upload
     papers to the wrong server.  This question shows you how to defeat
     that mechanism.
 
 Use the saved `.toml` and the saved version map `.csv` to provision
 the new server.
-You'll need to manually enter the publicCode you noted above.
+You'll need to manually enter the "public code" you noted above.
 If prenaming, ensure you use the same settings as before.
 Continue provisioning the server, creating the database etc.  No need
 to physically print the papers (as they should be identical!)  You
@@ -189,12 +188,12 @@ server) to this new server.
 .. note::
     If you do not have access to your old server, you can carefully
     manually reconstruct the specification.
-    You can extract the ``publicCode`` from the QR codes of the
+    You can extract the "public code" from the QR codes of the
     printed pages (e.g., using a QR app on your phone).
     See the source code ``plom/tpv_utils.py`` for hints on
     interpreting the results.
     If the server was multi-versioned, you're in trouble: in
-    principle as of 2024, you could write a script to
+    principle as of 2025, you could write a script to
     extract the version map from the scans themselves.
 
 
