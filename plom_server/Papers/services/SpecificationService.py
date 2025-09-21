@@ -18,7 +18,7 @@ from django.db import transaction
 from django.db.models import Max
 
 from plom.spec_verifier import SpecVerifier
-
+from plom.tpv_utils import new_magic_code
 from plom_server.Base.compat import load_toml_from_path, load_toml_from_string
 from plom_server.Base.compat import TOMLDecodeError  # noqa: F401
 from ..models import Specification, SpecQuestion
@@ -110,6 +110,12 @@ def install_spec_from_dict(
         # raise serializers.ValidationError(...)?
         raise ValueError("Not allowed to specify a publicCode directly")
 
+    # TODO: hopefully temporary hackery until we store the publicCode elsewhere
+    if not force_public_code:
+        spec_dict.pop("publicCode", None)
+        # keep the validator happy with a temp value: yuck, remove later
+        spec_dict["publicCode"] = "000000"
+
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
@@ -123,6 +129,10 @@ def install_spec_from_dict(
     serializer.is_valid(raise_exception=True)
 
     valid_data = serializer.validated_data
+
+    # TODO: hopefully temporary hackery around the serializer
+    if not force_public_code:
+        valid_data.pop("publicCode")
 
     return serializer.create(valid_data)
 
@@ -224,7 +234,7 @@ def get_the_spec_as_toml(
     if not _include_private_seed:
         spec.pop("privateSeed", None)
     if not include_public_code:
-        spec.pop("publicCode")
+        spec.pop("publicCode", None)
 
     for idx, question in spec["question"].items():
         for key, val in deepcopy(question).items():
@@ -249,8 +259,31 @@ def get_public_code() -> str | None:
         TODO: None working?
         TODO: unit tests.
     """
+    try:
+        spec = Specification.objects.get()
+    except ObjectDoesNotExist:
+        return None
+    c = spec.publicCode
+    if not c:
+        # TODO: possibly temporary hack when spec exists but publicCode empty
+        return None
+    return c
+
+
+def set_public_code(public_code: str):
+    """Change the public code."""
     spec = Specification.objects.get()
-    return spec.publicCode
+    spec.publicCode = public_code
+    spec.save()
+
+
+def get_or_create_new_public_code():
+    # probably racey but we can tweak is later with better DB storage for code
+    with transaction.atomic(durable=True):
+        public_code = get_public_code()
+        if public_code is None:
+            set_public_code(new_magic_code())
+    return get_public_code()
 
 
 def remove_spec() -> None:

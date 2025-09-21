@@ -210,6 +210,7 @@ class BuildPapersService:
             How many tasks did we launch?
         """
         assert_can_rebuild_test_pdfs()
+        SpecificationService.get_or_create_new_public_code()
         # first we set all tasks with status=error as obsolete.
         BuildPaperPDFChore.set_every_task_with_status_error_obsolete()
         # now iterate over papers that have zero non-obsolete chores.

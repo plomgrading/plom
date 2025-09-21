@@ -36,10 +36,13 @@ class ExamMockerService:
         # TODO: Issue #3888 this does direct file access, fails for remote storage?
         source_path = Path(_get_source_file(version).path)
 
-        # ensure mocked papers won't scan by using wrong public code
-        assert len(spec["publicCode"]) == 6
-        if spec["publicCode"] == "000000":
-            spec["publicCode"] = "999999"
+        if spec.get("publicCode"):
+            # ensure mocked papers won't scan by using wrong public code
+            assert len(spec["publicCode"]) == 6
+            if spec["publicCode"] == "000000":
+                spec["publicCode"] = "999999"
+            else:
+                spec["publicCode"] = "000000"
         else:
             spec["publicCode"] = "000000"
 

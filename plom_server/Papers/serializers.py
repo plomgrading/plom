@@ -44,6 +44,7 @@ class SpecSerializer(serializers.ModelSerializer):
     numberOfPages = serializers.IntegerField(min_value=1)
     numberOfQuestions = serializers.IntegerField(min_value=1)
     totalMarks = serializers.IntegerField(min_value=0)
+    # TODO: consider removing the code and seed from the Specification?
     privateSeed = serializers.CharField(default=new_private_seed)
     publicCode = serializers.CharField(default=new_magic_code)
     idPage = serializers.IntegerField(min_value=1)
