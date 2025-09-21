@@ -28,4 +28,4 @@ from .miscellanea import (
     MiscellaneaDownloadScrapPaperView,
     MiscellaneaDownloadBundleSeparatorView,
 )
-from .public_code import ChangePublicCodeView
+from .public_code import PublicCodeView

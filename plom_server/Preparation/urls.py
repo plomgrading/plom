@@ -6,7 +6,7 @@
 
 from django.urls import path
 from .views import (
-    ChangePublicCodeView,
+    PublicCodeView,
     PreparationLandingView,
     PreparationDependencyConflictView,
     PreparationFinishedView,
@@ -87,7 +87,7 @@ urlpatterns = [
     ),
     path(
         "public_code/",
-        ChangePublicCodeView.as_view(),
-        name="change_public_code",
+        PublicCodeView.as_view(),
+        name="public_code",
     ),
 ]
