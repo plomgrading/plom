@@ -463,7 +463,7 @@ class PaperCreatorService:
             PlomDependencyConflict: if preparation dependencies are not met.
             PlomDatabaseCreationError: if a database populate/evacuate chore already underway.
         """
-        assert_can_modify_qv_mapping_database()
+        assert_can_modify_qv_mapping_database(deleting=True)
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
         cls._reset_number_to_produce()

@@ -107,7 +107,7 @@ def delete_all_source_pdfs() -> None:
     Raises:
         PlomDependencyException: sources cannot be modified.
     """
-    assert_can_modify_sources()
+    assert_can_modify_sources(deleting=True)
 
     for pdf_obj in PaperSourcePDF.objects.all():
         delete_source_pdf(pdf_obj.version)
