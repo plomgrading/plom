@@ -500,17 +500,11 @@ class PlomAdminMessenger(Messenger):
 
         return response.json()
 
-    def new_server_upload_spec(
-        self, spec_toml: Path, *, force_public_code: bool = False
-    ) -> dict[str, Any]:
+    def new_server_upload_spec(self, spec_toml: Path) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
             spec_toml: The standard Python Path of a valid spec.toml file
-
-        Keyword Args:
-            force_public_code: Usually you may not include "publicCode" in
-                the specification.  Pass True to allow overriding that default.
 
         Returns:
             The newly-uploaded spec, as a dict.
@@ -524,10 +518,7 @@ class PlomAdminMessenger(Messenger):
         """
         # Caution: don't use json= with post when files= is used: use data= instead
         # https://requests.readthedocs.io/en/latest/user/quickstart/#more-complicated-post-requests
-        if force_public_code:
-            data = {"force_public_code": "on"}
-        else:
-            data = {}
+        data = {}
 
         with self.SRmutex:
             try:

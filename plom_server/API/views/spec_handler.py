@@ -74,8 +74,7 @@ class SpecificationHandler(APIView):
 
         Args:
             request: An HTTP request that includes a serialized file
-                accessible through key "spec_toml" and optionally the
-                string "on" from the key "force_public_code" in data.
+                accessible through key "spec_toml".
 
         Returns:
             A Response object whose json field contains the freshly-installed spec,
@@ -100,13 +99,6 @@ class SpecificationHandler(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        # TODO: could instead use a query_param in the URL?
-        _force_public_code = request.data.get("force_public_code", "")
-        if _force_public_code.casefold() == "on":
-            force_public_code = True
-        else:
-            force_public_code = False
-
         # would be handled by next block but with a more verbose errors
         if not spec_toml_string:
             return _error_response(
@@ -117,7 +109,6 @@ class SpecificationHandler(APIView):
         try:
             SpecificationService.install_spec_from_toml_string(
                 spec_toml_string,
-                force_public_code=force_public_code,
             )
         except PlomDependencyConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
