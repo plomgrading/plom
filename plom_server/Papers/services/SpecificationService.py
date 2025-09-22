@@ -222,7 +222,11 @@ def get_the_spec_as_toml(
     from the return) but this can be changed with keyword arguments.
 
     Keyword Args:
-        include_public_code: if True, include the current public code.
+        include_public_code: if True, include the current public code,
+            The default is False and this is DEPRECATED: we anticipate
+            not storing the public code in the spec in the near future.
+            No one should be calling this with True; if you need the
+            public code, see :func:`get_public_code`.
         _include_private_seed: if True, include the current private seed
             (currently unused, except maybe in testing?)
 

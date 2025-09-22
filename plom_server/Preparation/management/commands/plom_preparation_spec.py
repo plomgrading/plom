@@ -27,7 +27,7 @@ class Command(BaseCommand):
             self.stdout.write("No assessment specification present")
             return
 
-        toml_text = SpecificationService.get_the_spec_as_toml(include_public_code=True)
+        toml_text = SpecificationService.get_the_spec_as_toml()
         self.stdout.write("A valid assessment specification is present:")
         self.stdout.write("#" * 40)
         self.stdout.write(f"{toml_text}")
@@ -47,7 +47,7 @@ class Command(BaseCommand):
         if fname.exists():
             raise CommandError(f"File {fname} already present - not overwriting.")
         with open(fname, "w") as f:
-            f.write(SpecificationService.get_the_spec_as_toml(include_public_code=True))
+            f.write(SpecificationService.get_the_spec_as_toml())
 
     def upload_spec(
         self, spec_file: str | Path, force_public_code: bool = False
