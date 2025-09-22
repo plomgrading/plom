@@ -207,7 +207,7 @@ def get_the_spec() -> dict:
         )
         data = serializer.data
     except Specification.DoesNotExist:
-        raise ObjectDoesNotExist("The database does not contain a test specification.")
+        raise ObjectDoesNotExist("The database does not contain a specification.")
     # no publicCode in spec
     data.pop("publicCode", None)
     return data
@@ -216,7 +216,7 @@ def get_the_spec() -> dict:
 def get_the_spec_as_toml(
     *, include_public_code: bool = False, _include_private_seed: bool = False
 ) -> str:
-    """Return the test-specification from the database.
+    """Return the specification from the database.
 
     Generally, the public code and the private seed are removed (hidden
     from the return) but this can be changed with keyword arguments.
