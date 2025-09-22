@@ -5,14 +5,14 @@
 
 import importlib.metadata
 
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.urls import reverse
-from django.contrib import messages
 from django.views.generic import View
-from django_huey import get_queue
 from django_htmx.http import HttpResponseClientRedirect
+from django_huey import get_queue
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom_server.Papers.services import SpecificationService
@@ -141,14 +141,15 @@ class ResetView(ManagerRequiredView):
         got_phrase = request.POST.get("reset_phrase_box")
         if got_phrase != reset_phrase:
             return HttpResponse(
-                f'Phrase "{got_phrase}" does not match "{reset_phrase}"', status=400
+                f'<b>Error:</b> phrase "{got_phrase}" does not match "{reset_phrase}"',
+                status=400,
             )
 
         try:
             big_red_button.reset_assessment_preparation_database()
         except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
             messages.add_message(request, messages.ERROR, f"{err}")
-            return redirect(reverse("prep_conflict"))
+            return HttpResponse(f"<b>Error:</b> {err}", status=400)
 
         messages.success(request, "Plom instance successfully wiped.")
         return HttpResponseClientRedirect(reverse("home"))
