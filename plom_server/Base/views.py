@@ -12,15 +12,14 @@ from django.urls import reverse
 from django.contrib import messages
 from django.views.generic import View
 from django_huey import get_queue
+from django_htmx.http import HttpResponseClientRedirect
 
-from .base_group_views import ManagerRequiredView
-from .forms import CompleteWipeForm
-from .services import big_red_button
-
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 
-from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from .base_group_views import ManagerRequiredView
+from .services import big_red_button
 
 
 class TroublesAfootGenericErrorView(View):
@@ -110,7 +109,6 @@ class ResetView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         """Handles the GET request for the reset confirmation view."""
         context = self.build_context()
-        form = CompleteWipeForm()
         try:
             reset_phrase = SpecificationService.get_shortname()
             have_spec = True
@@ -122,41 +120,35 @@ class ResetView(ManagerRequiredView):
             {
                 "have_spec": have_spec,
                 "bundles_staged": have_bundles_staged,
-                "wipe_form": form,
                 "reset_phrase": reset_phrase,
             }
         )
-        return render(request, "base/reset_confirm.html", context=context)
+        return render(request, "base/reset.html", context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Handles the POST request for the reset confirmation view."""
-        context = self.build_context()
-        form = CompleteWipeForm(request.POST)
+        """Handles the POST request for the reset confirmation view.
+
+        If the "reset_phrase_box" doesn't match, return a 400.  On success
+        redirect to home.  Some other errors (unexpected ones) will go
+        to a "preparation conflict" page.
+
+        Called by htmx.
+        """
         try:
             reset_phrase = SpecificationService.get_shortname()
         except ObjectDoesNotExist:
             reset_phrase = "yes"
-        _confirm_field = "confirmation_field"
-        if not form.is_valid():
-            # not sure this can happen, or what to do if it does; for now
-            # display poorly formatted error message on the home screen
-            messages.error(request, f"Something expected happened: {form}")
-            return redirect("home")
-        if form.cleaned_data[_confirm_field] == reset_phrase:
-            try:
-                big_red_button.reset_assessment_preparation_database()
-            except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
-                messages.add_message(request, messages.ERROR, f"{err}")
-                return redirect(reverse("prep_conflict"))
-
-            messages.success(request, "Plom instance successfully wiped.")
-            return redirect("home")
-        else:
-            form.add_error(_confirm_field, "Phrase is incorrect")
-            context.update(
-                {
-                    "bundles_staged": ScanService().staging_bundles_exist(),
-                    "wipe_form": form,
-                }
+        got_phrase = request.POST.get("reset_phrase_box")
+        if got_phrase != reset_phrase:
+            return HttpResponse(
+                f'Phrase "{got_phrase}" does not match "{reset_phrase}"', status=400
             )
-            return render(request, "base/reset_confirm.html", context=context)
+
+        try:
+            big_red_button.reset_assessment_preparation_database()
+        except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return redirect(reverse("prep_conflict"))
+
+        messages.success(request, "Plom instance successfully wiped.")
+        return HttpResponseClientRedirect(reverse("home"))

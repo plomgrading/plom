@@ -45,34 +45,47 @@
                          aria-labelledby="accordion_heading1"
                          data-bs-parent="#reset_accordion">
                         <div class="accordion-body bg-danger-subtle">
-                            <div class="float-start">
-                                <img style="width: 20ex" src="{% static 'fingers_in_gears.svg' %}" />
-                            </div>
+                            <!-- <div class="float-start"> -->
+                            <!--     <img style="width: 20ex" src="{% static 'fingers_in_gears.svg' %}" /> -->
+                            <!-- </div> -->
                             <div>
                                 <p>
                                     Confirm that you understand that this action is irreversible,
                                     will result in the complete loss of data on this Plom instance,
-                                    and that you wish to continue anyway by entering the assessment
-                                    shortname below.
+                                    and that you wish to continue anyway by entering the text below.
                                 </p>
-                                <form method="post" action="" autocomplete="off">
+                                <div>
+                                    <!-- this is the target for any htmx error messages -->
+                                    <!-- p-0 border-0 here tries to hide the div when its empty -->
+                                    <div id="my-errors" class="p-0 border-0 alert alert-danger hide"></div>
+                                </div>
+                                <form hx-post=""
+                                      action=""
+                                      hx-target="body"
+                                      hx-confirm="Are you sure?"
+                                      hx-target-error="#my-errors"
+                                      hx-disabled-elt="#wipe_button"
+                                      hx-indicator="#myindicator"
+                                      autocomplete="off">
                                     {% csrf_token %}
-                                    <div class="mx-auto flex-row">
-                                        <div class="form-group m-2 flex-grow-1">
-                                            {{ wipe_form.confirmation_field }}
-                                            &nbsp; (type &ldquo;<strong>{{ reset_phrase }}</strong>&rdquo; to continue)
-                                        </div>
-                                        {% if wipe_form.confirmation_field.errors %}
-                                            {% for error in wipe_form.confirmation_field.errors %}
-                                                <p>
-                                                    <strong>{{ error|escape }}</strong>
-                                                </p>
-                                            {% endfor %}
-                                        {% endif %}
-                                        <button type="submit" class="btn btn-danger">
-                                            <i class="bi bi-exclamation-triangle-fill"></i> Wipe Plom Instance
-                                        </button>
+                                    <div class="form-floating mb-3">
+                                        <input type="text"
+                                               name="reset_phrase_box"
+                                               class="form-control"
+                                               pattern="{{ reset_phrase }}"
+                                               title="Enter {{ reset_phrase }} to continue"
+                                               id="reset_phrase_box"
+                                               placeholder="{{ reset_phrase }}">
+                                        <label for="reset_phrase_box">Enter &ldquo;{{ reset_phrase }}&rdquo; to continue</label>
                                     </div>
+                                    <!-- hx-disabled-elt="self" on this button doesn't work b/c this button doesn't have hx-post -->
+                                    <button type="submit" class="btn btn-danger" id="wipe_button">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Wipe Plom Instance
+                                    </button>
+                                    <span id="myindicator" class="htmx-indicator">
+                                        <img src="{% static 'ball_triangle.svg' %}" />
+                                        busy...
+                                    </span>
                                 </form>
                             </div>
                         </div>
@@ -88,7 +101,8 @@
             <div class="card-body">
                 <div class="card-text">
                     <p>
-                        This Plom instance has staged bundles and cannot be wiped via the interface. Contact your server administrator if you truly need to reset this instance
+                        This Plom instance has staged bundles and cannot be wiped via this interface.
+                        Contact your server administrator if you truly need to reset this instance
                     </p>
                 </div>
             </div>
