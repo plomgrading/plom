@@ -105,34 +105,10 @@ class ServerStatusView(ManagerRequiredView):
 
 
 class ResetView(ManagerRequiredView):
-    """View class for handling the reset functionality."""
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        """Handles the GET request for the reset functionality.
-
-        Args:
-            request (HttpRequest): The HTTP request object.
-
-        Returns:
-            An HTTP response object.
-        """
-        context = self.build_context()
-        context.update({"bundles_staged": ScanService().staging_bundles_exist()})
-        return render(request, "base/reset.html", context)
-
-
-class ResetConfirmView(ManagerRequiredView):
     """View class for confirming the reset of a Plom instance."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        """Handles the GET request for the reset confirmation view.
-
-        Args:
-            request (HttpRequest): The HTTP request object.
-
-        Returns:
-            HttpResponse: The HTTP response object.
-        """
+        """Handles the GET request for the reset confirmation view."""
         context = self.build_context()
         form = CompleteWipeForm()
         try:

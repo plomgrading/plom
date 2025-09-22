@@ -31,47 +31,65 @@
         </div>
     {% else %}
         {% if not bundles_staged %}
-            <div class="card">
-                <div class="card-header text-white bg-danger">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>Danger: Master Reset</strong>
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                </div>
-                <div class="card-body">
-                    <div class="card-text">
-                        <p>You have chosen to completely reset this Plom instance.</p>
-                        <p>
-                            <strong>This action is irreversible and will completely delete any data stored</strong>
-                        </p>
-                        <p>All data stored by Plom currently will be wiped, including but not limited to:</p>
-                        <ul>
-                            <li>The assessment specifications</li>
-                            <li>All printable PDFs</li>
-                            <li>The "QV map"</li>
-                        </ul>
-                        <a type="button" class="btn btn-primary m-1" href="{% url 'home' %}">Cancel and return home</a>
-                        <p class="mt-4">
-                            Confirm that you understand that this action is irreversible, will result in the complete loss of data on this Plom instance, and that you wish to continue anyways by entering the assessment shortname below
-                        </p>
-                        <p class="text-center">
-                            <strong>{{ reset_phrase }}</strong>
-                        </p>
-                        <form method="post" action="" autocomplete="off">
-                            {% csrf_token %}
-                            <div class="mx-auto text-center flex-row">
-                                <div class="form-group m-2 flex-grow-1">{{ wipe_form.confirmation_field }}</div>
-                                {% if wipe_form.confirmation_field.errors %}
-                                    {% for error in wipe_form.confirmation_field.errors %}
-                                        <p>
-                                            <strong>{{ error|escape }}</strong>
-                                        </p>
-                                    {% endfor %}
-                                {% endif %}
-                                <img style="max-width: 5rem" src="{% static 'fingers_in_gears.svg' %}" />
-                                <button type="submit" class="btn btn-danger">Wipe Plom Instance</button>
-                                <img style="max-width: 5rem" src="{% static 'fingers_in_gears.svg' %}" />
+            <div class="mt-4">
+                <p>Do you want to completely reset this Plom instance?</p>
+                <p>
+                    <strong>This action is irreversible and will completely delete any data stored</strong>
+                </p>
+                <p>All data stored by Plom currently will be wiped, including but not limited to:</p>
+                <ul>
+                    <li>The assessment specifications</li>
+                    <li>All printable PDFs</li>
+                    <li>The "QV map"</li>
+                </ul>
+                <a type="button" class="btn btn-primary m-1" href="{% url 'home' %}">Cancel and return home</a>
+                <div class="accordion mt-2" id="reset_accordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="accordion_heading1">
+                            <button class="accordion-button text-bg-danger collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse1"
+                                    aria-expanded="false"
+                                    aria-controls="collapse1">Continue</button>
+                        </h2>
+                        <div id="collapse1"
+                             class="accordion-collapse collapse"
+                             aria-labelledby="accordion_heading1"
+                             data-bs-parent="#reset_accordion">
+                            <div class="accordion-body bg-danger-subtle">
+                                <div class="float-start">
+                                    <img style="width: 20ex" src="{% static 'fingers_in_gears.svg' %}" />
+                                </div>
+                                <div>
+                                    <p>
+                                        Confirm that you understand that this action is irreversible,
+                                        will result in the complete loss of data on this Plom instance,
+                                        and that you wish to continue anyway by entering the assessment
+                                        shortname below.
+                                    </p>
+                                    <form method="post" action="" autocomplete="off">
+                                        {% csrf_token %}
+                                        <div class="mx-auto flex-row">
+                                            <div class="form-group m-2 flex-grow-1">
+                                                {{ wipe_form.confirmation_field }}
+                                                &nbsp; (type &ldquo;<strong>{{ reset_phrase }}</strong>&rdquo; to continue)
+                                            </div>
+                                            {% if wipe_form.confirmation_field.errors %}
+                                                {% for error in wipe_form.confirmation_field.errors %}
+                                                    <p>
+                                                        <strong>{{ error|escape }}</strong>
+                                                    </p>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-exclamation-triangle-fill"></i> Wipe Plom Instance
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
