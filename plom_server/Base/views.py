@@ -113,13 +113,15 @@ class ResetView(ManagerRequiredView):
         form = CompleteWipeForm()
         try:
             reset_phrase = SpecificationService.get_shortname()
+            have_spec = True
         except ObjectDoesNotExist:
-            context.update({"no_spec": True})
-            return render(request, "base/reset_confirm.html", context=context)
+            reset_phrase = "yes"
+            have_spec = False
+        have_bundles_staged = ScanService().staging_bundles_exist()
         context.update(
             {
-                "no_spec": False,
-                "bundles_staged": ScanService().staging_bundles_exist(),
+                "have_spec": have_spec,
+                "bundles_staged": have_bundles_staged,
                 "wipe_form": form,
                 "reset_phrase": reset_phrase,
             }
@@ -127,18 +129,13 @@ class ResetView(ManagerRequiredView):
         return render(request, "base/reset_confirm.html", context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Handles the POST request for the reset confirmation view.
-
-        Args:
-            request: The HTTP request object.
-
-        Returns:
-            A HTTP response object.
-        """
+        """Handles the POST request for the reset confirmation view."""
         context = self.build_context()
         form = CompleteWipeForm(request.POST)
-        # TODO: one might expect the validator should checks if this matches
-        reset_phrase = SpecificationService.get_shortname()
+        try:
+            reset_phrase = SpecificationService.get_shortname()
+        except ObjectDoesNotExist:
+            reset_phrase = "yes"
         _confirm_field = "confirmation_field"
         if not form.is_valid():
             # not sure this can happen, or what to do if it does; for now
