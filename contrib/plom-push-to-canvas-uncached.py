@@ -76,10 +76,7 @@ from plom.plom_exceptions import (
 
 # bump this a bit if you change this script
 __script_version__ = "0.6.1"
-
 __DEBUG__ = True
-
-__DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
 
 # These are the keys for the json returned by the Plom 'get spreadsheet' API call
 PLOM_STUDENT_ID = "StudentID"
@@ -90,6 +87,10 @@ PLOM_PAPERNUM = "PaperNumber"
 # when calling course.get_enrollments(), the student objects returned
 # will have student IDs stored in this attribute
 CANVAS_STUDENT_ID = "sis_user_id"
+__DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
+
+CHECKMARK = "\u2713"
+CROSS = "\u274c"
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -261,24 +262,6 @@ def get_parser() -> argparse.ArgumentParser:
 # A suite of functions to get Canvas related stuff
 
 
-def verify_canvas_api_key(user_input: str | None = None) -> str:
-    """Verify something was provided by the user for a Canvas API key.
-
-    This function only checks for existence, not validity.
-
-    Args:
-        user_input: a user_input canvas api key.
-
-    Returns:
-        A string, there's no guarantee it's a valid api key.
-
-    """
-    api_key = user_input or os.environ.get("CANVAS_API_KEY")
-    if not api_key:
-        api_key = input("Please enter an API key for Canvas: ")
-    return api_key
-
-
 def canvas_login(
     api_key: str, api_url: str | None = None, *, max_attempts: int = 3
 ) -> canvasapi.current_user.CurrentUser | None:
@@ -382,40 +365,6 @@ def interactively_get_course_id(user):
     return course.id
 
 
-def verify_canvas_course_id(
-    user_input: int | None = None,
-    *,
-    canvas_user: canvasapi.current_user.CurrentUser | None = None,
-) -> int:
-    """Verify something was provided by the user for the Canvas course id.
-
-    This function only checks for existence, not validity.
-
-    Args:
-        user_input: a user_input course_id.
-
-    Keyword Args:
-        canvas_user: used to retrieve a list of valid courses from Canvas if no user
-            input is provided. This is optional.
-
-    Returns:
-        An integer, there's no guarantee it's a valid Canvas course id.
-    """
-    course_id = user_input
-    if not course_id:
-        if canvas_user:
-            course_id = interactively_get_course_id(canvas_user)
-        else:
-            while True:
-                course_id = input("Please enter the Canvas course id: ")
-                try:
-                    course_id = int(course_id)
-                    break
-                except ValueError:
-                    print(f'"{course_id}" is not an integer.')
-    return course_id
-
-
 def get_course_by_id(
     course_number: int, user: canvasapi.current_user.CurrentUser
 ) -> canvasapi.course.Course | None:
@@ -438,40 +387,6 @@ def get_course_by_id(
     )
     time.sleep(1)
     return None
-
-
-def verify_canvas_course_section_id(
-    user_input: int | None = None,
-    *,
-    canvas_course: canvasapi.course.Course | None = None,
-) -> int | None:
-    """Verify something was provided by the user for the Canvas course section id.
-
-    This function only checks for existence, not validity.
-
-    Args:
-        user_input: a user_input course section id.
-
-    Keyword Args:
-        canvas_course: used to retrieve a list of valid sections from Canvas if no user
-            input is provided. This is optional.
-
-    Returns:
-        An integer, there's no guarantee it's a valid Canvas course section id.
-    """
-    course_section_id = user_input
-    if not course_section_id:
-        if canvas_course:
-            course_section_id = interactively_get_course_section_id(canvas_course)
-        else:
-            while True:
-                course_section_id = input("Please enter the Canvas course section id: ")
-                try:
-                    course_section_id = int(course_section_id)
-                    break
-                except ValueError:
-                    print(f'"{course_section_id}" is not an integer.')
-    return course_section_id
 
 
 def get_canvas_course_section_by_id(
@@ -578,40 +493,6 @@ def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> i
     print(f'  Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print("\n")
     return assignment.id
-
-
-def verify_canvas_assignment_id(
-    user_input: int | None = None,
-    *,
-    canvas_course: canvasapi.course.Course | None = None,
-) -> int:
-    """Verify something was provided by the user for the Canvas assignment id.
-
-    This function only checks for existence, not validity.
-
-    Args:
-        user_input: a user_input assignment id.
-
-    Keyword Args:
-        canvas_course: used to retrieve a list of valid assignments from
-            Canvas if no user input is provided. This is optional.
-
-    Returns:
-        An integer, there's no guarantee it's a valid Canvas assignment id.
-    """
-    assignment_id = user_input
-    if not assignment_id:
-        if canvas_course:
-            assignment_id = interactively_get_canvas_assignment_id(canvas_course)
-        else:
-            while True:
-                assignment_id = input("Please enter the Canvas assignment id: ")
-                try:
-                    assignment_id = int(assignment_id)
-                    break
-                except ValueError:
-                    print(f'"{assignment_id}" is not an integer.')
-    return assignment_id
 
 
 def get_canvas_assignment_by_id(
@@ -768,48 +649,44 @@ def main():
     # import dotenv
     # ...
 
-    # python doesn't have do-while :/
-    canvas_user = None
-    while not canvas_user:
-        args.api_key = verify_canvas_api_key(getattr(args, "api_key", None))
-        canvas_user = canvas_login(args.api_key, getattr(args, "api_url", None))
-        delattr(args, "api_key")
-    print("Canvas API key successfully authenticated.")
+    if hasattr(args, "api_key"):
+        args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
+    if hasattr(args, "api_key") and not args.api_key:
+        args.api_key = input("Please enter an API key for Canvas: ")
+    print("Checking Canvas API key... ", end="")
+    canvas_user = canvas_login(args.api_key, getattr(args, "api_url", None))
+    print(CHECKMARK)
 
-    canvas_course = None
-    while not canvas_course:
-        args.course = verify_canvas_course_id(
-            getattr(args, "course", None), canvas_user=canvas_user
-        )
-        canvas_course = get_course_by_id(args.course, canvas_user)
-        delattr(args, "course")
-    print(f"using course: {canvas_course}")
+    if not args.course:
+        args.course = interactively_get_course_id(canvas_user)
+    print("Getting Canvas course... ", end="")
+    canvas_course = get_course_by_id(args.course, canvas_user)
+    print(f"({canvas_course}) " + CHECKMARK)
 
-    canvas_course_section = None
-    if not getattr(args, "no_section", None):
-        while not canvas_course_section:
-            args.section = verify_canvas_course_section_id(
-                getattr(args, "section", None), canvas_course=canvas_course
-            )
-            if args.section is None:
-                canvas_course_section = None
-                break
+    if args.no_section:
+        canvas_course_section = None
+    else:
+        if not args.section:
+            args.section = interactively_get_course_section_id(canvas_course)
+        if args.section:
+            print("Getting Canvas section... ", end="")
             canvas_course_section = get_canvas_course_section_by_id(
                 canvas_course, args.section
             )
-            delattr(args, "section")
+            print(f"({canvas_course_section}) " + CHECKMARK)
 
-    canvas_assignment = None
-    while not canvas_assignment:
-        args.assignment = verify_canvas_assignment_id(
-            getattr(args, "assignment", None), canvas_course=canvas_course
-        )
-        canvas_assignment = get_canvas_assignment_by_id(canvas_course, args.assignment)
-        delattr(args, "assignment")
-    print(f"uploading to Assignment: {canvas_assignment}")
+    if not args.assignment:
+        args.assignment = interactively_get_canvas_assignment_id(canvas_course)
+    print("Getting Canvas assignment...", end="")
+    canvas_assignment = get_canvas_assignment_by_id(canvas_course, args.assignment)
+    print(f"({canvas_assignment}) " + CHECKMARK)
 
-    print(f"  * Assignment is published: {canvas_assignment.published}")
-    print(f'  * Assignment is "post_manually": {canvas_assignment.post_manually}')
+    print(
+        f"  * Assignment is published: { CHECKMARK if canvas_assignment.published else CROSS}"
+    )
+    print(
+        f'  * Assignment is "post_manually": {CHECKMARK if canvas_assignment.post_manually else CROSS}'
+    )
     if not canvas_assignment.published or not canvas_assignment.post_manually:
         raise ValueError(
             "Assignment must be published and set to manually release grades: see "
@@ -981,19 +858,20 @@ def main():
         # no Plom API for this
         if args.reports:
             pass
+    print("\n")
 
     if plom_timeouts:
-        print("There were some failed downloads from Plom:")
+        print("FAILED DOWNLOADS FROM PLOM")
         print(tabulate(plom_timeouts, headers="keys"))
         print("\n\n")
 
     if canvas_absences:
-        print("There were some students that didn't appear on Canvas:")
+        print("STUDENTS ABSENT FROM CANVAS")
         print(tabulate(canvas_absences, headers="keys"))
         print("\n\n")
 
     if canvas_timeouts:
-        print("There were some failed uploads to Canvas:")
+        print("FAILED UPLOADS TO CANVAS")
         print(tabulate(canvas_timeouts, headers="keys"))
         print("\n\n")
 
