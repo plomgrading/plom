@@ -148,7 +148,6 @@ class ResetView(ManagerRequiredView):
         try:
             big_red_button.reset_assessment_preparation_database()
         except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
-            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponse(f"<b>Error:</b> {err}", status=400)
 
         messages.success(request, "Plom instance successfully wiped.")
