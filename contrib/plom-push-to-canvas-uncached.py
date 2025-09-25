@@ -636,14 +636,16 @@ def get_canvas_assignment_by_id(
         return None
 
 
-def get_canvas_id_dict(course: canvasapi.course.Course) -> dict[str, int]:
+def get_canvas_id_dict(
+    course_or_section: canvasapi.course.Course | canvasapi.section.Section,
+) -> dict[str, int]:
     """Get a dictionary of student canvas IDs keyed by student ID.
 
     This assumes a 'student' has a StudentEnrolment role and a
     student ID which isn't None.
     """
     canvas_ids = {}
-    enrollees = course.get_enrollments()
+    enrollees = course_or_section.get_enrollments()
 
     # Student ID format will vary by institution
     # explicitly casting the student ID to string is intentional
@@ -790,6 +792,7 @@ def main():
                 getattr(args, "section", None), canvas_course=canvas_course
             )
             if args.section is None:
+                canvas_course_section = None
                 break
             canvas_course_section = get_canvas_course_section_by_id(
                 canvas_course, args.section
@@ -844,7 +847,10 @@ def main():
         canvas_submissions.update({submission.user_id: submission})
 
     # get canvas conversion dict - student id to canvas id
-    canvas_ids = get_canvas_id_dict(canvas_course)
+    if canvas_course_section:
+        canvas_ids = get_canvas_id_dict(canvas_course_section)
+    else:
+        canvas_ids = get_canvas_id_dict(canvas_course)
 
     if args.dry_run:
         successes = []
@@ -858,27 +864,14 @@ def main():
         student_name = exam_dict[PLOM_STUDENT_NAME]
         try:
             student_canvas_id = canvas_ids[student_id]
-        except KeyError:
-            print(
-                f"student {student_name} - {student_id} (paper #{paper_number})"
-                " couldn't be found on Canvas, skipping."
-            )
-            canvas_absences.append(
-                {
-                    "paper_number": paper_number,
-                    "student_id": student_id,
-                    "error": f"{student_name} couldn't be found on Canvas.",
-                }
-            )
-            continue
-
-        # this should never fail, but just in case
-        try:
+            # if the student has a Canvas id, this next line should never fail
+            # but it did in testing (note sure how to reproduce).
             student_canvas_submission = canvas_submissions[student_canvas_id]
         except KeyError:
             print(
-                f"student {student_name} - {student_id} (paper #{paper_number})"
-                " couldn't be found on Canvas, skipping."
+                f"Student {student_name} - {student_id} (paper #{paper_number})"
+                " couldn't be found in your canvas course (or section if specified),"
+                " skipping."
             )
             canvas_absences.append(
                 {
