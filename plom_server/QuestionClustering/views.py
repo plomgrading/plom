@@ -4,17 +4,11 @@
 
 from urllib.parse import urlencode
 
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseNotFound,
-    Http404,
-    QueryDict,
-)
-from django.shortcuts import render, redirect
-from django.urls import reverse
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpRequest, HttpResponse, HttpResponseNotFound, Http404
+from django.shortcuts import render, redirect
+from django.urls import reverse
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import HueyTaskTracker
@@ -446,13 +440,12 @@ class ClusterBulkTaggingView(ManagerRequiredView):
 class RemoveTagFromClusterView(ManagerRequiredView):
     """Remove tag from a particular cluster."""
 
-    def delete(self, request: HttpRequest):
+    def delete(self, request: HttpRequest) -> HttpResponse:
         """Remove tag from a particular cluster."""
-        qd = QueryDict(request.body.decode())
-        question_idx = int(qd.get("question_idx"))
-        version = int(qd.get("version"))
-        clusterId = int(qd.get("clusterId"))
-        tag_pk = int(qd.get("tag_pk"))
+        question_idx = int(request.GET.get("question_idx"))
+        version = int(request.GET.get("version"))
+        clusterId = int(request.GET.get("clusterId"))
+        tag_pk = int(request.GET.get("tag_pk"))
 
         qcs = QuestionClusteringService()
         qcs.remove_tag_from_a_cluster(
