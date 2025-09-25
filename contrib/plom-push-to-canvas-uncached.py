@@ -6,36 +6,37 @@
 # Copyright (C) 2022 Nicholas J H Lai
 # Copyright (C) 2025 Aidan Murphy
 
-"""Upload papers and grades to Canvas from Plom.
+r"""Upload papers and grades to Canvas from Plom.
 
 Overview:
 
   1. Finish grading
-  2. Download the `marks.csv`, the reassembled papers,
-     and the solutions from Plom.
+  2. Reassemble papers.
   3. Copy this script into the current directory.
   4. Run this script and follow the interactive menus:
      ```
-     ./plom-push-to-canvas.py --dry-run
+     ./plom-push-to-canvas-uncached.py --dry-run
      ```
      It will output what would be uploaded.
-  5. Note that you can provide command line arguments and/or
+     Note that you can provide command line arguments and/or
      set environment variables to avoid the interactive prompts:
      ```
      ./plom-push-to-canvas.py --help
      ```
-  6. Run it again for real:
+  5. Run it again for real:
      ```
-     ./plom-push-to-canvas.py --course xxxxxx --assignment xxxxxxx --no-section 2>&1 | tee push.log
+     ./plom-push-to-canvas.py --course xxxxxx \
+                            --assignment xxxxxx \
+                            --plom-server xxxxxx \
+                            --plom-username xxxxx \
+                            --no-section 2>&1 | tee push.log
      ```
 
-This script traverses the files in `reassembled/` directory
-and tries to upload them.  It takes the corresponding grades
-from `marks.csv`.  There can be grades in `marks.csv` for which
-there is no reassembled file in `reassembled/`: these are ignored.
+This script traverses all papers in your Plom server with any
+scanned student work - though it will ignore any papers that
+haven't been ID'd.
 
-Solutions can also be uploaded.  Again, only solutions that
-correspond to an actual reassembled paper will be uploaded.
+Solutions and Reports cannot be uploaded yet.
 
 Instructors and TAs can do this but in the past it would fail for
 the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
@@ -191,11 +192,6 @@ def get_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="""
             Don't push the reassembled papers.
-            CAUTION: in this case, this script still uses the pdf files in
-            "reassembled/" directory to decide who to upload to.  This is
-            a bit counter-intuitive b/c those files themselves are not uploaded.
-            The intended use of this option is for ADDING additional files
-            (see `--solutions, `--reports`).
         """,
     )
     parser.add_argument(
@@ -220,8 +216,6 @@ def get_parser() -> argparse.ArgumentParser:
             NOT IMPLEMENTED.
             Upload individualized student reports, in addition to reassembled papers
             (default: off).
-            The reports must be PDF files of the form "Student_Reports/12345678.pdf".
-            There must be one such file for each PDF file in "reassembled/".
         """,
     )
 
@@ -241,8 +235,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--plom-username",
         type=str,
         help="""
-            Also checks the
-            environment variable PLOM_USERNAME.
+            Also checks the environment variable PLOM_USERNAME.
         """,
     )
     parser.add_argument(
@@ -250,8 +243,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--plom-password",
         type=str,
         help="""
-            Also checks the
-            environment variable PLOM_PASSWORD.
+            Also checks the environment variable PLOM_PASSWORD.
         """,
     )
 
