@@ -22,7 +22,7 @@ class ManageScanServiceTests(TestCase):
             Bundle,
             pdf_hash="qwerty",
         )
-        # make 15 papers
+        # make some papers
         # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.
         # * 1,2,3,4 with fixed-page images  (6*4 scanned pages)
         # * 6,7 = 2 scanned fixed pages, 4 unscanned = incomplete  (2*2 scanned pages)
@@ -112,7 +112,7 @@ class ManageScanServiceTests(TestCase):
         return super().setUp()
 
     def test_counts(self) -> None:
-        # make 15 papers
+        # we have made some papers
         # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.
         # * 1,2,3,4 with fixed-page images  (6*4 scanned pages)
         # * 6,7 = 2 scanned fixed pages, 4 unscanned = incomplete  (2*2 scanned pages)
