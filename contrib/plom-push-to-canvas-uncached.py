@@ -12,7 +12,11 @@ Overview:
 
   1. Finish grading
   2. Reassemble papers.
-  3. Copy this script into the current directory.
+  3. Copy this script into the current directory, and install:
+    - tqdm
+    - plom
+    - tabulate
+    - python-dotenv (optional)
   4. Run this script and follow the interactive menus:
      ```
      ./plom-push-to-canvas-uncached.py --dry-run
@@ -51,14 +55,15 @@ import time
 from getpass import getpass
 import requests
 from tempfile import NamedTemporaryFile
-from tabulate import tabulate
 from email.message import EmailMessage
+
+from tabulate import tabulate
+from tqdm import tqdm
 
 import canvasapi
 from canvasapi import Canvas
 from canvasapi.exceptions import CanvasException
 from canvasapi import __version__ as __canvasapi_version__
-from tqdm import tqdm
 
 from plom.common import (
     __version__ as __plom_version__,
@@ -636,6 +641,13 @@ def get_plom_reassembled(
 
 def main():
     args = get_parser().parse_args()
+
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv()
+    except ModuleNotFoundError as e:
+        print(f"couldn't read a .env file, skipping: {e}")
 
     # TODO: read .env file
     # import dotenv
