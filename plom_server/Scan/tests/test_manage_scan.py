@@ -22,7 +22,7 @@ class ManageScanServiceTests(TestCase):
             Bundle,
             pdf_hash="qwerty",
         )
-        # make 15 papers
+        # make some papers
         # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.
         # * 1,2,3,4 with fixed-page images  (6*4 scanned pages)
         # * 6,7 = 2 scanned fixed pages, 4 unscanned = incomplete  (2*2 scanned pages)
@@ -112,7 +112,7 @@ class ManageScanServiceTests(TestCase):
         return super().setUp()
 
     def test_counts(self) -> None:
-        # make 15 papers
+        # we have made some papers
         # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.
         # * 1,2,3,4 with fixed-page images  (6*4 scanned pages)
         # * 6,7 = 2 scanned fixed pages, 4 unscanned = incomplete  (2*2 scanned pages)
@@ -121,7 +121,7 @@ class ManageScanServiceTests(TestCase):
         # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (3*2 mobile)
         # * 16,17,18 = two mobile pages each (questions 1, 2, 3). (2*2 mobile)
         mss = ManageScanService()
-        assert mss.get_total_papers() == 18
+        assert ManageScanService.get_total_papers() == 18
         assert mss.get_total_fixed_pages() == 18 * 6
         assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 4 * 3 + 3 * 2
         assert (
@@ -129,8 +129,8 @@ class ManageScanServiceTests(TestCase):
             == 5 * 6 + 1 + 2 * 2 + 2 * 2 + 2 * 2 + 4 * 3 + 3 * 2
         )
         assert mss.get_number_unused_papers() == 2
-        assert mss.get_number_completed_papers() == 5 + 4
-        assert mss.get_number_incomplete_papers() == 2 + 2 + 3
+        assert ManageScanService.get_number_completed_papers() == 5 + 4
+        assert ManageScanService.get_number_incomplete_papers() == 2 + 2 + 3
 
     def test_get_all_used_and_unused_papers(self) -> None:
         unused = [8, 9]
@@ -271,8 +271,7 @@ class ManageScanServiceTests(TestCase):
         """Test whether we can tell if a paper is scanned."""
         # papers 6, 7, 10, 11, 16, 17, 18 are incomplete
 
-        mss = ManageScanService()
-        assert mss.is_paper_completely_scanned(1)
-        assert mss.is_paper_completely_scanned(12)
-        assert not mss.is_paper_completely_scanned(6)
-        assert not mss.is_paper_completely_scanned(16)
+        assert ManageScanService.is_paper_completely_scanned(1)
+        assert ManageScanService.is_paper_completely_scanned(12)
+        assert not ManageScanService.is_paper_completely_scanned(6)
+        assert not ManageScanService.is_paper_completely_scanned(16)

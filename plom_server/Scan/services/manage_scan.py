@@ -54,11 +54,13 @@ class ManageScanService:
         mobile = MobilePage.objects.all()
         return scanned_fixed.count() + mobile.count()
 
-    def get_total_papers(self) -> int:
+    @staticmethod
+    def get_total_papers() -> int:
         """Return the total number of papers in the exam."""
         return Paper.objects.all().count()
 
-    def _get_used_unused_paper_querysets(self) -> tuple[QuerySet, QuerySet]:
+    @staticmethod
+    def _get_used_unused_paper_querysets() -> tuple[QuerySet, QuerySet]:
         """Return lazy querysets for all used and unused papers.
 
         A paper is used when it has at least one fixed page image, or at
@@ -88,7 +90,8 @@ class ManageScanService:
 
         return used_papers_queryset, unused_papers_queryset
 
-    def _get_complete_incomplete_paper_querysets(self) -> tuple[QuerySet, QuerySet]:
+    @classmethod
+    def _get_complete_incomplete_paper_querysets(cls) -> tuple[QuerySet, QuerySet]:
         """Return lazy querysets for all complete and incomplete papers.
 
         A paper is complete when it either has **all** its fixed
@@ -134,7 +137,7 @@ class ManageScanService:
         complete_papers_queryset = all_fixed_present | no_fixed_but_all_mobile
 
         # all used papers must be complete or incomplete
-        used_papers_queryset, _ = self._get_used_unused_paper_querysets()
+        used_papers_queryset, __ = cls._get_used_unused_paper_querysets()
         incomplete_papers_queryset = used_papers_queryset.filter(
             ~Exists(
                 complete_papers_queryset.filter(paper_number=OuterRef("paper_number"))
@@ -143,22 +146,23 @@ class ManageScanService:
 
         return complete_papers_queryset, incomplete_papers_queryset
 
-    @transaction.atomic
-    def get_number_completed_papers(self) -> int:
+    @classmethod
+    def get_number_completed_papers(cls) -> int:
         """Returns the number of complete papers."""
-        complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
+        complete_papers_queryset, __ = cls._get_complete_incomplete_paper_querysets()
         return complete_papers_queryset.count()
 
     # do not call this in a loop - write a function:
     # def are_papers_completely_scanned(self, paper_nums: list[int]) -> dict[int: bool]
-    def is_paper_completely_scanned(self, paper_num: int) -> bool:
+    @classmethod
+    def is_paper_completely_scanned(cls, paper_num: int) -> bool:
         """Check whether the given paper has been completely scanned."""
-        complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
+        complete_papers_queryset, __ = cls._get_complete_incomplete_paper_querysets()
         return complete_papers_queryset.filter(paper_number=paper_num).exists()
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
-    def get_all_complete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
+    def get_all_complete_papers(cls) -> dict[int, dict[str, list[dict[str, Any]]]]:
         """Dicts of info about papers that are completely scanned.
 
         see :func: `_get_complete_incomplete_paper_querysets` for definitions
@@ -176,17 +180,16 @@ class ManageScanService:
         # they reference. If we are iterating over many Paper objects (1000's)
         # we must "prefetch" the foreign keys to prevent several DB queries for
         # each paper (a db query for each mobile/fixed page accessed).
-        complete_papers_queryset, _ = (
-            ManageScanService()._get_complete_incomplete_paper_querysets()
-        )
+        complete_papers_queryset, __ = cls._get_complete_incomplete_paper_querysets()
 
         complete_papers_queryset = complete_papers_queryset.prefetch_related(
             Prefetch(
                 "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
             ),
+            # Papers/models/structure.py claims MobilePages have no order so sort by id
             Prefetch(
                 "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_index"),
+                queryset=MobilePage.objects.order_by("question_index", "pk"),
             ),
             "fixedpage_set__image",
             "mobilepage_set__image",
@@ -246,7 +249,7 @@ class ManageScanService:
             ),
             Prefetch(
                 "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_index"),
+                queryset=MobilePage.objects.order_by("question_index", "pk"),
             ),
             "fixedpage_set__image",
             "mobilepage_set__image",
@@ -302,11 +305,10 @@ class ManageScanService:
                 )
         return incomplete
 
-    @transaction.atomic
-    def get_number_incomplete_papers(self) -> int:
+    @classmethod
+    def get_number_incomplete_papers(cls) -> int:
         """Return the number of papers partially but not completely scanned."""
-        _, incomplete_papers_queryset = self._get_complete_incomplete_paper_querysets()
-
+        __, incomplete_papers_queryset = cls._get_complete_incomplete_paper_querysets()
         return incomplete_papers_queryset.count()
 
     @transaction.atomic
@@ -315,9 +317,8 @@ class ManageScanService:
         _, unused_papers_queryset = self._get_used_unused_paper_querysets()
         return unused_papers_queryset.count()
 
-    @staticmethod
-    @transaction.atomic
-    def get_all_unused_papers() -> list[int]:
+    @classmethod
+    def get_all_unused_papers(cls) -> list[int]:
         """Return a list of paper-numbers of all unused papers.
 
         see :func: `_get_used_unused_paper_querysets` for definitions
@@ -325,16 +326,14 @@ class ManageScanService:
 
         Returns:
             a list of integers sorted in paper-number order.
+
         TODO: currently, and ironically, "unused" (but tested)
         """
-        _, unused_papers_queryset = (
-            ManageScanService()._get_used_unused_paper_querysets()
-        )
+        __, unused_papers_queryset = cls._get_used_unused_paper_querysets()
         return sorted([paper.paper_number for paper in unused_papers_queryset])
 
-    @staticmethod
-    @transaction.atomic
-    def get_all_used_papers() -> list[int]:
+    @classmethod
+    def get_all_used_papers(cls) -> list[int]:
         """Return a list of paper-numbers of all used papers.
 
         see :func: `_get_used_unused_paper_querysets` for definitions
@@ -343,7 +342,7 @@ class ManageScanService:
         Returns:
             a list of paper-numbers sorted numerically.
         """
-        used_papers_queryset, _ = ManageScanService()._get_used_unused_paper_querysets()
+        used_papers_queryset, _ = cls._get_used_unused_paper_querysets()
         return sorted([paper.paper_number for paper in used_papers_queryset])
 
     @transaction.atomic
@@ -409,11 +408,11 @@ class ManageScanService:
             }
 
     @transaction.atomic
-    def get_pushed_mobile_page_image_info(self, page_pk: int) -> dict[str, Any]:
+    def get_pushed_mobile_page_image_info(self, page_id: int) -> dict[str, Any]:
         """Given the pk of the mobile-page return info about it and its image.
 
         Args:
-            page_pk: the pk of the mobile-page.
+            page_id: the id of the mobile-page.
 
         Returns:
             A dict with keys:
@@ -436,7 +435,7 @@ class ManageScanService:
         Raises:
             None expected.
         """
-        mp_obj = MobilePage.objects.get(pk=page_pk)
+        mp_obj = MobilePage.objects.get(pk=page_id)
         img = mp_obj.image
         # same image might be used for multiple questions - get all those
         q_idx_list = [

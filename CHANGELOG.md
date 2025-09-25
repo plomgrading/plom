@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* In some cases of more than one page per question, "homework mode" pages (Mobile Pages) were not displayed in the correct order, server-side.
 
 
 

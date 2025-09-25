@@ -56,9 +56,14 @@ class MobilePage(models.Model):
     DNM pool and a question is frowned upon and undefined: at best its
     likely to confuse end-users.
 
-    Note there is no particular ordering to mobile pages.  Users of this table
-    might infer one from the ordering of the primary key (``.pk``), so create
-    them in a particular order if you have one in mind.
+    Note there is no particular ordering to mobile pages specified in
+    this table beyond that of ``question_index``.  Services using this
+    table might infer (in fact currently *do infer* and should infer)
+    an ordering from the IDs (the primary key ``.pk``). so you should
+    create entries in the "correct order", the one that reflects how
+    you would want them represented to users.  If its too late, e.g.,
+    you'd like to "insert" a new MobilePage *before* one you already
+    added, well too bad, there is currently no way to do that.
     """
 
     # symbolic constant to be used for question_index, instead of literal -1
