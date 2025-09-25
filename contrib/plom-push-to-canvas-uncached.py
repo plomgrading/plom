@@ -686,7 +686,7 @@ def main():
     print(f"({canvas_assignment}) " + CHECKMARK)
 
     print(
-        f"  * Assignment is published: { CHECKMARK if canvas_assignment.published else CROSS}"
+        f"  * Assignment is published: {CHECKMARK if canvas_assignment.published else CROSS}"
     )
     print(
         f'  * Assignment is "post_manually": {CHECKMARK if canvas_assignment.post_manually else CROSS}'
