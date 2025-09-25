@@ -245,8 +245,7 @@ class ReassembleService:
         nonmarked_mobile = (
             MobilePage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            .order_by("question_index")
-            .order_by("pk")
+            .order_by("question_index", "pk")
         )
 
         unmarked = []
