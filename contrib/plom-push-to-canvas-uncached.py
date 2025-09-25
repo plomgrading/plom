@@ -650,7 +650,9 @@ def get_canvas_id_dict(course: canvasapi.course.Course) -> dict[str, int]:
             continue
         if getattr(enrollee, CANVAS_STUDENT_ID, None) is None:
             continue
-        canvas_ids.update({str(getattr(enrollee, CANVAS_STUDENT_ID)): enrollee.id})
+        canvas_ids.update(
+            {str(getattr(enrollee, CANVAS_STUDENT_ID)): enrollee.user["id"]}
+        )
 
     return canvas_ids
 
@@ -704,14 +706,21 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, in
 def get_plom_reassembled(
     msgr, papernum: int, memfile: NamedTemporaryFile
 ) -> NamedTemporaryFile:
-    """Download a reassembled PDF file from the server.
+    """Download a reassembled PDF file from the Plom server.
 
     This is a rewrite of a native PlomAdminMessenger function.
     The intention is to leave file i/o and cleanup to python, rather
     than manage it ourselves.
 
+    Args:
+        msgr: A PlomAdminMessenger instance.
+        papernum: the paper number of the paper to fetch.
+        memfile: a reference to a NamedTemporaryFile. It must be
+            opened with write permissions in **byte** mode.
+
     Returns:
-        A reference to the NamedTemporaryFile passed in. It should now contain the
+        A reference to the NamedTemporaryFile passed in. It should now
+        contain the reassembled exam paper specified by papernum.
     """
     if msgr.is_server_api_less_than(113):
         raise PlomNoServerSupportException(
@@ -731,7 +740,7 @@ def get_plom_reassembled(
             assert filename is not None
 
             memfile.name = msg.get_filename()
-            for chunk in tqdm(response.iter_content(chunk_size=8192)):
+            for chunk in response.iter_content(chunk_size=8192):
                 memfile.write(chunk)
 
         except requests.HTTPError as e:
@@ -829,7 +838,7 @@ def main():
     raw_submissions = canvas_assignment.get_submissions()
     canvas_submissions = {}
     for submission in raw_submissions:
-        canvas_submissions.update({submission.id: submission})
+        canvas_submissions.update({submission.user_id: submission})
 
     # get canvas conversion dict - student id to canvas id
     canvas_ids = get_canvas_id_dict(canvas_course)
@@ -839,7 +848,7 @@ def main():
     canvas_absences = []
     canvas_timeouts = []
     plom_timeouts = []
-    for _, exam_dict in student_marks.items():
+    for _, exam_dict in tqdm(student_marks.items()):
         paper_number = exam_dict[PLOM_PAPERNUM]
         score = exam_dict[PLOM_MARKS]
         student_id = exam_dict[PLOM_STUDENT_ID]
@@ -860,12 +869,29 @@ def main():
             )
             continue
 
-        student_canvas_submission = canvas_submissions[student_canvas_id]
-        assert student_canvas_submission is not None
+        try:
+            student_canvas_submission = canvas_submissions[student_canvas_id]
+        # In practice this should never fail, but during testing it did.
+        # The students were registered in a sandbox, but had already graduated,
+        # they had Canvas IDs but no submission objects on Canvas assignments.
+        except KeyError:
+            print(
+                f"Couldn't get Canvas submission for {student_name} ({student_id})."
+                " In testing this happens when the student has left UBC, but"
+                " is still registered in the course (i.e., they've graduated)."
+            )
+            canvas_absences.append(
+                {
+                    "paper_number": paper_number,
+                    "student_id": student_id,
+                    "error": f"{student_name} couldn't be found on Canvas.",
+                }
+            )
+            continue
 
         if args.dry_run:
             if args.papers:
-                with NamedTemporaryFile("w+") as f:
+                with NamedTemporaryFile("wb+") as f:
                     try:
                         get_plom_reassembled(plom_messenger, paper_number, f)
                         f.seek(0)
@@ -898,7 +924,7 @@ def main():
 
         # no real multithreading in python, so order doesn't really matter here
         if args.papers:
-            with NamedTemporaryFile("w+") as f:
+            with NamedTemporaryFile("wb+") as f:
                 try:
                     get_plom_reassembled(plom_messenger, paper_number, f)
                     f.seek(0)
@@ -954,6 +980,11 @@ def main():
     if plom_timeouts:
         print("There were some failed downloads from Plom:")
         print(tabulate(plom_timeouts, headers="keys"))
+        print("\n\n")
+
+    if canvas_absences:
+        print("There were some students that didn't appear on Canvas:")
+        print(tabulate(canvas_absences, headers="keys"))
         print("\n\n")
 
     if canvas_timeouts:
