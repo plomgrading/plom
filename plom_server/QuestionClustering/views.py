@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Colin B. Macdonald
 
 from urllib.parse import urlencode
 
-# Django
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -16,23 +16,15 @@ from django.urls import reverse
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 
-# application
-from plom_server.Papers.services import SpecificationService, PaperInfoService
-from plom_server.Rectangles.services import get_reference_qr_coords_for_page
-from plom_server.QuestionClustering.services import (
-    QuestionClusteringJobService,
-    QuestionClusteringService,
-)
-from plom_server.QuestionClustering.models import QVCluster, QVClusterLink
-from plom_server.QuestionClustering.forms import ClusteringJobForm
-from plom_server.QuestionClustering.exceptions.job_exception import (
-    DuplicateClusteringJobError,
-)
-from plom_server.QuestionClustering.exceptions.clustering_exception import (
-    EmptySelectedError,
-)
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Rectangles.services import get_reference_qr_coords_for_page
+from .services import QuestionClusteringJobService, QuestionClusteringService
+from .models import QVCluster, QVClusterLink
+from .forms import ClusteringJobForm
+from .exceptions.job_exception import DuplicateClusteringJobError
+from .exceptions.clustering_exception import EmptySelectedError
 
 
 class Debug(ManagerRequiredView):
