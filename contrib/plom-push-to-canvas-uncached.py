@@ -436,6 +436,7 @@ def get_course_by_id(
         f"course id: {course_number} doesn't match any course in user's teaching list:"
         f"{course_list}."
     )
+    time.sleep(1)
     return None
 
 
@@ -489,6 +490,7 @@ def get_canvas_course_section_by_id(
         return course.get_section(section_id)
     except CanvasException as e:
         print(f'id "{section_id}" doesn\'t match any section in {course.name}: {e}')
+        time.sleep(1)
         return None
 
 
@@ -630,6 +632,7 @@ def get_canvas_assignment_by_id(
         print(
             'id "{assignment_id}" doesn\'t match any assignment in {course.name}: {e}'
         )
+        time.sleep(1)
         return None
 
 
@@ -869,16 +872,13 @@ def main():
             )
             continue
 
+        # this should never fail, but just in case
         try:
             student_canvas_submission = canvas_submissions[student_canvas_id]
-        # In practice this should never fail, but during testing it did.
-        # The students were registered in a sandbox, but had already graduated,
-        # they had Canvas IDs but no submission objects on Canvas assignments.
         except KeyError:
             print(
-                f"Couldn't get Canvas submission for {student_name} ({student_id})."
-                " In testing this happens when the student has left UBC, but"
-                " is still registered in the course (i.e., they've graduated)."
+                f"student {student_name} - {student_id} (paper #{paper_number})"
+                " couldn't be found on Canvas, skipping."
             )
             canvas_absences.append(
                 {
@@ -910,10 +910,22 @@ def main():
                             }
                         )
                     successes.append(
-                        [f.name, student_id, student_name, student_canvas_id]
+                        {
+                            "file/mark": f.name,
+                            "student_id": student_id,
+                            "student_name": student_name,
+                            "student_canvas_id": student_canvas_id,
+                        }
                     )
             if args.post_grades:
-                successes.append([score, student_id, student_name, student_canvas_id])
+                successes.append(
+                    {
+                        "file/mark": score,
+                        "student_id": student_id,
+                        "student_name": student_name,
+                        "student_canvas_id": student_canvas_id,
+                    }
+                )
             # UNIMPLEMENTED - no Plom API yet
             if args.reports:
                 pass
