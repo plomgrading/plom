@@ -12,6 +12,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
 from django.db import transaction
 
+from plom.misc_utils import unpack_task_code
 from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
@@ -187,7 +188,7 @@ class QuestionMarkingService:
                 Or client is trying submit out-of-date rubrics when
                 ``require_latest_rubrics`` is True.
         """
-        papernum, question_idx = mark_task.unpack_code(code)
+        papernum, question_idx = unpack_task_code(code)
 
         # TODO: we could invert the logic here: from the integrity check
         # we know which task the client is trying to modify.  We can later

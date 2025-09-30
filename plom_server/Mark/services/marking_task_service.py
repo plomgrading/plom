@@ -20,6 +20,7 @@ from django.db.models import QuerySet
 from django.db import transaction
 from rest_framework import serializers
 
+from plom.misc_utils import unpack_task_code
 from plom.tagging import is_valid_tag_text
 from plom_server.Papers.services import ImageBundleService, PaperInfoService
 from plom_server.Papers.models import Paper
@@ -228,7 +229,7 @@ class MarkingTaskService:
             ValueError: invalid code.
             RuntimeError: code valid but task does not exist.
         """
-        paper_number, question_idx = mark_task.unpack_code(code)
+        paper_number, question_idx = unpack_task_code(code)
         try:
             return mark_task.get_latest_task(paper_number, question_idx)
         except ObjectDoesNotExist as e:

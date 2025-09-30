@@ -1,8 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021, 2024-2025 Colin B. Macdonald
 
-from plom.misc_utils import format_int_list_with_runs
-from plom.misc_utils import run_length_encoding
+from pytest import raises
+
+from plom.misc_utils import (
+    format_int_list_with_runs,
+    run_length_encoding,
+    unpack_task_code,
+)
 from plom.misc_utils import interpolate_questions_over_pages as interp
 
 
@@ -79,3 +84,55 @@ def test_interp_first_page() -> None:
     assert interp(3, 4, firstpg=5) == [[5], [5], [6], [7]]
     assert interp(3, 3, firstpg=2) == [[2], [3], [4]]
     assert interp(5, 2, firstpg=5) == [[5, 6], [7, 8, 9]]
+
+
+def test_unpack_task_code() -> None:
+    with raises(ValueError):
+        unpack_task_code("")
+
+    with raises(ValueError):
+        unpack_task_code("astringthatdoesn'tstartwithq")
+
+    with raises(ValueError):
+        unpack_task_code("qastrinGthatdoesn'tcontainalowercaseG")
+
+    with raises(ValueError):
+        unpack_task_code("000qge")
+
+    paper_number, question_index = unpack_task_code("0001g2")
+    assert paper_number == 1
+    assert question_index == 2
+
+
+def test_unpack_task_code_optional_legacy_leading_q() -> None:
+    p, q = unpack_task_code("q0001g2")
+    assert p == 1
+    assert q == 2
+    p, q = unpack_task_code("q8g9")
+    assert p == 8
+    assert q == 9
+
+
+def test_unpack_task_code_additional_tests() -> None:
+    with raises(ValueError):
+        unpack_task_code("g0001q2")
+
+    __, q1 = unpack_task_code("0001g2")
+    __, q2 = unpack_task_code("0001g02")
+    assert q1 == q2
+
+    __, q1 = unpack_task_code("0001g2")
+    __, q2 = unpack_task_code("0001g22")
+    assert q1 != q2
+
+    p1, q1 = unpack_task_code("1234567g88888")
+    p2, q2 = unpack_task_code("1234567g90909")
+    p3, q3 = unpack_task_code("9876543g90909")
+    assert p1 == p2
+    assert p1 != p3
+    assert q2 == q3
+    assert q1 != q3
+
+    p1, q1 = unpack_task_code("8g9")
+    assert p1 == 8
+    assert q1 == 9

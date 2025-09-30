@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
+from plom.misc_utils import unpack_task_code
 from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
@@ -108,7 +109,7 @@ class MarkTask(APIView):
         if version is not None:
             version = int(version)
         try:
-            papernum, question_idx = mark_task.unpack_code(code)
+            papernum, question_idx = unpack_task_code(code)
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
