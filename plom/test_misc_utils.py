@@ -87,6 +87,12 @@ def test_interp_first_page() -> None:
 
 
 def test_unpack_task_code() -> None:
+    paper_number, question_index = unpack_task_code("0001g2")
+    assert paper_number == 1
+    assert question_index == 2
+
+
+def test_unpack_task_code_errors() -> None:
     with raises(ValueError):
         unpack_task_code("")
 
@@ -99,9 +105,11 @@ def test_unpack_task_code() -> None:
     with raises(ValueError):
         unpack_task_code("000qge")
 
-    paper_number, question_index = unpack_task_code("0001g2")
-    assert paper_number == 1
-    assert question_index == 2
+    with raises(ValueError):
+        unpack_task_code("02XX23g04")
+
+    with raises(ValueError):
+        unpack_task_code("023g0XX4")
 
 
 def test_unpack_task_code_optional_legacy_leading_q() -> None:
