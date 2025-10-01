@@ -27,112 +27,169 @@ table = [
     {
         "name": "Bootstrap-js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
-        "css": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
-        "jsintegrity": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
-        "cssintegrity": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
-        "jsfilename": "bootstrap.bundle.min.js",
-        "cssfilename": "bootstrap.min.css",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
+                "hash": "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js.map",
+                "hash": "sha256-xhEj5YzApLZdc3ugcMSFkRs9vsbXuAK99mKDlavZwIs=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
+                "hash": "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css.map",
+                "hash": "sha256-SBRPr2qg+zzSznSNlzAjj4iPSrcV8F2r0cmvLFZxmIo=",
+            },
+        ],
     },
     {
         "name": "Bootstrap-Icons",
         "license": "MIT",
-        "css": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css",
-        "cssfilename": "bootstrap-icons.css",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css",
+                "hash": "sha256-AEMichyFVzMXWbxt2qy7aJsPBxXWiK7IK9BW0tW1zDs=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff",
+                "hash": "sha256-9VUTt7WRy4SjuH/w406iTUgx1v7cIuVLkRymS1tUShU=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff2",
+                "hash": "sha256-bHVxA2ShylYEJncW9tKJl7JjGf2weM8R4LQqtm/y6mE=",
+            },
+        ],
     },
     {
         "name": "HTMX",
         "license": "0BSD",
-        "js": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
-        "jsfilename": "htmx.js",
-        "jsintegrity": "sha256-OkbJL4z95vvR20hS8JSzBBiOUsgGmk8vejf0kQirF3U=",
+        "files": [
+            {
+                "url": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
+                "hash": "sha256-OkbJL4z95vvR20hS8JSzBBiOUsgGmk8vejf0kQirF3U=",
+            },
+        ],
     },
     {
         "name": "htmx-ext-response-targets",
         "license": "0BSD",  # ?? probably same as htmx
-        "js": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3/dist/response-targets.js",
-        "jsfilename": "response-targets.js",
-        # "js": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3",
-        # "jsfilename": "response-targets.min.js",
-        "jsintegrity": "sha384-NtTh9TBZ2X/pFpfsVvQOjSsYWmjmqG6h5ioQWVAe2/j3AuTHRmfqvoqp+iOed+I0",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3/dist/response-targets.js",
+                "hash": "sha384-NtTh9TBZ2X/pFpfsVvQOjSsYWmjmqG6h5ioQWVAe2/j3AuTHRmfqvoqp+iOed+I0",
+            },
+        ],
     },
     {
         "name": "Alpine",
         "license": "MIT",
-        "js": "https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js",
-        "jsfilename": "alpine.js",
-        "jsintegrity": "sha256-PtHu0lJIiSHfZeNj1nFd6wTX+Squ255SGZ/fc8seCtM=",
+        "files": [
+            {
+                "url": "https://unpkg.com/alpinejs@3.15.0/dist/cdn.min.js",
+                "filename": "alpine.js",
+                "hash": "sha256-4EHxtjnR5rL8JzbY12OKQJr81ESm7JBEb49ORPo29AY=",
+            },
+        ],
     },
     {
         "name": "chart.js",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js",
-        "jsintegrity": "sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=",
-        "jsfilename": "chart.umd.js",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js",
+                "hash": "sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=",
+            },
+        ],
     },
     {
         "name": "d3.js",
         "license": "BSD",
-        "js": "https://d3js.org/d3.v6.min.js",
-        "jsfilename": "d3.v6.min.js",
+        "files": [
+            {
+                "url": "https://d3js.org/d3.v6.min.js",
+                "hash": "sha256-+7jaYCp29O1JusNWHaYtgUn6EhuP0VaFuswhNV06MyI=",
+            },
+        ],
     },
     {
         # Sorttable by Stuart Langridge, https://github.com/stuartlangridge/sorttable
         "name": "sorttable",
         "license": "X11",  # https://www.kryogenix.org/code/browser/sorttable/#licence
         # No, blocks direct download:
-        # "js": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
-        "jsintegrity": "sha256-n3657FhpVO0BrpRmnXeQho7yfKvMVBh0QcoYkQr2O8w=",
+        # "url": "https://www.kryogenix.org/code/browser/sorttable/sorttable.js",
+        "hash": "sha256-n3657FhpVO0BrpRmnXeQho7yfKvMVBh0QcoYkQr2O8w=",
         "zip": "https://www.kryogenix.org/code/browser/sorttable/sorttable.zip",
-        "jsfilename": "sorttable.js",
+        "filename": "sorttable.js",
     },
     {
         # SortableJS (note not Sorttable!) https://github.com/SortableJS/Sortable
         "name": "SortableJS",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
-        "jsintegrity": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
-        "jsfilename": "Sortable.min.js",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
+                "hash": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
+            }
+        ],
     },
     {
         # Unfortunate that we use both "Tablesort" and "sorttable"; they seem similar
         "name": "Tablesort",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
-        "jsintegrity": "sha256-exTAyB07iPiInEumh/fA2mMNK0dDmoTzRhVoITcKqTA=",
-        "jsfilename": "tablesort.min.js",
-    },
-    {
-        "name": "Tablesort.number",
-        "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/sorts/tablesort.number.min.js",
-        "jsintegrity": "sha256-RrgkMionKOUBO+Hu+0puHGjKv/GK5FiMUKEIBBt9OzI=",
-        "jsfilename": "tablesort.number.min.js",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
+                "hash": "sha256-exTAyB07iPiInEumh/fA2mMNK0dDmoTzRhVoITcKqTA=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/sorts/tablesort.number.min.js",
+                "hash": "sha256-RrgkMionKOUBO+Hu+0puHGjKv/GK5FiMUKEIBBt9OzI=",
+            },
+        ],
     },
     {
         # TODO: RC version, no release since Jan 2021, consider replacing
         "name": "select2",
         "license": "MIT",
-        "js": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
-        "css": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
-        "jsfilename": "select2.min.js",
-        "cssfilename": "select2.min.css",
+        "files": [
+            {
+                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
+                "hash": "sha256-9yRP/2EFlblE92vzCA10469Ctd0jT48HnmmMw5rJZrA=",
+            },
+            {
+                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+                "hash": "sha256-zaSoHBhwFdle0scfGEFUCwggPN7F+ip9XRglo8IWb4w=",
+            },
+        ],
     },
     {
         # Used only on the login page (?)
         "name": "mdb-ui-kit",
         "license": "MIT",
-        "js": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.js",
-        "css": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css",
-        "jsfilename": "mdb.min.js",
-        "cssfilename": "mdb.min.css",
+        "files": [
+            {
+                "url": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.js",
+                "hash": "sha256-y+Pa+MbXsX6NG/fYpJV07UA0o5KW9YaP+YvNoZNTapI=",
+            },
+            {
+                "url": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css",
+                "hash": "sha256-dqc3ralMj9oruQZRUoBCEJqXVmvrulSKRxBIzaJVwpY=",
+            },
+        ],
     },
     {
         "name": "JQuery",
         "license": "MIT",
-        "js": "https://code.jquery.com/jquery-3.6.4.min.js",
-        "jsfilename": "jquery-3.6.4.min.js",
-        "jsintegrity": "sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=",
+        "files": [
+            {
+                "url": "https://code.jquery.com/jquery-3.6.4.min.js",
+                "hash": "sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=",
+            },
+        ],
     },
 ]
 
@@ -189,7 +246,7 @@ def check_file(f, hash: str | None = None):
     elif hash.startswith("sha384-"):
         if hash != sha384:
             raise ValueError(
-                "Downloaded sha384 does not match records!\n"
+                f"Downloaded sha384 for {f} does not match records!\n"
                 f"records:  {hash}\n"
                 f"download: {sha384}"
             )
@@ -197,7 +254,7 @@ def check_file(f, hash: str | None = None):
     else:
         if hash != sha256:
             raise ValueError(
-                "Downloaded sha256 does not match records!\n"
+                f"Downloaded sha256 for {f} does not match records!\n"
                 f"records:  {hash}\n"
                 f"download: {sha256}\n"
             )
@@ -211,26 +268,41 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
         destdir = "plom_extra_static"
     static_js = Path(destdir) / "js3rdparty"
     static_css = Path(destdir) / "css3rdparty"
+    static_css_fonts = Path(destdir) / "css3rdparty/fonts"
 
     Path(destdir).mkdir(exist_ok=True)
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
+    static_css_fonts.mkdir(exist_ok=True)
     print("Checking/downloading vendored JavaScript and CSS:")
     for row in table:
-        if row.get("zip"):
+        assert isinstance(row, dict)
+        if row.get("files"):
+            for f in row["files"]:
+                filename = f.get("filename")
+                if not filename:
+                    filename = f["url"].split("/")[-1]
+                fcf = filename.casefold()
+                if fcf.endswith(".js"):
+                    where = static_js
+                elif fcf.endswith(".js.map"):
+                    where = static_js
+                elif fcf.endswith(".css"):
+                    where = static_css
+                elif fcf.endswith(".css.map"):
+                    where = static_css
+                elif fcf.endswith(".woff") or fcf.endswith(".woff2"):
+                    where = static_css_fonts
+                else:
+                    raise RuntimeError(f"unexpected filetype: {f}")
+                check_or_download_file(f["url"], where, filename, hash=f.get("hash"))
+        elif row.get("zip"):
             # special case for zip
             check_or_download_and_unzip(
-                static_js, row["jsfilename"], row["zip"], row.get("jsintegrity")
+                static_js, row["filename"], row["zip"], row.get("hash")
             )
-            continue
-        if row.get("js"):
-            check_or_download_file(
-                row["js"], static_js, row["jsfilename"], hash=row.get("jsintegrity")
-            )
-        if row.get("css"):
-            check_or_download_file(
-                row["css"], static_css, row["cssfilename"], hash=row.get("cssintegrity")
-            )
+        else:
+            raise RuntimeError(f"unexpected format in row {row}")
 
 
 if __name__ == "__main__":
