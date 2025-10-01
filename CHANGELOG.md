@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* Clients v0.19.0 and v0.19.1 are blocked due to potential bugs when marking more than 999 papers.
 
 ### Fixed
 * In some cases of more than one page per question, "homework mode" pages (Mobile Pages) were not displayed in the correct order, server-side.
