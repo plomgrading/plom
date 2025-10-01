@@ -21,10 +21,7 @@ import requests
 # Maintenance
 # -----------
 #
-# In many cases, the html file would also list the integrity.
-# That needs to be manually updated.  Actually why bother if local,
-# we could just check here...?
-
+# Bump these sometimes!
 
 table = [
     {
@@ -46,11 +43,9 @@ table = [
     {
         "name": "HTMX",
         "license": "0BSD",
-        "js": "https://unpkg.com/htmx.org@2.0.6/dist/htmx.js",
+        "js": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
         "jsfilename": "htmx.js",
-        # "js": "https://unpkg.com/htmx.org@2.0.6/dist/htmx.min.js",
-        # "jsfilename": "htmx.min.js",
-        "jsintegrity": "sha384-ksKjJrwjL5VxqAkAZAVOPXvMkwAykMaNYegdixAESVr+KqLkKE8XBDoZuwyWVUDv",
+        "jsintegrity": "sha256-OkbJL4z95vvR20hS8JSzBBiOUsgGmk8vejf0kQirF3U=",
     },
     {
         "name": "htmx-ext-response-targets",
@@ -98,6 +93,21 @@ table = [
         "js": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
         "jsintegrity": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
         "jsfilename": "Sortable.min.js",
+    },
+    {
+        # Unfortunate that we use both "Tablesort" and "sorttable"; they seem similar
+        "name": "Tablesort",
+        "license": "MIT",
+        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
+        "jsintegrity": "sha256-exTAyB07iPiInEumh/fA2mMNK0dDmoTzRhVoITcKqTA=",
+        "jsfilename": "tablesort.min.js",
+    },
+    {
+        "name": "Tablesort.number",
+        "license": "MIT",
+        "js": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/sorts/tablesort.number.min.js",
+        "jsintegrity": "sha256-RrgkMionKOUBO+Hu+0puHGjKv/GK5FiMUKEIBBt9OzI=",
+        "jsfilename": "tablesort.number.min.js",
     },
     {
         # TODO: RC version, no release since Jan 2021, consider replacing
@@ -187,7 +197,7 @@ def check_file(f, hash: str | None = None):
     else:
         if hash != sha256:
             raise ValueError(
-                "Downloaded sha384 does not match records!\n"
+                "Downloaded sha256 does not match records!\n"
                 f"records:  {hash}\n"
                 f"download: {sha256}\n"
             )

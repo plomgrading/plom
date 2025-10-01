@@ -126,8 +126,7 @@
       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
       const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
     </script>
-    <script src="{% static 'js3rdparty/chart.umd.js' %}" integrity="sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=" crossorigin="anonymous">
-    </script>
+    <script src="{% static 'js3rdparty/chart.umd.js' %}"></script>
     <script>
   var ctx_all = document.getElementById('hist_all');
     new Chart(ctx_all, {
