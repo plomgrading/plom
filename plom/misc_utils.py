@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019 Omer Angel
-# Copyright (C) 2019, 2021-2024 Colin B. Macdonald
+# Copyright (C) 2019, 2021-2025 Colin B. Macdonald
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2023 Edith Coates
 
 from __future__ import annotations
 
@@ -312,3 +313,45 @@ def interpolate_questions_over_pages(
         ]
         # TODO: could instead spread them over the last few questions
     return question_pages
+
+
+def unpack_task_code(code: str) -> tuple[int, int]:
+    """Return a tuple of (paper_number, question_index) from a task code string like "1234g07".
+
+    Args:
+        code: a task code which is a string like "0001g1".  Requires code to be
+            at least 3 characters long.  For legacy reasons, code can optionally
+            start with a "q" which will be discarded.
+            Requires that code contain a "g" somewhere after the first character,
+            but not be the last character and the rest of the characters to be
+            numeric.
+
+    Returns:
+        A tuple of two integers, the paper number and the question index.
+
+    Raises:
+        ValueError: described conditions are not satisfied.
+    """
+    if code.startswith("q"):
+        code = code[1:]
+
+    errbase = f'invalid task code "{code}": '
+    if len(code) < len("0g0"):
+        raise ValueError(errbase + "too short")
+
+    if "g" not in code:
+        raise ValueError(errbase + 'must contain a "g"')
+
+    left, right = code.split("g")
+
+    try:
+        paper_number = int(left)
+    except (ValueError, TypeError) as e:
+        raise ValueError(errbase + f"cannot get paper_number: {e}") from None
+
+    try:
+        question_idx = int(right)
+    except (ValueError, TypeError) as e:
+        raise ValueError(errbase + f"cannot get question_idx: {e}") from None
+
+    return paper_number, question_idx
