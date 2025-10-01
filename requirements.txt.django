@@ -21,7 +21,7 @@
 
 arrow==1.3.0
 canvasapi==3.3.0
-django==5.2.6
+django==5.2.7
 django-braces==1.17.0
 django-filter==25.1
 django-htmx==1.24.0
