@@ -110,7 +110,9 @@ def test_unpack_task_code_errors() -> None:
 
     with raises(ValueError):
         unpack_task_code("023g0XX4")
-
+    # string that ends with g
+    with raises(ValueError):
+        unpack_task_code("0001g")
 
 def test_unpack_task_code_optional_legacy_leading_q() -> None:
     p, q = unpack_task_code("q0001g2")
