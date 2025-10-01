@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from plom_server.Base.tests import config_test
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Papers.models import (

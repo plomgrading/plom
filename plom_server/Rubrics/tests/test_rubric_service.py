@@ -11,12 +11,11 @@
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-
 from model_bakery import baker
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
-from plom_server.Base.tests import config_test
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Mark.models.annotations import Annotation
 from plom_server.Mark.models.tasks import MarkingTask
 from plom_server.Papers.models import Paper
