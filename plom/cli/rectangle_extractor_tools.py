@@ -25,7 +25,7 @@ def extract_rectangle(
             ["left", "top", "right", "bottom"], each mapping to the coordinate value
             relative to QR position.
         out_path: The output path where the image file will be saved at. If this is None,
-            then it will be saved at "./extracted_region_V{version}_page{page_num}_paper{paper_num}.png".
+            then it will be saved at "./extracted_region_v{version}_page{page_num}_paper{paper_num}.png".
 
     Keyword Args:
         msgr:  An active Messenger object.
@@ -38,7 +38,7 @@ def extract_rectangle(
             raise ValueError(f"Output path must be a .png file, got: {out_path}")
 
         out_path = (
-            f"extracted_region_V{version}_page{page_num}_paper{paper_num}.png"
+            f"extracted_region_v{version}_page{page_num}_paper{paper_num}.png"
             if not out_path
             else out_path
         )

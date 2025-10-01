@@ -416,7 +416,7 @@ def get_parser() -> argparse.ArgumentParser:
         required=False,
         help="""
         The output path of the extracted rectangle image. If not provided, the image will be saved as:
-            "./extracted_region_V{version}_page{page_num}_paper{paper_num}.png"
+            "./extracted_region_v{version}_page{page_num}_paper{paper_num}.png"
         where {version}, {page_num}, and {paper_num} are replaced by their respective values.
         """,
     )

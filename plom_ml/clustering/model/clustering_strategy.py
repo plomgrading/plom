@@ -35,7 +35,7 @@ def get_best_clustering(
     This function defaults with AgglomerativeClustering clustering algorithm. Note that to get
     more fine-grained clustering one can provide smaller thresholds range. Furthermore, it would
     be even better if we provide another argument where we force the threshold at a specific value
-    and if that val is None then we do the search.
+    and if that value is None then we do the search.
 
     Args:
         X: the feature matrix.
@@ -53,7 +53,7 @@ def get_best_clustering(
     best_labels = np.array([])
     best_thresh = -1  # for debug
 
-    # Becareful with linkage, I have tuned my thresholds for distance_metric = ward,
+    # Be careful with linkage, I have tuned my thresholds for distance_metric = ward,
     # and if we change that to "complete" we need to retune again.
     linkage = "average" if distance_metric == "cosine" else "ward"
 
@@ -85,7 +85,8 @@ def get_best_clustering(
                 best_labels = labels
                 best_thresh = t
 
-    if not best_labels:
+    assert isinstance(best_labels, np.ndarray)
+    if not best_labels.size > 0:
         raise NoThresholdFound(
             f"Can't find any threshold within {thresholds} to produce any clustering"
         )
