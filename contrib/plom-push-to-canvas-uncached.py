@@ -755,8 +755,8 @@ def main():
     else:
         canvas_ids = get_canvas_id_dict(canvas_course)
 
-    if args.dry_run:
-        successes = []
+    successes = []
+    count = 0
     canvas_absences = []
     canvas_timeouts = []
     plom_timeouts = []
@@ -884,20 +884,22 @@ def main():
         # no Plom API for this
         if args.reports:
             pass
+        count += 1
     print("\n")
+    print(f"pushed {count} papers without issue\n")
 
     if plom_timeouts:
-        print("FAILED DOWNLOADS FROM PLOM")
+        print(f"{len(plom_timeouts)} FAILED DOWNLOADS FROM PLOM")
         print(tabulate(plom_timeouts, headers="keys"))
         print("\n\n")
 
     if canvas_absences:
-        print("STUDENTS ABSENT FROM CANVAS")
+        print(f"{len(canvas_absences)} STUDENTS ABSENT FROM CANVAS")
         print(tabulate(canvas_absences, headers="keys"))
         print("\n\n")
 
     if canvas_timeouts:
-        print("FAILED UPLOADS TO CANVAS")
+        print(f"{len(canvas_timeouts)} FAILED UPLOADS TO CANVAS")
         print(tabulate(canvas_timeouts, headers="keys"))
         print("\n\n")
 
