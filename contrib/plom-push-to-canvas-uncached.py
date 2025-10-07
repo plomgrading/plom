@@ -571,7 +571,31 @@ def get_plom_marks(msgr: PlomAdminMessenger) -> dict:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
 
 
-def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, int]]:
+def get_plom_identified_papers(msgr: PlomAdminMessenger) -> dict:
+    """Get a list of information about identified papers on the server.
+
+    Returns:
+        A dict of information keyed by the paper number it corresponds to.
+    """
+    if msgr.is_server_api_less_than(113):
+        raise PlomNoServerSupportException(
+            "Server too old: does not support getting plom marks"
+        )
+
+    with msgr.SRmutex:
+        try:
+            response = msgr.get_auth("/REP/identified")
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException(response.reason) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+
+def restructure_plom_marks_dict(
+    plom_marks_dict: dict, plom_identified_papers_dict: dict
+) -> dict[int, dict[str, int]]:
     """Change the key on the Plom marks dicts to student number.
 
     This function will remove any papers with warnings attached (for example,
@@ -580,6 +604,7 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, in
     Returns:
         A dict of exam marks keyed by student ids.
     """
+    print(plom_identified_papers_dict)
     simplified_dict = {}
     # we won't attempt to push papers on the discard list to Canvas
     discard_list = []
@@ -739,7 +764,9 @@ def main():
     print(CHECKMARK)
 
     # iterate over this
-    student_marks = restructure_plom_marks_dict(get_plom_marks(plom_messenger))
+    student_marks = restructure_plom_marks_dict(
+        get_plom_marks(plom_messenger), get_plom_identified_papers(plom_messenger)
+    )
     print(f"Plom marks retrieved (for {len(student_marks)} examinees).")
 
     # put canvas submissions in a dict for fast recall
