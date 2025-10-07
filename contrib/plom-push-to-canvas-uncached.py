@@ -647,11 +647,7 @@ def main():
 
         load_dotenv()
     except ModuleNotFoundError as e:
-        print(f"couldn't read a .env file, skipping: {e}")
-
-    # TODO: read .env file
-    # import dotenv
-    # ...
+        print(f'"dotenv" not installed, cannot read .env file: {e}')
 
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
