@@ -49,6 +49,7 @@ the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 
 import argparse
 import os
+import sys
 import random
 import string
 import time
@@ -89,6 +90,7 @@ PLOM_STUDENT_ID = "StudentID"
 PLOM_STUDENT_NAME = "StudentName"
 PLOM_MARKS = "Total"
 PLOM_PAPERNUM = "PaperNumber"
+PLOM_WARNINGS = "warnings"
 
 # when calling course.get_enrollments(), the student objects returned
 # will have student IDs stored in this attribute
@@ -572,17 +574,32 @@ def get_plom_marks(msgr: PlomAdminMessenger) -> dict:
 def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, int]]:
     """Change the key on the Plom marks dicts to student number.
 
-    This function will remove any entries with a blank student number. This
-    function assumes there are no duplicate student numbers in an entries.
+    This function will remove any papers with warnings attached (for example,
+    in 0.19.2 this means the paper isn't completely marked, or hasn't been ID'd).
 
     Returns:
         A dict of exam marks keyed by student ids.
     """
     simplified_dict = {}
+    # we won't attempt to push papers on the discard list to Canvas
+    discard_list = []
     for key, value in plom_marks_dict.items():
-        if not value[PLOM_STUDENT_ID]:
+        if PLOM_WARNINGS in value.keys():
+            discard_list.append(value)
             continue
+
         simplified_dict[value[PLOM_STUDENT_ID]] = value
+
+    # TODO: the discard list currently includes papers without any work attached!
+    if discard_list:
+        print("Some papers cannot be processed for push to Canvas:")
+        print(tabulate(discard_list, headers="keys"))
+        print(f"This script will not push these {len(discard_list)} results to Canvas,")
+        confirmation = input("proceed? [y/n] ")
+        if confirmation not in ["", "y", "Y", "\n"]:
+            print("CANCELLED")
+            sys.exit(0)
+
     return simplified_dict
 
 
@@ -707,10 +724,11 @@ def main():
     if hasattr(args, "plom_password") and not args.plom_password:
         args.plom_password = getpass("plom password: ")
 
+    print("Checking plom credentials...", end="")
     plom_messenger = start_messenger(
         args.plom_server, args.plom_username, args.plom_password
     )
-    print("Plom credentials successfully authenticated.")
+    print(CHECKMARK)
 
     # iterate over this
     student_marks = restructure_plom_marks_dict(get_plom_marks(plom_messenger))
