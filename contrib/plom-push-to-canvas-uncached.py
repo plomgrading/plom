@@ -659,6 +659,14 @@ def get_plom_reassembled(
 def main():
     args = get_parser().parse_args()
 
+    unsupported_options = [args.solutions, args.reports]
+    if any(unsupported_options):
+        print(
+            'You\'ve selected an unsupported option (probably "--solutions" or "--reports"), '
+            "exiting."
+        )
+        sys.exit(1)
+
     try:
         from dotenv import load_dotenv
 
