@@ -353,7 +353,7 @@ def interactively_get_course_id(user):
             )
             selection = courses_teaching[choice]
             print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [y/n] ")
+            confirmation = input("  Confirm choice? [Y/n] ")
             if confirmation in ["", "\n", "y", "Y"]:
                 course_chosen = True
                 course = selection
@@ -447,7 +447,7 @@ def interactively_get_course_section_id(course: canvasapi.course.Course) -> int 
             else:
                 section = sections[choice - 1]
                 print(f"  You selected {choice}: {section.name} ({section.id})")
-            confirmation = input("  Confirm choice? [y/n] ")
+            confirmation = input("  Confirm choice? [Y/n] ")
             if confirmation in ["", "\n", "y", "Y"]:
                 print("\n")
                 return section if section is None else section.id
@@ -484,7 +484,7 @@ def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> i
             )
             selection = assignments[choice]
             print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [y/n] ")
+            confirmation = input("  Confirm choice? [Y/n] ")
             if confirmation in ["", "\n", "y", "Y"]:
                 assignment_chosen = True
                 assignment = selection
@@ -600,7 +600,7 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
         print(f"{len(discard_list)} paper[s] cannot be processed for push to Canvas:")
         print(tabulate(discard_list, headers="keys"))
         print(f"This script will not push these {len(discard_list)} results to Canvas,")
-        confirmation = input("proceed? [y/n] ")
+        confirmation = input("proceed? [Y/n] ")
         if confirmation not in ["", "y", "Y", "\n"]:
             print("CANCELLED")
             sys.exit(0)
@@ -666,11 +666,9 @@ def main():
 
     unsupported_options = [args.solutions, args.reports]
     if any(unsupported_options):
-        print(
-            'You\'ve selected an unsupported option (probably "--solutions" or "--reports"), '
-            "exiting."
+        raise NotImplementedError(
+            "Solutions and Reports aren't supported yet, exiting."
         )
-        sys.exit(1)
 
     try:
         from dotenv import load_dotenv
@@ -827,12 +825,11 @@ def main():
                         "student_canvas_id": student_canvas_id,
                     }
                 )
-            # UNIMPLEMENTED - no Plom API yet
             if args.reports:
+                raise NotImplementedError("No Plom API")
                 pass
-            # UNIMPLEMENTED - no Plom API yet
             if args.solutions:
-                pass
+                raise NotImplementedError("No Plom API")
             continue
 
         # no real multithreading in python, so order doesn't really matter here
@@ -882,12 +879,12 @@ def main():
                 )
             time.sleep(random.uniform(0.1, 0.3))
 
-        # no Plom API for this
         if args.solutions:
+            raise NotImplementedError("No Plom API")
             pass
 
-        # no Plom API for this
         if args.reports:
+            raise NotImplementedError("No Plom API")
             pass
         count += 1
     print("\n")
