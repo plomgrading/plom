@@ -36,9 +36,8 @@ Overview:
                             --no-section 2>&1 | tee push.log
      ```
 
-This script traverses all papers in your Plom server with any
-scanned student work - though it will ignore any papers that
-haven't been ID'd.
+This script traverses all identified and marked papers in your Plom
+server. It will ignore exams that are unidentified and/or unmarked.
 
 Solutions and Reports cannot be uploaded yet.
 
@@ -571,31 +570,7 @@ def get_plom_marks(msgr: PlomAdminMessenger) -> dict:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
 
 
-def get_plom_identified_papers(msgr: PlomAdminMessenger) -> dict:
-    """Get a list of information about identified papers on the server.
-
-    Returns:
-        A dict of information keyed by the paper number it corresponds to.
-    """
-    if msgr.is_server_api_less_than(113):
-        raise PlomNoServerSupportException(
-            "Server too old: does not support getting plom marks"
-        )
-
-    with msgr.SRmutex:
-        try:
-            response = msgr.get_auth("/REP/identified")
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-
-def restructure_plom_marks_dict(
-    plom_marks_dict: dict, plom_identified_papers_dict: dict
-) -> dict[int, dict[str, int]]:
+def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, int]]:
     """Change the key on the Plom marks dicts to student number.
 
     This function will remove any papers with warnings attached (for example,
@@ -604,20 +579,25 @@ def restructure_plom_marks_dict(
     Returns:
         A dict of exam marks keyed by student ids.
     """
-    print(plom_identified_papers_dict)
     simplified_dict = {}
     # we won't attempt to push papers on the discard list to Canvas
     discard_list = []
     for key, value in plom_marks_dict.items():
+        # Oct. 8th - the distinction between None and "" is significant
+        # None means the paper was ID'd as having a blank coverpage
+        # "" means the paper hasn't been ID'd yet and we will implicitly discard it
+        if value[PLOM_STUDENT_ID] == "":
+            continue
+
+        # Oct. 8th - we explicitly discard unmarked papers
         if PLOM_WARNINGS in value.keys():
             discard_list.append(value)
             continue
 
         simplified_dict[value[PLOM_STUDENT_ID]] = value
 
-    # TODO: the discard list currently includes papers without any work attached!
     if discard_list:
-        print("Some papers cannot be processed for push to Canvas:")
+        print(f"{len(discard_list)} paper[s] cannot be processed for push to Canvas:")
         print(tabulate(discard_list, headers="keys"))
         print(f"This script will not push these {len(discard_list)} results to Canvas,")
         confirmation = input("proceed? [y/n] ")
@@ -764,9 +744,7 @@ def main():
     print(CHECKMARK)
 
     # iterate over this
-    student_marks = restructure_plom_marks_dict(
-        get_plom_marks(plom_messenger), get_plom_identified_papers(plom_messenger)
-    )
+    student_marks = restructure_plom_marks_dict(get_plom_marks(plom_messenger))
     print(f"Plom marks retrieved (for {len(student_marks)} examinees).")
 
     # put canvas submissions in a dict for fast recall
