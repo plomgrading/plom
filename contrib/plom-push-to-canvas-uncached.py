@@ -570,7 +570,7 @@ def get_plom_marks(msgr: PlomAdminMessenger) -> dict:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
 
 
-def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, int]]:
+def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
     """Change the key on the Plom marks dicts to student number.
 
     This function will remove any papers with warnings attached (for example,
@@ -579,22 +579,22 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, in
     Returns:
         A dict of exam marks keyed by student ids.
     """
-    simplified_dict = {}
+    simplified_list = []
     # we won't attempt to push papers on the discard list to Canvas
     discard_list = []
-    for key, value in plom_marks_dict.items():
+    for paper_num, mark_dict in plom_marks_dict.items():
         # Oct. 8th - the distinction between None and "" is significant
         # None means the paper was ID'd as having a blank coverpage
         # "" means the paper hasn't been ID'd yet and we will implicitly discard it
-        if value[PLOM_STUDENT_ID] == "":
+        if mark_dict[PLOM_STUDENT_ID] == "":
             continue
 
         # Oct. 8th - we explicitly discard unmarked papers
-        if PLOM_WARNINGS in value.keys():
-            discard_list.append(value)
+        if PLOM_WARNINGS in mark_dict.keys():
+            discard_list.append(mark_dict)
             continue
 
-        simplified_dict[value[PLOM_STUDENT_ID]] = value
+        simplified_list.append(mark_dict)
 
     if discard_list:
         print(f"{len(discard_list)} paper[s] cannot be processed for push to Canvas:")
@@ -605,7 +605,7 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> dict[int, dict[str, in
             print("CANCELLED")
             sys.exit(0)
 
-    return simplified_dict
+    return simplified_list
 
 
 def get_plom_reassembled(
@@ -676,8 +676,8 @@ def main():
         from dotenv import load_dotenv
 
         load_dotenv()
-    except ModuleNotFoundError as e:
-        print(f'"dotenv" not installed, cannot read .env file: {e}')
+    except ModuleNotFoundError:
+        pass
 
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
@@ -765,7 +765,7 @@ def main():
     canvas_absences = []
     canvas_timeouts = []
     plom_timeouts = []
-    for _, exam_dict in tqdm(student_marks.items()):
+    for exam_dict in tqdm(student_marks):
         paper_number = exam_dict[PLOM_PAPERNUM]
         score = exam_dict[PLOM_MARKS]
         student_id = exam_dict[PLOM_STUDENT_ID]
