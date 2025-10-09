@@ -373,18 +373,16 @@ def get_course_by_id(
         user: the Canvas user to authorise this.
 
     Returns:
-        A Canvas course object if successful, or None if not.
+        A Canvas course object if successful, raises a ValueError otherwise.
     """
     course_list = get_courses_teaching(user)
     for course in course_list:
         if course_number == course.id:
             return course
-    print(
+    raise ValueError(
         f"course id: {course_number} doesn't match any course in user's teaching list:"
         f"{course_list}."
     )
-    time.sleep(1)
-    return None
 
 
 def interactively_get_course_section_id(course: canvasapi.course.Course) -> int | None:
