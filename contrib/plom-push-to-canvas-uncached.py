@@ -387,26 +387,6 @@ def get_course_by_id(
     return None
 
 
-def get_canvas_course_section_by_id(
-    course: canvasapi.course.Course, section_id: int
-) -> canvasapi.section.Section | None:
-    """Get a Canvas section object given a section id and Canvas course object.
-
-    Args:
-        course: the Canvas course object.
-        section_id: the id for the desired section.
-
-    Returns:
-        A Canvas section object if successful, or None if not.
-    """
-    try:
-        return course.get_section(section_id)
-    except CanvasException as e:
-        print(f'id "{section_id}" doesn\'t match any section in {course.name}: {e}')
-        time.sleep(1)
-        return None
-
-
 def interactively_get_course_section_id(course: canvasapi.course.Course) -> int | None:
     """Choose a section from a menu.
 
@@ -491,28 +471,6 @@ def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> i
     print(f'  Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print("\n")
     return assignment.id
-
-
-def get_canvas_assignment_by_id(
-    course: canvasapi.course.Course, assignment_id: int
-) -> canvasapi.assignment.Assignment | None:
-    """Get a Canvas assignment object given an assignment id and Canvas course object.
-
-    Args:
-        course: the Canvas course object.
-        assignment_id: the id of the desired assignment.
-
-    Returns:
-        A Canvas assignment object if successful, or None if not.
-    """
-    try:
-        return course.get_assignment(assignment_id)
-    except CanvasException:
-        print(
-            f'id "{assignment_id}" doesn\'t match any assignment in {course.name}: {e}'
-        )
-        time.sleep(1)
-        return None
 
 
 def get_canvas_id_dict(
@@ -696,17 +654,19 @@ def main():
     else:
         if not args.section:
             args.section = interactively_get_course_section_id(canvas_course)
+
         if args.section:
             print("Getting Canvas section... ", end="")
-            canvas_course_section = get_canvas_course_section_by_id(
-                canvas_course, args.section
-            )
+            canvas_course_section = canvas_course.get_section(args.section)
             print(f"({canvas_course_section}) " + CHECKMARK)
+        # user interactively selected "no course section"
+        else:
+            canvas_course_section = None
 
     if not args.assignment:
         args.assignment = interactively_get_canvas_assignment_id(canvas_course)
     print("Getting Canvas assignment...", end="")
-    canvas_assignment = get_canvas_assignment_by_id(canvas_course, args.assignment)
+    canvas_assignment = canvas_course.get_assignment(args.assignment)
     print(f"({canvas_assignment}) " + CHECKMARK)
 
     print(
