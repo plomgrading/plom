@@ -14,7 +14,7 @@ Overview:
   2. Reassemble papers.
   3. Copy this script into the current directory, and install:
     - tqdm
-    - plom
+    - plom   (TODO: maybe it even works with `pip install --no-deps plom`)
     - tabulate
     - python-dotenv (optional)
   4. Run this script and follow the interactive menus:
@@ -509,7 +509,7 @@ def get_canvas_assignment_by_id(
         return course.get_assignment(assignment_id)
     except CanvasException:
         print(
-            'id "{assignment_id}" doesn\'t match any assignment in {course.name}: {e}'
+            f'id "{assignment_id}" doesn\'t match any assignment in {course.name}: {e}'
         )
         time.sleep(1)
         return None
