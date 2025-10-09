@@ -573,8 +573,8 @@ def get_plom_marks(msgr: PlomAdminMessenger) -> dict:
 def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
     """Change the key on the Plom marks dicts to student number.
 
-    This function will remove any papers with warnings attached (for example,
-    in 0.19.2 this means the paper isn't completely marked, or hasn't been ID'd).
+    **WARNING: sometimes requires user interaction.**
+    This function will remove any papers with warnings attached.
 
     Returns:
         A dict of exam marks keyed by student ids.
