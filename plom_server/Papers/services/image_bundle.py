@@ -500,6 +500,9 @@ class ImageBundleService:
         # get all scanned pages (relevant to questions)
         filled_qpages = QuestionPage.objects.filter(image__isnull=False)
         mpages = MobilePage.objects.all()
+        # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
+        # count (including them will lead to bugs, Issue #3925); we filter them out.
+        mpages = mpages.exclude(question_index=MobilePage.DNM_qidx)
 
         # number of pages per question
         test_page_dict = SpecificationService.get_question_pages()
