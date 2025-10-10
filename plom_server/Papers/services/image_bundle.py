@@ -428,6 +428,9 @@ class ImageBundleService:
         """
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
         extras = MobilePage.objects.filter(image__bundle=bundle)
+        # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
+        # count (including them will lead to bugs, Issue #3925); we filter them out.
+        extras = extras.exclude(question_index=MobilePage.DNM_qidx)
 
         # version isn't necessary for the readiness check
         # but it can be fetched here with little additional overhead
