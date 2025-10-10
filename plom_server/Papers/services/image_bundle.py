@@ -562,11 +562,13 @@ class ImageBundleService:
             A dict with the input paper number/qidx tuples as keys, and True/False
             as the values.
         """
-        test_questions = list(SpecificationService.get_question_pages().keys())
+        # TODO: is this really the best method to get this info?
+        valid_question_indices = list(SpecificationService.get_question_pages().keys())
+        valid_question_indices.append(MobilePage.DNM_qidx)
         ready_pairs = self._get_ready_paper_question_pairs()
         pq_pair_ready = {}
         for pair in paper_qidx_pairs:
-            if pair[1] not in test_questions:
+            if pair[1] not in valid_question_indices:
                 raise ValueError(
                     f"question index '{pair[1]}' doesn't correspond"
                     " to any question on this assessment."
