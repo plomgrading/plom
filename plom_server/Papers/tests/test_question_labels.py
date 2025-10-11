@@ -11,20 +11,20 @@ class SpecificationServiceQuestionLabelTests(TestCase):
         spec_dict = {
             "idPage": 1,
             "numberOfVersions": 2,
-            "numberOfPages": 5,
+            "numberOfPages": 6,
             "totalMarks": 20,
             "numberOfQuestions": 4,
             "name": "testing",
             "longName": "Testing",
-            "doNotMarkPages": [],
-            "question": {
-                1: {"pages": [2], "mark": 5},
-                2: {"pages": [3], "mark": 5, "label": "Ex.2"},
-                3: {"pages": [4], "mark": 5, "label": "Q<3"},
-                4: {"pages": [5], "mark": 5, "label": "Q4"},
-            },
+            "doNotMarkPages": [6],
+            "question": [
+                {"pages": [2], "mark": 5},
+                {"pages": [3], "mark": 5, "label": "Ex.2"},
+                {"pages": [4], "mark": 5, "label": "Q<3"},
+                {"pages": [5], "mark": 5, "label": "Q4"},
+            ],
         }
-        serv._store_validated_spec(spec_dict)
+        serv.install_spec_from_dict(spec_dict)
         return super().setUp()
 
     def test_qlabels(self) -> None:
