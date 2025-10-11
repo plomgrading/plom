@@ -443,6 +443,14 @@ class ImageBundleReadyTests(TestCase):
         self.assertTrue(pair_ready[(self.paper.paper_number, 4)])
         self.assertFalse(pair_ready[(self.paper.paper_number, 5)])
 
+    def test_paper_question_pairs_ready_ValueError(self) -> None:
+        with self.assertRaises(ValueError):
+            ImageBundleService.check_if_paper_question_pairs_ready(
+                [
+                    (self.paper.paper_number, 42),
+                ]
+            )
+
     def test__get_ready_paper_question_pairs(self) -> None:
         ibs = ImageBundleService()
         ready_pairs = [
