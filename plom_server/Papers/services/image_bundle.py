@@ -576,8 +576,7 @@ class ImageBundleService:
         Raises:
             ValueError: asking about invalid question indices.
         """
-        # TODO: is this really the best method to get this info?
-        valid_question_indices = list(SpecificationService.get_question_pages().keys())
+        valid_question_indices = SpecificationService.get_question_indices()
         ready_pairs = cls._get_ready_paper_question_pairs()
         pq_pair_ready = {}
         for pair in paper_qidx_pairs:
