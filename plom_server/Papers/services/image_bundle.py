@@ -558,18 +558,23 @@ class ImageBundleService:
     def check_if_paper_question_pairs_ready(
         cls, paper_qidx_pairs: list[tuple[int, int]]
     ) -> dict[tuple[int, int], bool]:
-        """Check if provided paper/question pairs are ready for marking.
+        """Check if provided paper/question pairs are ready for marking, returning a dict.
 
         See :func:`_get_ready_paper_question_pairs` for what 'ready' means.
 
         Args:
             paper_qidx_pairs: a list of tuples identifying a particular
                 question on a particular paper. The tuples should be formatted
-                as (paper_number, qidx).
+                as (paper_number, qidx).  You should not ask about any "meta
+                values" such as extra pages assigned to DNM: valid qidx's only
+                in the range 1 to the largest question index.
 
         Returns:
             A dict with the input paper number/qidx tuples as keys, and True/False
             as the values.
+
+        Raises:
+            ValueError: asking about invalid question indices.
         """
         # TODO: is this really the best method to get this info?
         valid_question_indices = list(SpecificationService.get_question_pages().keys())
