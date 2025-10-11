@@ -367,7 +367,7 @@ class ImageBundleReadyTests(TestCase):
             "numberOfVersions": 2,
             "numberOfPages": 12,
             "totalMarks": 30,
-            "numberOfQuestions": 3,
+            "numberOfQuestions": 5,
             "name": "papers_demo",
             "longName": "Papers Test",
             "doNotMarkPages": [2, 3],
