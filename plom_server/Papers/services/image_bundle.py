@@ -447,8 +447,10 @@ class ImageBundleService:
         )
 
         # now check if pq pairs are markable
-        paper_question_pairs_dict = ImageBundleService().are_paper_question_pairs_ready(
-            [t[:2] for t in papers_questions_versions_updated_by_bundle]
+        paper_question_pairs_dict = (
+            ImageBundleService.check_if_paper_question_pairs_ready(
+                [t[:2] for t in papers_questions_versions_updated_by_bundle]
+            )
         )
         pqv_updated_and_ready = [
             t
@@ -481,8 +483,9 @@ class ImageBundleService:
         """
         return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
 
+    @staticmethod
     @transaction.atomic
-    def _get_ready_paper_question_pairs(self) -> list[tuple[int, int]]:
+    def _get_ready_paper_question_pairs() -> list[tuple[int, int]]:
         """Get all paper question pairs that are ready for marking.
 
         This function queries database images directly to determine
@@ -551,9 +554,9 @@ class ImageBundleService:
 
         return ready
 
-    @transaction.atomic
-    def are_paper_question_pairs_ready(
-        self, paper_qidx_pairs: list[tuple[int, int]]
+    @classmethod
+    def check_if_paper_question_pairs_ready(
+        cls, paper_qidx_pairs: list[tuple[int, int]]
     ) -> dict[tuple[int, int], bool]:
         """Check if provided paper/question pairs are ready for marking.
 
@@ -570,7 +573,7 @@ class ImageBundleService:
         """
         # TODO: is this really the best method to get this info?
         valid_question_indices = list(SpecificationService.get_question_pages().keys())
-        ready_pairs = self._get_ready_paper_question_pairs()
+        ready_pairs = cls._get_ready_paper_question_pairs()
         pq_pair_ready = {}
         for pair in paper_qidx_pairs:
             if pair[1] not in valid_question_indices:

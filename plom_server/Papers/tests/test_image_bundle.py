@@ -429,7 +429,6 @@ class ImageBundleReadyTests(TestCase):
         return super().setUp()
 
     def test_are_paper_question_pairs_ready(self) -> None:
-        ibs = ImageBundleService()
         pq_pairs = [
             (self.paper.paper_number, 1),
             (self.paper.paper_number, 2),
@@ -437,7 +436,7 @@ class ImageBundleReadyTests(TestCase):
             (self.paper.paper_number, 4),
             (self.paper.paper_number, 5),
         ]
-        pair_ready = ibs.are_paper_question_pairs_ready(pq_pairs)
+        pair_ready = ImageBundleService.check_if_paper_question_pairs_ready(pq_pairs)
         self.assertTrue(pair_ready[(self.paper.paper_number, 1)])
         self.assertTrue(pair_ready[(self.paper.paper_number, 2)])
         self.assertFalse(pair_ready[(self.paper.paper_number, 3)])
