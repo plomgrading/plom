@@ -34,18 +34,18 @@ class ImageBundleTests(TestCase):
         spec_dict = {
             "idPage": 1,
             "numberOfVersions": 2,
-            "numberOfPages": 5,
+            "numberOfPages": 6,
             "totalMarks": 10,
             "numberOfQuestions": 2,
             "name": "papers_demo",
             "longName": "Papers Test",
-            "doNotMarkPages": [2, 5],
-            "question": {
-                "1": {"pages": [3], "mark": 5},
-                "2": {"pages": [4], "mark": 5},
-            },
+            "doNotMarkPages": [2, 5, 6],
+            "question": [
+                {"pages": [3], "mark": 5},
+                {"pages": [4], "mark": 5},
+            ],
         }
-        SpecificationService._store_validated_spec(spec_dict)
+        SpecificationService.install_spec_from_dict(spec_dict)
         self.user: User = baker.make(User, username="testScanner")
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
@@ -366,21 +366,21 @@ class ImageBundleReadyTests(TestCase):
             "idPage": 1,
             "numberOfVersions": 2,
             "numberOfPages": 12,
-            "totalMarks": 30,
+            "totalMarks": 25,
             "numberOfQuestions": 5,
             "name": "papers_demo",
             "longName": "Papers Test",
-            "doNotMarkPages": [2, 3],
-            "question": {
-                "1": {"pages": [4], "mark": 5},
-                "2": {"pages": [5, 6], "mark": 5},
-                "3": {"pages": [7, 8], "mark": 5},
-                "4": {"pages": [9], "mark": 5},
-                "5": {"pages": [10], "mark": 5},
-            },
+            "doNotMarkPages": [2, 3, 11, 12],
+            "question": [
+                {"pages": [4], "mark": 5},
+                {"pages": [5, 6], "mark": 5},
+                {"pages": [7, 8], "mark": 5},
+                {"pages": [9], "mark": 5},
+                {"pages": [10], "mark": 5},
+            ],
         }
         image_obj = baker.make(Image)
-        SpecificationService._store_validated_spec(spec_dict)
+        SpecificationService.install_spec_from_dict(spec_dict)
         self.paper = baker.make(Paper, paper_number=1)
         self.page2 = baker.make(DNMPage, paper=self.paper, page_number=2)
         self.page3 = baker.make(DNMPage, paper=self.paper, page_number=3)
