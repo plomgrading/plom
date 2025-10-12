@@ -123,7 +123,8 @@ class ManageScanService:
             return Paper.objects.none(), Paper.objects.none()
         mobile_pages = (
             MobilePage.objects.values("paper")
-            .exclude(question_index=MobilePage.DNM_qidx)
+            # filter out pages with meta question indexes (such as DNM Pages)
+            .filter(question_index__in=SpecificationService.get_question_indices())
             .annotate(counts=Count("question_index", distinct=True))
             .filter(counts=SpecificationService.get_n_questions())
             .values_list("paper", flat=True)
