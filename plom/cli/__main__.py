@@ -39,6 +39,7 @@ from plom.cli import (
     clear_login,
     delete_classlist,
     delete_source,
+    get_marks_as_csv_string,
     get_reassembled,
     get_unmarked,
     id_paper,
@@ -131,6 +132,22 @@ def get_parser() -> argparse.ArgumentParser:
         "csvfile",
         help="a CSV file with column headers 'id','name', and [optionally] 'paper_number'.",
     )
+
+    s = sub.add_parser(
+        "get-marks",
+        help="Get information related to exam papers.",
+        description="""
+            Retrieve marks, IDs, and other information about generated exam papers.
+        """,
+    )
+    s.add_argument(
+        "papernum",
+        nargs="?",
+        type=int,
+        default=None,
+        help="Specify a paper. If unspecified, will retrieve marks for all papers.",
+    )
+    _add_server_args(s)
 
     s = sub.add_parser(
         "get-reassembled",
@@ -481,6 +498,10 @@ def main():
 
     elif args.command == "reset-task":
         r = reset_task(args.papernum, args.question_idx, msgr=m)
+        print(r)
+
+    elif args.command == "get-marks":
+        r = get_marks_as_csv_string(papernum=args.papernum, msgr=m)
         print(r)
 
     elif args.command == "get-reassembled":
