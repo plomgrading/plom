@@ -16,7 +16,6 @@ from tempfile import NamedTemporaryFile
 from typing import Any
 
 import requests
-from tqdm import tqdm
 
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -281,12 +280,21 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_unmarked(self, papernum: int) -> dict[str, Any]:
-        """Download a unmarked PDF file from the server.
+    def new_server_get_unmarked(
+        self, papernum: int, memfile: NamedTemporaryFile = None
+    ) -> NamedTemporaryFile:
+        """Download an unmarked PDF file from the Plom server.
+
+        Args:
+            papernum: the paper number of the paper to fetch.
+            memfile: a reference to a NamedTemporaryFile. It must be
+                opened with write permissions in **byte** mode.
+                If unprovided, one will be created. **The caller
+                must close this file**.
 
         Returns:
-            A dict including key `"filename"` for the file that was written
-            and other information about the download.
+            A reference to the NamedTemporaryFile passed in. It should now
+            contain the reassembled exam paper specified by papernum.
         """
         if self.is_server_api_less_than(114):
             raise PlomNoServerSupportException(
@@ -304,17 +312,15 @@ class PlomAdminMessenger(Messenger):
                 msg["Content-Disposition"] = response.headers.get("Content-Disposition")
                 filename = msg.get_filename()
                 assert filename is not None
-                num_bytes = 0
-                # defaults to CWD: TODO: kwarg to change that?
-                with open(filename, "wb") as f:
-                    for chunk in tqdm(response.iter_content(chunk_size=8192)):
-                        f.write(chunk)
-                        num_bytes += len(chunk)
-                r = {
-                    "filename": filename,
-                    "content-length": num_bytes,
-                }
-                return r
+
+                if memfile is None:
+                    memfile = NamedTemporaryFile("wb+")
+
+                memfile.name = filename
+                for chunk in response.iter_content(chunk_size=8192):
+                    memfile.write(chunk)
+                memfile.seek(0)  # be kind, and rewind
+
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
@@ -323,6 +329,8 @@ class PlomAdminMessenger(Messenger):
                 if response.status_code == 404:
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+            return memfile
 
     def new_server_get_reassembled(
         self, papernum: int, memfile: NamedTemporaryFile = None
