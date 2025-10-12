@@ -428,7 +428,7 @@ class ImageBundleReadyTests(TestCase):
         # questions that are not ready: 3,5
         return super().setUp()
 
-    def test_are_paper_question_pairs_ready(self) -> None:
+    def test_check_if_paper_question_pairs_ready(self) -> None:
         pq_pairs = [
             (self.paper.paper_number, 1),
             (self.paper.paper_number, 2),
