@@ -502,30 +502,6 @@ def get_canvas_id_dict(
 # functions to interact with a Plom server
 
 
-def get_plom_marks(msgr: PlomAdminMessenger) -> dict:
-    """Get a list of information about exam papers on the server.
-
-    More specifically this contains info about student marks and IDs.
-
-    Returns:
-        A dict of information keyed by the paper number it corresponds to.
-    """
-    if msgr.is_server_api_less_than(113):
-        raise PlomNoServerSupportException(
-            "Server too old: does not support getting plom marks"
-        )
-
-    with msgr.SRmutex:
-        try:
-            response = msgr.get_auth("/REP/spreadsheet")
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-
 def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
     """Change the key on the Plom marks dicts to student number.
 
@@ -565,7 +541,7 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
 
 
 def get_plom_reassembled(
-    msgr, papernum: int, memfile: NamedTemporaryFile
+    msgr: PlomAdminMessenger, papernum: int, memfile: NamedTemporaryFile
 ) -> NamedTemporaryFile:
     """Download a reassembled PDF file from the Plom server.
 
@@ -700,7 +676,9 @@ def main():
     print(CHECKMARK)
 
     # iterate over this
-    student_marks = restructure_plom_marks_dict(get_plom_marks(plom_messenger))
+    student_marks = restructure_plom_marks_dict(
+        plom_messenger.new_server_get_paper_marks()
+    )
     print(f"Plom marks retrieved (for {len(student_marks)} examinees).")
 
     # put canvas submissions in a dict for fast recall
