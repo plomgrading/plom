@@ -428,6 +428,9 @@ class ImageBundleService:
         """
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
         extras = MobilePage.objects.filter(image__bundle=bundle)
+        # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
+        # count (including them will lead to bugs, Issue #3925); we filter them out.
+        extras = extras.exclude(question_index=MobilePage.DNM_qidx)
 
         # version isn't necessary for the readiness check
         # but it can be fetched here with little additional overhead
@@ -444,8 +447,10 @@ class ImageBundleService:
         )
 
         # now check if pq pairs are markable
-        paper_question_pairs_dict = ImageBundleService().are_paper_question_pairs_ready(
-            [t[:2] for t in papers_questions_versions_updated_by_bundle]
+        paper_question_pairs_dict = (
+            ImageBundleService.check_if_paper_question_pairs_ready(
+                [t[:2] for t in papers_questions_versions_updated_by_bundle]
+            )
         )
         pqv_updated_and_ready = [
             t
@@ -478,8 +483,9 @@ class ImageBundleService:
         """
         return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
 
+    @staticmethod
     @transaction.atomic
-    def _get_ready_paper_question_pairs(self) -> list[tuple[int, int]]:
+    def _get_ready_paper_question_pairs() -> list[tuple[int, int]]:
         """Get all paper question pairs that are ready for marking.
 
         This function queries database images directly to determine
@@ -500,6 +506,9 @@ class ImageBundleService:
         # get all scanned pages (relevant to questions)
         filled_qpages = QuestionPage.objects.filter(image__isnull=False)
         mpages = MobilePage.objects.all()
+        # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
+        # count (including them will lead to bugs, Issue #3925); we filter them out.
+        mpages = mpages.exclude(question_index=MobilePage.DNM_qidx)
 
         # number of pages per question
         test_page_dict = SpecificationService.get_question_pages()
@@ -545,28 +554,33 @@ class ImageBundleService:
 
         return ready
 
-    @transaction.atomic
-    def are_paper_question_pairs_ready(
-        self, paper_qidx_pairs: list[tuple[int, int]]
+    @classmethod
+    def check_if_paper_question_pairs_ready(
+        cls, paper_qidx_pairs: list[tuple[int, int]]
     ) -> dict[tuple[int, int], bool]:
-        """Check if provided paper/question pairs are ready for marking.
+        """Check if provided paper/question pairs are ready for marking, returning a dict.
 
         See :func:`_get_ready_paper_question_pairs` for what 'ready' means.
 
         Args:
             paper_qidx_pairs: a list of tuples identifying a particular
                 question on a particular paper. The tuples should be formatted
-                as (paper_number, qidx).
+                as (paper_number, qidx).  You should not ask about any "meta
+                values" such as extra pages assigned to DNM: valid qidx's only
+                in the range 1 to the largest question index.
 
         Returns:
             A dict with the input paper number/qidx tuples as keys, and True/False
             as the values.
+
+        Raises:
+            ValueError: asking about invalid question indices.
         """
-        test_questions = list(SpecificationService.get_question_pages().keys())
-        ready_pairs = self._get_ready_paper_question_pairs()
+        valid_question_indices = SpecificationService.get_question_indices()
+        ready_pairs = cls._get_ready_paper_question_pairs()
         pq_pair_ready = {}
         for pair in paper_qidx_pairs:
-            if pair[1] not in test_questions:
+            if pair[1] not in valid_question_indices:
                 raise ValueError(
                     f"question index '{pair[1]}' doesn't correspond"
                     " to any question on this assessment."

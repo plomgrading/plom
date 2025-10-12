@@ -13,20 +13,20 @@ class SpecificationServiceMiscTests(TestCase):
         spec_dict = {
             "idPage": 1,
             "numberOfVersions": 2,
-            "numberOfPages": 7,
+            "numberOfPages": 8,
             "totalMarks": 20,
             "numberOfQuestions": 4,
             "name": "testing",
             "longName": "Testing",
-            "doNotMarkPages": [],
-            "question": {
-                1: {"pages": [2], "mark": 5},
-                2: {"pages": [3], "mark": 5, "select": 1},
-                3: {"pages": [4], "mark": 5, "select": [1, 2]},
-                4: {"pages": [5, 6, 7], "mark": 5, "select": [1, 2]},
-            },
+            "doNotMarkPages": [8],
+            "question": [
+                {"pages": [2], "mark": 5},
+                {"pages": [3], "mark": 5, "select": 1},
+                {"pages": [4], "mark": 5, "select": [1, 2]},
+                {"pages": [5, 6, 7], "mark": 5, "select": [1, 2]},
+            ],
         }
-        s._store_validated_spec(spec_dict)
+        s.install_spec_from_dict(spec_dict)
         return super().setUp()
 
     def test_selection_methods_dict(self) -> None:
@@ -42,7 +42,7 @@ class SpecificationServiceMiscTests(TestCase):
 
     def test_get_list_of_pages(self) -> None:
         pp = s.get_list_of_pages()
-        assert pp == list(range(1, 7 + 1))
+        assert pp == list(range(1, 8 + 1))
 
     def test_get_short_and_long_names_or_empty(self) -> None:
         assert s.get_short_and_long_names_or_empty() == ("testing", "Testing")

@@ -239,22 +239,6 @@ def get_private_seed() -> str:
     return spec.privateSeed
 
 
-def _store_validated_spec(validated_spec: dict) -> None:
-    """Takes the validated test specification and stores it in the db.
-
-    Note this is used in unit testing but otherwise has no callers as
-    of April 2025.  Instead, consider :func:`install_spec_from_dict` or
-    the helpers :func:`install_spec_from_toml_file` and
-    :func:`install_spec_from_toml_string`.
-
-    Args:
-        validated_spec: A dictionary containing a validated test
-            specification.
-    """
-    serializer = SpecSerializer()
-    serializer.create(validated_spec)
-
-
 def remove_spec() -> None:
     """Removes the specification from the db, if possible.
 

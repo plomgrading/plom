@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.test import TestCase
 from plom_server.Scan.models import (
@@ -27,19 +28,19 @@ class QRServiceTest(TestCase):
         spec_dict = {
             "idPage": 1,
             "numberOfVersions": 2,
-            "numberOfPages": 5,
+            "numberOfPages": 6,
             "totalMarks": 10,
             "numberOfQuestions": 2,
             "name": "papers_demo",
             "longName": "Papers Test",
-            "doNotMarkPages": [2, 5],
-            "question": {
-                "1": {"pages": [3], "mark": 5},
-                "2": {"pages": [4], "mark": 5},
-            },
+            "doNotMarkPages": [2, 5, 6],
+            "question": [
+                {"pages": [3], "mark": 5},
+                {"pages": [4], "mark": 5},
+            ],
             "publicCode": "123",
         }
-        SpecificationService._store_validated_spec(spec_dict)
+        SpecificationService.install_spec_from_dict(spec_dict, force_public_code=True)
 
         # setup paper and pages
         paper = Paper.objects.create(paper_number=1)

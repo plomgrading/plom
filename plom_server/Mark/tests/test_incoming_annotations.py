@@ -25,18 +25,18 @@ class MiscIncomingAnnotationsTests(TestCase):
         spec_dict = {
             "idPage": 1,
             "numberOfVersions": 2,
-            "numberOfPages": 5,
+            "numberOfPages": 6,
             "totalMarks": 10,
             "numberOfQuestions": 2,
             "name": "papers_demo",
             "longName": "Papers Test",
-            "doNotMarkPages": [2, 5],
-            "question": {
-                "1": {"pages": [3], "mark": 5},
-                "2": {"pages": [4], "mark": 5},
-            },
+            "doNotMarkPages": [2, 5, 6],
+            "question": [
+                {"pages": [3], "mark": 5},
+                {"pages": [4], "mark": 5},
+            ],
         }
-        SpecificationService._store_validated_spec(spec_dict)
+        SpecificationService.install_spec_from_dict(spec_dict)
         user1: User = baker.make(User, username="User1")
         self.rubric1_on_3 = baker.make(
             Rubric,

@@ -792,8 +792,6 @@ class MarkingTaskService:
         except Paper.DoesNotExist:
             raise ValueError(f"Cannot find paper {paper_number}")
 
-        ibs = ImageBundleService()
-
         # now we know there is at least one task (either valid or out of date)
         valid_tasks = MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
@@ -821,7 +819,7 @@ class MarkingTaskService:
 
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
         pq_pair = (paper_obj.paper_number, question_index)
-        if ibs.are_paper_question_pairs_ready([pq_pair])[pq_pair]:
+        if ImageBundleService.check_if_paper_question_pairs_ready([pq_pair])[pq_pair]:
             self.create_task(paper_obj, question_index)
 
     @transaction.atomic
