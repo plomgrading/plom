@@ -53,9 +53,7 @@ import random
 import string
 import time
 from getpass import getpass
-import requests
 from tempfile import NamedTemporaryFile
-from email.message import EmailMessage
 
 from tabulate import tabulate
 from tqdm import tqdm
@@ -70,13 +68,11 @@ from plom.common import (
     Default_Port,
 )
 from plom.cli import start_messenger
-from plom.messenger import PlomAdminMessenger
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomSeriousException,
     PlomNoPermission,
     PlomNoPaper,
-    PlomNoServerSupportException,
 )
 
 
@@ -540,56 +536,6 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
     return simplified_list
 
 
-def get_plom_reassembled(
-    msgr: PlomAdminMessenger, papernum: int, memfile: NamedTemporaryFile
-) -> NamedTemporaryFile:
-    """Download a reassembled PDF file from the Plom server.
-
-    This is a rewrite of a native PlomAdminMessenger function.
-    The intention is to leave file i/o and cleanup to python, rather
-    than manage it ourselves.
-
-    Args:
-        msgr: A PlomAdminMessenger instance.
-        papernum: the paper number of the paper to fetch.
-        memfile: a reference to a NamedTemporaryFile. It must be
-            opened with write permissions in **byte** mode.
-
-    Returns:
-        A reference to the NamedTemporaryFile passed in. It should now
-        contain the reassembled exam paper specified by papernum.
-    """
-    if msgr.is_server_api_less_than(113):
-        raise PlomNoServerSupportException(
-            "Server too old: API does not support getting reassembled papers"
-        )
-
-    with msgr.SRmutex:
-        try:
-            response = msgr.get_auth(
-                f"/api/beta/finish/reassembled/{papernum}", stream=True
-            )
-            response.raise_for_status()
-            # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
-            msg = EmailMessage()
-            msg["Content-Disposition"] = response.headers.get("Content-Disposition")
-            filename = msg.get_filename()
-            assert filename is not None
-
-            memfile.name = msg.get_filename()
-            for chunk in response.iter_content(chunk_size=8192):
-                memfile.write(chunk)
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 403:
-                raise PlomNoPermission(response.reason) from None
-            if response.status_code == 404:
-                raise PlomNoPaper(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-
 ###########################################################
 
 
@@ -728,8 +674,15 @@ def main():
             if args.papers:
                 with NamedTemporaryFile("wb+") as f:
                     try:
-                        get_plom_reassembled(plom_messenger, paper_number, f)
-                        f.seek(0)
+                        plom_messenger.new_server_get_reassembled(paper_number, f)
+                        successes.append(
+                            {
+                                "file/mark": f.name,
+                                "student_id": student_id,
+                                "student_name": student_name,
+                                "student_canvas_id": student_canvas_id,
+                            }
+                        )
                     except (
                         PlomAuthenticationException,
                         PlomNoPermission,
@@ -744,14 +697,6 @@ def main():
                                 "error": e,
                             }
                         )
-                    successes.append(
-                        {
-                            "file/mark": f.name,
-                            "student_id": student_id,
-                            "student_name": student_name,
-                            "student_canvas_id": student_canvas_id,
-                        }
-                    )
             if args.post_grades:
                 successes.append(
                     {
@@ -772,8 +717,7 @@ def main():
         if args.papers:
             with NamedTemporaryFile("wb+") as f:
                 try:
-                    get_plom_reassembled(plom_messenger, paper_number, f)
-                    f.seek(0)
+                    plom_messenger.new_server_get_reassembled(paper_number, f)
                     student_canvas_submission.upload_comment(f)
                 except (
                     PlomAuthenticationException,
