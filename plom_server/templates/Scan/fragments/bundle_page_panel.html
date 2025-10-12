@@ -344,7 +344,7 @@
                                                 </div>
                                             </div>
                                             <hr>
-                                            <fieldset class="mt-2">
+                                            <fieldset x-data="{ question_all_dnm_selection: 'choose_q' }"" class="mt-2">
                                                 <p class="fw-bold">Question(s):</p>
                                                 <div class="form-check">
                                                     <input name="question_all_dnm"
@@ -352,10 +352,11 @@
                                                            class="form-check-input"
                                                            type="radio"
                                                            id="question_all_dnm1_{{ index }}"
-                                                           checked>
+                                                           checked
+                                                           x-model="question_all_dnm_selection" />
                                                     <label class="form-check-label" for="question_all_dnm1_{{ index }}">Attach to specific question(s):</label>
                                                 </div>
-                                                <div class="ms-4">
+                                                <div x-show="question_all_dnm_selection === 'choose_q'" class="ms-4">
                                                     <fieldset>
                                                         {% for qidx, qlabel, qlabel_html in question_labels_html %}
                                                             <div class="form-check">
@@ -374,7 +375,8 @@
                                                            value="choose_all"
                                                            class="form-check-input"
                                                            type="radio"
-                                                           id="question_all_dnm2_{{ index }}">
+                                                           id="question_all_dnm2_{{ index }}"
+                                                           x-model="question_all_dnm_selection" />
                                                     <label class="form-check-label" for="question_all_dnm2_{{ index }}">
                                                         Attach to <em>all</em> questions
                                                     </label>
@@ -384,7 +386,8 @@
                                                            value="choose_dnm"
                                                            class="form-check-input"
                                                            type="radio"
-                                                           id="question_all_dnm3_{{ index }}">
+                                                           id="question_all_dnm3_{{ index }}"
+                                                           x-model="question_all_dnm_selection" />
                                                     <label class="form-check-label" for="question_all_dnm3_{{ index }}">
                                                         Do not mark <small>(but keep with this paper)</small>
                                                     </label>
