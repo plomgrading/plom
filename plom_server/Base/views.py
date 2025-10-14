@@ -91,8 +91,11 @@ class ServerStatusView(ManagerRequiredView):
             }
             queues.append(info)
 
+        server_url = f"{request.scheme}://{request.get_host()}"
+
         context.update(
             {
+                "server_url": server_url,
                 "django_version": django_version,
                 "huey_version": importlib.metadata.version("huey"),
                 "pymupdf_version": pymupdf_version,
