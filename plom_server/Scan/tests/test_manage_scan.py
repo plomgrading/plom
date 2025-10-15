@@ -49,7 +49,7 @@ class ManageScanServiceTests(TestCase):
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(FixedPage, paper=paper, image=img, version=1, page_number=pg)
 
-        # make2 papers with 2 pages with images and 4 without (ie an incomplete paper)
+        # make 2 papers with 2 pages with images and 4 without (ie an incomplete paper)
         for paper_number in [6, 7]:
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 3):
@@ -85,8 +85,8 @@ class ManageScanServiceTests(TestCase):
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(MobilePage, paper=paper, question_index=qn, image=img)
 
-        # make 4 papers with 3 mobile pages and all fixed pages unscanned ("complete")
-        for paper_number in [12, 13, 14, 15]:
+        # make 3 papers with 3 mobile pages and all fixed pages unscanned ("complete")
+        for paper_number in [12, 13, 14]:
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 7):
                 baker.make(
@@ -97,8 +97,23 @@ class ManageScanServiceTests(TestCase):
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(MobilePage, paper=paper, question_index=qn, image=img)
 
-        # make 3 papers with 2 mobile pages and all fixed pages unscanned ("incomplete")
-        for paper_number in [16, 17, 18]:
+        # make 1 paper with 4 mobile pages and all fixed pages unscanned ("complete")
+        paper_number = 15
+        paper = baker.make(Paper, paper_number=paper_number)
+        for pg in range(1, 7):
+            baker.make(FixedPage, paper=paper, image=None, version=1, page_number=pg)
+        for qn in range(1, 4):
+            ord += 1
+            img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
+            baker.make(MobilePage, paper=paper, question_index=qn, image=img)
+        # The DNM page shouldn't change anything about this paper's 'completeness'
+        img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
+        baker.make(
+            MobilePage, paper=paper, question_index=MobilePage.DNM_qidx, image=img
+        )
+
+        # make 2 papers with 2 mobile pages and all fixed pages unscanned ("incomplete")
+        for paper_number in [16, 17]:
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 7):
                 baker.make(
@@ -109,6 +124,21 @@ class ManageScanServiceTests(TestCase):
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(MobilePage, paper=paper, question_index=qn, image=img)
 
+        # make 1 paper with 3 mobile pages and all fixed pages unscanned ("incomplete")
+        paper_number = 18
+        paper = baker.make(Paper, paper_number=paper_number)
+        for pg in range(1, 7):
+            baker.make(FixedPage, paper=paper, image=None, version=1, page_number=pg)
+        for qn in range(1, 3):
+            ord += 1
+            img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
+            baker.make(MobilePage, paper=paper, question_index=qn, image=img)
+        # The DNM page shouldn't change anything about this paper's 'completeness'
+        img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
+        baker.make(
+            MobilePage, paper=paper, question_index=MobilePage.DNM_qidx, image=img
+        )
+
         return super().setUp()
 
     def test_counts(self) -> None:
@@ -118,15 +148,17 @@ class ManageScanServiceTests(TestCase):
         # * 6,7 = 2 scanned fixed pages, 4 unscanned = incomplete  (2*2 scanned pages)
         # * 8,9 = completely unscanned = unused
         # * 10,11 = 2 scanned fixed pages, 4 unscanned, 2 mobile pages = incomplete  (2*2 scanned, 2*2 mobile)
-        # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (3*2 mobile)
-        # * 16,17,18 = two mobile pages each (questions 1, 2, 3). (2*2 mobile)
+        # * 12,13,14 = three mobile pages each (questions 1, 2, 3). (3*3 mobile)
+        # * 15 = four mobile pages (questions 1, 2, 3, DNM). (1*4 mobile)
+        # * 16,17 = two mobile pages each (questions 1, 2). (2*2 mobile)
+        # * 18 = two mobile pages each (questions 1, 2, DNM). (1*3 mobile)
         mss = ManageScanService()
         assert ManageScanService.get_total_papers() == 18
         assert mss.get_total_fixed_pages() == 18 * 6
-        assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 4 * 3 + 3 * 2
+        assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 3 * 3 + 1 * 4 + 2 * 2 + 3 * 1
         assert (
             mss.get_number_of_scanned_pages()
-            == 5 * 6 + 1 + 2 * 2 + 2 * 2 + 2 * 2 + 4 * 3 + 3 * 2
+            == 5 * 6 + 1 + 2 * 2 + 2 * 2 + 2 * 2 + 3 * 3 + 4 * 1 + 2 * 2 + 1 * 3
         )
         assert mss.get_number_unused_papers() == 2
         assert ManageScanService.get_number_completed_papers() == 5 + 4
@@ -208,9 +240,9 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in m_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
 
-        for pn in [16, 17, 18]:
+        for pn in [16, 17]:
             assert pn in mss_incomplete
-            # it is missing pages 3,4,5,6, but has fixed pages 1,2 and mobile for q1,2- the img_pk of those we can ignore.
+            # the papers have 1 mobile page for each of Q1 and Q2.
             f_pg_data = mss_incomplete[pn]["fixed"]
             m_pg_data = mss_incomplete[pn]["mobile"]
             assert len(f_pg_data) == 0
@@ -219,6 +251,21 @@ class ManageScanServiceTests(TestCase):
                 assert (
                     m_pg_data[pg - 1]["question_idx"] == pg
                 )  # 7th, 8th entries are q's 1,2.
+                assert (
+                    "img_pk" in m_pg_data[pg - 1]
+                )  # not testing the actual value of image_pk
+
+        for pn in [18]:
+            assert pn in mss_incomplete
+            # it is missing pages 3,4,5,6, but has fixed pages 1,2 and mobile for q1,2- the img_pk of those we can ignore.
+            f_pg_data = mss_incomplete[pn]["fixed"]
+            m_pg_data = mss_incomplete[pn]["mobile"]
+            assert len(f_pg_data) == 0
+            assert len(m_pg_data) == 3
+            assert m_pg_data[0]["question_idx"] == MobilePage.DNM_qidx
+            assert m_pg_data[1]["question_idx"] == 1
+            assert m_pg_data[2]["question_idx"] == 2
+            for pg in range(1, 3):
                 assert (
                     "img_pk" in m_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
@@ -258,11 +305,23 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in f_page_data[pg - 1]
                 )  # not testing the actual value of image_pk
 
-        for pn in [12, 13, 14, 15]:
+        for pn in [12, 13, 14]:
             assert pn in mss_complete
             m_page_data = mss_complete[pn]["mobile"]
             for qn in range(1, 4):
                 self.assertEqual(m_page_data[qn - 1]["question_idx"], qn)
+                assert (
+                    "img_pk" in m_page_data[qn - 1]
+                )  # not testing the actual value of image_pk
+
+        for pn in [15]:
+            assert pn in mss_complete
+            m_page_data = mss_complete[pn]["mobile"]
+            self.assertEqual(m_page_data[0]["question_idx"], MobilePage.DNM_qidx)
+            self.assertEqual(m_page_data[1]["question_idx"], 1)
+            self.assertEqual(m_page_data[2]["question_idx"], 2)
+            self.assertEqual(m_page_data[3]["question_idx"], 3)
+            for qn in range(1, 5):
                 assert (
                     "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk

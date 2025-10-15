@@ -116,15 +116,21 @@ class ManageScanService:
         fixed_with_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=False
         )
-        # build a subquery to help us find papers which have at least one mobile page
-        # with a distinct question_index for each question
-        if not SpecificationService.is_there_a_spec():
+
+        # we save one query by asking directly for questions, rather than the spec
+        exam_question_indices: list = SpecificationService.get_question_indices()
+        if not exam_question_indices:
             # Short-circuit return: with no spec, scanning project is degenerate
             return Paper.objects.none(), Paper.objects.none()
+
+        # build a subquery to help us find papers which have at least one mobile page
+        # with a distinct question_index for each question.
         mobile_pages = (
             MobilePage.objects.values("paper")
+            # filter out pages with meta question indexes (such as DNM Pages)
+            .filter(question_index__in=exam_question_indices)
             .annotate(counts=Count("question_index", distinct=True))
-            .filter(counts=SpecificationService.get_n_questions())
+            .filter(counts=len(exam_question_indices))
             .values_list("paper", flat=True)
         )
         all_mobile_pages = MobilePage.objects.filter(
