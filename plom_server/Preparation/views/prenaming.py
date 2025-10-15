@@ -64,8 +64,15 @@ class PrenamingConfigView(ManagerRequiredView):
         success_url = "configure_prenaming"
 
         if "set_config" in request.POST:
-            x_pos = request.POST.get("xPos")
-            y_pos = request.POST.get("yPos")
+            # be careful with data coming back from requests - almost always is converted to float.
+            # this caused #4053
+            try:
+                x_pos = float(request.POST.get("xPos"))
+                y_pos = float(request.POST.get("yPos"))
+            except (ValueError, TypeError) as err:
+                messages.add_message(request, messages.ERROR, f"{err}")
+                return redirect(reverse("prep_conflict"))
+
             try:
                 PrenameSettingService.set_prenaming_coords(x_pos, y_pos)
                 return redirect(reverse(success_url))
