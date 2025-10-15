@@ -13,8 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* UI tweaks during extra page assignment to clarify ambiguity in the "all questions" radio option.
+* Server is more self-contained, by self-hosting more javascript/CSS libraries.
 
 ### Fixed
+* Error during upload of bundle if pages had been assigned to the DNM group.
+* Crash during prenaming box positioning due to string/float conversions.
+* Reset prenaming box positioning on server reset.
 
 
 
