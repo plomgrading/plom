@@ -237,13 +237,15 @@ class ExtraliseImageView(ScannerRequiredView):
             to_questions = [int(q) for q in extra_page_data.getlist("questions")]
             if not to_questions:
                 return HttpResponse(
-                    """<span class="alert alert-danger">At least one question</span>"""
+                    """<span class="alert alert-danger">At least one question</span>""",
+                    status=409,
                 )
         else:
             return HttpResponse(
                 """<span class="alert alert-danger">
                     Unexpected radio choice: this is a bug; please file an issue!
-                </span>"""
+                </span>""",
+                status=409,
             )
 
         try:
@@ -256,7 +258,8 @@ class ExtraliseImageView(ScannerRequiredView):
             )
         except ValueError as e:
             return HttpResponse(
-                f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>"""
+                f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>""",
+                status=409,
             )
 
         return render(
