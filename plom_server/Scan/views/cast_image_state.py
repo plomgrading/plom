@@ -211,8 +211,16 @@ class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        # TODO - improve this form processing
+        """HTMX posts here to make a page into an extra page.
 
+        On errors, this returns 409 errors, with alert spans
+        appropriate for rendering to HTML.
+
+        On success, its returns a 200 response with a short message.
+        Its kind of supposed to do nothing, and rely on client-side
+        SPA like behaviour to script refreshing appropriate bits of
+        the page.
+        """
         extra_page_data = request.POST
 
         paper_number = extra_page_data.get("paper_number", None)
@@ -272,7 +280,7 @@ class ExtraliseImageView(ScannerRequiredView):
         # seems like a good idea but hx-on:htmx:after-request doesn't run :(
         # return HttpResponse(status=204)
 
-        return HttpResponse("hi why am I here?", status=200)
+        return HttpResponse("Successfully set extra", status=200)
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
