@@ -43,6 +43,9 @@ class ThumbnailContainerFragmentView(ScannerRequiredView):
 
         Returns:
             An rendered thumbnail fragment.
+
+        Note: be careful in changing things here: the same thumbnails are generated
+        "en masse" by including the fragment directly in :class:`BundleThumbnailsView`.
         """
         # list of dicts of page info, in bundle order
         scanner = ScanService()
@@ -163,6 +166,10 @@ class BundleThumbnailsView(ScannerRequiredView):
         Returns:
             The response returns a template-rendered page.
             If there was no such bundle, return a 404 error page.
+
+        Note: be careful in changing things here: the same thumbnails are
+        generated inside this render are also generated one-at-a-time in
+        :class:`ThumbnailContainerFragmentView`.
         """
         try:
             context = self.build_context(bundle_id=bundle_id)
