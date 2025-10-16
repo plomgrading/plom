@@ -252,7 +252,7 @@
                                 <div class="alert alert-secondary">
                                     <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
-                                          hx-swap="none"
+                                          hx-target-error="#invalidmessage"
                                           hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                         <!--
                                             This Alpine.js block manages interactivity for assigning an extra page to a specific paper.

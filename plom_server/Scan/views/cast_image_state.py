@@ -221,7 +221,8 @@ class ExtraliseImageView(ScannerRequiredView):
             paper_number = int(paper_number)
         except (ValueError, TypeError):
             return HttpResponse(
-                """<span class="alert alert-danger">Invalid paper number</span>"""
+                """<span class="alert alert-danger">Invalid paper number</span>""",
+                status=409,
             )
 
         choice = extra_page_data.get("question_all_dnm", "")
