@@ -42,7 +42,7 @@ class ThumbnailContainerFragmentView(ScannerRequiredView):
             index: which page, by 1-based index into the bundle.
 
         Returns:
-            An rendered thubnail fragment.
+            An rendered thumbnail fragment.
         """
         # list of dicts of page info, in bundle order
         scanner = ScanService()

@@ -420,7 +420,7 @@ class ScanService:
 
     @transaction.atomic
     def get_thumbnail_image(self, bundle_pk: int, index: int) -> StagingImage:
-        """Get a thubnail image from the database.
+        """Get a thumbnail image from the database.
 
         To uniquely identify an image, we need a bundle and a page index.
         """
