@@ -254,7 +254,7 @@
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
                                           hx-swap="none"
                                           hx-target-error="#invalidmessage"
-                                          hx-on:htmx:after-request="myHandler(event, {{ index }})">
+                                          hx-on:htmx:after-request="my_refresh_stuff(event, {{ index }})">
                                         <!--
                                             This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
 
@@ -408,16 +408,13 @@
     </div>
 </div>
 <script>
-  function myHandler(event, index) {
-    console.log(event)
+  function my_refresh_stuff(event, index) {
     const xhr = event.detail.xhr;
     if (xhr.status === 200) {
-      console.log("Success! Running hx-on action");
+      // console.log("Success! Running hx-on action");
       refreshThumbnailContainer(index);
       clickThumbnail(index);
-    } else {
-      console.log("Error: Request failed");
-      // Do nothing on error
     }
+    // Do nothing on error, hope its handled elsewhere, e.g., by hx-target-error
   }
 </script>
