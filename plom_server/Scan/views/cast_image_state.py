@@ -262,11 +262,17 @@ class ExtraliseImageView(ScannerRequiredView):
                 status=409,
             )
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        # nah
+        # return render(
+        #     request,
+        #     "Scan/fragments/bundle_page_panel.html",
+        #     {"bundle_id": bundle_id, "index": index},
+        # )
+
+        # seems like a good idea but hx-on:htmx:after-request doesn't run :(
+        # return HttpResponse(status=204)
+
+        return HttpResponse("hi why am I here?", status=200)
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
