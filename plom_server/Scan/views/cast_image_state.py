@@ -269,11 +269,11 @@ class ExtraliseImageView(ScannerRequiredView):
                 status=409,
             )
 
-        return HttpResponse("Successfully set info", status=200)
+        return HttpResponse("Success: set info", status=200)
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        """Cast an existing bundle page to an extra page (unassigned)."""
+        """HTMX puts here to cast an existing bundle page to an extra page (unassigned)."""
         try:
             ScanCastService.extralise_image_from_bundle_id(
                 request.user, bundle_id, index
@@ -285,19 +285,14 @@ class ExtraliseImageView(ScannerRequiredView):
         except ObjectDoesNotExist as err:
             return Http404(err)
         except ValueError as err:
-            print(f"Issue #3878: got ValueError we're unsure how to handle: {err}")
-            # TODO: redirect ala scan_bundle_lock?
-            raise
+            return HttpResponse(f"{err}", status=409)
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        return HttpResponse("Success: changed to extra page")
 
     def delete(
         self, request: HttpRequest, *, bundle_id: int, index: int
     ) -> HttpResponse:
+        """HTMX deletes here to clear the extra page info from a particular page in a bundle."""
         try:
             ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
                 request.user, bundle_id, index
@@ -306,9 +301,7 @@ class ExtraliseImageView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
+        except ObjectDoesNotExist as err:
+            return Http404(err)
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        return HttpResponse("Success: cleared extra page info")

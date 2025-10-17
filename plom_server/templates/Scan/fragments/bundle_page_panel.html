@@ -3,6 +3,7 @@
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2025 Colin B. Macdonald
+
     Copyright (C) 2025 Aidan Murphy
     Copyright (C) 2025 Deep Shah
 -->
@@ -168,6 +169,10 @@
                                 </a>
                             </div>
                         </div>
+                        <!-- common error handling dump -->
+                        <!-- TODO: annoyingly we reserve space: without pb-4 the error overlaps
+                             the next dive, not sure why -->
+                        <div class="py-4" id="invalidmessage"></div>
                         <!-- what we can do depends on the status -->
                         {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
                             <div>
@@ -182,8 +187,8 @@
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
                                    hx-put="{% url 'extralise_image' bundle_id index %}"
-                                   hx-swap="none"
-                                   hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                   hx-target-error="#invalidmessage"
+                                   hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to extra page</a>
                             </div>
                         {% endif %}
@@ -244,8 +249,8 @@
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}"
-                                       hx-swap="none"
-                                       hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                       hx-target-error="#invalidmessage"
+                                       hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                     Clear information</a>
                                 </div>
                             {% else %}
@@ -253,7 +258,7 @@
                                     <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
                                           hx-target-error="#invalidmessage"
-                                          hx-on:htmx:after-request="my_refresh_stuff(event, {{ index }})">
+                                          hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
                                         <!--
                                             This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
 
@@ -394,7 +399,6 @@
                                                 </div>
                                             </fieldset>
                                         </div>
-                                        <div class="py-4" id="invalidmessage"></div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>
                                     </form>
                                 </div>
@@ -407,7 +411,7 @@
     </div>
 </div>
 <script>
-  function my_refresh_stuff(event, index) {
+  function on_status_200_refresh(event, index) {
     const xhr = event.detail.xhr;
     if (xhr.status === 200) {
       // console.log("Success! Running hx-on action");
