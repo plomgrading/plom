@@ -289,7 +289,7 @@
                                           -->
                                         <div x-data="{ selection_method: '', final_paper_number: null, bundlepapers: true }">
                                             <input type="hidden" name="paper_number" :value="final_paper_number">
-                                            <p class="fw-bold">Paper:</p>
+                                            <p class="mb-1 fw-bold">Paper:</p>
                                             {% if prev_paper_number %}
                                                 <div class="form-check">
                                                     <input class="form-check-input"
@@ -350,7 +350,7 @@
                                             </div>
                                             <hr>
                                             <fieldset x-data="{ question_all_dnm_selection: 'choose_q' }"" class="mt-2">
-                                                <p class="fw-bold">Question(s):</p>
+                                                <p class="mb-1 fw-bold">Question(s):</p>
                                                 <div class="form-check">
                                                     <input name="question_all_dnm"
                                                            value="choose_q"
@@ -361,7 +361,8 @@
                                                            x-model="question_all_dnm_selection" />
                                                     <label class="form-check-label" for="question_all_dnm1_{{ index }}">Attach to specific question(s):</label>
                                                 </div>
-                                                <div x-show="question_all_dnm_selection === 'choose_q'" class="ms-4">
+                                                <div x-show="question_all_dnm_selection === 'choose_q'"
+                                                     class="ms-4 border-start ps-3">
                                                     <fieldset>
                                                         {% for qidx, qlabel, qlabel_html in question_labels_html %}
                                                             <div class="form-check">
