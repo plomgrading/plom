@@ -247,14 +247,14 @@
                             </div>
                             {% if current_page.info.paper_number %}
                                 <div>
-                                    <a class="btn btn-danger text-center w-100 mb-3"
+                                    <a class="btn btn-danger text-center w-100 mb-2"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}"
                                        hx-target-error="#invalidmessage"
                                        hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
                                     Clear information</a>
                                 </div>
                             {% else %}
-                                <div class="alert alert-secondary">
+                                <div class="alert alert-secondary mb-2">
                                     <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
                                           hx-target-error="#local_invalidmessage"
