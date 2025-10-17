@@ -69,6 +69,11 @@ from ..services.util import (
 from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
 
 
+# future translation support
+def _(x: str) -> str:
+    return x
+
+
 log = logging.getLogger(__name__)
 
 
@@ -1259,10 +1264,21 @@ class ScanService:
             elif status == "unknown":
                 label = "Unknown page"
             elif status == "extra":
+                label = "Extra page"
                 if pg["info"]["paper_number"]:
-                    label = f"Extra page - {info['paper_number']}.{info['question_idx_list']}"
+                    label += f" {info['paper_number']}."
+                    qidx_list = info["question_idx_list"]
+                    if not qidx_list:
+                        # TODO: seems to use [] rather than the MobilePage.DNM_qidx
+                        # not quite sure why but seems like something that might
+                        # bite us later
+                        label += "DNM"
+                    elif len(qidx_list) == 1:
+                        label += f"qidx{qidx_list[0]}"
+                    else:
+                        label += "qidx[" + ",".join(str(x) for x in qidx_list) + "]"
                 else:
-                    label = "Extra page - no data"
+                    label += " - " + _("no data")
             elif status == "error":
                 label = f"error: {info['reason']}"
             elif status == "unread":
