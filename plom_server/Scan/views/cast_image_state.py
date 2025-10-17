@@ -213,8 +213,9 @@ class ExtraliseImageView(ScannerRequiredView):
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         """HTMX posts here to make a page into an extra page.
 
-        On errors, this returns 409 errors, with alert spans
-        appropriate for rendering to HTML.
+        On errors, this returns 409 http responses, with a plain
+        textual human-readable error message.  The error message
+        is undecorated.
 
         On success, its returns a 200 response with a short textual
         message of success.  Its not necessary or expected that callers
@@ -227,10 +228,7 @@ class ExtraliseImageView(ScannerRequiredView):
         try:
             paper_number = int(paper_number)
         except (ValueError, TypeError):
-            return HttpResponse(
-                """<span class="alert alert-danger">Invalid paper number</span>""",
-                status=409,
-            )
+            return HttpResponse("Invalid paper number", status=409)
 
         choice = extra_page_data.get("question_all_dnm", "")
         if choice == "choose_all":
@@ -243,15 +241,11 @@ class ExtraliseImageView(ScannerRequiredView):
             # caution: `get` would return just the last entry
             to_questions = [int(q) for q in extra_page_data.getlist("questions")]
             if not to_questions:
-                return HttpResponse(
-                    """<span class="alert alert-danger">At least one question</span>""",
-                    status=409,
-                )
+                return HttpResponse("At least one question", status=409)
+
         else:
             return HttpResponse(
-                """<span class="alert alert-danger">
-                    Unexpected radio choice: this is a bug; please file an issue!
-                </span>""",
+                "Unexpected radio choice: this is a bug; please file an issue!",
                 status=409,
             )
 
@@ -264,10 +258,7 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ValueError as e:
-            return HttpResponse(
-                f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>""",
-                status=409,
-            )
+            return HttpResponse(f"{e}: try reloading this page.", status=409)
 
         return HttpResponse("Success: set info", status=200)
 
