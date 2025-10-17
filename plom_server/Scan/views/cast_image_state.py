@@ -216,10 +216,9 @@ class ExtraliseImageView(ScannerRequiredView):
         On errors, this returns 409 errors, with alert spans
         appropriate for rendering to HTML.
 
-        On success, its returns a 200 response with a short message.
-        Its kind of supposed to do nothing, and rely on client-side
-        SPA like behaviour to script refreshing appropriate bits of
-        the page.
+        On success, its returns a 200 response with a short textual
+        message of success.  Its not necessary or expected that callers
+        will show this to users.
         """
         extra_page_data = request.POST
 
@@ -270,17 +269,7 @@ class ExtraliseImageView(ScannerRequiredView):
                 status=409,
             )
 
-        # nah
-        # return render(
-        #     request,
-        #     "Scan/fragments/bundle_page_panel.html",
-        #     {"bundle_id": bundle_id, "index": index},
-        # )
-
-        # seems like a good idea but hx-on:htmx:after-request doesn't run :(
-        # return HttpResponse(status=204)
-
-        return HttpResponse("Successfully set extra", status=200)
+        return HttpResponse("Successfully set info", status=200)
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
