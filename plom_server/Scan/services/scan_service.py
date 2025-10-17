@@ -1172,7 +1172,7 @@ class ScanService:
         """List of info about the pages in a bundle in bundle order.
 
         Args:
-            bundle_obj (todo): the pk reference to a bundle.
+            bundle_obj: reference to a bundle.
 
         Returns:
             list: the pages within the given bundle ordered by their
@@ -1187,6 +1187,10 @@ class ScanService:
             ``paper_number``, and ``question_idx_list``.
             ``page_label`` is a short label appropriate for displaying
             on a page icon, or as a tooltip.
+            ``zfill_order`` is just order with zero-padding based on
+            the number of digits needed for size of this bundle.
+            ``n_qr_read`` is the number of QR codes read, and appears
+            to be unused by anyone as of 2025-Oct.
         """
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
