@@ -136,6 +136,11 @@
                 </div>
             </div>
         </div>
-        {% django_htmx_script %}
+        <!-- this django-htmx addon might help with debugging (not production) but
+               conflicts with our hx-target-error handling, use with caution.
+	       docs: https://django-htmx.readthedocs.io/en/latest/template_tags.html#django-htmx-extension-script -->
+        {% comment %}
+		  {% django_htmx_script %}
+        {% endcomment %}
     </body>
 </html>
