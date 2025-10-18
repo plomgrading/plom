@@ -177,18 +177,20 @@
                         <div class="py-4" id="invalidmessage"></div>
                         <!-- what we can do depends on the status -->
                         {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
-                            <div hx-target="this" class="my-2">
+                            <div class="my-2">
                                 <a class="btn btn-outline-danger text-center w-100"
                                    hx-post="{% url 'discard_image' bundle_id index %}"
-                                   hx-target-error="#invalidmessage"
+                                   hx-target="closest div"
+                                   hx-target-error="closest div"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">Discard</a>
                             </div>
                         {% endif %}
                         {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
-                            <div hx-target="this" class="my-2">
+                            <div class="my-2">
                                 <a class="btn btn-outline-secondary text-center w-100"
                                    hx-put="{% url 'extralise_image' bundle_id index %}"
-                                   hx-target-error="#invalidmessage"
+                                   hx-target="closest div"
+                                   hx-target-error="closest div"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to extra page</a>
                             </div>
@@ -208,10 +210,11 @@
                             <!-- cannot do anything with an unread page -->
                         {% elif current_page.status == 'discard' %}
                             <!-- stuff unique to discard pages -->
-                            <div hx-target="this" class="my-2">
+                            <div class="my-2">
                                 <a class="btn btn-outline-secondary text-center w-100"
                                    hx-post="{% url 'unknowify_image' bundle_id index %}"
-                                   hx-target-error="#invalidmessage"
+                                   hx-target="closest div"
+                                   hx-target-error="closest div"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to unknown page</a>
                             </div>
@@ -247,12 +250,14 @@
                                 </a>
                             </div>
                             {% if current_page.info.paper_number %}
-                                <div hx-target="this" class="my-2">
+                                <div class="my-2">
                                     <a class="btn btn-outline-secondary text-center w-100"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}"
-                                       hx-target-error="#invalidmessage"
+                                       hx-target="closest div"
+                                       hx-target-error="closest div"
                                        hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
-                                    Clear information</a>
+                                        Clear information
+                                    </a>
                                 </div>
                             {% else %}
                                 <div class="alert alert-secondary my-2">
