@@ -13,7 +13,7 @@ from email.message import EmailMessage
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, IO
+from typing import Any
 
 import requests
 
@@ -280,7 +280,9 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_unmarked(self, papernum: int, memfile: IO | None = None) -> IO:
+    def new_server_get_unmarked(
+        self, papernum: int, memfile: NamedTemporaryFile = None
+    ) -> NamedTemporaryFile:
         """Download an unmarked PDF file from the Plom server.
 
         Args:
@@ -331,8 +333,8 @@ class PlomAdminMessenger(Messenger):
             return memfile
 
     def new_server_get_reassembled(
-        self, papernum: int, memfile: IO | None = None
-    ) -> IO:
+        self, papernum: int, memfile: NamedTemporaryFile = None
+    ) -> NamedTemporaryFile:
         """Download a reassembled PDF file from the Plom server.
 
         Args:
