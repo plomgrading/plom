@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Server is more self-contained, by self-hosting more javascript/CSS libraries.
 
 ### Fixed
+* Scan: fixed a regression where errors while dealing with extra pages were not shown.
 * Error during upload of bundle if pages had been assigned to the DNM group.
 * Crash during prenaming box positioning due to string/float conversions.
 * Reset prenaming box positioning on server reset.
