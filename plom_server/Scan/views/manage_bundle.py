@@ -7,25 +7,24 @@
 # Copyright (C) 2025 Deep Shah
 # Copyright (C) 2025 Aidan Murphy
 
+from datetime import datetime
 from typing import Any
 
 import pymupdf
 
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404, FileResponse, HttpRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.contrib import messages
-
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils.decorators import method_decorator
-
-from plom_server.Base.base_group_views import ScannerRequiredView
-from plom_server.Papers.services import SpecificationService, PaperInfoService
-from ..services import ScanService
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from plom.misc_utils import format_int_list_with_runs
-from datetime import datetime
+from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+
+from ..services import ScanService
 
 
 class ThumbnailContainerFragmentView(ScannerRequiredView):
