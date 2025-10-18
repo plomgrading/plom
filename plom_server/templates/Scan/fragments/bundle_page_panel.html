@@ -178,7 +178,7 @@
                         <!-- what we can do depends on the status -->
                         {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
                             <div hx-target="this" class="my-2">
-                                <a class="btn btn-danger text-center w-100"
+                                <a class="btn btn-outline-danger text-center w-100"
                                    hx-post="{% url 'discard_image' bundle_id index %}"
                                    hx-target-error="#invalidmessage"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">Discard</a>
@@ -186,7 +186,7 @@
                         {% endif %}
                         {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
                             <div hx-target="this" class="my-2">
-                                <a class="btn btn-warning text-center w-100"
+                                <a class="btn btn-outline-secondary text-center w-100"
                                    hx-put="{% url 'extralise_image' bundle_id index %}"
                                    hx-target-error="#invalidmessage"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
@@ -209,7 +209,7 @@
                         {% elif current_page.status == 'discard' %}
                             <!-- stuff unique to discard pages -->
                             <div hx-target="this" class="my-2">
-                                <a class="btn btn-outline-warning text-center w-100"
+                                <a class="btn btn-outline-secondary text-center w-100"
                                    hx-post="{% url 'unknowify_image' bundle_id index %}"
                                    hx-target-error="#invalidmessage"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
@@ -219,26 +219,26 @@
                                 <a class="btn btn-outline-danger text-center w-100"
                                    hx-post="{% url 'unknowify_all_discards' bundle_id %}"
                                    hx-confirm="This will convert all discarded pages to unknown pages!">
-                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                    <i class="bi bi-exclamation-diamond-fill"></i>
                                     Cast all discards to unknown pages
-                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                    <i class="bi bi-exclamation-diamond-fill"></i>
                                 </a>
                             </div>
                         {% elif current_page.status == 'unknown' %}
                             <!-- stuff unique to unknown pages -->
                             <div class="my-2">
-                                <a class="btn btn-danger text-centre w-100"
+                                <a class="btn btn-outline-danger text-centre w-100"
                                    hx-post="{% url 'discard_all_unknowns' bundle_id %}"
                                    hx-confirm="This will convert all unknown pages to discarded pages!">
-                                    <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
+                                    <i class="bi bi-exclamation-diamond-fill"></i>
                                     Discard all unknown pages
-                                    <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
+                                    <i class="bi bi-exclamation-diamond-fill"></i>
                                 </a>
                             </div>
                         {% elif current_page.status == 'extra' %}
                             <!-- stuff unique to extra pages  -->
                             <div class="my-2">
-                                <a class="btn btn-info w-100"
+                                <a class="btn btn-outline-secondary w-100"
                                    href="{% url 'scan_compare_handwriting' bundle_id index %}"
                                    target="_blank"
                                    data-bs-toggle="tooltip"
@@ -248,7 +248,7 @@
                             </div>
                             {% if current_page.info.paper_number %}
                                 <div hx-target="this" class="my-2">
-                                    <a class="btn btn-danger text-center w-100"
+                                    <a class="btn btn-outline-secondary text-center w-100"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}"
                                        hx-target-error="#invalidmessage"
                                        hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
