@@ -257,7 +257,7 @@
                                 <div class="alert alert-secondary mb-2">
                                     <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
-                                          hx-target-error="#local_invalidmessage"
+                                          hx-target-error="#error_msg_for_set_extra"
                                           hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
                                         <!--
                                             This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
@@ -400,7 +400,7 @@
                                                 </div>
                                             </fieldset>
                                         </div>
-                                        <div class="py-4" id="local_invalidmessage"></div>
+                                        <div class="py-4" id="error_msg_for_set_extra"></div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>
                                     </form>
                                 </div>
