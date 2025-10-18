@@ -168,6 +168,10 @@
                                 </a>
                             </div>
                         </div>
+                        <!-- common error handling dump -->
+                        <!-- TODO: annoyingly we reserve space: without pb-4 the error overlaps
+                             the next dive, not sure why -->
+                        <div class="py-4" id="invalidmessage"></div>
                         <!-- what we can do depends on the status -->
                         {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
                             <div>
@@ -182,8 +186,8 @@
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
                                    hx-put="{% url 'extralise_image' bundle_id index %}"
-                                   hx-swap="none"
-                                   hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                   hx-target-error="#invalidmessage"
+                                   hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to extra page</a>
                             </div>
                         {% endif %}
@@ -242,18 +246,18 @@
                             </div>
                             {% if current_page.info.paper_number %}
                                 <div>
-                                    <a class="btn btn-danger text-center w-100 mb-3"
+                                    <a class="btn btn-danger text-center w-100 mb-2"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}"
-                                       hx-swap="none"
-                                       hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                       hx-target-error="#invalidmessage"
+                                       hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
                                     Clear information</a>
                                 </div>
                             {% else %}
-                                <div class="alert alert-secondary">
+                                <div class="alert alert-secondary mb-2">
                                     <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
-                                          hx-swap="none"
-                                          hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                          hx-target-error="#error_msg_for_set_extra"
+                                          hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
                                         <!--
                                             This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
 
@@ -284,7 +288,7 @@
                                           -->
                                         <div x-data="{ selection_method: '', final_paper_number: null, bundlepapers: true }">
                                             <input type="hidden" name="paper_number" :value="final_paper_number">
-                                            <p class="fw-bold">Paper:</p>
+                                            <p class="mb-1 fw-bold">Paper:</p>
                                             {% if prev_paper_number %}
                                                 <div class="form-check">
                                                     <input class="form-check-input"
@@ -345,7 +349,7 @@
                                             </div>
                                             <hr>
                                             <fieldset x-data="{ question_all_dnm_selection: 'choose_q' }"" class="mt-2">
-                                                <p class="fw-bold">Question(s):</p>
+                                                <p class="mb-1 fw-bold">Question(s):</p>
                                                 <div class="form-check">
                                                     <input name="question_all_dnm"
                                                            value="choose_q"
@@ -356,7 +360,8 @@
                                                            x-model="question_all_dnm_selection" />
                                                     <label class="form-check-label" for="question_all_dnm1_{{ index }}">Attach to specific question(s):</label>
                                                 </div>
-                                                <div x-show="question_all_dnm_selection === 'choose_q'" class="ms-4">
+                                                <div x-show="question_all_dnm_selection === 'choose_q'"
+                                                     class="ms-4 border-start ps-3">
                                                     <fieldset>
                                                         {% for qidx, qlabel, qlabel_html in question_labels_html %}
                                                             <div class="form-check">
@@ -394,7 +399,7 @@
                                                 </div>
                                             </fieldset>
                                         </div>
-                                        <div class="py-4" id="invalidmessage"></div>
+                                        <div class="py-4" id="error_msg_for_set_extra"></div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>
                                     </form>
                                 </div>
@@ -406,3 +411,14 @@
         </div>
     </div>
 </div>
+<script>
+  function on_status_200_refresh(event, index) {
+    const xhr = event.detail.xhr;
+    if (xhr.status === 200) {
+      // console.log("Success! Running hx-on action");
+      refreshThumbnailContainer(index);
+      clickThumbnail(index);
+    }
+    // Do nothing on error, hope its handled elsewhere, e.g., by hx-target-error
+  }
+</script>
