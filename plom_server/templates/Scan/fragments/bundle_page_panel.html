@@ -177,9 +177,8 @@
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
                                    hx-post="{% url 'discard_image' bundle_id index %}"
-                                   hx-swap="none"
-                                   hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
-                                Discard</a>
+                                   hx-target-error="#invalidmessage"
+                                   hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">Discard</a>
                             </div>
                         {% endif %}
                         {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
@@ -209,8 +208,8 @@
                             <div>
                                 <a class="btn btn-outline-warning text-center w-100 mb-3"
                                    hx-post="{% url 'unknowify_image' bundle_id index %}"
-                                   hx-swap="none"
-                                   hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                   hx-target-error="#invalidmessage"
+                                   hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to unknown page</a>
                             </div>
                             <div>

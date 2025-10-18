@@ -28,6 +28,7 @@ class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """HTMX posts here to discard a page from a bundle."""
         try:
             ScanCastService.discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
@@ -38,11 +39,8 @@ class DiscardImageView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+
+        return HttpResponse("Success: discarded")
 
 
 class DiscardAllUnknownsHTMXView(ScannerRequiredView):
@@ -70,6 +68,7 @@ class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """HTMX posts here to mark a page from a bundle as unknown."""
         try:
             ScanCastService().unknowify_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
@@ -81,11 +80,7 @@ class UnknowifyImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        return HttpResponse("Success: made unknown")
 
 
 class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
