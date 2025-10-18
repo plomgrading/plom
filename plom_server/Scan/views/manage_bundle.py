@@ -180,7 +180,7 @@ class BundleThumbnailsSummaryFragmentView(ScannerRequiredView):
 
     def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
 
-        context = super().build_context()
+        context = self.build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
 
@@ -251,7 +251,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
     """Return the image display fragment from a user-uploaded bundle."""
 
     def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        context = super().build_context()
+        context = self.build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
@@ -386,7 +386,7 @@ class HandwritingComparisonView(ScannerRequiredView):
             An HttpResponse rendering the 'handwriting_comparison.html' template with context
             including the extra page and its neighboring known papers (if any).
         """
-        context = super().build_context()
+        context = self.build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
         n_pages = scanner.get_n_images(bundle)

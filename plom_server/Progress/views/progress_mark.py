@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Bryan Tanady
 
 from django.contrib.sites.shortcuts import get_current_site
@@ -21,7 +21,7 @@ from ..services import ProgressOverviewService
 
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        context = super().build_context()
+        context = self.build_context()
 
         pos = ProgressOverviewService()
         id_task_overview, _ = pos.get_task_overview()
@@ -50,7 +50,7 @@ class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Respond to Get method requests to the Mark Papers page."""
-        context = super().build_context()
+        context = self.build_context()
         server_link = AuthenticationServices.get_base_link(
             default_host=get_current_site(request).domain
         )
@@ -62,7 +62,7 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
-        context = super().build_context()
+        context = self.build_context()
         mss = MarkingStatsService()
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
@@ -87,7 +87,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
-        context = super().build_context()
+        context = self.build_context()
         mss = MarkingStatsService()
         stats = mss.get_basic_marking_stats(question_idx, version=version)
         histogram = mss.get_mark_histogram(question_idx, version=version)
@@ -136,7 +136,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
 class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
     def get(self, request: HttpRequest, *, question_idx: int) -> HttpResponse:
         version = 1
-        context = super().build_context()
+        context = self.build_context()
         mss = MarkingStatsService()
         stats = mss.get_basic_marking_stats(question_idx, version=None)
         histogram = mss.get_mark_histogram(question_idx, version=None)
