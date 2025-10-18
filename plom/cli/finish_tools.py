@@ -5,7 +5,6 @@
 from csv import DictWriter
 from io import StringIO
 from typing import Any
-from tempfile import NamedTemporaryFile
 
 from plom.cli import with_messenger
 
@@ -47,17 +46,7 @@ def get_marks_as_csv_string(*, papernum: int | None = None, msgr) -> str:
 @with_messenger
 def get_reassembled(papernum: int, *, msgr) -> dict[str, Any]:
     """Get a paper in its marked state."""
-    with NamedTemporaryFile("wb+") as memfile:
-        msgr.new_server_get_reassembled(papernum, memfile)
-        with open(memfile.name, "wb") as permanentfile:
-            memfile_contents = memfile.read()
-            permanentfile.write(memfile_contents)
-            info_dict = {
-                "filename": memfile.name,
-                "content-length": len(memfile_contents),
-            }
-
-    return info_dict
+    return msgr.new_server_get_reassembled(papernum)
 
 
 @with_messenger
