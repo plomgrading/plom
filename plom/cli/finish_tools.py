@@ -63,14 +63,4 @@ def get_reassembled(papernum: int, *, msgr) -> dict[str, Any]:
 @with_messenger
 def get_unmarked(papernum: int, *, msgr) -> dict[str, Any]:
     """Get a paper in its unmarked state."""
-    with NamedTemporaryFile("wb+") as memfile:
-        msgr.new_server_get_unmarked(papernum, memfile)
-        with open(memfile.name, "wb") as permanentfile:
-            memfile_contents = memfile.read()
-            permanentfile.write(memfile_contents)
-            info_dict = {
-                "filename": memfile.name,
-                "content-length": len(memfile_contents),
-            }
-
-    return info_dict
+    return msgr.new_server_get_unmarked(papernum)
