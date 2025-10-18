@@ -2,10 +2,12 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 import importlib.metadata
 
 from django.contrib import messages
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -15,6 +17,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from django_huey import get_queue
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom_server.Authentication.services import AuthenticationServices
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 
@@ -91,7 +94,12 @@ class ServerStatusView(ManagerRequiredView):
             }
             queues.append(info)
 
-        server_url = f"{request.scheme}://{request.get_host()}"
+        # Caution: nginx might be in the way
+        # server_url = f"{request.scheme}://{request.get_host()}"
+        # Helper code also checks some env vars etc
+        server_url = AuthenticationServices.get_base_link(
+            default_host=get_current_site(request).domain
+        )
 
         context.update(
             {
