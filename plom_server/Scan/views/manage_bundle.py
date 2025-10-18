@@ -379,6 +379,8 @@ class HandwritingComparisonView(ScannerRequiredView):
 
         Args:
             request: The incoming HTTP GET request.
+
+        Keyword Args:
             bundle_id: The ID of the bundle containing scanned pages.
             index: The page index of the extra (unidentified) page to compare.
 
@@ -418,9 +420,11 @@ class HandwritingComparisonView(ScannerRequiredView):
                         and int(page_num_in_paper) == 1
                     ):
                         prev_paper_first_page_index = page.get("order")
+                        prev_paper_first_page_info = "ID page"
                         break
 
         if prev_paper_first_page_index is None:
+            prev_paper_first_page_info = "(could not find ID page; showing nearest)"
             prev_paper_first_page_index = nearest_prev_known_index
 
         next_paper_number = None
@@ -449,10 +453,12 @@ class HandwritingComparisonView(ScannerRequiredView):
                         and int(page_num_in_paper) == 1
                     ):
                         next_paper_first_page_index = page.get("order")
+                        next_paper_first_page_info = "ID page"
                         break
 
         if next_paper_first_page_index is None:
             next_paper_first_page_index = nearest_next_known_index
+            next_paper_first_page_info = "(could not find ID page; showing nearest)"
 
         context.update(
             {
@@ -462,6 +468,8 @@ class HandwritingComparisonView(ScannerRequiredView):
                 "next_paper_number": next_paper_number,
                 "prev_paper_first_page_index": prev_paper_first_page_index,
                 "next_paper_first_page_index": next_paper_first_page_index,
+                "prev_paper_first_page_info": prev_paper_first_page_info,
+                "next_paper_first_page_info": next_paper_first_page_info,
                 "current_page": current_page,
             }
         )
