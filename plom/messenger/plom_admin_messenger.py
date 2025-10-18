@@ -265,7 +265,7 @@ class PlomAdminMessenger(Messenger):
         Returns:
             A dict of information keyed by the paper number it corresponds to.
         """
-        if self.is_server_api_less_than(113):
+        if self.is_server_api_less_than(115):
             raise PlomNoServerSupportException(
                 "Server too old: does not support getting plom marks"
             )
