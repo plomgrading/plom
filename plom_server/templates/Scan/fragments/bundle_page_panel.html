@@ -38,9 +38,9 @@
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
-                <div class="card-body p-2">
+                <div class="card-body p-2 py-0">
                     {% if current_page.status == 'known' %}
-                        <div class="alert alert-success">
+                        <div class="alert alert-success my-2">
                             <h6 class="alert-heading">Known</h6>
                             <ul>
                                 <li>paper: {{ current_page.info.paper_number }}</li>
@@ -59,7 +59,7 @@
                             </ul>
                         </div>
                     {% elif current_page.status == 'extra' %}
-                        <div class="alert alert-info">
+                        <div class="alert alert-info my-2">
                             <h6 class="alert-heading">Extra</h6>
                             <ul>
                                 <li>paper: {{ current_page.info.paper_number }}</li>
@@ -81,14 +81,14 @@
                             </ul>
                         </div>
                     {% elif current_page.status == 'unknown' %}
-                        <div class="alert alert-warning">
+                        <div class="alert alert-warning my-2">
                             <h6 class="alert-heading">Unknown</h6>
                             <ul>
                                 <li>No qr-codes could be read</li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'discard' %}
-                        <div class="alert alert-dark">
+                        <div class="alert alert-dark my-2">
                             <h6 class="alert-heading">Discard</h6>
                             <ul>
                                 <li>{{ current_page.info.reason }}</li>
@@ -109,7 +109,7 @@
                             </ul>
                         </div>
                     {% elif current_page.status == 'error' %}
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger my-2">
                             <h6 class="alert-heading">Error</h6>
                             <ul>
                                 <li>{{ current_page.info.reason }}</li>
@@ -126,18 +126,21 @@
                             </ul>
                         </div>
                     {% elif current_page.status == 'unread' %}
-                        <div class="alert alert-dark">
+                        <div class="alert alert-dark my-2">
                             <h6 class="alert-heading">Unread</h6>
                             <ul>
                                 <li>Have not read qr-codes yet</li>
                             </ul>
                         </div>
                     {% endif %}
-                    {% if is_push_locked %}<div class="alert alert-warning text-center">Bundle is locked</div>{% endif %}
+                    {% if is_push_locked %}
+                        <!-- loaded page after another tab pushed for example -->
+                        <div class="alert alert-warning text-center my-2">Bundle is locked</div>
+                    {% endif %}
                     {% if not is_pushed and not is_push_locked %}
                         <!-- add in the stuff we can do before pushing -->
-                        <div>
-                            <div class="d-flex mb-3">
+                        <div class="my-2">
+                            <div class="d-flex">
                                 <!-- rotations target the thumbnail container for a swap, then click on them -->
                                 <a class="btn btn-secondary w-75"
                                    data-bs-toggle="tooltip"
@@ -174,7 +177,7 @@
                         <div class="py-4" id="invalidmessage"></div>
                         <!-- what we can do depends on the status -->
                         {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
-                            <div hx-target="this" class="my-3">
+                            <div hx-target="this" class="my-2">
                                 <a class="btn btn-danger text-center w-100"
                                    hx-post="{% url 'discard_image' bundle_id index %}"
                                    hx-target-error="#invalidmessage"
@@ -182,7 +185,7 @@
                             </div>
                         {% endif %}
                         {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
-                            <div hx-target="this" class="my-3">
+                            <div hx-target="this" class="my-2">
                                 <a class="btn btn-warning text-center w-100"
                                    hx-put="{% url 'extralise_image' bundle_id index %}"
                                    hx-target-error="#invalidmessage"
@@ -191,7 +194,7 @@
                             </div>
                         {% endif %}
                         {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
-                            <div class="my-3">
+                            <div class="my-2">
                                 <a class="btn btn-outline-success text-center w-100"
                                    hx-get="{% url 'knowify_image' bundle_id index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
@@ -205,14 +208,14 @@
                             <!-- cannot do anything with an unread page -->
                         {% elif current_page.status == 'discard' %}
                             <!-- stuff unique to discard pages -->
-                            <div hx-target="this" class="my-3">
+                            <div hx-target="this" class="my-2">
                                 <a class="btn btn-outline-warning text-center w-100"
                                    hx-post="{% url 'unknowify_image' bundle_id index %}"
                                    hx-target-error="#invalidmessage"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to unknown page</a>
                             </div>
-                            <div class="my-3">
+                            <div class="my-2">
                                 <a class="btn btn-outline-danger text-center w-100"
                                    hx-post="{% url 'unknowify_all_discards' bundle_id %}"
                                    hx-confirm="This will convert all discarded pages to unknown pages!">
@@ -223,7 +226,7 @@
                             </div>
                         {% elif current_page.status == 'unknown' %}
                             <!-- stuff unique to unknown pages -->
-                            <div class="my-3">
+                            <div class="my-2">
                                 <a class="btn btn-danger text-centre w-100"
                                    hx-post="{% url 'discard_all_unknowns' bundle_id %}"
                                    hx-confirm="This will convert all unknown pages to discarded pages!">
@@ -234,7 +237,7 @@
                             </div>
                         {% elif current_page.status == 'extra' %}
                             <!-- stuff unique to extra pages  -->
-                            <div class="my-3">
+                            <div class="my-2">
                                 <a class="btn btn-info w-100"
                                    href="{% url 'scan_compare_handwriting' bundle_id index %}"
                                    target="_blank"
@@ -244,7 +247,7 @@
                                 </a>
                             </div>
                             {% if current_page.info.paper_number %}
-                                <div hx-target="this" class="my-3">
+                                <div hx-target="this" class="my-2">
                                     <a class="btn btn-danger text-center w-100"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}"
                                        hx-target-error="#invalidmessage"
@@ -252,7 +255,7 @@
                                     Clear information</a>
                                 </div>
                             {% else %}
-                                <div class="alert alert-secondary mb-2">
+                                <div class="alert alert-secondary my-2">
                                     <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
                                           hx-target-error="#error_msg_for_set_extra"
