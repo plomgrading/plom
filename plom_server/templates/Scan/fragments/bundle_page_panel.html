@@ -180,8 +180,7 @@
                             <div class="my-2">
                                 <a class="btn btn-outline-danger text-center w-100"
                                    hx-post="{% url 'discard_image' bundle_id index %}"
-                                   hx-target="closest div"
-                                   hx-target-error="closest div"
+                                   hx-target-error="#invalidmessage"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">Discard</a>
                             </div>
                         {% endif %}
@@ -189,8 +188,7 @@
                             <div class="my-2">
                                 <a class="btn btn-outline-secondary text-center w-100"
                                    hx-put="{% url 'extralise_image' bundle_id index %}"
-                                   hx-target="closest div"
-                                   hx-target-error="closest div"
+                                   hx-target-error="#invalidmessage"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to extra page</a>
                             </div>
@@ -213,8 +211,7 @@
                             <div class="my-2">
                                 <a class="btn btn-outline-secondary text-center w-100"
                                    hx-post="{% url 'unknowify_image' bundle_id index %}"
-                                   hx-target="closest div"
-                                   hx-target-error="closest div"
+                                   hx-target-error="#invalidmessage"
                                    hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
                                 Cast to unknown page</a>
                             </div>
@@ -253,8 +250,7 @@
                                 <div class="my-2">
                                     <a class="btn btn-outline-secondary text-center w-100"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}"
-                                       hx-target="closest div"
-                                       hx-target-error="closest div"
+                                       hx-target-error="#invalidmessage"
                                        hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
                                         Clear information
                                     </a>
