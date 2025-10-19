@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Papers.models import Paper, QuestionPage, MobilePage
 from plom_server.Papers.services import PaperInfoService, SpecificationService
 
@@ -413,17 +414,18 @@ class ScanCastService:
                 one-based indices should we assign this discarded paper to.
 
         Raises:
-            ValueError: can't find things, or extra page already has information.
+            ValueError: can't find things.
+            PlomConflict: extra page already has information.
             PlomBundleLockedException:
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
-        # make sure paper_number in db
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except ObjectDoesNotExist:
             raise ValueError(f"Paper {paper_number} is not in the database.")
-        # now check all the questions
+
+        # check all the questions
         # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
         if False:
             for qi in assign_to_question_indices:
@@ -458,7 +460,7 @@ class ScanCastService:
 
         # Throw value error if data has already been set.
         if eximg.paper_number is not None:
-            raise ValueError(
+            raise PlomConflict(
                 "Cannot overwrite existing extra-page info; "
                 "potentially another user has set data."
             )
@@ -482,11 +484,14 @@ class ScanCastService:
         :method:`_assign_extra_page` that does the work.
 
         Raises:
-            ValueError: can't find things, or extra page already has information.
-            ObjectDoesNotExist: cannot find bundle.
+            ValueError: can't find things.
+            PlomConflict: extra page already has information.
             PlomBundleLockedException:
         """
-        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        except StagingBundle.DoesNotExist:
+            raise ValueError(f"Bundle id {bundle_id} does not exist")
         cls._assign_extra_page(
             user_obj,
             bundle_obj,
@@ -526,6 +531,7 @@ class ScanCastService:
 
         Raises:
             ValueError: can't find things.
+            PlomConflict: extra page already has information.
             PermissionDenied: username does not exist or wrong group.
         """
         user_obj = _manager_or_scanner_user_from_username(username)

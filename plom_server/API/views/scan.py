@@ -229,7 +229,7 @@ class ScanMapBundle(APIView):
                 papernum=papernum,
                 question_indices=question_idx_list,
             )
-        except ValueError as e:
+        except (ValueError, PlomConflict) as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except ObjectDoesNotExist as e:
             return _error_response(

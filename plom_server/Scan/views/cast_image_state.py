@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 
@@ -208,9 +209,9 @@ class ExtraliseImageView(ScannerRequiredView):
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         """HTMX posts here to make a page into an extra page.
 
-        On errors, this returns 409 http responses, with a plain
-        textual human-readable error message.  The error message
-        is undecorated.
+        On errors, this returns 404, 409 http responses, with plain
+        textual human-readable error messages.  The error messages
+        are undecorated.
 
         On success, its returns a 200 response with a short textual
         message of success.  Its not necessary or expected that callers
@@ -255,6 +256,8 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ValueError as e:
+            return HttpResponse(e, status=404)
+        except PlomConflict as e:
             return HttpResponse(f"{e}: try reloading this page.", status=409)
 
         return HttpResponse("Success: set info", status=200)

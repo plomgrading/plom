@@ -6,6 +6,7 @@ from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.plom_exceptions import PlomConflict
 from plom.scan.question_list_utils import check_question_list
 from plom_server.Papers.services import SpecificationService
 from ...services import ScanCastService, ScanService
@@ -60,7 +61,7 @@ class Command(BaseCommand):
             ScanCastService.assign_extra_page_cmd(
                 username, bundle_name, index, paper_number, question_idx_list
             )
-        except ValueError as e:
+        except (ValueError, PlomConflict) as e:
             raise CommandError(e)
 
     def clear_extra_page_data(self, username, bundle_name, index):
