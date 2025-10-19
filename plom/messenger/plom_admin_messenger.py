@@ -257,6 +257,29 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def new_server_get_paper_marks(self) -> dict[int, dict]:
+        """Get a list of information about exam papers on the server.
+
+        More specifically this contains info about student marks and IDs.
+
+        Returns:
+            A dict of information keyed by the paper number it corresponds to.
+        """
+        if self.is_server_api_less_than(115):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support getting plom marks"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/REP/spreadsheet")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def new_server_get_unmarked(self, papernum: int) -> dict[str, Any]:
         """Download a unmarked PDF file from the server.
 
