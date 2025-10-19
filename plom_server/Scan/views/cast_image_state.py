@@ -74,7 +74,7 @@ class UnknowifyImageView(ScannerRequiredView):
                 request.user, bundle_id, index
             )
         except ValueError as err:
-            return HttpResponse(err, status=404)
+            return HttpResponse(f"Error: {err}", status=404)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
@@ -278,9 +278,9 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ObjectDoesNotExist as err:
-            return HttpResponse(err, status=404)
+            return HttpResponse(f"Error: {err}", status=404)
         except ValueError as err:
-            return HttpResponse(err, status=409)
+            return HttpResponse(f"Error: {err}", status=409)
 
         return HttpResponse("Success: changed to extra page")
 
@@ -297,6 +297,6 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ObjectDoesNotExist as err:
-            return HttpResponse(err, status=404)
+            return HttpResponse(f"Error: {err}", status=404)
 
         return HttpResponse("Success: cleared extra page info")
