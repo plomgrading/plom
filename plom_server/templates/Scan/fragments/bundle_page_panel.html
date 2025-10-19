@@ -399,7 +399,12 @@
                                                 </div>
                                             </fieldset>
                                         </div>
-                                        <div class="py-4" id="error_msg_for_set_extra"></div>
+                                        <div class="mt-1 mb-1">
+                                            <!-- this is the target for any htmx error messages -->
+                                            <!-- p-0 border-0 here tries to hide the div when its empty -->
+                                            <div id="error_msg_for_set_extra"
+                                                 class="p-0 border-0 alert alert-danger hide"></div>
+                                        </div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>
                                     </form>
                                 </div>
