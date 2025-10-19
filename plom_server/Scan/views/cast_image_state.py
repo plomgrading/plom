@@ -241,7 +241,7 @@ class ExtraliseImageView(ScannerRequiredView):
             # caution: `get` would return just the last entry
             to_questions = [int(q) for q in extra_page_data.getlist("questions")]
             if not to_questions:
-                return HttpResponse("At least one question", status=409)
+                return HttpResponse("At least one question must be provided", status=409)
 
         else:
             return HttpResponse(
