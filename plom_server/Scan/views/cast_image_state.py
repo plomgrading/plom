@@ -209,7 +209,7 @@ class ExtraliseImageView(ScannerRequiredView):
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         """HTMX posts here to make a page into an extra page.
 
-        On errors, this returns 404, 409 http responses, with plain
+        On errors, this returns 400, 404, http responses, with plain
         textual human-readable error messages.  The error messages
         are undecorated.
 
@@ -224,7 +224,7 @@ class ExtraliseImageView(ScannerRequiredView):
         try:
             paper_number = int(paper_number)
         except (ValueError, TypeError):
-            return HttpResponse("Invalid paper number", status=409)
+            return HttpResponse("Invalid paper number", status=400)
 
         choice = extra_page_data.get("question_all_dnm", "")
         if choice == "choose_all":
@@ -238,13 +238,12 @@ class ExtraliseImageView(ScannerRequiredView):
             to_questions = [int(q) for q in extra_page_data.getlist("questions")]
             if not to_questions:
                 return HttpResponse(
-                    "At least one question must be provided", status=409
+                    "At least one question must be provided", status=400
                 )
-
         else:
             return HttpResponse(
                 "Unexpected radio choice: this is a bug; please file an issue!",
-                status=409,
+                status=400,
             )
 
         try:
@@ -260,7 +259,7 @@ class ExtraliseImageView(ScannerRequiredView):
         except PlomConflict as e:
             return HttpResponse(f"{e}: try reloading this page.", status=409)
 
-        return HttpResponse("Success: set info", status=200)
+        return HttpResponse("Success: set info")
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
