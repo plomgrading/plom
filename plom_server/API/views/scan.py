@@ -222,7 +222,7 @@ class ScanMapBundle(APIView):
             )
 
         try:
-            ScanService().map_bundle_page(
+            ScanService.map_bundle_page(
                 bundle_id,
                 page,
                 user=request.user,

@@ -647,8 +647,8 @@ class ScanService:
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
+    @staticmethod
     def map_bundle_page(
-        self,
         bundle_id: int,
         page: int,
         *,
@@ -708,7 +708,7 @@ class ScanService:
             )
             if page_img.image_type != StagingImage.EXTRA:
                 ScanCastService.extralise_image_from_bundle_id(user, bundle_id, page)
-            ScanCastService.assign_extra_page_from_bundle_pk_and_order(
+            ScanCastService.assign_extra_page_from_bundle_id_and_order(
                 user,
                 bundle_id,
                 page,

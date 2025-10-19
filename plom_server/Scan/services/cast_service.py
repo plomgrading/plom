@@ -468,7 +468,7 @@ class ScanCastService:
         eximg.save()
 
     @classmethod
-    def assign_extra_page_from_bundle_pk_and_order(
+    def assign_extra_page_from_bundle_id_and_order(
         cls,
         user_obj: User,
         bundle_id: int,
@@ -476,6 +476,16 @@ class ScanCastService:
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
+        """Fill in the missing information in a ExtraStagingImage from bundle id.
+
+        This is a wrapper around the actual service command
+        :method:`_assign_extra_page` that does the work.
+
+        Raises:
+            ValueError: can't find things, or extra page already has information.
+            ObjectDoesNotExist: cannot find bundle.
+            PlomBundleLockedException:
+        """
         bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         cls._assign_extra_page(
             user_obj,
@@ -533,9 +543,9 @@ class ScanCastService:
             assign_to_question_indices,
         )
 
-    @transaction.atomic
-    def clear_extra_page_info_from_bundle_pk_and_order(
-        self, user_obj: User, bundle_id: int, bundle_order: int
+    @classmethod
+    def clear_extra_page_info_from_bundle_id_and_order(
+        cls, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
         """A wrapper around clear_image_type.
 
@@ -545,19 +555,20 @@ class ScanCastService:
         rather than requiring it explicitly.
 
         Args:
-            user_obj: (obj) An instead of a django user
-            bundle_id: (int) The pk of the bundle
-            bundle_order: (int) Bundle order of a page.
+            user_obj: An instead of a django user
+            bundle_id: The id of the bundle
+            bundle_order: Bundle "order" specifies a page.
 
         Returns:
             None.
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_id)
-        self.clear_extra_page(user_obj, bundle_obj, bundle_order)
+        cls.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
+    @staticmethod
     @transaction.atomic
     def clear_extra_page(
-        self, user_obj: User, bundle_obj: StagingBundle, bundle_order: int
+        user_obj: User, bundle_obj: StagingBundle, bundle_order: int
     ) -> None:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
@@ -576,9 +587,10 @@ class ScanCastService:
         eximg.question_idx_list = None
         eximg.save()
 
+    @classmethod
     @transaction.atomic
     def clear_extra_page_cmd(
-        self, username: str, bundle_name: str, bundle_order: int
+        cls, username: str, bundle_name: str, bundle_order: int
     ) -> None:
         user_obj = _manager_or_scanner_user_from_username(username)
 
@@ -587,7 +599,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.clear_extra_page(user_obj, bundle_obj, bundle_order)
+        cls.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
     @classmethod
     def extralise_image_from_bundle_id(

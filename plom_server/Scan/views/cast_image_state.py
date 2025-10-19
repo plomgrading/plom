@@ -247,7 +247,7 @@ class ExtraliseImageView(ScannerRequiredView):
             )
 
         try:
-            ScanCastService().assign_extra_page_from_bundle_pk_and_order(
+            ScanCastService.assign_extra_page_from_bundle_id_and_order(
                 request.user, bundle_id, index, paper_number, to_questions
             )
         except PlomBundleLockedException:
@@ -282,7 +282,7 @@ class ExtraliseImageView(ScannerRequiredView):
     ) -> HttpResponse:
         """HTMX deletes here to clear the extra page info from a particular page in a bundle."""
         try:
-            ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
+            ScanCastService.clear_extra_page_info_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
         except PlomBundleLockedException:
