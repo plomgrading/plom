@@ -21,7 +21,9 @@
                 <i class="bi bi-check-circle text-success"></i>
             </h5>
             <p class="card-text">
-                sha256: <span class="badge bg-info">{{ src.hash }}</span>
+                sha256: <small class="text-muted"><tt><span>{{ src.hash }}</span></tt></small>
+                <br />
+                original filename: <small class="text-muted"><tt>{{ src.original_filename }}</tt></small>
             </p>
             <div class="row row-cols-auto">
                 <div class="p-1 col">

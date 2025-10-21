@@ -12,6 +12,7 @@ class PaperSourcePDF(models.Model):
     version = models.PositiveIntegerField(unique=True)
     source_pdf = models.FileField(upload_to="sourceVersions/")
     hash = models.CharField(null=False, max_length=64)
+    original_filename = models.TextField()
 
 
 # ---------------------------------

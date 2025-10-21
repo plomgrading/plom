@@ -125,7 +125,12 @@ def get_source(version: int) -> dict[str, Any]:
     """
     try:
         pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
-        return {"version": pdf_obj.version, "uploaded": True, "hash": pdf_obj.hash}
+        return {
+            "version": pdf_obj.version,
+            "uploaded": True,
+            "hash": pdf_obj.hash,
+            "original_filename": pdf_obj.original_filename,
+        }
     except PaperSourcePDF.DoesNotExist:
         return {"version": version, "uploaded": False}
 
@@ -140,8 +145,9 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     return [get_source(v) for v in vers]
 
 
-@transaction.atomic
-def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
+def store_source_pdf(
+    version: int, source_pdf: pathlib.Path, *, original_filename: str = ""
+) -> None:
     """Store one of the source PDF files into the database.
 
     This does very little error checking; its perhaps intended for internal use.
@@ -149,6 +155,9 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
     Args:
         version: which version, indexed from one.
         source_pdf: a path to an actual file.
+
+    Keyword Args:
+        original_filename: optionally, the the original filename of this data.
 
     Returns:
         None
@@ -172,7 +181,12 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     with open(source_pdf, "rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")
-        PaperSourcePDF.objects.create(version=version, source_pdf=dj_file, hash=hashed)
+        PaperSourcePDF.objects.create(
+            version=version,
+            source_pdf=dj_file,
+            hash=hashed,
+            original_filename=original_filename,
+        )
 
 
 def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, str]:
@@ -216,9 +230,13 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
                     False,
                     f"Uploaded pdf has {doc.page_count} pages, but spec requires {required_pages}",
                 )
+        if hasattr(in_memory_file, "name"):
+            original_filename = in_memory_file.name
+        else:
+            original_filename = ""
         # now try to store it
         try:
-            store_source_pdf(version, tmp_pdf)
+            store_source_pdf(version, tmp_pdf, original_filename=original_filename)
         except ValueError as err:
             return (False, str(err))
 

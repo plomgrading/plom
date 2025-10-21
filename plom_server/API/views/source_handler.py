@@ -135,7 +135,7 @@ class SourceDetail(APIView):
         if source_pdf.size > 0:
             try:
                 success, message = SourceService.take_source_from_upload(
-                    version, request.FILES["source_pdf"]
+                    version, source_pdf
                 )
             except PlomDependencyConflict as e:
                 return _error_response(
