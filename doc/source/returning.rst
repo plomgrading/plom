@@ -146,7 +146,6 @@ An example invocation looks something like::
         --course 112233 \
         --assignment 1234123 \
         --no-section \
-        --no-solutions \
         2>&1 | tee push.log
 
 .. tip::
