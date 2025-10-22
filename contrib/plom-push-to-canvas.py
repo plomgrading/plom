@@ -4,499 +4,798 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
+# Copyright (C) 2025 Aidan Murphy
 
-"""Upload reassembled Plom papers and grades to Canvas.
+r"""Upload papers and grades to Canvas from Plom.
 
 Overview:
 
   1. Finish grading
-  2. Download the `marks.csv`, the reassembled papers,
-     and the solutions from Plom.
+  2. Reassemble papers.
   3. Copy this script into the current directory, and install:
     - tqdm
     - canvasapi
     - exif
-    - pandas
     - plom   (TODO: maybe it even works with `pip install --no-deps plom`)
+    - tabulate
+    - python-dotenv (optional)
   4. Run this script and follow the interactive menus:
      ```
      ./plom-push-to-canvas.py --dry-run
      ```
      It will output what would be uploaded.
-  5. Note that you can provide command line arguments and/or
+     Note that you can provide command line arguments and/or
      set environment variables to avoid the interactive prompts:
      ```
      ./plom-push-to-canvas.py --help
      ```
-  6. Run it again for real:
+  5. Run it again for real:
      ```
-     ./plom-push-to-canvas.py --course xxxxxx --assignment xxxxxxx --no-section 2>&1 | tee push.log
+     ./plom-push-to-canvas.py --course xxxxxx \
+                            --assignment xxxxxx \
+                            --plom-server xxxxxx \
+                            --plom-username xxxxx \
+                            --no-section 2>&1 | tee push.log
      ```
 
-This script traverses the files in `reassembled/` directory
-and tries to upload them.  It takes the corresponding grades
-from `marks.csv`.  There can be grades in `marks.csv` for which
-there is no reassembled file in `reassembled/`: these are ignored.
+This script traverses all identified and marked papers in your Plom
+server. It will ignore exams that are unidentified and/or unmarked.
 
-Solutions can also be uploaded.  Again, only solutions that
-correspond to an actual reassembled paper will be uploaded.
+Solutions and Reports cannot be uploaded yet.
 
 Instructors and TAs can do this but in the past it would fail for
 the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 """
 
+
 import argparse
 import os
-from pathlib import Path
+import sys
 import random
 import string
 import time
-from textwrap import dedent
+from getpass import getpass
 
-from canvasapi.exceptions import CanvasException
-from canvasapi import __version__ as __canvasapi_version__
-import pandas
+from tabulate import tabulate
 from tqdm import tqdm
 
-from plom.common import __version__ as __plom_version__
-from plom.canvas import __DEFAULT_CANVAS_API_URL__
-from plom.canvas import (
-    canvas_login,
-    download_classlist,
-    get_assignment_by_id_number,
-    get_conversion_table,
-    get_course_by_id_number,
-    get_section_by_id_number,
-    get_sis_id_to_canvas_id_table,
-    get_student_list,
-    interactively_get_assignment,
-    interactively_get_course,
-    interactively_get_section,
+import canvasapi
+from canvasapi import Canvas
+from canvasapi.exceptions import CanvasException
+from canvasapi import __version__ as __canvasapi_version__
+
+from plom.common import (
+    __version__ as __plom_version__,
+    Default_Port,
+)
+from plom.cli import start_messenger
+from plom.plom_exceptions import (
+    PlomAuthenticationException,
+    PlomSeriousException,
+    PlomNoPermission,
+    PlomNoPaper,
 )
 
 
 # bump this a bit if you change this script
 __script_version__ = "0.6.2"
+__DEBUG__ = True
+
+# These are the keys for the json returned by the Plom 'get spreadsheet' API call
+PLOM_STUDENT_ID = "StudentID"
+PLOM_STUDENT_NAME = "StudentName"
+PLOM_MARKS = "Total"
+PLOM_PAPERNUM = "PaperNumber"
+PLOM_WARNINGS = "warnings"
+
+# when calling course.get_enrollments(), the student objects returned
+# will have student IDs stored in this attribute
+CANVAS_STUDENT_ID = "sis_user_id"
+__DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
+
+CHECKMARK = "\u2713"
+CROSS = "\u274c"
 
 
-def sis_id_to_student_dict(student_list):
-    out_dict = {}
-    for student in student_list:
-        assert student.role == "StudentEnrollment"
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__script_version__} (using Plom version {__plom_version__}, "
+        f"and canvasapi package version {__canvasapi_version__})",
+    )
+    parser.add_argument(
+        "--api_url",
+        type=str,
+        default=__DEFAULT_CANVAS_API_URL__,
+        action="store",
+        help=f'URL for talking to Canvas, defaults to "{__DEFAULT_CANVAS_API_URL__}".',
+    )
+    parser.add_argument(
+        "--api-key",
+        type=str,
+        action="store",
+        help="""
+            The API Key for talking to Canvas.
+            You can instead set the environment variable CANVAS_API_KEY.
+            If not specified by either mechanism, you will be prompted
+            to enter it.
+        """,
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Perform a dry-run without writing grades or uploading files to Canvas.",
+    )
+    parser.add_argument(
+        "--course",
+        type=int,
+        metavar="N",
+        action="store",
+        help="""
+            Specify a Canvas course ID (an integer N).
+            Interactively prompt from a list if omitted.
+        """,
+    )
+    parser.add_argument(
+        "--no-section",
+        action="store_true",
+        help="""
+            Don't use section information from Canvas.
+            In this case we will take the classlist directly from the
+            course.
+            In most cases, this is probably what you want UNLESS you have
+            the same student in multiple sections (causing duplicates in
+            the classlist, leading to problems).
+        """,
+    )
+    parser.add_argument(
+        "--section",
+        type=int,
+        metavar="N",
+        action="store",
+        help="""
+            Specify a Canvas section ID (an integer N).
+            If neither this nor "no-section" is specified then the script
+            will interactively prompt from a list.
+        """,
+    )
+    parser.add_argument(
+        "--assignment",
+        type=int,
+        metavar="M",
+        action="store",
+        help="""
+            Specify a Canvas Assignment ID (an integer M).
+            Interactively prompt from a list if omitted.
+        """,
+    )
+    parser.add_argument(
+        "--post-grades",
+        action="store_true",
+        default=True,
+        help="""
+            By default, we post grades for each student (as well as uploading
+            the reassembled papers (default: on).
+        """,
+    )
+    parser.add_argument(
+        "--no-post-grades",
+        dest="post_grades",
+        action="store_false",
+    )
+    parser.add_argument(
+        "--no-papers",
+        dest="papers",
+        action="store_false",
+        help="""
+            Don't push the reassembled papers.
+        """,
+    )
+    parser.add_argument(
+        "--solutions",
+        action="store_true",
+        default=False,
+        help="""
+            NOT IMPLEMENTED.
+            Upload individualized solutions, in addition to reassembled papers
+            (default: off).
+        """,
+    )
+    parser.add_argument(
+        "--no-solutions",
+        dest="solutions",
+        action="store_false",
+    )
+    parser.add_argument(
+        "--reports",
+        action="store_true",
+        help="""
+            NOT IMPLEMENTED.
+            Upload individualized student reports, in addition to reassembled papers
+            (default: off).
+        """,
+    )
+
+    parser.add_argument(
+        "--plom-server",
+        "-s",
+        metavar="SERVER[:PORT]",
+        help=f"""
+            URL of server to contact. In SERVER, the protocol prefix is semi-optional:
+            you can omit it and get https by default, or you can force http by including
+            that explicitly. If [:PORT] is omitted, SERVER:{Default_Port} will be used.
+            The environment variable PLOM_SERVER will be used if --plom-server is not given.
+        """,
+    )
+    parser.add_argument(
+        "-u",
+        "--plom-username",
+        type=str,
+        help="""
+            Also checks the environment variable PLOM_USERNAME.
+        """,
+    )
+    parser.add_argument(
+        "-w",
+        "--plom-password",
+        type=str,
+        help="""
+            Also checks the environment variable PLOM_PASSWORD.
+        """,
+    )
+
+    return parser
+
+
+###########################################################
+# A suite of functions to get Canvas related stuff
+
+
+def canvas_login(
+    api_key: str, api_url: str | None = None, *, max_attempts: int = 3
+) -> canvasapi.current_user.CurrentUser | None:
+    """Login to a Canvas server using an API key.
+
+    Args:
+        api_url: the Canvas server to login to, uses a default if omitted.
+        api_key: the Canvas API key.
+
+    Keyword Args:
+        max_attempts: if the credentials fail to authenticate,
+            try again until they fail this many times.
+
+    Returns:
+        The user referenced by the given API key if successful, or None if not.
+    """
+    if not api_url:
+        api_url = __DEFAULT_CANVAS_API_URL__
+
+    count = 0
+    while count < max_attempts:
         try:
-            assert student.sis_user_id is not None
-        except AssertionError:
-            # print(student.user_id)
+            return Canvas(api_url, api_key).get_current_user()
+        except CanvasException:
+            count += 1
+    # after max_attempts failures, assume issue with input credentials
+    print("Couldn't authenticate with provided API key and api url")
+    return None
+
+
+def get_courses_teaching(
+    user: canvasapi.current_user.CurrentUser,
+) -> list[canvasapi.course.Course]:
+    """Get a list of the Canvas courses a particular user is teaching.
+
+    Args:
+        user: the canvas user to check
+
+    Returns:
+        A list of canvas course objects.
+    """
+    # TODO: this looks very inefficient, but I don't want to touch it.
+    courses_teaching = []
+    for course in user.get_courses():
+        try:
+            for enrollee in course.enrollments:
+                if enrollee["user_id"] == user.id:
+                    # observed types are "teacher", "ta", "student", "designer"
+                    if enrollee["type"] in ["teacher", "ta"]:
+                        courses_teaching += [course]
+                    else:
+                        continue
+
+        except AttributeError:
+            # OK for some reason a requester object is being included
+            # as a course??????
+            #
+            # TODO: INvestigate further?
+            # print(f"WARNING: At least one course is missing some expected attributes")
             pass
-            # print(student.)
-        out_dict[student.sis_user_id] = student
-    return out_dict
+
+    return courses_teaching
 
 
-def get_sis_id_to_sub_and_name_table(subs):
-    # Why the heck is canvas so stupid about not associating student
-    # IDs with student submissions
-    conversion = get_conversion_table()
+def interactively_get_course_id(user):
+    """Interactively get a course id from a user.
 
-    sis_id_to_sub = {}
-    for sub in subs:
-        canvas_id = sub.user_id
-        try:
-            name, sis_id = conversion[str(canvas_id)]
-            sis_id_to_sub[sis_id] = (sub, name)
-        except KeyError:
+    Args:
+        user: the Canvas user to whose course list to browse.
+
+    Returns:
+        The course id of the selected course.
+    """
+    courses_teaching = get_courses_teaching(user)
+    print("\nAvailable courses:")
+    print("  --------------------------------------------------------------------")
+    for i, course in enumerate(courses_teaching):
+        print(f"    {i}: {course.name}")
+
+    course_chosen = False
+    while not course_chosen:
+        choice = input("\n  Choice [0-n]: ")
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(courses_teaching):
+            print("Choice too large.")
+        else:
+            choice = int(choice)
             print(
-                f"couldn't find student information associated with canvas id {canvas_id}..."
+                "  --------------------------------------------------------------------"
             )
+            selection = courses_teaching[choice]
+            print(f"  You selected {choice}: {selection.name}")
+            confirmation = input("  Confirm choice? [Y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                course_chosen = True
+                course = selection
+                break
+    print(f'  Note: you can use "--course {course.id}" to reselect.\n')
+    print("\n")
+    return course.id
 
-    return sis_id_to_sub
+
+def get_course_by_id(
+    course_number: int, user: canvasapi.current_user.CurrentUser
+) -> canvasapi.course.Course | None:
+    """Get a Canvas course object given course id and Canvas user object.
+
+    Args:
+        course_number: the id for the Canvas course.
+        user: the Canvas user to authorise this.
+
+    Returns:
+        A Canvas course object if successful, raises a ValueError otherwise.
+    """
+    course_list = get_courses_teaching(user)
+    for course in course_list:
+        if course_number == course.id:
+            return course
+    raise ValueError(
+        f"course id: {course_number} doesn't match any course in user's teaching list:"
+        f"{course_list}."
+    )
 
 
-def get_sis_id_to_marks():
-    """A dictionary of the Student Number ("sis id") to total mark."""
-    df = pandas.read_csv("marks.csv", dtype="object")
+def interactively_get_course_section_id(course: canvasapi.course.Course) -> int | None:
+    """Choose a section from a menu.
+
+    Args:
+        course: a canvas course object. Sections from this course will be displayed.
+
+    Returns:
+        None or a section id.
+    """
+    print(f"\nSelect a Section from {course}.\n")
+    print("  Available Sections:")
+    print("  --------------------------------------------------------------------")
+
+    sections = list(course.get_sections())
+    i = 0
+    print(
+        f"    {i}: Do not choose a section (None) (Probably the right choice; read the help)"
+    )
+    i += 1
+    for section in sections:
+        print(f"    {i}: {section.name} ({section.id})")
+        i += 1
+
+    while True:
+        choice = input("\n  Choice [0-n]: ")
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(sections) + 1:
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            if choice == 0:
+                section = None
+                print(f"  You selected {choice}: None")
+            else:
+                section = sections[choice - 1]
+                print(f"  You selected {choice}: {section.name} ({section.id})")
+            confirmation = input("  Confirm choice? [Y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                print("\n")
+                return section if section is None else section.id
+
+
+def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> int:
+    """Choose an assignment from a menu.
+
+    Args:
+        course: a canvas course object. Assignments from this course will be displayed.
+
+    Returns:
+        An assignment id.
+    """
+    print(f"\nSelect an assignment for {course}.\n")
+    print("  Available assignments:")
+    print("  --------------------------------------------------------------------")
+
+    assignments = list(course.get_assignments())
+    for i, assignment in enumerate(assignments):
+        print(f"    {i}: {assignment.name}")
+
+    assignment_chosen = False
+    while not assignment_chosen:
+        choice = input("\n  Choice [0-n]: ")
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(assignments):
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            selection = assignments[choice]
+            print(f"  You selected {choice}: {selection.name}")
+            confirmation = input("  Confirm choice? [Y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                assignment_chosen = True
+                assignment = selection
+    print(f'  Note: you can use "--assignment {assignment.id}" to reselect.\n')
+    print("\n")
+    return assignment.id
+
+
+def get_canvas_id_dict(
+    course_or_section: canvasapi.course.Course | canvasapi.section.Section,
+) -> dict[str, int]:
+    """Get a dictionary of student canvas IDs keyed by student ID.
+
+    This assumes a 'student' has a StudentEnrolment role and a
+    student ID which isn't None.
+    """
+    canvas_ids = {}
+    enrollees = course_or_section.get_enrollments()
+
+    # Student ID format will vary by institution
+    # explicitly casting the student ID to string is intentional
+    # Canvas ID should always be a number, so less concern there.
+    for enrollee in enrollees:
+        if enrollee.role != "StudentEnrollment":
+            continue
+        if getattr(enrollee, CANVAS_STUDENT_ID, None) is None:
+            continue
+        canvas_ids.update(
+            {str(getattr(enrollee, CANVAS_STUDENT_ID)): enrollee.user["id"]}
+        )
+
+    return canvas_ids
+
+
+###########################################################
+###########################################################
+# functions to interact with a Plom server
+
+
+def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
+    """Change the key on the Plom marks dicts to student number.
+
+    **WARNING: sometimes requires user interaction.**
+    This function will remove any papers with warnings attached.
+
+    Returns:
+        A dict of exam marks keyed by student ids.
+    """
+    simplified_list = []
+    # we won't attempt to push papers on the discard list to Canvas
+    discard_list = []
+    for paper_num, mark_dict in plom_marks_dict.items():
+        # Oct. 8th - the distinction between None and "" is significant
+        # None means the paper was ID'd as having a blank coverpage
+        # "" means the paper hasn't been ID'd yet and we will implicitly discard it
+        if mark_dict[PLOM_STUDENT_ID] == "":
+            continue
+
+        # Oct. 8th - we explicitly discard unmarked papers
+        if PLOM_WARNINGS in mark_dict.keys():
+            discard_list.append(mark_dict)
+            continue
+
+        simplified_list.append(mark_dict)
+
+    if discard_list:
+        print(f"{len(discard_list)} paper[s] cannot be processed for push to Canvas:")
+        print(tabulate(discard_list, headers="keys"))
+        print(f"This script will not push these {len(discard_list)} results to Canvas,")
+        confirmation = input("proceed? [Y/n] ")
+        if confirmation not in ["", "y", "Y", "\n"]:
+            print("CANCELLED")
+            sys.exit(0)
+
+    return simplified_list
+
+
+###########################################################
+
+
+def main():
+    args = get_parser().parse_args()
+
+    unsupported_options = [args.solutions, args.reports]
+    if any(unsupported_options):
+        raise NotImplementedError(
+            "Solutions and Reports aren't supported yet, exiting."
+        )
+
     try:
-        d = df.set_index("StudentID")["Total"].to_dict()
-    except KeyError as e:
-        # Issue #3722, if something goes wrong give a very verbose error:
-        print(f'Pandas raised a KeyError reading "marks.csv":\n    {e}')
-        header_names = ", ".join(f'"{x}"' for x in df.columns)
-        print(f"We have headers:\n    {header_names}")
-        print(f'The first few lines of "marks.csv" looks like:\n{df.head()}')
-        raise KeyError(
-            'Something wrong with "StudentID" or "Total" columns?\n'
-            '  "marks.csv" contains headers:\n'
-            f"    {header_names}\n"
-            f"  KeyError was raised: {e}\n"
-        ) from e
-    # TODO: if specific types are needed
-    # return {str(k): int(v) for k,v in d.items()}
-    return d
+        from dotenv import load_dotenv
 
+        load_dotenv()
+    except ModuleNotFoundError:
+        pass
 
-parser = argparse.ArgumentParser(
-    description=__doc__.split("\n")[0],
-    epilog="\n".join(__doc__.split("\n")[1:]),
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-parser.add_argument(
-    "--version",
-    action="version",
-    version=f"%(prog)s {__script_version__} (using Plom version {__plom_version__}, "
-    f"and canvasapi package version {__canvasapi_version__})",
-)
-parser.add_argument(
-    "--api_url",
-    type=str,
-    default=__DEFAULT_CANVAS_API_URL__,
-    action="store",
-    help=f'URL for talking to Canvas, defaults to "{__DEFAULT_CANVAS_API_URL__}".',
-)
-parser.add_argument(
-    "--api_key",
-    type=str,
-    action="store",
-    help="""
-        The API Key for talking to Canvas.
-        You can instead set the environment variable CANVAS_API_KEY.
-        If not specified by either mechanism, you will be prompted
-        to enter it.
-    """,
-)
-parser.add_argument(
-    "--dry-run",
-    action="store_true",
-    help="Perform a dry-run without writing grades or uploading files.",
-)
-parser.add_argument(
-    "--course",
-    type=int,
-    metavar="N",
-    action="store",
-    help="""
-        Specify a Canvas course ID (an integer N).
-        Interactively prompt from a list if omitted.
-    """,
-)
-parser.add_argument(
-    "--no-section",
-    action="store_true",
-    help="""
-        Don't use section information from Canvas.
-        In this case we will take the classlist directly from the
-        course.
-        In most cases, this is probably what you want UNLESS you have
-        the same student in multiple sections (causing duplicates in
-        the classlist, leading to problems).
-    """,
-)
-parser.add_argument(
-    "--section",
-    type=int,
-    metavar="N",
-    action="store",
-    help="""
-        Specify a Canvas section ID (an integer N).
-        If neither this nor "no-section" is specified then the script
-        will interactively prompt from a list.
-    """,
-)
-parser.add_argument(
-    "--assignment",
-    type=int,
-    metavar="M",
-    action="store",
-    help="""
-        Specify a Canvas Assignment ID (an integer M).
-        Interactively prompt from a list if omitted.
-    """,
-)
-parser.add_argument(
-    "--post-grades",
-    action="store_true",
-    default=True,
-    help="""
-        By default, we post grades for each student (as well as uploading
-        the reassembled papers (default: on).
-    """,
-)
-parser.add_argument(
-    "--no-post-grades",
-    dest="post_grades",
-    action="store_false",
-)
-parser.add_argument(
-    "--no-papers",
-    dest="papers",
-    action="store_false",
-    help="""
-        Don't push the reassembled papers.
-        CAUTION: in this case, this script still uses the pdf files in
-        "reassembled/" directory to decide who to upload to.  This is
-        a bit counter-intuitive b/c those files themselves are not uploaded.
-        The intended use of this option is for ADDING additional files
-        (see `--solutions, `--reports`).
-    """,
-)
-parser.add_argument(
-    "--solutions",
-    action="store_true",
-    default=True,
-    help="""
-        Upload individualized solutions, in addition to reassembled papers
-        (default: on).
-    """,
-)
-parser.add_argument(
-    "--no-solutions",
-    dest="solutions",
-    action="store_false",
-)
-parser.add_argument(
-    "--reports",
-    action="store_true",
-    help="""
-        Upload individualized student reports, in addition to reassembled papers
-        (default: off).
-        The reports must be PDF files of the form "Student_Reports/12345678.pdf".
-        There must be one such file for each PDF file in "reassembled/".
-    """,
-)
-
-
-if __name__ == "__main__":
-    args = parser.parse_args()
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
-        if not args.api_key:
-            args.api_key = input("Please enter the API key for Canvas: ")
+    if hasattr(args, "api_key") and not args.api_key:
+        args.api_key = input("Please enter an API key for Canvas: ")
+    print("Checking Canvas API key... ", end="")
+    canvas_user = canvas_login(args.api_key, getattr(args, "api_url", None))
+    print(CHECKMARK)
 
-    user = canvas_login(args.api_url, args.api_key)
-
-    if args.course is None:
-        course = interactively_get_course(user)
-        print(f'Note: you can use "--course {course.id}" to reselect.\n')
-    else:
-        course = get_course_by_id_number(args.course, user)
-    print(f"Ok using course: {course}")
+    if not args.course:
+        args.course = interactively_get_course_id(canvas_user)
+    print("Getting Canvas course... ", end="")
+    canvas_course = get_course_by_id(args.course, canvas_user)
+    print(f"({canvas_course}) " + CHECKMARK)
 
     if args.no_section:
-        section = None
-    elif args.section:
-        section = get_section_by_id_number(course, args.section)
+        canvas_course_section = None
     else:
-        section = interactively_get_section(course)
-        if section is None:
-            print('Note: you can use "--no-section" to omit selecting section.\n')
+        if not args.section:
+            args.section = interactively_get_course_section_id(canvas_course)
+
+        if args.section:
+            print("Getting Canvas section... ", end="")
+            canvas_course_section = canvas_course.get_section(args.section)
+            print(f"({canvas_course_section}) " + CHECKMARK)
+        # user interactively selected "no course section"
         else:
-            print(f'Note: you can use "--section {section.id}" to reselect.\n')
-    print(f"Ok using section: {section}")
+            canvas_course_section = None
 
-    if args.assignment:
-        assignment = get_assignment_by_id_number(course, args.assignment)
-    else:
-        assignment = interactively_get_assignment(course)
-        print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
-    print(f"Ok uploading to Assignment: {assignment}")
+    if not args.assignment:
+        args.assignment = interactively_get_canvas_assignment_id(canvas_course)
+    print("Getting Canvas assignment...", end="")
+    canvas_assignment = canvas_course.get_assignment(args.assignment)
+    print(f"({canvas_assignment}) " + CHECKMARK)
 
-    print(f"  * Assignment is published: {assignment.published}")
-    print(f'  * Assignment is "post_manually": {assignment.post_manually}')
-    if not assignment.published or not assignment.post_manually:
+    print(
+        f"  * Assignment is published: {CHECKMARK if canvas_assignment.published else CROSS}"
+    )
+    print(
+        f'  * Assignment is "post_manually": {CHECKMARK if canvas_assignment.post_manually else CROSS}'
+    )
+    if not canvas_assignment.published or not canvas_assignment.post_manually:
         raise ValueError(
             "Assignment must be published and set to manually release grades: see "
             "https://plom.rtfd.io/en/latest/returning.html#return-via-canvas"
         )
 
-    print("\nChecking if you have `marks.csv`...")
-    print("  --------------------------------------------------------------------")
-    if not Path("marks.csv").exists():
-        raise ValueError('Missing "marks.csv": download it from Plom and try again')
-    print('  Found "marks.csv" file.')
-    if not Path("reassembled").exists():
-        raise ValueError(
-            'Missing "reassembled/": '
-            "download the reassembled papers from Plom and try again"
-        )
-    print('  Found "reassembled/" directory.')
+    if hasattr(args, "plom_server"):
+        args.plom_server = args.plom_server or os.environ.get("PLOM_SERVER")
+    if hasattr(args, "plom_username"):
+        args.plom_username = args.plom_username or os.environ.get("PLOM_USERNAME")
+    if hasattr(args, "plom_password"):
+        args.plom_password = args.plom_password or os.environ.get("PLOM_PASSWORD")
 
-    if args.solutions:
-        soln_dir = Path("solutions")
-        if not soln_dir.exists():
-            raise ValueError(
-                f'Missing "{soln_dir}": download solutions from Plom '
-                "or pass `--no-solutions` to omit"
-            )
-        print(f'  Found "{soln_dir}" directory.')
+    if hasattr(args, "plom_server") and not args.plom_server:
+        args.plom_server = input("plom server: ")
+    if hasattr(args, "plom_username") and not args.plom_username:
+        args.plom_username = input("plom username: ")
+    if hasattr(args, "plom_password") and not args.plom_password:
+        args.plom_password = getpass("plom password: ")
 
-    if args.reports:
-        report_dir = Path("Student_Reports")
-        if not report_dir.exists():
-            raise ValueError(f'Cannot upload reports b/c of missing "{report_dir}"')
-        print(f'  Found "{report_dir}" directory.')
+    print("Checking plom credentials...", end="")
+    plom_messenger = start_messenger(
+        args.plom_server, args.plom_username, args.plom_password
+    )
+    print(CHECKMARK)
 
-    print("\nFetching data from canvas now...")
-    print("  --------------------------------------------------------------------")
-    if section:
-        print("  Getting student list from Section...")
-        student_list = get_student_list(section)
+    # iterate over this
+    student_marks = restructure_plom_marks_dict(
+        plom_messenger.new_server_get_paper_marks()
+    )
+    print(f"Plom marks retrieved (for {len(student_marks)} examinees).")
+
+    # put canvas submissions in a dict for fast recall
+    # this dict is keyed by *canvas id* not student id
+    raw_submissions = canvas_assignment.get_submissions()
+    canvas_submissions = {}
+    for submission in raw_submissions:
+        canvas_submissions.update({submission.user_id: submission})
+
+    # get canvas conversion dict - student id to canvas id
+    if canvas_course_section:
+        canvas_ids = get_canvas_id_dict(canvas_course_section)
     else:
-        print("  Getting student list from Course...")
-        student_list = get_student_list(course)
-    print("    done.")
-    print("  Getting canvasapi submission objects...")
-    subs = assignment.get_submissions()
-    print("    done.")
+        canvas_ids = get_canvas_id_dict(canvas_course)
 
-    print("  Getting another classlist and various conversion tables...")
-    download_classlist(course)
-    print("    done.")
-
-    # Most of these conversion tables are fully irrelevant once we
-    # test this code enough to be confident we can remove the
-    # assertions down below
-    print("  Constructing SIS_ID to student conversion table...")
-    sis_id_to_students = sis_id_to_student_dict(student_list)
-    print("    done.")
-
-    print("  Constructing SIS_ID to canvasapi submission conversion table...")
-    sis_id_to_sub_and_name = get_sis_id_to_sub_and_name_table(subs)
-    print("    done.")
-
-    print("  Constructing SIS_ID to canvasapi submission conversion table...")
-    # We only need this second one for double-checking everything is
-    # in order
-    sis_id_to_canvas = get_sis_id_to_canvas_id_table()
-    print("    done.")
-
-    print("  Finally, getting SIS_ID to marks conversion table.")
-    sis_id_to_marks = get_sis_id_to_marks()
-    print("    done.")
-
-    if args.dry_run:
-        print("\n\nPushing to Canvas [DRY-RUN]...")
-    else:
-        print("\n\nPushing to Canvas...")
-    print("  --------------------------------------------------------------------")
-    timeouts = []
-    for pdf in tqdm(Path("reassembled").glob("*.pdf")):
-        # the student number is whatever is after the last underscore
-        sis_id = pdf.stem.split("_")[-1]
-        # rebuild the stuff before the last underscore
-        basename = "_".join(pdf.stem.split("_")[0:-1])
-        if sis_id == "None":
-            print(f"\nWARNING: PDF {pdf} has a 'None' ID")
-            print("  probably someone didn't fill in the front")
-            print("  (or possibly its a blank paper)")
-            print("Skipping for now; you will have to deal with this one manually")
-            continue
-        assert len(sis_id) == 8, f"sis_id {sis_id} did not have 8 digits"
-        assert set(sis_id) <= set(string.digits), f"sis_id {sis_id} had non-digit chars"
+    successes = []
+    count = 0
+    canvas_absences = []
+    canvas_timeouts = []
+    plom_timeouts = []
+    for exam_dict in tqdm(student_marks):
+        paper_number = exam_dict[PLOM_PAPERNUM]
+        score = exam_dict[PLOM_MARKS]
+        student_id = exam_dict[PLOM_STUDENT_ID]
+        student_name = exam_dict[PLOM_STUDENT_NAME]
         try:
-            sub, name = sis_id_to_sub_and_name[sis_id]
-            student = sis_id_to_students[sis_id]
-            mark = sis_id_to_marks[sis_id]
+            student_canvas_id = canvas_ids[student_id]
+            # if the student has a Canvas id, this next line should never fail
+            # but it did in testing (note sure how to reproduce).
+            student_canvas_submission = canvas_submissions[student_canvas_id]
         except KeyError:
-            print(f"\nWARNING: No student # {sis_id} in Canvas!")
-            print("  Hopefully this is 1-1 w/ a prev canvas id error")
-            print("  SKIPPING this paper and continuing")
+            print(
+                f"Student {student_name} - {student_id} (paper #{paper_number})"
+                " couldn't be found in your canvas course (or section if specified),"
+                " skipping."
+            )
+            canvas_absences.append(
+                {
+                    "paper_number": paper_number,
+                    "student_id": student_id,
+                    "error": f"{student_name} couldn't be found on Canvas.",
+                }
+            )
             continue
-        assert sub.user_id == student.user_id
-        if args.solutions:
-            # stuff "solutions" into filename, b/w base and SID
-            soln_pdf = soln_dir / f"{basename}_solutions_{sis_id}.pdf"
-            if not soln_pdf.exists():
-                print()
-                print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
-                soln_pdf = None
-        if args.reports:
-            report_pdf = report_dir / f"{sis_id}.pdf"
-            if not report_pdf.exists():
-                print()
-                print(f"WARNING: Student #{sis_id} has no report: {report_pdf}")
-                report_pdf = None
 
-        # try:
-        #     if sub.submission_comments:
-        #         print(sub.submission_comments)
-        #     else:
-        #         print("missing")
-        # except AttributeError:
-        #     print("no")
-        #     pass
         if args.dry_run:
             if args.papers:
-                timeouts.append((pdf.name, sis_id, name))
-            if args.solutions and soln_pdf:
-                timeouts.append((soln_pdf.name, sis_id, name))
-            if args.reports and report_pdf:
-                timeouts.append((report_pdf.name, sis_id, name))
+                try:
+                    file_info = plom_messenger.new_server_get_reassembled(paper_number)
+                    successes.append(
+                        {
+                            "file/mark": file_info["filename"],
+                            "student_id": student_id,
+                            "student_name": student_name,
+                            "student_canvas_id": student_canvas_id,
+                        }
+                    )
+                except (
+                    PlomAuthenticationException,
+                    PlomNoPermission,
+                    PlomNoPaper,
+                    PlomSeriousException,
+                ) as e:
+                    print(e)
+                    plom_timeouts.append(
+                        {
+                            "paper_number": paper_number,
+                            "student_id": student_id,
+                            "error": e,
+                        }
+                    )
+                finally:
+                    if os.path.exists(file_info["filename"]):
+                        os.remove(file_info["filename"])
             if args.post_grades:
-                timeouts.append((mark, sis_id, name))
+                successes.append(
+                    {
+                        "file/mark": score,
+                        "student_id": student_id,
+                        "student_name": student_name,
+                        "student_canvas_id": student_canvas_id,
+                    }
+                )
+            if args.reports:
+                raise NotImplementedError("No Plom API")
+                pass
+            if args.solutions:
+                raise NotImplementedError("No Plom API")
             continue
 
-        # TODO: should look at the return values
-        # TODO: back off on canvasapi.exception.RateLimitExceeded?
+        # no real multithreading in python, so order doesn't really matter here
         if args.papers:
             try:
-                sub.upload_comment(pdf)
+                file_info = plom_messenger.new_server_get_reassembled(paper_number)
+                student_canvas_submission.upload_comment(file_info["filename"])
+            except (
+                PlomAuthenticationException,
+                PlomNoPermission,
+                PlomNoPaper,
+                PlomSeriousException,
+            ) as e:
+                print(e)
+                plom_timeouts.append(
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": e,
+                    }
+                )
+            # TODO: should look at the negative response from Canvas
             except CanvasException as e:
                 print(e)
-                timeouts.append((pdf.name, sis_id, name))
-            time.sleep(random.uniform(0.1, 0.2))
-        if args.solutions and soln_pdf:
-            try:
-                sub.upload_comment(soln_pdf)
-            except CanvasException as e:
-                print(e)
-                timeouts.append((soln_pdf.name, sis_id, name))
-            time.sleep(random.uniform(0.1, 0.2))
-        if args.reports and report_pdf:
-            try:
-                sub.upload_comment(report_pdf)
-            except CanvasException as e:
-                print(e)
-                timeouts.append((report_pdf.name, sis_id, name))
-            time.sleep(random.uniform(0.1, 0.2))
+                canvas_timeouts.append(
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": e,
+                    }
+                )
+            finally:
+                if os.path.exists(file_info["filename"]):
+                    os.remove(file_info["filename"])
+
+            time.sleep(random.uniform(0.1, 0.3))
+
         if args.post_grades:
             try:
-                sub.edit(submission={"posted_grade": mark})
+                student_canvas_submission.edit(submission={"posted_grade": score})
             except CanvasException as e:
                 print(e)
-                timeouts.append((mark, sis_id, name))
-            time.sleep(random.uniform(0.1, 0.2))
+                canvas_timeouts.append(
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": f"{e}\n mark {score} couldn't be uploaded.",
+                    }
+                )
+            time.sleep(random.uniform(0.1, 0.3))
 
-    print(
-        dedent(
-            """
+        if args.solutions:
+            raise NotImplementedError("No Plom API")
+            pass
 
-            ## Viewing the PDF files as an instructor
+        if args.reports:
+            raise NotImplementedError("No Plom API")
+            pass
+        count += 1
+    print("\n")
+    print(f"pushed {count} papers without issue\n")
 
-            Because of a Canvas bug, you (an instructor) may not be able to see these
-            attachments directly in Canvas -> Grades.  There are two workarounds noted
-            in https://github.com/instructure/canvas-lms/issues/1886
-            (Students have no such problem; they will be able to see the attachment).
-            """
-        )
-    )
+    if plom_timeouts:
+        print(f"{len(plom_timeouts)} FAILED DOWNLOADS FROM PLOM")
+        print(tabulate(plom_timeouts, headers="keys"))
+        print("\n\n")
+
+    if canvas_absences:
+        print(f"{len(canvas_absences)} STUDENTS ABSENT FROM CANVAS")
+        print(tabulate(canvas_absences, headers="keys"))
+        print("\n\n")
+
+    if canvas_timeouts:
+        print(f"{len(canvas_timeouts)} FAILED UPLOADS TO CANVAS")
+        print(tabulate(canvas_timeouts, headers="keys"))
+        print("\n\n")
 
     if args.dry_run:
-        print("Done with DRY-RUN.  The following data would have been uploaded:")
-        print("")
-        print("    sis_id    student name       filename/mark")
-        print("    --------------------------------------------")
-        # note dry_run co-ops the timeout structure
-        for thing, sis_id, name in timeouts:
-            print(f"    {sis_id}  {name} \t {thing}")
+        print("These items would've been uploaded to Canvas:")
+        print(tabulate(successes, headers="keys"))
+        print("\n\n")
 
-    elif timeouts:
-        print(f"Done, but there were {len(timeouts)} timeouts:")
-        print("")
-        print("    sis_id    student name       filename/mark")
-        print("    --------------------------------------------")
-        for thing, sis_id, name in timeouts:
-            print(f"    {sis_id} {name} \t {thing}")
-        print("  These should be uploaded manually, or rerun with only")
-        print("  the failures placed in reassembled/")
 
-    else:
-        print("Done!  And there were no timeouts.")
+if __name__ == "__main__":
+    main()
