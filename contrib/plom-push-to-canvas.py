@@ -12,7 +12,12 @@ Overview:
   1. Finish grading
   2. Download the `marks.csv`, the reassembled papers,
      and the solutions from Plom.
-  3. Copy this script into the current directory.
+  3. Copy this script into the current directory, and install:
+    - tqdm
+    - canvasapi
+    - exif
+    - pandas
+    - plom   (TODO: maybe it even works with `pip install --no-deps plom`)
   4. Run this script and follow the interactive menus:
      ```
      ./plom-push-to-canvas.py --dry-run
@@ -71,7 +76,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.6.1"
+__script_version__ = "0.6.2"
 
 
 def sis_id_to_student_dict(student_list):
