@@ -14,6 +14,8 @@ Overview:
   2. Reassemble papers.
   3. Copy this script into the current directory, and install:
     - tqdm
+    - canvasapi
+    - exif
     - plom   (TODO: maybe it even works with `pip install --no-deps plom`)
     - tabulate
     - python-dotenv (optional)
@@ -25,11 +27,11 @@ Overview:
      Note that you can provide command line arguments and/or
      set environment variables to avoid the interactive prompts:
      ```
-     ./plom-push-to-canvas.py --help
+     ./plom-push-to-canvas-uncached.py --help
      ```
   5. Run it again for real:
      ```
-     ./plom-push-to-canvas.py --course xxxxxx \
+     ./plom-push-to-canvas-uncached.py --course xxxxxx \
                             --assignment xxxxxx \
                             --plom-server xxxxxx \
                             --plom-username xxxxx \
@@ -76,7 +78,7 @@ from plom.plom_exceptions import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.6.1"
+__script_version__ = "0.6.2"
 __DEBUG__ = True
 
 # These are the keys for the json returned by the Plom 'get spreadsheet' API call
