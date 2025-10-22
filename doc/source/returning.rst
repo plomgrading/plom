@@ -126,6 +126,8 @@ Return via Canvas: scripting
         112233 and 1234123 above.
       * Whether you are returning solutions (and/or reports)
         in addition to the papers and grades.
+        Solutions and reports are only available via the
+        'old script' (described below).
 
 Get the script called ``plom-push-to-canvas.py``.
 You might find it in a directory like ``/home/<user>/.local/share/plom/contrib``
