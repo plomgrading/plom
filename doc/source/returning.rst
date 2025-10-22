@@ -129,19 +129,19 @@ Return via Canvas: scripting
         Solutions and reports are only available via the
         'old script' (described below).
 
-Get the script called ``plom-push-to-canvas.py``.
+Get the script called ``plom-push-to-canvas-uncached.py``.
 You might find it in a directory like ``/home/<user>/.local/share/plom/contrib``
 or you can get it from the Plom source code.
 Copy it to a new empty working directory.
-Make the script executable, e.g., `chmod a+x plom-push-to-canvas.py`.
+Make the script executable, e.g., `chmod a+x plom-push-to-canvas-uncached.py`.
 
-Run ``./plom-push-to-canvas.py --help`` for instructions and interactivity.
+Run ``./plom-push-to-canvas-uncached.py --help`` for instructions and interactivity.
 Use the ``--dry-run`` mode first!
 You almost certainly want ``--no-section`` unless you are doing something
 very specialized (see ``--help`` for more info).
 An example invocation looks something like::
 
-    ./plom-push-to-canvas.py \
+    ./plom-push-to-canvas-uncached.py \
         --dry-run \
         --course 112233 \
         --assignment 1234123 \
@@ -164,10 +164,10 @@ An example invocation looks something like::
 Return via Canvas: old script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An alternative to the above, you could use the older ``plom-push-to-canvas-old.py``.
+An alternative to the above, you could use the older ``plom-push-to-canvas.py``.
 In this case, you will need to manually download the ``marks.csv``
 and reassembled` papers from your Plom server.
-Place a copy of ``plom-push-to-canvas-old.py`` in the same directory
+Place a copy of ``plom-push-to-canvas.py`` in the same directory
 where you have the unzipped ``reassembled/`` subdirectory and ``marks.csv``.
 Proceed similarly to the above.
 
