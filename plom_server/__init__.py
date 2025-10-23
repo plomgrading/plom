@@ -14,7 +14,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 # Also in plom/common.py
-__version__ = "0.19.4"
+__version__ = "0.19.5.dev0"
 
 Plom_API_Version = "115"
 
