@@ -18,7 +18,7 @@ from plom_server.Papers.services import SpecificationService
 from .utils import _error_response
 
 
-class SpecificationHandler(APIView):
+class SpecificationAPIView(APIView):
     """Handle transactions involving the Assessment Specification."""
 
     # DELETE /api/v0/spec
