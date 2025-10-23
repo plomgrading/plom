@@ -54,6 +54,7 @@ import sys
 import random
 import string
 import time
+from datetime import datetime, timezone
 from getpass import getpass
 
 from tabulate import tabulate
@@ -92,6 +93,8 @@ PLOM_WARNINGS = "warnings"
 # will have student IDs stored in this attribute
 CANVAS_STUDENT_ID = "sis_user_id"
 __DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
+# 2026-01-31T07:59:00Z
+CANVAS_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 CHECKMARK = "\u2713"
 CROSS = "\u274c"
@@ -289,34 +292,49 @@ def canvas_login(
 
 def get_courses_teaching(
     user: canvasapi.current_user.CurrentUser,
+    *,
+    prune_inactive: bool = True,
 ) -> list[canvasapi.course.Course]:
     """Get a list of the Canvas courses a particular user is teaching.
 
     Args:
         user: the canvas user to check
 
+    Keyword Args:
+        prune_inactive: attempt to remove courses which seem inactive.
+            Practices will vary by institution, you may need to turn this off.
+
     Returns:
         A list of canvas course objects.
     """
-    # TODO: this looks very inefficient, but I don't want to touch it.
     courses_teaching = []
     for course in user.get_courses():
-        try:
-            for enrollee in course.enrollments:
-                if enrollee["user_id"] == user.id:
-                    # observed types are "teacher", "ta", "student", "designer"
-                    if enrollee["type"] in ["teacher", "ta"]:
-                        courses_teaching += [course]
-                    else:
-                        continue
 
-        except AttributeError:
-            # OK for some reason a requester object is being included
-            # as a course??????
-            #
-            # TODO: INvestigate further?
-            # print(f"WARNING: At least one course is missing some expected attributes")
-            pass
+        # FK: OK for some reason a requester object is being included
+        # as a course??????
+        # AM: I'm guessing these are courses with db info deleted
+
+        if prune_inactive:
+            # https://developerdocs.instructure.com/services/canvas/resources/courses#courses-api
+            # if end date has passed, remove course from selection
+            # getattr because UBC seems to be deleting some old course db data
+            end_datetime = getattr(course, "end_at", None)
+            if end_datetime:
+                end_datetime = datetime.strptime(end_datetime, CANVAS_DATETIME_FORMAT)
+                end_datetime = end_datetime.replace(tzinfo=timezone.utc)
+                if end_datetime < datetime.now(timezone.utc):
+                    continue
+
+        enrollments = getattr(course, "enrollments", [])
+        for enrollee in enrollments:
+            # There must be a reason this is here...
+            if enrollee["user_id"] != user.id:
+                continue
+            # observed types are "teacher", "ta", "student", "designer"
+            if enrollee["type"] not in ["teacher", "ta"]:
+                continue
+
+            courses_teaching += [course]
 
     return courses_teaching
 
