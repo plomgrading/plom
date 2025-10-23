@@ -69,6 +69,11 @@ from ..services.util import (
 from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
 
 
+# future translation support
+def _(x: str) -> str:
+    return x
+
+
 log = logging.getLogger(__name__)
 
 
@@ -420,7 +425,7 @@ class ScanService:
 
     @transaction.atomic
     def get_thumbnail_image(self, bundle_pk: int, index: int) -> StagingImage:
-        """Get a thubnail image from the database.
+        """Get a thumbnail image from the database.
 
         To uniquely identify an image, we need a bundle and a page index.
         """
@@ -1172,19 +1177,25 @@ class ScanService:
         """List of info about the pages in a bundle in bundle order.
 
         Args:
-            bundle_obj (todo): the pk reference to a bundle.
+            bundle_obj: reference to a bundle.
 
         Returns:
             list: the pages within the given bundle ordered by their
             bundle-order.  Each item in the list is a dict with keys
             ``status`` (the image type), ``order``, ``rotation``,
-            and ``info``.
+            ``page_label``, ``n_qr_read``, ``zfill_order``, and ``info``.
             The latter value is itself a dict containing different
             items depending on the image-type.  For error-pages and
             discard-pages, it contains the ``reason`` while for
             known-pages it contains ``paper_number``, ``page_number``
             and ``version``.  Finally for extra-pages, it contains
             ``paper_number``, and ``question_idx_list``.
+            ``page_label`` is a short label appropriate for displaying
+            on a page icon, or as a tooltip.
+            ``zfill_order`` is just order with zero-padding based on
+            the number of digits needed for size of this bundle.
+            ``n_qr_read`` is the number of QR codes read, and appears
+            to be unused by anyone as of 2025-Oct.
         """
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
@@ -1208,6 +1219,7 @@ class ScanService:
                 "zfill_order": f"{img.bundle_order}".zfill(n_digits),
                 "rotation": img.rotation,
                 "n_qr_read": len(img.parsed_qr),
+                "page_label": "",  # filled-in below
             }
 
         for img in bundle_obj.stagingimage_set.filter(
@@ -1241,7 +1253,44 @@ class ScanService:
             }
 
         # now build an ordered list by running the keys (which are bundle-order) of the pages-dict in order.
-        return [pages[ord] for ord in sorted(pages.keys())]
+        r = [pages[ord] for ord in sorted(pages.keys())]
+
+        # generate the page labels
+        for pg in r:
+            status = pg["status"]
+            info = pg["info"]
+            if status == "known":
+                label = f"paper-{info['paper_number']}.{info['page_number']}"
+            elif status == "unknown":
+                label = "Unknown page"
+            elif status == "extra":
+                label = "Extra page"
+                if pg["info"]["paper_number"]:
+                    label += f" {info['paper_number']}."
+                    qidx_list = info["question_idx_list"]
+                    if not qidx_list:
+                        # TODO: seems to use [] rather than the MobilePage.DNM_qidx
+                        # not quite sure why but seems like something that might
+                        # bite us later
+                        label += "DNM"
+                    elif len(qidx_list) == 1:
+                        label += f"qidx{qidx_list[0]}"
+                    else:
+                        label += "qidx[" + ",".join(str(x) for x in qidx_list) + "]"
+                else:
+                    label += " - " + _("no data")
+            elif status == "error":
+                label = f"error: {info['reason']}"
+            elif status == "unread":
+                label = "qr-unread"
+            elif status == "discard":
+                label = f"discard: {info['reason']}"
+            else:
+                raise RuntimeError(f"Programming error: unexpected case pg={pg}")
+                # label = "unexpected error"
+            pg["page_label"] = label
+
+        return r
 
     @transaction.atomic
     def get_bundle_papers_pages_list(
