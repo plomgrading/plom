@@ -256,6 +256,35 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def get_interactively_from_dict(choices: dict, *, prompt="Select one:"):
+    """Ask user to pick a key, return the value."""
+    print(f"\n{prompt}")
+    print("  --------------------------------------------------------------------")
+
+    for i, key in enumerate(choices.keys()):
+        print(f"    {i}: {key}")
+
+    key_chosen = False
+    while not key_chosen:
+        user_input = input("\n  Enter [0-n]: ")
+        if not (set(user_input) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(user_input) >= len(choices.keys()):
+            print("Choice too large.")
+        else:
+            user_input = int(user_input)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            selection = list(choices.keys())[user_input]
+            print(f"  You selected {user_input}: {selection}")
+            confirmation = input("  Confirm choice? [Y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                key_chosen = True
+
+    return choices[selection]
+
+
 ###########################################################
 # A suite of functions to get Canvas related stuff
 
@@ -342,40 +371,24 @@ def get_courses_teaching(
 def interactively_get_course_id(user):
     """Interactively get a course id from a user.
 
+    CAUTION: this assumes each course is uniquely named.
+    Duplicates are discarded.
+
     Args:
         user: the Canvas user to whose course list to browse.
 
     Returns:
         The course id of the selected course.
     """
-    courses_teaching = get_courses_teaching(user)
-    print("\nAvailable courses:")
-    print("  --------------------------------------------------------------------")
-    for i, course in enumerate(courses_teaching):
-        print(f"    {i}: {course.name}")
-
-    course_chosen = False
-    while not course_chosen:
-        choice = input("\n  Choice [0-n]: ")
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(courses_teaching):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-            selection = courses_teaching[choice]
-            print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [Y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                course_chosen = True
-                course = selection
-                break
-    print(f'  Note: you can use "--course {course.id}" to reselect.\n')
+    course_name_id_dict = {
+        course.name: course.id for course in get_courses_teaching(user)
+    }
+    course_id = get_interactively_from_dict(
+        course_name_id_dict, prompt="Available courses:"
+    )
+    print(f'  Note: you can use "--course {course_id}" to reselect.\n')
     print("\n")
-    return course.id
+    return course_id
 
 
 def get_course_by_id(
@@ -409,41 +422,22 @@ def interactively_get_course_section_id(course: canvasapi.course.Course) -> int 
     Returns:
         None or a section id.
     """
-    print(f"\nSelect a Section from {course}.\n")
-    print("  Available Sections:")
-    print("  --------------------------------------------------------------------")
-
-    sections = list(course.get_sections())
-    i = 0
-    print(
-        f"    {i}: Do not choose a section (None) (Probably the right choice; read the help)"
+    section_name_id_dict = {
+        "Do not choose a section (None) (Probably the right choice; read the help)": None
+    }
+    section_name_id_dict.update(
+        {section.name: section.id for section in course.get_sections()}
     )
-    i += 1
-    for section in sections:
-        print(f"    {i}: {section.name} ({section.id})")
-        i += 1
+    section_id = get_interactively_from_dict(
+        section_name_id_dict, prompt=f"Select a section from {course}:"
+    )
+    if section_id is None:
+        print('  Note: you can use "--no-section" to reselect.\n')
+    else:
+        print(f'  Note: you can use "--section {section_id}" to reselect.\n')
 
-    while True:
-        choice = input("\n  Choice [0-n]: ")
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(sections) + 1:
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-            if choice == 0:
-                section = None
-                print(f"  You selected {choice}: None")
-            else:
-                section = sections[choice - 1]
-                print(f"  You selected {choice}: {section.name} ({section.id})")
-            confirmation = input("  Confirm choice? [Y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                print("\n")
-                return section if section is None else section.id
+    print("\n")
+    return section_id
 
 
 def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> int:
@@ -453,37 +447,17 @@ def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> i
         course: a canvas course object. Assignments from this course will be displayed.
 
     Returns:
-        An assignment id.
+    An assignment id.
     """
-    print(f"\nSelect an assignment for {course}.\n")
-    print("  Available assignments:")
-    print("  --------------------------------------------------------------------")
-
-    assignments = list(course.get_assignments())
-    for i, assignment in enumerate(assignments):
-        print(f"    {i}: {assignment.name}")
-
-    assignment_chosen = False
-    while not assignment_chosen:
-        choice = input("\n  Choice [0-n]: ")
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(assignments):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-            selection = assignments[choice]
-            print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [Y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                assignment_chosen = True
-                assignment = selection
-    print(f'  Note: you can use "--assignment {assignment.id}" to reselect.\n')
+    assignment_name_id_dict = {
+        assignment.name: assignment.id for assignment in course.get_assignments()
+    }
+    assignment_id = get_interactively_from_dict(
+        assignment_name_id_dict, prompt=f"Select an assignment from {course}:"
+    )
+    print(f'  Note: you can use "--assignment {assignment_id}" to reselect.\n')
     print("\n")
-    return assignment.id
+    return assignment_id
 
 
 def get_canvas_id_dict(
