@@ -97,8 +97,7 @@ def install_spec_from_dict(
 
     spec_dict = deepcopy(spec_dict)  # Defend input dict from changes
 
-    existing_publicCode = spec_dict.get("publicCode", None)
-    if existing_publicCode:
+    if spec_dict.get("publicCode", None):
         # raise serializers.ValidationError(...)?
         raise ValueError("Not allowed to specify a publicCode directly")
 
@@ -176,8 +175,6 @@ def get_the_spec() -> dict:
         data = serializer.data
     except Specification.DoesNotExist:
         raise ObjectDoesNotExist("The database does not contain a specification.")
-    # no publicCode in spec
-    data.pop("publicCode", None)
     return data
 
 

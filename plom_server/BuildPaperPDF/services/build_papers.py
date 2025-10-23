@@ -49,6 +49,7 @@ def huey_build_single_paper(
     papernum: int,
     spec: dict,
     qvmap_row: dict[int | str, int],
+    public_code: str,
     source_versions: dict[int, pathlib.Path],
     *,
     student_info: dict[str, Any] | None = None,
@@ -71,6 +72,7 @@ def huey_build_single_paper(
         spec: the specification of the assessment.
         qvmap_row: which version to use for each question and id page.
             A row of the "qvmap".
+        public_code: the public code to include in QR codes.
         source_versions: dict of paths to the PDF files for each version.
 
     Keyword Args:
@@ -94,12 +96,13 @@ def huey_build_single_paper(
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
-            spec=spec,
-            papernum=papernum,
+            spec,
+            papernum,
             question_versions=qvmap_row,
             extra=student_info,
             xcoord=prename_config["xcoord"],
             ycoord=prename_config["ycoord"],
+            public_code=public_code,
             where=pathlib.Path(tempdir),
             source_versions=source_versions,
         )
@@ -258,8 +261,6 @@ class BuildPapersService:
         # get all the qvmap and student-id/name info
         spec = SpecificationService.get_the_spec()
         public_code = Settings.get_public_code()
-        # TODO: legacy mergeAndCodePages expects public_code in the spec
-        spec["publicCode"] = public_code
         qvmap = PQVMappingService.get_pqv_map_dict()
         prenamed = StagingStudentService.get_prenamed_papers()
         prename_config = PrenameSettingService().get_prenaming_config()
@@ -316,6 +317,7 @@ class BuildPapersService:
                 chore.paper.paper_number,
                 spec,
                 qvmap[chore.paper.paper_number],
+                public_code,
                 source_versions,
                 student_info=student_info,
                 prename_config=prename_config,
