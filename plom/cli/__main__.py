@@ -309,14 +309,6 @@ def get_parser() -> argparse.ArgumentParser:
     s.add_argument("papernum", type=int, help="Which paper to reset")
     s.add_argument("question_idx", type=int, help="Which question to reset")
 
-    # TODO: perhaps unnecessary for modern Plom
-    s = sub.add_parser(
-        "clear",
-        help='Clear "scanner" login',
-        description='Clear "scanner" login after a crash or other expected event.',
-    )
-    _add_server_args(s)
-
     sp_map = sub.add_parser(
         "map",
         help="Assign pages of a bundle to particular questions.",
@@ -364,7 +356,6 @@ def get_parser() -> argparse.ArgumentParser:
         extract the rectangle from the scanned paper with that page number and version.
         """,
     )
-
     s.add_argument(
         "--version",
         "-v",
@@ -378,14 +369,12 @@ def get_parser() -> argparse.ArgumentParser:
         required=True,
         help="The page number of the paper that will be extracted",
     )
-
     s.add_argument(
         "--papernum",
         type=int,
         required=True,
         help="The paper number to be extracted",
     )
-
     s.add_argument(
         "--left",
         "-l",
@@ -406,7 +395,6 @@ def get_parser() -> argparse.ArgumentParser:
         If not provided then default to 0
         """,
     )
-
     s.add_argument(
         "--right",
         "-r",
@@ -417,7 +405,6 @@ def get_parser() -> argparse.ArgumentParser:
         If not provided then default to 1
         """,
     )
-
     s.add_argument(
         "--bottom",
         "-b",
@@ -473,6 +460,14 @@ def get_parser() -> argparse.ArgumentParser:
         """,
     )
     s.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
+    _add_server_args(s)
+
+    # perhaps unnecessary for modern Plom?
+    s = sub.add_parser(
+        "clear",
+        help='Clear "scanner" login',
+        description='Clear "scanner" login after a crash or other expected event.',
+    )
     _add_server_args(s)
 
     return parser
