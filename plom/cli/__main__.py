@@ -127,11 +127,11 @@ def get_parser() -> argparse.ArgumentParser:
             mentions even a single student ID already present on the server.
         """,
     )
-    _add_server_args(s)
     s.add_argument(
         "csvfile",
         help="a CSV file with column headers 'id','name', and [optionally] 'paper_number'.",
     )
+    _add_server_args(s)
 
     s = sub.add_parser(
         "get-marks",
@@ -196,8 +196,8 @@ def get_parser() -> argparse.ArgumentParser:
             Use the `list-bundles` command to check on the status of your bundle.
         """,
     )
-    _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "upload-source",
@@ -207,7 +207,6 @@ def get_parser() -> argparse.ArgumentParser:
             replacing the existing source, if any.
         """,
     )
-    _add_server_args(s)
     s.add_argument(
         "source_pdf",
         help="A PDF file containing a valid assessment source.",
@@ -219,13 +218,13 @@ def get_parser() -> argparse.ArgumentParser:
         default=1,
         help="Source version number (default 1).",
     )
+    _add_server_args(s)
 
     s = sub.add_parser(
         "delete-source",
         help="Delete an assessment source PDF.",
         description="Remove the indicated assessment source.",
     )
-    _add_server_args(s)
     s.add_argument(
         "-v",
         dest="version",
@@ -233,6 +232,7 @@ def get_parser() -> argparse.ArgumentParser:
         default=1,
         help="Source version number (default 1).",
     )
+    _add_server_args(s)
 
     s = sub.add_parser(
         "upload-spec",
@@ -263,15 +263,15 @@ def get_parser() -> argparse.ArgumentParser:
             Use the `list-bundles` command to check on the status of your bundle.
         """,
     )
-    _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "wait-bundle",
         help="Wait for a bundle to finish processing, NOT IMPLEMENTED YET",
     )
-    _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "id-paper",
@@ -285,17 +285,17 @@ def get_parser() -> argparse.ArgumentParser:
             to you.
         """,
     )
-    _add_server_args(s)
     s.add_argument("papernum", type=int, help="Which paper number to identify")
     s.add_argument("--sid", type=str)
     s.add_argument("--name", type=str)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "un-id-paper",
         help="Unidentify a paper, removing the association with a student",
     )
-    _add_server_args(s)
     s.add_argument("papernum", type=int, help="Which paper number to identify")
+    _add_server_args(s)
 
     s = sub.add_parser(
         "reset-task",
@@ -305,9 +305,9 @@ def get_parser() -> argparse.ArgumentParser:
             The task will need to be marked again.
         """,
     )
-    _add_server_args(s)
     s.add_argument("papernum", type=int, help="Which paper to reset")
     s.add_argument("question_idx", type=int, help="Which question to reset")
+    _add_server_args(s)
 
     sp_map = sub.add_parser(
         "map",
