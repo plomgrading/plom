@@ -438,8 +438,43 @@ def get_parser() -> argparse.ArgumentParser:
         where {version}, {page_num}, and {paper_num} are replaced by their respective values.
         """,
     )
-
     _add_server_args(s)
+
+    s = sub.add_parser(
+        "tags",
+        help="List tags",
+        description="""
+          List all the tags defined on the server.
+        """,
+    )
+    s.add_argument(
+        "--list",
+        action="store_true",
+        help="""List the tags on the server (default behaviour).""",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "tag",
+        help="Add/remove tags from papers",
+        description="""
+          Add or remove tags from a paper and question.
+        """,
+    )
+    s.add_argument(
+        "--rm",
+        action="store_true",
+        help="""Remove tag(s) from paper (if omitted we add tags).""",
+    )
+    s.add_argument(
+        "task",
+        help="""
+            Which task to tag, e.g., 0123g4 for paper 123 question 4.
+        """,
+    )
+    s.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
+    _add_server_args(s)
+
     return parser
 
 
@@ -566,6 +601,33 @@ def main():
         success = extract_rectangle(
             args.version, args.pagenum, args.papernum, region, args.out_path, msgr=m
         )
+
+    elif args.command == "tags":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            tags = msgr.get_all_tags()
+            print("Tags on server:\n    " + "\n    ".join(t for tid, t in tags))
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    elif args.command == "tag":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            # TODO: perhaps we want something like --paper 123 --question 4
+            # task = f"{paper:04}g{question}"
+            task = args.task
+            if args.rm:
+                print(f"Task {task}, removing tags: {args.tags}")
+                for t in args.tags:
+                    msgr.remove_single_tag(task, t)
+            else:
+                print(f"Task {task}, adding tags: {args.tags}")
+                for t in args.tags:
+                    msgr.add_single_tag(task, t)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
