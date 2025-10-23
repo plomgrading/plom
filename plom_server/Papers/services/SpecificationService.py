@@ -102,10 +102,6 @@ def install_spec_from_dict(
         # raise serializers.ValidationError(...)?
         raise ValueError("Not allowed to specify a publicCode directly")
 
-    # TODO: hopefully temporary hackery until we store the publicCode elsewhere
-    # keep the validator happy with a temp value: yuck, remove later
-    spec_dict["publicCode"] = "000000"
-
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
