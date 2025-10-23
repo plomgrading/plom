@@ -555,9 +555,6 @@ def main():
         success = upload_classlist(Path(args.csvfile), msgr=m)
         sys.exit(0 if success else 1)
 
-    elif args.command == "clear":
-        clear_login(args.server, args.username, args.password)
-
     elif args.command == "extract-rectangle":
         region = {
             "left": args.left if args.left else 0,
@@ -569,6 +566,10 @@ def main():
         success = extract_rectangle(
             args.version, args.pagenum, args.papernum, region, args.out_path, msgr=m
         )
+
+    elif args.command == "clear":
+        clear_login(args.server, args.username, args.password)
+
     else:
         get_parser().print_help()
 
