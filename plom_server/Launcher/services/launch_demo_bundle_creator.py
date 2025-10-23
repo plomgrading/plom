@@ -30,6 +30,10 @@ from plom.create.scribble_utils import (
 )
 from plom.scan import pdfmucker
 
+# TODO: was this somehow not supposed to import plom_server? why not?
+# TODO: it seems to go to a lot of trouble not too...?
+from plom_server.Base.services import Settings
+
 
 class DemoBundleCreationService:
     """Handle generating demo bundles."""
@@ -182,20 +186,20 @@ class DemoBundleCreationService:
         Returns:
             None, but modifies ``pdf_doc``  as a side effect.
         """
+        public_code = Settings.get_public_code()
         # a rather cludge way to get at the spec via commandline tools
-        # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
             spec_file = Path(td) / "the_spec.toml"
             call_command("plom_preparation_spec", "download", f"{spec_file}")
             spec = SpecVerifier.from_toml_file(spec_file).spec
-            code = spec["publicCode"]
             max_ver = spec["numberOfVersions"]
+            # TODO: why not SpecificationService.get_n_versions()?
 
             # take last page of paper and insert a qr-code from the page before that.
             page_number = pdf_doc.page_count
             # make a qr-code for this paper/page but with version max+1
             qr_pngs = create_QR_codes(
-                paper_number, page_number, max_ver + 1, code, Path(td)
+                paper_number, page_number, max_ver + 1, public_code, Path(td)
             )
             pdf_doc.delete_page()  # this defaults to the last page.
 
@@ -301,17 +305,14 @@ class DemoBundleCreationService:
         Returns:
             None, but modifies ``pdf_doc`` as a side effect.
         """
-        # a rather cludge way to get at the spec via commandline tools
-        # really we just need the public code.
+        public_code = Settings.get_public_code()
         with tempfile.TemporaryDirectory() as td:
-            spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_spec", "download", f"{spec_file}")
-            code = SpecVerifier.from_toml_file(spec_file).spec["publicCode"]
-
             # take last page of paper and insert a qr-code from the page before that.
             page_number = pdf_doc.page_count
             # make a qr-code for this paper, but for second-last page.
-            qr_pngs = create_QR_codes(paper_number, page_number - 1, 1, code, Path(td))
+            qr_pngs = create_QR_codes(
+                paper_number, page_number - 1, 1, public_code, Path(td)
+            )
             pdf_doc[-1].insert_text(
                 (120, 60),
                 text="This is a page has a qr-code from the previous page",
@@ -340,21 +341,16 @@ class DemoBundleCreationService:
         This is intended to simulate the user accidentally uploading a page ffom a
         different assessment (as the developers may have done earlier in plom development).
         """
-        # a rather cludge way to get at the spec via commandline tools
-        # really we just need the public code.
+        public_code = Settings.get_public_code()
         with tempfile.TemporaryDirectory() as td:
-            spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_spec", "download", f"{spec_file}")
-            spec = SpecVerifier.from_toml_file(spec_file).spec
-
             # now make a new magic code that is not the same as the spec
-            assert len(spec["publicCode"]) == 6
-            if spec["publicCode"] == "000000":
-                code = "999999"
+            assert len(public_code) == 6
+            if public_code == "000000":
+                public_code = "999999"
             else:
-                code = "000000"
+                public_code = "000000"
 
-            qr_pngs = create_QR_codes(1, 1, 1, code, Path(td))
+            qr_pngs = create_QR_codes(1, 1, 1, public_code, Path(td))
             # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
             # these are called "qr_0001_pg1_4.png" etc.
             pdf_doc.new_page(-1)
@@ -374,14 +370,9 @@ class DemoBundleCreationService:
 
     def append_out_of_range_paper_and_page(self, pdf_doc):
         """Append two new pages to the pdf - one as test-1 page-999 and one as test-99999 page-1."""
-        # a rather cludge way to get at the spec via commandline tools
-        # really we just need the public code.
+        public_code = Settings.get_public_code()
         with tempfile.TemporaryDirectory() as td:
-            spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_spec", "download", f"{spec_file}")
-            code = SpecVerifier.from_toml_file(spec_file).spec["publicCode"]
-
-            qr_pngs = create_QR_codes(99999, 1, 1, code, Path(td))
+            qr_pngs = create_QR_codes(99999, 1, 1, public_code, Path(td))
             pdf_doc.new_page(-1)
             pdf_doc[-1].insert_text(
                 (120, 200),
@@ -396,7 +387,7 @@ class DemoBundleCreationService:
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
 
-            qr_pngs = create_QR_codes(1, 999, 1, code, Path(td))
+            qr_pngs = create_QR_codes(1, 999, 1, public_code, Path(td))
             pdf_doc.new_page(-1)
             pdf_doc[-1].insert_text(
                 (120, 200),
