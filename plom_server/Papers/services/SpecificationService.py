@@ -18,7 +18,7 @@ from django.db import transaction
 from django.db.models import Max
 
 from plom.spec_verifier import SpecVerifier
-from plom.tpv_utils import new_magic_code
+from plom_server.Base.services import Settings
 from plom_server.Base.compat import load_toml_from_path, load_toml_from_string
 from plom_server.Base.compat import TOMLDecodeError  # noqa: F401
 from ..models import Specification, SpecQuestion
@@ -226,7 +226,7 @@ def get_the_spec_as_toml(
             The default is False and this is DEPRECATED: we anticipate
             not storing the public code in the spec in the near future.
             No one should be calling this with True; if you need the
-            public code, see :func:`get_public_code`.
+            public code, see :func:`Settings.get_public_code`.
         _include_private_seed: if True, include the current private seed
             (currently unused, except maybe in testing?)
 
@@ -239,6 +239,8 @@ def get_the_spec_as_toml(
         spec.pop("privateSeed", None)
     if not include_public_code:
         spec.pop("publicCode", None)
+    if include_public_code:
+        spec["publicCode"] = Settings.get_public_code()
 
     for idx, question in spec["question"].items():
         for key, val in deepcopy(question).items():
@@ -253,41 +255,6 @@ def get_private_seed() -> str:
     """Return the private seed."""
     spec = Specification.objects.get()
     return spec.privateSeed
-
-
-def get_public_code() -> str | None:
-    """Return the public code or None if there isn't one.
-
-    Returns:
-        The public code or None if the server doesn't have one.
-        TODO: None working?
-        TODO: unit tests.
-    """
-    try:
-        spec = Specification.objects.get()
-    except ObjectDoesNotExist:
-        return None
-    c = spec.publicCode
-    if not c:
-        # TODO: possibly temporary hack when spec exists but publicCode empty
-        return None
-    return c
-
-
-def set_public_code(public_code: str):
-    """Change the public code."""
-    spec = Specification.objects.get()
-    spec.publicCode = public_code
-    spec.save()
-
-
-def get_or_create_new_public_code():
-    # probably racey but we can tweak is later with better DB storage for code
-    with transaction.atomic(durable=True):
-        public_code = get_public_code()
-        if public_code is None:
-            set_public_code(new_magic_code())
-    return get_public_code()
 
 
 def remove_spec() -> None:

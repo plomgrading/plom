@@ -31,6 +31,7 @@ from plom_server.Preparation.services import (
     PQVMappingService,
     PrenameSettingService,
 )
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import Paper
 from plom_server.Preparation.services import SourceService
@@ -210,7 +211,7 @@ class BuildPapersService:
             How many tasks did we launch?
         """
         assert_can_rebuild_test_pdfs()
-        SpecificationService.get_or_create_new_public_code()
+        Settings.get_or_create_new_public_code()
         # first we set all tasks with status=error as obsolete.
         BuildPaperPDFChore.set_every_task_with_status_error_obsolete()
         # now iterate over papers that have zero non-obsolete chores.
@@ -232,7 +233,7 @@ class BuildPapersService:
             PlomDependencyConflict: if dependencies not met.
         """
         assert_can_rebuild_test_pdfs()
-        SpecificationService.get_or_create_new_public_code()
+        Settings.get_or_create_new_public_code()
         self._send_list_of_tasks([paper_num])
 
     def _send_list_of_tasks(self, paper_number_list: list[int]) -> None:
@@ -256,7 +257,7 @@ class BuildPapersService:
 
         # get all the qvmap and student-id/name info
         spec = SpecificationService.get_the_spec()
-        public_code = SpecificationService.get_public_code()
+        public_code = Settings.get_public_code()
         # TODO: legacy mergeAndCodePages expects public_code in the spec
         spec["publicCode"] = public_code
         qvmap = PQVMappingService.get_pqv_map_dict()
