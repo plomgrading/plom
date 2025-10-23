@@ -18,7 +18,6 @@ import pymupdf
 from django.core.management import call_command
 from django.conf import settings
 
-from plom.spec_verifier import SpecVerifier
 from plom.create.mergeAndCodePages import (
     create_QR_codes,
     create_invalid_QR_and_bar_codes,
@@ -31,8 +30,9 @@ from plom.create.scribble_utils import (
 from plom.scan import pdfmucker
 
 # TODO: was this somehow not supposed to import plom_server? why not?
-# TODO: it seems to go to a lot of trouble not too...?
+# TODO: it seems it used to go to a lot of trouble not too.
 from plom_server.Base.services import Settings
+from plom_server.Papers.services import SpecificationService
 
 
 class DemoBundleCreationService:
@@ -56,16 +56,6 @@ class DemoBundleCreationService:
                     )
         return classlist
 
-    def get_default_paper_length(self):
-        """Get the default number of pages in a paper from the specification."""
-        # some contortions here to avoid using django services, but
-        # instead get things using management commands.
-        #
-        with tempfile.TemporaryDirectory() as td:
-            spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_spec", "download", f"{spec_file}")
-            return SpecVerifier.from_toml_file(spec_file)["numberOfPages"]
-
     def split_into_bundle_files(self, out_file, config):
         """Split the single scribble PDF file into the designated number of bundles.
 
@@ -74,7 +64,7 @@ class DemoBundleCreationService:
             config (PlomServerConfig): server config
         """
         bundles = config.bundles
-        default_n_pages = self.get_default_paper_length()
+        default_n_pages = SpecificationService.get_n_pages()
 
         with pymupdf.open(out_file) as scribble_pdf:
             from_page_idx = 0
@@ -187,14 +177,8 @@ class DemoBundleCreationService:
             None, but modifies ``pdf_doc``  as a side effect.
         """
         public_code = Settings.get_public_code()
-        # a rather cludge way to get at the spec via commandline tools
+        max_ver = SpecificationService.get_n_versions()
         with tempfile.TemporaryDirectory() as td:
-            spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_spec", "download", f"{spec_file}")
-            spec = SpecVerifier.from_toml_file(spec_file).spec
-            max_ver = spec["numberOfVersions"]
-            # TODO: why not SpecificationService.get_n_versions()?
-
             # take last page of paper and insert a qr-code from the page before that.
             page_number = pdf_doc.page_count
             # make a qr-code for this paper/page but with version max+1
