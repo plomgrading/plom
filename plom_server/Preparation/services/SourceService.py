@@ -145,6 +145,8 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     return [get_source(v) for v in vers]
 
 
+# TODO: mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+# source_pdf: pathlib.Path | resources.abc.Traversable,
 def store_source_pdf(
     version: int, source_pdf: pathlib.Path, *, original_filename: str = ""
 ) -> None:
