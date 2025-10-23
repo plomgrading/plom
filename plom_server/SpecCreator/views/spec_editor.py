@@ -52,8 +52,6 @@ class SpecEditorView(ManagerRequiredView):
         )
         data = request.POST
 
-        force_public_code = data.get("force-public-code")
-
         gave_toml_file = data.get("which_action") == "upload_file"
         if gave_toml_file:
             f = request.FILES.get("toml_file")
@@ -85,9 +83,7 @@ class SpecEditorView(ManagerRequiredView):
                 context["msg"] = "Specification passes validity checks."
                 context["success"] = True
             else:
-                SpecificationService.install_spec_from_toml_string(
-                    spec, force_public_code=force_public_code
-                )
+                SpecificationService.install_spec_from_toml_string(spec)
                 # Spec saved successfully - redirect to the summary page.
                 return HttpResponseClientRedirect(reverse("spec_summary"))
         except PlomDependencyConflict as e:
