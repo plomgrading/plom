@@ -465,8 +465,10 @@ def get_parser() -> argparse.ArgumentParser:
     # perhaps unnecessary for modern Plom?
     s = sub.add_parser(
         "clear",
-        help='Clear "scanner" login',
-        description='Clear "scanner" login after a crash or other expected event.',
+        help="Clear your login",
+        description="""
+            Clear your login after a crash or other expected event.
+        """,
     )
     _add_server_args(s)
 
