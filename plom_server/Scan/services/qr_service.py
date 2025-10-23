@@ -271,7 +271,7 @@ class QRService:
         correct_public_code = Settings.get_public_code()
         if public_code != correct_public_code:
             raise ValueError(
-                f"Public code {public_code} does not match spec {correct_public_code}"
+                f"Public code {public_code} does not match server {correct_public_code}"
                 " - was a page from a different assessment uploaded?"
             )
 
