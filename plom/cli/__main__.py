@@ -242,16 +242,25 @@ def get_parser() -> argparse.ArgumentParser:
     s.add_argument("tomlfile", help="The assessment specification.")
     _add_server_args(s)
 
-    # s = sub.add_parser(
-    #     "change-public-code",
-    #     help="""
-    #         Override the usually randomly chosen "publicCode", which is used
-    #         to prevent uploading papers from a different server.
-    #         Read the docs before using this!
-    #     """,
-    # )
-    # s.add_argument("sixdig", help="Six digits.")
-    # _add_server_args(s)
+    s = sub.add_parser(
+        "get-public-code",
+        help="""
+            Get "public code", which is used to prevent uploading
+            papers from a different server.
+        """,
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "set-public-code",
+        help="""
+            Override the usually randomly chosen "public code", which is used
+            to prevent uploading papers from a different server.
+            Read the docs before using this!
+        """,
+    )
+    s.add_argument("sixdig", help="Six digit numeric code.")
+    _add_server_args(s)
 
     s = sub.add_parser(
         "delete-bundle",
@@ -565,6 +574,25 @@ def main():
             Path(args.tomlfile),
             msgr=(args.server, args.username, args.password),
         )
+
+    elif args.command == "get-public-code":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            r = msgr.get_public_code()
+            print(r)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    elif args.command == "set-public-code":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            msgr.set_public_code(args.sixdig)
+            r = msgr.get_public_code()
+            print(r)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "delete-bundle":
         msgr = start_messenger(args.server, args.username, args.password)

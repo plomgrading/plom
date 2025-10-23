@@ -41,11 +41,11 @@ class PublicCodeAPIView(APIView):
 
         Returns:
             A 200 response object with no content on success.
-            Status 400 if you don't provide the `new_public_code`.
+            Status 400 if you don't provide the `new_public_code` or
+            the provided code is invalid.
             Status 403 indicates user is not in the "manager" group.
             Status 409 indicates that changing the public code is not allowed,
             which currently never happens but potentially could in the future.
-            TODO: someone should be enforcing validity (6 digits etc?).
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -61,6 +61,9 @@ class PublicCodeAPIView(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        Settings.set_public_code(new_public_code)
+        try:
+            Settings.set_public_code(new_public_code)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         return Response()
