@@ -342,15 +342,14 @@ class DemoBundleCreationService:
         different assessment (as the developers may have done earlier in plom development).
         """
         public_code = Settings.get_public_code()
-        with tempfile.TemporaryDirectory() as td:
-            # now make a new magic code that is not the same as the spec
-            assert len(public_code) == 6
-            if public_code == "000000":
-                public_code = "999999"
-            else:
-                public_code = "000000"
+        # and make a new magic code that is not the same as the server's
+        assert len(public_code) == 6
+        wrong_code = "000000"
+        if wrong_code == public_code:
+            wrong_code = "999999"
 
-            qr_pngs = create_QR_codes(1, 1, 1, public_code, Path(td))
+        with tempfile.TemporaryDirectory() as td:
+            qr_pngs = create_QR_codes(1, 1, 1, wrong_code, Path(td))
             # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
             # these are called "qr_0001_pg1_4.png" etc.
             pdf_doc.new_page(-1)
