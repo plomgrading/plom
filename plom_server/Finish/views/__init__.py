@@ -3,7 +3,6 @@
 # Copyright (C) 2024 Bryan Tanady
 
 from .marking_info import (
-    MarkingInformationPaperView,
     MarksDownloadView,
     TAInfoDownloadView,
     AnnotationsInfoDownloadView,

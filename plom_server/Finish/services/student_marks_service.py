@@ -273,41 +273,6 @@ class StudentMarkService:
                 spreadsheet_data[paper.paper_number] = (student_id, student_name)
         return spreadsheet_data
 
-    def get_marks_from_paper(self, paper_num: int) -> dict:
-        """Get the marks for a paper.
-
-        Args:
-            paper_num: The paper number.
-
-        Returns:
-            Dict keyed by paper number whose values are a dictionary holding
-            the mark information for each question in the paper.
-        """
-        try:
-            paper_obj = Paper.objects.get(paper_number=paper_num)
-        except Paper.DoesNotExist:
-            return {}
-        marking_tasks = (
-            paper_obj.markingtask_set.all()
-            .select_related("latest_annotation")
-            .exclude(status=MarkingTask.OUT_OF_DATE)
-        )
-        questions: dict[int, str | dict] = {}
-        for marking_task in marking_tasks.order_by("question_index"):
-            current_annotation = marking_task.latest_annotation
-            if current_annotation:
-                questions[marking_task.question_index] = {
-                    "question": marking_task.question_index,
-                    "version": marking_task.question_version,
-                    "out_of": current_annotation.annotation_data["maxMark"],
-                    "student_mark": current_annotation.score,
-                }
-            else:
-                # String value so that it questions.get(i) doesn't return None
-                questions[marking_task.question_index] = "Not marked"
-
-        return {paper_num: questions}
-
     @staticmethod
     def get_n_of_question_marked(question: int, *, version: int = 0) -> int:
         """Get the count of how many papers have marked a specific question.
