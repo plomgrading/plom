@@ -257,22 +257,6 @@ class StudentMarkService:
         # Sort by paper number
         return {k: marks[k] for k in sorted(marks)}
 
-    def get_marks_from_paper_set(self, paper_set: set) -> dict:
-        """Get the marks for a set of papers.
-
-        Args:
-            paper_set: The set of (int) paper numbers.
-
-        Returns:
-            Dict containing the mark information for each question in each paper. Keyed by paper number whose
-            values are a dictionary holding the mark information for each question in the paper.
-        """
-        marks = {}
-        for paper_num in paper_set:
-            marks.update(self.get_marks_from_paper(paper_num))
-
-        return marks
-
     def get_n_of_question_marked(self, question: int, *, version: int = 0) -> int:
         """Get the count of how many papers have marked a specific question.
 
