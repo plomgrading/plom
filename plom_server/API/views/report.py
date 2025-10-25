@@ -33,7 +33,7 @@ class REPspreadsheet(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        spreadsheet_data = StudentMarkService.get_all_marking_info_faster()
+        spreadsheet_data = StudentMarkService.get_all_marking_info()
         return Response(
             spreadsheet_data,
             status=status.HTTP_200_OK,

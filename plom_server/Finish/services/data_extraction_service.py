@@ -27,7 +27,7 @@ class DataExtractionService:
     """
 
     def __init__(self):
-        student_dict = StudentMarkService.get_all_marking_info_faster()
+        student_dict = StudentMarkService.get_all_marking_info()
         student_keys = StudentMarkService._get_csv_header()
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 

@@ -363,7 +363,7 @@ class StudentMarkService:
         Returns:
             The csv in string format.
         """
-        student_marks = cls.get_all_marking_info_faster()
+        student_marks = cls.get_all_marking_info()
 
         keys = cls._get_csv_header(
             version_info=version_info,
@@ -390,7 +390,7 @@ class StudentMarkService:
         return csv_io.getvalue()
 
     @staticmethod
-    def get_all_marking_info_faster() -> list[dict[str, Any]]:
+    def get_all_marking_info() -> list[dict[str, Any]]:
         """Build a list of dictionaries being the rows of the marking spreadsheet.
 
         Returns:
