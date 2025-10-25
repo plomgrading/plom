@@ -10,6 +10,7 @@
 # Copyright (C) 2025 Aidan Murphy
 
 import csv
+import hashlib
 from io import StringIO
 from typing import Any
 
@@ -22,7 +23,6 @@ from plom_server.Mark.models import MarkingTask
 from plom_server.Papers.models.paper_structure import Paper
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Scan.services import ManageScanService
-import hashlib
 
 
 class StudentMarkService:
@@ -64,7 +64,8 @@ class StudentMarkService:
                 return False
         return True
 
-    def get_n_questions_marked(self, paper: Paper) -> int:
+    @staticmethod
+    def _get_n_questions_marked(paper: Paper) -> int:
         """Return the number of questions that are marked in a paper.
 
         Args:
@@ -75,7 +76,8 @@ class StudentMarkService:
             paper=paper, status=MarkingTask.COMPLETE
         ).count()
 
-    def get_last_updated_timestamp(self, paper: Paper) -> timezone.datetime:
+    @staticmethod
+    def _get_last_updated_timestamp(paper: Paper) -> timezone.datetime:
         """Return the latest update timestamp from the PaperIDTask or MarkingTask.
 
         Args:
@@ -168,8 +170,9 @@ class StudentMarkService:
             mark = None
         return version, mark
 
+    @classmethod
     def get_paper_status(
-        self, paper: Paper
+        cls, paper: Paper
     ) -> tuple[bool, bool, int, timezone.datetime]:
         """Return a list of [scanned?, identified?, n questions marked, time of last update] for a given paper.
 
@@ -179,11 +182,11 @@ class StudentMarkService:
         Returns:
             tuple of [bool, bool, int, datetime]
         """
-        paper_id_info = self.get_paper_id_or_none(paper)
+        paper_id_info = cls.get_paper_id_or_none(paper)
         is_id = paper_id_info is not None
         is_scanned = ManageScanService.is_paper_completely_scanned(paper.paper_number)
-        n_marked = self.get_n_questions_marked(paper)
-        last_modified = self.get_last_updated_timestamp(paper)
+        n_marked = cls._get_n_questions_marked(paper)
+        last_modified = cls._get_last_updated_timestamp(paper)
 
         return (is_scanned, is_id, n_marked, last_modified)
 

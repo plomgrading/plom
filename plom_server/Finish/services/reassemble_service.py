@@ -48,8 +48,8 @@ class ReassembleService:
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            spreadsheet_data[paper.paper_number] = (
-                StudentMarkService().get_paper_status(paper)
+            spreadsheet_data[paper.paper_number] = StudentMarkService.get_paper_status(
+                paper
             )
         return spreadsheet_data
 
