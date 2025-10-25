@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
 from django.http import HttpRequest, HttpResponse
@@ -10,18 +10,32 @@ from rest_framework import status
 
 from plom_server.Finish.services import ReassembleService
 from plom_server.Finish.services import StudentMarkService
-
 from plom_server.Papers.models import Paper
+
+from .utils import _error_response
 
 
 class REPspreadsheet(APIView):
+    """API related to spreadsheat-like data."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
-        spreadsheet_data = StudentMarkService().get_spreadsheet_data()
-        print(spreadsheet_data)
-        spreadsheet_data2 = StudentMarkService.get_all_marking_info_faster()
-        print(spreadsheet_data2)
+        """API to get information about all marked and ID papers, similar to the contents of Plom's `marks.csv`.
+
+        Only managers and lead_markers can access this, others will receive a 403.
+
+        Returns a list of dicts, with homogeneous keys, appropriate for the headers
+        of a csv file, for example.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("manager" in group_list or "lead_marker" in group_list):
+            return _error_response(
+                'Only "manager" and "lead_marker" users access spreadsheet data',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        spreadsheet_data = StudentMarkService.get_all_marking_info_faster()
         return Response(
-            spreadsheet_data2,
+            spreadsheet_data,
             status=status.HTTP_200_OK,
         )
 

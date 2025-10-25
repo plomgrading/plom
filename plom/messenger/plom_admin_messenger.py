@@ -272,6 +272,7 @@ class PlomAdminMessenger(Messenger):
 
         with self.SRmutex:
             try:
+                # TODO: rename the this url in 116 revision
                 response = self.get_auth("/REP/spreadsheet")
                 response.raise_for_status()
                 return response.json()

@@ -47,7 +47,6 @@ Instructors and TAs can do this but in the past it would fail for
 the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 """
 
-
 import argparse
 import os
 import sys
@@ -55,6 +54,7 @@ import random
 import string
 import time
 from getpass import getpass
+from typing import Any
 
 from tabulate import tabulate
 from tqdm import tqdm
@@ -499,26 +499,28 @@ def get_canvas_id_dict(
 # functions to interact with a Plom server
 
 
-def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
+def restructure_plom_marks(plom_marks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Change the key on the Plom marks dicts to student number.
 
     **WARNING: sometimes requires user interaction.**
     This function will remove any papers with warnings attached.
 
     Returns:
-        A dict of exam marks keyed by student ids.
+        A list of dicts.
     """
     simplified_list = []
     # we won't attempt to push papers on the discard list to Canvas
     discard_list = []
-    for paper_num, mark_dict in plom_marks_dict.items():
+    for mark_dict in plom_marks:
         # Oct. 8th - the distinction between None and "" is significant
         # None means the paper was ID'd as having a blank coverpage
         # "" means the paper hasn't been ID'd yet and we will implicitly discard it
+        # Oct. 24th: the API now gives only those that are ID'd so this may not happen
         if mark_dict[PLOM_STUDENT_ID] == "":
             continue
 
         # Oct. 8th - we explicitly discard unmarked papers
+        # Oct. 24th: ditto, probably not included
         if PLOM_WARNINGS in mark_dict.keys():
             discard_list.append(mark_dict)
             continue
@@ -623,9 +625,7 @@ def main():
     print(CHECKMARK)
 
     # iterate over this
-    student_marks = restructure_plom_marks_dict(
-        plom_messenger.new_server_get_paper_marks()
-    )
+    student_marks = restructure_plom_marks(plom_messenger.new_server_get_paper_marks())
     print(f"Plom marks retrieved (for {len(student_marks)} examinees).")
 
     # put canvas submissions in a dict for fast recall

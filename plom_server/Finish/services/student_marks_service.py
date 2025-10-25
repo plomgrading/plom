@@ -168,65 +168,6 @@ class StudentMarkService:
             mark = None
         return version, mark
 
-    def _paper_spreadsheet_dict(self, paper: Paper) -> dict[str, Any]:
-        """Return a dictionary representing a paper.
-
-        Args:
-            paper: a reference to a Paper instance.
-
-        Returns:
-            A dictionary whose keys are PaperNumber, StudentID, StudentName,
-            identified, marked, mark and version of each question, Total, and
-            last_update.
-        """
-        paper_dict = {"PaperNumber": paper.paper_number}
-        warnings = []
-
-        paper_id_info = self.get_paper_id_or_none(paper)
-        if paper_id_info:
-            student_id, student_name = paper_id_info
-            paper_dict["StudentID"] = student_id
-            paper_dict["StudentName"] = student_name
-        else:
-            paper_dict["StudentID"] = ""
-            paper_dict["StudentName"] = ""
-            warnings.append("[Not identified]")
-        paper_dict["identified"] = paper_id_info is not None
-
-        paper_marked = self.is_paper_marked(paper)
-
-        paper_dict["marked"] = paper_marked
-        if paper_marked:
-            total = 0.0
-        else:
-            warnings.append("[Not marked]")
-            paper_dict["Total"] = None
-
-        for qi, qlabel in SpecificationService.get_question_index_label_pairs():
-            version, mark = self.get_question_version_and_mark(paper, qi)
-            paper_dict[f"{qlabel}_mark"] = mark
-            paper_dict[f"{qlabel}_version"] = version
-            # if paper is marked then compute the total
-            if paper_marked:
-                assert mark is not None
-                total += mark
-        if paper_marked:
-            paper_dict["Total"] = total
-
-        if warnings:
-            paper_dict.update({"warnings": ",".join(warnings)})
-
-        paper_dict["last_update"] = self.get_last_updated_timestamp(paper)
-        return paper_dict
-
-    def get_spreadsheet_data(self) -> dict[str, Any]:
-        """Return a dictionary with all of the required data for a reassembly spreadsheet."""
-        spreadsheet_data = {}
-        papers = Paper.objects.all()
-        for paper in papers:
-            spreadsheet_data[paper.paper_number] = self._paper_spreadsheet_dict(paper)
-        return spreadsheet_data
-
     def get_paper_status(
         self, paper: Paper
     ) -> tuple[bool, bool, int, timezone.datetime]:
