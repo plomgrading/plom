@@ -230,8 +230,7 @@ class TaMarkingService:
         Raises:
             None expected
         """
-        service = StudentMarkService()
-        num_questions_marked = service.get_n_of_question_marked(question_idx)
+        num_questions_marked = StudentMarkService.get_n_of_question_marked(question_idx)
 
         marking_task = (
             MarkingTask.objects.filter(question_index=question_idx)

@@ -73,7 +73,7 @@ class ReassembleService:
         legacy_cover_page_info.append([student_id, student_name])
 
         for i in SpecificationService.get_question_indices():
-            version, mark = StudentMarkService().get_question_version_and_mark(paper, i)
+            version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
             legacy_cover_page_info.append([i, version, mark])
 
         return legacy_cover_page_info
@@ -90,13 +90,12 @@ class ReassembleService:
             ``[question_label, version, max_mark]`` for each question.
             Otherwise, ``[question_label, version, mark, max_mark]``.
         """
-        sms = StudentMarkService()
         cover_page_info = []
 
         for i in SpecificationService.get_question_indices():
             question_label = SpecificationService.get_question_label(i)
             max_mark = SpecificationService.get_question_mark(i)
-            version, mark = sms.get_question_version_and_mark(paper, i)
+            version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
 
             if solution:
                 cover_page_info.append([question_label, version, max_mark])

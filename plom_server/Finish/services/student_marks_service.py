@@ -136,8 +136,9 @@ class StudentMarkService:
             return None
         return action.student_id, action.student_name
 
+    @staticmethod
     def get_question_version_and_mark(
-        self, paper: Paper, question_idx: int
+        paper: Paper, question_idx: int
     ) -> tuple[int, float | None]:
         """For a particular paper and question index, return the question version and score.
 
@@ -257,7 +258,8 @@ class StudentMarkService:
         # Sort by paper number
         return {k: marks[k] for k in sorted(marks)}
 
-    def get_n_of_question_marked(self, question: int, *, version: int = 0) -> int:
+    @staticmethod
+    def get_n_of_question_marked(question: int, *, version: int = 0) -> int:
         """Get the count of how many papers have marked a specific question.
 
         Args:
