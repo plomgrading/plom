@@ -21,20 +21,21 @@ def get_marks_as_csv_string(*, papernum: int | None = None, msgr) -> str:
     Returns:
         A string containing the paper marks formatted as a csv.
     """
-    papers_marks_dict = msgr.new_server_get_paper_marks()
-    if papernum is not None:
-        papers_marks_dict = {papernum: papers_marks_dict[str(papernum)]}
-    papers_marks_list = [marks_dict for marks_dict in papers_marks_dict.values()]
+    papers_marks_list = msgr.new_server_get_paper_marks()
 
-    # TODO: API doesn't return a consistent set of fields in each dict
-    dict_keys = []
-    for marks_dict in papers_marks_list:
-        for key in marks_dict.keys():
-            if key not in dict_keys:
-                dict_keys.append(key)
+    # TODO: remove this feature?
+    # if we don't want to remove it, this should be a query param for the API
+    # which can then return the actual error.
+    if papernum is not None:
+        for marks_dict in papers_marks_list:
+            if marks_dict["PaperNumber"] == papernum:
+                papers_marks_list = [marks_dict]
+                break
+        if not len(papers_marks_list) == 1:
+            raise ValueError(f"Paper {papernum} doesn't exist or hasn't been ID'd.")
 
     with StringIO() as stringbuffer:
-        writer = DictWriter(stringbuffer, dict_keys)
+        writer = DictWriter(stringbuffer, papers_marks_list[0].keys())
 
         writer.writeheader()
         writer.writerows(papers_marks_list)
