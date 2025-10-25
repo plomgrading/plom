@@ -192,7 +192,7 @@ class StudentMarkService:
         return (is_scanned, is_id, n_marked, last_modified)
 
     def get_identified_papers(self) -> dict[str, list[str]]:
-        """Return a dictionary with all of the identified papers and their names and IDs.
+        """Return a dictionary with all of the identified papers and their names and IDs, with potentially INEFFICIENT DB operations.
 
         Returns:
             dictionary: keys are paper numbers, values are a list of [str, str]
@@ -242,7 +242,7 @@ class StudentMarkService:
         return {paper_num: questions}
 
     def get_all_marks(self) -> dict:
-        """Get the marks for all papers.
+        """Get the marks for all papers, with potentially INEFFICIENT DB operations.
 
         Returns:
             Dict containing the mark information for each question in each paper. Keyed by
