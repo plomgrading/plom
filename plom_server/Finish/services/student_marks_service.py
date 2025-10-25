@@ -52,7 +52,7 @@ class StudentMarkService:
 
     @classmethod
     def are_all_papers_marked(cls) -> bool:
-        """Return True if all used papers are marked.
+        """Return True if all used papers are marked, with potentially INEFFICIENT DB operations.
 
         See :func: ManageScanService._get_used_unused_paper_querysets() for
         definitions of used and unused papers.
