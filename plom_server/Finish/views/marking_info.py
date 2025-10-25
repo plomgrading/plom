@@ -15,11 +15,10 @@ from plom_server.Papers.services import SpecificationService
 from ..services import StudentMarkService, TaMarkingService, AnnotationDataService
 
 
-class MarkingInformationView(ManagerRequiredView):
-    """View for the Student Marks page."""
+class MarksDownloadView(ManagerRequiredView):
+    """View to download marks."""
 
-    @staticmethod
-    def marks_download(request: HttpRequest) -> HttpResponse:
+    def get(self, request: HttpRequest) -> HttpResponse:
         """Download marks as a csv file."""
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
@@ -50,8 +49,11 @@ class MarkingInformationView(ManagerRequiredView):
 
         return response
 
-    @staticmethod
-    def ta_info_download(request: HttpRequest) -> HttpResponse:
+
+class TAInfoDownloadView(ManagerRequiredView):
+    """View to download TA info."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()
         csv_as_string = tms.build_ta_info_csv_as_string()
@@ -72,8 +74,11 @@ class MarkingInformationView(ManagerRequiredView):
 
         return response
 
-    @staticmethod
-    def annotation_info_download(request: HttpRequest) -> HttpResponse:
+
+class AnnotationsInfoDownloadView(ManagerRequiredView):
+    """View to download Annotation info."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
         """Download annotation information as a csv file."""
         ads = AnnotationDataService()
         csv_as_string = ads.get_csv_data_as_string()
@@ -95,6 +100,7 @@ class MarkingInformationView(ManagerRequiredView):
         return response
 
 
+# Is this used by anything?  If so what?
 class MarkingInformationPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""
 
