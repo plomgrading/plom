@@ -8,7 +8,7 @@
 
 import arrow
 
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
@@ -98,13 +98,3 @@ class AnnotationsInfoDownloadView(ManagerRequiredView):
         )
 
         return response
-
-
-# Is this used by anything?  If so what?
-class MarkingInformationPaperView(ManagerRequiredView):
-    """View for the Student Marks page as a JSON blob."""
-
-    def get(self, request: HttpRequest, *, paper_num: int) -> JsonResponse:
-        """Get the data for the Student Marks page as a JSON blob."""
-        marks_dict = StudentMarkService().get_marks_from_paper(paper_num)
-        return JsonResponse(marks_dict)

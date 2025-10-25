@@ -7,7 +7,6 @@
 from django.urls import path
 
 from .views import (
-    MarkingInformationPaperView,
     MarksDownloadView,
     TAInfoDownloadView,
     AnnotationsInfoDownloadView,
@@ -29,12 +28,6 @@ from .views import (
 
 
 urlpatterns = [
-    # TODO: anyone calling this Json mark stuff?
-    path(
-        "marking_info/<int:paper_num>/paper/",
-        MarkingInformationPaperView.as_view(),
-        name="paper_num",
-    ),
     path(
         "marking_info/marks_download/",
         MarksDownloadView.as_view(),
