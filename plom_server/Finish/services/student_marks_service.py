@@ -449,6 +449,10 @@ class StudentMarkService:
     def get_all_marking_info_faster() -> list[dict[str, Any]]:
         """Build a list of dictionaries being the rows of the marking spreadsheet.
 
+        Returns:
+            A list of dicts, with keys appropriate for the columns of Plom's
+            `marks.csv` spreadsheet.
+
         Raises:
             RuntimeError: if there are two complete ID-tasks for the same paper,
             or if there are two complete MarkingTasks for the same paper/question.

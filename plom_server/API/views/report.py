@@ -17,8 +17,11 @@ from plom_server.Papers.models import Paper
 class REPspreadsheet(APIView):
     def get(self, request: HttpRequest) -> HttpResponse:
         spreadsheet_data = StudentMarkService().get_spreadsheet_data()
+        print(spreadsheet_data)
+        spreadsheet_data2 = StudentMarkService.get_all_marking_info_faster()
+        print(spreadsheet_data2)
         return Response(
-            spreadsheet_data,
+            spreadsheet_data2,
             status=status.HTTP_200_OK,
         )
 
