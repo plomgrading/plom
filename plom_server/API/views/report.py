@@ -40,9 +40,10 @@ class REPspreadsheet(APIView):
         )
 
 
+# TODO: unused, legacy, used inefficient service: remove ASAP
 class REPidentified(APIView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        id_data = StudentMarkService().get_identified_papers()
+        id_data = StudentMarkService().get_identified_papers()  # inefficient?
         return Response(
             id_data,
             status=status.HTTP_200_OK,

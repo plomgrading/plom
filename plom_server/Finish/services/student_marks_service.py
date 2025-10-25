@@ -194,6 +194,9 @@ class StudentMarkService:
     def get_identified_papers(self) -> dict[str, list[str]]:
         """Return a dictionary with all of the identified papers and their names and IDs, with potentially INEFFICIENT DB operations.
 
+        TODO: only called by an unused legacy API code, see "API/views/reports.py"
+        TODO: so this can be removed soon.
+
         Returns:
             dictionary: keys are paper numbers, values are a list of [str, str]
         """
