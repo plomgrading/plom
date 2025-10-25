@@ -308,23 +308,6 @@ class StudentMarkService:
 
         return {paper_num: questions}
 
-    def get_all_marks(self) -> dict:
-        """Get the marks for all papers, with potentially INEFFICIENT DB operations.
-
-        Returns:
-            Dict containing the mark information for each question in each paper. Keyed by
-            paper number whose values are a dictionary holding the mark information for each
-            question in the paper.
-        """
-        paper_nums = MarkingTask.objects.values_list(
-            "paper__paper_number", flat=True
-        ).distinct()
-        marks = {}
-        for paper_num in paper_nums:
-            marks.update(self.get_marks_from_paper(paper_num))
-        # Sort by paper number
-        return {k: marks[k] for k in sorted(marks)}
-
     @staticmethod
     def get_n_of_question_marked(question: int, *, version: int = 0) -> int:
         """Get the count of how many papers have marked a specific question.

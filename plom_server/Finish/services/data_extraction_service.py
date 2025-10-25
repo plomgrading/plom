@@ -172,17 +172,6 @@ class DataExtractionService:
 
         return averages
 
-    def _get_average_grade_on_question(self, qlabel: str) -> float:
-        """Return the average grade on a specific question (not percentage)."""
-        return self.student_df[f"{qlabel}_mark"].mean()
-
-    def get_average_grade_on_all_questions(self) -> list[tuple[int, str, float]]:
-        """Return the average grade on each question (not percentage)."""
-        averages = []
-        for qidx, qlabel in SpecificationService.get_question_index_label_pairs():
-            averages.append((qidx, qlabel, self._get_average_grade_on_question(qlabel)))
-        return averages
-
     def _get_marks_for_all_questions(
         self, *, student_df: pd.DataFrame | None = None
     ) -> pd.DataFrame:

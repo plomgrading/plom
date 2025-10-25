@@ -27,7 +27,6 @@ from .views import (
 
 
 urlpatterns = [
-    path("marking_info", MarkingInformationView.as_view(), name="marking_info"),
     path(
         "marking_info/<int:paper_num>/paper/",
         MarkingInformationPaperView.as_view(),
