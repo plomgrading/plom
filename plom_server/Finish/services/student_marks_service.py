@@ -15,6 +15,8 @@ from io import StringIO
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Exists, OuterRef, Count
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from plom_server.Identify.models import PaperIDTask
@@ -29,6 +31,59 @@ class StudentMarkService:
     """Service for the Student Marks page."""
 
     # TODO: unit tests for many of these methods
+
+    @staticmethod
+    def _get_marked_unmarked_paper_querysets() -> tuple[QuerySet, QuerySet]:
+        """Get a list of papers which are and aren't completely marked.
+
+        This will only fetch 'used' papers, see
+        :func: `ManageScanService._get_used_unused_paper_querysets()` for
+        definitions of used and unused papers.
+        A marked paper marked will have one, and only one, complete
+        marking task for each question.
+        An unmarked paper is any used paper which isn't marked. This means
+        'partially marked' papers are unmarked.
+
+        Returns:
+            A tuple of two querysets, the first contains all completely
+            marked papers. The second contains the papers which aren't
+            completely marked.
+
+        """
+        exam_question_indices: list = SpecificationService.get_question_indices()
+        complete_tasks = MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
+
+        # a subquery to find papers which have at least one complete marking task
+        # for each question. This returns a list of Paper.pk, not Paper.paper_number
+        # I suspect the first filter isn't necessary, but better safe than sorry
+        complete_tasks_counted = (
+            complete_tasks.values("paper")
+            .filter(question_index__in=exam_question_indices)
+            .annotate(counts=Count("question_index", distinct=True))
+            .filter(counts=len(exam_question_indices))
+            .values_list("paper", flat=True)
+        )
+
+        marked_papers_queryset = Paper.objects.filter(pk__in=complete_tasks_counted)
+
+        used_papers_queryset, _ = ManageScanService._get_used_unused_paper_querysets()
+
+        # all used papers must be marked or unmarked
+        unmarked_papers_queryset = used_papers_queryset.filter(
+            ~Exists(
+                marked_papers_queryset.filter(paper_number=OuterRef("paper_number"))
+            )
+        )
+
+        # TODO: The inefficient function also checks that all tasks are complete
+        # or out of date for a complete paper - this function should do the same?
+
+        # make sure one completed task for each question and that all tasks are complete or out of date.
+        # return (n_completed_tasks == n_questions) and (
+        #     n_completed_tasks + n_out_of_date_tasks == n_all_tasks
+        # )
+
+        return marked_papers_queryset, unmarked_papers_queryset
 
     @staticmethod
     def is_paper_marked(paper: Paper) -> bool:
@@ -54,7 +109,7 @@ class StudentMarkService:
     def are_all_papers_marked(cls) -> bool:
         """Return True if all used papers are marked, with potentially INEFFICIENT DB operations.
 
-        See :func: ManageScanService._get_used_unused_paper_querysets() for
+        See :func: `ManageScanService._get_used_unused_paper_querysets()` for
         definitions of used and unused papers.
         """
         used_papers, _ = ManageScanService._get_used_unused_paper_querysets()
