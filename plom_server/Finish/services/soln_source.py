@@ -4,6 +4,7 @@
 
 import hashlib
 import io
+from typing import Any
 
 import pymupdf
 
@@ -46,18 +47,24 @@ class SolnSourceService:
             soln_pdfs[spdf.version] = spdf.pdf_hash
         return soln_pdfs
 
-    @transaction.atomic
-    def get_list_of_sources(self) -> dict[int, None | tuple[str, str]]:
-        """Return a dict of all versions, uploaded or not."""
-        status: dict[int, None | tuple[str, str]] = {
-            v: None for v in SpecificationService.get_list_of_versions()
-        }
-        for soln_pdf_obj in SolutionSourcePDF.objects.all():
-            status[soln_pdf_obj.version] = (
-                soln_pdf_obj.source_pdf.url,
-                soln_pdf_obj.pdf_hash,
-            )
-        return status
+    @staticmethod
+    def get_list_of_sources() -> list[dict[str, Any]]:
+        """Return a list of dicts describing all versions of the solutions, uploaded or not."""
+
+        def _get_source_dict(v):
+            try:
+                x = SolutionSourcePDF.objects.filter(version=v).get()
+                return {
+                    "version": x.version,
+                    "uploaded": True,
+                    "hash": x.pdf_hash,
+                    "original_filename": x.original_filename,
+                }
+            except SolutionSourcePDF.DoesNotExist:
+                return {"version": v, "uploaded": False}
+
+        vers = SpecificationService.get_list_of_versions()
+        return [_get_source_dict(v) for v in vers]
 
     @staticmethod
     def remove_solution_pdf(version: int):
@@ -135,6 +142,7 @@ class SolnSourceService:
                 version=version,
                 source_pdf=File(io.BytesIO(file_bytes), name=f"solution{version}.pdf"),
                 pdf_hash=doc_hash,
+                original_filename=in_memory_file.name,
             )
             # We need to create solution images for display in the client
             # Assembly of solutions for each paper will use the source pdfs, not these images.

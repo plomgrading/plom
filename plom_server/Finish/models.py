@@ -54,6 +54,7 @@ class SolutionSourcePDF(models.Model):
     version = models.PositiveIntegerField(unique=True)
     source_pdf = models.FileField(upload_to="sourceVersions")
     pdf_hash = models.CharField(null=False, max_length=64)
+    original_filename = models.TextField()
 
 
 class SolutionImage(models.Model):

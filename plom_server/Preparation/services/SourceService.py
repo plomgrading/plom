@@ -120,8 +120,8 @@ def get_source(version: int) -> dict[str, Any]:
         version: which version, indexed from one.
 
     Returns:
-        A dictionary with the version, uploaded status, and file hash
-        if uploaded.
+        A dictionary with the version, uploaded status, and---if
+        uploaded---the file hash and original filename.
     """
     try:
         pdf_obj = PaperSourcePDF.objects.filter(version=version).get()

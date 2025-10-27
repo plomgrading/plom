@@ -39,7 +39,7 @@ class SolnSourcesView(ManagerRequiredView):
             {
                 "versions": SpecificationService.get_n_versions(),
                 "number_of_soln_pdfs": SolnSourceService().get_number_of_solution_pdf(),
-                "uploaded_soln_sources": SolnSourceService().get_list_of_sources(),
+                "uploaded_soln_sources": SolnSourceService.get_list_of_sources(),
             }
         )
         return render(request, "Finish/soln_sources.html", context)
