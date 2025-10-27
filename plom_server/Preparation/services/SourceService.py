@@ -128,7 +128,7 @@ def get_source(version: int) -> dict[str, Any]:
         return {
             "version": pdf_obj.version,
             "uploaded": True,
-            "hash": pdf_obj.hash,
+            "hash": pdf_obj.pdf_hash,
             "original_filename": pdf_obj.original_filename,
         }
     except PaperSourcePDF.DoesNotExist:
@@ -179,14 +179,14 @@ def store_source_pdf(
 
     with open(source_pdf, "rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
-    hashed = hashlib.sha256(the_bytes).hexdigest()
+    hash_value = hashlib.sha256(the_bytes).hexdigest()
 
     with open(source_pdf, "rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")
         PaperSourcePDF.objects.create(
             version=version,
             source_pdf=dj_file,
-            hash=hashed,
+            pdf_hash=hash_value,
             original_filename=original_filename,
         )
 
@@ -251,11 +251,11 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
 def check_pdf_duplication() -> dict[str, list[int]]:
     hashes = defaultdict(list)
     for pdf_obj in PaperSourcePDF.objects.all():
-        hashes[pdf_obj.hash].append(pdf_obj.version)
+        hashes[pdf_obj.pdf_hash].append(pdf_obj.version)
     duplicates = {}
-    for hash, versions in hashes.items():
+    for pdf_hash, versions in hashes.items():
         if len(versions) > 1:
-            duplicates[hash] = versions
+            duplicates[pdf_hash] = versions
     return duplicates
 
 

@@ -166,10 +166,10 @@ class SourceServiceTests(TestCase):
         duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {})
 
-        baker.make(PaperSourcePDF, version=1, hash="abcde123")
+        baker.make(PaperSourcePDF, version=1, pdf_hash="abcde123")
         duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {})
 
-        baker.make(PaperSourcePDF, version=2, hash="abcde123")
+        baker.make(PaperSourcePDF, version=2, pdf_hash="abcde123")
         duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {"abcde123": [1, 2]})
