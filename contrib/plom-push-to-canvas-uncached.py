@@ -416,6 +416,9 @@ def get_course_by_id(
 def interactively_get_course_section_id(course: canvasapi.course.Course) -> int | None:
     """Choose a section from a menu.
 
+    CAUTION: this assumes each section is uniquely named.
+    Duplicates are discarded.
+
     Args:
         course: a canvas course object. Sections from this course will be displayed.
 
@@ -443,11 +446,14 @@ def interactively_get_course_section_id(course: canvasapi.course.Course) -> int 
 def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> int:
     """Choose an assignment from a menu.
 
+    CAUTION: this assumes each assignment is uniquely named.
+    Duplicates are discarded.
+
     Args:
         course: a canvas course object. Assignments from this course will be displayed.
 
     Returns:
-    An assignment id.
+        An assignment id.
     """
     assignment_name_id_dict = {
         assignment.name: assignment.id for assignment in course.get_assignments()
