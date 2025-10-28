@@ -128,7 +128,8 @@ class SolnSourceService:
         with pymupdf.open(stream=file_bytes) as doc:
             if len(doc) != SolnSpecService.get_n_pages():
                 raise ValueError(
-                    f"Solution pdf does has {len(doc)} pages - needs {SolnSpecService.get_n_pages()}."
+                    f"Solution pdf does has {len(doc)} pages - should have "
+                    f"{SolnSpecService.get_n_pages()} to match soln spec."
                 )
 
             doc_hash = hashlib.sha256(file_bytes).hexdigest()
@@ -148,7 +149,8 @@ class SolnSourceService:
             # Assembly of solutions for each paper will use the source pdfs, not these images.
             self._create_solution_images(version, doc)
 
-    def _create_solution_images(self, version: int, doc: pymupdf.Document) -> None:
+    @staticmethod
+    def _create_solution_images(version: int, doc: pymupdf.Document) -> None:
         """Create one solution image for each question of the given version, for client.
 
         Images are extracted at 150 DPI.
