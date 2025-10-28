@@ -87,7 +87,8 @@ class SourceManageView(ManagerRequiredView):
         else:
             try:
                 success, message = SourceService.take_source_from_upload(
-                    version, request.FILES["source_pdf"]
+                    version,
+                    request.FILES["source_pdf"],
                 )
                 context.update(
                     {
