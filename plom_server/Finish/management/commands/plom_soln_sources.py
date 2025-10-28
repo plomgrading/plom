@@ -6,6 +6,7 @@
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
+from tabulate import tabulate
 
 from ...services import SolnSourceService
 
@@ -15,8 +16,7 @@ class Command(BaseCommand):
 
     def show_status(self):
         solns = SolnSourceService.get_list_of_sources()
-        for soln in solns:
-            print(soln)
+        self.stdout.write(tabulate(solns, headers="keys", tablefmt="simple_outline"))
         hashes = [s["hash"] for s in solns if s["uploaded"]]
         if len(hashes) != len(set(hashes)):
             self.stdout.write(
