@@ -14,8 +14,14 @@ class Command(BaseCommand):
     help = "Displays the uploaded solution pdfs and allows users to upload/download/remove solution pdfs."
 
     def show_status(self):
-        for soln in SolnSourceService.get_list_of_sources():
+        solns = SolnSourceService.get_list_of_sources()
+        for soln in solns:
             print(soln)
+        hashes = [s["hash"] for s in solns if s["uploaded"]]
+        if len(hashes) != len(set(hashes)):
+            self.stdout.write(
+                self.style.WARNING("Warning: duplicate file hash: wrong file uploaded?")
+            )
 
     def upload_source(self, version: int, source_pdf_path: str | Path) -> None:
         try:

@@ -35,11 +35,19 @@ class SolnSourcesView(ManagerRequiredView):
             except ObjectDoesNotExist:
                 raise Http404("No such file")
 
+        solns = SolnSourceService.get_list_of_sources()
+        hashes = [s["hash"] for s in solns if s["uploaded"]]
+        if len(hashes) != len(set(hashes)):
+            dupes_warning = True
+        else:
+            dupes_warning = False
+
         context.update(
             {
                 "versions": SpecificationService.get_n_versions(),
                 "number_of_soln_pdfs": SolnSourceService().get_number_of_solution_pdf(),
-                "uploaded_soln_sources": SolnSourceService.get_list_of_sources(),
+                "soln_sources": solns,
+                "dupes_warning": dupes_warning,
             }
         )
         return render(request, "Finish/soln_sources.html", context)
