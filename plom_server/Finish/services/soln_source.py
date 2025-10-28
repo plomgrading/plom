@@ -124,7 +124,7 @@ class SolnSourceService:
                 )
 
             doc_hash = hashlib.sha256(file_bytes).hexdigest()
-            # TODO: not sure how to warn: we'll do it on display instead
+            # Note: unsure how to warn so we'll do it on display instead
             # if SolutionSourcePDF.objects.filter(pdf_hash=doc_hash).exists():
             # raise ValueError(
             #    f"Another solution pdf with hash {doc_hash} has already been uploaded."
