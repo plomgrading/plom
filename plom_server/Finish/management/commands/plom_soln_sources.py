@@ -3,12 +3,10 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-import pymupdf
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from plom_server.Papers.services import SpecificationService, SolnSpecService
 from ...services import SolnSourceService
 
 
@@ -16,40 +14,14 @@ class Command(BaseCommand):
     help = "Displays the uploaded solution pdfs and allows users to upload/download/remove solution pdfs."
 
     def show_status(self):
-        soln_hash = SolnSourceService().get_solution_pdf_hashes()
-        for v, h in soln_hash.items():
-            self.stdout.write(f"Version {v}: {h}")
+        for soln in SolnSourceService.get_list_of_sources():
+            print(soln)
 
-    def upload_source(self, version: int, source_pdf_path: str) -> None:
-        versions = SpecificationService.get_list_of_versions()
-        if version not in versions:
-            self.stderr.write(
-                f"Version {version} is out of range - must be in {versions}."
-            )
-            return
-
-        pdf_path = Path(source_pdf_path)
-
-        if not pdf_path.exists():
-            self.stderr.write(f"Cannot open {source_pdf_path}.")
-            return
-
-        # make sure we can actually open the pdf and check pages
-        np = SolnSpecService.get_n_pages()
+    def upload_source(self, version: int, source_pdf_path: str | Path) -> None:
         try:
-            with pymupdf.open(pdf_path) as doc:
-                if len(doc) != np:
-                    raise CommandError(
-                        f"Solution source pdf must have {np} pages according to"
-                        f"the soln spec; supplied file has {len(doc)} pages."
-                    )
-        except pymupdf.FileDataError as err:
-            raise CommandError(err)
-
-        try:
-            with pdf_path.open("rb") as fh:
+            with Path(source_pdf_path).open("rb") as fh:
                 SolnSourceService().take_solution_source_pdf_from_upload(version, fh)
-        except ValueError as err:
+        except (OSError, ValueError) as err:
             raise CommandError(err)
 
     def remove_source(self, version=None, all=False):

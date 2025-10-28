@@ -38,15 +38,6 @@ class SolnSourceService:
             == SpecificationService.get_n_versions()
         )
 
-    def get_solution_pdf_hashes(self) -> dict[int, None | str]:
-        """Returns dict of hash of each uploaded solution pdf, or Nones if pdf missing."""
-        soln_pdfs: dict[int, None | str] = {
-            v: None for v in SpecificationService.get_list_of_versions()
-        }
-        for spdf in SolutionSourcePDF.objects.all():
-            soln_pdfs[spdf.version] = spdf.pdf_hash
-        return soln_pdfs
-
     @staticmethod
     def get_list_of_sources() -> list[dict[str, Any]]:
         """Return a list of dicts describing all versions of the solutions, uploaded or not."""
