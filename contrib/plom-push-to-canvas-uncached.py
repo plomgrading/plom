@@ -520,7 +520,6 @@ def restructure_plom_marks(plom_marks: list[dict[str, Any]]) -> list[dict[str, A
             continue
 
         # Oct. 8th - we explicitly discard unmarked papers
-        # Oct. 24th: ditto, probably not included
         if PLOM_WARNINGS in mark_dict.keys():
             discard_list.append(mark_dict)
             continue
