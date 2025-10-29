@@ -30,7 +30,7 @@
                 <div class="card-text">
                     {% if not all_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages</p>{% endif %}
                     {% if duplicates %}
-                        <div class="alert alert-danger" role="alert">
+                        <div class="alert alert-danger mb-0" role="alert">
                             There appear to be duplicate PDFs - please check
                             <ul>
                                 {% for hash,vers in duplicates.items %}
