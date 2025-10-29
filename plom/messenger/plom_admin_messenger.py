@@ -518,15 +518,13 @@ class PlomAdminMessenger(Messenger):
         """
         # Caution: don't use json= with post when files= is used: use data= instead
         # https://requests.readthedocs.io/en/latest/user/quickstart/#more-complicated-post-requests
-        data = {}
-
         with self.SRmutex:
             try:
                 with spec_toml.open("rb") as f:
                     response = self.post_auth(
                         "/api/v0/spec",
                         files={"spec_toml": f},
-                        data=data,
+                        data={},
                     )
                 response.raise_for_status()
             except requests.HTTPError as e:
