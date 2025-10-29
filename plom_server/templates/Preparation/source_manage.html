@@ -21,7 +21,7 @@
             <div class="card-body">
                 <h4 class="card-title" id="source_status">
                     You have uploaded {{ num_uploaded_source_versions }} of {{ num_versions }} source pdfs
-                    {% if all_sources_uploaded %}
+                    {% if all_sources_uploaded and not duplicates %}
                         <i class="bi bi-check-circle text-success"></i>
                     {% else %}
                         <i class="bi bi-exclamation-diamond-fill text-warning"></i>
