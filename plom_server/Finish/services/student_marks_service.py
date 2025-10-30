@@ -39,8 +39,8 @@ class StudentMarkService:
         This will only fetch 'used' papers, see
         :func: `ManageScanService._get_used_unused_paper_querysets()` for
         definitions of used and unused papers.
-        A marked paper marked will have one, and only one, complete
-        marking task for each question.
+        A marked paper will have one complete marking
+        task for each question.
         An unmarked paper is any used paper which isn't marked. This means
         'partially marked' papers are unmarked.
 
