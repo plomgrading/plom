@@ -337,7 +337,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.10.2
+    - pip install pytest pytest-cov coverage[toml]~=7.11.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -394,8 +394,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=3.3.11  # codespell:ignore astroid
-    - pip install pylint~=3.3.7
+    - pip install astroid~=4.0.1  # codespell:ignore astroid
+    - pip install pylint~=4.0.2
   script:
     - pylint plom
     - pylint plom_server
@@ -428,7 +428,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.403
+    - pip install pyright~=1.1.407
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -531,7 +531,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.10.2
+    - pip install coverage~=7.11.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -555,7 +555,7 @@ webplom_api_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.10.2
+    - pip install coverage~=7.11.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
