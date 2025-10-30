@@ -43,6 +43,7 @@ from plom.cli import (
     get_pqvmap_as_csv_string,
     get_reassembled,
     get_unmarked,
+    get_all_unmarked,
     id_paper,
     un_id_paper,
     list_bundles,
@@ -173,13 +174,22 @@ def get_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser(
         "get-unmarked",
-        help="Get a unmarked paper.",
+        help="Get an unmarked paper.",
         description="""
-            Download a unmarked paper as a PDF file from the server.
+            Download an unmarked paper as a PDF file from the server.
             Will fail if no scanned images are associated with the paper.
         """,
     )
-    s.add_argument("papernum", type=int)
+    s.add_argument("papernum", type=int, nargs="?")
+    s.add_argument(
+        "--all",
+        default=False,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            scans of all papers that exist on the server in their unmarked states.
+        """,
+    )
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -526,11 +536,21 @@ def main():
             f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
     elif args.command == "get-unmarked":
-        r = get_unmarked(args.papernum, msgr=m)
-        print(
-            f"wrote unmarked paper number {args.papernum} to "
-            f'file {r["filename"]} [{r["content-length"]} bytes]'
-        )
+        # XNOR - we only want one or the other
+        if bool(args.all) == bool(args.papernum):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum:
+            r = get_unmarked(args.papernum, msgr=m)
+            print(
+                f"wrote unmarked paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_unmarked(msgr=m)
+            print(
+                f'wrote {r["num-papers"]} unmarked papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
 
     elif args.command == "upload-source":
         ver = args.version
