@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 
@@ -208,9 +209,9 @@ class ExtraliseImageView(ScannerRequiredView):
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         """HTMX posts here to make a page into an extra page.
 
-        On errors, this returns 409 http responses, with a plain
-        textual human-readable error message.  The error message
-        is undecorated.
+        On errors, this returns 400, 404, http responses, with plain
+        textual human-readable error messages.  The error messages
+        are undecorated.
 
         On success, its returns a 200 response with a short textual
         message of success.  Its not necessary or expected that callers
@@ -223,7 +224,7 @@ class ExtraliseImageView(ScannerRequiredView):
         try:
             paper_number = int(paper_number)
         except (ValueError, TypeError):
-            return HttpResponse("Invalid paper number", status=409)
+            return HttpResponse("Invalid paper number", status=400)
 
         choice = extra_page_data.get("question_all_dnm", "")
         if choice == "choose_all":
@@ -237,17 +238,16 @@ class ExtraliseImageView(ScannerRequiredView):
             to_questions = [int(q) for q in extra_page_data.getlist("questions")]
             if not to_questions:
                 return HttpResponse(
-                    "At least one question must be provided", status=409
+                    "At least one question must be provided", status=400
                 )
-
         else:
             return HttpResponse(
                 "Unexpected radio choice: this is a bug; please file an issue!",
-                status=409,
+                status=400,
             )
 
         try:
-            ScanCastService().assign_extra_page_from_bundle_pk_and_order(
+            ScanCastService.assign_extra_page_from_bundle_id_and_order(
                 request.user, bundle_id, index, paper_number, to_questions
             )
         except PlomBundleLockedException:
@@ -255,9 +255,11 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ValueError as e:
+            return HttpResponse(e, status=404)
+        except PlomConflict as e:
             return HttpResponse(f"{e}: try reloading this page.", status=409)
 
-        return HttpResponse("Success: set info", status=200)
+        return HttpResponse("Success: set info")
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
@@ -282,7 +284,7 @@ class ExtraliseImageView(ScannerRequiredView):
     ) -> HttpResponse:
         """HTMX deletes here to clear the extra page info from a particular page in a bundle."""
         try:
-            ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
+            ScanCastService.clear_extra_page_info_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
         except PlomBundleLockedException:

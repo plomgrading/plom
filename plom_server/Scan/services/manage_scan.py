@@ -224,7 +224,9 @@ class ManageScanService:
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
                         "page_label": (
-                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
+                            "dnm"
+                            if mp.question_index == MobilePage.DNM_qidx
+                            else f"qi.{mp.question_index}"
                         ),
                     }
                 )
@@ -305,7 +307,9 @@ class ManageScanService:
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
                         "page_label": (
-                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
+                            "dnm"
+                            if mp.question_index == MobilePage.DNM_qidx
+                            else f"qi.{mp.question_index}"
                         ),
                     }
                 )
