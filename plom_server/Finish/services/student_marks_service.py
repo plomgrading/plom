@@ -85,8 +85,8 @@ class StudentMarkService:
 
         return marked_papers_queryset, unmarked_papers_queryset
 
-    @classmethod
-    def is_paper_marked(cls, paper: Paper) -> bool:
+    @staticmethod
+    def is_paper_marked(paper: Paper) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
@@ -95,15 +95,15 @@ class StudentMarkService:
         Returns:
             bool: True when all questions in the given paper are marked.
         """
-        marked_papers, _ = cls._get_marked_unmarked_paper_querysets()
-        # TODO: This function originally checked that all tasks are complete
-        # or out of date for a complete paper - does this function need to do the same?
-
+        paper_tasks = MarkingTask.objects.filter(paper=paper)
+        n_completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE).count()
+        n_out_of_date_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE).count()
+        n_all_tasks = paper_tasks.count()
+        n_questions = SpecificationService.get_n_questions()
         # make sure one completed task for each question and that all tasks are complete or out of date.
-        # return (n_completed_tasks == n_questions) and (
-        #     n_completed_tasks + n_out_of_date_tasks == n_all_tasks
-        # )
-        return paper in marked_papers
+        return (n_completed_tasks == n_questions) and (
+            n_completed_tasks + n_out_of_date_tasks == n_all_tasks
+        )
 
     @classmethod
     def are_all_papers_marked(cls) -> bool:
