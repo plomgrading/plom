@@ -177,6 +177,8 @@ class DemoBundleCreationService:
             None, but modifies ``pdf_doc``  as a side effect.
         """
         public_code = Settings.get_public_code()
+        if not public_code:
+            public_code = ""
         max_ver = SpecificationService.get_n_versions()
         with tempfile.TemporaryDirectory() as td:
             # take last page of paper and insert a qr-code from the page before that.
@@ -290,6 +292,8 @@ class DemoBundleCreationService:
             None, but modifies ``pdf_doc`` as a side effect.
         """
         public_code = Settings.get_public_code()
+        if not public_code:
+            public_code = ""
         with tempfile.TemporaryDirectory() as td:
             # take last page of paper and insert a qr-code from the page before that.
             page_number = pdf_doc.page_count
@@ -319,7 +323,7 @@ class DemoBundleCreationService:
             -1, text="This is a garbage page", fontsize=18, color=[0, 0.75, 0]
         )
 
-    def append_page_from_another_assessment(self, pdf_doc):
+    def append_page_from_another_assessment(self, pdf_doc) -> None:
         """Append a (simulated) page from an assessment with a different public-code.
 
         This is intended to simulate the user accidentally uploading a page ffom a
@@ -327,7 +331,8 @@ class DemoBundleCreationService:
         """
         public_code = Settings.get_public_code()
         # and make a new magic code that is not the same as the server's
-        assert len(public_code) == 6
+        if public_code:
+            assert len(public_code) == 6
         wrong_code = "000000"
         if wrong_code == public_code:
             wrong_code = "999999"
@@ -351,9 +356,11 @@ class DemoBundleCreationService:
             )
             # (note don't care if even/odd page: is a new page, no staple indicator)
 
-    def append_out_of_range_paper_and_page(self, pdf_doc):
+    def append_out_of_range_paper_and_page(self, pdf_doc) -> None:
         """Append two new pages to the pdf - one as test-1 page-999 and one as test-99999 page-1."""
         public_code = Settings.get_public_code()
+        if not public_code:
+            public_code = ""
         with tempfile.TemporaryDirectory() as td:
             qr_pngs = create_QR_codes(99999, 1, 1, public_code, Path(td))
             pdf_doc.new_page(-1)
