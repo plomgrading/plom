@@ -594,7 +594,7 @@ webplom_demo:
     - apt-get --no-install-recommends --yes install git
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@dev
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
