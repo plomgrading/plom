@@ -547,7 +547,7 @@ class PlomAdminMessenger(Messenger):
         if self.is_server_api_less_than(116):
             # workaround by grabbing it from the spec (where it was in older servers)
             s = self.get_spec()
-            return s.get("publicCode")
+            return s.get("publicCode") or ""
 
         with self.SRmutex:
             try:
