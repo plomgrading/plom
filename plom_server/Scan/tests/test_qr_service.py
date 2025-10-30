@@ -19,6 +19,7 @@ from plom_server.Scan.models import (
 )
 from plom_server.Scan.services import QRService
 from plom_server.Base.models import BaseImage
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import Paper, FixedPage, MobilePage
 
@@ -42,7 +43,7 @@ class QRServiceTest(TestCase):
             ],
         }
         SpecificationService.install_spec_from_dict(spec_dict)
-        SpecificationService.set_public_code("123456")
+        Settings.set_public_code("123456")
 
         # setup paper and pages
         paper = Paper.objects.create(paper_number=1)

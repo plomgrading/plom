@@ -18,7 +18,6 @@ from django.db import transaction
 from django.db.models import Max
 
 from plom.spec_verifier import SpecVerifier
-from plom.tpv_utils import new_magic_code
 from plom_server.Base.compat import load_toml_from_path, load_toml_from_string
 from plom_server.Base.compat import TOMLDecodeError  # noqa: F401
 from ..models import Specification, SpecQuestion
@@ -74,8 +73,6 @@ def validate_spec_from_string(spec_toml_str: str) -> bool:
 @transaction.atomic
 def install_spec_from_dict(
     spec_dict: dict[str, Any],
-    *,
-    force_public_code: bool = False,
 ) -> Specification:
     """Load a test spec from a dictionary and save to the database.
 
@@ -83,10 +80,6 @@ def install_spec_from_dict(
 
     Args:
         spec_dict: the dictionary describing the assessment.
-
-    Keyword Args:
-        force_public_code: Usually you may not include "publicCode" in
-            the specification.  Pass True to allow overriding that default.
 
     Returns:
         The Specification that was just saved.
@@ -104,17 +97,9 @@ def install_spec_from_dict(
 
     spec_dict = deepcopy(spec_dict)  # Defend input dict from changes
 
-    # Note: the serializer makes these codes so it seems too late the ask it there
-    existing_publicCode = spec_dict.get("publicCode", None)
-    if existing_publicCode and not force_public_code:
+    if spec_dict.get("publicCode", None):
         # raise serializers.ValidationError(...)?
         raise ValueError("Not allowed to specify a publicCode directly")
-
-    # TODO: hopefully temporary hackery until we store the publicCode elsewhere
-    if not force_public_code:
-        spec_dict.pop("publicCode", None)
-        # keep the validator happy with a temp value: yuck, remove later
-        spec_dict["publicCode"] = "000000"
 
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
@@ -127,29 +112,17 @@ def install_spec_from_dict(
     # This raises both serializers.ValidationErrors and ValueErrors
     # TODO: the raising of ValueErrors appears non-standard, consider refactor
     serializer.is_valid(raise_exception=True)
-
     valid_data = serializer.validated_data
-
-    # TODO: hopefully temporary hackery around the serializer
-    if not force_public_code:
-        valid_data.pop("publicCode")
-
     return serializer.create(valid_data)
 
 
 def install_spec_from_toml_file(
     pathname: str | Path,
-    *,
-    force_public_code: bool = False,
 ) -> Specification:
     """Load a specification from a TOML file and save it to the database.
 
     Args:
         pathname: what file to load from.
-
-    Keyword Args:
-        force_public_code: Usually you may not include "publicCode" in
-            the specification.  Pass True to allow overriding that default.
 
     Raises:
         TOMLDecodeError: cannot read toml.
@@ -158,22 +131,16 @@ def install_spec_from_toml_file(
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = load_toml_from_path(pathname)
-    return install_spec_from_dict(data, force_public_code=force_public_code)
+    return install_spec_from_dict(data)
 
 
 def install_spec_from_toml_string(
     tomlstr: str,
-    *,
-    force_public_code: bool = False,
 ) -> Specification:
     """Load a specification from a string in TOML format and save it to the database.
 
     Args:
         tomlstr: a string containing toml.
-
-    Keyword Args:
-        force_public_code: Usually you may not include "publicCode" in
-            the specification.  Pass True to allow overriding that default.
 
     Raises:
         TOMLDecodeError: cannot read toml.
@@ -182,7 +149,7 @@ def install_spec_from_toml_string(
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = load_toml_from_string(tomlstr)
-    return install_spec_from_dict(data, force_public_code=force_public_code)
+    return install_spec_from_dict(data)
 
 
 def is_there_a_spec() -> bool:
@@ -208,25 +175,16 @@ def get_the_spec() -> dict:
         data = serializer.data
     except Specification.DoesNotExist:
         raise ObjectDoesNotExist("The database does not contain a specification.")
-    # no publicCode in spec
-    data.pop("publicCode", None)
     return data
 
 
-def get_the_spec_as_toml(
-    *, include_public_code: bool = False, _include_private_seed: bool = False
-) -> str:
+def get_the_spec_as_toml(*, _include_private_seed: bool = False) -> str:
     """Return the specification from the database.
 
-    Generally, the public code and the private seed are removed (hidden
+    Generally, the private seed is removed (hidden
     from the return) but this can be changed with keyword arguments.
 
     Keyword Args:
-        include_public_code: if True, include the current public code,
-            The default is False and this is DEPRECATED: we anticipate
-            not storing the public code in the spec in the near future.
-            No one should be calling this with True; if you need the
-            public code, see :func:`get_public_code`.
         _include_private_seed: if True, include the current private seed
             (currently unused, except maybe in testing?)
 
@@ -237,8 +195,6 @@ def get_the_spec_as_toml(
     spec.pop("id", None)
     if not _include_private_seed:
         spec.pop("privateSeed", None)
-    if not include_public_code:
-        spec.pop("publicCode", None)
 
     for idx, question in spec["question"].items():
         for key, val in deepcopy(question).items():
@@ -253,41 +209,6 @@ def get_private_seed() -> str:
     """Return the private seed."""
     spec = Specification.objects.get()
     return spec.privateSeed
-
-
-def get_public_code() -> str | None:
-    """Return the public code or None if there isn't one.
-
-    Returns:
-        The public code or None if the server doesn't have one.
-        TODO: None working?
-        TODO: unit tests.
-    """
-    try:
-        spec = Specification.objects.get()
-    except ObjectDoesNotExist:
-        return None
-    c = spec.publicCode
-    if not c:
-        # TODO: possibly temporary hack when spec exists but publicCode empty
-        return None
-    return c
-
-
-def set_public_code(public_code: str):
-    """Change the public code."""
-    spec = Specification.objects.get()
-    spec.publicCode = public_code
-    spec.save()
-
-
-def get_or_create_new_public_code():
-    # probably racey but we can tweak is later with better DB storage for code
-    with transaction.atomic(durable=True):
-        public_code = get_public_code()
-        if public_code is None:
-            set_public_code(new_magic_code())
-    return get_public_code()
 
 
 def remove_spec() -> None:

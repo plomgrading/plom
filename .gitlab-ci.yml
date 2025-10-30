@@ -43,6 +43,7 @@ variables:
   MACBIN_PY_MAJOR_MINOR_VER: "3.11"
   MACBIN_PY_VER: 3.11.9
   QT_QPA_PLATFORM: offscreen
+  PLOMCLIENT_BRANCHNAME: dev
 
 stages:
   - static_analysis
@@ -594,7 +595,7 @@ webplom_demo:
     - apt-get --no-install-recommends --yes install git
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
@@ -792,7 +793,7 @@ newOS_newdeps_django_tests:
   script:
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     # we can run in-tree but we need pip for dependencies
     - pip install .
     - pip uninstall -y plom
@@ -830,7 +831,7 @@ minpy_mindeps_django_tests:
     - pip install .
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     # TODO: do we want full demo or just makemigrate?
     - PYTHONPATH="." python3 plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - python3 manage.py test

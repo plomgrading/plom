@@ -11,7 +11,8 @@ from django.db import transaction
 
 from plom.tpv_utils import parse_paper_page_version
 
-from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Base.services import Settings
+from plom_server.Papers.services import PaperInfoService
 from ..models import (
     StagingImage,
     StagingBundle,
@@ -267,10 +268,10 @@ class QRService:
 
         # make sure the public code matches
         public_code = qr_info["page_info"]["public_code"]
-        correct_public_code = SpecificationService.get_public_code()
+        correct_public_code = Settings.get_public_code()
         if public_code != correct_public_code:
             raise ValueError(
-                f"Public code {public_code} does not match spec {correct_public_code}"
+                f"Public code {public_code} does not match server {correct_public_code}"
                 " - was a page from a different assessment uploaded?"
             )
 

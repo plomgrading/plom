@@ -163,7 +163,6 @@ class Migration(migrations.Migration):
                 ("numberOfQuestions", models.PositiveIntegerField()),
                 ("totalMarks", models.PositiveIntegerField()),
                 ("privateSeed", models.TextField()),
-                ("publicCode", models.TextField()),
                 ("idPage", models.PositiveIntegerField()),
                 ("doNotMarkPages", models.JSONField()),
                 ("allowSharedPages", models.BooleanField(default=False)),

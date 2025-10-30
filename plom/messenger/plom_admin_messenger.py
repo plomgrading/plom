@@ -500,17 +500,11 @@ class PlomAdminMessenger(Messenger):
 
         return response.json()
 
-    def new_server_upload_spec(
-        self, spec_toml: Path, *, force_public_code: bool = False
-    ) -> dict[str, Any]:
+    def new_server_upload_spec(self, spec_toml: Path) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
             spec_toml: The standard Python Path of a valid spec.toml file
-
-        Keyword Args:
-            force_public_code: Usually you may not include "publicCode" in
-                the specification.  Pass True to allow overriding that default.
 
         Returns:
             The newly-uploaded spec, as a dict.
@@ -520,22 +514,17 @@ class PlomAdminMessenger(Messenger):
             PlomNoPermission: user is not in the group required to make
                 these changes.
             ValueError: invalid spec.
-            PlomSeriousException: other errors unexpected errors.
+            PlomSeriousException: other unexpected errors.
         """
         # Caution: don't use json= with post when files= is used: use data= instead
         # https://requests.readthedocs.io/en/latest/user/quickstart/#more-complicated-post-requests
-        if force_public_code:
-            data = {"force_public_code": "on"}
-        else:
-            data = {}
-
         with self.SRmutex:
             try:
                 with spec_toml.open("rb") as f:
                     response = self.post_auth(
                         "/api/v0/spec",
                         files={"spec_toml": f},
-                        data=data,
+                        data={},
                     )
                 response.raise_for_status()
             except requests.HTTPError as e:
@@ -548,6 +537,59 @@ class PlomAdminMessenger(Messenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
+
+    def get_public_code(self) -> str:
+        """Get the server's public code, or an empty string if it doesn't have one yet.
+
+        Exceptions:
+            PlomSeriousException: other unexpected errors.
+        """
+        if self.is_server_api_less_than(116):
+            # workaround by grabbing it from the spec (where it was in older servers)
+            s = self.get_spec()
+            return s.get("publicCode") or ""
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/v0/public_code")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.json()
+
+    def set_public_code(self, public_code: str) -> None:
+        """Set the public code on the server.
+
+        Exceptions:
+            ValueError: invalid code.
+            PlomNoPermission: user is not in the group required to make
+                these changes.
+            PlomNoServerSupportException: server too old.
+            PlomConflict: server not accepting public code changes at this
+                time; placeholder for future change.
+            PlomSeriousException: other unexpected errors.
+        """
+        if self.is_server_api_less_than(116):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support directly setting public code"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.post_auth(
+                    "/api/v0/public_code",
+                    json={"new_public_code": public_code},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise ValueError(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_delete_classlist(self) -> None:
         """Delete the classlist (if any) held by the server."""

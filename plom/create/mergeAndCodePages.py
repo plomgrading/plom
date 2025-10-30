@@ -412,6 +412,7 @@ def make_PDF(
     no_qr: bool = False,
     fakepdf: bool = False,
     *,
+    public_code: str | None = None,
     where: Path | None = None,
     source_versions_path: Path | str | None = None,
     source_versions: dict[int, Path] | None = None,
@@ -449,6 +450,10 @@ def make_PDF(
             writing new code.
 
     Keyword Args:
+        public_code: a short numeric code included in the QR codes to,
+            will be taken from the spec if omitted (which should only
+            be done in legacy situations as the public code is not longer
+            stored in the spec!
         where: where to save the files, with some default if omitted.
         source_versions: ordered list of locations of the source-version
             files.  Mutually-exclusive with ``source_versions_path``.
@@ -501,9 +506,11 @@ def make_PDF(
             v: _src / f"version{v}.pdf" for v in range(1, spec["numberOfVersions"] + 1)
         }
 
+    if public_code is None:
+        public_code = spec["publicCode"]
+
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
-        public_code = spec["publicCode"]
         exam = _create_QRcoded_pdf(
             spec,
             papernum,

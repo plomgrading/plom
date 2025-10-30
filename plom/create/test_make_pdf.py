@@ -9,6 +9,7 @@ import pymupdf
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import make_PDF
 from plom.spec_verifier import SpecVerifier
+from plom.tpv_utils import new_magic_code
 
 
 def test_make_pdf_shared_pages(tmp_path) -> None:
@@ -22,12 +23,12 @@ def test_make_pdf_shared_pages(tmp_path) -> None:
     assert common_page in pages_q3
     r["allowSharedPages"] = True
     spec = SpecVerifier(r)
-    spec.checkCodes()
     with raises(NotImplementedError, match=r"page 5 has versions \[1, 2\]"):
         _ = make_PDF(
             spec,
             4,
             {1: 1, 2: 1, 3: 2},
+            public_code=new_magic_code(),
             where=tmp_path,
             source_versions_path=(tmp_path / "sourceVersions"),
         )
@@ -35,6 +36,7 @@ def test_make_pdf_shared_pages(tmp_path) -> None:
         spec,
         4,
         {1: 1, 2: 1, 3: 1},
+        public_code=new_magic_code(),
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -46,12 +48,12 @@ def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
     r["name"] = "시험"
     r["question"]["1"]["label"] = "강남스타일"
     spec = SpecVerifier(r)
-    spec.checkCodes()
     pdf_path = make_PDF(
         spec,
         4,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "싸이", "id": "22345678"},
+        public_code=new_magic_code(),
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -63,12 +65,13 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
     """Because of PyMuPDF's font subsetting, non-ascii names should not blowup the filesize."""
     assert buildDemoSourceFiles(basedir=tmp_path)
     spec = SpecVerifier.demo()
-    spec.checkCodes()
+    public_code = new_magic_code()
     pdf1 = make_PDF(
         spec,
         5,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "Bore Ring Ascii", "id": "87654321"},
+        public_code=public_code,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -77,6 +80,7 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         6,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "싸이", "id": "12345678"},
+        public_code=public_code,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -85,6 +89,7 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         7,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "싸이", "id": "12345679"},
+        public_code=public_code,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
         font_subsetting=False,
