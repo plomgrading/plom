@@ -65,5 +65,6 @@ include plom_server/demo_files/*.toml
 include plom_server/demo_files/*.tex
 include plom_server/demo_files/*.csv
 include plom_server/**/management/commands/*.py
+include plom_ml/clustering/model/*.yaml
 
 # TODO: docs?
