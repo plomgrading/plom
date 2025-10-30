@@ -27,7 +27,8 @@ from .source_handler import (
     SourceDetail,
 )
 
-from .spec_handler import SpecificationHandler
+from .spec_handler import SpecificationAPIView
+from .public_code import PublicCodeAPIView
 from .classlist import (
     Classlist,
     Prenaming,

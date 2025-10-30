@@ -45,7 +45,8 @@ from .views import (
     REPcoverPageInfo,
     SourceOverview,
     SourceDetail,
-    SpecificationHandler,
+    SpecificationAPIView,
+    PublicCodeAPIView,
     RectangleExtractorView,
     PQVmap,
 )
@@ -137,7 +138,12 @@ urlpatterns = [
     ),
     path(
         "api/v0/spec",
-        SpecificationHandler.as_view(),
+        SpecificationAPIView.as_view(),
+        name="api_spec_handler",
+    ),
+    path(
+        "api/v0/public_code",
+        PublicCodeAPIView.as_view(),
         name="api_spec_handler",
     ),
     # Django inspects patterns in order, using the first match.

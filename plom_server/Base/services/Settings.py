@@ -4,7 +4,7 @@
 from copy import deepcopy
 from typing import Any
 
-from plom.tpv_utils import new_magic_code
+from plom.tpv_utils import new_magic_code, is_valid_public_code
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from ..models import SettingsModel
 
@@ -126,8 +126,10 @@ def get_public_code() -> str | None:
     return key_value_store_get_or_none("public_code")
 
 
-def set_public_code(public_code: str):
+def set_public_code(public_code: str) -> None:
     """Change the public code."""
+    if not is_valid_public_code(public_code):
+        raise ValueError("invalid public code")
     key_value_store_set("public_code", public_code)
 
 
