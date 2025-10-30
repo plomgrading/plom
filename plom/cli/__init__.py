@@ -24,6 +24,7 @@ from .source_tools import upload_source
 from .source_tools import delete_source
 from .spec_tools import upload_spec
 from .task_tools import reset_task
+from .pqvmap_tools import get_pqvmap_as_csv_string
 from .classlist_tools import delete_classlist
 from .classlist_tools import download_classlist
 from .classlist_tools import upload_classlist

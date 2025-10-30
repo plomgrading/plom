@@ -40,6 +40,7 @@ from plom.cli import (
     delete_classlist,
     delete_source,
     get_marks_as_csv_string,
+    get_pqvmap_as_csv_string,
     get_reassembled,
     get_unmarked,
     id_paper,
@@ -146,6 +147,15 @@ def get_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="Specify a paper. If unspecified, will retrieve marks for all papers.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-pqvmap",
+        help="Retrieve the current pqvmap as a .csv and print it to stdout.",
+        description="""
+            Retrieve the current pqvmap as a .csv and print it to stdout.
+        """,
     )
     _add_server_args(s)
 
@@ -503,6 +513,10 @@ def main():
 
     elif args.command == "get-marks":
         r = get_marks_as_csv_string(papernum=args.papernum, msgr=m)
+        print(r)
+
+    elif args.command == "get-pqvmap":
+        r = get_pqvmap_as_csv_string(msgr=m)
         print(r)
 
     elif args.command == "get-reassembled":

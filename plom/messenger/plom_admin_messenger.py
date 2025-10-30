@@ -280,6 +280,32 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def new_server_get_pqvmap(self) -> dict[Any, dict]:
+        """Request the pqvmap (if any) held by the server.
+
+        Returns:
+            A dict of dicts containing the pqvmap.
+
+        Raises:
+            PlomSeriousException - if the GET request produces an HTTPError
+            PlomAuthenticationException
+            PlomServerSupportException
+        """
+        if self.is_server_api_less_than(115):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support getting pqvmap"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/beta/pqvmap")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def new_server_get_unmarked(self, papernum: int) -> dict[str, Any]:
         """Download a unmarked PDF file from the server.
 
