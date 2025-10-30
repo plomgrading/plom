@@ -38,7 +38,7 @@ class SourceManageView(ManagerRequiredView):
             "num_versions": SpecificationService.get_n_versions(),
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
-            "uploaded_sources": SourceService.get_list_of_sources(),
+            "sources": SourceService.get_list_of_sources(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": SourceService.check_pdf_duplication(),
         }

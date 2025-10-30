@@ -38,15 +38,6 @@ class SolnSourceService:
             == SpecificationService.get_n_versions()
         )
 
-    def get_solution_pdf_hashes(self) -> dict[int, None | str]:
-        """Returns dict of hash of each uploaded solution pdf, or Nones if pdf missing."""
-        soln_pdfs: dict[int, None | str] = {
-            v: None for v in SpecificationService.get_list_of_versions()
-        }
-        for spdf in SolutionSourcePDF.objects.all():
-            soln_pdfs[spdf.version] = spdf.pdf_hash
-        return soln_pdfs
-
     @staticmethod
     def get_list_of_sources() -> list[dict[str, Any]]:
         """Return a list of dicts describing all versions of the solutions, uploaded or not."""
@@ -133,15 +124,6 @@ class SolnSourceService:
                 )
 
             doc_hash = hashlib.sha256(file_bytes).hexdigest()
-            # check if there is an existing solution with that hash
-            if SolutionSourcePDF.objects.filter(pdf_hash=doc_hash).exists():
-                # TODO: so what?  maybe my solutions are identical: this should
-                # at most be a warning.  If we're protecting the user from
-                # accidentally uploading the wrong file, we can warn them instead.
-                raise ValueError(
-                    f"Another solution pdf with hash {doc_hash} has already been uploaded."
-                )
-            # create the DB entry
             SolutionSourcePDF.objects.create(
                 version=version,
                 source_pdf=File(io.BytesIO(file_bytes), name=f"solution{version}.pdf"),

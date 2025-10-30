@@ -22,13 +22,21 @@
                     You have uploaded {{ number_of_soln_pdfs }} of {{ versions }} source pdfs
                     {% if number_of_soln_pdfs == versions %}<i class="bi bi-check-circle text-success fs-4"></i>{% endif %}
                 </h4>
+                {% if dupes_warning %}
+                    <p class="card-text alert alert-danger">
+                        <strong>Warning:</strong> duplicate files detected.
+                        Please double-checked whether you have uploaded the
+                        correct solution files: perhaps you uploaded the same
+                        file twice?
+                    </p>
+                {% endif %}
                 <p class="card-text mb-0">
                     Note that deleting a solution source pdf will
                     invalidate any built solution pdfs.
                 </p>
             </div>
         </div>
-        {% for soln in uploaded_soln_sources %}
+        {% for soln in soln_sources %}
             <div>
                 <div class="card">
                     <div class="card-body">

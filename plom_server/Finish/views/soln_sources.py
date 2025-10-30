@@ -6,7 +6,13 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from django.shortcuts import render
 from django.urls import reverse
-from django.http import HttpResponseRedirect, FileResponse, Http404
+from django.http import (
+    HttpResponse,
+    HttpRequest,
+    HttpResponseRedirect,
+    FileResponse,
+    Http404,
+)
 
 from django_htmx.http import HttpResponseClientRedirect
 
@@ -18,7 +24,12 @@ from plom_server.Papers.services import SolnSpecService, SpecificationService
 
 
 class SolnSourcesView(ManagerRequiredView):
-    def get(self, request, version=None):
+    """View to provide access to the source PDFs."""
+
+    def get(
+        self, request: HttpRequest, *, version: int | None = None
+    ) -> HttpResponse | FileResponse:
+        """Get either a particular version PDF or a rendered HTML page about all versions."""
         context = self.build_context()
         if not SolnSpecService.is_there_a_soln_spec():
             return HttpResponseRedirect(reverse("soln_home"))
@@ -35,17 +46,27 @@ class SolnSourcesView(ManagerRequiredView):
             except ObjectDoesNotExist:
                 raise Http404("No such file")
 
+        solns = SolnSourceService.get_list_of_sources()
+        hashes = [s["hash"] for s in solns if s["uploaded"]]
+        if len(hashes) != len(set(hashes)):
+            dupes_warning = True
+        else:
+            dupes_warning = False
+
         context.update(
             {
                 "versions": SpecificationService.get_n_versions(),
                 "number_of_soln_pdfs": SolnSourceService().get_number_of_solution_pdf(),
-                "uploaded_soln_sources": SolnSourceService.get_list_of_sources(),
+                "soln_sources": solns,
+                "dupes_warning": dupes_warning,
             }
         )
         return render(request, "Finish/soln_sources.html", context)
 
-    def delete(self, request, version=None):
-        # reset any built soln pdfs as well as delete this soln source pdf.
+    def delete(
+        self, request: HttpRequest, *, version: int | None = None
+    ) -> HttpResponse:
+        """Delete to reset any built soln pdfs as well as delete this soln source pdf."""
         if version:
             BuildSolutionService().reset_all_soln_build()
             SolnSourceService.remove_solution_pdf(version)
