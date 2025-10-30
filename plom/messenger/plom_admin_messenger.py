@@ -544,6 +544,11 @@ class PlomAdminMessenger(Messenger):
         Exceptions:
             PlomSeriousException: other unexpected errors.
         """
+        if self.is_server_api_less_than(116):
+            # workaround by grabbing it from the spec (where it was in older servers)
+            s = self.get_spec()
+            return s.get("publicCode")
+
         with self.SRmutex:
             try:
                 response = self.get_auth("/api/v0/public_code")
@@ -565,6 +570,11 @@ class PlomAdminMessenger(Messenger):
                 time; placeholder for future change.
             PlomSeriousException: other unexpected errors.
         """
+        if self.is_server_api_less_than(116):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support directly setting public code"
+            )
+
         with self.SRmutex:
             try:
                 response = self.post_auth(
