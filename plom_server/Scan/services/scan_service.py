@@ -652,8 +652,8 @@ class ScanService:
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
+    @staticmethod
     def map_bundle_page(
-        self,
         bundle_id: int,
         page: int,
         *,
@@ -667,9 +667,8 @@ class ScanService:
 
         Any page with one of the types UNKNOWN, ERROR, KNOWN, or DISCARD
         can be mapped. Only some pages of type EXTRA can be mapped:
-        if the page already has mapping info, the request fails.
-        An exception of type PlomConflict is raised for any request
-        in which the target page is not eligible for mapping.
+        if the page already has mapping info, the request fails with
+        PlomConflict.
 
         Args:
             bundle_id: unique integer identifier of bundle DB object.
@@ -688,7 +687,8 @@ class ScanService:
 
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
-            ValueError: May be raised by supporting methods from class ScanCastService.
+            ValueError: other database things not found.
+            PlomConflict: extra page already has data.
         """
         log.debug(
             f"Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
@@ -713,7 +713,7 @@ class ScanService:
             )
             if page_img.image_type != StagingImage.EXTRA:
                 ScanCastService.extralise_image_from_bundle_id(user, bundle_id, page)
-            ScanCastService.assign_extra_page_from_bundle_pk_and_order(
+            ScanCastService.assign_extra_page_from_bundle_id_and_order(
                 user,
                 bundle_id,
                 page,
