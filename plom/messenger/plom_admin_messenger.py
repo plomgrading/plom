@@ -323,7 +323,9 @@ class PlomAdminMessenger(Messenger):
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_reassembled(self, papernum: int) -> dict[str, Any]:
+    def new_server_get_reassembled(
+        self, papernum: int, *, verbose: bool = False
+    ) -> dict[str, Any]:
         """Download a reassembled PDF file from the server.
 
         Returns:
@@ -334,6 +336,18 @@ class PlomAdminMessenger(Messenger):
             raise PlomNoServerSupportException(
                 "Server too old: API does not support getting reassembled papers"
             )
+        if verbose:
+
+            def verbose_print(contents):
+                print(contents)
+
+        else:
+
+            def tqdm(iterable):
+                return iterable
+
+            def verbose_print(contents):
+                pass
 
         with self.SRmutex:
             try:
@@ -350,7 +364,7 @@ class PlomAdminMessenger(Messenger):
                 # defaults to CWD: TODO: kwarg to change that?
                 with open(filename, "wb") as f:
                     for chunk in tqdm(response.iter_content(chunk_size=8192)):
-                        print((type(chunk), len(chunk)))
+                        verbose_print((type(chunk), len(chunk)))
                         f.write(chunk)
                         num_bytes += len(chunk)
                 r = {
