@@ -42,6 +42,7 @@ from plom.cli import (
     get_marks_as_csv_string,
     get_pqvmap_as_csv_string,
     get_reassembled,
+    get_all_reassembled,
     get_unmarked,
     get_all_unmarked,
     id_paper,
@@ -168,7 +169,16 @@ def get_parser() -> argparse.ArgumentParser:
             Will fail if the paper is not reassembled yet.
         """,
     )
-    s.add_argument("papernum", type=int)
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            all papers that exist on the server in their reassembled states.
+        """,
+    )
     s.add_argument("-v", "--verbose", default=False, action="store_true")
     _add_server_args(s)
 
@@ -530,11 +540,22 @@ def main():
         print(r)
 
     elif args.command == "get-reassembled":
-        r = get_reassembled(args.papernum, msgr=m, verbose=args.verbose)
-        print(
-            f"wrote reassembled paper number {args.papernum} to "
-            f'file {r["filename"]} [{r["content-length"]} bytes]'
-        )
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_reassembled(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote reassembled paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_reassembled(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} reassembled papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
     elif args.command == "get-unmarked":
         # XNOR - we only want one or the other
         if (args.all is not None) == (args.papernum is not None):

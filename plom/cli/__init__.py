@@ -21,6 +21,7 @@ from .bundle_tools import upload_bundle, bundle_map_page
 from .identify_tools import id_paper, un_id_paper
 from .finish_tools import (
     get_reassembled,
+    get_all_reassembled,
     get_unmarked,
     get_all_unmarked,
     get_marks_as_csv_string,

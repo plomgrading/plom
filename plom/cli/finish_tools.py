@@ -60,6 +60,41 @@ def get_unmarked(papernum: int, *, msgr) -> dict[str, Any]:
 
 
 @with_messenger
+def get_all_reassembled(
+    *, dirname: str = "reassembled", msgr, verbose: bool = False
+) -> dict[str, Any]:
+    """Get all papers in their marked states.
+
+    Raises:
+        OSError: directory already exists or cannot be written to.
+    """
+    pqvmap_dict = msgr.new_server_get_pqvmap()
+    previous_cwd = getcwd()
+    paper_count = 0
+    content_length = 0
+
+    mkdir(dirname)  # this raises an error if it dirname/ already exists
+    chdir(dirname)
+    for papernum_string in tqdm(pqvmap_dict.keys()):
+        papernum = int(papernum_string)
+        try:
+            r = msgr.new_server_get_reassembled(papernum, verbose=verbose)
+            paper_count += 1
+            content_length += r["content-length"]
+
+        except PlomException as err:
+            print(err)
+    chdir(previous_cwd)
+
+    information = {
+        "dirname": dirname,
+        "num-papers": paper_count,
+        "content-length": content_length,
+    }
+    return information
+
+
+@with_messenger
 def get_all_unmarked(*, dirname: str = "unmarked", msgr) -> dict[str, Any]:
     """Get all papers their unmarked states.
 
