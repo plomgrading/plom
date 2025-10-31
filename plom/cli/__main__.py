@@ -180,10 +180,10 @@ def get_parser() -> argparse.ArgumentParser:
             Will fail if no scanned images are associated with the paper.
         """,
     )
-    s.add_argument("papernum", type=int, nargs="?")
+    s.add_argument("papernum", type=int, default=None, nargs="?")
     s.add_argument(
         "--all",
-        default=False,
+        default=None,
         action="store_true",
         help="""
             Can be specified instead of 'papernum'. This will attempt to download
@@ -537,9 +537,9 @@ def main():
         )
     elif args.command == "get-unmarked":
         # XNOR - we only want one or the other
-        if bool(args.all) == bool(args.papernum):
+        if (args.all is not None) == (args.papernum is not None):
             raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
-        if args.papernum:
+        if args.papernum is not None:
             r = get_unmarked(args.papernum, msgr=m)
             print(
                 f"wrote unmarked paper number {args.papernum} to "
