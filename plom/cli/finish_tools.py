@@ -61,7 +61,11 @@ def get_unmarked(papernum: int, *, msgr) -> dict[str, Any]:
 
 @with_messenger
 def get_all_unmarked(*, dirname: str = "unmarked", msgr) -> dict[str, Any]:
-    """Get all papers their unmarked states."""
+    """Get all papers their unmarked states.
+
+    Raises:
+        OSError: directory already exists or cannot be written to.
+    """
     pqvmap_dict = msgr.new_server_get_pqvmap()
     previous_cwd = getcwd()
     paper_count = 0
