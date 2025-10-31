@@ -75,8 +75,9 @@ class StudentMarkService:
             )
         )
 
-        # TODO: The inefficient function also checks that all tasks are complete
-        # or out of date for a complete paper - this function should do the same?
+        # TODO: a previous inefficient (loops-based) function also checked that
+        # all tasks are complete or out of date for a complete paper - perhaps
+        # this function should do the same?
 
         # make sure one completed task for each question and that all tasks are complete or out of date.
         # return (n_completed_tasks == n_questions) and (
