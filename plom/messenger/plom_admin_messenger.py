@@ -336,18 +336,9 @@ class PlomAdminMessenger(Messenger):
             raise PlomNoServerSupportException(
                 "Server too old: API does not support getting reassembled papers"
             )
-        if verbose:
 
-            def verbose_print(contents):
-                print(contents)
-
-        else:
-
-            def tqdm(iterable):
-                return iterable
-
-            def verbose_print(contents):
-                pass
+        verbose_print = print if verbose else (lambda content: None)
+        verbose_tqdm = tqdm if verbose else (lambda iterable: iterable)
 
         with self.SRmutex:
             try:
@@ -363,7 +354,7 @@ class PlomAdminMessenger(Messenger):
                 num_bytes = 0
                 # defaults to CWD: TODO: kwarg to change that?
                 with open(filename, "wb") as f:
-                    for chunk in tqdm(response.iter_content(chunk_size=8192)):
+                    for chunk in verbose_tqdm(response.iter_content(chunk_size=8192)):
                         verbose_print((type(chunk), len(chunk)))
                         f.write(chunk)
                         num_bytes += len(chunk)
