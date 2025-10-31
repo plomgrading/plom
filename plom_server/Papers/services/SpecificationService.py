@@ -239,22 +239,6 @@ def get_private_seed() -> str:
     return spec.privateSeed
 
 
-def _store_validated_spec(validated_spec: dict) -> None:
-    """Takes the validated test specification and stores it in the db.
-
-    Note this is used in unit testing but otherwise has no callers as
-    of April 2025.  Instead, consider :func:`install_spec_from_dict` or
-    the helpers :func:`install_spec_from_toml_file` and
-    :func:`install_spec_from_toml_string`.
-
-    Args:
-        validated_spec: A dictionary containing a validated test
-            specification.
-    """
-    serializer = SpecSerializer()
-    serializer.create(validated_spec)
-
-
 def remove_spec() -> None:
     """Removes the specification from the db, if possible.
 
@@ -475,9 +459,8 @@ def get_total_marks() -> int:
 
 @transaction.atomic
 def n_pages_for_question(question_index) -> int:
-    """Return the pages used for the given question."""
-    question = SpecQuestion.objects.get(question_index=question_index)
-    return len(question.pages)
+    """Return the number of pages used for the given question."""
+    return SpecQuestion.objects.filter(question_index=question_index).count()
 
 
 @transaction.atomic
@@ -536,8 +519,8 @@ def get_question_labels() -> list[str]:
     """Get the question labels in a list.
 
     Returns:
-        The question labels in a list, in the order of
-        increasing question index.
+        The question labels in a list, in the order of increasing
+        question index.
     """
     return [label for _, label in get_question_index_label_pairs()]
 

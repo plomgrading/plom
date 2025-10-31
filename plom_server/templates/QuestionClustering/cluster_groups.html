@@ -1,15 +1,16 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
 {% load custom_tags %}
 {% block title %}
-    Cluster groups for {{ question_label }} V{{ version }} Page {{ page_num }}
+    Cluster groups for {{ question_label }} v{{ version }} Page {{ page_num }}
 {% endblock title %}
 {% block page_heading %}
-    Cluster groups for {{ question_label }} V{{ version }} Page {{ page_num }}
+    Cluster groups for {{ question_label }} v{{ version }} Page {{ page_num }}
 {% endblock page_heading %}
 {% block main_content %}
     <!-- navigation button -->
@@ -20,12 +21,10 @@
             Return to question clustering jobs page
         </a>
     </div>
-    <!-- Include SortableJS + Alpine + Tablesort -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script defer
-            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/tablesort.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tablesort@5.2.1/dist/sorts/tablesort.number.min.js"></script>
+    <!-- Include SortableJS + Tablesort; Alpine is in base.html -->
+    <script src="{% static '/js3rdparty/Sortable.min.js' %}"></script>
+    <script src="{% static '/js3rdparty/tablesort.min.js' %}"></script>
+    <script src="{% static '/js3rdparty/tablesort.number.min.js' %}"></script>
     <div x-data="{ selected: [], all: false, openMenu: false, ids: [
         {% for cid in cluster_groups.keys %}
             '{{ cid }}'
@@ -273,7 +272,7 @@
                 });
                 this.order = s.toArray();
             },
-            
+
 
             submit() {
                 this.order = Array.from(this.$refs.tbody.children)
@@ -289,7 +288,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const table = document.querySelector('[x-ref="clusterTable"]');
             const ts = new Tablesort(table);
-            
+
             // Make header icons responsive
             table.addEventListener('afterSort', () => {
                 table.querySelectorAll('th').forEach(th => {
@@ -304,10 +303,10 @@
                 );
                 });
             });
-            
+
             // Sort by priority if there are unset priorities
             const unset_count = document.querySelectorAll(".unset-priority").length;
-            
+
             if (unset_count == 0){
                 const priorityHeader = document.getElementById('priority-col');
                 // Click it to trigger the default sort
@@ -320,7 +319,7 @@
                     }
                 }
             }
-            
+
             // Master checkbox that selects all checkboxes
             const master = document.querySelector('#master-checkbox');
             const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
@@ -333,7 +332,7 @@
                     });
                 });
 
-    
+
             });
 
 

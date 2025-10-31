@@ -39,8 +39,12 @@ from plom.cli import (
     clear_login,
     delete_classlist,
     delete_source,
+    get_marks_as_csv_string,
+    get_pqvmap_as_csv_string,
     get_reassembled,
+    get_all_reassembled,
     get_unmarked,
+    get_all_unmarked,
     id_paper,
     un_id_paper,
     list_bundles,
@@ -133,6 +137,31 @@ def get_parser() -> argparse.ArgumentParser:
     )
 
     s = sub.add_parser(
+        "get-marks",
+        help="Get information related to exam papers.",
+        description="""
+            Retrieve marks, IDs, and other information about generated exam papers.
+        """,
+    )
+    s.add_argument(
+        "papernum",
+        nargs="?",
+        type=int,
+        default=None,
+        help="Specify a paper. If unspecified, will retrieve marks for all papers.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-pqvmap",
+        help="Retrieve the current pqvmap as a .csv and print it to stdout.",
+        description="""
+            Retrieve the current pqvmap as a .csv and print it to stdout.
+        """,
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "get-reassembled",
         help="Get a reassembled paper.",
         description="""
@@ -140,18 +169,38 @@ def get_parser() -> argparse.ArgumentParser:
             Will fail if the paper is not reassembled yet.
         """,
     )
-    s.add_argument("papernum", type=int)
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            all papers that exist on the server in their reassembled states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
     _add_server_args(s)
 
     s = sub.add_parser(
         "get-unmarked",
-        help="Get a unmarked paper.",
+        help="Get an unmarked paper.",
         description="""
-            Download a unmarked paper as a PDF file from the server.
+            Download an unmarked paper as a PDF file from the server.
             Will fail if no scanned images are associated with the paper.
         """,
     )
-    s.add_argument("papernum", type=int)
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            scans of all papers that exist on the server in their unmarked states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -416,7 +465,7 @@ def get_parser() -> argparse.ArgumentParser:
         required=False,
         help="""
         The output path of the extracted rectangle image. If not provided, the image will be saved as:
-            "./extracted_region_V{version}_page{page_num}_paper{paper_num}.png"
+            "./extracted_region_v{version}_page{page_num}_paper{paper_num}.png"
         where {version}, {page_num}, and {paper_num} are replaced by their respective values.
         """,
     )
@@ -483,18 +532,47 @@ def main():
         r = reset_task(args.papernum, args.question_idx, msgr=m)
         print(r)
 
+    elif args.command == "get-marks":
+        r = get_marks_as_csv_string(papernum=args.papernum, msgr=m)
+        print(r)
+
+    elif args.command == "get-pqvmap":
+        r = get_pqvmap_as_csv_string(msgr=m)
+        print(r)
+
     elif args.command == "get-reassembled":
-        r = get_reassembled(args.papernum, msgr=m)
-        print(
-            f"wrote reassembled paper number {args.papernum} to "
-            f'file {r["filename"]} [{r["content-length"]} bytes]'
-        )
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_reassembled(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote reassembled paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_reassembled(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} reassembled papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
     elif args.command == "get-unmarked":
-        r = get_unmarked(args.papernum, msgr=m)
-        print(
-            f"wrote unmarked paper number {args.papernum} to "
-            f'file {r["filename"]} [{r["content-length"]} bytes]'
-        )
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_unmarked(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote unmarked paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_unmarked(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} unmarked papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
 
     elif args.command == "upload-source":
         ver = args.version

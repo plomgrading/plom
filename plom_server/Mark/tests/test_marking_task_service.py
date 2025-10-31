@@ -18,68 +18,17 @@ class MarkingTaskServiceTests(TestCase):
     Also tests some of the function-based services in mark_task.
     """
 
-    def test_unpack_code(self) -> None:
-        """Test mark_task.unpack_code()."""
-        with self.assertRaises(AssertionError):
-            mark_task.unpack_code("")
-
-        with self.assertRaises(AssertionError):
-            mark_task.unpack_code("astringthatdoesn'tstartwithq")
-
-        with self.assertRaises(AssertionError):
-            mark_task.unpack_code("qastrinGthatdoesn'tcontainalowercaseG")
-
-        with self.assertRaises(ValueError):
-            mark_task.unpack_code("q000qge")
-
-        paper_number, question_index = mark_task.unpack_code("q0001g2")
-        self.assertEqual(paper_number, 1)
-        self.assertEqual(question_index, 2)
-
-    def test_unpack_code_additional_tests(self) -> None:
-        with self.assertRaises(AssertionError):
-            mark_task.unpack_code("g0001q2")
-
-        _, q1 = mark_task.unpack_code("q0001g2")
-        _, q2 = mark_task.unpack_code("q0001g02")
-
-        self.assertEqual(q1, q2)
-
-        _, q1 = mark_task.unpack_code("q0001g2")
-        _, q2 = mark_task.unpack_code("q0001g22")
-
-        self.assertNotEqual(q1, q2)
-
-        p1, q1 = mark_task.unpack_code(
-            "q1234567890987654321g8888888855555555123412341324"
-        )
-        p2, q2 = mark_task.unpack_code(
-            "q1234567890987654321g9090909090909090909090909090"
-        )
-        p3, q3 = mark_task.unpack_code(
-            "q9876543100123456789g9090909090909090909090909090"
-        )
-
-        self.assertEqual(p1, p2)
-        self.assertNotEqual(p1, p3)
-        self.assertEqual(q2, q3)
-        self.assertNotEqual(q1, q3)
-
-        p1, q1 = mark_task.unpack_code("q8g9")
-        self.assertEqual(p1, 8)
-        self.assertEqual(q1, 9)
-
     def test_get_latest_task_no_paper_nor_question(self) -> None:
         s = MarkingTaskService()
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
-            s.get_task_from_code("q0042g42")
+            s.get_task_from_code("0042g42")
 
     def test_get_latest_task_has_paper_but_no_question(self) -> None:
         s = MarkingTaskService()
         task = baker.make(
-            MarkingTask, question_index=1, paper__paper_number=42, code="q0042g1"
+            MarkingTask, question_index=1, paper__paper_number=42, code="0042g1"
         )
-        code = "q0042g9"
+        code = "0042g9"
         assert task.code != code
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code(code)
@@ -90,9 +39,9 @@ class MarkingTaskServiceTests(TestCase):
             question_index=1,
             question_version=2,
             paper__paper_number=42,
-            code="q0042g1",
+            code="0042g1",
         )
-        code = "q0042g1"
+        code = "0042g1"
         assert task.code == code
         mark_task.get_latest_task(42, 1, question_version=2)
         with self.assertRaisesRegex(ValueError, "wrong version"):

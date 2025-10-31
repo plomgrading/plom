@@ -127,7 +127,7 @@ def _validate_parameters(parameters: None | list, num_versions: None | int = 1) 
 
 
 # TODO: this code belongs in model/serializer?
-def _validate_value(value: int | float, max_mark: int) -> None:
+def _validate_value(value: int | float | str, max_mark: int) -> None:
     # check that the "value" lies in [-max_mark, max_mark]
     try:
         value = float(value)
@@ -141,16 +141,16 @@ def _validate_value(value: int | float, max_mark: int) -> None:
         )
 
 
-def _validate_value_out_of(value, out_of, max_mark) -> None:
+def _validate_value_out_of(value, out_of, max_mark: int) -> None:
     try:
         out_of = float(out_of)
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         raise serializers.ValidationError(
             {"out_of": f"out of {out_of} must be convertible to number: {e}"}
         ) from e
     try:
         value = float(value)
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         raise serializers.ValidationError(
             {"value": f"value {value} must be convertible to number: {e}"}
         ) from e

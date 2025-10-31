@@ -13,11 +13,13 @@ numberOfQuestions = 2
 idPage = 1
 doNotMarkPages = []
 
+
 [[question]]
 pages = [2]
 mark = 1
 
+
 [[question]]
-pages = [3,4]
+pages = [3, 4]
 mark = 1
-select = 1
+select = [1, 2]

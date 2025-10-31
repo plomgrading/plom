@@ -19,18 +19,18 @@ class PaperCreatorTests(TestCase):
         spec_dict = {
             "idPage": 1,
             "numberOfVersions": 2,
-            "numberOfPages": 5,
+            "numberOfPages": 6,
             "totalMarks": 10,
             "numberOfQuestions": 2,
             "name": "papers_demo",
             "longName": "Papers Test",
-            "doNotMarkPages": [2, 5],
-            "question": {
-                "1": {"pages": [3], "mark": 5},
-                "2": {"pages": [4], "mark": 5},
-            },
+            "doNotMarkPages": [2, 5, 6],
+            "question": [
+                {"pages": [3], "mark": 5},
+                {"pages": [4], "mark": 5},
+            ],
         }
-        SpecificationService._store_validated_spec(spec_dict)
+        SpecificationService.install_spec_from_dict(spec_dict)
         return super().setUp()
 
     def get_n_models(self):
@@ -51,9 +51,9 @@ class PaperCreatorTests(TestCase):
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 
         self.assertEqual(n_papers, 1)
-        self.assertEqual(n_pages, 5)
+        self.assertEqual(n_pages, 6)
         self.assertEqual(n_id, 1)
-        self.assertEqual(n_dnm, 2)
+        self.assertEqual(n_dnm, 3)
         self.assertEqual(n_question, 2)
 
         paper = Paper.objects.get(paper_number=1)

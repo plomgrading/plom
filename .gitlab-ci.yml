@@ -302,7 +302,7 @@ tag_matches_ver:
   rules:
    - if: $CI_COMMIT_TAG
   script:
-    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
+    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
     - echo "Extracted version string '$VER'"
     - echo "Now comparing to CI_COMMIT_TAG '$CI_COMMIT_TAG'"
     - echo $VER
@@ -316,7 +316,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=25.1.0"
+    - pip3 install "black~=25.9.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -337,7 +337,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.10.2
+    - pip install pytest pytest-cov coverage[toml]~=7.11.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -394,8 +394,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=3.3.11  # codespell:ignore astroid
-    - pip install pylint~=3.3.7
+    - pip install astroid~=4.0.1  # codespell:ignore astroid
+    - pip install pylint~=4.0.2
   script:
     - pylint plom
     - pylint plom_server
@@ -413,7 +413,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.17.1
+    - pip install mypy~=1.18.2
   script:
     - mypy --version
     - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
@@ -428,7 +428,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.403
+    - pip install pyright~=1.1.407
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -452,7 +452,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.12.10
+    - pip install ruff~=0.14.2
   script:
     - ruff check .
     # ruff format .
@@ -463,7 +463,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.12.10
+    - pip install ruff~=0.14.2
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -515,13 +515,14 @@ no-question-numbers:
   image: python:3.12
   stage: static_analysis
   script:
-    - grep plom_server -rie "question.num"
+    # TODO: consider adding "plom" here too
+    - grep plom_server -rie "question.num" || true
     - echo "Question number is ambiguous; generally we prefer index or the question label"
-    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l`
+    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l || true`
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 15 ]]"
+    - bash -c "[[ $HOW_MANY -le 0 ]]"
   allow_failure: true
 
 
@@ -530,7 +531,8 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.10.2
+    - pip install coverage~=7.11.0
+    - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
     - export PLOM_DATABASE_BACKEND=sqlite
@@ -547,6 +549,32 @@ webplom_test:
       coverage_report:
         coverage_format: cobertura
         path: django_coverage.xml
+
+webplom_api_test:
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  before_script:
+    - pip install coverage~=7.11.0
+    - pip install pytest pytest-mock pytest-django
+  script:
+    - export PYTHONPATH=$PWD
+    - export PLOM_DATABASE_BACKEND=sqlite
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    # migrate the test database (skip makemigrations per #3826)
+    - python3 manage.py migrate
+    # run only the API tests and collect coverage for plom_server/API
+    - coverage run --source=plom_server/API -m pytest plom_server/API/tests
+    # ignore any coverage errors (e.g. OpenCV) and print summary
+    - coverage report -i --precision=2
+    # output Cobertura XML for GitLab
+    - coverage xml -i -o django_api_coverage.xml
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: django_api_coverage.xml
 
 
 webplom_demo:

@@ -8,7 +8,7 @@
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -42,13 +42,13 @@ class DemoHWBundleConfig:
 
 @dataclass()
 class PlomServerConfig:
-    """A description of a Plom server's database.
+    """A description of a Plom server's state, used for automated testing.
 
-    Can be saved to a .toml file, or loaded from a toml to quickly spin up a server with a pre-defined state.
+    Can loaded from a dict to quickly configure the database to a pre-defined state.
     """
 
     parent_dir: Path
-    test_spec: Optional[Union[str, Path]] = None
+    test_spec: str | Path | None = None
     # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
     # test_sources: str | list[Path] | list[resources.abc.Traversable] | None = None
     test_sources: str | list[Path] | None = None
@@ -68,7 +68,7 @@ class PlomServerConfig:
             f is None for f in all_instance_fields.values()
         ):
             raise PlomConfigError(
-                "A test specification is required in order to build a server."
+                "A specification is required in order to build a server."
             )
 
         if self.bundles is None and self.hw_bundles is None:
@@ -86,7 +86,7 @@ class PlomServerConfig:
                 )
 
 
-def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
+def read_server_config(path: str | Path) -> PlomServerConfig:
     """Create a server config from a TOML file.
 
     Args:
@@ -102,15 +102,3 @@ def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
             return PlomServerConfig(**config)
         except tomllib.TOMLDecodeError as e:
             raise ValueError(e) from e
-
-
-def read_server_config_from_string(
-    config_str: str, parent_dir: Optional[Path] = None
-) -> PlomServerConfig:
-    """Create a server config from a TOML-formatted string."""
-    try:
-        config = tomllib.loads(config_str)
-        config["parent_dir"] = parent_dir
-        return PlomServerConfig(**config)
-    except tomllib.TOMLDecodeError as e:
-        raise ValueError(e) from e

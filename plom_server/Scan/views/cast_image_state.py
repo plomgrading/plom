@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 
@@ -28,21 +29,19 @@ class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """HTMX posts here to discard a page from a bundle."""
         try:
             ScanCastService.discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
-        except ValueError as e:
-            raise Http404(e)
+        except ValueError as err:
+            return HttpResponse(f"Error: {err}", status=404)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+
+        return HttpResponse("Success: discarded")
 
 
 class DiscardAllUnknownsHTMXView(ScannerRequiredView):
@@ -70,22 +69,19 @@ class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """HTMX posts here to mark a page from a bundle as unknown."""
         try:
             ScanCastService().unknowify_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
-        except ValueError as e:
-            raise Http404(e)
+        except ValueError as err:
+            return HttpResponse(f"Error: {err}", status=404)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        return HttpResponse("Success: made unknown")
 
 
 class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
@@ -113,7 +109,7 @@ class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
     def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        context = super().build_context()
+        context = self.build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
@@ -211,8 +207,16 @@ class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        # TODO - improve this form processing
+        """HTMX posts here to make a page into an extra page.
 
+        On errors, this returns 400, 404, http responses, with plain
+        textual human-readable error messages.  The error messages
+        are undecorated.
+
+        On success, its returns a 200 response with a short textual
+        message of success.  Its not necessary or expected that callers
+        will show this to users.
+        """
         extra_page_data = request.POST
 
         paper_number = extra_page_data.get("paper_number", None)
@@ -220,9 +224,7 @@ class ExtraliseImageView(ScannerRequiredView):
         try:
             paper_number = int(paper_number)
         except (ValueError, TypeError):
-            return HttpResponse(
-                """<span class="alert alert-danger">Invalid paper number</span>"""
-            )
+            return HttpResponse("Invalid paper number", status=400)
 
         choice = extra_page_data.get("question_all_dnm", "")
         if choice == "choose_all":
@@ -236,17 +238,16 @@ class ExtraliseImageView(ScannerRequiredView):
             to_questions = [int(q) for q in extra_page_data.getlist("questions")]
             if not to_questions:
                 return HttpResponse(
-                    """<span class="alert alert-danger">At least one question</span>"""
+                    "At least one question must be provided", status=400
                 )
         else:
             return HttpResponse(
-                """<span class="alert alert-danger">
-                    Unexpected radio choice: this is a bug; please file an issue!
-                </span>"""
+                "Unexpected radio choice: this is a bug; please file an issue!",
+                status=400,
             )
 
         try:
-            ScanCastService().assign_extra_page_from_bundle_pk_and_order(
+            ScanCastService.assign_extra_page_from_bundle_id_and_order(
                 request.user, bundle_id, index, paper_number, to_questions
             )
         except PlomBundleLockedException:
@@ -254,19 +255,15 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ValueError as e:
-            return HttpResponse(
-                f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>"""
-            )
+            return HttpResponse(e, status=404)
+        except PlomConflict as e:
+            return HttpResponse(f"{e}: try reloading this page.", status=409)
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        return HttpResponse("Success: set info")
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
-        """Cast an existing bundle page to an extra page (unassigned)."""
+        """HTMX puts here to cast an existing bundle page to an extra page (unassigned)."""
         try:
             ScanCastService.extralise_image_from_bundle_id(
                 request.user, bundle_id, index
@@ -276,32 +273,25 @@ class ExtraliseImageView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ObjectDoesNotExist as err:
-            return Http404(err)
+            return HttpResponse(f"Error: {err}", status=404)
         except ValueError as err:
-            print(f"Issue #3878: got ValueError we're unsure how to handle: {err}")
-            # TODO: redirect ala scan_bundle_lock?
-            raise
+            return HttpResponse(f"Error: {err}", status=409)
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        return HttpResponse("Success: changed to extra page")
 
     def delete(
         self, request: HttpRequest, *, bundle_id: int, index: int
     ) -> HttpResponse:
+        """HTMX deletes here to clear the extra page info from a particular page in a bundle."""
         try:
-            ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
+            ScanCastService.clear_extra_page_info_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
+        except ObjectDoesNotExist as err:
+            return HttpResponse(f"Error: {err}", status=404)
 
-        return render(
-            request,
-            "Scan/fragments/bundle_page_panel.html",
-            {"bundle_id": bundle_id, "index": index},
-        )
+        return HttpResponse("Success: cleared extra page info")

@@ -16,7 +16,7 @@
 
     function getMaximumMarks() {
         var question_dict = JSON.parse('{{ question_max_marks_dict|escapejs }}');
-        var question_idx = document.getElementById("id_question").value;
+        var question_idx = document.getElementById("id_question_index").value;
         return question_dict[question_idx];
     }
 
@@ -51,11 +51,14 @@
             valueField.disabled = false;
             valueField.min = -1 * max_value;
             valueField.max = max_value;
+            outOfField.value = ""
             outOfField.readOnly = true;
             outOfField.disabled = true;
         } else {
+            valueField.value = 0
             valueField.readOnly = true;
             valueField.disabled = true;
+            outOfField.value = ""
             outOfField.readOnly = true;
             outOfField.disabled = true;
         }
@@ -81,12 +84,11 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel">
                     {% if rid %}
-                        Editing Rubric (caution: beta!)
+                        Editing Rubric
                     {% else %}
-                        Creating Rubric (caution: beta!)
+                        Creating Rubric
                     {% endif %}
                 </h5>
-                <!-- TODO: Issue #3550 to remove the beta label -->
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
@@ -125,8 +127,7 @@
                                for="{{ edit_form.value.id_for_label }}">Value:</label>
                         <div class="col">{{ edit_form.value }}</div>
                         <label class="col-sm-2 col-form-label"
-                               for="{{ edit_form.out_of.id_for_label }}"
-                               id="id_out_of_label">out of</label>
+                               for="{{ edit_form.out_of.id_for_label }}">out of</label>
                         <div class="col">{{ edit_form.out_of }}</div>
                     </div>
                     <div class="row form-group">

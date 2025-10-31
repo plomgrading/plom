@@ -14,8 +14,7 @@ import arrow
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse
-from django.http import Http404, FileResponse
+from django.http import HttpRequest, HttpResponse, Http404, FileResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
@@ -34,11 +33,10 @@ from plom.plom_exceptions import PlomBundleLockedException
 class ScannerOverview(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
+        total_papers = ManageScanService.get_total_papers()
+        completed_papers = ManageScanService.get_number_completed_papers()
+        incomplete_papers = ManageScanService.get_number_incomplete_papers()
         mss = ManageScanService()
-
-        total_papers = mss.get_total_papers()
-        completed_papers = mss.get_number_completed_papers()
-        incomplete_papers = mss.get_number_incomplete_papers()
         pushed_bundles = mss.get_number_pushed_bundles()
         unpushed_bundles = mss.get_number_unpushed_bundles()
         discards = mss.get_discarded_page_info()

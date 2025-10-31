@@ -27,9 +27,11 @@ def reset_assessment_preparation_database():
     # Remove all test database rows
     PaperCreatorService.remove_all_papers_from_db(background=False)
 
-    # Remove classlist
+    # Remove classlist and reset prename setting.
     StagingStudentService.remove_all_students()
     PrenameSettingService().set_prenaming_setting(False)
+    # reset the prename box position too.
+    PrenameSettingService.reset_prenaming_coords()
 
     # Remove and delete source PDFs
     SourceService.delete_all_source_pdfs()

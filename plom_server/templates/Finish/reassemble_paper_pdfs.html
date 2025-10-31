@@ -104,6 +104,7 @@
                    class="btn btn-warning-outline disabled">Download zip of all reassembled papers</a>
                 warning - no papers reassembled
             {% endif %}
+            <!-- TODO: unpleasantly nested quotes by the_url: some way to fix that? -->
             <details class="my-2"
                      x-data="{first:{{ min_paper_number }}, last:{{ max_paper_number }}, the_url:'{% url "reassembled_range" %}' }">
                 <summary>Select range of reassembled papers to download</summary>

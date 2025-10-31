@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
-from plom_server.Base.tests import config_test
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Papers.models import Paper, Image, MobilePage, Bundle, QuestionPage
 from plom_server.Mark.models import MarkingTask
 from plom_server.Scan.services import ManageDiscardService

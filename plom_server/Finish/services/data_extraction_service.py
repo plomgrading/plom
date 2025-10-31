@@ -81,7 +81,8 @@ class DataExtractionService:
 
         Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
         """
-        qs = f"q{question_index}_mark"
+        qlabel = SpecificationService.get_question_label(question_index)
+        qs = f"{qlabel}_mark"
         return {
             "count": self.student_df[qs].count(),
             "max": self.student_df[qs].max(),
@@ -114,26 +115,22 @@ class DataExtractionService:
         self.student_df.dropna(subset=["Total"], inplace=True)
         return self.student_df["Total"].tolist()
 
-    def _get_average_on_question_as_percentage(self, question_index: int) -> float:
+    def _get_average_on_question_as_percentage(self, qidx: int) -> float:
         """Return the average mark on a specific question as a percentage."""
-        return (
-            100
-            * self.student_df[f"q{question_index}_mark"].mean()
-            / SpecificationService.get_question_max_mark(question_index)
-        )
+        qlabel = SpecificationService.get_question_label(qidx)
+        maxmark = SpecificationService.get_question_max_mark(qidx)
+        return 100 * self.student_df[f"{qlabel}_mark"].mean() / maxmark
 
     def _get_average_on_question_version_as_percentage(
         self, question_index: int, version_number: int
     ) -> float:
         """Return the average mark on a specific question as a percentage."""
+        qlabel = SpecificationService.get_question_label(question_index)
+        maxmark = SpecificationService.get_question_max_mark(question_index)
         version_df = self.student_df[
-            (self.student_df[f"q{question_index}_version"] == version_number)
+            (self.student_df[f"{qlabel}_version"] == version_number)
         ]
-        return (
-            100
-            * version_df[f"q{question_index}_mark"].mean()
-            / SpecificationService.get_question_max_mark(question_index)
-        )
+        return 100 * version_df[f"{qlabel}_mark"].mean() / maxmark
 
     def get_averages_on_all_questions_as_percentage(self) -> list[float]:
         """Return the average mark on each question as a percentage."""
@@ -171,26 +168,15 @@ class DataExtractionService:
 
         return averages
 
-    def _get_average_grade_on_question(self, question_index: int) -> float:
-        """Return the average grade on a specific question (not percentage).
-
-        Args:
-            question_index: The question to get the average grade for.
-
-        Returns:
-            The average grade on the question as a float.
-        """
-        return self.student_df[f"q{question_index}_mark"].mean()
+    def _get_average_grade_on_question(self, qlabel: str) -> float:
+        """Return the average grade on a specific question (not percentage)."""
+        return self.student_df[f"{qlabel}_mark"].mean()
 
     def get_average_grade_on_all_questions(self) -> list[tuple[int, str, float]]:
-        """Return the average grade on each question (not percentage).
-
-        Returns:
-            The average grade on each question.
-        """
+        """Return the average grade on each question (not percentage)."""
         averages = []
         for qidx, qlabel in SpecificationService.get_question_index_label_pairs():
-            averages.append((qidx, qlabel, self._get_average_grade_on_question(qidx)))
+            averages.append((qidx, qlabel, self._get_average_grade_on_question(qlabel)))
         return averages
 
     def _get_marks_for_all_questions(
@@ -212,7 +198,7 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
-        return student_df.filter(regex="q[0-9]*_mark")
+        return student_df.filter(regex=".*_mark")
 
     def _get_question_correlation_heatmap_data(
         self, *, student_df: pd.DataFrame | None = None
@@ -233,15 +219,12 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
-        # TODO: regex likely to break if question labels were used in spreadsheet
-        marks_corr = (
-            student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
-        )
+        marks_corr = student_df.filter(regex=".*_mark").corr(numeric_only=True).round(2)
 
         for i, name in enumerate(marks_corr.columns):
-            qlabel = SpecificationService.get_question_label(i + 1)
-            marks_corr.rename({name: qlabel}, axis=1, inplace=True)
-            marks_corr.rename({name: qlabel}, axis=0, inplace=True)
+            qlabel_only = name.removesuffix("_mark")
+            marks_corr.rename({name: qlabel_only}, axis=1, inplace=True)
+            marks_corr.rename({name: qlabel_only}, axis=0, inplace=True)
 
         return marks_corr
 
@@ -283,14 +266,14 @@ class DataExtractionService:
         return marks_by_ta
 
     def _get_ta_data_for_question(
-        self, question_index: int, *, ta_df: pd.DataFrame | None = None
+        self, qidx: int, *, ta_df: pd.DataFrame | None = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific question.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
 
         Args:
-            question_index: The question to get the data for.
+            qidx: The question to get the data for.
 
         Keyword Args:
             ta_df: Optional dataframe containing the TA data. Should be a copy or
@@ -303,7 +286,7 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        question_df = ta_df[ta_df["question_number"] == question_index]
+        question_df = ta_df[ta_df["question_index"] == qidx]
         return question_df
 
     def _get_all_ta_data_by_qidx(self) -> dict[int, pd.DataFrame]:
@@ -319,7 +302,7 @@ class DataExtractionService:
             insertion order).
         """
         marks_by_question = {}
-        for qidx in sorted(self.ta_df["question_number"].unique()):
+        for qidx in sorted(self.ta_df["question_index"].unique()):
             marks_by_question[qidx] = self._get_ta_data_for_question(qidx)
         return marks_by_question
 
@@ -333,7 +316,7 @@ class DataExtractionService:
             marking times for each question.
         """
         times_by_question = {}
-        for qi in self.ta_df["question_number"].unique():
+        for qi in self.ta_df["question_index"].unique():
             times_by_question[qi] = self._get_ta_data_for_question(qi)[
                 "seconds_spent_marking"
             ]
@@ -359,7 +342,7 @@ class DataExtractionService:
         assert isinstance(ta_df, pd.DataFrame)
 
         return (
-            ta_df[ta_df["user"] == ta_name]["question_number"]
+            ta_df[ta_df["user"] == ta_name]["question_index"]
             .drop_duplicates()
             .sort_values()
             .tolist()
@@ -384,7 +367,7 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        users = ta_df[(ta_df["question_number"] == question_index)]["user"]
+        users = ta_df[(ta_df["question_index"] == question_index)]["user"]
         user_list = users.unique().tolist()
         # MyPy complains about types (on CI, not locally) unsure why so assert
         assert isinstance(user_list, list)
@@ -413,9 +396,9 @@ class DataExtractionService:
         assert isinstance(df, pd.DataFrame)
 
         if ver is not None:
-            tmp = df[(df["question_number"] == qidx) & (df["question_version"] == ver)]
+            tmp = df[(df["question_index"] == qidx) & (df["question_version"] == ver)]
         else:
-            tmp = df[df["question_number"] == qidx]
+            tmp = df[df["question_index"] == qidx]
         return tmp["score_given"].tolist()
 
     def _get_marking_times_for_qidx(
@@ -439,9 +422,9 @@ class DataExtractionService:
         assert isinstance(df, pd.DataFrame)
 
         if ver is not None:
-            tmp = df[(df["question_number"] == qidx) & (df["question_version"] == ver)]
+            tmp = df[(df["question_index"] == qidx) & (df["question_version"] == ver)]
         else:
-            tmp = df[df["question_number"] == qidx]
+            tmp = df[df["question_index"] == qidx]
         return tmp["seconds_spent_marking"].tolist()
 
     def get_scores_for_ta(

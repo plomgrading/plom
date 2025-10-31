@@ -78,6 +78,17 @@ def _client_reject_list() -> list[dict[str, Any]]:
             ),
             "action": "warn",
         },
+        {
+            "client-id": "org.plomgrading.PlomClient",
+            "version": "0.19.1",
+            "operator": "<=",
+            "reason": (
+                "Plom Client v0.19.0 and v0.19.1 cannot be safely used "
+                "to mark paper numbers larger than 999."
+                " Please upgrade your client to v0.19.2 or later."
+            ),
+            "action": "block",
+        },
     ]
 
 

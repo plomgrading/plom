@@ -174,7 +174,7 @@ class MmodifyRubric(APIView):
         except PermissionDenied as e:
             # not catching this would work, but we don't get the full error message
             return _error_response(e, status.HTTP_403_FORBIDDEN)
-        except (serializers.ValidationError, NotImplementedError) as e:
+        except (ValueError, serializers.ValidationError, NotImplementedError) as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)

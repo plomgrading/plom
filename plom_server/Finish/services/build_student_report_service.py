@@ -47,7 +47,7 @@ def _get_descriptive_statistics_from_score_list(
 
 
 def brief_report_pdf_builder(
-    paper_number,
+    paper_number: int,
     total_score_list: list[float],
     question_score_lists: dict[int, list[float]],
 ) -> dict[str, Any]:
@@ -87,6 +87,7 @@ def brief_report_pdf_builder(
         "totalMarks": SpecificationService.get_total_marks(),
         "name": paper_info["name"],
         "sid": paper_info["sid"],
+        "paper_number": paper_number,
         "grade": paper_info["total"],
         "total_stats": _get_descriptive_statistics_from_score_list(total_score_list),
         "kde_graph": MinimalPlotService.kde_plot_of_total_marks(

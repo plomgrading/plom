@@ -56,7 +56,12 @@ Users of various distributions can install `from Flathub`_.
 
 .. _from Flathub: https://flathub.org/apps/org.plomgrading.PlomClient
 
-Another option is to download the "AppImage" from our `releases page`_.
+Another option is to install using a Python package manager such as
+``pip``, ``poetry`` or ``uv``: for example ``pip install plom-client``.
+Depending on your system, you may need to install some dependencies
+using your system package manager first (e.g., see ChromeOS below for example).
+
+Finally, Another option is to download the "AppImage" from our `releases page`_.
 
 You may need to change the permissions on the binary to make it executable.
 Open a terminal and go to the directory where you saved the binary::

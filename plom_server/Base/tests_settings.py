@@ -6,7 +6,7 @@ from django.test import TestCase
 from .services import Settings
 
 
-class PapersPrintedSettingTests(TestCase):
+class TestPapersPrintedSetting(TestCase):
     def test_settings_create_rubrics_tristates(self) -> None:
         Settings.set_who_can_create_rubrics("locked")
         Settings.set_who_can_create_rubrics("permissive")

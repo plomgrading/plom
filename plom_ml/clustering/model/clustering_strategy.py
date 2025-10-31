@@ -4,9 +4,9 @@
 
 """This is an abstracted inference for https://github.com/BryanTanady/plom_ml_clustering."""
 
-import os
 import yaml
 from abc import abstractmethod
+from importlib import resources
 from pathlib import Path
 from typing import Mapping
 
@@ -15,6 +15,7 @@ from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.cluster import AgglomerativeClustering
 from huggingface_hub import hf_hub_download
 
+import plom_ml.clustering.model
 from plom_ml.clustering.embedding.embedder import (
     Embedder,
     SymbolicEmbedder,
@@ -35,7 +36,7 @@ def get_best_clustering(
     This function defaults with AgglomerativeClustering clustering algorithm. Note that to get
     more fine-grained clustering one can provide smaller thresholds range. Furthermore, it would
     be even better if we provide another argument where we force the threshold at a specific value
-    and if that val is None then we do the search.
+    and if that value is None then we do the search.
 
     Args:
         X: the feature matrix.
@@ -53,7 +54,7 @@ def get_best_clustering(
     best_labels = np.array([])
     best_thresh = -1  # for debug
 
-    # Becareful with linkage, I have tuned my thresholds for distance_metric = ward,
+    # Be careful with linkage, I have tuned my thresholds for distance_metric = ward,
     # and if we change that to "complete" we need to retune again.
     linkage = "average" if distance_metric == "cosine" else "ward"
 
@@ -85,7 +86,8 @@ def get_best_clustering(
                 best_labels = labels
                 best_thresh = t
 
-    if not best_labels:
+    assert isinstance(best_labels, np.ndarray)
+    if not best_labels.size > 0:
         raise NoThresholdFound(
             f"Can't find any threshold within {thresholds} to produce any clustering"
         )
@@ -200,9 +202,8 @@ class HMEClusteringStrategy(ClusteringStrategy):
     """
 
     def __init__(self):
-        # load model config
-        config_path = os.path.join(os.path.dirname(__file__), "model_config.yaml")
-        with open(config_path) as f:
+        config_path = resources.files(plom_ml.clustering.model) / "model_config.yaml"
+        with config_path.open("r") as f:
             config = yaml.safe_load(f)
 
         # load weights path
@@ -308,9 +309,8 @@ class MCQClusteringStrategy(ClusteringStrategy):
     """
 
     def __init__(self):
-        # load model config
-        config_path = os.path.join(os.path.dirname(__file__), "model_config.yaml")
-        with open(config_path) as f:
+        config_path = resources.files(plom_ml.clustering.model) / "model_config.yaml"
+        with config_path.open("r") as f:
             config = yaml.safe_load(f)
 
         # check if weight has been downloaded

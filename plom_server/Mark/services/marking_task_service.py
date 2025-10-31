@@ -9,6 +9,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 import json
+import logging
 import pathlib
 import random
 from typing import Any
@@ -19,12 +20,16 @@ from django.db.models import QuerySet
 from django.db import transaction
 from rest_framework import serializers
 
+from plom.misc_utils import unpack_task_code
 from plom.tagging import is_valid_tag_text
 from plom_server.Papers.services import ImageBundleService, PaperInfoService
 from plom_server.Papers.models import Paper
 
 from . import MarkingPriorityService, mark_task
 from ..models import MarkingTask, MarkingTaskTag, Annotation
+
+
+log = logging.getLogger("MarkingTaskService")
 
 
 class MarkingTaskService:
@@ -69,7 +74,7 @@ class MarkingTaskService:
         except ValueError as err:
             raise RuntimeError(f"Server does not have a question-version map - {err}")
 
-        task_code = f"q{paper.paper_number:04}g{question_index}"
+        task_code = f"{paper.paper_number:04}g{question_index}"
 
         # other tasks with this code are now 'out of date'
         # as per #3220 do not erase assigned user.
@@ -129,7 +134,7 @@ class MarkingTaskService:
                 a loop.
         """
         # create all the task codes
-        task_codes = [f"q{X[0]:04}g{X[1]}" for X in paper_question_version_list]
+        task_codes = [f"{X[0]:04}g{X[1]}" for X in paper_question_version_list]
         # use this to get all existing marking tasks
         existing_tasks = (
             MarkingTask.objects.filter(code__in=task_codes)
@@ -156,7 +161,7 @@ class MarkingTaskService:
         # finally get on with building things
         new_tasks = []
         for pn, qi, v in paper_question_version_list:
-            code = f"q{pn:04}g{qi}"
+            code = f"{pn:04}g{qi}"
             if code in priorities:
                 priority = priorities[code]
             elif strategy == "paper_number":
@@ -224,10 +229,7 @@ class MarkingTaskService:
             ValueError: invalid code.
             RuntimeError: code valid but task does not exist.
         """
-        try:
-            paper_number, question_idx = mark_task.unpack_code(code)
-        except AssertionError as e:
-            raise ValueError(f"{code} is not a valid task code: {e}") from e
+        paper_number, question_idx = unpack_task_code(code)
         try:
             return mark_task.get_latest_task(paper_number, question_idx)
         except ObjectDoesNotExist as e:
@@ -362,9 +364,10 @@ class MarkingTaskService:
         This is a file system (later object store) hit, which will have some IO cost.
 
         Args:
-            code (str): key of the associated task.
-            data (dict): information about the mark, rubrics, and annotation images.
-            plomfile (str): a JSON field representing annotation data.
+            code: key of the associated task.
+            data: information about the mark, rubrics, and annotation images.
+            plomfile: a JSON field representing annotation data, the contents
+                of the so-called "plom file".
 
         Returns:
             Two things in a tuple;
@@ -431,6 +434,7 @@ class MarkingTaskService:
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
+            # TODO: this looks like direct file access on the server, Issue #3888.
             img_path = pathlib.Path(image_data["server_path"])
             if not img_path.exists():
                 raise serializers.ValidationError("Invalid original-image in request.")
@@ -542,12 +546,13 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    @transaction.atomic
     def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
         """Get an existing tag, or create if necessary, based on the given text.
 
         Args:
-            user: the user creating/attaching the tag.
+            user: the user creating the tag, if a new tag needs to be
+                created.  If the tag already exists, we DO NOT update
+                the user.
             tag_text: the text of the tag.
 
         Returns:
@@ -560,11 +565,13 @@ class MarkingTaskService:
             raise serializers.ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-        try:
-            tag_obj = MarkingTaskTag.objects.get(text=tag_text)
-        except MarkingTaskTag.DoesNotExist:
-            # no such tag exists, so create one
-            tag_obj = MarkingTaskTag.objects.create(user=user, text=tag_text)
+        tag_obj, _created = MarkingTaskTag.objects.get_or_create(
+            text=tag_text, defaults={"user": user}
+        )
+        if _created:
+            # "The bank might keep declining 'em. But these hundred dollar cheques,
+            #  I'm signin' 'em."  -- Street Sweeper Social Club re: Issue #2642
+            log.debug('New tag "%d" created by %s', tag_obj, user)
         return tag_obj
 
     @transaction.atomic
@@ -676,7 +683,7 @@ class MarkingTaskService:
 
         Args:
             tag_text: which tag to add, creating it if necessary.
-            code: from which task, for example ``"q0123g5"`` for paper
+            code: from which task, for example ``"0123g5"`` for paper
                 123 question 5.
             user: who is doing the tagging.
                 TODO: record who tagged: Issue #2840.
@@ -699,7 +706,7 @@ class MarkingTaskService:
 
         Args:
             tag_text: which tag to remove.
-            code: from which task, for example ``"q0123g5"`` for paper
+            code: from which task, for example ``"0123g5"`` for paper
                 123 question 5.
 
         Raises:
@@ -785,8 +792,6 @@ class MarkingTaskService:
         except Paper.DoesNotExist:
             raise ValueError(f"Cannot find paper {paper_number}")
 
-        ibs = ImageBundleService()
-
         # now we know there is at least one task (either valid or out of date)
         valid_tasks = MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
@@ -814,7 +819,7 @@ class MarkingTaskService:
 
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
         pq_pair = (paper_obj.paper_number, question_index)
-        if ibs.are_paper_question_pairs_ready([pq_pair])[pq_pair]:
+        if ImageBundleService.check_if_paper_question_pairs_ready([pq_pair])[pq_pair]:
             self.create_task(paper_obj, question_index)
 
     @transaction.atomic

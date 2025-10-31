@@ -46,7 +46,7 @@ def assert_can_modify_spec():
 
 
 # 2 = the sources depend on the spec, and built-papers depend on the sources
-def assert_can_modify_sources():
+def assert_can_modify_sources(*, deleting: bool = False) -> None:
     from . import PapersPrinted
     from plom_server.Papers.services import SpecificationService
     from plom_server.BuildPaperPDF.services import BuildPapersService
@@ -54,9 +54,10 @@ def assert_can_modify_sources():
     # cannot modify sources if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
-    # if there is no spec, then cannot modify sources
-    if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no specification.")
+    # if there is no spec, then cannot modify sources (unless deleting)
+    if not deleting:
+        if not SpecificationService.is_there_a_spec():
+            raise PlomDependencyConflict("There is no specification.")
     # cannot modify sources if any papers have been produced
     if BuildPapersService().are_any_papers_built():
         raise PlomDependencyConflict(
@@ -152,7 +153,7 @@ def assert_can_modify_prenaming_config():
 
 
 # 4 - qvmap depends on the spec, build papers depends on the qvmap
-def assert_can_modify_qv_mapping_database():
+def assert_can_modify_qv_mapping_database(*, deleting: bool = False) -> None:
     from . import PapersPrinted, PrenameSettingService, StagingStudentService
     from plom_server.Papers.services import SpecificationService
     from plom_server.BuildPaperPDF.services import BuildPapersService
@@ -160,9 +161,10 @@ def assert_can_modify_qv_mapping_database():
     # cannot modify qv mapping / database if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
-    # cannot modify the qv-mapping if there is no spec
-    if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no assessment spec.")
+    # cannot modify the qv-mapping if there is no spec (but deleting ok)
+    if not deleting:
+        if not SpecificationService.is_there_a_spec():
+            raise PlomDependencyConflict("There is no assessment spec.")
 
     # if prenaming set, then we must have a classlist before can modify qv-map.
     # else we can modify independent of the classlist.

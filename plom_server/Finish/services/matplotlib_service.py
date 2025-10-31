@@ -175,8 +175,8 @@ class MatplotlibService:
         self.ensure_all_figures_closed()
 
         qlabel = SpecificationService.get_question_label(question_idx)
-        ver_column = "q" + str(question_idx) + "_version"
-        mark_column = "q" + str(question_idx) + "_mark"
+        ver_column = qlabel + "_version"
+        mark_column = qlabel + "_mark"
         plot_series = []
         if versions:
             if pd.isna(student_df[ver_column].max()):
@@ -321,7 +321,7 @@ class MatplotlibService:
         if ta_df is None:
             ta_df = self.des._get_ta_data_for_ta(
                 ta_name,
-                ta_df=self.des._get_ta_data_for_question(question_index=question_idx),
+                ta_df=self.des._get_ta_data_for_question(question_idx),
             )
 
         assert isinstance(ta_df, pd.DataFrame)
@@ -584,9 +584,7 @@ class MatplotlibService:
         plt.xlim(
             [
                 -0.5,
-                self.des._get_ta_data_for_question(question_index=question_idx)[
-                    "max_score"
-                ].max()
+                self.des._get_ta_data_for_question(question_idx)["max_score"].max()
                 + 0.5,
             ]
         )

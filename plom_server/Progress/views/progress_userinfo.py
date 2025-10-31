@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Bryan Tanady
 
 from django.contrib.auth.models import User
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from plom_server.Base.base_group_views import ManagerRequiredView
@@ -16,8 +17,8 @@ from ..services import UserInfoServices
 
 
 class ProgressUserInfoHome(ManagerRequiredView):
-    def get(self, request):
-        context = super().build_context()
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
         filter_form = AnnotationFilterForm(request.GET)
 
         uis = UserInfoServices()
@@ -45,11 +46,6 @@ class ProgressUserInfoHome(ManagerRequiredView):
         annotations_grouped_by_user = uis.get_annotations_based_on_user(
             filtered_annotations
         )
-        annotations_grouped_by_question_ver = (
-            uis.get_annotations_based_on_question_and_version(
-                annotations_grouped_by_user
-            )
-        )
 
         usernames_with_quota = QuotaService.get_list_of_usernames_with_quotas()
 
@@ -64,7 +60,6 @@ class ProgressUserInfoHome(ManagerRequiredView):
         context.update(
             {
                 "annotations_grouped_by_user": annotations_grouped_by_user,
-                "annotations_grouped_by_question_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
                 "default_quota_limit": default_quota_limit,

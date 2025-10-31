@@ -2,22 +2,28 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-from importlib import resources
+from django.test import TestCase
 
-from plom_server.Base.tests import ConfigTestCase
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Papers.models import Paper
 from plom_server.TaskOrder.services import TaskOrderService
 
 from ..models import MarkingTask
 from ..services import QuestionMarkingService, MarkingPriorityService
-from . import config_files
 
 
-class MarkingTaskPriorityTests(ConfigTestCase):
+class MarkingTaskPriorityTests(TestCase):
     """Tests for marking task priority."""
 
-    # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
-    config_file = resources.files(config_files) / "priority_tests.toml"  # type: ignore[assignment]
+    @config_test(
+        {
+            "test_spec": "tiny_spec.toml",
+            "num_to_produce": 5,
+            "auto_init_tasks": True,
+        }
+    )
+    def setUp(self) -> None:
+        pass
 
     def test_taskorder_default(self) -> None:
         strategy = MarkingPriorityService.get_mark_priority_strategy()

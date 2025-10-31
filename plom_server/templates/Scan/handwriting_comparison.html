@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Deep Shah
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -27,6 +28,7 @@
                 </div>
                 <div class="card-body p-0 position-relative overflow-hidden flex-grow-1">
                     {% if prev_paper_first_page_index is not None %}
+                        <small class="fw-light small lh-1 position-absolute top-0 start-0 m-2 z-3">{{ prev_paper_first_page_info }}</small>
                         <button id="view-pdf-btn-prev"
                                 class="btn btn-sm btn-secondary position-absolute bottom-0 end-0 m-2 z-3"
                                 onclick="showPdf('prev')">View Full PDF</button>
@@ -63,6 +65,7 @@
                 </div>
                 <div class="card-body p-0 position-relative overflow-hidden flex-grow-1">
                     {% if next_paper_first_page_index is not None %}
+                        <small class="fw-light small lh-1 position-absolute top-0 start-0 m-2 z-3">{{ next_paper_first_page_info }}</small>
                         <button id="view-pdf-btn-next"
                                 class="btn btn-sm btn-secondary position-absolute bottom-0 end-0 m-2 z-3"
                                 onclick="showPdf('next')">View Full PDF</button>
