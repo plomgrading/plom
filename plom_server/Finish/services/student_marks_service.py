@@ -37,7 +37,7 @@ class StudentMarkService:
         """Get a list of papers which are and aren't completely marked.
 
         This will only fetch 'used' papers, see
-        :func: `ManageScanService._get_used_unused_paper_querysets()` for
+        :method:`ManageScanService._get_used_unused_paper_querysets()` for
         definitions of used and unused papers.
         A marked paper will have one complete marking
         task for each question.
@@ -110,7 +110,7 @@ class StudentMarkService:
     def are_all_papers_marked(cls) -> bool:
         """Return True if all used papers are marked.
 
-        See :func: `ManageScanService._get_used_unused_paper_querysets()` for
+        See :method:`ManageScanService._get_used_unused_paper_querysets()` for
         definitions of used and unused papers.
         """
         _, unmarked_papers = cls._get_marked_unmarked_paper_querysets()
