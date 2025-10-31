@@ -158,6 +158,7 @@ def get_parser() -> argparse.ArgumentParser:
         """,
     )
     s.add_argument("papernum", type=int)
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -505,7 +506,7 @@ def main():
         print(r)
 
     elif args.command == "get-reassembled":
-        r = get_reassembled(args.papernum, msgr=m)
+        r = get_reassembled(args.papernum, msgr=m, verbose=args.verbose)
         print(
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'

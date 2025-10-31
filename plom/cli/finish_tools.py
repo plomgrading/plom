@@ -44,9 +44,9 @@ def get_marks_as_csv_string(*, papernum: int | None = None, msgr) -> str:
 
 
 @with_messenger
-def get_reassembled(papernum: int, *, msgr) -> dict[str, Any]:
+def get_reassembled(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a paper in its marked state."""
-    return msgr.new_server_get_reassembled(papernum)
+    return msgr.new_server_get_reassembled(papernum, verbose=verbose)
 
 
 @with_messenger
