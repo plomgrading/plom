@@ -96,6 +96,7 @@ class StudentMarkService:
         Returns:
             bool: True when all questions in the given paper are marked.
         """
+        # TODO: Is this the most efficient way to compute marked vs unmarked?
         paper_tasks = MarkingTask.objects.filter(paper=paper)
         n_completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE).count()
         n_out_of_date_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE).count()
