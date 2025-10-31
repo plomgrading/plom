@@ -397,7 +397,7 @@ class HandwritingComparisonView(ScannerRequiredView):
         nearest_prev_known_index = None
 
         # WARNING: Potentially inefficient DB access
-        for i in range(index - 1, -1, -1):
+        for i in range(index - 1, 0, -1):
             page_info = scanner.get_bundle_single_page_info(bundle, i)
             if page_info.get("status") == "known":
                 prev_paper_number = page_info.get("info", {}).get("paper_number")
