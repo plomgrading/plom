@@ -306,8 +306,10 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_unmarked(self, papernum: int) -> dict[str, Any]:
-        """Download a unmarked PDF file from the server.
+    def new_server_get_unmarked(
+        self, papernum: int, *, verbose: bool = False
+    ) -> dict[str, Any]:
+        """Download an unmarked PDF file from the server.
 
         Returns:
             A dict including key `"filename"` for the file that was written
@@ -317,6 +319,9 @@ class PlomAdminMessenger(Messenger):
             raise PlomNoServerSupportException(
                 "Server too old: API does not support getting unmarked papers"
             )
+
+        verbose_print = print if verbose else (lambda content: None)
+        verbose_tqdm = tqdm if verbose else (lambda iterable: iterable)
 
         with self.SRmutex:
             try:
@@ -332,7 +337,8 @@ class PlomAdminMessenger(Messenger):
                 num_bytes = 0
                 # defaults to CWD: TODO: kwarg to change that?
                 with open(filename, "wb") as f:
-                    for chunk in tqdm(response.iter_content(chunk_size=8192)):
+                    for chunk in verbose_tqdm(response.iter_content(chunk_size=8192)):
+                        verbose_print((type(chunk), len(chunk)))
                         f.write(chunk)
                         num_bytes += len(chunk)
                 r = {

@@ -54,9 +54,9 @@ def get_reassembled(papernum: int, *, msgr, verbose: bool = False) -> dict[str, 
 
 
 @with_messenger
-def get_unmarked(papernum: int, *, msgr) -> dict[str, Any]:
+def get_unmarked(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a paper in its unmarked state."""
-    return msgr.new_server_get_unmarked(papernum)
+    return msgr.new_server_get_unmarked(papernum, verbose=verbose)
 
 
 @with_messenger
@@ -95,8 +95,10 @@ def get_all_reassembled(
 
 
 @with_messenger
-def get_all_unmarked(*, dirname: str = "unmarked", msgr) -> dict[str, Any]:
-    """Get all papers their unmarked states.
+def get_all_unmarked(
+    *, dirname: str = "unmarked", msgr, verbose: bool = False
+) -> dict[str, Any]:
+    """Get all papers in their unmarked states.
 
     Raises:
         OSError: directory already exists or cannot be written to.
@@ -106,12 +108,12 @@ def get_all_unmarked(*, dirname: str = "unmarked", msgr) -> dict[str, Any]:
     paper_count = 0
     content_length = 0
 
-    mkdir(dirname)  # this raises an error if it dirname/ already exists
+    mkdir(dirname)  # this raises an error if dirname/ already exists
     chdir(dirname)
     for papernum_string in tqdm(pqvmap_dict.keys()):
         papernum = int(papernum_string)
         try:
-            r = msgr.new_server_get_unmarked(papernum)
+            r = msgr.new_server_get_unmarked(papernum, verbose=verbose)
             paper_count += 1
             content_length += r["content-length"]
 

@@ -200,6 +200,7 @@ def get_parser() -> argparse.ArgumentParser:
             scans of all papers that exist on the server in their unmarked states.
         """,
     )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -561,13 +562,13 @@ def main():
         if (args.all is not None) == (args.papernum is not None):
             raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
         if args.papernum is not None:
-            r = get_unmarked(args.papernum, msgr=m)
+            r = get_unmarked(args.papernum, msgr=m, verbose=args.verbose)
             print(
                 f"wrote unmarked paper number {args.papernum} to "
                 f'file {r["filename"]} [{r["content-length"]} bytes]'
             )
         elif args.all:
-            r = get_all_unmarked(msgr=m)
+            r = get_all_unmarked(msgr=m, verbose=args.verbose)
             print(
                 f'wrote {r["num-papers"]} unmarked papers to '
                 f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
