@@ -6,6 +6,7 @@
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% load static %}
 {% load django_htmx %}
@@ -142,5 +143,10 @@
         {% comment %}
 		  {% django_htmx_script %}
         {% endcomment %}
+        <!-- This is a last ditch effort to catch htmx errors (400/500 responses,
+	or no connection to server).
+        It's important that this is placed near the bottom of the file, so htmx error
+        events can have propagation cancelled before they're heard here. -->
+        <script type="module" src="{% static '/js/plom_htmx_error_handler.js' %}"></script>
     </body>
 </html>
