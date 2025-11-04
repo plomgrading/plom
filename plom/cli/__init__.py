@@ -22,6 +22,8 @@ from .identify_tools import id_paper, un_id_paper
 from .finish_tools import (
     get_reassembled,
     get_all_reassembled,
+    get_report,
+    get_all_reports,
     get_solution,
     get_all_solutions,
     get_unmarked,
