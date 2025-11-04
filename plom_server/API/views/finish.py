@@ -40,6 +40,50 @@ class FinishReassembled(APIView):
         return FileResponse(pdf_file, status=status.HTTP_200_OK)
 
 
+class FinishReport(APIView):
+    """API related to bundles."""
+
+    # GET: /api/beta/finish/report/{papernum}
+    def get(self, request: Request, *, papernum: int) -> FileResponse:
+        """API to download a report for a given paper.
+
+        Only managers and lead_markers can access this, others will receive a 403.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("manager" in group_list or "lead_marker" in group_list):
+            return _error_response(
+                'Only "manager" and "lead_marker" users can download reassembled papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        return _error_response(
+            "Reports not implemented yet",
+            status.HTTP_501_NOT_IMPLEMENTED,
+        )
+
+
+class FinishSolution(APIView):
+    """API related to bundles."""
+
+    # GET: /api/beta/finish/solution/{papernum}
+    def get(self, request: Request, *, papernum: int) -> FileResponse:
+        """API to download a solution set for a given paper.
+
+        Only managers and lead_markers can access this, others will receive a 403.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("manager" in group_list or "lead_marker" in group_list):
+            return _error_response(
+                'Only "manager" and "lead_marker" users can download reassembled papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        return _error_response(
+            "Solutions not implemented yet",
+            status.HTTP_501_NOT_IMPLEMENTED,
+        )
+
+
 class FinishUnmarked(APIView):
     """API related to unmarked papers."""
 
