@@ -14,7 +14,7 @@ from .utils import _error_response
 
 
 class FinishReassembled(APIView):
-    """API related to bundles."""
+    """API related to marked and reassembled papers."""
 
     # GET: /api/beta/finish/reassembled/{papernum}
     def get(self, request: Request, *, papernum: int) -> FileResponse:
@@ -41,7 +41,7 @@ class FinishReassembled(APIView):
 
 
 class FinishReport(APIView):
-    """API related to bundles."""
+    """API related to student reports."""
 
     # GET: /api/beta/finish/report/{papernum}
     def get(self, request: Request, *, papernum: int) -> FileResponse:
@@ -52,18 +52,23 @@ class FinishReport(APIView):
         group_list = list(request.user.groups.values_list("name", flat=True))
         if not ("manager" in group_list or "lead_marker" in group_list):
             return _error_response(
-                'Only "manager" and "lead_marker" users can download reassembled papers',
+                'Only "manager" and "lead_marker" users can download report files',
                 status.HTTP_403_FORBIDDEN,
             )
 
-        return _error_response(
-            "Reports not implemented yet",
-            status.HTTP_501_NOT_IMPLEMENTED,
-        )
+        try:
+            pdf_file = ReassembleService().get_single_student_report(papernum)
+        except ObjectDoesNotExist as err:
+            return _error_response(
+                f"Report for paper {papernum} does not exist: perhaps the paper is"
+                f" not yet marked, identified or reassemble is in-progress: {err}",
+                status.HTTP_404_NOT_FOUND,
+            )
+        return FileResponse(pdf_file, status=status.HTTP_200_OK)
 
 
 class FinishSolution(APIView):
-    """API related to bundles."""
+    """API related to solution files."""
 
     # GET: /api/beta/finish/solution/{papernum}
     def get(self, request: Request, *, papernum: int) -> FileResponse:
