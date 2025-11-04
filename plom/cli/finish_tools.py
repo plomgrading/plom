@@ -40,11 +40,49 @@ def get_reassembled(papernum: int, *, msgr, verbose: bool = False) -> dict[str, 
     """Get a paper in its marked state."""
     return msgr.new_server_get_reassembled(papernum, verbose=verbose)
 
-
 @with_messenger
 def get_unmarked(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a paper in its unmarked state."""
     return msgr.new_server_get_unmarked(papernum, verbose=verbose)
+
+def get_solution(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
+    """Get a solution set for a given paper."""
+    return msgr.new_server_get_solution(papernum, verbose=verbose)
+
+
+@with_messenger
+def get_all_solutions(
+    *, dirname: str = "solutions", msgr, verbose: bool = False
+) -> dict[str, Any]:
+    """Get solution files for all papers.
+
+    Raises:
+        OSError: directory already exists or cannot be written to.
+    """
+    pqvmap_dict = msgr.new_server_get_pqvmap()
+    previous_cwd = getcwd()
+    paper_count = 0
+    content_length = 0
+
+    mkdir(dirname)  # this raises an error if it dirname/ already exists
+    chdir(dirname)
+    for papernum_string in tqdm(pqvmap_dict.keys()):
+        papernum = int(papernum_string)
+        try:
+            r = msgr.new_server_get_solution(papernum, verbose=verbose)
+            paper_count += 1
+            content_length += r["content-length"]
+
+        except PlomException as err:
+            print(err)
+    chdir(previous_cwd)
+
+    information = {
+        "dirname": dirname,
+        "num-papers": paper_count,
+        "content-length": content_length,
+    }
+    return information
 
 
 @with_messenger
