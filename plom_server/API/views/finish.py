@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework import status
 
-from plom_server.Finish.services import ReassembleService
+from plom_server.Finish.services import ReassembleService, BuildSolutionService
 
 from .utils import _error_response
 
@@ -67,21 +67,26 @@ class FinishSolution(APIView):
 
     # GET: /api/beta/finish/solution/{papernum}
     def get(self, request: Request, *, papernum: int) -> FileResponse:
-        """API to download a solution set for a given paper.
+        """API to download a solution file for a given paper.
 
         Only managers and lead_markers can access this, others will receive a 403.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if not ("manager" in group_list or "lead_marker" in group_list):
             return _error_response(
-                'Only "manager" and "lead_marker" users can download reassembled papers',
+                'Only "manager" and "lead_marker" users can download solution files',
                 status.HTTP_403_FORBIDDEN,
             )
 
-        return _error_response(
-            "Solutions not implemented yet",
-            status.HTTP_501_NOT_IMPLEMENTED,
-        )
+        try:
+            pdf_file = BuildSolutionService().get_single_solution_pdf_file(papernum)
+        except ObjectDoesNotExist as err:
+            return _error_response(
+                "Solution file does not exist: perhaps not yet assembled,"
+                f" assembly is in-progress: {err}",
+                status.HTTP_404_NOT_FOUND,
+            )
+        return FileResponse(pdf_file, status=status.HTTP_200_OK)
 
 
 class FinishUnmarked(APIView):
