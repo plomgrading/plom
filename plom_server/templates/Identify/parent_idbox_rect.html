@@ -26,8 +26,7 @@
             {% else %}
                 <div class="alert alert-success w-50 d-flex align-items-center">
                     All ID-box rectangles are set:
-                    <button hx-confirm="Are you sure?"
-                            hx-put="{% url 'id_prediction_launch' %}"
+                    <button hx-put="{% url 'id_prediction_launch' %}"
                             class="btn btn-primary mx-2">Launch Auto-ID-Reader</button>
                 </div>
             {% endif %}
