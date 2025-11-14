@@ -7,25 +7,24 @@
 # Copyright (C) 2025 Deep Shah
 # Copyright (C) 2025 Aidan Murphy
 
+from datetime import datetime
 from typing import Any
 
 import pymupdf
 
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404, FileResponse, HttpRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.contrib import messages
-
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils.decorators import method_decorator
-
-from plom_server.Base.base_group_views import ScannerRequiredView
-from plom_server.Papers.services import SpecificationService, PaperInfoService
-from ..services import ScanService
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from plom.misc_utils import format_int_list_with_runs
-from datetime import datetime
+from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+
+from ..services import ScanService
 
 
 class ThumbnailContainerFragmentView(ScannerRequiredView):
@@ -386,6 +385,8 @@ class HandwritingComparisonView(ScannerRequiredView):
 
         Args:
             request: The incoming HTTP GET request.
+
+        Keyword Args:
             bundle_id: The ID of the bundle containing scanned pages.
             index: The page index of the extra (unidentified) page to compare.
 
@@ -403,7 +404,7 @@ class HandwritingComparisonView(ScannerRequiredView):
         nearest_prev_known_index = None
 
         # WARNING: Potentially inefficient DB access
-        for i in range(index - 1, -1, -1):
+        for i in range(index - 1, 0, -1):
             page_info = scanner.get_bundle_single_page_info(bundle, i)
             if page_info.get("status") == "known":
                 prev_paper_number = page_info.get("info", {}).get("paper_number")
@@ -425,9 +426,11 @@ class HandwritingComparisonView(ScannerRequiredView):
                         and int(page_num_in_paper) == 1
                     ):
                         prev_paper_first_page_index = page.get("order")
+                        prev_paper_first_page_info = "ID page"
                         break
 
         if prev_paper_first_page_index is None:
+            prev_paper_first_page_info = "(could not find ID page; showing nearest)"
             prev_paper_first_page_index = nearest_prev_known_index
 
         next_paper_number = None
@@ -456,10 +459,12 @@ class HandwritingComparisonView(ScannerRequiredView):
                         and int(page_num_in_paper) == 1
                     ):
                         next_paper_first_page_index = page.get("order")
+                        next_paper_first_page_info = "ID page"
                         break
 
         if next_paper_first_page_index is None:
             next_paper_first_page_index = nearest_next_known_index
+            next_paper_first_page_info = "(could not find ID page; showing nearest)"
 
         context.update(
             {
@@ -469,6 +474,8 @@ class HandwritingComparisonView(ScannerRequiredView):
                 "next_paper_number": next_paper_number,
                 "prev_paper_first_page_index": prev_paper_first_page_index,
                 "next_paper_first_page_index": next_paper_first_page_index,
+                "prev_paper_first_page_info": prev_paper_first_page_info,
+                "next_paper_first_page_info": next_paper_first_page_info,
                 "current_page": current_page,
             }
         )

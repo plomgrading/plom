@@ -4,9 +4,9 @@
 
 """This is an abstracted inference for https://github.com/BryanTanady/plom_ml_clustering."""
 
-import os
 import yaml
 from abc import abstractmethod
+from importlib import resources
 from pathlib import Path
 from typing import Mapping
 
@@ -15,6 +15,7 @@ from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.cluster import AgglomerativeClustering
 from huggingface_hub import hf_hub_download
 
+import plom_ml.clustering.model
 from plom_ml.clustering.embedding.embedder import (
     Embedder,
     SymbolicEmbedder,
@@ -201,9 +202,8 @@ class HMEClusteringStrategy(ClusteringStrategy):
     """
 
     def __init__(self):
-        # load model config
-        config_path = os.path.join(os.path.dirname(__file__), "model_config.yaml")
-        with open(config_path) as f:
+        config_path = resources.files(plom_ml.clustering.model) / "model_config.yaml"
+        with config_path.open("r") as f:
             config = yaml.safe_load(f)
 
         # load weights path
@@ -309,9 +309,8 @@ class MCQClusteringStrategy(ClusteringStrategy):
     """
 
     def __init__(self):
-        # load model config
-        config_path = os.path.join(os.path.dirname(__file__), "model_config.yaml")
-        with open(config_path) as f:
+        config_path = resources.files(plom_ml.clustering.model) / "model_config.yaml"
+        with config_path.open("r") as f:
             config = yaml.safe_load(f)
 
         # check if weight has been downloaded

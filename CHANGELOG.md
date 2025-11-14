@@ -26,8 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* Compare handwriting now explains why if it shows a non-ID page (for example, if the ID page is itself unknown).
+* Improvements to command-line tools and error handling.
 
 ### Fixed
+* Packaging of the QuestionClustering app was broken.
 
 
 
