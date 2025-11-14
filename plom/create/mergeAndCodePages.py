@@ -507,6 +507,7 @@ def make_PDF(
         }
 
     if public_code is None:
+        # Only legacy code should be passing None in here: likely can be removed soon!
         public_code = spec["publicCode"]
 
     # Build all relevant pngs in a temp directory
