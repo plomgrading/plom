@@ -46,14 +46,14 @@
                               method="post"
                               action="{% url 'public_code' %}">
                             {% csrf_token %}
-                            <div class="form-floating m-2">
+                            <div class="form-floating">
                                 <input type="text"
                                        name="new_public_code"
                                        class="form-control"
                                        id="new_public_code">
                                 <label for="new_public_code">New 6-digit public code, or blank to generate a random code</label>
                             </div>
-                            <div class="form-check m-2">
+                            <div class="form-check my-2">
                                 <input class="form-check-input"
                                        type="checkbox"
                                        role="switch"
