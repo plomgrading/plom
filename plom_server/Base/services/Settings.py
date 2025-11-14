@@ -142,3 +142,8 @@ def get_or_create_new_public_code():
         key="public_code", defaults={"value": new_magic_code()}
     )
     return obj.value
+
+
+def create_new_random_public_code():
+    """Create a new random public code, independent of whether one already exists."""
+    set_public_code(new_magic_code())

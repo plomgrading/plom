@@ -8,7 +8,6 @@ from django.http import (
 )
 from django.shortcuts import render, redirect
 
-from plom.tpv_utils import new_magic_code
 from plom_server.Base.services import Settings
 from plom_server.Base.base_group_views import ManagerRequiredView
 
@@ -31,10 +30,11 @@ class PublicCodeView(ManagerRequiredView):
         public_code = request.POST.get("new_public_code")
         if not request.POST.get("confirm_check"):
             return HttpResponseBadRequest("Must confirm by clicking the checkbox")
-        if not public_code:
-            public_code = new_magic_code()
         try:
-            Settings.set_public_code(public_code)
+            if not public_code:
+                Settings.create_new_random_public_code()
+            else:
+                Settings.set_public_code(public_code)
         except ValueError as e:
             return HttpResponseBadRequest(e)
         return redirect("public_code")
