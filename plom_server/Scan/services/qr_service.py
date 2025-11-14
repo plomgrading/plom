@@ -11,7 +11,8 @@ from django.db import transaction
 
 from plom.tpv_utils import parse_paper_page_version
 
-from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Base.services import Settings
+from plom_server.Papers.services import PaperInfoService
 from ..models import (
     StagingImage,
     StagingBundle,
@@ -169,7 +170,7 @@ class QRService:
 
     @staticmethod
     def _check_consistent_qrs(parsed_qr_dict: dict[str, dict[str, Any]]) -> None:
-        """Check the parsed qr-codes: confirm they are self-consistent and that the publicCode matches the test spec.
+        """Check the parsed qr-codes: confirm they are self-consistent and that the publicCode matches.
 
         Note that the parsed_qr_dict is of the form
         {
@@ -265,13 +266,12 @@ class QRService:
         ):
             return True
 
-        # make sure the public code matches that given in the spec
-        spec_dictionary = SpecificationService.get_the_spec()
+        # make sure the public code matches
         public_code = qr_info["page_info"]["public_code"]
-        correct_public_code = spec_dictionary["publicCode"]
+        correct_public_code = Settings.get_public_code()
         if public_code != correct_public_code:
             raise ValueError(
-                f"Public code {public_code} does not match spec {correct_public_code}"
+                f"Public code {public_code} does not match server {correct_public_code}"
                 " - was a page from a different assessment uploaded?"
             )
 

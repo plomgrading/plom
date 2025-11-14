@@ -7,6 +7,7 @@ from pathlib import Path
 from pytest import raises
 import pymupdf
 
+from plom.tpv_utils import new_magic_code
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import make_PDF
@@ -91,11 +92,11 @@ def test_stamp_QRs(tmp_path) -> None:
 def test_qr_stamp_all_pages(tmp_path) -> None:
     assert buildDemoSourceFiles(basedir=tmp_path)
     spec = SpecVerifier.demo()
-    spec.checkCodes()
     pdf_path = make_PDF(
         spec,
         5,
         {1: 1, 2: 1, 3: 2},
+        public_code=new_magic_code(),
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )

@@ -6,6 +6,7 @@
 
 from django.urls import path
 from .views import (
+    PublicCodeView,
     PreparationLandingView,
     PreparationDependencyConflictView,
     PreparationFinishedView,
@@ -83,5 +84,10 @@ urlpatterns = [
         "reference_image/<int:version>/<int:page>",
         ReferenceImageView.as_view(),
         name="reference_image",
+    ),
+    path(
+        "public_code/",
+        PublicCodeView.as_view(),
+        name="public_code",
     ),
 ]

@@ -44,7 +44,7 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 
-Plom_API_Version = 115  # Our API version
+Plom_API_Version = 116  # Our API version
 Plom_Legacy_Server_API_Version = 60
 
 # We can support earlier servers by special-case code, so
@@ -55,6 +55,7 @@ Supported_Server_API_Versions = [
     113,  # 2025-01
     114,  # 2025-05
     115,  # 2025-09
+    116,  # 2025-??
 ]
 # Brief changelog
 #
@@ -70,6 +71,8 @@ Supported_Server_API_Versions = [
 # * 115
 #    - rubrics versions field uses string instead of list
 #    - tasks no longer start with "q"
+# * 116
+#    - get/set public_code
 
 
 log = logging.getLogger("messenger")

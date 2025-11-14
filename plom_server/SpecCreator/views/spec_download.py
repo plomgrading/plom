@@ -14,8 +14,9 @@ class SpecDownloadView(ManagerRequiredView):
     """Grab the toml of the current server specification."""
 
     def get(self, request: HttpRequest) -> HttpResponse | FileResponse:
+        """Get a representation of the server specification as .toml file."""
         try:
-            toml = SpecificationService.get_the_spec_as_toml(include_public_code=True)
+            toml = SpecificationService.get_the_spec_as_toml()
         except ObjectDoesNotExist as e:
             raise Http404(e) from e
         return FileResponse(

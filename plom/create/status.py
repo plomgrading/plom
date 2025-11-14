@@ -63,8 +63,7 @@ def status(*, msgr) -> None:
         print(check_mark + " Server has a spec ")
         sv = SpecVerifier(spec)
         print(sv)
-        # maybe above printer should do this?
-        print(f"  Server public code: {spec['publicCode']}")
+        print(f"  Old-style public code in spec: {spec.get('publicCode')}")
 
     print("\nUser information")
     print("----------------\n")

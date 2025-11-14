@@ -27,7 +27,7 @@ class Command(BaseCommand):
             self.stdout.write("No assessment specification present")
             return
 
-        toml_text = SpecificationService.get_the_spec_as_toml(include_public_code=True)
+        toml_text = SpecificationService.get_the_spec_as_toml()
         self.stdout.write("A valid assessment specification is present:")
         self.stdout.write("#" * 40)
         self.stdout.write(f"{toml_text}")
@@ -47,15 +47,11 @@ class Command(BaseCommand):
         if fname.exists():
             raise CommandError(f"File {fname} already present - not overwriting.")
         with open(fname, "w") as f:
-            f.write(SpecificationService.get_the_spec_as_toml(include_public_code=True))
+            f.write(SpecificationService.get_the_spec_as_toml())
 
-    def upload_spec(
-        self, spec_file: str | Path, force_public_code: bool = False
-    ) -> None:
+    def upload_spec(self, spec_file: str | Path) -> None:
         try:
-            SpecificationService.install_spec_from_toml_file(
-                spec_file, force_public_code=force_public_code
-            )
+            SpecificationService.install_spec_from_toml_file(spec_file)
         except (
             PlomDependencyConflict,
             SpecificationService.TOMLDecodeError,
@@ -82,16 +78,6 @@ class Command(BaseCommand):
         )
         sub.add_parser("status", help="Show details of current specification")
         sp_U = sub.add_parser("upload", help="Upload a specification")
-        sp_U.add_argument(
-            "--force-public-code",
-            default=False,
-            action="store_true",
-            help="""
-                Allow specifying the "publicCode" which prevents uploading
-                papers from a different server.
-                Read the docs before using this!
-            """,
-        )
         sp_D = sub.add_parser("download", help="Download the current specification")
         sp_D.add_argument(
             "dest", type=str, nargs="?", help="Where to download specification toml"
@@ -107,7 +93,7 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":
-            self.upload_spec(options["test_spec.toml"], options["force_public_code"])
+            self.upload_spec(options["test_spec.toml"])
         elif options["command"] == "download":
             self.download_spec(options["dest"])
         elif options["command"] == "remove":

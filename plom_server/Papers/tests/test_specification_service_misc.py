@@ -55,13 +55,8 @@ class SpecificationServiceMiscTests(TestCase):
         t = s.get_the_spec_as_toml()
         assert isinstance(t, str)
 
-    def test_get_the_spec_as_toml_with_code(self) -> None:
-        t = s.get_the_spec_as_toml(include_public_code=True)
-        assert isinstance(t, str)
-        assert "publicCode" in t
-
-    def test_get_the_spec_as_toml_without_code(self) -> None:
-        t = s.get_the_spec_as_toml(include_public_code=False)
+    def test_get_the_spec_as_toml_no_public_code(self) -> None:
+        t = s.get_the_spec_as_toml()
         assert isinstance(t, str)
         assert "publicCode" not in t
 
