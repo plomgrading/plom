@@ -18,6 +18,12 @@
         <p class="lead m-4">
             Current public code: <tt>{{ public_code }}</tt>
         </p>
+        <p>
+            One reason to change the public code is to
+            <a class="link-secondary"
+               href="https://plom.readthedocs.io/en/stable/faq.html#how-can-i-clone-a-server-so-that-it-accepts-scans-intended-for-another-server">clone a server</a>,
+            so that it accepts scans intended for another.
+        </p>
         <div class="accordion mt-2" id="reset_accordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="accordion_heading1">
@@ -35,13 +41,6 @@
                      aria-labelledby="accordion_heading1"
                      data-bs-parent="#reset_accordion">
                     <div class="accordion-body bg-danger-subtle">
-                        <p>
-                            One (rare!) reason to change this is to
-                            <a class="link-secondary"
-                               href="https://plom.readthedocs.io/en/stable/faq.html#how-can-i-clone-a-server-so-that-it-accepts-scans-intended-for-another-server">clone a server</a>,
-                            so that it accepts scans intended for another.
-                            Maybe you have your own reasons, but be careful!
-                        </p>
                         <form enctype="multipart/form-data"
                               id="form"
                               method="post"
