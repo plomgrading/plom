@@ -89,7 +89,8 @@ class SolnSourceService:
         for obj in SolutionSourcePDF.objects.all():
             cls.remove_solution_pdf(obj.version)
 
-    def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
+    @staticmethod
+    def get_soln_pdf_for_download(version: int) -> io.BytesIO:
         """Return bytes of solution pdf for given version."""
         if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")

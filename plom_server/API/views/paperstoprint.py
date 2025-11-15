@@ -109,15 +109,14 @@ class papersToPrint(APIView):
                 )
 
         if papernumber is not None:
+            papernumber = int(papernumber)
             # Return single PDF as requested by number
             # Very similar (hardly DRY) to adjacent method GetPDFFile.get()
             try:
                 (
                     pdf_filename,
                     pdf_bytes,
-                ) = BuildPapersService().get_paper_recommended_name_and_bytes(
-                    int(papernumber)
-                )
+                ) = BuildPapersService.get_paper_recommended_name_and_bytes(papernumber)
             except ValueError:
                 return _error_response(
                     f"Paper {papernumber} not found", status.HTTP_404_NOT_FOUND

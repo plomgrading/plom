@@ -137,9 +137,10 @@ class Command(BaseCommand):
         self.stdout.write(f"Revoked {N} build paper PDF chores")
 
     def download_specific_paper(self, paper_number: int) -> None:
-        bp_service = BuildPapersService()
         try:
-            (name, b) = bp_service.get_paper_recommended_name_and_bytes(paper_number)
+            (name, b) = BuildPapersService.get_paper_recommended_name_and_bytes(
+                paper_number
+            )
         except ValueError as err:
             raise CommandError(err)
 

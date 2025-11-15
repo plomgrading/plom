@@ -3,22 +3,25 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseRedirect,
+    FileResponse,
+    Http404,
+)
 from django.shortcuts import render
 from django.urls import reverse
-from django.http import HttpResponseRedirect, FileResponse, Http404
-
 from django_htmx.http import HttpResponseClientRedirect
 
-
 from plom_server.Base.base_group_views import ManagerRequiredView
-
-from ..services import SolnSourceService, BuildSolutionService
 from plom_server.Papers.services import SolnSpecService, SpecificationService
+from ..services import SolnSourceService, BuildSolutionService
 
 
 class SolnSourcesView(ManagerRequiredView):
-    def get(self, request, version=None):
+    def get(self, request: HttpRequest, *, version=None) -> HttpResponse | FileResponse:
+        """Download one particular source, or render a page about all sources."""
         context = self.build_context()
         if not SolnSpecService.is_there_a_soln_spec():
             return HttpResponseRedirect(reverse("soln_home"))
@@ -26,7 +29,7 @@ class SolnSourcesView(ManagerRequiredView):
         # version is non-null when user wants to download the source.
         if version:
             try:
-                source_bytes = SolnSourceService().get_soln_pdf_for_download(version)
+                source_bytes = SolnSourceService.get_soln_pdf_for_download(version)
                 return FileResponse(
                     source_bytes,
                     as_attachment=True,
