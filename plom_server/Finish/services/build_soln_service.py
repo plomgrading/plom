@@ -309,15 +309,15 @@ class BuildSolutionService:
                 continue
             self.queue_single_solution_build(data["paper_num"])
 
-    @transaction.atomic
-    def get_single_solution_pdf_file(self, paper_number: int) -> File:
+    @staticmethod
+    def get_single_solution_pdf_file(paper_number: int) -> tuple[File, str]:
         """Get the django-file of the solution pdf for the given paper.
 
         Args:
-            paper_number (int): The paper number to re-assemble.
+            paper_number: which paper to we want a solution for.
 
         Returns:
-            File: the django-File of the solution pdf.
+            Tuple of the the django-File of the solution pdf and the filename.
 
         Raises:
             ObjectDoesNotExist: no such paper or solution build chore, or if
@@ -329,7 +329,7 @@ class BuildSolutionService:
             obsolete=False,
             status=BuildSolutionPDFChore.COMPLETE,
         )
-        return chore.pdf_file
+        return (chore.pdf_file, chore.display_filename)
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
         """Mark a solution pdf build chore as obsolete and try to cancel it if queued in Huey.
@@ -385,8 +385,8 @@ class BuildSolutionService:
                 N += 1
         return N
 
-    @transaction.atomic
-    def get_completed_pdf_files_and_names(self) -> list[tuple[File, str]]:
+    @staticmethod
+    def get_completed_pdf_files_and_names() -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of solutions.
 
         Returns:
@@ -399,8 +399,8 @@ class BuildSolutionService:
             )
         ]
 
-    @transaction.atomic
-    def get_zipfly_generator(self, *, chunksize: int = 1024 * 1024) -> zipfly.ZipFly:
+    @classmethod
+    def get_zipfly_generator(cls, *, chunksize: int = 1024 * 1024) -> zipfly.ZipFly:
         """Return a streaminmg zipfile generator for archive of the solution pdfs.
 
         Keyword Args:
@@ -414,7 +414,7 @@ class BuildSolutionService:
                 "fs": pdf_file.path,
                 "n": f"solutions/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
+            for pdf_file, display_filename in cls.get_completed_pdf_files_and_names()
         ]
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
