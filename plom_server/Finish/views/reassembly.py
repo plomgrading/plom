@@ -105,9 +105,10 @@ class StartOneReassembly(ManagerRequiredView):
         ReassembleService().reset_single_paper_reassembly(paper_number)
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
-    def get(self, request, paper_number):
-        pdf_file = ReassembleService().get_single_reassembled_file(paper_number)
-        return FileResponse(pdf_file)
+    def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
+        """Download one of the reassembled papers."""
+        pdf_file, filename = ReassembleService.get_single_reassembled_file(paper_number)
+        return FileResponse(pdf_file, filename=filename)
 
     def put(self, request, paper_number):  # called by "re-reassemble"
         ReassembleService().reset_single_paper_reassembly(paper_number)

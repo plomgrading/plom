@@ -30,14 +30,14 @@ class FinishReassembled(APIView):
             )
 
         try:
-            pdf_file = ReassembleService().get_single_reassembled_file(papernum)
+            pdf_file, filename = ReassembleService.get_single_reassembled_file(papernum)
         except ObjectDoesNotExist as err:
             return _error_response(
                 "Reassembled paper does not exist: perhaps not yet marked,"
                 f" identified or reassemble is in-progress: {err}",
                 status.HTTP_404_NOT_FOUND,
             )
-        return FileResponse(pdf_file, status=status.HTTP_200_OK)
+        return FileResponse(pdf_file, filename=filename, status=status.HTTP_200_OK)
 
 
 class FinishUnmarked(APIView):
@@ -58,10 +58,11 @@ class FinishUnmarked(APIView):
             )
 
         try:
-            pdf_bytestream = ReassembleService().get_unmarked_paper(papernum)
+            pdf_bytestream = ReassembleService.get_unmarked_paper(papernum)
         except ValueError as err:
             return _error_response(
                 f"Unable to retrieve the 'unmarked' paper: {err}",
                 status.HTTP_404_NOT_FOUND,
             )
+        # note: filename set in service function
         return FileResponse(pdf_bytestream, status=status.HTTP_200_OK)
