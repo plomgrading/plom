@@ -191,7 +191,8 @@ class BuildPapersService:
             obsolete=False, status=BuildPaperPDFChore.ERROR
         ).exists()
 
-    def get_completed_pdf_files_and_names(self) -> list[tuple[File, str]]:
+    @staticmethod
+    def get_completed_pdf_files_and_names() -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of completed (built) tests papers."""
         return [
             (pdf.pdf_file, pdf.display_filename)
@@ -447,7 +448,8 @@ class BuildPapersService:
             for task in tasks
         ]
 
-    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
+    @classmethod
+    def get_zipfly_generator(cls, short_name: str, *, chunksize: int = 1024 * 1024):
         """Get a dynamic zip file streamer generator for all the PDF files.
 
         Raises:
@@ -458,7 +460,7 @@ class BuildPapersService:
                 "fs": pdf_path.path,
                 "n": f"papers_for_{short_name}/{display_filename}",
             }
-            for pdf_path, display_filename in self.get_completed_pdf_files_and_names()
+            for pdf_path, display_filename in cls.get_completed_pdf_files_and_names()
         ]
         if len(paths) == 0:
             raise ValueError("No PDF files are built")

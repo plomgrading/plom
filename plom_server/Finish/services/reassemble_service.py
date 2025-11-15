@@ -803,9 +803,9 @@ class ReassembleService:
             .count()
         )
 
-    @transaction.atomic
+    @staticmethod
     def get_completed_pdf_files_and_names(
-        self, *, first_paper: int | None = None, last_paper: int | None = None
+        *, first_paper: int | None = None, last_paper: int | None = None
     ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
 
@@ -825,9 +825,9 @@ class ReassembleService:
             query = query.filter(paper__paper_number__lte=last_paper)
         return [(task.pdf_file, task.display_filename) for task in query]
 
-    @transaction.atomic
+    @staticmethod
     def get_completed_report_files_and_names(
-        self, *, first_paper: int | None = None, last_paper: int | None = None
+        *, first_paper: int | None = None, last_paper: int | None = None
     ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
 
@@ -848,9 +848,10 @@ class ReassembleService:
 
         return [(task.report_pdf_file, task.report_display_filename) for task in query]
 
+    @classmethod
     @transaction.atomic
     def get_zipfly_generator(
-        self,
+        cls,
         *,
         first_paper: int | None = None,
         last_paper: int | None = None,
@@ -878,7 +879,7 @@ class ReassembleService:
                 "fs": pdf_file.path,
                 "n": f"reassembled/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names(
+            for pdf_file, display_filename in cls.get_completed_pdf_files_and_names(
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
@@ -887,7 +888,7 @@ class ReassembleService:
                 "fs": report_pdf_file.path,
                 "n": f"student_reports/{report_display_filename}",
             }
-            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names(
+            for report_pdf_file, report_display_filename in cls.get_completed_report_files_and_names(
                 first_paper=first_paper, last_paper=last_paper
             )
         ]

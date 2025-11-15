@@ -149,9 +149,8 @@ class Command(BaseCommand):
         self.stdout.write(f'Saved paper {paper_number} as "{name}"')
 
     def download_all_papers(self) -> None:
-        bps = BuildPapersService()
         short_name = SpecificationService.get_short_name_slug()
-        zgen = bps.get_zipfly_generator(short_name)
+        zgen = BuildPapersService.get_zipfly_generator(short_name)
         with open(f"{short_name}.zip", "wb") as fh:
             self.stdout.write(f"Opening {short_name}.zip to write the zip-file")
             tot_size = 0

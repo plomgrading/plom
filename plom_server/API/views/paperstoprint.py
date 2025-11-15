@@ -131,7 +131,7 @@ class papersToPrint(APIView):
         # Very similar (hardly DRY) to adjacent method GetStreamingZipOfPDFs.get()
         short_name = SpecificationService.get_short_name_slug()
         try:
-            zgen = BuildPapersService().get_zipfly_generator(short_name)
+            zgen = BuildPapersService.get_zipfly_generator(short_name)
         except ValueError:
             return _error_response(
                 f"Papers for {short_name} not found", status.HTTP_404_NOT_FOUND

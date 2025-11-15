@@ -132,7 +132,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         short_name = SpecificationService.get_short_name_slug()
         try:
-            zgen = BuildPapersService().get_zipfly_generator(short_name)
+            zgen = BuildPapersService.get_zipfly_generator(short_name)
         except ValueError as e:
             raise Http404(e)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
