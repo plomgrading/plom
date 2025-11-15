@@ -14,31 +14,19 @@ from tqdm import tqdm
 
 
 @with_messenger
-def get_marks_as_csv_string(*, papernum: int | None = None, msgr) -> str:
+def get_marks_as_csv_string(*, msgr) -> str:
     """Get exam paper marks as a csv formatted string.
 
     Keyword Args:
-        papernum: the paper number to retrieve exam paper marks. If
-            unspecified, exam paper marks will be retrieved for all papers.
         msgr: a valid PlomAdminMessenger instance.
 
     Returns:
         A string containing the paper marks formatted as a csv.
     """
-    papers_marks_dict = msgr.new_server_get_paper_marks()
-    if papernum is not None:
-        papers_marks_dict = {papernum: papers_marks_dict[str(papernum)]}
-    papers_marks_list = [marks_dict for marks_dict in papers_marks_dict.values()]
-
-    # TODO: API doesn't return a consistent set of fields in each dict
-    dict_keys = []
-    for marks_dict in papers_marks_list:
-        for key in marks_dict.keys():
-            if key not in dict_keys:
-                dict_keys.append(key)
+    papers_marks_list = msgr.new_server_get_paper_marks()
 
     with StringIO() as stringbuffer:
-        writer = DictWriter(stringbuffer, dict_keys)
+        writer = DictWriter(stringbuffer, papers_marks_list[0].keys())
 
         writer.writeheader()
         writer.writerows(papers_marks_list)
