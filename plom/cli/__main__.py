@@ -143,13 +143,6 @@ def get_parser() -> argparse.ArgumentParser:
             Retrieve marks, IDs, and other information about generated exam papers.
         """,
     )
-    s.add_argument(
-        "papernum",
-        nargs="?",
-        type=int,
-        default=None,
-        help="Specify a paper. If unspecified, will retrieve marks for all papers.",
-    )
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -533,7 +526,7 @@ def main():
         print(r)
 
     elif args.command == "get-marks":
-        r = get_marks_as_csv_string(papernum=args.papernum, msgr=m)
+        r = get_marks_as_csv_string(msgr=m)
         print(r)
 
     elif args.command == "get-pqvmap":
