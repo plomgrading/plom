@@ -170,14 +170,16 @@ class StudentMarkService:
             return timezone.now()  # if no updates return the current time.
 
     @staticmethod
-    def get_paper_id_or_none(paper: Paper) -> tuple[str, str] | None:
+    def get_paper_id_or_none(paper: Paper) -> tuple[str | None, str] | None:
         """Return a tuple of (student ID, student name) if the paper has been identified. Otherwise, return None.
 
         Args:
             paper: a reference to a Paper instance
 
         Returns:
-            a tuple (str, str) or None
+            A tuple (str, str) or None.  Note that a paper can be ID'd
+            with sid `None`, in which case we get back ``(None, str)``
+            where the second string is an explanation.
         """
         try:
             action = (

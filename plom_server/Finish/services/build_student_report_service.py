@@ -10,10 +10,11 @@ from statistics import mean, median, mode, stdev, quantiles
 from typing import Any
 
 from django.conf import settings
+from django.utils.text import slugify
 
 from plom_server.Papers.services import SpecificationService
-from ..services import StudentMarkService
 from plom_server.QuestionTags.services import QuestionTagService
+from ..services import StudentMarkService
 
 
 def _get_descriptive_statistics_from_score_list(
@@ -150,7 +151,13 @@ def brief_report_pdf_builder(
     pdf_data = HTML(string=rendered_html, base_url="").write_pdf(stylesheets=[css])
     shortname = SpecificationService.get_shortname()
     sid = paper_info["sid"]
-    filename = f"{shortname}_report_{sid}.pdf"
+    if sid is None:
+        # in this case, name has a hint such as "Blank paper" or "No ID given"
+        why_none = slugify(paper_info["name"])
+        filename = f"{shortname}_report_paper{paper_number:04}_{why_none}.pdf"
+    else:
+        filename = f"{shortname}_report_{sid}.pdf"
+
     return {
         "bytes": pdf_data,
         "filename": filename,
@@ -161,8 +168,8 @@ def brief_report_pdf_builder(
 class BuildStudentReportService:
     """Class that contains helper functions for building student report pdf."""
 
+    @staticmethod
     def build_brief_report(
-        self,
         paper_number: int,
         total_score_list: list[float],
         question_score_lists: dict[int, list[float]],

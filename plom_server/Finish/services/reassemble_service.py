@@ -16,17 +16,18 @@ from typing import Any
 import arrow
 import zipfly
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
-from django.core.exceptions import ObjectDoesNotExist
+from django.utils.text import slugify
 from django_huey import db_task, get_queue
 import huey
 import huey.api
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
-
+from plom_server.Base.models import HueyTaskTracker
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
@@ -35,8 +36,6 @@ from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ManageScanService
 
 from ..models import ReassemblePaperChore
-from plom_server.Base.models import HueyTaskTracker
-
 from .student_marks_service import StudentMarkService
 
 
@@ -78,7 +77,8 @@ class ReassembleService:
 
         return legacy_cover_page_info
 
-    def _get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
+    @staticmethod
+    def _get_cover_page_info(paper: Paper, solution: bool = False) -> list[Any]:
         """Return information needed to build a cover page for a reassembled paper.
 
         Args:
@@ -104,8 +104,9 @@ class ReassembleService:
 
         return cover_page_info
 
+    @classmethod
     def build_paper_cover_page(
-        self, tmpdir: Path, paper: Paper, solution: bool = False
+        cls, tmpdir: Path, paper: Paper, solution: bool = False
     ) -> Path:
         """Build a cover page for a reassembled PDF or a solution.
 
@@ -123,7 +124,7 @@ class ReassembleService:
         else:
             sid, sname = (None, None)
 
-        cover_page_table_data = self._get_cover_page_info(paper, solution)
+        cover_page_table_data = cls._get_cover_page_info(paper, solution)
         cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
         makeCover(
             cover_page_table_data,
@@ -351,7 +352,13 @@ class ReassembleService:
             raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
 
         shortname = SpecificationService.get_shortname()
-        outname = outdir / f"{shortname}_{student_id}.pdf"
+        if student_id is None:
+            # in this case student_name has a hint such as "Blank paper" or "No ID given"
+            why_none = slugify(student_name)
+            outname = f"{shortname}_paper{paper.paper_number:04}_{why_none}.pdf"
+        else:
+            outname = f"{shortname}_{student_id}.pdf"
+        outname = outdir / outname
 
         with tempfile.TemporaryDirectory() as _td:
             tmpdir = Path(_td)
@@ -954,7 +961,7 @@ def huey_reassemble_paper(
 
             assert total_score_list is not None
             assert question_score_lists is not None
-            report_data = BuildStudentReportService().build_brief_report(
+            report_data = BuildStudentReportService.build_brief_report(
                 paper_number, total_score_list, question_score_lists
             )
             # save the report data to file in tempdir - TODO can we do this all in memory?
