@@ -176,21 +176,15 @@ class ScanService:
         with transaction.atomic(durable=True):
             existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
             if existing:
-                conflict_list = ", ".join(f'"{x.slug}"' for x in existing)
-                if len(existing) == 1:
-                    errmsg = (
-                        f"A bundle {conflict_list} with"
-                        f" the same file hash {pdf_hash}"
-                        " has already been uploaded"
-                    )
+                dupes = ", ".join(f'"{x.slug}"' for x in existing)
+                N = len(existing)
+                if N == 1:
+                    msg = f"A bundle {dupes} has already been uploaded"
                 else:
-                    errmsg = (
-                        f"{len(existing)} bundles {conflict_list} with"
-                        f" the same file hash {pdf_hash}"
-                        " have already been uploaded"
-                    )
+                    msg = f"{N} bundles {dupes} have already been uploaded"
+                msg += f" with the same file hash {pdf_hash}"
                 if not force:
-                    raise PlomConflict(errmsg)
+                    raise PlomConflict(msg)
                 # TODO: how to display the warning?
 
             # create the bundle first, so it has a pk and
