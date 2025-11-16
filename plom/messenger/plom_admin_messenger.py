@@ -38,8 +38,18 @@ log = logging.getLogger("messenger")
 class PlomAdminMessenger(Messenger):
     """Extend the Messenger to handle more advanced communication with a Plom Server."""
 
-    def new_server_upload_bundle(self, pdf: Path) -> dict[str, Any]:
+    def new_server_upload_bundle(
+        self, pdf: Path, *, force: bool = False
+    ) -> dict[str, Any]:
         """Upload a PDF file to the server as a new bundle.
+
+        Args:
+            pdf: Path to a PDF file.
+
+        Keyword Args:
+            force: defaults False.  If true, some things that would be errors
+                become warnings instead.  For example, this allows uploading
+                a duplicate bundle.
 
         Returns:
             A dictionary, including the bundle_id and maybe other
@@ -49,12 +59,19 @@ class PlomAdminMessenger(Messenger):
             raise PlomNoServerSupportException(
                 "Server too old: does not support staging bundle upload"
             )
+        if force and self.is_server_api_less_than(116):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support forcing upload"
+            )
 
         with self.SRmutex:
             try:
                 with pdf.open("rb") as f:
                     files = {"pdf_file": f}
-                    response = self.post_auth("/api/beta/scan/bundles", files=files)
+                    url = "/api/beta/scan/bundles"
+                    if force:
+                        url += "?force"
+                    response = self.post_auth(url, files=files)
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:

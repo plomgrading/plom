@@ -48,7 +48,8 @@ class ScanListBundles(APIView):
         will result in a 400.
 
         The bundle must have a distinct sha256 hash from existing
-        bundles, or you'll get a 409.
+        bundles, or you'll get a 409.  Passing the "force" query
+        parameter makes this a warning rather than an error.
         """
         user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -68,10 +69,16 @@ class ScanListBundles(APIView):
         # For now do some checks in the service, see :func:`upload_bundle`.
 
         # TODO: consider exposing force_render and read_after via query params
+        if "force" in request.query_params:
+            force = True
+        else:
+            force = False
 
         slug = slugify(filename_stem)
         try:
-            bundle_id = ScanService.upload_bundle(pdf, slug, user, read_after=True)
+            bundle_id = ScanService.upload_bundle(
+                pdf, slug, user, read_after=True, force=force
+            )
         except ValidationError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomConflict as e:
