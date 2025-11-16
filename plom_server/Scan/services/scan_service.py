@@ -172,7 +172,7 @@ class ScanService:
             existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
             if existing:
                 raise PlomConflict(
-                    f"Bundle(s) {[x.slug for x in existing]} with the"
+                    f"Bundle(s) {', '.join(x.slug for x in existing)} with the"
                     f" same file hash {pdf_hash} have already uploaded"
                 )
             # create the bundle first, so it has a pk and

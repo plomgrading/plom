@@ -21,7 +21,7 @@ from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
 from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.plom_exceptions import PlomBundleLockedException, PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService
@@ -158,6 +158,11 @@ class ScannerUploadView(ScannerRequiredView):
         return render(request, "Scan/bundle_upload.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Posting a PDF file uploads it as a bundle.
+
+        Refreshes the page on success.  On errors, sends error messages
+        via the via the "messages" system and refreshes the page.
+        """
         form = BundleUploadForm(request.POST, request.FILES)
         if not form.is_valid():
             # we can get the errors from the form and pass them into the context
@@ -174,16 +179,20 @@ class ScannerUploadView(ScannerRequiredView):
         pdf_hash = data["sha256"]
         number_of_pages = data["number_of_pages"]
         timestamp = datetime.timestamp(data["time_uploaded"])
-        ScanService.upload_bundle(
-            bundle_file,
-            slug,
-            user,
-            timestamp=timestamp,
-            pdf_hash=pdf_hash,
-            number_of_pages=number_of_pages,
-            force_render=data["force_render"],
-            read_after=data["read_after"],
-        )
+        try:
+            ScanService.upload_bundle(
+                bundle_file,
+                slug,
+                user,
+                timestamp=timestamp,
+                pdf_hash=pdf_hash,
+                number_of_pages=number_of_pages,
+                force_render=data["force_render"],
+                read_after=data["read_after"],
+            )
+        except PlomConflict as e:
+            messages.add_message(request, messages.ERROR, e)
+            return HttpResponseClientRefresh()
         if len(pdf_hash) >= (12 + 12 + 3):
             brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
         else:
