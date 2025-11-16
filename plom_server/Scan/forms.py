@@ -57,9 +57,8 @@ class BundleUploadForm(forms.Form):
 
         # TODO: Should we prevent uploading duplicate bundles or warn them?
         hashed = hashlib.sha256(file_bytes).hexdigest()
-        scanner = ScanService()
-        if scanner.check_for_duplicate_hash(hashed):
-            original_bundle_name = scanner.get_bundle_name_from_hash(hashed)
+        if ScanService.check_for_duplicate_hash(hashed):
+            original_bundle_name = ScanService.get_bundle_name_from_hash(hashed)
             raise ValidationError(
                 f"Bundle was already uploaded as '{original_bundle_name}' and hash {hashed}"
             )

@@ -127,8 +127,7 @@ class ScanServiceTests(TestCase):
 class MoreScanServiceTests(TestCase):
     def test_duplicate_hash(self) -> None:
         baker.make(StagingBundle, pdf_hash="abcde")
-        scanner = ScanService()
-        duplicate_detected = scanner.check_for_duplicate_hash("abcde")
+        duplicate_detected = ScanService.check_for_duplicate_hash("abcde")
         self.assertTrue(duplicate_detected)
 
     def test_parse_qr_codes(self) -> None:

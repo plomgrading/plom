@@ -386,16 +386,16 @@ class ScanService:
         """Get the original, full-resolution image file from the database."""
         return self.get_image(bundle_id, index).baseimage.image_file
 
-    @transaction.atomic
-    def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
+    @staticmethod
+    def check_for_duplicate_hash(pdf_hash: str) -> bool:
         """Check if a PDF has already been uploaded.
 
         Returns True if the hash already exists in the database.
         """
         return StagingBundle.objects.filter(pdf_hash=pdf_hash).exists()
 
-    @transaction.atomic
-    def get_bundle_name_from_hash(self, pdf_hash: str) -> str | None:
+    @staticmethod
+    def get_bundle_name_from_hash(pdf_hash: str) -> str | None:
         """Get a bundle-name from a hash or return none."""
         try:
             return StagingBundle.objects.get(pdf_hash=pdf_hash).slug
