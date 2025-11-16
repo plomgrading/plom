@@ -13,7 +13,7 @@ from typing import Any
 import arrow
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest, HttpResponse, Http404, FileResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -193,6 +193,9 @@ class ScannerUploadView(ScannerRequiredView):
             )
         except PlomConflict as e:
             messages.add_message(request, messages.ERROR, e)
+            return HttpResponseClientRefresh()
+        except ValidationError as e:
+            messages.add_message(request, messages.ERROR, e.message)
             return HttpResponseClientRefresh()
         if len(pdf_hash) >= (12 + 12 + 3):
             brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]

@@ -65,7 +65,7 @@ class ScanListBundles(APIView):
             return _error_response(s, status.HTTP_400_BAD_REQUEST)
 
         # TODO: BundleUploadForm is not used in this API endpoint and that's
-        # unfortunate b/c it does some checks including a maximum upload size.
+        # unfortunate duplication of code: check there too if changing anything.
         # For now do some checks in the service, see :func:`upload_bundle`.
 
         # TODO: consider exposing force_render and read_after via query params

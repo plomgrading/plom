@@ -14,7 +14,6 @@ from django.utils import timezone
 from django import forms
 from django.forms import ValidationError
 from django.utils.text import slugify
-from django.conf import settings
 
 
 class BundleUploadForm(forms.Form):
@@ -40,11 +39,6 @@ class BundleUploadForm(forms.Form):
         if not pdf:
             raise ValidationError("Data must include a PDF file via the 'pdf' field")
 
-        # TODO: set a request size limit in production
-        if pdf.size > settings.MAX_BUNDLE_SIZE:
-            readable_file_size = settings.MAX_BUNDLE_SIZE / 1e9
-            raise ValidationError(f"Bundle size limit is {readable_file_size} GB.")
-
         # NOTE - this is where we enforce bundle names avoiding underscores
         # reserving those for system bundles.
         if pdf.name.startswith("_"):
@@ -63,11 +57,6 @@ class BundleUploadForm(forms.Form):
             with pymupdf.open(stream=file_bytes) as pdf_doc:
                 if "PDF" not in pdf_doc.metadata["format"]:
                     raise ValidationError("File is not a valid PDF.")
-                if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
-                    raise ValidationError(
-                        f"File of {pdf_doc.page_count} pages "
-                        f"exceeds {settings.MAX_BUNDLE_PAGES} page limit."
-                    )
                 data.update(
                     {
                         "number_of_pages": pdf_doc.page_count,

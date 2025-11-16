@@ -146,6 +146,12 @@ class ScanService:
         except OSError as err:
             raise ValidationError(f"Unexpected error handling file: {err}") from err
 
+        if len(file_bytes) > settings.MAX_BUNDLE_SIZE:
+            raise ValidationError(
+                f"Bundle file size {len(file_bytes)} exceeds"
+                f" limit of {settings.MAX_BUNDLE_SIZE} bytes."
+            )
+
         if not pdf_hash:
             pdf_hash = hashlib.sha256(file_bytes).hexdigest()
 
