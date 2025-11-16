@@ -5,11 +5,8 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
-import pathlib
-
 from django import forms
 from django.forms import ValidationError
-from django.utils.text import slugify
 
 
 class BundleUploadForm(forms.Form):
@@ -37,14 +34,4 @@ class BundleUploadForm(forms.Form):
             raise ValidationError(
                 "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             )
-
-        # get slug from filename
-        filename_stem = pathlib.Path(pdf.name).stem
-        slug = slugify(filename_stem)
-
-        data.update(
-            {
-                "slug": slug,
-            }
-        )
         return data

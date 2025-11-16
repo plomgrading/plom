@@ -3,11 +3,8 @@
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from pathlib import Path
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import ValidationError
-from django.utils.text import slugify
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -59,8 +56,7 @@ class ScanListBundles(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         pdf = request.FILES.get("pdf_file")
-        filename_stem = Path(pdf.name).stem
-        if filename_stem.startswith("_"):
+        if pdf.name.startswith("_"):
             s = "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             return _error_response(s, status.HTTP_400_BAD_REQUEST)
 
@@ -70,10 +66,9 @@ class ScanListBundles(APIView):
         else:
             force = False
 
-        slug = slugify(filename_stem)
         try:
             bundle_id, msg, warnings = ScanService.upload_bundle(
-                pdf, slug, user, read_after=True, force=force
+                pdf, user, read_after=True, force=force
             )
         except ValidationError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)

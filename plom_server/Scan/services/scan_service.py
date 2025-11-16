@@ -18,6 +18,7 @@ import time
 from datetime import datetime
 from io import BytesIO
 from math import ceil
+from pathlib import Path
 from typing import Any
 
 from django.conf import settings
@@ -27,6 +28,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.forms import ValidationError
 from django.utils import timezone
+from django.utils.text import slugify
 from django_huey import db_task
 import huey
 import huey.api
@@ -84,9 +86,9 @@ class ScanService:
     def upload_bundle(
         cls,
         _uploaded_pdf_file: File,
-        slug: str,
         user: User,
         *,
+        slug: str = "",
         pdf_hash: str = "",
         force_render: bool = False,
         read_after: bool = False,
@@ -106,12 +108,13 @@ class ScanService:
         Args:
             _uploaded_pdf_file (Django File): File-object containing the pdf
                 (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
-            slug: Filename slug for the pdf.
             user (Django User): the user uploading the file
 
         Keyword Args:
             pdf_hash: the sha256 of the pdf file.  If omitted, we will
-                compute it.
+                compute it.  Possibly only used by testing code.
+            slug: Filename slug for the pdf, or omit to take from the
+                first input.  Possibly only used by testing code.
             force_render: Don't try to extract large bitmaps; always
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
@@ -136,6 +139,10 @@ class ScanService:
         # django.utils import timezone
         # timestamp = timezone.now()
         timestamp = datetime.timestamp(timezone.now())
+
+        if not slug:
+            filename_stem = Path(_uploaded_pdf_file.name).stem
+            slug = slugify(filename_stem)
 
         # Warning: Aidan saw errors if we open this more than once, during an API upload
         # here get the bytes from the file and never use `_upload_pdf_file` again.
@@ -220,10 +227,10 @@ class ScanService:
         )
         return bundle_obj.pk, success_msg, "; ".join(warnings)
 
+    @classmethod
     def upload_bundle_cmd(
-        self,
+        cls,
         pdf_file_path: str | pathlib.Path,
-        slug: str,
         username: str,
     ) -> int:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
@@ -231,9 +238,8 @@ class ScanService:
         Checks if the supplied username has permissions to access and upload scans.
 
         Args:
-            pdf_file_path (pathlib.Path or str): the path to the pdf being uploaded
-            slug (str): Filename slug for the pdf
-            username (str): the username uploading the file
+            pdf_file_path: the path to the pdf to be uploaded.
+            username: the username string of who is uploading the file.
 
         Returns:
             The bundle id, the primary key of the newly-created bundle.
@@ -257,7 +263,7 @@ class ScanService:
         with open(pdf_file_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        r = self.upload_bundle(pdf_file_object, slug, user_obj)
+        r = cls.upload_bundle(pdf_file_object, user_obj)
         return r[0]
 
     @staticmethod

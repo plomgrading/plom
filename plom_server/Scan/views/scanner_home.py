@@ -174,12 +174,10 @@ class ScannerUploadView(ScannerRequiredView):
 
         data = form.cleaned_data  # this checks the file really is a valid PDF
         user = request.user
-        slug = data["slug"]
         bundle_file = data["pdf"]
         try:
             bundle_id, success_msg, warnings = ScanService.upload_bundle(
                 bundle_file,
-                slug,
                 user,
                 force_render=data["force_render"],
                 read_after=data["read_after"],

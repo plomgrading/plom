@@ -61,7 +61,9 @@ class ScanServiceTests(TestCase):
 
         slug = "_test_bundle"
         fake_hash = "deadbeef"
-        ScanService.upload_bundle(pdf_file_object, slug, self.user, pdf_hash=fake_hash)
+        ScanService.upload_bundle(
+            pdf_file_object, self.user, pdf_hash=fake_hash, slug=slug
+        )
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
         bundle_path = pathlib.Path(the_bundle.pdf_file.path)
@@ -86,9 +88,8 @@ class ScanServiceTests(TestCase):
             fh.seek(0)
             non_pdf_file_object = File(fh)
 
-        slug = "_test_bundle"
         with self.assertRaises(ValidationError):
-            ScanService.upload_bundle(non_pdf_file_object, slug, self.user)
+            ScanService.upload_bundle(non_pdf_file_object, self.user)
 
     def test_remove_bundle(self) -> None:
         """Test removing a bundle and assert uploaded PDF file removed from disk."""

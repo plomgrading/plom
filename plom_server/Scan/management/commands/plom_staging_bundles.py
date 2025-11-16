@@ -8,8 +8,6 @@ import pathlib
 from time import sleep
 
 from tabulate import tabulate
-
-from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
 from plom.plom_exceptions import PlomConflict
@@ -30,17 +28,14 @@ class Command(BaseCommand):
 
     def upload_pdf(self, username: str, source_pdf: str) -> None:
         """Upload a pdf bundle to the staging area."""
-        scanner = ScanService()
-
         filename_stem = pathlib.Path(source_pdf).stem
         if filename_stem.startswith("_"):
             raise CommandError(
                 "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             )
 
-        slug = slugify(filename_stem)
         try:
-            bundle_id = scanner.upload_bundle_cmd(source_pdf, slug, username)
+            bundle_id = ScanService.upload_bundle_cmd(source_pdf, username)
         except (ValueError, PlomConflict) as err:
             raise CommandError(err)
         self.stdout.write(
