@@ -32,6 +32,7 @@ class BundleUploadForm(forms.Form):
     )
     force_render = forms.BooleanField(required=False)
     read_after = forms.BooleanField(required=False)
+    accept_duplicates = forms.BooleanField(required=False)
 
     def clean(self):
         data = self.cleaned_data

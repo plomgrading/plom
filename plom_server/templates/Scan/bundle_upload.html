@@ -56,6 +56,15 @@
                                 use <q>safe mode rendering</q> of each page
                             </label>
                         </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="accept_duplicates"
+                                   name="accept_duplicates" />
+                            <label class="form-check-label" for="accept_duplicates">
+                                <i class="bi bi-exclamation-diamond-fill text-warning"></i> allow duplicate bundle uploads
+                            </label>
+                        </div>
                         <!-- hx-disabled-elt="self" on this button doesn't work b/c this button doesn't have hx-post -->
                         <!-- https://stackoverflow.com/questions/78888026/setting-hx-disabled-elt-not-disabling-my-button -->
                         <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>

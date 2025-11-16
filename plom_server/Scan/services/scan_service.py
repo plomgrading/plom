@@ -92,6 +92,7 @@ class ScanService:
         number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
+        force: bool = False,
     ) -> int:
         """Upload a bundle PDF and store it in the filesystem + database.
 
@@ -121,6 +122,9 @@ class ScanService:
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
                 upload+splitting is finished.
+            force: accept an upload that would otherwise be an error.
+                Off by default.  Currently this allows duplicate bundles
+                to be uploaded which would otherwise be an error.
 
         Returns:
             The bundle id, the primary key of the newly-created bundle.
@@ -129,6 +133,7 @@ class ScanService:
             ValidationError: _uploaded_pdf_file isn't a valid pdf or
                 exceeds the page limit, or other error.
             PlomConflict: we already have a bundle which conflicts.
+                ``force=True`` to accept it anyway.
         """
         if not timestamp:
             timestamp = datetime.timestamp(timezone.now())
@@ -184,7 +189,10 @@ class ScanService:
                         f" the same file hash {pdf_hash}"
                         " have already been uploaded"
                     )
-                raise PlomConflict(errmsg)
+                if not force:
+                    raise PlomConflict(errmsg)
+                # TODO: how to display the warning?
+
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
             bundle_obj = StagingBundle.objects.create(

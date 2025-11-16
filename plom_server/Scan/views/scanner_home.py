@@ -189,6 +189,7 @@ class ScannerUploadView(ScannerRequiredView):
                 number_of_pages=number_of_pages,
                 force_render=data["force_render"],
                 read_after=data["read_after"],
+                force=data["accept_duplicates"],
             )
         except PlomConflict as e:
             messages.add_message(request, messages.ERROR, e)
