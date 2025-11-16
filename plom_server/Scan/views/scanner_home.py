@@ -25,7 +25,6 @@ from plom.plom_exceptions import PlomBundleLockedException, PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService
-from ..forms import BundleUploadForm
 
 
 class ScannerOverview(ScannerRequiredView):
@@ -128,7 +127,6 @@ class ScannerUploadView(ScannerRequiredView):
         scanner = ScanService()
         context.update(
             {
-                "form": BundleUploadForm(),
                 "is_any_bundle_push_locked": False,
                 "papers_have_been_printed": PapersPrinted.have_papers_been_printed(),
                 "bundle_size_limit": settings.MAX_BUNDLE_SIZE / 1024 / 1024,
@@ -163,25 +161,18 @@ class ScannerUploadView(ScannerRequiredView):
         Refreshes the page on success.  On errors, sends error messages
         via the via the "messages" system and refreshes the page.
         """
-        form = BundleUploadForm(request.POST, request.FILES)
-        if not form.is_valid():
-            # we can get the errors from the form and pass them into the context
-            # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
-            # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
-            error_list: list[str] = sum(form.errors.values(), [])
-            messages.add_message(request, messages.ERROR, error_list)
-            return HttpResponseClientRefresh()
-
-        data = form.cleaned_data  # this checks the file really is a valid PDF
+        bundle_file = request.FILES.get("pdf")
         user = request.user
-        bundle_file = data["pdf"]
+        force_render = request.POST.get("force_render") == "on"
+        read_after = request.POST.get("read_after") == "on"
+        force = request.POST.get("accept_duplicates") == "on"
         try:
             bundle_id, success_msg, warnings = ScanService.upload_bundle(
                 bundle_file,
                 user,
-                force_render=data["force_render"],
-                read_after=data["read_after"],
-                force=data["accept_duplicates"],
+                force_render=force_render,
+                read_after=read_after,
+                force=force,
             )
         except PlomConflict as e:
             messages.add_message(request, messages.ERROR, e)

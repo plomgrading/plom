@@ -142,6 +142,11 @@ class ScanService:
 
         if not slug:
             filename_stem = Path(_uploaded_pdf_file.name).stem
+            if filename_stem.startswith("_"):
+                raise ValidationError(
+                    "Bundle filenames cannot start with an underscore"
+                    " - we reserve those for internal use."
+                )
             slug = slugify(filename_stem)
 
         # Warning: Aidan saw errors if we open this more than once, during an API upload

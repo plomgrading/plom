@@ -4,7 +4,6 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-import pathlib
 from time import sleep
 
 from tabulate import tabulate
@@ -28,12 +27,6 @@ class Command(BaseCommand):
 
     def upload_pdf(self, username: str, source_pdf: str) -> None:
         """Upload a pdf bundle to the staging area."""
-        filename_stem = pathlib.Path(source_pdf).stem
-        if filename_stem.startswith("_"):
-            raise CommandError(
-                "Bundle filenames cannot start with an underscore - we reserve those for internal use."
-            )
-
         try:
             bundle_id = ScanService.upload_bundle_cmd(source_pdf, username)
         except (ValueError, PlomConflict) as err:

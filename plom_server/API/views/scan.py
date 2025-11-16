@@ -56,9 +56,6 @@ class ScanListBundles(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         pdf = request.FILES.get("pdf_file")
-        if pdf.name.startswith("_"):
-            s = "Bundle filenames cannot start with an underscore - we reserve those for internal use."
-            return _error_response(s, status.HTTP_400_BAD_REQUEST)
 
         # TODO: consider exposing force_render and read_after via query params
         if "force" in request.query_params:
