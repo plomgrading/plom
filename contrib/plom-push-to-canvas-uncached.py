@@ -70,12 +70,7 @@ from plom.common import (
     Default_Port,
 )
 from plom.cli import start_messenger
-from plom.plom_exceptions import (
-    PlomAuthenticationException,
-    PlomSeriousException,
-    PlomNoPermission,
-    PlomNoPaper,
-)
+from plom.plom_exceptions import PlomException
 
 
 # bump this a bit if you change this script
@@ -680,12 +675,7 @@ def main():
                             "student_canvas_id": student_canvas_id,
                         }
                     )
-                except (
-                    PlomAuthenticationException,
-                    PlomNoPermission,
-                    PlomNoPaper,
-                    PlomSeriousException,
-                ) as e:
+                except PlomException as e:
                     print(e)
                     plom_timeouts.append(
                         {
@@ -718,12 +708,7 @@ def main():
             try:
                 file_info = plom_messenger.new_server_get_reassembled(paper_number)
                 student_canvas_submission.upload_comment(file_info["filename"])
-            except (
-                PlomAuthenticationException,
-                PlomNoPermission,
-                PlomNoPaper,
-                PlomSeriousException,
-            ) as e:
+            except PlomException as e:
                 print(e)
                 plom_timeouts.append(
                     {
