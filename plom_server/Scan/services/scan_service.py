@@ -171,10 +171,20 @@ class ScanService:
         with transaction.atomic(durable=True):
             existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
             if existing:
-                raise PlomConflict(
-                    f"Bundle(s) {', '.join(x.slug for x in existing)} with the"
-                    f" same file hash {pdf_hash} have already uploaded"
-                )
+                conflict_list = ", ".join(f'"{x.slug}"' for x in existing)
+                if len(existing) == 1:
+                    errmsg = (
+                        f"A bundle {conflict_list} with"
+                        f" the same file hash {pdf_hash}"
+                        " has already been uploaded"
+                    )
+                else:
+                    errmsg = (
+                        f"{len(existing)} bundles {conflict_list} with"
+                        f" the same file hash {pdf_hash}"
+                        " have already been uploaded"
+                    )
+                raise PlomConflict(errmsg)
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
             bundle_obj = StagingBundle.objects.create(
