@@ -11,23 +11,21 @@ from datetime import datetime
 from typing import Any
 
 import arrow
-
-from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404, FileResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
-from django.conf import settings
 
+from plom.misc_utils import format_int_list_with_runs
+from plom.plom_exceptions import PlomBundleLockedException
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService
 from ..forms import BundleUploadForm
-
-from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomBundleLockedException
 
 
 class ScannerOverview(ScannerRequiredView):
