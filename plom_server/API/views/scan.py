@@ -64,10 +64,6 @@ class ScanListBundles(APIView):
             s = "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             return _error_response(s, status.HTTP_400_BAD_REQUEST)
 
-        # TODO: BundleUploadForm is not used in this API endpoint and that's
-        # unfortunate duplication of code: check there too if changing anything.
-        # For now do some checks in the service, see :func:`upload_bundle`.
-
         # TODO: consider exposing force_render and read_after via query params
         if "force" in request.query_params:
             force = True
@@ -76,7 +72,7 @@ class ScanListBundles(APIView):
 
         slug = slugify(filename_stem)
         try:
-            bundle_id = ScanService.upload_bundle(
+            bundle_id, msg, warnings = ScanService.upload_bundle(
                 pdf, slug, user, read_after=True, force=force
             )
         except ValidationError as e:
@@ -84,7 +80,10 @@ class ScanListBundles(APIView):
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
-        return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
+        return Response(
+            {"bundle_id": bundle_id, "msg": msg, "warnings": warnings},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ScanBundleActions(APIView):

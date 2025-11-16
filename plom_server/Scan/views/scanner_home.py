@@ -176,17 +176,11 @@ class ScannerUploadView(ScannerRequiredView):
         user = request.user
         slug = data["slug"]
         bundle_file = data["pdf"]
-        pdf_hash = data["sha256"]
-        number_of_pages = data["number_of_pages"]
-        timestamp = datetime.timestamp(data["time_uploaded"])
         try:
-            ScanService.upload_bundle(
+            bundle_id, success_msg, warnings = ScanService.upload_bundle(
                 bundle_file,
                 slug,
                 user,
-                timestamp=timestamp,
-                pdf_hash=pdf_hash,
-                number_of_pages=number_of_pages,
                 force_render=data["force_render"],
                 read_after=data["read_after"],
                 force=data["accept_duplicates"],
@@ -197,19 +191,8 @@ class ScannerUploadView(ScannerRequiredView):
         except ValidationError as e:
             messages.add_message(request, messages.ERROR, e.message)
             return HttpResponseClientRefresh()
-        if len(pdf_hash) >= (12 + 12 + 3):
-            brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
-        else:
-            brief_hash = pdf_hash
-        messages.add_message(
-            request,
-            messages.INFO,
-            (
-                f"Uploaded {slug} with {number_of_pages} pages "
-                f"and hash {brief_hash}. "
-                "Background processing started."
-            ),
-        )
+        messages.add_message(request, messages.WARNING, "Warning: " + warnings)
+        messages.add_message(request, messages.INFO, "Success: " + success_msg)
         return HttpResponseClientRefresh()
 
 

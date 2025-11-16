@@ -4,15 +4,11 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from datetime import datetime
-import hashlib
 import pathlib
 from time import sleep
 
-import pymupdf
 from tabulate import tabulate
 
-from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
@@ -36,12 +32,6 @@ class Command(BaseCommand):
         """Upload a pdf bundle to the staging area."""
         scanner = ScanService()
 
-        try:
-            with open(source_pdf, "rb") as f:
-                file_bytes = f.read()
-        except OSError as err:
-            raise CommandError(err)
-
         filename_stem = pathlib.Path(source_pdf).stem
         if filename_stem.startswith("_"):
             raise CommandError(
@@ -49,23 +39,8 @@ class Command(BaseCommand):
             )
 
         slug = slugify(filename_stem)
-        timestamp = datetime.timestamp(timezone.now())
-        hashed = hashlib.sha256(file_bytes).hexdigest()
         try:
-            with pymupdf.open(stream=file_bytes) as pdf_doc:
-                number_of_pages = pdf_doc.page_count
-        except pymupdf.FileDataError as err:
-            raise CommandError(err)
-
-        try:
-            bundle_id = scanner.upload_bundle_cmd(
-                source_pdf,
-                slug,
-                username,
-                timestamp,
-                hashed,
-                number_of_pages,
-            )
+            bundle_id = scanner.upload_bundle_cmd(source_pdf, slug, username)
         except (ValueError, PlomConflict) as err:
             raise CommandError(err)
         self.stdout.write(

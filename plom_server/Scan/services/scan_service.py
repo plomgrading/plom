@@ -87,13 +87,11 @@ class ScanService:
         slug: str,
         user: User,
         *,
-        timestamp: float | None = None,
         pdf_hash: str = "",
-        number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
         force: bool = False,
-    ) -> int:
+    ) -> tuple[int, str, str]:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, trigger a background job to split PDF into page images and
@@ -112,12 +110,8 @@ class ScanService:
             user (Django User): the user uploading the file
 
         Keyword Args:
-            timestamp: the timestamp of the time at which the file was
-                uploaded.  If omitted, we'll use right now.
             pdf_hash: the sha256 of the pdf file.  If omitted, we will
                 compute it.
-            number_of_pages: the number of pages in the pdf, can be None
-                if we don't know yet.
             force_render: Don't try to extract large bitmaps; always
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
@@ -127,7 +121,9 @@ class ScanService:
                 to be uploaded which would otherwise be an error.
 
         Returns:
-            The bundle id, the primary key of the newly-created bundle.
+            A tuple, with first entry the bundle id, the primary key of
+            the newly-created bundle, followed by a human-readable
+            success message, and then a human-readable list of warnings.
 
         Raises:
             ValidationError: _uploaded_pdf_file isn't a valid pdf or
@@ -135,8 +131,11 @@ class ScanService:
             PlomConflict: we already have a bundle which conflicts.
                 ``force=True`` to accept it anyway.
         """
-        if not timestamp:
-            timestamp = datetime.timestamp(timezone.now())
+        warnings = []
+        # TODO: the form used something else:
+        # django.utils import timezone
+        # timestamp = timezone.now()
+        timestamp = datetime.timestamp(timezone.now())
 
         # Warning: Aidan saw errors if we open this more than once, during an API upload
         # here get the bytes from the file and never use `_upload_pdf_file` again.
@@ -158,14 +157,16 @@ class ScanService:
         try:
             with pymupdf.open(stream=file_bytes) as pdf_doc:
                 if "PDF" not in pdf_doc.metadata["format"]:
-                    raise ValidationError("Uploaded file isn't a valid pdf")
-                if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
+                    raise ValidationError("File is not a valid PDF")
+                number_of_pages = pdf_doc.page_count
+                if number_of_pages > settings.MAX_BUNDLE_PAGES:
                     raise ValidationError(
-                        f"Uploaded pdf with {pdf_doc.page_count} pages"
+                        f"Uploaded pdf with {number_of_pages} pages"
                         f" exceeds {settings.MAX_BUNDLE_PAGES} page limit"
                     )
         # PyMuPDF docs says its exceptions will be caught by RuntimeError
-        except RuntimeError as e:
+        # (keep some other stuff just in case)
+        except (RuntimeError, pymupdf.FileDataError, KeyError) as e:
             raise ValidationError(
                 f"PyMuPDF library {pymupdf.__version__} could not open file,"
                 f" perhaps not a PDF? {type(e).__name__}: {e} "
@@ -191,7 +192,7 @@ class ScanService:
                 msg += f" with the same file hash {pdf_hash}"
                 if not force:
                     raise PlomConflict(msg)
-                # TODO: how to display the warning?
+                warnings.append(msg)
 
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
@@ -207,16 +208,23 @@ class ScanService:
             bundle_obj.number_of_pages = number_of_pages
             bundle_obj.save()
         cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
-        return bundle_obj.pk
+
+        if len(pdf_hash) >= (12 + 12 + 3):
+            brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
+        else:
+            brief_hash = pdf_hash
+        success_msg = (
+            f"Uploaded {slug} with {number_of_pages} pages "
+            f"and hash {brief_hash}. "
+            "Background processing started."
+        )
+        return bundle_obj.pk, success_msg, "; ".join(warnings)
 
     def upload_bundle_cmd(
         self,
         pdf_file_path: str | pathlib.Path,
         slug: str,
         username: str,
-        timestamp: float,
-        pdf_hash: str,
-        number_of_pages: int,
     ) -> int:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
@@ -226,15 +234,14 @@ class ScanService:
             pdf_file_path (pathlib.Path or str): the path to the pdf being uploaded
             slug (str): Filename slug for the pdf
             username (str): the username uploading the file
-            timestamp (float): the timestamp of the datetime at which the file was uploaded
-            pdf_hash (str): the sha256 of the pdf.
-            number_of_pages (int): the number of pages in the pdf
 
         Returns:
             The bundle id, the primary key of the newly-created bundle.
 
         Raises:
             ValueError: username invalid or not in scanner group.
+            ValidationError: _uploaded_pdf_file isn't a valid pdf or
+                exceeds the page limit, or other error.
             PlomConflict: duplicate upload.
         """
         # username => user_object, if in scanner group, else exception raised.
@@ -250,14 +257,8 @@ class ScanService:
         with open(pdf_file_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        return self.upload_bundle(
-            pdf_file_object,
-            slug,
-            user_obj,
-            timestamp=timestamp,
-            pdf_hash=pdf_hash,
-            number_of_pages=number_of_pages,
-        )
+        r = self.upload_bundle(pdf_file_object, slug, user_obj)
+        return r[0]
 
     @staticmethod
     def split_and_save_bundle_images(

@@ -541,7 +541,8 @@ def main():
 
     if args.command == "upload-bundle":
         r = upload_bundle(Path(args.pdf), msgr=m, force=args.force)
-        print(r)
+        for k, v in r.items():
+            print(f"{k}: {v}")
     elif args.command == "list-bundles":
         list_bundles(msgr=m)
     elif args.command == "push-bundle":
