@@ -449,7 +449,9 @@ class BuildPapersService:
         ]
 
     @classmethod
-    def get_zipfly_generator(cls, short_name: str, *, chunksize: int = 1024 * 1024):
+    def get_zipfly_generator(
+        cls, short_name: str, *, chunksize: int = 1024 * 1024
+    ) -> zipfly.ZipFly:
         """Get a dynamic zip file streamer generator for all the PDF files.
 
         Raises:

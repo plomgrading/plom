@@ -848,14 +848,13 @@ class ReassembleService:
         return [(task.report_pdf_file, task.report_display_filename) for task in query]
 
     @classmethod
-    @transaction.atomic
     def get_zipfly_generator(
         cls,
         *,
         first_paper: int | None = None,
         last_paper: int | None = None,
         chunksize: int = 1024 * 1024,
-    ):
+    ) -> zipfly.ZipFly:
         """Return a generator that can stream a zipfile of some papers without building in memory.
 
         Keyword Args:

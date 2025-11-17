@@ -400,7 +400,6 @@ class BuildSolutionService:
         ]
 
     @classmethod
-    @transaction.atomic
     def get_zipfly_generator(cls, *, chunksize: int = 1024 * 1024) -> zipfly.ZipFly:
         """Return a streaminmg zipfile generator for archive of the solution pdfs.
 
