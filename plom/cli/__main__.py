@@ -202,6 +202,16 @@ def get_parser() -> argparse.ArgumentParser:
         description="Upload a bundle of page images in a PDF file.",
     )
     s.add_argument("pdf", help="a PDF file.")
+    s.add_argument(
+        "--force",
+        default=None,
+        action="store_true",
+        help="""
+            Force the upload of a PDF file that would otherwise be an error,
+            in some cases.  Currently this can be used to upload duplicate
+            bundles.
+        """,
+    )
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -530,8 +540,9 @@ def main():
     m = (args.server, args.username, args.password)
 
     if args.command == "upload-bundle":
-        r = upload_bundle(Path(args.pdf), msgr=m)
-        print(r)
+        r = upload_bundle(Path(args.pdf), msgr=m, force=args.force)
+        for k, v in r.items():
+            print(f"{k}: {v}")
     elif args.command == "list-bundles":
         list_bundles(msgr=m)
     elif args.command == "push-bundle":

@@ -18,6 +18,7 @@ import time
 from datetime import datetime
 from io import BytesIO
 from math import ceil
+from pathlib import Path
 from typing import Any
 
 from django.conf import settings
@@ -27,6 +28,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.forms import ValidationError
 from django.utils import timezone
+from django.utils.text import slugify
 from django_huey import db_task
 import huey
 import huey.api
@@ -84,15 +86,14 @@ class ScanService:
     def upload_bundle(
         cls,
         _uploaded_pdf_file: File,
-        slug: str,
         user: User,
         *,
-        timestamp: float | None = None,
+        slug: str = "",
         pdf_hash: str = "",
-        number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
-    ) -> int:
+        force: bool = False,
+    ) -> tuple[int, str, str]:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, trigger a background job to split PDF into page images and
@@ -107,31 +108,46 @@ class ScanService:
         Args:
             _uploaded_pdf_file (Django File): File-object containing the pdf
                 (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
-            slug: Filename slug for the pdf.
             user (Django User): the user uploading the file
 
         Keyword Args:
-            timestamp: the timestamp of the time at which the file was
-                uploaded.  If omitted, we'll use right now.
             pdf_hash: the sha256 of the pdf file.  If omitted, we will
-                compute it.
-            number_of_pages: the number of pages in the pdf, can be None
-                if we don't know yet.
+                compute it.  Possibly only used by testing code.
+            slug: Filename slug for the pdf, or omit to take from the
+                first input.  Possibly only used by testing code.
             force_render: Don't try to extract large bitmaps; always
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
                 upload+splitting is finished.
+            force: accept an upload that would otherwise be an error.
+                Off by default.  Currently this allows duplicate bundles
+                to be uploaded which would otherwise be an error.
 
         Returns:
-            The bundle id, the primary key of the newly-created bundle.
+            A tuple, with first entry the bundle id, the primary key of
+            the newly-created bundle, followed by a human-readable
+            success message, and then a human-readable list of warnings.
 
         Raises:
             ValidationError: _uploaded_pdf_file isn't a valid pdf or
                 exceeds the page limit, or other error.
             PlomConflict: we already have a bundle which conflicts.
+                ``force=True`` to accept it anyway.
         """
-        if not timestamp:
-            timestamp = datetime.timestamp(timezone.now())
+        warnings = []
+        # TODO: the form used something else:
+        # django.utils import timezone
+        # timestamp = timezone.now()
+        timestamp = datetime.timestamp(timezone.now())
+
+        if not slug:
+            filename_stem = Path(_uploaded_pdf_file.name).stem
+            if filename_stem.startswith("_"):
+                raise ValidationError(
+                    "Bundle filenames cannot start with an underscore"
+                    " - we reserve those for internal use."
+                )
+            slug = slugify(filename_stem)
 
         # Warning: Aidan saw errors if we open this more than once, during an API upload
         # here get the bytes from the file and never use `_upload_pdf_file` again.
@@ -141,20 +157,28 @@ class ScanService:
         except OSError as err:
             raise ValidationError(f"Unexpected error handling file: {err}") from err
 
+        if len(file_bytes) > settings.MAX_BUNDLE_SIZE:
+            raise ValidationError(
+                f"Bundle file size {len(file_bytes)} exceeds"
+                f" limit of {settings.MAX_BUNDLE_SIZE} bytes."
+            )
+
         if not pdf_hash:
             pdf_hash = hashlib.sha256(file_bytes).hexdigest()
 
         try:
             with pymupdf.open(stream=file_bytes) as pdf_doc:
                 if "PDF" not in pdf_doc.metadata["format"]:
-                    raise ValidationError("Uploaded file isn't a valid pdf")
-                if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
+                    raise ValidationError("File is not a valid PDF")
+                number_of_pages = pdf_doc.page_count
+                if number_of_pages > settings.MAX_BUNDLE_PAGES:
                     raise ValidationError(
-                        f"Uploaded pdf with {pdf_doc.page_count} pages"
+                        f"Uploaded pdf with {number_of_pages} pages"
                         f" exceeds {settings.MAX_BUNDLE_PAGES} page limit"
                     )
         # PyMuPDF docs says its exceptions will be caught by RuntimeError
-        except RuntimeError as e:
+        # (keep some other stuff just in case)
+        except (RuntimeError, pymupdf.FileDataError, KeyError) as e:
             raise ValidationError(
                 f"PyMuPDF library {pymupdf.__version__} could not open file,"
                 f" perhaps not a PDF? {type(e).__name__}: {e} "
@@ -171,10 +195,17 @@ class ScanService:
         with transaction.atomic(durable=True):
             existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
             if existing:
-                raise PlomConflict(
-                    f"Bundle(s) {[x.slug for x in existing]} with the"
-                    f" same file hash {pdf_hash} have already uploaded"
-                )
+                dupes = ", ".join(f'"{x.slug}"' for x in existing)
+                N = len(existing)
+                if N == 1:
+                    msg = f"A bundle {dupes} has already been uploaded"
+                else:
+                    msg = f"{N} bundles {dupes} have already been uploaded"
+                msg += f" with the same file hash {pdf_hash}"
+                if not force:
+                    raise PlomConflict(msg)
+                warnings.append(msg)
+
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
             bundle_obj = StagingBundle.objects.create(
@@ -189,34 +220,39 @@ class ScanService:
             bundle_obj.number_of_pages = number_of_pages
             bundle_obj.save()
         cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
-        return bundle_obj.pk
 
+        if len(pdf_hash) >= (12 + 12 + 3):
+            brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
+        else:
+            brief_hash = pdf_hash
+        success_msg = (
+            f"Uploaded {slug} with {number_of_pages} pages "
+            f"and hash {brief_hash}. "
+            "Background processing started."
+        )
+        return bundle_obj.pk, success_msg, "; ".join(warnings)
+
+    @classmethod
     def upload_bundle_cmd(
-        self,
+        cls,
         pdf_file_path: str | pathlib.Path,
-        slug: str,
         username: str,
-        timestamp: float,
-        pdf_hash: str,
-        number_of_pages: int,
     ) -> int:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
         Checks if the supplied username has permissions to access and upload scans.
 
         Args:
-            pdf_file_path (pathlib.Path or str): the path to the pdf being uploaded
-            slug (str): Filename slug for the pdf
-            username (str): the username uploading the file
-            timestamp (float): the timestamp of the datetime at which the file was uploaded
-            pdf_hash (str): the sha256 of the pdf.
-            number_of_pages (int): the number of pages in the pdf
+            pdf_file_path: the path to the pdf to be uploaded.
+            username: the username string of who is uploading the file.
 
         Returns:
             The bundle id, the primary key of the newly-created bundle.
 
         Raises:
             ValueError: username invalid or not in scanner group.
+            ValidationError: _uploaded_pdf_file isn't a valid pdf or
+                exceeds the page limit, or other error.
             PlomConflict: duplicate upload.
         """
         # username => user_object, if in scanner group, else exception raised.
@@ -232,14 +268,8 @@ class ScanService:
         with open(pdf_file_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        return self.upload_bundle(
-            pdf_file_object,
-            slug,
-            user_obj,
-            timestamp=timestamp,
-            pdf_hash=pdf_hash,
-            number_of_pages=number_of_pages,
-        )
+        r = cls.upload_bundle(pdf_file_object, user_obj)
+        return r[0]
 
     @staticmethod
     def split_and_save_bundle_images(
@@ -386,16 +416,16 @@ class ScanService:
         """Get the original, full-resolution image file from the database."""
         return self.get_image(bundle_id, index).baseimage.image_file
 
-    @transaction.atomic
-    def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
+    @staticmethod
+    def check_for_duplicate_hash(pdf_hash: str) -> bool:
         """Check if a PDF has already been uploaded.
 
         Returns True if the hash already exists in the database.
         """
         return StagingBundle.objects.filter(pdf_hash=pdf_hash).exists()
 
-    @transaction.atomic
-    def get_bundle_name_from_hash(self, pdf_hash: str) -> str | None:
+    @staticmethod
+    def get_bundle_name_from_hash(pdf_hash: str) -> str | None:
         """Get a bundle-name from a hash or return none."""
         try:
             return StagingBundle.objects.get(pdf_hash=pdf_hash).slug
@@ -1652,46 +1682,14 @@ def huey_parent_split_bundle_chore(
         ValueError: various error situations about the input.
         RuntimeError: child chore failed.
     """
-    import pymupdf
-
     assert task is not None
 
     start_time = time.time()
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+    bundle_length = bundle_obj.number_of_pages
+    assert bundle_length is not None, "Should know bundle length before processing"
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-
-    # TODO: there is some duplication of code here with BundleUploadForm
-    try:
-        with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
-            bundle_length = pdf_doc.page_count
-            if "PDF" not in pdf_doc.metadata["format"]:
-                raise ValueError("File is not a valid PDF")
-    except pymupdf.FileDataError as err:
-        raise ValueError(
-            f"Invalid pdf file? failed to determine number of pages: {err}"
-        ) from err
-
-    # TODO: accessing `settings` here inside the huey job bothers me
-    if bundle_length > settings.MAX_BUNDLE_PAGES:
-        raise ValueError(
-            f"File of {bundle_length} pages "
-            f"exceeds {settings.MAX_BUNDLE_PAGES} page limit."
-        )
-
-    if bundle_obj.number_of_pages is not None:
-        # if we already knew the number of pages, it better match!
-        if bundle_obj.number_of_pages != bundle_length:
-            raise ValueError(
-                f"number of pages {bundle_length} does not match "
-                f"existing preset value {bundle_obj.number_of_pages}"
-            )
-
-    with transaction.atomic():
-        _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
-        _write_bundle.number_of_pages = bundle_length
-        _write_bundle.save()
-    bundle_obj.refresh_from_db()
 
     # cut the list of all indices into chunks
     chunk_length = ceil(bundle_length / number_of_chunks)

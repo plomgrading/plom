@@ -9,9 +9,9 @@ from plom.scan.question_list_utils import _parse_questions
 
 
 @with_messenger
-def upload_bundle(pdf: Path, *, msgr) -> dict[str, Any]:
+def upload_bundle(pdf: Path, *, force: bool = False, msgr) -> dict[str, Any]:
     """Upload a bundle from a local pdf file."""
-    return msgr.new_server_upload_bundle(pdf)
+    return msgr.new_server_upload_bundle(pdf, force=force)
 
 
 @with_messenger

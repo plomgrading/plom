@@ -55,7 +55,6 @@ class ScanServiceTests(TestCase):
 
     def test_upload_bundle(self) -> None:
         """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
-        timestamp = timezone.now().timestamp()
         # open the pdf-file to create a file-object to pass to the upload command.
         with open(self.pdf_path, "rb") as fh:
             pdf_file_object = File(fh)
@@ -63,7 +62,7 @@ class ScanServiceTests(TestCase):
         slug = "_test_bundle"
         fake_hash = "deadbeef"
         ScanService.upload_bundle(
-            pdf_file_object, slug, self.user, timestamp=timestamp, pdf_hash=fake_hash
+            pdf_file_object, self.user, pdf_hash=fake_hash, slug=slug
         )
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
@@ -89,9 +88,8 @@ class ScanServiceTests(TestCase):
             fh.seek(0)
             non_pdf_file_object = File(fh)
 
-        slug = "_test_bundle"
         with self.assertRaises(ValidationError):
-            ScanService.upload_bundle(non_pdf_file_object, slug, self.user)
+            ScanService.upload_bundle(non_pdf_file_object, self.user)
 
     def test_remove_bundle(self) -> None:
         """Test removing a bundle and assert uploaded PDF file removed from disk."""
@@ -127,8 +125,7 @@ class ScanServiceTests(TestCase):
 class MoreScanServiceTests(TestCase):
     def test_duplicate_hash(self) -> None:
         baker.make(StagingBundle, pdf_hash="abcde")
-        scanner = ScanService()
-        duplicate_detected = scanner.check_for_duplicate_hash("abcde")
+        duplicate_detected = ScanService.check_for_duplicate_hash("abcde")
         self.assertTrue(duplicate_detected)
 
     def test_parse_qr_codes(self) -> None:
