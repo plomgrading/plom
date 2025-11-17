@@ -24,7 +24,7 @@ margin = 10
 def reassemble(
     outname: str | Path,
     shortName: str,
-    sid: str | None,
+    sid_or_other_id_info: str,
     coverfile: str | Path | None,
     id_images: list[dict[str, Any]],
     marked_pages: list[str],
@@ -37,8 +37,8 @@ def reassemble(
     Args:
         outname (str/pathlib.Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
-        sid: Student ID, or similar string to be written into metadata,
-            could also be None.
+        sid_or_other_id_info: Student ID, or similar string to be written
+            into metadata.  Could also be None, which means don't write it.
         coverfile (str/pathlib.Path): a coversheet already in PDF format.
             Pass None to omit (deprecated "totalling mode" did this).
         id_images (list): dict of images with keys "filename" (`pathlib.Path`)
@@ -102,9 +102,13 @@ def reassemble(
         exam, nonmarked_images, "seen but deemed not relevant to any question."
     )
 
+    if sid_or_other_id_info is None:
+        title = f"{shortName}"
+    else:
+        title = f"{shortName} {sid_or_other_id_info}"
     exam.set_metadata(
         {
-            "title": f"{shortName} {sid}",
+            "title": title,
             "producer": f"Plom {__version__}",
         }
     )
