@@ -24,7 +24,7 @@ margin = 10
 def reassemble(
     outname: str | Path,
     shortName: str,
-    sid_or_other_id_info: str,
+    sid_or_other_id_info: str | None,
     coverfile: str | Path | None,
     id_images: list[dict[str, Any]],
     marked_pages: list[str],
