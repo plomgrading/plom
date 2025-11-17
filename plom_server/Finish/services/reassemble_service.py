@@ -224,7 +224,8 @@ class ReassembleService:
             marked_pages.append(annotation.image.image.path)
         return marked_pages
 
-    def get_unmarked_images(self, paper: Paper) -> list[dict[str, Any]]:
+    @staticmethod
+    def get_unmarked_images(paper: Paper) -> list[dict[str, Any]]:
         """Get paths for a paper's images as they were scanned.
 
         Args:
@@ -274,7 +275,8 @@ class ReassembleService:
 
         return unmarked_deduplicated
 
-    def get_unmarked_paper(self, papernum: int) -> BytesIO:
+    @classmethod
+    def get_unmarked_paper(cls, papernum: int) -> BytesIO:
         """Reassemble a particular paper JIT without marker annotations.
 
         The produced file isn't cached.
@@ -290,7 +292,7 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        unmarked_images = self.get_unmarked_images(paper_obj)
+        unmarked_images = cls.get_unmarked_images(paper_obj)
 
         paper_id = StudentMarkService.get_paper_id_or_none(paper_obj)
         if not paper_id:
@@ -531,15 +533,15 @@ class ReassembleService:
         print(f"Just enqueued Huey reassembly task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
-    @transaction.atomic
-    def get_single_reassembled_file(self, paper_number: int) -> File:
+    @staticmethod
+    def get_single_reassembled_file(paper_number: int) -> tuple[File, str]:
         """Get the django-file of the reassembled pdf of the given paper.
 
         Args:
-            paper_number (int): The paper number to re-assemble.
+            paper_number: The paper number to re-assemble.
 
         Returns:
-            File: the django-File of the reassembled pdf.
+            Tuple of the django-File of the pdf and the suggested filename.
 
         Raises:
             ObjectDoesNotExist: no such paper or reassembly chore, or if
@@ -551,17 +553,18 @@ class ReassembleService:
             obsolete=False,
             status=ReassemblePaperChore.COMPLETE,
         )
-        return chore.pdf_file
+        return (chore.pdf_file, chore.display_filename)
 
-    @transaction.atomic
-    def get_single_student_report(self, paper_number: int) -> File:
+    @staticmethod
+    def get_single_student_report(paper_number: int) -> tuple[File, str]:
         """Get the django-file of the student report pdf of the given paper.
 
         Args:
-            paper_number (int): The paper number.
+            paper_number: The paper number.
 
         Returns:
-            File: the django-File of the report pdf.
+            Tuple of the django-File of the report pdf and the
+            suggested filename.
 
         Raises:
             ObjectDoesNotExist: no such paper or reassembly chore, or if
@@ -573,7 +576,7 @@ class ReassembleService:
             obsolete=False,
             status=ReassemblePaperChore.COMPLETE,
         )
-        return chore.report_pdf_file
+        return (chore.report_pdf_file, chore.report_display_filename)
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
         """Mark a reassembly chore as obsolete and try to cancel it if queued in Huey.
@@ -799,9 +802,9 @@ class ReassembleService:
             .count()
         )
 
-    @transaction.atomic
+    @staticmethod
     def get_completed_pdf_files_and_names(
-        self, *, first_paper: int | None = None, last_paper: int | None = None
+        *, first_paper: int | None = None, last_paper: int | None = None
     ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
 
@@ -821,9 +824,9 @@ class ReassembleService:
             query = query.filter(paper__paper_number__lte=last_paper)
         return [(task.pdf_file, task.display_filename) for task in query]
 
-    @transaction.atomic
+    @staticmethod
     def get_completed_report_files_and_names(
-        self, *, first_paper: int | None = None, last_paper: int | None = None
+        *, first_paper: int | None = None, last_paper: int | None = None
     ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
 
@@ -844,9 +847,10 @@ class ReassembleService:
 
         return [(task.report_pdf_file, task.report_display_filename) for task in query]
 
+    @classmethod
     @transaction.atomic
     def get_zipfly_generator(
-        self,
+        cls,
         *,
         first_paper: int | None = None,
         last_paper: int | None = None,
@@ -874,7 +878,7 @@ class ReassembleService:
                 "fs": pdf_file.path,
                 "n": f"reassembled/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names(
+            for pdf_file, display_filename in cls.get_completed_pdf_files_and_names(
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
@@ -883,7 +887,7 @@ class ReassembleService:
                 "fs": report_pdf_file.path,
                 "n": f"student_reports/{report_display_filename}",
             }
-            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names(
+            for report_pdf_file, report_display_filename in cls.get_completed_report_files_and_names(
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
