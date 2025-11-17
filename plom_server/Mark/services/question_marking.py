@@ -254,3 +254,12 @@ class QuestionMarkingService:
         # TODO: consider moving this into the helper in annotations.py
         task.status = MarkingTask.COMPLETE
         task.save()
+
+        if require_latest_rubrics:
+            # strip any "rubric_changed" tags
+            try:
+                MarkingTaskService().remove_tag_text_from_task_code(
+                    "rubric_changed", task.code
+                )
+            except ValueError:
+                pass
