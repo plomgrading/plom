@@ -299,7 +299,12 @@ class ReassembleService:
         if not paper_id:
             pdf_id_metadata = f"paper-{paper_obj.paper_number}"
         else:
-            pdf_id_metadata = paper_id[0]  # student id
+            sid, name = paper_id
+            if sid is None:
+                why_none = name  # name should have a hint why it's not ID'd
+                pdf_id_metadata = f"paper-{paper_obj.paper_number} {why_none}"
+            else:
+                pdf_id_metadata = sid
 
         shortname = SpecificationService.get_shortname()
 
@@ -355,10 +360,10 @@ class ReassembleService:
         if student_id is None:
             # in this case student_name has a hint such as "Blank paper" or "No ID given"
             why_none = slugify(student_name)
-            outname = f"{shortname}_paper{paper.paper_number:04}_{why_none}.pdf"
+            fname = f"{shortname}_paper{paper.paper_number:04}_{why_none}.pdf"
         else:
-            outname = f"{shortname}_{student_id}.pdf"
-        outname = outdir / outname
+            fname = f"{shortname}_{student_id}.pdf"
+        outname = outdir / fname
 
         with tempfile.TemporaryDirectory() as _td:
             tmpdir = Path(_td)

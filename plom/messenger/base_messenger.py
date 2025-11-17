@@ -1700,6 +1700,7 @@ class BaseMessenger:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    # TODO: possibly deprecated
     def getSolutionStatus(self):
         with self.SRmutex:
             try:

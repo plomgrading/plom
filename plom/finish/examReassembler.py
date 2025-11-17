@@ -24,7 +24,7 @@ margin = 10
 def reassemble(
     outname: str | Path,
     shortName: str,
-    sid: str,
+    sid: str | None,
     coverfile: str | Path | None,
     id_images: list[dict[str, Any]],
     marked_pages: list[str],
@@ -37,7 +37,8 @@ def reassemble(
     Args:
         outname (str/pathlib.Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
-        sid (str): Student ID, to be written into metadata.
+        sid: Student ID, or similar string to be written into metadata,
+            could also be None.
         coverfile (str/pathlib.Path): a coversheet already in PDF format.
             Pass None to omit (deprecated "totalling mode" did this).
         id_images (list): dict of images with keys "filename" (`pathlib.Path`)
