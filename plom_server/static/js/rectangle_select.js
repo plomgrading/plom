@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024-2025 Andrew Rechnitze
     Copyright (C) 2024-2025 Bryan Tanady
+    Copyright (C) 2025 Colin B. Macdonald
 */
 
 // Code idea copied from 
@@ -20,7 +21,7 @@ var h_plom_tl_y= document.getElementById('plom_top');
 var h_plom_br_x= document.getElementById('plom_right');
 var h_plom_br_y= document.getElementById('plom_bottom');
 
-var handleRadius = 8 
+var handleRadius = 10
 
 var dragTL = dragBL = dragTR = dragBR = false;
 var dragWholeRect = false;
@@ -172,14 +173,8 @@ function mouseDown(e) {
   var pos = getMousePos(this,e);
   mouseX = pos.x;
   mouseY = pos.y;
-  // 0. inside movable rectangle
-  if (checkInRect(mouseX, mouseY, rect)){
-      dragWholeRect=true;
-      startX = mouseX;
-      startY = mouseY;
-  }
   // 1. top left
-  else if (checkCloseEnough(mouseX, rect.left) && checkCloseEnough(mouseY, rect.top)) {
+  if (checkCloseEnough(mouseX, rect.left) && checkCloseEnough(mouseY, rect.top)) {
       dragTL = true;
   }
   // 2. top right
@@ -194,7 +189,12 @@ function mouseDown(e) {
   else if (checkCloseEnough(mouseX, rect.left + rect.width) && checkCloseEnough(mouseY, rect.top + rect.height)) {
       dragBR = true;
   }
-  // (5.) none of them
+  // 5. inside movable rectangle
+  else if (checkInRect(mouseX, mouseY, rect)) {
+      dragWholeRect=true;
+      startX = mouseX;
+      startY = mouseY;
+  }
   else {
       // handle not resizing
   }
