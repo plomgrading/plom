@@ -23,7 +23,7 @@ def get_marks_as_csv_string(*, msgr) -> str:
     Returns:
         A string containing the paper marks formatted as a csv.
     """
-    papers_marks_list = msgr.new_server_get_paper_marks()
+    papers_marks_list = msgr.get_paper_marks()
 
     with StringIO() as stringbuffer:
         writer = DictWriter(stringbuffer, papers_marks_list[0].keys())
@@ -38,18 +38,18 @@ def get_marks_as_csv_string(*, msgr) -> str:
 @with_messenger
 def get_reassembled(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a paper in its marked state."""
-    return msgr.new_server_get_reassembled(papernum, verbose=verbose)
+    return msgr.get_reassembled(papernum, verbose=verbose)
 
 
 @with_messenger
 def get_unmarked(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a paper in its unmarked state."""
-    return msgr.new_server_get_unmarked(papernum, verbose=verbose)
+    return msgr.get_unmarked(papernum, verbose=verbose)
 
 
 def get_report(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a student report for a given paper."""
-    return msgr.new_server_get_report(papernum, verbose=verbose)
+    return msgr.get_report(papernum, verbose=verbose)
 
 
 @with_messenger
@@ -57,12 +57,12 @@ def get_all_reports(
     *, dirname: str = "reports", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get student reports for all papers."""
-    pqvmap_dict = msgr.new_server_get_pqvmap()
+    pqvmap_dict = msgr.get_pqvmap()
     papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
 
     return _get_all_helper(
         papernum_list,
-        msgr.new_server_get_report,
+        msgr.get_report,
         dirname=dirname,
         verbose=verbose,
     )
@@ -71,7 +71,7 @@ def get_all_reports(
 @with_messenger
 def get_solution(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a solution set for a given paper."""
-    return msgr.new_server_get_solution(papernum, verbose=verbose)
+    return msgr.get_solution(papernum, verbose=verbose)
 
 
 @with_messenger
@@ -79,12 +79,12 @@ def get_all_solutions(
     *, dirname: str = "solutions", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get solution files for all papers."""
-    pqvmap_dict = msgr.new_server_get_pqvmap()
+    pqvmap_dict = msgr.get_pqvmap()
     papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
 
     return _get_all_helper(
         papernum_list,
-        msgr.new_server_get_solution,
+        msgr.get_solution,
         dirname=dirname,
         verbose=verbose,
     )
@@ -95,12 +95,12 @@ def get_all_reassembled(
     *, dirname: str = "reassembled", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get all papers in their marked states."""
-    pqvmap_dict = msgr.new_server_get_pqvmap()
+    pqvmap_dict = msgr.get_pqvmap()
     papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
 
     return _get_all_helper(
         papernum_list,
-        msgr.new_server_get_reassembled,
+        msgr.get_reassembled,
         dirname=dirname,
         verbose=verbose,
     )
@@ -111,12 +111,12 @@ def get_all_unmarked(
     *, dirname: str = "unmarked", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get all papers in their unmarked states."""
-    pqvmap_dict = msgr.new_server_get_pqvmap()
+    pqvmap_dict = msgr.get_pqvmap()
     papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
 
     return _get_all_helper(
         papernum_list,
-        msgr.new_server_get_unmarked,
+        msgr.get_unmarked,
         dirname=dirname,
         verbose=verbose,
     )

@@ -38,9 +38,7 @@ log = logging.getLogger("messenger")
 class PlomAdminMessenger(Messenger):
     """Extend the Messenger to handle more advanced communication with a Plom Server."""
 
-    def new_server_upload_bundle(
-        self, pdf: Path, *, force: bool = False
-    ) -> dict[str, Any]:
+    def upload_bundle(self, pdf: Path, *, force: bool = False) -> dict[str, Any]:
         """Upload a PDF file to the server as a new bundle.
 
         Args:
@@ -85,7 +83,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_list_bundles(self) -> list[list[Any]]:
+    def list_bundles(self) -> list[list[Any]]:
         """Get a list of information about bundles on the server.
 
         TODO: beta: rename to something reasonable in due time.
@@ -111,7 +109,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_bundle_map_page(
+    def bundle_map_page(
         self,
         bundle_id: int,
         page: int,
@@ -209,7 +207,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_push_bundle(self, bundle_id: int) -> dict[str, Any]:
+    def push_bundle(self, bundle_id: int) -> dict[str, Any]:
         """Push a bundle from the staging area.
 
         TODO: beta: rename to something reasonable in due time.
@@ -243,7 +241,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_delete_bundle(self, bundle_id: int):
+    def delete_bundle(self, bundle_id: int):
         """Delete a bundle from the staging area.
 
         TODO: beta: rename to something reasonable in due time.
@@ -274,7 +272,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_paper_marks(self) -> dict[int, dict]:
+    def get_paper_marks(self) -> dict[int, dict]:
         """Get a list of information about exam papers on the server.
 
         More specifically this contains info about student marks and IDs.
@@ -298,7 +296,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_pqvmap(self) -> dict[Any, dict]:
+    def get_pqvmap(self) -> dict[Any, dict]:
         """Request the pqvmap (if any) held by the server.
 
         Returns:
@@ -324,9 +322,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_unmarked(
-        self, papernum: int, *, verbose: bool = False
-    ) -> dict[str, Any]:
+    def get_unmarked(self, papernum: int, *, verbose: bool = False) -> dict[str, Any]:
         """Download an unmarked PDF file from the server.
 
         Returns:
@@ -373,7 +369,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_reassembled(
+    def get_reassembled(
         self, papernum: int, *, verbose: bool = False
     ) -> dict[str, Any]:
         """Download a reassembled PDF file from the server.
@@ -422,9 +418,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_report(
-        self, papernum: int, *, verbose: bool = False
-    ) -> dict[str, Any]:
+    def get_report(self, papernum: int, *, verbose: bool = False) -> dict[str, Any]:
         """Download a student report file from the server.
 
         Returns:
@@ -471,9 +465,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_solution(
-        self, papernum: int, *, verbose: bool = False
-    ) -> dict[str, Any]:
+    def get_solution(self, papernum: int, *, verbose: bool = False) -> dict[str, Any]:
         """Download a solution PDF file from the server.
 
         The solutions for each paper may not be the same, asking for
@@ -581,9 +573,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_upload_source(
-        self, version: int, source_pdf: Path
-    ) -> dict[str, Any]:
+    def upload_source(self, version: int, source_pdf: Path) -> dict[str, Any]:
         """Upload an assessment source to the server.
 
         Args:
@@ -622,7 +612,7 @@ class PlomAdminMessenger(Messenger):
 
         return response.json()
 
-    def new_server_delete_source(self, version: int) -> dict[str, Any]:
+    def delete_source(self, version: int) -> dict[str, Any]:
         """Delete the specified assessment source from the server.
 
         Args:
@@ -656,7 +646,7 @@ class PlomAdminMessenger(Messenger):
 
         return response.json()
 
-    def new_server_upload_spec(self, spec_toml: Path) -> dict[str, Any]:
+    def upload_spec(self, spec_toml: Path) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
@@ -747,7 +737,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_delete_classlist(self) -> None:
+    def delete_classlist(self) -> None:
         """Delete the classlist (if any) held by the server."""
         with self.SRmutex:
             try:
@@ -762,7 +752,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_download_classlist(self) -> BytesIO:
+    def download_classlist(self) -> BytesIO:
         """Download the classlist (if any) held by the server.
 
         Returns:
@@ -787,9 +777,7 @@ class PlomAdminMessenger(Messenger):
 
         return csv_content
 
-    def new_server_upload_classlist(
-        self, csvpath: Path
-    ) -> tuple[bool, list[dict[str, Any]]]:
+    def upload_classlist(self, csvpath: Path) -> tuple[bool, list[dict[str, Any]]]:
         """Use the given CSV file to extend the classlist on the server.
 
         Typically the server classlist starts empty and this is used just once.

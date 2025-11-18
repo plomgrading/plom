@@ -17,7 +17,7 @@ def get_pqvmap_as_csv_string(msgr) -> str:
     Returns:
         A string containing the pqvmap as a .csv string.
     """
-    pqvmap_json = msgr.new_server_get_pqvmap()
+    pqvmap_json = msgr.get_pqvmap()
     pqvmap_dict_list = []
     for paper_number, version_dict in pqvmap_json.items():
         pqvdict = {"paper_number": paper_number}

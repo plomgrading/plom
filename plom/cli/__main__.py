@@ -594,7 +594,7 @@ def main():
     elif args.command == "push-bundle":
         msgr = start_messenger(args.server, args.username, args.password)
         try:
-            r = msgr.new_server_push_bundle(args.bundle_id)
+            r = msgr.push_bundle(args.bundle_id)
             print(r)
         finally:
             msgr.closeUser()
@@ -738,7 +738,7 @@ def main():
     elif args.command == "delete-bundle":
         msgr = start_messenger(args.server, args.username, args.password)
         try:
-            r = msgr.new_server_delete_bundle(args.bundle_id)
+            r = msgr.delete_bundle(args.bundle_id)
             print(r)
         finally:
             msgr.closeUser()
