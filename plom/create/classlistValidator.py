@@ -18,11 +18,11 @@ canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 class PlomClasslistValidator:
     """The Plom Classlist Validator has methods to help ensure compatible classlists."""
 
-    def readClassList(self, filename: Path | str) -> list[dict[str, Any]]:
+    def readClasslist(self, filename: Path | str) -> list[dict[str, Any]]:
         """Read classlist from filename and return as list of dicts.
 
         Arguments:
-            filename: csv-file to be loaded.  It must be UTF-8-encoded, or
+            filename: csv-file to be loaded.  It must be UTF-8 encoded, or
                 "utf-8-sig".
 
         Returns:
@@ -35,6 +35,8 @@ class PlomClasslistValidator:
             ValueError: the file does not contain a header line, or the file
                 does not contain any of the header names we might expect, or
                 there is some other problem with the headers.
+            UnicodeDecodeError: encoding troubles, such as when the file isn't
+                in UTF-8.
         """
         classAsDicts = []
         # Note newline: https://docs.python.org/3/library/csv.html#id4
@@ -297,9 +299,26 @@ class PlomClasslistValidator:
         """
         werr = []
         try:
-            cl_as_dicts = self.readClassList(filename)
+            cl_as_dicts = self.readClasslist(filename)
+        except UnicodeDecodeError as err:
+            errstr = (
+                "This file has the wrong encoding: "
+                "you may need to export it as a UTF-8 file.  "
+                f"{err.__class__.__name__}: {err}"
+            )
+            url = "https://plom.readthedocs.io/en/latest/faq.html#how-do-i-make-a-utf-8-csv-file"
+            werr.append(
+                {
+                    "warn_or_err": "error",
+                    "werr_line": 0,
+                    "werr_text": errstr,
+                    "werr_more_info_url": url,
+                }
+            )
+            return (False, werr, [])
         except (ValueError, FileNotFoundError) as err:
-            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
+            errstr = f"{err.__class__.__name__}: {err}"
+            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": errstr})
             return (False, werr, [])
         except Exception as err:
             e = f"Some other sort of error reading {filename}: {type(err)} {err}"
