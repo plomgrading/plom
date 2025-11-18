@@ -12,7 +12,7 @@
 import csv
 import hashlib
 from io import StringIO
-from typing import Any, Optional
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Exists, OuterRef, Count, Q
@@ -87,13 +87,13 @@ class StudentMarkService:
         return marked_papers_queryset, unmarked_papers_queryset
 
     @staticmethod
-    def is_paper_marked(paper: Paper, n_questions: Optional[int] = None) -> bool:
+    def is_paper_marked(paper: Paper, n_questions: int | None = None) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
             paper: a reference to a Paper instance.
             n_questions: number of questions in the test. Pass n_questions to reduce
-            repetitive db_query of n_questions.
+                repetitive db_query of n_questions.  If omitted, it will be computed.
 
         Returns:
             bool: True when all questions in the given paper are marked.
