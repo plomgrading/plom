@@ -15,6 +15,7 @@ from plom_server.Papers.models import Paper
 from .utils import _error_response
 
 
+# /REP/spreadsheet
 class REPspreadsheet(APIView):
     """API related to spreadsheat-like data."""
 
@@ -41,6 +42,7 @@ class REPspreadsheet(APIView):
 
 
 # TODO: unused, legacy, used inefficient service: remove ASAP
+# /REP/identified
 class REPidentified(APIView):
     def get(self, request: HttpRequest) -> HttpResponse:
         id_data = StudentMarkService().get_identified_papers()  # inefficient?

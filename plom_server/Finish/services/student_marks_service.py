@@ -170,14 +170,16 @@ class StudentMarkService:
             return timezone.now()  # if no updates return the current time.
 
     @staticmethod
-    def get_paper_id_or_none(paper: Paper) -> tuple[str, str] | None:
+    def get_paper_id_or_none(paper: Paper) -> tuple[str | None, str] | None:
         """Return a tuple of (student ID, student name) if the paper has been identified. Otherwise, return None.
 
         Args:
             paper: a reference to a Paper instance
 
         Returns:
-            a tuple (str, str) or None
+            A tuple (str, str) or None.  Note that a paper can be ID'd
+            with sid `None`, in which case we get back ``(None, str)``
+            where the second string is an explanation.
         """
         try:
             action = (
@@ -244,7 +246,7 @@ class StudentMarkService:
 
         return (is_scanned, is_id, n_marked, last_modified)
 
-    def get_identified_papers(self) -> dict[str, list[str]]:
+    def get_identified_papers(self) -> dict[int, tuple[str | None, str]]:
         """Return a dictionary with all of the identified papers and their names and IDs, with potentially INEFFICIENT DB operations.
 
         TODO: only called by an unused legacy API code, see "API/views/reports.py"
@@ -259,7 +261,7 @@ class StudentMarkService:
             paper_id_info = self.get_paper_id_or_none(paper)
             if paper_id_info:
                 student_id, student_name = paper_id_info
-                spreadsheet_data[paper.paper_number] = [student_id, student_name]
+                spreadsheet_data[paper.paper_number] = (student_id, student_name)
         return spreadsheet_data
 
     def get_marks_from_paper(self, paper_num: int) -> dict:
