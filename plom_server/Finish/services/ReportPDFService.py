@@ -115,10 +115,10 @@ def pdf_builder(
     stdev_mark = des.get_totals_stdev()
 
     task_count_dict = mts.get_task_counts_dict()
-    total_tasks = task_count_dict["valid"]
-
+    total_valid_tasks = task_count_dict["valid"]
     marked_tasks = task_count_dict["complete"]
-    all_marked = marked_tasks == total_tasks and total_tasks > 0
+    # separate code path from StudentMarkService.are_all_papers_marked
+    all_marked = marked_tasks == total_valid_tasks and total_valid_tasks > 0
 
     mpls.ensure_all_figures_closed()
 
