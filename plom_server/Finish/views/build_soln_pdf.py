@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.shortcuts import render
-from django.http import FileResponse, StreamingHttpResponse
+from django.http import HttpRequest, FileResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.text import slugify
-
 from django_htmx.http import HttpResponseClientRedirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView
@@ -68,10 +67,10 @@ class StartOneBuildSoln(ManagerRequiredView):
         BuildSolutionService().reset_single_solution_build(paper_number)
         return HttpResponseClientRedirect(reverse("build_soln"))
 
-    def get(self, request, paper_number):
-        return FileResponse(
-            BuildSolutionService().get_single_solution_pdf_file(paper_number)
-        )
+    def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
+        """Download the solution PDF for a particular paper number."""
+        pdf, filename = BuildSolutionService.get_single_solution_pdf_file(paper_number)
+        return FileResponse(pdf, filename=filename)
 
     def put(self, request, paper_number):  # called by "re-build_soln"
         BuildSolutionService().reset_single_solution_build(paper_number)
@@ -88,11 +87,12 @@ class StartAllBuildSoln(ManagerRequiredView):
         BuildSolutionService().reset_all_soln_build()
         return HttpResponseClientRedirect(reverse("build_soln"))
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> StreamingHttpResponse:
+        """A streaming download of all the solution PDFs in one big dynamically-generated zipfile."""
         # using zipfly python package.  see django example here
         # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
         short_name = slugify(SpecificationService.get_shortname())
-        zgen = BuildSolutionService().get_zipfly_generator()
+        zgen = BuildSolutionService.get_zipfly_generator()
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = (
             f"attachment; filename={short_name}_solutions.zip"

@@ -3,24 +3,20 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
-
-from django.shortcuts import render
-from django.urls import reverse
 from django.http import (
-    HttpResponse,
     HttpRequest,
+    HttpResponse,
     HttpResponseRedirect,
     FileResponse,
     Http404,
 )
-
+from django.shortcuts import render
+from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 
-
 from plom_server.Base.base_group_views import ManagerRequiredView
-
-from ..services import SolnSourceService, BuildSolutionService
 from plom_server.Papers.services import SolnSpecService, SpecificationService
+from ..services import SolnSourceService, BuildSolutionService
 
 
 class SolnSourcesView(ManagerRequiredView):
@@ -37,7 +33,7 @@ class SolnSourcesView(ManagerRequiredView):
         # version is non-null when user wants to download the source.
         if version:
             try:
-                source_bytes = SolnSourceService().get_soln_pdf_for_download(version)
+                source_bytes = SolnSourceService.get_soln_pdf_for_download(version)
                 return FileResponse(
                     source_bytes,
                     as_attachment=True,

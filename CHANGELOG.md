@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Compare handwriting now explains why if it shows a non-ID page (for example, if the ID page is itself unknown).
+* Updating the annotations (sending new marking data) from the client will remove any `rubric_changed` tags, which should improve the process of making major edits to in-use rubrics.
 * Improvements to command-line tools and error handling.
 
 ### Fixed

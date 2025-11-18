@@ -43,9 +43,7 @@ class Command(BaseCommand):
 
     def download_source(self, version):
         try:
-            soln_pdf_bytes = (
-                SolnSourceService().get_soln_pdf_for_download(version).read()
-            )
+            soln_pdf_bytes = SolnSourceService.get_soln_pdf_for_download(version).read()
         except ValueError as err:
             raise CommandError(err)
         fname = f"solution{version}.pdf"

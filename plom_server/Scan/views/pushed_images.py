@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2025 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -41,7 +41,7 @@ class WholePaperView(ScannerLeadMarkerOrManagerView):
 
     def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
         """Get an unmarked paper."""
-        pdf_bytestream = ReassembleService().get_unmarked_paper(paper_number)
+        pdf_bytestream = ReassembleService.get_unmarked_paper(paper_number)
 
         return FileResponse(
             pdf_bytestream,  # filename set in service function
