@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased Development
 
 ### Added
+* ability for "force" upload of duplicate scan bundles.
 
 ### Removed
 
 ### Changed
 * public code handling has changed to be more flexible.
+* improvements to classlist handling for developers.
 
 ### Fixed
 
