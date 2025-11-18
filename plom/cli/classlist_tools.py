@@ -20,7 +20,7 @@ def delete_classlist(msgr) -> bool:
     Returns:
         True if the server's classlist was purged.
     """
-    msgr.new_server_delete_classlist()
+    msgr.delete_classlist()
     print("OK, server's classlist is now empty.")
     return True
 
@@ -36,7 +36,7 @@ def download_classlist(msgr) -> bool:
         True iff the server's classlist was emitted.
     """
     success = True
-    csvstream = msgr.new_server_download_classlist()
+    csvstream = msgr.download_classlist()
     for chunk in csvstream:
         sys.stdout.buffer.write(chunk)
     return success
@@ -59,7 +59,7 @@ def upload_classlist(csvname: Path, *, msgr) -> bool:
         True iff the server's classlist now includes all uploaded records.
     """
     try:
-        success, werr = msgr.new_server_upload_classlist(csvname)
+        success, werr = msgr.upload_classlist(csvname)
     except (PlomAuthenticationException, PlomConflict) as e:
         success = False
         print(f"Upload failed with exception: {e}")

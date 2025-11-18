@@ -27,7 +27,7 @@ def upload_spec(spec_toml: Path, *, msgr) -> bool:
         True if the server's specification was updated, otherwise False.
     """
     try:
-        check = msgr.new_server_upload_spec(spec_toml)
+        check = msgr.upload_spec(spec_toml)
     except (
         PlomAuthenticationException,
         PlomConflict,

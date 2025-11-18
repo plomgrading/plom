@@ -609,7 +609,7 @@ def main():
     print(CHECKMARK)
 
     # iterate over this
-    student_marks = restructure_plom_marks(plom_messenger.new_server_get_paper_marks())
+    student_marks = restructure_plom_marks(plom_messenger.get_paper_marks())
     print(f"Plom marks retrieved (for {len(student_marks)} examinees).")
 
     # put canvas submissions in a dict for fast recall
@@ -658,7 +658,7 @@ def main():
         if args.dry_run:
             if args.papers:
                 try:
-                    file_info = plom_messenger.new_server_get_reassembled(paper_number)
+                    file_info = plom_messenger.get_reassembled(paper_number)
                     successes.append(
                         {
                             "file/mark": file_info["filename"],
@@ -690,7 +690,7 @@ def main():
                 )
             if args.reports:
                 try:
-                    file_info = plom_messenger.new_server_get_report(paper_number)
+                    file_info = plom_messenger.get_report(paper_number)
                     successes.append(
                         {
                             "file/mark": file_info["filename"],
@@ -713,7 +713,7 @@ def main():
                         os.remove(file_info["filename"])
             if args.solutions:
                 try:
-                    file_info = plom_messenger.new_server_get_solution(paper_number)
+                    file_info = plom_messenger.get_solution(paper_number)
                     successes.append(
                         {
                             "file/mark": file_info["filename"],
@@ -736,7 +736,7 @@ def main():
         # no real parallelism in python, so order doesn't really matter here
         if args.papers:
             try:
-                file_info = plom_messenger.new_server_get_reassembled(paper_number)
+                file_info = plom_messenger.get_reassembled(paper_number)
                 student_canvas_submission.upload_comment(file_info["filename"])
             except PlomException as e:
                 print(e)
@@ -779,7 +779,7 @@ def main():
 
         if args.solutions:
             try:
-                file_info = plom_messenger.new_server_get_solution(paper_number)
+                file_info = plom_messenger.get_solution(paper_number)
                 student_canvas_submission.upload_comment(file_info["filename"])
             except PlomException as e:
                 print(e)
@@ -808,7 +808,7 @@ def main():
 
         if args.reports:
             try:
-                file_info = plom_messenger.new_server_get_report(paper_number)
+                file_info = plom_messenger.get_report(paper_number)
                 student_canvas_submission.upload_comment(file_info["filename"])
             except PlomException as e:
                 print(e)
