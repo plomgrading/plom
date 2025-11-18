@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
@@ -14,6 +14,8 @@ from rest_framework import status, serializers
 from plom.plom_exceptions import PlomConflict
 from plom_server.Rubrics.services import RubricService
 from plom_server.Mark.serializers.tasks import MarkingTaskSerializer
+
+from plom_server.UserManagement.models import User
 
 from .utils import _error_response
 
@@ -40,9 +42,20 @@ class MgetRubricsByQuestion(APIView):
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 
+# GET: /MK/user/{username}/{question}
+# PUT: /MK/user/{username}/{question}
+
+
 class MgetRubricPanes(APIView):
     def get(self, request: Request, *, username: str, question: int) -> Response:
-        pane = RubricService.get_rubric_pane(request.user, question)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return _error_response(
+                f"User {username} doesn't exist",
+                status.HTTP_400_BAD_REQUEST,
+            )
+        pane = RubricService.get_rubric_pane(user, question)
         return Response(pane, status=status.HTTP_200_OK)
 
     def put(self, request: Request, *, username: str, question: int) -> Response:
@@ -161,7 +174,7 @@ class MmodifyRubric(APIView):
         except PermissionDenied as e:
             # not catching this would work, but we don't get the full error message
             return _error_response(e, status.HTTP_403_FORBIDDEN)
-        except (serializers.ValidationError, NotImplementedError) as e:
+        except (ValueError, serializers.ValidationError, NotImplementedError) as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)

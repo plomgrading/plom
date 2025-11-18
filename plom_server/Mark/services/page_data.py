@@ -33,9 +33,12 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
     question_pages = QuestionPage.objects.filter(
         paper=test_paper, question_index=question_index
     ).prefetch_related("image", "image__baseimage")
-    mobile_pages = MobilePage.objects.filter(
-        paper=test_paper, question_index=question_index
-    ).prefetch_related("image", "image__baseimage")
+    # Papers/models/structure.py claims MobilePages have no order so sort by id
+    mobile_pages = (
+        MobilePage.objects.filter(paper=test_paper, question_index=question_index)
+        .order_by("pk")
+        .prefetch_related("image", "image__baseimage")
+    )
 
     page_list = []
     for page in question_pages.order_by("page_number"):
@@ -59,8 +62,8 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
                     # are for any consumers of this API.
                 }
             )
-    # TODO - decide better order (see hackery comments below).
-    # Also - do not repeat mobile pages if can avoid it.
+    # Note: MobilePages are ordered only by their id, as documented in
+    # Papers/models/structure.py
     for page in mobile_pages:
         image = page.image
         assert image is not None  # mobile pages will always have images
@@ -205,7 +208,7 @@ class PageDataService:
         # need to keep count as we go.
         question_mobile_page_count: dict[int, int] = {}
 
-        # add mobile-pages in pk order (is creation order)
+        # add mobile-pages in id order (is creation order)
         for page in (
             MobilePage.objects.filter(paper=test_paper)
             .order_by("pk")
@@ -221,7 +224,7 @@ class PageDataService:
             pages_metadata.append(
                 {
                     "pagename": pagename,
-                    "md5": page.image.image__baseimage.image_hash,
+                    "md5": page.image.baseimage.image_hash,
                     "included": qidx == question,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,

@@ -26,44 +26,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="PapersPrintedSettingModel",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("have_printed_papers", models.BooleanField(default=False)),
-            ],
-            options={
-                "abstract": False,
-            },
-        ),
-        migrations.CreateModel(
-            name="PrenamingSetting",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("enabled", models.BooleanField(default=False)),
-                ("xcoord", models.FloatField(default=50)),
-                ("ycoord", models.FloatField(default=42)),
-            ],
-            options={
-                "abstract": False,
-            },
-        ),
-        migrations.CreateModel(
             name="StagingPQVMapping",
             fields=[
                 (

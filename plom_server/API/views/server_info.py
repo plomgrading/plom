@@ -19,7 +19,7 @@ from rest_framework import status
 
 from plom_server import Plom_API_Version
 from plom_server import __version__
-from plom_server.Base.models import SettingsModel
+from plom_server.Base.services import Settings
 from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
 from ..permissions import AllowAnyReadOnly
@@ -77,6 +77,17 @@ def _client_reject_list() -> list[dict[str, Any]]:
                 "Please upgrade (or downgrade)."
             ),
             "action": "warn",
+        },
+        {
+            "client-id": "org.plomgrading.PlomClient",
+            "version": "0.19.1",
+            "operator": "<=",
+            "reason": (
+                "Plom Client v0.19.0 and v0.19.1 cannot be safely used "
+                "to mark paper numbers larger than 999."
+                " Please upgrade your client to v0.19.2 or later."
+            ),
+            "action": "block",
         },
     ]
 
@@ -157,26 +168,25 @@ class ExamInfo(APIView):
         info: dict[str, Any] = {
             # TODO: hardcoded, Issue #2938
             "current_largest_paper_num": 9999,
-            "feedback_rules": SettingsModel.get_feedback_rules(),
+            "feedback_rules": Settings.get_feedback_rules(),
         }
         return Response(info)
 
 
 class CloseUser(APIView):
-    """Delete the user's token, surrender their tasks, and log them out.
-
-    Returns:
-        (200) user is logged out successfully
-        (401) user is not signed in
-    """
+    """Delete the user's token, surrender their tasks, and log them out."""
 
     # DELETE: /close_user/
     # DELETE: /close_user/?revoke_token
     def delete(self, request: Request) -> Response:
         """Token-based logout, surrender all tasks, and optionally revoke the token.
 
-        If the ``query_params`` contains ``revoke_token`` then we'll revoke the tablet
+        If the ``query_params`` contains ``revoke_token`` then we'll revoke the token
         preventing future API calls until login creates a new token.
+
+        Returns:
+            Http return code 200 when the user is logged out successfully.
+            A 401 error is returned in various error cases.
         """
         revoke_token = False
         if "revoke_token" in request.query_params:
@@ -207,9 +217,9 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
 
         Returns:
             200 and a token in json if user logged in successfully.
-            400 for poorly formed requests, such as no client version or
-            bad client version.  If the callers asks for exclusive access,
-            then reply with 409 if user already has a token (see Issue #3845).
+            400 for poorly formed requests, such as no client version or bad client version.
+            401 for requests with an inactive (or invalid) user/passwd combo.
+            409 if the caller asks for exclusive access but already has a token (see Issue #3845).
         """
         # Idea from
         # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
@@ -252,7 +262,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         )
         if not serializer.is_valid():
             return _error_response(
-                "The username / password pair are not authorized",
+                "Access denied. Check username, password, and 'enabled' status.",
                 status.HTTP_401_UNAUTHORIZED,
             )
         user = serializer.validated_data["user"]
@@ -283,7 +293,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         )
         if not serializer.is_valid():
             return _error_response(
-                "The username / password pair are not authorized",
+                "Access denied. Check username, password, and 'enabled' status.",
                 status.HTTP_401_UNAUTHORIZED,
             )
         # note this differs from request.user which is AnonymousUser

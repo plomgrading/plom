@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
@@ -46,6 +46,16 @@ class PushAllPageImages(ScannerRequiredView):
             )
         except RuntimeError as err:
             messages.add_message(request, messages.ERROR, f"{err}")
+            # Note: reverse gives a view; that view should consume messages
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_push_error", args=[bundle_id])
+            )
+        except Exception as err:
+            # TODO: we don't like generic exception handlers but we got bit by
+            # Issue #3926 so now catch all the unexpected errors too.
+            messages.add_message(
+                request, messages.ERROR, f"Plom bug: unexpected error: {err}"
+            )
             # Note: reverse gives a view; that view should consume messages
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_push_error", args=[bundle_id])

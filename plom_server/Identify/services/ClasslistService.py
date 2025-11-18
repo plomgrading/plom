@@ -1,17 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
-
-from __future__ import annotations
 
 from plom_server.Preparation.services import StagingStudentService
 
 
 def get_students() -> list[dict[str, str | int]]:
     """Get a list of students, empty if there are none."""
-    return StagingStudentService().get_students()
+    return StagingStudentService.get_students()
 
 
 def get_students_in_api_format() -> list[dict[str, str | int]]:

@@ -165,9 +165,8 @@ def get_n_pages() -> int:
 
 
 def n_pages_for_question(question_one_index: int) -> int:
-    """Return the pages used for the solution to the given question."""
-    question = SolnSpecQuestion.objects.get(question_number=question_one_index)
-    return len(question.pages)
+    """Return the number of pages used for the solution to the given question."""
+    return SolnSpecQuestion.objects.filter(question_index=question_one_index).count()
 
 
 def soln_list_to_dict(solns: list[dict]) -> dict[str, dict]:

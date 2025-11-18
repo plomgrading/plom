@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.conf import settings
 from model_bakery import baker
 
-from plom_server.Base.tests import config_test
+from plom_server.TestingSupport.utils import config_test
 from ..services import SourceService, PapersPrinted
 from ..models import PaperSourcePDF
 from .. import useful_files_for_testing as useful_files
@@ -88,7 +88,7 @@ class SourceServiceTests(TestCase):
             assert not r
             assert "range" in msg
 
-    @config_test({"test_spec": "config_files/tiny_spec.toml"})
+    @config_test({"test_spec": "tiny_spec.toml"})
     def test_store_source_pdfs_wrong_page_count(self) -> None:
         # we explicitly **unset** papers-printed for testing purposes
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)

@@ -23,16 +23,13 @@ class SpecQuestion(models.Model):
             happens if the version-map in practice contradicts this setting.
             See also Issue #2261 which proposes a more general mechanism.
         label: a human identifiable label for this question, e.g. Q1, Ex1, etc.
-        question_index: a 0 based index used internally.
+        question_index: a one-based index, used for unambiguous access and
+            to define label if label isn't specified.
     """
 
     pages = models.JSONField()
     mark = models.PositiveIntegerField(null=False)
-    select = models.CharField(
-        choices=[("fix", "fix"), ("shuffle", "shuffle")],
-        default="shuffle",
-        max_length=7,  # length of the string "shuffle"
-    )
+    select = models.JSONField(null=True)
     label = models.TextField(null=True)
     question_index = models.PositiveIntegerField(null=False, unique=True)
 
@@ -133,18 +130,3 @@ class SolnSpecification(SingletonABCModel):
                 does not exist.
         """
         return cls.objects.get(pk=1)
-
-
-class NumberOfPapersToProduceSetting(SingletonABCModel):
-    number_of_papers = models.PositiveIntegerField(default=0, null=False)
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the NumberOfPapersToProduceSetting model."""
-        obj, created = cls.objects.get_or_create(
-            pk=1,
-            defaults={
-                "number_of_papers": 0,
-            },
-        )
-        return obj

@@ -57,7 +57,7 @@ if not SECRET_KEY:
 # Notes on ports:
 #   - PLOM_PUBLIC_FACING_PORT: where nginx or whoever will be expecting connections typically HTTPS
 #     TODO: we need to know this (for CSRF), probably can be omitted if its 443
-#   - PLOM_CONTAINER_PORT: the localhost port that django binds to for HTTP, default 8000
+#   - the localhost port that django binds to for HTTP, defaults 8000 but can be changed on the command line
 env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
 _port = ""
 if env_port:
@@ -134,6 +134,7 @@ INSTALLED_APPS = [
     "plom_server.TaskOrder",
     "plom_server.Rectangles",
     "plom_server.QuestionTags",
+    "plom_server.QuestionClustering",
 ]
 
 MIDDLEWARE = [
@@ -238,8 +239,14 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
+# --------------------------------------
+#
+# Something important, see docs
 STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# These are the "source" dirs for static files.  The first one might be readonly (Issue #2932)
+# Second one is a hack to get some oxymoronic "dynamic" static stuff: see extra pages, scrap
+# pages, javascript downloads, etc).
+STATICFILES_DIRS = [BASE_DIR / "static", "plom_extra_static"]
 # Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)

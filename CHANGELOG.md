@@ -9,6 +9,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Removed
+
+### Changed
+* Compare handwriting now explains why if it shows a non-ID page (for example, if the ID page is itself unknown).
+* Updating the annotations (sending new marking data) from the client will remove any `rubric_changed` tags, which should improve the process of making major edits to in-use rubrics.
+* Improvements to command-line tools and error handling.
+
+### Fixed
+* Packaging of the QuestionClustering app was broken.
+* Fix for filenames containing random characters for individual reassembled/report/solution downloads.
+* Fix for duplicate reassembled filenames for blank papers, ditto reports and solutions.
+* Misc bug fixes and UI tweaks.
+
+
+
+## [0.19.4] - 2025-10-23
+
+### Changed
+* UI tweaks during extra page assignment to clarify ambiguity in the "all questions" radio option.
+* Server is more self-contained, by self-hosting more javascript/CSS libraries.
+
+### Fixed
+* Scan: fixed a regression where errors while dealing with extra pages were not shown.
+* Error during upload of bundle if pages had been assigned to the DNM group.
+* Crash during prenaming box positioning due to string/float conversions.
+* Reset prenaming box positioning on server reset.
+
+
+
+## [0.19.3] - 2025-10-01
+
+### Changed
+* Clients v0.19.0 and v0.19.1 are blocked due to potential bugs when marking more than 999 papers.
+* Clearer workflow for resetting a server.
+
+### Fixed
+* In some cases of more than one page per question, "homework mode" pages (Mobile Pages) were not displayed in the correct order, server-side.
+* Improve thumbnail displays in Scan app.
+* Misc bug fixes, and UI tweaks.
+
+
+
+## [0.19.2] - 2025-09-11
+
+### Added
+* Papers can be downloaded in their "unmarked" state.
+* Support for fractional rubrics has improved: instructions can set their preferences about fractional rubrics, currently 1/2 and 1/4 points are visible in the UI.
+* The Scan thumbnail app where extra pages are assigned has numerous improvements, including the ability to see the cover sheets of the next and previous papers in the bundle.
+
+### Removed
+* Several not-very-maintained `manage.py` commands in favour of `plom-cli`, which works remotely over the API.
+
+### Changed
+* The spec has changed format: the `select` key accepts a single integer or a list of integers.  Question versions are randomly drawn from this list.  If omitted, defaults to all versions.
+* The printed papers now say "Paper 0123" not "Test 0123" on top of the page.
+* `marks.csv` now respects custom "question labels".
+* The UI of the server now "vendors" most javascript dependencies on startup, for a more standalone server.
+* Improved importing of Rubrics from spreadsheets.
+
+### Fixed
+* Fix table-sorting by clicking on column headers, in several tables.
+* Misc bug fixes and minor improvements.
+
+
+
+## [0.18.3] - 2025-06-14
+
+### Changed
+* UI tweaks, text clarifications, and misc code cleanups,
+
+### Fixed
+* Single-digit microQR codes could be mistaken for extra page QR codes, sometimes leading crashes.
+* Workaround `.csv` classlists exported by Microsoft Excel with "Feff" "byte-order-mark".
+* Fixes related to discarding an entire paper.
+* Fixes to students reports.
+
+
+## [0.18.2] - 2025-05-23
+
+### Added
+* Rubric templates can be downloaded showing what is needed in csv/json/toml if you want to make rubrics outside of Plom.
+* Improved error handling of unexpected errors during staged bundle push.
+
+### Fixed
+* Fixed regression and crash when clients gets info on extra pages.
+* Fixed regression and crash when extra page is set to DNM.
+* Uploading a broken/conflicting classlist no longer adds some of the students.
+* Improvements to setting TaskOrder from a file.
+
+
+## [0.18.1] - 2025-05-17
+
+### Fixed
+* Regression in production container: default to port 8000 if unspecified.
+* Fixed crash in production server about undefined wsgi module.
+
+
+## [0.18.0] - 2025-05-14
+
+### Added
 * New support for multi-versioned ID pages, for example if different students should see different cover pages.  Currently, this uses the custom QV-map feature.
 * New API to remotely reset tasks, usable via the client as well as `plom-cli`.
 * Rubrics can be created in the web UI as well as the client.
@@ -27,7 +128,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Student reports have been re-enabled using more efficient database queries.
 * The API can optionally enforce a "single session" model again, which should fix some confusing behaviour involving multiple simultaneous logins.
-
 
 
 ## [0.17.4] - 2025-03-26
@@ -1467,7 +1567,14 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.4...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.19.4...main
+[0.19.4]: https://gitlab.com/plom/plom/-/compare/v0.19.3...v0.19.4
+[0.19.3]: https://gitlab.com/plom/plom/-/compare/v0.19.2...v0.19.3
+[0.19.2]: https://gitlab.com/plom/plom/-/compare/v0.18.3...v0.19.2
+[0.18.3]: https://gitlab.com/plom/plom/-/compare/v0.18.2...v0.18.3
+[0.18.2]: https://gitlab.com/plom/plom/-/compare/v0.18.1...v0.18.2
+[0.18.1]: https://gitlab.com/plom/plom/-/compare/v0.18.0...v0.18.1
+[0.18.0]: https://gitlab.com/plom/plom/-/compare/v0.17.4...v0.18.0
 [0.17.4]: https://gitlab.com/plom/plom/-/compare/v0.17.3...v0.17.4
 [0.17.3]: https://gitlab.com/plom/plom/-/compare/v0.17.2...v0.17.3
 [0.17.2]: https://gitlab.com/plom/plom/-/compare/v0.17.1...v0.17.2

@@ -7,15 +7,19 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Bryan Tanady
 
 """Plom tools for pushing and manipulating bundles from the command line.
 
 See help for each subcommand or consult online documentation for an
 overview of the steps in setting up a server.
 
-Most subcommands communicate with a server, which can be specified
-on the command line or by setting environment variables PLOM_SERVER
-PLOM_USERNAME and PLOM_PASSWORD.
+Most subcommands communicate with a server, which can be specified on the
+command line; the environment variable PLOM_SERVER provides the default.
+Authentication is typically required. This can be done through command-line options,
+or interactively at the command prompt, or by setting the environment variables
+PLOM_USERNAME and PLOM_PASSWORD. For details, see the extended help for any
+specific subcommand.
 """
 
 __copyright__ = "Copyright (C) 2020-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
@@ -25,24 +29,34 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 from pathlib import Path
+import sys
 
 from stdiomask import getpass
 
-from plom import Default_Port, __version__
+from plom.common import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,
+    delete_classlist,
+    delete_source,
+    get_marks_as_csv_string,
+    get_pqvmap_as_csv_string,
     get_reassembled,
+    get_all_reassembled,
+    get_unmarked,
+    get_all_unmarked,
     id_paper,
     un_id_paper,
     list_bundles,
     start_messenger,
     upload_bundle,
+    upload_classlist,
+    upload_source,
+    download_classlist,
     upload_spec,
     reset_task,
+    extract_rectangle,
 )
-
-# from plom.cli import clear_login
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -67,8 +81,10 @@ def get_parser() -> argparse.ArgumentParser:
             metavar="SERVER[:PORT]",
             action="store",
             help=f"""
-                Which server to contact, port defaults to {Default_Port}.
-                Also checks the environment variable PLOM_SERVER if omitted.
+                URL of server to contact. In SERVER, the protocol prefix is semi-optional:
+                you can omit it and get https by default, or you can force http by including
+                that explicitly. If [:PORT] is omitted, SERVER:{Default_Port} will be used.
+                The environment variable PLOM_SERVER will be used if --server is not given.
             """,
         )
         x.add_argument(
@@ -91,6 +107,54 @@ def get_parser() -> argparse.ArgumentParser:
         )
 
     s = sub.add_parser(
+        "delete-classlist",
+        help="Delete the classlist held by the server.",
+        description="Delete the classlist held by the server.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "download-classlist",
+        help="Download the classlist held by the server.",
+        description="Copy the classlist held by the server to stdout, in CSV format.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "upload-classlist",
+        help="Augment server classlist with rows from this CSV file.",
+        description="""
+            Add student info from this CSV file to server's classlist.
+            Any info already on server will be retained, BUT
+            the whole operation will be rejected if the upload
+            mentions even a single student ID already present on the server.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "csvfile",
+        help="a CSV file with column headers 'id','name', and [optionally] 'paper_number'.",
+    )
+
+    s = sub.add_parser(
+        "get-marks",
+        help="Get information related to exam papers.",
+        description="""
+            Retrieve marks, IDs, and other information about generated exam papers.
+        """,
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-pqvmap",
+        help="Retrieve the current pqvmap as a .csv and print it to stdout.",
+        description="""
+            Retrieve the current pqvmap as a .csv and print it to stdout.
+        """,
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "get-reassembled",
         help="Get a reassembled paper.",
         description="""
@@ -98,7 +162,38 @@ def get_parser() -> argparse.ArgumentParser:
             Will fail if the paper is not reassembled yet.
         """,
     )
-    s.add_argument("papernum", type=int)
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            all papers that exist on the server in their reassembled states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-unmarked",
+        help="Get an unmarked paper.",
+        description="""
+            Download an unmarked paper as a PDF file from the server.
+            Will fail if no scanned images are associated with the paper.
+        """,
+    )
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            scans of all papers that exist on the server in their unmarked states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -130,8 +225,43 @@ def get_parser() -> argparse.ArgumentParser:
     s.add_argument("bundle_id", type=int)
 
     s = sub.add_parser(
+        "upload-source",
+        help="Upload an assessment source PDF.",
+        description="""
+            Upload a PDF file containing a valid assessment source version,
+            replacing the existing source, if any.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "source_pdf",
+        help="A PDF file containing a valid assessment source.",
+    )
+    s.add_argument(
+        "-v",
+        dest="version",
+        type=int,
+        default=1,
+        help="Source version number (default 1).",
+    )
+
+    s = sub.add_parser(
+        "delete-source",
+        help="Delete an assessment source PDF.",
+        description="Remove the indicated assessment source.",
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "-v",
+        dest="version",
+        type=int,
+        default=1,
+        help="Source version number (default 1).",
+    )
+
+    s = sub.add_parser(
         "upload-spec",
-        help="Upload assessment spec",
+        help="Upload an assessment spec",
         description="Upload a .toml file containing an assessment specification.",
     )
     s.add_argument("tomlfile", help="The assessment specification.")
@@ -231,9 +361,6 @@ def get_parser() -> argparse.ArgumentParser:
             Which paper number to attach the page to.
             It must exist; you must create it first with appropriate
             versions.
-            TODO: argparse has this as optional but no default setting
-            for this yet: maybe it should assign to the next available
-            paper number or something like that?
         """,
     )
     sp_map.add_argument(
@@ -244,13 +371,99 @@ def get_parser() -> argparse.ArgumentParser:
             Which question(s) are answered on the page.
             You can pass a single integer, or a list like `-q [1,2,3]`
             which attaches the page to questions 1, 2 and 3.
-            You can also pass the special string `-q all` which attaches
-            the page to all questions (this is also the default).
-            An empty list will "discard" that particular page.
-            TODO: discard, dnm and all are currently "in-flux".
+            You can also pass one of several special strings:
+            `-q all` attaches the page to all questions (this is
+            also the default).  `-q dnm` attaches the page to a
+            particular paper but sets it "Do Not Mark".
+            `-q discard` discards the page.
+            An empty list will is currently the same as `-q all`.
         """,
     )
     _add_server_args(sp_map)
+
+    s = sub.add_parser(
+        "extract-rectangle",
+        help="Extract rectangle from a paper, saving as a png file",
+        description="""Given version, page number, paper number, and boundaries of the rectangle,
+        extract the rectangle from the scanned paper with that page number and version.
+        """,
+    )
+
+    s.add_argument(
+        "--version",
+        "-v",
+        required=True,
+        type=int,
+        help="The version of the page to extract",
+    )
+    s.add_argument(
+        "--pagenum",
+        type=int,
+        required=True,
+        help="The page number of the paper that will be extracted",
+    )
+
+    s.add_argument(
+        "--papernum",
+        type=int,
+        required=True,
+        help="The paper number to be extracted",
+    )
+
+    s.add_argument(
+        "--left",
+        "-l",
+        required=False,
+        type=float,
+        help="""x coordinate of the rectangle's top left corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 0
+        """,
+    )
+    s.add_argument(
+        "--top",
+        "-t",
+        required=False,
+        type=float,
+        help="""y coordinate of the rectangle's top left corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 0
+        """,
+    )
+
+    s.add_argument(
+        "--right",
+        "-r",
+        required=False,
+        type=float,
+        help="""x coordinate of the rectangle's bottom right corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 1
+        """,
+    )
+
+    s.add_argument(
+        "--bottom",
+        "-b",
+        required=False,
+        type=float,
+        help="""y coordinate of the rectangle's top bottom right corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 1
+        """,
+    )
+    s.add_argument(
+        "--out-path",
+        type=str,
+        required=False,
+        help="""
+        The output path of the extracted rectangle image. If not provided, the image will be saved as:
+            "./extracted_region_v{version}_page{page_num}_paper{paper_num}.png"
+        where {version}, {page_num}, and {paper_num} are replaced by their respective values.
+        """,
+    )
+
+    _add_server_args(s)
     return parser
 
 
@@ -273,6 +486,7 @@ def main():
         args.password = getpass("password: ")
 
     m = (args.server, args.username, args.password)
+
     if args.command == "upload-bundle":
         r = upload_bundle(Path(args.pdf), msgr=m)
         print(r)
@@ -311,12 +525,57 @@ def main():
         r = reset_task(args.papernum, args.question_idx, msgr=m)
         print(r)
 
+    elif args.command == "get-marks":
+        r = get_marks_as_csv_string(msgr=m)
+        print(r)
+
+    elif args.command == "get-pqvmap":
+        r = get_pqvmap_as_csv_string(msgr=m)
+        print(r)
+
     elif args.command == "get-reassembled":
-        r = get_reassembled(args.papernum, msgr=m)
-        print(
-            f"wrote reassembled paper number {args.papernum} to "
-            f'file {r["filename"]} [{r["content-length"]} bytes]'
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_reassembled(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote reassembled paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_reassembled(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} reassembled papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
+    elif args.command == "get-unmarked":
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_unmarked(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote unmarked paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_unmarked(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} unmarked papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
+    elif args.command == "upload-source":
+        ver = args.version
+        r = upload_source(
+            ver, Path(args.source_pdf), msgr=(args.server, args.username, args.password)
         )
+
+    elif args.command == "delete-source":
+        ver = args.version
+        r = delete_source(ver, msgr=(args.server, args.username, args.password))
 
     elif args.command == "upload-spec":
         r = upload_spec(
@@ -334,8 +593,32 @@ def main():
             msgr.closeUser()
             msgr.stop()
 
+    elif args.command == "delete-classlist":
+        success = delete_classlist(msgr=m)
+        sys.exit(0 if success else 1)
+
+    elif args.command == "download-classlist":
+        success = download_classlist(msgr=m)
+        sys.exit(0 if success else 1)
+
+    elif args.command == "upload-classlist":
+        success = upload_classlist(Path(args.csvfile), msgr=m)
+        sys.exit(0 if success else 1)
+
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
+
+    elif args.command == "extract-rectangle":
+        region = {
+            "left": args.left if args.left else 0,
+            "top": args.top if args.top else 0,
+            "right": args.right if args.right else 1,
+            "bottom": args.bottom if args.bottom else 1,
+        }
+
+        success = extract_rectangle(
+            args.version, args.pagenum, args.papernum, region, args.out_path, msgr=m
+        )
     else:
         get_parser().print_help()
 

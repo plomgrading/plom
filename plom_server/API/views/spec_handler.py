@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -20,13 +21,42 @@ from .utils import _error_response
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
 
+    # DELETE /api/v0/spec
+    def delete(self, request: Request) -> Response:
+        """Clear the current assessment spec.
+
+        Args:
+            request: A Request object
+
+        Returns:
+            A response whose body is empty, with status 204, on success.
+            A response with status 403 if the user is not in the 'manager' group.
+            A response with status 409 if the spec cannot be removed.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can upload an assessment spec',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            SpecificationService.remove_spec()
+        except ObjectDoesNotExist:
+            # existing spec also gives 204
+            pass
+        except PlomDependencyConflict as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     # GET /api/v0/spec
     def get(self, request: Request) -> Response:
         """Get the current assessment spec.
 
         Returns:
-            (200) JsonResponse: the current spec.
-            (400) spec not found.
+            The current spec, as a string in the Response's json,
+            with status 200 on success. Status 400 indicates "spec not found."
         """
         if not SpecificationService.is_there_a_spec():
             return _error_response(
@@ -40,20 +70,19 @@ class SpecificationHandler(APIView):
 
     # POST /api/v0/spec
     def post(self, request: Request) -> Response:
-        """Use a string containing TOML to replace the server's current spec, or to instantiate a brand new one.
+        """Replace the server's current spec, or instantiate a brand new one.
 
         Args:
-            request: An HTTP request in which the data dict has a string-type
-                key named "spec_toml" whose corresponding value is a
-                utf-8 string containing everything read from a well-formed
-                spec file in TOML format.
+            request: An HTTP request that includes a serialized file
+                accessible through key "spec_toml" and optionally the
+                string "on" from the key "force_public_code" in data.
 
         Returns:
-            (200) JsonResponse: the freshly-installed new spec.
-            (400) TOML didn't parse correctly.
-            (403) User does not belong to "manager" group.
-            (409) Changing the spec is not allowed. Typically because
-                the server is in an advanced state.
+            A Response object whose json field contains the freshly-installed spec,
+            with status 200, when everything works. Status 400 means TOML didn't
+            parse correctly; status 403 indicates user is not in the "manager" group.
+            Status 409 indicates that changing the spec is not allowed,
+            typically because the server is in an advanced state.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -62,9 +91,21 @@ class SpecificationHandler(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        spec_toml_string = request.data.get("spec_toml", "")
+        try:
+            incoming = request.FILES["spec_toml"]
+            spec_toml_string = incoming.read().decode("utf-8")
+        except UnicodeDecodeError:
+            return _error_response(
+                "Unicode error makes progress impossible. Assessment spec unchanged.",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
         # TODO: could instead use a query_param in the URL?
-        force_public_code = request.data.get("force_public_code")
+        _force_public_code = request.data.get("force_public_code", "")
+        if _force_public_code.casefold() == "on":
+            force_public_code = True
+        else:
+            force_public_code = False
 
         # would be handled by next block but with a more verbose errors
         if not spec_toml_string:

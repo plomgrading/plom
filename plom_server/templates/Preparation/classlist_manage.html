@@ -33,7 +33,7 @@
         {% endif %}
         {% if student_list_present %}
             <div class="alert alert-primary">
-                <span>Classlist present with {{ student_list|length }} students:</span>
+                <span>Classlist present with {{ student_list|length }} student{{ student_list|length|pluralize }}:</span>
                 <a href="{% url 'prep_classlist_download' %}" class="btn btn-info">download</a>
                 <button class="btn btn-danger"
                         hx-delete="."
@@ -99,12 +99,16 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    Plom needs a classlist as a csv file with three columns
+                    <p class="mb-1">
+                        Plom needs a classlist as a <tt>.csv</tt> file with three columns:
+                    </p>
                     <ul>
                         <li>"id" &mdash; the student id</li>
                         <li>"name" &mdash; the student name as a single field</li>
                         <li>"paper_number" &mdash; an optional field for prenaming papers</li>
                     </ul>
+                    <p>The file must be UTF-8 encoded.</p>
+                    <!-- (the Microsoft &ldquo;utf-8-sig&rdquo; variant is acceptable) -->
                 </div>
             </div>
         {% endif %}

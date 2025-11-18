@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -17,6 +18,9 @@ from plom.plom_exceptions import (
     PlomPushCollisionException,
     PlomBundleLockedException,
 )
+
+from plom_server.Papers.models import MobilePage
+from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 from .utils import _error_response
 
@@ -144,12 +148,25 @@ class ScanMapBundle(APIView):
 
     # POST: /api/beta/scan/bundle/{bundle_id}/{page}/map
     def post(self, request: Request, *, bundle_id: int, page: int) -> Response:
-        """API to map the pages of a bundle onto questions.
+        """API to map one page of a Staging Bundle onto questions.
 
-        On success (200), the return will be TODO: still a WIP.
+        Args:
+            request: A Request object with some important clues in the
+                query parameters: `papernum` indicates to which paper to
+                assign the page.  `qidx` indicates a question index and
+                maybe be repeated.  `page_dest` specifies a string, "all",
+                "dnm" or "discard".  If you pass `page_dest`, you should
+                *not* pass `qidx` as well.
 
-        Only "scanner" users including managers can do this; others will
-        get a 403.
+        Keyword Args:
+            bundle_id: the integer that uniquely identifies which bundle to work on.
+            page: the integer position of the page to work on in that bundle.
+                The first page in the bundle has number 1 (not 0).
+
+        Returns:
+            A Response object. On success, the content is empty and the status is 204.
+            Status 403 is returned if the calling user is outside the "scanner" group;
+            status 400 indicates an error of some kind in the input parameters.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
@@ -158,32 +175,65 @@ class ScanMapBundle(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         data = request.query_params
-        print(data)
-        question_idx_list = data.getlist("qidx")
-        try:
-            question_idx_list = [int(n) for n in question_idx_list]
-        except ValueError as e:
-            return _error_response(
-                f"Non-integer qidx: {e}", status.HTTP_400_BAD_REQUEST
-            )
-        print(question_idx_list)
-        papernum = data.get("papernum")
-        print(papernum)
-        # if questions is None:
-        #     questions = "all"
-        # many types possible for ``questions`` but here we always get a str
-        # return _error_response("WIP", status.HTTP_400_BAD_REQUEST)
 
-        # TODO: error handling to deal with: mapping the same page twice, currently an integrity error
-        try:
-            ScanService().map_bundle_page(
-                bundle_id, page, papernum=papernum, question_indices=question_idx_list
+        page_dest = data.get("page_dest")  # Expect one of "all", "dnm", "discard"
+        question_idx_list = data.getlist("qidx")
+        papernum = data.get("papernum")
+
+        if page_dest is not None and question_idx_list:
+            return _error_response(
+                f'Do not specify both a keyword "{page_dest}" and'
+                f' qidx "{question_idx_list}" in the same call',
+                status.HTTP_400_BAD_REQUEST,
             )
-        except ValueError as e:
+
+        if page_dest == "discard":
+            try:
+                ScanService.discard_staging_bundle_page(
+                    bundle_id, page, user=request.user
+                )
+            except ValueError as e:
+                return _error_response(e, status.HTTP_400_BAD_REQUEST)
+            except ObjectDoesNotExist as e:
+                return _error_response(
+                    f"Probably no bundle id {bundle_id} or page {page}: {e}",
+                    status.HTTP_404_NOT_FOUND,
+                )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        if page_dest is None:
+            try:
+                question_idx_list = [int(n) for n in question_idx_list]
+            except ValueError as e:
+                return _error_response(
+                    f"ScanMapBundle got a non-integer qidx: {e}",
+                    status.HTTP_400_BAD_REQUEST,
+                )
+        elif page_dest == "all":
+            question_idx_list = [
+                1 + j for j in range(SpecificationService.get_n_questions())
+            ]
+        elif page_dest == "dnm":
+            question_idx_list = [MobilePage.DNM_qidx]
+        else:
+            return _error_response(
+                f"Cannot construct list of questions from {data}",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ScanService.map_bundle_page(
+                bundle_id,
+                page,
+                user=request.user,
+                papernum=papernum,
+                question_indices=question_idx_list,
+            )
+        except (ValueError, PlomConflict) as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except ObjectDoesNotExist as e:
             return _error_response(
                 f"Probably no bundle id {bundle_id} or page {page}: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
-        return Response({"hi": "hello"}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)

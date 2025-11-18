@@ -9,7 +9,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
@@ -31,15 +31,16 @@ RUN apt-get -y update && \
 
 COPY requirements.txt /src/
 WORKDIR /src
-# pip from 22.04 is too old for pure pyproject.toml?
-RUN pip install -U --no-cache-dir pip
-RUN pip install --no-cache-dir -r requirements.txt
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+# RUN pip install -U --no-cache-dir pip
+# --ignore-installed: don't try to uninstall system packages (i.e., "packaging")
+RUN pip install --no-cache-dir --ignore-installed -r requirements.txt
 
-# Because source includes the PyQt client, we need minimal deps for Qt.
-# For example, to install PyQt and run tests
+# Minimal deps for Qt, e.g., to support installing client inside container for testing
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx \
-    libegl1 libxkbcommon0 libdbus-1-3 && \
+    apt-get --no-install-recommends -y install \
+    libgl1 libxcb-cursor0 libegl1 libxkbcommon0 libdbus-1-3 \
+    libglib2.0-0  && \
     apt-get -yq autoclean
 
 COPY . /src

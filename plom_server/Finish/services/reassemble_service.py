@@ -2,8 +2,11 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 import random
 import tempfile
@@ -13,27 +16,26 @@ from typing import Any
 import arrow
 import zipfly
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
-from django.core.exceptions import ObjectDoesNotExist
+from django.utils.text import slugify
 from django_huey import db_task, get_queue
 import huey
 import huey.api
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
-
+from plom_server.Base.models import HueyTaskTracker
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
-from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage
+from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage, FixedPage
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ManageScanService
 
 from ..models import ReassemblePaperChore
-from plom_server.Base.models import HueyTaskTracker
-
 from .student_marks_service import StudentMarkService
 
 
@@ -45,8 +47,8 @@ class ReassembleService:
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            spreadsheet_data[paper.paper_number] = (
-                StudentMarkService().get_paper_status(paper)
+            spreadsheet_data[paper.paper_number] = StudentMarkService.get_paper_status(
+                paper
             )
         return spreadsheet_data
 
@@ -70,12 +72,13 @@ class ReassembleService:
         legacy_cover_page_info.append([student_id, student_name])
 
         for i in SpecificationService.get_question_indices():
-            version, mark = StudentMarkService().get_question_version_and_mark(paper, i)
+            version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
             legacy_cover_page_info.append([i, version, mark])
 
         return legacy_cover_page_info
 
-    def _get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
+    @staticmethod
+    def _get_cover_page_info(paper: Paper, solution: bool = False) -> list[Any]:
         """Return information needed to build a cover page for a reassembled paper.
 
         Args:
@@ -87,13 +90,12 @@ class ReassembleService:
             ``[question_label, version, max_mark]`` for each question.
             Otherwise, ``[question_label, version, mark, max_mark]``.
         """
-        sms = StudentMarkService()
         cover_page_info = []
 
         for i in SpecificationService.get_question_indices():
             question_label = SpecificationService.get_question_label(i)
             max_mark = SpecificationService.get_question_mark(i)
-            version, mark = sms.get_question_version_and_mark(paper, i)
+            version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
 
             if solution:
                 cover_page_info.append([question_label, version, max_mark])
@@ -102,8 +104,9 @@ class ReassembleService:
 
         return cover_page_info
 
+    @classmethod
     def build_paper_cover_page(
-        self, tmpdir: Path, paper: Paper, solution: bool = False
+        cls, tmpdir: Path, paper: Paper, solution: bool = False
     ) -> Path:
         """Build a cover page for a reassembled PDF or a solution.
 
@@ -121,12 +124,12 @@ class ReassembleService:
         else:
             sid, sname = (None, None)
 
-        cover_page_table_data = self._get_cover_page_info(paper, solution)
+        cover_page_table_data = cls._get_cover_page_info(paper, solution)
         cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
         makeCover(
             cover_page_table_data,
             cover_pdf_name,
-            test_num=paper.paper_number,
+            paper_num=paper.paper_number,
             info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
@@ -203,16 +206,14 @@ class ReassembleService:
             for img in nonmarked
         ]
 
-    def get_annotation_images(self, paper: Paper) -> list[dict[str, Any]]:
+    def get_annotation_images(self, paper: Paper) -> list[str]:
         """Get the paths for a paper's annotation images.
 
         Args:
             paper: a reference to a Paper instance.
 
         Returns:
-            List of dicts, each having keys 'filename' and 'rotation'
-            giving the path to the image and the rotation angle of the
-            image.
+            List of strings/Paths to each annotation.
         """
         marked_pages = []
         mts = MarkingTaskService()
@@ -223,6 +224,107 @@ class ReassembleService:
             annotation = mts.get_latest_annotation(paper.paper_number, qi)
             marked_pages.append(annotation.image.image.path)
         return marked_pages
+
+    @staticmethod
+    def get_unmarked_images(paper: Paper) -> list[dict[str, Any]]:
+        """Get paths for a paper's images as they were scanned.
+
+        Args:
+            paper: a reference to a Paper instance
+
+        Returns:
+            List of dicts, each having keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.
+        """
+        nonmarked_fixed = (
+            FixedPage.objects.filter(paper=paper)
+            .prefetch_related("image", "image__baseimage")
+            .order_by("page_number")
+        )
+        # Papers/models/structure.py claims MobilePages have no order so sort by id
+        nonmarked_mobile = (
+            MobilePage.objects.filter(paper=paper)
+            .prefetch_related("image", "image__baseimage")
+            .order_by("question_index", "pk")
+        )
+
+        unmarked = []
+        for page in nonmarked_fixed:
+            if page.image is not None:
+                unmarked.append(
+                    {
+                        "filename": page.image.baseimage.image_file.path,
+                        "rotation": page.image.rotation,
+                    }
+                )
+        for page in nonmarked_mobile:
+            unmarked.append(
+                {
+                    "filename": page.image.baseimage.image_file.path,
+                    "rotation": page.image.rotation,
+                }
+            )
+
+        if not unmarked:
+            raise ValueError(f"Paper {paper.paper_number} has no unmarked images.")
+
+        # distinct("qidx"/"page_number") doesn't work outside of postgres
+        # so deduplicate list this way
+        unmarked_dict = {d["filename"]: d for d in unmarked}
+        unmarked_deduplicated = list(unmarked_dict.values())
+
+        return unmarked_deduplicated
+
+    @classmethod
+    def get_unmarked_paper(cls, papernum: int) -> BytesIO:
+        """Reassemble a particular paper JIT without marker annotations.
+
+        The produced file isn't cached.
+
+        Args:
+            papernum: The papernumber to reassemble.
+
+        Returns:
+            The bytes of a .pdf file, wrapped in a BytesIO object.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=papernum)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number") from None
+
+        unmarked_images = cls.get_unmarked_images(paper_obj)
+
+        paper_id = StudentMarkService.get_paper_id_or_none(paper_obj)
+        if not paper_id:
+            pdf_id_metadata = f"paper-{paper_obj.paper_number}"
+        else:
+            sid, name = paper_id
+            if sid is None:
+                why_none = name  # name should have a hint why it's not ID'd
+                pdf_id_metadata = f"paper-{paper_obj.paper_number} {why_none}"
+            else:
+                pdf_id_metadata = sid
+
+        shortname = SpecificationService.get_shortname()
+
+        # need NamedTempFile otherwise it returns an fd, not compatible with reassemble
+        with tempfile.NamedTemporaryFile() as tf:
+            reassemble(
+                tf.name,
+                shortname,
+                pdf_id_metadata,
+                coverfile=None,
+                id_images=unmarked_images,
+                marked_pages=[],
+                dnm_images=[],
+                nonmarked_images=[],
+            )
+            with open(tf.name, "rb") as pdf_file:
+                pdf_bytestream = BytesIO(pdf_file.read())
+
+        pdf_bytestream.name = f"{shortname}_{pdf_id_metadata}.pdf"
+        return pdf_bytestream
 
     def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:
         """Reassemble a particular paper.
@@ -255,7 +357,13 @@ class ReassembleService:
             raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
 
         shortname = SpecificationService.get_shortname()
-        outname = outdir / f"{shortname}_{student_id}.pdf"
+        if student_id is None:
+            # in this case student_name has a hint such as "Blank paper" or "No ID given"
+            why_none = slugify(student_name)
+            fname = f"{shortname}_paper{paper.paper_number:04}_{why_none}.pdf"
+        else:
+            fname = f"{shortname}_{student_id}.pdf"
+        outname = outdir / fname
 
         with tempfile.TemporaryDirectory() as _td:
             tmpdir = Path(_td)
@@ -292,7 +400,7 @@ class ReassembleService:
         for paper in all_papers:
             status[paper.paper_number] = {
                 "paper_num": int(paper.paper_number),
-                "scanned": False,
+                "used": False,
                 "identified": False,
                 "marked": False,
                 "number_marked": 0,
@@ -307,8 +415,8 @@ class ReassembleService:
             }
         number_of_questions = SpecificationService.get_n_questions()
 
-        for pn in ManageScanService.get_all_complete_papers():
-            status[pn]["scanned"] = True
+        for pn in ManageScanService.get_all_used_papers():
+            status[pn]["used"] = True
 
         def latest_update(time_a: datetime | None, time_b: datetime) -> datetime:
             if time_a is None:
@@ -437,15 +545,15 @@ class ReassembleService:
         print(f"Just enqueued Huey reassembly task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
-    @transaction.atomic
-    def get_single_reassembled_file(self, paper_number: int) -> File:
+    @staticmethod
+    def get_single_reassembled_file(paper_number: int) -> tuple[File, str]:
         """Get the django-file of the reassembled pdf of the given paper.
 
         Args:
-            paper_number (int): The paper number to re-assemble.
+            paper_number: The paper number to re-assemble.
 
         Returns:
-            File: the django-File of the reassembled pdf.
+            Tuple of the django-File of the pdf and the suggested filename.
 
         Raises:
             ObjectDoesNotExist: no such paper or reassembly chore, or if
@@ -457,17 +565,18 @@ class ReassembleService:
             obsolete=False,
             status=ReassemblePaperChore.COMPLETE,
         )
-        return chore.pdf_file
+        return (chore.pdf_file, chore.display_filename)
 
-    @transaction.atomic
-    def get_single_student_report(self, paper_number: int) -> File:
+    @staticmethod
+    def get_single_student_report(paper_number: int) -> tuple[File, str]:
         """Get the django-file of the student report pdf of the given paper.
 
         Args:
-            paper_number (int): The paper number.
+            paper_number: The paper number.
 
         Returns:
-            File: the django-File of the report pdf.
+            Tuple of the django-File of the report pdf and the
+            suggested filename.
 
         Raises:
             ObjectDoesNotExist: no such paper or reassembly chore, or if
@@ -479,7 +588,7 @@ class ReassembleService:
             obsolete=False,
             status=ReassemblePaperChore.COMPLETE,
         )
-        return chore.report_pdf_file
+        return (chore.report_pdf_file, chore.report_display_filename)
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
         """Mark a reassembly chore as obsolete and try to cancel it if queued in Huey.
@@ -705,9 +814,9 @@ class ReassembleService:
             .count()
         )
 
-    @transaction.atomic
+    @staticmethod
     def get_completed_pdf_files_and_names(
-        self, *, first_paper: int | None = None, last_paper: int | None = None
+        *, first_paper: int | None = None, last_paper: int | None = None
     ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
 
@@ -727,9 +836,9 @@ class ReassembleService:
             query = query.filter(paper__paper_number__lte=last_paper)
         return [(task.pdf_file, task.display_filename) for task in query]
 
-    @transaction.atomic
+    @staticmethod
     def get_completed_report_files_and_names(
-        self, *, first_paper: int | None = None, last_paper: int | None = None
+        *, first_paper: int | None = None, last_paper: int | None = None
     ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
 
@@ -750,14 +859,14 @@ class ReassembleService:
 
         return [(task.report_pdf_file, task.report_display_filename) for task in query]
 
-    @transaction.atomic
+    @classmethod
     def get_zipfly_generator(
-        self,
+        cls,
         *,
         first_paper: int | None = None,
         last_paper: int | None = None,
         chunksize: int = 1024 * 1024,
-    ):
+    ) -> zipfly.ZipFly:
         """Return a generator that can stream a zipfile of some papers without building in memory.
 
         Keyword Args:
@@ -780,7 +889,7 @@ class ReassembleService:
                 "fs": pdf_file.path,
                 "n": f"reassembled/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names(
+            for pdf_file, display_filename in cls.get_completed_pdf_files_and_names(
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
@@ -789,7 +898,7 @@ class ReassembleService:
                 "fs": report_pdf_file.path,
                 "n": f"student_reports/{report_display_filename}",
             }
-            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names(
+            for report_pdf_file, report_display_filename in cls.get_completed_report_files_and_names(
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
@@ -857,7 +966,7 @@ def huey_reassemble_paper(
 
             assert total_score_list is not None
             assert question_score_lists is not None
-            report_data = BuildStudentReportService().build_brief_report(
+            report_data = BuildStudentReportService.build_brief_report(
                 paper_number, total_score_list, question_score_lists
             )
             # save the report data to file in tempdir - TODO can we do this all in memory?

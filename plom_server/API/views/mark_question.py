@@ -8,11 +8,11 @@
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.viewsets import ViewSet
+from rest_framework.views import APIView
 
+from plom.misc_utils import unpack_task_code
 from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
@@ -26,12 +26,11 @@ from plom_server.Progress.services import UserInfoServices
 from .utils import _error_response
 
 
-class QuestionMarkingViewSet(ViewSet):
-    """Controller for the question marking workflow."""
+class MarkTaskNextAvailable(APIView):
+    """Get the next currently-available marking task."""
 
     # GET: /MK/tasks/available
-    @action(detail=False, methods=["get"], url_path="available")
-    def available(self, request: Request, *args) -> Response:
+    def get(self, request: Request) -> Response:
         """Get the next currently-available marking task.
 
         Responds with a code for the next available marking task.
@@ -89,28 +88,12 @@ class QuestionMarkingViewSet(ViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(task.code, status=status.HTTP_200_OK)
 
-    # POST: /MK/tasks/{code}
+
+class MarkTask(APIView):
+    """Handles patch and post for tasks, corresponding to claiming and submitting annotations."""
+
     # PATCH: /MK/tasks/{code}
-    @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
-    def claim_or_mark_task(self, request: Request, code: str) -> Response:
-        """Attach a user to a marking task, or accept a grade and annotation.
-
-        patch:
-        Attach a user to a marking task.
-
-        post:
-        Accept a marker's grade and annotation.
-
-        Methods:
-            PATCH: see self.claim_task()
-            POST: see self.mark_task()
-        """
-        if request.method == "PATCH":
-            return self.claim_task(request, code=code)
-        elif request.method == "POST":
-            return self.mark_task(request, code=code)
-
-    def claim_task(self, request: Request, *, code: str) -> Response:
+    def patch(self, request: Request, *, code: str) -> Response:
         """Attach a user to a marking task and return the task's metadata.
 
         Reply with status 200, or 409 if someone else has claimed this
@@ -119,15 +102,16 @@ class QuestionMarkingViewSet(ViewSet):
         and it does not match the task, reply with a 417.  If you don't
         send version, we set it to None which means no such check will
         be made: you're claiming the task regardless of what version it is.
+        400 for a poorly formatted request, such as invalid task code.
         """
         data = request.query_params
         version = data.get("version", None)
         if version is not None:
             version = int(version)
         try:
-            papernum, question_idx = mark_task.unpack_code(code)
-        except AssertionError as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
+            papernum, question_idx = unpack_task_code(code)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             try:
@@ -148,18 +132,23 @@ class QuestionMarkingViewSet(ViewSet):
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([question_data, tags, task.pk])
 
-    def mark_task(self, request: Request, *, code: str) -> Response:
+    # POST: /MK/tasks/{code}
+    def post(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
         Returns:
             200: returns two integers, first the number of marked papers
             for this question/version and the total number of papers for
             this question/version.
-            400: malformed input of some sort.
-            404: no such task.
+            400: malformed input of some sort, such as poorly formed task code.
+            404: currently not returned but perhaps in the past this was used
+            instead of 410, in some cases (depending on a regex matching of
+            task codes.  Its possible in the future the server might distinguish
+            between "never existed" (404) and "gone away" (410), so clients should
+            handle both to be future-proof.
             406: integrity fail: client submitted to out-of-date task.
             409: task has changed.
-            410: task is gone.
+            410: task is non-existent, either never was, or has now gone away.
         """
         mts = MarkingTaskService()
         data = request.POST
@@ -172,8 +161,6 @@ class QuestionMarkingViewSet(ViewSet):
             mark_data, annot_data = mts.validate_and_clean_marking_data(
                 code, data, plomfile_data
             )
-        except ObjectDoesNotExist as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
         except serializers.ValidationError as e:
             # happens automatically but this way we keep the error msg
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
@@ -194,6 +181,7 @@ class QuestionMarkingViewSet(ViewSet):
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except KeyError as e:
+            # TODO: unclear where KeyError can happen, perhaps delete this case?
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomTaskChangedError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)

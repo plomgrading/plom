@@ -132,6 +132,7 @@ class Command(BaseCommand):
         for p in dir.iterdir():
             if p.stem.split("_")[3] == f"{digit_index}":
                 image = cv.imread(str(p), cv.IMREAD_GRAYSCALE)
+                assert image is not None
                 image = image.flatten()
                 images.append(image)
                 paper_num = p.stem.split("_")[1]
@@ -166,7 +167,7 @@ class Command(BaseCommand):
         for i in range(len(clusters)):
             if len(clusters[i]) > 0:
                 for paper_num in clusters[i]:
-                    code = f"q{paper_num}g1"
+                    code = f"{paper_num}g1"
                     text = f"cluster_{i}"
                     try:
                         ms.add_tag_text_from_task_code(text, code, user)

@@ -8,7 +8,8 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
+# Copyright (C) 2025 Deep Shah
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -26,9 +27,8 @@ authors = [
     {name = 'Andrew Rechnitzer'},
     {name = 'Colin B. Macdonald'},
 ]
-license = {text = 'AGPLv3+'}
+license = "AGPL-3.0-or-later"
 classifiers=[
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Topic :: Education :: Testing",
     "Development Status :: 3 - Alpha",
     "Operating System :: OS Independent",
@@ -46,7 +46,7 @@ dependencies = [
     "canvasapi>=3.0.0",
     "cryptography>=41.0.3",
     "pyOpenSSL>=23.2.0",
-    "django>=4.2.6",
+    "django>=5.1.1",
     "django-braces>=1.15.0",
     "django-filter>=23.2",
     "django-htmx>=1.14.0",
@@ -60,27 +60,26 @@ dependencies = [
     "exif>=1.6.1",
     "gunicorn>=21.1.0",
     "imutils>=0.5.4",
-    "matplotlib>=3.5.3",
+    "matplotlib>=3.6.3",
     "model_bakery>=1.11.0",
-    "numpy>=1.21.2",
-    "opencv-python-headless>=4.5.4.60",
+    "numpy>=1.26.4",
+    "opencv-python-headless>=4.7.0.72",
     "packaging",
-    "pandas>=1.5.0",
+    "pandas>=2.1.4",
     "passlib",
     "Pillow>=10.2",
-    "platformdirs>=3.0.0",
-    "pymupdf>=1.24.8",
+    "pymupdf>=1.25.3",
     "PyMySQL>=1.0.2",
-    "pyspellchecker>=0.8.1",
     "pytest>=7.2.0",
+    "pytest_mock>=3.14.1",
     "pytest-qt>=4.2.0",
     "PyQt6>=6.2.0",
     "psycopg[binary]>=3.1.8",
     "random-username>=1.0.2",
     "requests",
     "requests-toolbelt",
-    "scikit-learn>=1.0.2",
-    "scipy>=1.8.1",
+    "scikit-learn>=1.4.2",
+    "scipy>=1.11.4",
     "seaborn>=0.12.2",
     "segno>=1.5.2",
     "setuptools>=74",
@@ -92,9 +91,14 @@ dependencies = [
     "weasyprint>=57.0",
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
-    "zxing-cpp>=1.4.0",
+    "zxing-cpp>=2.2.1",
+    "onnxruntime>=1.22.1",
+    "huggingface_hub>=0.34.3",
     # "nplusone>=1.0.0",
     # "django-silk>=5.2.0",
+    # plom_ml stuff
+    "scikit-image>=0.25.1",
+    "transformers>=4.53.2",
 ]
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
@@ -128,6 +132,7 @@ packages = [
     "plom.cli",
     "plom.create",
     "plom.create.fonts",
+    "plom.messenger",
     "plom.scan",
     "plom.finish",
     "plom.idreader",
@@ -151,6 +156,9 @@ packages = [
     "plom_server.Identify.services",
     "plom_server.QuestionTags",
     "plom_server.QuestionTags.services",
+    "plom_server.QuestionClustering",
+    "plom_server.QuestionClustering.services",
+    "plom_server.QuestionClustering.exceptions",
     "plom_server.Launcher",
     "plom_server.Launcher.services",
     "plom_server.Launcher.management.commands",
@@ -188,6 +196,13 @@ packages = [
     "plom_server.UserManagement",
     "plom_server.UserManagement.services",
     "plom_server.Visualization",
+    "plom_ml",
+    "plom_ml.clustering",
+    "plom_ml.clustering.embedding",
+    "plom_ml.clustering.model",
+    "plom_ml.clustering.pipeline",
+    "plom_ml.clustering.preprocessing"
+
 ]
 # TODO: fixtures?  huey?  media?
 
@@ -211,11 +226,12 @@ packages = [
             "contrib/plom-return_codes_to_canvas_csv.py",
             "contrib/plom-write_grades_to_canvas_csv.py",
             "contrib/upload_hw_from_zip_of_jpegs.py",
-            "contrib/plom-push-to-canvas.py"
+            "contrib/plom-push-to-canvas.py",
+            "contrib/plom-push-to-canvas-uncached.py"
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = 'plom.__version__'}
+version = {attr = 'plom.common.__version__'}
 
 [project.scripts]
 plom-create = "plom.create.__main__:main"
@@ -239,9 +255,8 @@ extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
 generated-members = ["pandas", "cv2.*"]
 # order matters: need errors-only before disable
 errors-only = true
-# TODO: lots of not-an-iterable in plom/db
 # TODO: lots of no-member in plom_server
-disable = ["not-an-iterable", "no-member"]
+disable = ["no-member"]
 output-format = "colorized"
 # we have some in-tree deprecated or to-move code that needs tensorflow
 ignored-modules = ["tensorflow", "api_secrets"]
@@ -252,9 +267,8 @@ ignored-modules = ["tensorflow", "api_secrets"]
 omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
-# TODO: for now ignore the plom_server folder: it uses its own testing
-addopts = "--ignore plom_server"
 qt_api = "pyqt6"
+python_files = "test_*.py *_test.py tests.py"
 
 [tool.djlint]
 # TODO: fix then remove from ignore list: H006, H013
@@ -285,13 +299,10 @@ module = [
     'django_huey',
     'django_tables2',
     'huey.*',
-    'matplotlib.*',
     'polymorphic.models',
     'pymupdf',
     'random_username.generate',
     'rest_framework.*',
-    'scipy.optimize',
-    'seaborn',
     'weasyprint',
     'whitenoise',
     'zipfly',
@@ -299,19 +310,13 @@ module = [
 ignore_missing_imports = true
 
 # hide some things from mypy
-#   - examDB and theServer have strange/confusing import patterns
-#   - tool.py has pyqtProperty stuff that is also confusing to me
-#   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
 [[tool.mypy.overrides]]
-module = [
-    'plom.db.examDB',
-    'plom.server.theServer',
-]
+module = []
 ignore_errors = true
 
 [tool.pyright]
 pythonVersion = "3.12"
-exclude = ['plom/server', '**/_digitHunter.py']
+exclude = ['**/_digitHunter.py']
 # changing to "off" makes this much quieter
 typeCheckingMode = "basic"
 # lots of Django false positives?
@@ -334,8 +339,8 @@ select = ["D"]
 # D100: public module docstrings: seem to get a lot of false positives
 # D10x: most of these are about missing docstrings
 ignore = ["D107", "D100", "D101", "D102", "D103", "D104", "D106"]
-# Legacy stuff: would need lots of edits to pass
-exclude = ["plom/server/**", "plom/db/**", "plom/canvas/**"]
+# Legacy or autogenerated stuff
+exclude = ["plom/canvas/**", "plom_server/**/migrations/*.py"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -346,3 +351,5 @@ convention = "google"
 '__init__.py' = ['F401', 'E402', 'I001']
 # tests don't need docstrings
 'plom*/**/test*.py' = ['D100', 'D101', 'D102', 'D103', 'D104']
+# Django apps.py seem like boilerplate
+'plom*/**/apps.py' = ['D101']

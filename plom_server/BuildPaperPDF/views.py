@@ -113,7 +113,7 @@ class GetPDFFile(ManagerRequiredView):
     def get(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         try:
             (pdf_filename, pdf_bytes) = (
-                BuildPapersService().get_paper_recommended_name_and_bytes(paper_number)
+                BuildPapersService.get_paper_recommended_name_and_bytes(paper_number)
             )
         except ValueError:
             # TODO: Issue #3157 why do we need this?  Can we just 404?
@@ -132,7 +132,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         short_name = SpecificationService.get_short_name_slug()
         try:
-            zgen = BuildPapersService().get_zipfly_generator(short_name)
+            zgen = BuildPapersService.get_zipfly_generator(short_name)
         except ValueError as e:
             raise Http404(e)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")

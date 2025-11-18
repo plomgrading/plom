@@ -3,6 +3,7 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Deep Shah
 
 from django import forms
 
@@ -11,7 +12,7 @@ from plom_server.Papers.services import SpecificationService
 from .models import Rubric
 
 
-class RubricHalfMarkForm(forms.Form):
+class RubricCreateHalfMarkForm(forms.Form):
     # creates half-mark rubrics
     pass
 
@@ -99,9 +100,8 @@ class RubricItemForm(forms.ModelForm):
         empty_value="",
     )
 
-    # Explicit IntegerField for value for now
-    # TODO: Change this to a DecimalField when ready
-    value = forms.IntegerField(required=True)
+    # Note: DecimalField seems to result in ugly "+3.0" rubrics
+    value = forms.FloatField(required=True)
 
     kind = forms.ChoiceField(
         choices=Rubric.RubricKind.choices,
@@ -112,6 +112,7 @@ class RubricItemForm(forms.ModelForm):
         required=False,
         widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
     )
+    published = forms.BooleanField(required=False, label="Published", initial=True)
 
     class Meta:
         model = Rubric
@@ -126,11 +127,11 @@ class RubricItemForm(forms.ModelForm):
             "parameters",
             "tags",
             "pedagogy_tags",
+            "published",
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),
             "meta": forms.Textarea(attrs={"rows": 2}),
-            "versions": forms.TextInput(),  # default would be Textarea
             "tags": forms.TextInput(),  # default would be Textarea
             "parameters": forms.Textarea(attrs={"rows": 2}),
         }
@@ -146,3 +147,24 @@ class RubricItemForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"
+
+
+class RubricTemplateDownloadForm(forms.Form):
+    """Form for downloading a template of rubrics."""
+
+    FILE_TYPE_CHOICES = [("csv", ".csv"), ("json", ".json"), ("toml", ".toml")]
+    question_filter = forms.TypedChoiceField(required=False)
+    file_type = forms.TypedChoiceField(
+        choices=FILE_TYPE_CHOICES, required=False, initial=".csv"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
+
+        question_choices.insert(0, ("", "All Questions"))
+
+        self.fields["question_filter"].choices = question_choices

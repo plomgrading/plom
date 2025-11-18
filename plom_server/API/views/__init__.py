@@ -2,8 +2,13 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
+
+from .paperstoprint import (
+    papersToPrint,
+)
 
 from .server_info import (
     UserRole,
@@ -14,7 +19,20 @@ from .server_info import (
     ObtainAuthTokenUpdateLastLogin,
 )
 
+from .user_info import UsersInfo
+
+
+from .source_handler import (
+    SourceOverview,
+    SourceDetail,
+)
+
 from .spec_handler import SpecificationHandler
+from .classlist import (
+    Classlist,
+    Prenaming,
+)
+from .pqvmap import PQVmap
 
 from .identify import (
     GetClasslist,
@@ -49,6 +67,7 @@ from .scan import (
 
 from .finish import (
     FinishReassembled,
+    FinishUnmarked,
 )
 
 from .report import (
@@ -71,4 +90,6 @@ from .latex import (
     MlatexFragment,
 )
 
-from .mark_question import QuestionMarkingViewSet
+from .mark_question import MarkTaskNextAvailable, MarkTask
+
+from .rectangle_extractor import RectangleExtractorView

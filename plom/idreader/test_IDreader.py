@@ -4,18 +4,19 @@
 # Copyright (C) 2021-2022, 2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Sophia Vetrici
+# Copyright (C) 2024-2025 Deep Shah
 
-import pymupdf as fitz
+import pymupdf
 import numpy as np
 import PIL.Image
 from pytest import raises
+import onnxruntime as ort  # type: ignore
 
 from plom.misc_utils import working_directory
 from .predictStudentID import compute_probabilities
 from .assign_prob import calc_log_likelihood
 from .assign_prob import assemble_cost_matrix, lap_solver
-from .model_utils import download_or_train_model
-from .model_utils import load_model, is_model_present, download_model
+from .model_utils import ensure_model_available, is_model_present, load_model
 from .predictStudentID import get_digit_box, get_digit_prob
 
 from plom.create.demotools import buildDemoSourceFiles
@@ -45,17 +46,22 @@ def test_log_likelihood() -> None:
         calc_log_likelihood("123", probabilities)
 
 
-def test_download_or_train_model(tmp_path) -> None:
+def test_model_availability(tmp_path) -> None:
+    """Tests that the model can be fetched and loaded correctly."""
     with working_directory(tmp_path):
         assert not is_model_present()
-        assert download_model()
+        ensure_model_available()
         # check correct files are present
         assert is_model_present()
-        download_or_train_model()
+
+        # A second call should do nothing and be fast
+        ensure_model_available()
         assert is_model_present()
-        m = load_model()
-        # check something about the model
-        assert isinstance(m.get_params(), dict)
+
+        session, device = load_model()
+        # check that the loaded object is a valid ONNX session
+        assert isinstance(session, ort.InferenceSession)
+        assert len(session.get_inputs()) > 0
 
 
 # Bit messy with so many subtests: refactor to a setup / teardown class?
@@ -65,7 +71,7 @@ def test_get_digit_box(tmp_path) -> None:
 
     assert buildDemoSourceFiles(basedir=tmp_path)
 
-    with fitz.open(tmp_path / "sourceVersions/version1.pdf") as d:
+    with pymupdf.open(tmp_path / "sourceVersions/version1.pdf") as d:
         scribble_name_and_id(d, "01234567", "Testy McTester")
         f = tmp_path / "foo.pdf"
         d.save(f)
@@ -84,12 +90,12 @@ def test_get_digit_box(tmp_path) -> None:
 
     # test: list_of_list_of_probabilities
     with working_directory(tmp_path):
-        download_or_train_model()
-        model = load_model()
+        ensure_model_available()
+        model, _ = load_model()
     x = get_digit_prob(model, id_img, 0.05, 0.975, 8, debug=False)
     assert len(x) == 8
     for probs in x:
-        assert len(probs) == 10
+        assert len(probs) == 11
         for p in probs:
             assert 0 <= p <= 1, "Not a probability"
 
@@ -116,7 +122,7 @@ def test_get_digit_box(tmp_path) -> None:
     ]
     _id_imgs = []
     for s in miniclass:
-        with fitz.open(tmp_path / "sourceVersions/version1.pdf") as d:
+        with pymupdf.open(tmp_path / "sourceVersions/version1.pdf") as d:
             scribble_name_and_id(d, s["id"], s["studentName"], seed=42)
             f = tmp_path / f"mytest_{s['id']}.pdf"
             d.save(f)

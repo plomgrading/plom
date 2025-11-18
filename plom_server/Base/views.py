@@ -2,25 +2,27 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 import importlib.metadata
 
+from django.contrib import messages
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.urls import reverse
-from django.contrib import messages
 from django.views.generic import View
+from django_htmx.http import HttpResponseClientRedirect
 from django_huey import get_queue
 
-from .base_group_views import ManagerRequiredView
-from .forms import CompleteWipeForm
-from .services import big_red_button
-
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom_server.Authentication.services import AuthenticationServices
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 
-from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from .base_group_views import ManagerRequiredView
+from .services import big_red_button
 
 
 class TroublesAfootGenericErrorView(View):
@@ -92,8 +94,16 @@ class ServerStatusView(ManagerRequiredView):
             }
             queues.append(info)
 
+        # Caution: nginx might be in the way
+        # server_url = f"{request.scheme}://{request.get_host()}"
+        # Helper code also checks some env vars etc
+        server_url = AuthenticationServices.get_base_link(
+            default_host=get_current_site(request).domain
+        )
+
         context.update(
             {
+                "server_url": server_url,
                 "django_version": django_version,
                 "huey_version": importlib.metadata.version("huey"),
                 "pymupdf_version": pymupdf_version,
@@ -105,85 +115,51 @@ class ServerStatusView(ManagerRequiredView):
 
 
 class ResetView(ManagerRequiredView):
-    """View class for handling the reset functionality."""
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        """Handles the GET request for the reset functionality.
-
-        Args:
-            request (HttpRequest): The HTTP request object.
-
-        Returns:
-            An HTTP response object.
-        """
-        context = self.build_context()
-        context.update({"bundles_staged": ScanService().staging_bundles_exist()})
-        return render(request, "base/reset.html", context)
-
-
-class ResetConfirmView(ManagerRequiredView):
     """View class for confirming the reset of a Plom instance."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        """Handles the GET request for the reset confirmation view.
-
-        Args:
-            request (HttpRequest): The HTTP request object.
-
-        Returns:
-            HttpResponse: The HTTP response object.
-        """
+        """Handles the GET request for the reset confirmation view."""
         context = self.build_context()
-        form = CompleteWipeForm()
         try:
             reset_phrase = SpecificationService.get_shortname()
+            have_spec = True
         except ObjectDoesNotExist:
-            context.update({"no_spec": True})
-            return render(request, "base/reset_confirm.html", context=context)
+            reset_phrase = "yes"
+            have_spec = False
+        have_bundles_staged = ScanService().staging_bundles_exist()
         context.update(
             {
-                "no_spec": False,
-                "bundles_staged": ScanService().staging_bundles_exist(),
-                "wipe_form": form,
+                "have_spec": have_spec,
+                "bundles_staged": have_bundles_staged,
                 "reset_phrase": reset_phrase,
             }
         )
-        return render(request, "base/reset_confirm.html", context=context)
+        return render(request, "base/reset.html", context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
         """Handles the POST request for the reset confirmation view.
 
-        Args:
-            request: The HTTP request object.
+        If the "reset_phrase_box" doesn't match, return a 400.  On success
+        redirect to home.  Some other errors (unexpected ones) will go
+        to a "preparation conflict" page.
 
-        Returns:
-            A HTTP response object.
+        Called by htmx.
         """
-        context = self.build_context()
-        form = CompleteWipeForm(request.POST)
-        # TODO: one might expect the validator should checks if this matches
-        reset_phrase = SpecificationService.get_shortname()
-        _confirm_field = "confirmation_field"
-        if not form.is_valid():
-            # not sure this can happen, or what to do if it does; for now
-            # display poorly formatted error message on the home screen
-            messages.error(request, f"Something expected happened: {form}")
-            return redirect("home")
-        if form.cleaned_data[_confirm_field] == reset_phrase:
-            try:
-                big_red_button.reset_assessment_preparation_database()
-            except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
-                messages.add_message(request, messages.ERROR, f"{err}")
-                return redirect(reverse("prep_conflict"))
-
-            messages.success(request, "Plom instance successfully wiped.")
-            return redirect("home")
-        else:
-            form.add_error(_confirm_field, "Phrase is incorrect")
-            context.update(
-                {
-                    "bundles_staged": ScanService().staging_bundles_exist(),
-                    "wipe_form": form,
-                }
+        try:
+            reset_phrase = SpecificationService.get_shortname()
+        except ObjectDoesNotExist:
+            reset_phrase = "yes"
+        got_phrase = request.POST.get("reset_phrase_box")
+        if got_phrase != reset_phrase:
+            return HttpResponse(
+                f'<b>Error:</b> phrase "{got_phrase}" does not match "{reset_phrase}"',
+                status=400,
             )
-            return render(request, "base/reset_confirm.html", context=context)
+
+        try:
+            big_red_button.reset_assessment_preparation_database()
+        except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
+            return HttpResponse(f"<b>Error:</b> {err}", status=400)
+
+        messages.success(request, "Plom instance successfully wiped.")
+        return HttpResponseClientRedirect(reverse("home"))

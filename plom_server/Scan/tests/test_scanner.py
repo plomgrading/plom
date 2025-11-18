@@ -27,8 +27,13 @@ from plom.tpv_utils import encodePaperPageVersion
 from plom.scan import QRextract, pdfmucker, rotate
 
 from .. import tests as _Scan_tests
-from ..models import StagingBundle, StagingImage
-from ..services import PageImageProcessor, ScanService
+
+from plom_server.Scan.services.scan_service import (
+    StagingBundle,
+    StagingImage,
+    PageImageProcessor,
+    ScanService,
+)
 
 
 class ScanServiceTests(TestCase):

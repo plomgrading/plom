@@ -7,8 +7,6 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 
-from __future__ import annotations
-
 import math
 import pathlib
 import tempfile
@@ -36,7 +34,7 @@ def create_QR_codes(
     """Creates QR codes as png files and a dictionary of their filenames.
 
     Arguments:
-        papernum: the paper/test number.
+        papernum: the paper number.
         pagenum: the page number.
         ver: the version of this page.
         code: short digit code distinguishing this document from others.
@@ -78,7 +76,7 @@ def label_for_top_of_page(paper: str | int, group: str, page: int) -> str:
     """
     if not isinstance(paper, str):
         paper = f"{paper:04}"
-    return f"Test {paper}  {group}  p. {page}"
+    return f"Paper {paper}  {group}  p. {page}"
 
 
 def _create_QRcoded_pdf(
@@ -96,8 +94,8 @@ def _create_QRcoded_pdf(
     (We create 4 QR codes but only add 3 of them because of the staple side, see below).
 
     Arguments:
-        spec (dict): A validated test specification
-        papernum (int): the paper/test number.
+        spec (dict): A validated assessment specification
+        papernum (int): the paper number.
         qvmap_row: version number for each question of this paper.
             and optionally the id page.  A row of the "qvmap".
         tmpdir (pathlib.Path): a place where we can make temporary files.

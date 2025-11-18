@@ -3,26 +3,40 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023 Aidan Murphy
+# Copyright (C) 2024-2025 Aidan Murphy
 
 from django.test import TestCase
 from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from plom_server.Papers.models import Paper, QuestionPage, SpecQuestion
+from plom_server.Papers.models import Paper, QuestionPage
 from plom_server.Rubrics.models import Rubric
 
 from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
 from ..services import MarkingTaskService
 from ..models import MarkingTask, AnnotationImage
 from ..services.annotations import _create_new_annotation_in_database
+from plom_server.Papers.services import SpecificationService
 
 
 class MiscIncomingAnnotationsTests(TestCase):
     def setUp(self) -> None:
-        baker.make(SpecQuestion, question_index=1, mark=5)
-        baker.make(SpecQuestion, question_index=2, mark=5)
+        spec_dict = {
+            "idPage": 1,
+            "numberOfVersions": 2,
+            "numberOfPages": 6,
+            "totalMarks": 10,
+            "numberOfQuestions": 2,
+            "name": "papers_demo",
+            "longName": "Papers Test",
+            "doNotMarkPages": [2, 5, 6],
+            "question": [
+                {"pages": [3], "mark": 5},
+                {"pages": [4], "mark": 5},
+            ],
+        }
+        SpecificationService.install_spec_from_dict(spec_dict)
         user1: User = baker.make(User, username="User1")
         self.rubric1_on_3 = baker.make(
             Rubric,
@@ -67,7 +81,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         mts = MarkingTaskService()
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
         baker.make(Paper, paper_number=1)
-        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
+        mts.set_paper_marking_task_outdated(1, 1)  # confirm no errors raised
 
     def test_marking_outdated2(self) -> None:
         mts = MarkingTaskService()
@@ -76,7 +90,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         user0: User = baker.make(User)
         baker.make(
             MarkingTask,
-            code="q0001g1",
+            code="0001g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper1,
@@ -84,7 +98,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
         baker.make(
             MarkingTask,
-            code="q0001g1",
+            code="0001g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper1,
@@ -95,30 +109,29 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
 
     def test_marking_outdated3(self) -> None:
+        """Use a question index that doesn't correspond to a test question."""
         mts = MarkingTaskService()
         paper1 = baker.make(Paper, paper_number=1)
         user0: User = baker.make(User)
         baker.make(
             MarkingTask,
-            code="q0001g2",
+            code="0001g2",
             status=MarkingTask.OUT_OF_DATE,
             assigned_user=user0,
             paper=paper1,
             question_index=2,
         )
-        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 2)
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 3)
 
     def test_marking_outdated4(self) -> None:
+        """Test marking_outdated when there are multiple editions."""
         mts = MarkingTaskService()
         user0: User = baker.make(User)
         paper2 = baker.make(Paper, paper_number=2)
-        # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
-        # todo - this should likely be replaced with a spec check
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -150,15 +163,19 @@ class MiscIncomingAnnotationsTests(TestCase):
                 ]
             },
         )
+        task.refresh_from_db()
+        # creating the new annotation replaces the task's latest annotation
         task.latest_annotation != a1
         task.latest_annotation == a2
 
         assert a2.edition > a1.edition
 
+        # now we make the task outdated
         mts.set_paper_marking_task_outdated(2, 1)
+        task.refresh_from_db()
+        assert task.status == MarkingTask.OUT_OF_DATE
         # Do we care?  Maybe is illdefined what latest should point to?
         task.latest_annotation == a2
-        # TODO: test the effects of setting something out of date.
 
     def test_marking_submits_non_existent_rubrics(self) -> None:
         user0: User = baker.make(User)
@@ -166,7 +183,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -184,7 +201,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -210,7 +227,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -238,7 +255,7 @@ class MiscIncomingAnnotationsTests(TestCase):
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -268,7 +285,7 @@ class MiscIncomingAnnotationsTests(TestCase):
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
@@ -315,7 +332,7 @@ class MiscIncomingAnnotationsTests(TestCase):
 
         task = baker.make(
             MarkingTask,
-            code="q0002g1",
+            code="0002g1",
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,

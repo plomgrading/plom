@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -29,7 +30,7 @@ class Command(BaseCommand):
         # Notice that both user-visible and DB-stored bundle indices are 1-indexed
         # so we **do not** have to add/subtract one when doing these operations.
         try:
-            ScanCastService().discard_image_type_from_bundle_cmd(
+            ScanCastService.discard_image_type_from_bundle_cmd(
                 username, bundle_name, order, image_type=image_type
             )
         except ValueError as err:

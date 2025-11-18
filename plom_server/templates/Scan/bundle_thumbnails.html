@@ -4,6 +4,8 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Winnie Cheung
+    Copyright (C) 2025 Philip D. Loewen
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -25,360 +27,195 @@
         <a class="btn btn-secondary"
            href="{% url 'scan_recent_bundle_thumbnails' %}">Most recent staged bundle</a>
     </div>
-    <div class="card mt-2">
-        <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
-        <div class="card-body pb-0"
-             x-data="{show_summary: false}"
-             x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
-            <div>
-                <h5>
-                    {% if is_pushed %}
-                        <i class="bi bi-check-square text-success"></i>
-                        Pushed bundle
-                    {% else %}
-                        {% if not has_page_images %}
-                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                            Unprocessed bundle
-                        {% elif not finished_reading_qr %}
-                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                            Unread bundle
-                        {% else %}
-                            Staged bundle
-                        {% endif %}
-                    {% endif %}
-                    <q><tt>{{ slug }}</tt></q>
-                    {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
-                        {% if n_collisions %}
-                            contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}
-                        {% elif n_incomplete == 0 %}
-                            <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
-                            <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                            has no pages requiring attention -
-                            <button class="btn btn-success"
-                                    hx-confirm="Please confirm that you want to push this bundle."
-                                    hx-post="{% url 'scan_push_all' bundle_id %}"
-                                    x-bind:disabled="midPush"
-                                    @htmx:before-send="midPush=true;">Push</button>
-                        {% else %}
-                            has no problems, but contains incomplete papers. You can
-                            <!-- Issue #3411: provide link to additional info -->
-                            <button class="btn btn-danger"
-                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
-                                    hx-post="{% url 'scan_push_all' bundle_id %}"
-                                    x-bind:disabled="midPush"
-                                    @htmx:before-send="midPush=true;">Push</button>
-                            but it is not recommended
-                        {% endif %}
-                    {% endif %}
-                    {% if not is_perfect %}has pages that require your attention{% endif %}
-                </h5>
-                {% if n_incomplete %}
-                    <div class="alert alert-warning">
-                        <details>
-                            <summary>This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}</summary>
-                            {% if is_pushed %}
-                                <ul>
-                                    <li>Incomplete papers contain some, but not all their pages.</li>
-                                    <li>
-                                        Any question that is missing
-                                        pages <em>will not</em> be
-                                        sent out for marking.
-                                    </li>
-                                    <li>
-                                        Incomplete papers can indicate
-                                        problems with scanning such as two
-                                        pages stuck together.
-                                    </li>
-                                    <li>
-                                        Incomplete papers also occur if a paper is
-                                        split across two bundles.  In this
-                                        case, just keep pushing bundles and
-                                        Plom will automatically complete
-                                        these papers when the additional
-                                        pages become available.
-                                    </li>
-                                </ul>
-                            {% else %}
-                                <ul>
-                                    <li>Incomplete papers contain some, but not all their pages.</li>
-                                    <li>
-                                        If you push the incomplete
-                                        papers, you can start marking
-                                        any questions that have all
-                                        their pages.
-                                    </li>
-                                    <li>
-                                        Incomplete papers can indicate
-                                        problems with scanning such as two
-                                        pages stuck together.
-                                    </li>
-                                    <li>
-                                        Incomplete papers also occur if a paper is
-                                        split across two bundles.  In this
-                                        case, after you push both bundles the
-                                        paper will become complete automatically.
-                                    </li>
-                                    <li>
-                                        If you wish, you can always
-                                        decide to delete this bundle
-                                        and rescan the physical
-                                        papers.
-                                    </li>
-                                </ul>
-                            {% endif %}
-                        </details>
-                    </div>
-                {% endif %}
-                {% if error_pages %}
-                    <div class="alert alert-danger">
-                        <details>
-                            <summary>This bundle contains {{ error_pages }} error page{{ error_pages|pluralize }}</summary>
-                            <ul>
-                                <li>This could indicate serious scanning problems.</li>
-                                <li>
-                                    Consider fixing any problems with the physical pages,
-                                    then delete this PDF and rescan the papers.
-                                </li>
-                                <li>
-                                    If there are only a small number of problems, you may
-                                    be able to workaround them by casting Error pages to
-                                    Known/Extra pages.
-                                </li>
-                            </ul>
-                            <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
-                               hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
-                               hx-confirm="Are you sure?">Remove bundle</a>
-                        </details>
-                    </div>
-                {% endif %}
-                {% if n_collisions %}
-                    <div class="alert alert-danger">
-                        <h5>
-                            This bundle contains {{ n_collisions }} scan{{ n_collisions|pluralize }} of pages that have already been pushed
-                        </h5>
-                        <p>
-                            Generally this indicates one of the following:
-                            <ul>
-                                <li>You have scanned papers twice &mdash; this usually is not a big problem:</li>
-                                <ul>
-                                    <li>
-                                        You can delete this bundle
-                                        (e.g., if everything here
-                                        collides with pages you
-                                        already have, or if you want
-                                        to rescan part of it).
-                                    </li>
-                                    <li>
-                                        You can discard the pages of this
-                                        bundle that collide, and then push
-                                        the remaining pages.
-                                    </li>
-                                </ul>
-                                <li>You are midway through replacing some poorly-scanned papers:</li>
-                                <ul>
-                                    <li>
-                                        you may want to <q>discard</q> the
-                                        existing (pushed) poorly-scanned
-                                        pages and then return here,
-                                    </li>
-                                    <li>
-                                        or you can discard some of these
-                                        staged pages to resolve the
-                                        collision;
-                                    </li>
-                                    <li>
-                                        it just depends whether
-                                        you want to keep the staged image
-                                        or the previously-pushed image.
-                                    </li>
-                                </ul>
-                                <li>
-                                    You have accidentally reused
-                                    papers&mdash;different students have
-                                    written on the same paper&mdash;which
-                                    is a
-                                    <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions">substantial problem!</a>
-                                </li>
-                            </ul>
-                        </p>
-                        <p>The colliding image{{ n_collisions|pluralize }}: {{ colliding_images_nice_format }}</p>
-                    </div>
-                {% endif %}
-                <p>
-                    Summary of bundle contents
-                    <button class="btn btn-light" x-on:click="show_summary =! show_summary">
-                        <i class="bi bi-chevron-down" x-show="!show_summary"></i>
-                        <i class="bi bi-chevron-up" x-show="show_summary"></i>
-                    </button>
-                </p>
-            </div>
-            <div class="card-text" x-show="show_summary" x-transition>
-                <div class="row">
-                    <div class="col-4">
-                        <div class="pb-0 alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
-                            {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
-                            <ul>
-                                <li>{{ known_pages }} / {{ total_pages }} known pages</li>
-                                {% if known_pages != total_pages %}
-                                    <li>{{ unknown_pages }} unknown pages</li>
-                                    <li>{{ extra_pages }} extra pages</li>
-                                    <li>{{ discard_pages }} discard pages</li>
-                                    <li>{{ error_pages }} error pages</li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-8 pb-1">
-                        <h5>Bundle Contains:</h5>
-                        {% for paper,pages in papers_pages_list %}
-                            {% with pg=pages|dictsort:"order"|first %}
-                                {% if paper in incomplete_papers_list %}
-                                    <button class="btn m-1 btn-warning"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-placement="top"
-                                            data-bs-title="Is missing pages"
-                                            hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
-                                            hx-swap="innerHTML"
-                                            hx-target="#updatePage">paper {{ paper }}</button>
-                                {% else %}
-                                    <button class="btn m-1 btn-success"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-placement="top"
-                                            data-bs-title="Is complete"
-                                            hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
-                                            hx-swap="innerHTML"
-                                            hx-target="#updatePage">paper {{ paper }}</button>
-                                {% endif %}
-                            {% endwith %}
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="bundleSummary"
+         hx-get="{% url 'scan_bundle_summary' bundle_id %}"
+         hx-trigger="summaryRefresh"
+         hx-swap="innerHTML"
+         hx-target="#bundleSummary"
+         hx-on:htmx:after-swap="refreshBundleSummaryTooltips()">
+        {% include "Scan/fragments/bundle_summary.html" with slug=slug n_collisions=n_collisions n_incomplete=n_incomplete colliding_images_nice_format=colliding_images_nice_format total_pages=total_pages known_pages=known_pages unknown_pages=unknown_pages extra_pages=extra_pages discard_pages=discard_pages error_pages=error_pages unread_pages=unread_pages paper_pages_list=paper_pages_list incomplete_papers_list=incomplete_papers_list %}
     </div>
     <div class="row pt-3">
         <div class="col-4">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">
+                    <div class="card-title mb-0">
                         <div class="dropdown">
-                            <span>Showing:</span>
-                            <button class="btn btn-secondary fs-5 dropdown-toggle w-75"
-                                    type="button"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                {% for opt in filter_options %}
-                                    {% if opt.filter_code == the_filter %}{{ opt.filter_name }}{% endif %}
-                                {% endfor %}
-                            </button>
-                            <ul class="dropdown-menu">
-                                {% for opt in filter_options %}
-                                    <li>
-                                        {% if opt.filter_code != the_filter %}
-                                            <a class="dropdown-item"
-                                               href="{% url 'scan_bundle_thumbnails' opt.filter_code bundle_id %}">{{ opt.filter_name }}</a>
-                                        {% else %}
-                                            <a class="dropdown-item text-secondary disabled">{{ opt.filter_name }}</a>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
+                            <!-- WET, see <script> tag further down. -->
+                            <!-- autocomplete is Firefox-specific fix: https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+                            <!-- ********* Note ********* -->
+                            <!-- 13th of August 2025 - filtering only happens when changing the dropdown -->
+                            <!-- other state changes intentionally don't cause the page thumbnails to filter. -->
+                            <!-- The idea is to give users a chance to review or undo their recent changes. -->
+                            <select class="form-select"
+                                    onchange="filterPages(this.value)"
+                                    autocomplete="off">
+                                <option>all</option>
+                                <option>needs your attention</option>
+                                <option>known pages</option>
+                                <option>extra pages</option>
+                                <option>extra pages without information</option>
+                                <option>errors</option>
+                                <option>discarded pages</option>
+                                <option>unknown pages</option>
+                                <option>unread pages</option>
+                            </select>
+                        </div>
+                        <hr class="mb-1" />
+                        <div class="container">
+                            <div class="row text-center d-flex align-items-center">
+                                <div class="col-2 px-1">
+                                    <button class="btn btn-sm btn-outline" onclick="tickSlider(-1)">-</button>
+                                </div>
+                                <div class="col-8 px-1 d-flex align-items-center">
+                                    <input id="thumbnailResizeSlider"
+                                           type="range"
+                                           class="w-100"
+                                           min="3"
+                                           max="20"
+                                           step="1"
+                                           value="10"
+                                           autocomplete="off"
+                                           oninput="resizeThumbnailContainers(this.value)">
+                                </div>
+                                <div class="col-2 px-1">
+                                    <button class="btn btn-sm btn-outline" onclick="tickSlider(1)">+</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-2 pe-0">
+                <div class="card-body py-2 px-0">
                     <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
-                    <div class="container overflow-y-scroll ps-0" style="max-height:78vh;">
-                        <div class="row row-cols-6 gy-1 gx-1">
+                    <div class="container overflow-y-scroll p-2" style="max-height:78vh;">
+                        <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
                             {% for pg in pages %}
-                                {% if pg.status == "known" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-success-subtle p-1"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }}">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" with grab_speed="low" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "unknown" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-warning-subtle col p-1 border-warning border-2"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="Unknown page">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "extra" %}
-                                    <!-- check if it has paper+question info -->
-                                    {% if pg.info.paper_number %}
-                                        <!-- extra page info is complete -->
-                                        <div class="col">
-                                            <div class="card text-center bg-primary-subtle col p-1"
-                                                 data-bs-toggle="tooltip"
-                                                 data-bs-placement="top"
-                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }}">
-                                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                            </div>
-                                        </div>
-                                    {% else %}
-                                        <div class="col">
-                                            <!-- extra page info required -->
-                                            <div class="card text-center bg-info-subtle col p-1  border-info border-2"
-                                                 data-bs-toggle="tooltip"
-                                                 data-bs-placement="top"
-                                                 data-bs-title="Extra page - no data">
-                                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                {% elif pg.status == "error" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-danger-subtle col p-1 border-error border-2"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="error: {{ pg.info.reason }}">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "unread" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-dark-subtle col p-1"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="qr-unread">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "discard" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-dark-subtle col p-1"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="discard: {{ pg.info.reason }}">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% endif %}
+                                <!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
+                                <div id="fragmentcontainer-{{ pg.order }}"
+                                     class="text-center"
+                                     hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
+                                     hx-trigger="thumbnailRefresh"
+                                     hx-swap="innerHTML"
+                                     hx-on:htmx:after-swap="refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})"
+                                     hx-on:htmx:after-settle="resizeThumbnailContainer({{ pg.order }})">
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
+                                </div>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-8" id="updatePage">
-            {% if pop %}
-                <div hx-get="{% url 'scan_bundle_page' the_filter bundle_id pop %}"
-                     hx-swap="innerHTML"
-                     hx-target="#updatePage"
-                     hx-trigger="load"></div>
-            {% endif %}
+        <div class="col-8" id="updatePage" style="min-height: 83vh;">
             <!-- HTMX will fill this in -->
         </div>
+        <!-- thumbnail container border uses radios, this changes radio appearance -->
+        <style>
+			  input[type="radio"][id^="pgradio-"] {
+				display: none;
+			  }
+
+			  .radio-label {
+				outline:inner;
+				border-radius: 6px;
+				user-select: none;
+			  }
+
+			  input[type="radio"][id^="pgradio-"]:checked + .radio-label {
+				outline: 3px solid #000000;
+			  }
+
+			  .radio-label:hover {
+				cursor: pointer;
+			  }
+        </style>
+        <script>
+				// https://getbootstrap.com/docs/5.3/components/tooltips
+			// create all tooltips when page is initially loaded
+				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+				const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+			// iterate over the thumbnail containers and decide which to show/hide
+			// important to keep track of different None/none/null references between html, js, py
+			function filterPages(filter) {
+			  document.querySelectorAll('div[id^="fragmentcontainer-"]').forEach(div => {
+				const pg_container = div.firstElementChild;
+				const status_ = pg_container.dataset.status;
+				const paper_number = pg_container.dataset.paper_number;
+				const extra_missing_info = status_ == "extra" && paper_number == "None";
+
+				switch (filter) {
+				case "needs your attention":
+						if (extra_missing_info || status_ == "unknown" || status_ == "error")
+							div.style.display = '';
+						else
+							div.style.display = 'none';
+						break;
+				case "known pages": div.style.display = status_ == "known" ? '': 'none' ;break;
+				case "extra pages": div.style.display = status_ == "extra" ? '': 'none' ;break;
+				case "extra pages without information":
+						if (extra_missing_info)
+							div.style.display = '';
+						else
+							div.style.display = 'none';
+						break;
+				case "errors": div.style.display = status_ == "error" ? '': 'none' ;break;
+				case "discarded pages": div.style.display = status_ == "discard" ? '': 'none' ;break;
+				case "unknown pages": div.style.display = status_ == "unknown" ? '': 'none' ;break;
+				case "unread pages": div.style.display = status_ == "unread" ? '': 'none' ;break;
+				case "all": ;
+				default:
+						div.style.display = '';
+				}
+			  });
+			}
+
+			// trigger a thumbnail to refresh using information from the server
+			// htmx.trigger isn't itself async, but it is used to trigger an async event
+			function refreshThumbnailContainer(index) {
+				htmx.trigger(document.getElementById("fragmentcontainer-" + index), "thumbnailRefresh");
+			}
+
+
+			// trigger the summary at the top of the page to refresh
+			function refreshBundleSummary() {
+				htmx.trigger(document.getElementById("bundleSummary"), "summaryRefresh");
+			}
+
+			// trigger the tooltips in the summary to refresh
+			function refreshBundleSummaryTooltips() {
+				var summaryTooltipTriggerList = document.querySelectorAll('button[id^="paper-btn-"]');
+				var updatedTooltipList = [...summaryTooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+			}
+
+			// add a new tooltip to a thumbnail
+			function refreshThumbnailTooltip(index) {
+				new bootstrap.Tooltip(document.getElementById("pgcontainer-" + index));
+			}
+
+			// click a particular thumbnail
+			function clickThumbnail(bundle_index) {
+				const target_thumbnail = document.getElementById("pgradio-" + bundle_index);
+				target_thumbnail.click();
+			}
+
+			// resize _all_ thumbnail containers
+			function resizeThumbnailContainers(newWidth) {
+				var thumbnailImages = document.querySelectorAll('img[id^="thumbnailimg-"]');
+				thumbnailImages.forEach(img => {
+					img.style.width = newWidth*0.7 + "ch";
+				})
+			}
+			function resizeThumbnailContainer(index) {
+				var thumbnailImage = document.getElementById("thumbnailimg-" + index);
+				var slider = document.getElementById('thumbnailResizeSlider');
+				thumbnailImage.style.width = slider.value*0.7 + "ch";
+			}
+			function tickSlider(valueChange) {
+				var slider = document.getElementById('thumbnailResizeSlider');
+				slider.value = parseFloat(slider.value) + parseFloat(slider.step)*valueChange;
+				resizeThumbnailContainers(slider.value);
+			}
+        </script>
     </div>
-    <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
-    <script>
-      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-    </script>
 {% endblock main_content %}

@@ -337,9 +337,11 @@ def isValidExtraPageCode(code: str) -> bool:
     Returns:
         The validity of the extra page code.
     """
-    code = code.lstrip("plomX")
-    if len(code) != len("O"):
+    if len(code) != len("plomX0"):
         return False
+    if not code.startswith("plomX"):
+        return False
+    code = code.lstrip("plomX")
     # now check that remaining letter is a digit in 1,2,..,8.
     if code.isnumeric():
         if 1 <= int(code) <= 8:
@@ -356,9 +358,11 @@ def isValidScrapPaperCode(code: str) -> bool:
     Returns:
         The validity of the scrap page code.
     """
-    code = code.lstrip("plomS")
-    if len(code) != len("O"):
+    if len(code) != len("plomS0"):
         return False
+    if not code.startswith("plomS"):
+        return False
+    code = code.lstrip("plomS")
     # now check that remaining letter is a digit in 1,2,..,8.
     if code.isnumeric():
         if 1 <= int(code) <= 8:
@@ -375,6 +379,10 @@ def isValidBundleSeparatorPaperCode(code: str) -> bool:
     Returns:
         The validity of the bundle separator page code.
     """
+    if len(code) != len("plomB0"):
+        return False
+    if not code.startswith("plomB"):
+        return False
     code = code.lstrip("plomB")
     if len(code) != len("O"):
         return False
@@ -411,7 +419,12 @@ def getExtraPageOrientation(code: str) -> int:
 
     Returns:
         The orientation as a small integer.
+
+    Raises:
+        ValueError: not a valid extra-page code.
     """
+    if not isValidExtraPageCode(code):
+        raise ValueError("Invalid extra-page code")
     return int(code[5])
 
 
@@ -423,7 +436,12 @@ def getScrapPaperOrientation(code: str) -> int:
 
     Returns:
         The orientation as a small integer.
+
+    Raises:
+        ValueError: not a valid scrap-paper code.
     """
+    if not isValidScrapPaperCode(code):
+        raise ValueError("Invalid scrap-paper code")
     return int(code[5])
 
 
@@ -435,5 +453,10 @@ def getBundleSeparatorPaperOrientation(code: str) -> int:
 
     Returns:
         The orientation as a small integer.
+
+    Raises:
+        ValueError: not a valid bundle-separator-paper code.
     """
+    if not isValidBundleSeparatorPaperCode(code):
+        raise ValueError("Invalid bundle-separator-paper code")
     return int(code[5])

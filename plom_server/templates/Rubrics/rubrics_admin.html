@@ -6,6 +6,7 @@
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2025 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -16,8 +17,33 @@
 {% endblock page_heading %}
 {% block main_content %}
     {% include "../base/alert_messages.html" with messages=messages %}
-    <div class="card m-2">
+    <div class="card m-2 mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Fractional rubrics</h5>
+        </div>
         <div class="card-body">
+            <p>
+                Some people have strong feelings about non-integer marks.
+                You can allow or disallow their creation by changing these preferences.
+                (Note that this doesn't effect which rubrics can be <em>used</em>).
+            </p>
+            <form method="post" action="{% url 'rubric_fractional_pref' %}">
+                {% csrf_token %}
+                <fieldset>
+                    {% for opt in rubric_fractional_options %}
+                        <div class="form-check ms-{{ opt.indent }}">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="{{ opt.name }}"
+                                   name="{{ opt.name }}"
+                                   {% if opt.checked %}checked{% endif %} />
+                            <label class="form-check-label" for="{{ opt.name }}">{{ opt.label }}</label>
+                        </div>
+                    {% endfor %}
+                </fieldset>
+                <button type="submit" class="btn btn-secondary" name="todo_needed_or_not">Submit</button>
+            </form>
+            <hr />
             <form method="post" action="{% url 'rubric_half' %}">
                 {% csrf_token %}
                 <div class="form-group mr-2">{{ rubric_halfmark_form }}</div>
@@ -32,6 +58,13 @@
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
                 {% if half_point_rubrics %}These rubrics have already been created.{% endif %}
             </p>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-header">
+            <h5 class="card-title">Upload and download rubrics</h5>
+        </div>
+        <div class="card-body">
             <form method="get" action={% url 'rubric_download' %} class="form-inline">
                 {% csrf_token %}
                 <div class="form-group mr-2">
@@ -50,8 +83,45 @@
                     {{ rubric_upload_form }}
                 </div>
             </form>
-            <p>Upload rubrics from .csv, .toml, or .json file (beta!)</p>
-            <!-- TODO: Issue #3755: should we provide an example? -->
+            <p>
+                Upload rubrics from .csv, .toml, or .json file (beta!). <a href="#"
+    class="text-primary"
+    data-bs-toggle="modal"
+    data-bs-target="#rubricTemplateModal">Download template</a>
+            </p>
+            <div class="modal fade"
+                 id="rubricTemplateModal"
+                 tabindex="-1"
+                 role="dialog"
+                 aria-labelledby="rubricTemplateModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="rubricTemplateModalLabel">Download Template Rubric</h5>
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="get" action="{% url 'rubric_template_download' %}">
+                                <div class="form-group mb-2">
+                                    {{ rubric_template_form.question_filter.label_tag }}
+                                    {{ rubric_template_form.question_filter }}
+                                </div>
+                                <div class="form-group mb-3">
+                                    {{ rubric_template_form.file_type.label_tag }}
+                                    {{ rubric_template_form.file_type }}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-success me-2">Download</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock main_content %}

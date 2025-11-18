@@ -156,12 +156,10 @@ and create the actual QR-coded PDF files to print for you assessment.
 Technical docs
 --------------
 
-* For scripting, the command-line tools `django-admin plom_preparation_spec`,
-  `django-admin plom_qvmap`, `django-admin plom_build_paper_pdfs`, and others
-  can used.
+* For scripting, the command-line tool `plom-cli` can be used.
 
   ..
-     TODO: ideally we'd get these argparse'd into the docs like the legacy tools.
+     TODO: ideally we'd get this argparse'd into the docs like the legacy tools.
 
 * On legacy servers, the command-line tool :doc:`plom-create` is used for
   most tasks related starting a new assessment.

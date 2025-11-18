@@ -112,13 +112,13 @@ wet_no_drift:
     - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "If version info duplicated, ensure same"
-    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
+    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/common.py`
     - echo $VER0
     - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
     - echo $VER1
     - bash -c "[[ x$VER0 == x$VER1 ]]"
 
-# we don't yet manage our CSS/JS libraries very well (Issue #2763)
+
 wet_css_js_3rd_party:
   stage: static_analysis
   image: python:3
@@ -126,8 +126,8 @@ wet_css_js_3rd_party:
     - pip install requests
   script:
     - python3 plom_server/get_js.py
-    - ls plom_server/static/3rdpartyjs/
-    - ls plom_server/static/3rdpartycss/
+    - ls plom_extra_static/js3rdparty/
+    - ls plom_extra_static/css3rdparty/
 
 
 # By default we assume the target is origin/main but if a MR is open,
@@ -135,6 +135,9 @@ wet_css_js_3rd_party:
 copyright_year:
   image: fedora:42
   stage: static_analysis
+  rules:
+    # Tags don't have this defined and non-empty. This job doesn't run on releases
+    - if: $CI_COMMIT_BRANCH
   before_script:
     - dnf install -y python3 glab git
     - git --version
@@ -143,18 +146,9 @@ copyright_year:
     - git remote add upstream https://gitlab.com/plom/plom.git
     - echo "Consider these various open merge requests"
     - glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom
-    - TARGET_MR=$(glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom)
+    - read TARGET_REPO_NAME TARGET_BRANCH_NAME <<< $(./maint/find-MR-target-branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main")
     # we expect to find at most one MR
-    - NUM_MRS=$(glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom | sed '1,2d;$d' | wc -l)
-    # / regex pattern / delete non-matches ; last_match // \1 /
-    # TODO could potentially be easier with "glab mr list --output json"
-    - TARGET_BRANCH_NAME=$( echo $TARGET_MR | sed '/.*\s(\(.*\))\s←\s(.*)$/!d;s//\1/' )
-    # if we have a MR then set local repo name to "upstream"
-    - TARGET_REPO_NAME=${TARGET_BRANCH_NAME:+"upstream"}
-    # else we want origin/main
-    - TARGET_REPO_NAME=${TARGET_REPO_NAME:-"origin"}
-    - TARGET_BRANCH_NAME=${TARGET_BRANCH_NAME:-"main"}
-    # finally we have either upstream/foo or origin/main
+    - NUM_MRS=$(./maint/find-MR-target-branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main" | wc -l)
     - TARGET_BRANCH=${TARGET_REPO_NAME}/${TARGET_BRANCH_NAME}
     - echo "We think the target branch is '$TARGET_BRANCH'"
     - echo "Next ensure we have that target branch for comparing"
@@ -168,9 +162,9 @@ copyright_year:
     - echo "Those commits touch the following files:"
     # git show --pretty="" --name-only ${TARGET_BRANCH}..${CI_COMMIT_BRANCH} -- | uniq -u
     - git diff --name-only ${TARGET_BRANCH}...${CI_COMMIT_BRANCH} --
-    - ./contrib/is_copyright_uptodate.py `git diff --name-only ${TARGET_BRANCH}...$CI_COMMIT_BRANCH --`
+    - ./maint/is-copyright-uptodate.py `git diff --name-only ${TARGET_BRANCH}...$CI_COMMIT_BRANCH --`
     - echo "Note that there are some files that do not have/need copyright headers"
-    - if [ ${NUM_MRS} -gt 1 ]; then exit 1; fi
+    - if [ ${NUM_MRS} -gt 1 ]; then echo "'NUM_MRS' ('${NUM_MRS}' is greater than 1, exiting...)"; exit 1; fi
   allow_failure: true
 
 
@@ -307,7 +301,7 @@ tag_matches_ver:
   rules:
    - if: $CI_COMMIT_TAG
   script:
-    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
+    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
     - echo "Extracted version string '$VER'"
     - echo "Now comparing to CI_COMMIT_TAG '$CI_COMMIT_TAG'"
     - echo $VER
@@ -321,7 +315,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=25.1.0"
+    - pip3 install "black~=25.9.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -342,7 +336,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.8.0
+    - pip install pytest pytest-cov coverage[toml]~=7.11.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -360,7 +354,7 @@ doctests:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip3 install --upgrade pytest
+    - pip install --ignore-installed -U pytest
   script:
     # TODO how to run only doctests?  here we just ignore-glib on "test_*"
     - pytest --version
@@ -369,6 +363,8 @@ doctests:
 
 # Ensure the migrations have been updated
 # needs full dependencies, cannot easily run with other early static analysis
+# Note to devs: if this job is failing, it probably means you have made database changes.
+# You should probably run `./maint/maint-wipe-rebuild-migrations.sh` and commit the results.
 migrations-uptodate:
   stage: test
   needs: ["container-image"]
@@ -397,11 +393,12 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=3.3.9  # codespell:ignore astroid
-    - pip install pylint~=3.3.6
+    - pip install astroid~=4.0.1  # codespell:ignore astroid
+    - pip install pylint~=4.0.2
   script:
     - pylint plom
     - pylint plom_server
+    - pylint plom_ml
     - pylint contrib
   allow_failure: true
 
@@ -415,13 +412,13 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.15.0
+    - pip install mypy~=1.18.2
   script:
     - mypy --version
-    - mypy plom --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom --python-ver 3.10
-    - mypy plom_server --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom_server --python-ver 3.10
+    - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom plom_server --python-ver 3.10
+    - mypy plom_ml --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom_ml --python-ver 3.10
   allow_failure: true
 
 
@@ -430,7 +427,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.400
+    - pip install pyright~=1.1.407
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -441,7 +438,7 @@ flake8:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install flake8~=7.2.0
+    - pip install flake8~=7.3.0
   script:
     # first show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -454,7 +451,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.8
+    - pip install ruff~=0.14.2
   script:
     - ruff check .
     # ruff format .
@@ -465,17 +462,17 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.8
+    - pip install ruff~=0.14.2
   script:
+    - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
-    - EXCEPTIONS="D101,D102,D103,D104,D106"
     - ruff check --select $EXCEPTIONS --exit-zero
     - HOWMANY=`ruff check --select $EXCEPTIONS --exit-zero | grep "Found .* errors" | grep -o "[0-9]*"`
     - echo $EXCEPTIONS
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1451 ]]"
+    - bash -c "[[ $HOWMANY -le 787 ]]"
   allow_failure: true
 
 
@@ -517,13 +514,14 @@ no-question-numbers:
   image: python:3.12
   stage: static_analysis
   script:
-    - grep plom_server -rie "question.num"
+    # TODO: consider adding "plom" here too
+    - grep plom_server -rie "question.num" || true
     - echo "Question number is ambiguous; generally we prefer index or the question label"
-    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l`
+    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l || true`
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 23 ]]"
+    - bash -c "[[ $HOW_MANY -le 0 ]]"
   allow_failure: true
 
 
@@ -532,7 +530,8 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.8.0
+    - pip install coverage~=7.11.0
+    - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
     - export PLOM_DATABASE_BACKEND=sqlite
@@ -549,6 +548,32 @@ webplom_test:
       coverage_report:
         coverage_format: cobertura
         path: django_coverage.xml
+
+webplom_api_test:
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  before_script:
+    - pip install coverage~=7.11.0
+    - pip install pytest pytest-mock pytest-django
+  script:
+    - export PYTHONPATH=$PWD
+    - export PLOM_DATABASE_BACKEND=sqlite
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    # migrate the test database (skip makemigrations per #3826)
+    - python3 manage.py migrate
+    # run only the API tests and collect coverage for plom_server/API
+    - coverage run --source=plom_server/API -m pytest plom_server/API/tests
+    # ignore any coverage errors (e.g. OpenCV) and print summary
+    - coverage report -i --precision=2
+    # output Cobertura XML for GitLab
+    - coverage xml -i -o django_api_coverage.xml
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: django_api_coverage.xml
 
 
 webplom_demo:
@@ -639,7 +664,7 @@ out-of-tree-scratch:
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
-    - pip install -U pytest
+    - pip install --ignore-installed -U pytest
     # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
     - pip install django
     - pwd
@@ -744,8 +769,9 @@ newOS_newdeps_django_tests:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
+    PIP_BREAK_SYSTEM_PACKAGES: 1
   stage: alt_build
-  image: ubuntu:22.04
+  image: ubuntu:24.04
   allow_failure: true
   before_script:
     - apt-get update
@@ -753,13 +779,14 @@ newOS_newdeps_django_tests:
     - apt-get --no-install-recommends --yes install
       cmake make g++
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
-      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+      libgl1  libxcb-cursor0 libegl1 libxkbcommon0 libdbus-1-3
+      libsm6 libxrender1
       libpango-1.0-0 libpangocairo-1.0-0
       python3-pytest python3-dev
       python3-pip
       iproute2 psmisc file python3-magic git
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip setuptools packaging wheel
+    - python3 -m pip install --upgrade --ignore-installed pip setuptools packaging wheel
     - pip --version
   script:
     # pip install plom-client
@@ -788,11 +815,13 @@ minpy_mindeps_django_tests:
   stage: alt_build
   image: python:3.10
   before_script:
+    # Note: Python image based on Debian (can install deps)
     - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make g++ dvipng
       texlive-latex-extra latexmk texlive-fonts-recommended
-      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+      libgl1 libxcb-cursor0 libegl1 libxkbcommon0 libdbus-1-3
+      libsm6 libxrender1
       git
     - pip install pytest
   script:

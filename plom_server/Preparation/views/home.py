@@ -31,14 +31,13 @@ from ..services import (
 class PreparationLandingView(ManagerRequiredView):
     def build_context(self):
         pss = PrenameSettingService()
-        sss = StagingStudentService()
         bps = BuildPapersService()
 
         context = {
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "prename_enabled": pss.get_prenaming_setting(),
-            "student_list_present": sss.are_there_students(),
+            "student_list_present": StagingStudentService.are_there_students(),
             "is_db_chore_running": PaperInfoService.is_paper_database_being_updated_in_background(),
             "is_db_fully_populated": PaperInfoService.is_paper_database_fully_populated(),
             "all_papers_built": bps.are_all_papers_built(),

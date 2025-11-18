@@ -28,8 +28,9 @@ class ClasslistDownloadView(ManagerRequiredView):
         about MS Excel and BOM.  Do we need to keep that software happy?
         """
         pss = PrenameSettingService()
-        sss = StagingStudentService()
-        csv_txt = sss.get_students_as_csv_string(prename=pss.get_prenaming_setting())
+        csv_txt = StagingStudentService.get_students_as_csv_string(
+            prename=pss.get_prenaming_setting()
+        )
         # Note: without BytesIO here it doesn't respect filename, get "download.csv"
         return FileResponse(
             BytesIO(csv_txt.encode("utf-8")),
@@ -41,14 +42,13 @@ class ClasslistDownloadView(ManagerRequiredView):
 
 class ClasslistView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        sss = StagingStudentService()
         pss = PrenameSettingService()
 
         context = self.build_context()
         context.update(
             {
-                "student_list_present": sss.are_there_students(),
-                "student_list": sss.get_students(),
+                "student_list_present": StagingStudentService.are_there_students(),
+                "student_list": StagingStudentService.get_students(),
                 "prenaming": pss.get_prenaming_setting(),
                 "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             }
@@ -64,12 +64,11 @@ class ClasslistView(ManagerRequiredView):
             return redirect("prep_classlist")
 
         # check if there are already students in the list.
-        sss = StagingStudentService()
-        if sss.are_there_students():
+        if StagingStudentService.are_there_students():
             return redirect("prep_classlist")
 
         try:
-            success, warn_err = sss.validate_and_use_classlist_csv(
+            success, warn_err = StagingStudentService.validate_and_use_classlist_csv(
                 request.FILES["classlist_csv"], ignore_warnings=ignore_warnings
             )
             if (not success) or (warn_err and not ignore_warnings):
@@ -86,7 +85,7 @@ class ClasslistView(ManagerRequiredView):
     def delete(self, request: HttpRequest) -> HttpResponseClientRedirect:
         # is htmx-delete, not http.
         try:
-            StagingStudentService().remove_all_students()
+            StagingStudentService.remove_all_students()
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))

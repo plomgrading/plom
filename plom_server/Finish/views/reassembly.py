@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, Http404
@@ -13,6 +14,9 @@ from django_htmx.http import HttpResponseClientRedirect
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
 from ..services import ReassembleService
+from plom.misc_utils import format_int_list_with_runs
+
+from plom_server.Scan.services import ManageScanService
 
 
 class ReassemblePapersView(ManagerRequiredView):
@@ -25,12 +29,12 @@ class ReassemblePapersView(ManagerRequiredView):
         reas = ReassembleService()
         all_paper_status = reas.get_all_paper_status_for_reassembly()
         # Compute some counts required for the page
-        n_papers = sum([1 for x in all_paper_status if x["scanned"]])
+        n_papers = sum([1 for x in all_paper_status if x["used"]])
         n_not_ready = sum(
             [
                 1
                 for x in all_paper_status
-                if x["scanned"] and not (x["identified"] and x["marked"])
+                if x["used"] and not (x["identified"] and x["marked"])
             ]
         )
         n_ready = sum(
@@ -57,15 +61,25 @@ class ReassemblePapersView(ManagerRequiredView):
             [1 for x in all_paper_status if x["reassembled_status"] == "Complete"]
         )
         min_paper_number = min(
-            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
+            [X["paper_num"] for X in all_paper_status if X["used"]],
+            default=None,
         )
         max_paper_number = max(
-            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
+            [X["paper_num"] for X in all_paper_status if X["used"]],
+            default=None,
+        )
+        partially_scanned_papers = list(
+            ManageScanService.get_all_incomplete_papers().keys()
+        )
+        partially_scanned_papers_abbrev_list = format_int_list_with_runs(
+            partially_scanned_papers
         )
 
         context.update(
             {
                 "papers": all_paper_status,
+                "partially_scanned_papers": partially_scanned_papers,
+                "partially_scanned_papers_abbrev_list": partially_scanned_papers_abbrev_list,
                 "n_papers": n_papers,
                 "n_not_ready": n_not_ready,
                 "n_ready": n_ready,
@@ -91,9 +105,10 @@ class StartOneReassembly(ManagerRequiredView):
         ReassembleService().reset_single_paper_reassembly(paper_number)
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
-    def get(self, request, paper_number):
-        pdf_file = ReassembleService().get_single_reassembled_file(paper_number)
-        return FileResponse(pdf_file)
+    def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
+        """Download one of the reassembled papers."""
+        pdf_file, filename = ReassembleService.get_single_reassembled_file(paper_number)
+        return FileResponse(pdf_file, filename=filename)
 
     def put(self, request, paper_number):  # called by "re-reassemble"
         ReassembleService().reset_single_paper_reassembly(paper_number)
@@ -110,11 +125,12 @@ class StartAllReassembly(ManagerRequiredView):
         ReassembleService().reset_all_paper_reassembly()
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> StreamingHttpResponse:
+        """A streaming download of all the solution PDFs in one big dynamically-generated zipfile."""
         # using zipfly python package.  see django example here
         # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
         short_name = slugify(SpecificationService.get_shortname())
-        zgen = ReassembleService().get_zipfly_generator()
+        zgen = ReassembleService.get_zipfly_generator()
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = (
             f"attachment; filename={short_name}_reassembled.zip"
@@ -140,7 +156,7 @@ class DownloadRangeOfReassembled(ManagerRequiredView):
         if last_paper:
             short_name += f"_to_{last_paper}"
         try:
-            zgen = ReassembleService().get_zipfly_generator(
+            zgen = ReassembleService.get_zipfly_generator(
                 first_paper=first_paper, last_paper=last_paper
             )
         except ValueError as err:

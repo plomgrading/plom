@@ -57,7 +57,7 @@
                                                             </button>
                                                         {% endif %}
                                                     {% endfor %}
-                                                    {% for mp in pages.mobile|dictsort:"question_number" %}
+                                                    {% for mp in pages.mobile|dictsort:"question_idx" %}
                                                         <button hx-get="{% url 'pushed_img_wrap' 'mobile' mp.page_pk %}"
                                                                 hx-target="#incompleteImageHere"
                                                                 hx-replace="incompletInnerHTML"

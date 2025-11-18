@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Bryan Tanady
 
 
 """Scriptable Plom tools for use by experts."""
@@ -12,15 +13,28 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 
-from plom import __version__
+from plom.common import __version__
 
 from .start_messenger import with_messenger, start_messenger, clear_login
 from .list_bundles import list_bundles
 from .bundle_tools import upload_bundle, bundle_map_page
 from .identify_tools import id_paper, un_id_paper
-from .finish_tools import get_reassembled
+from .finish_tools import (
+    get_reassembled,
+    get_all_reassembled,
+    get_unmarked,
+    get_all_unmarked,
+    get_marks_as_csv_string,
+)
+from .source_tools import upload_source
+from .source_tools import delete_source
 from .spec_tools import upload_spec
 from .task_tools import reset_task
+from .pqvmap_tools import get_pqvmap_as_csv_string
+from .classlist_tools import delete_classlist
+from .classlist_tools import download_classlist
+from .classlist_tools import upload_classlist
+from .rectangle_extractor_tools import extract_rectangle
 
 # what you get from "from plom.cli import *"
 __all__ = [
@@ -30,6 +44,12 @@ __all__ = [
     "list_bundles",
     "upload_bundle",
     "get_reassembled",
+    "delete_source",
+    "upload_source",
     "upload_spec",
     "reset_task",
+    "delete_classlist",
+    "download_classlist",
+    "upload_classlist",
+    "extract_rectangle",
 ]

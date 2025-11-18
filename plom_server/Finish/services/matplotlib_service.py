@@ -4,6 +4,8 @@
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Deep Shah
+# Copyright (C) 2025 Philip D. Loewen
 
 import base64
 from io import BytesIO
@@ -177,8 +179,8 @@ class MatplotlibService:
         self.ensure_all_figures_closed()
 
         qlabel = self.q_label_map[question_idx]
-        ver_column = "q" + str(question_idx) + "_version"
-        mark_column = "q" + str(question_idx) + "_mark"
+        ver_column = qlabel + "_version"
+        mark_column = qlabel + "_mark"
         plot_series = []
         if versions:
             if pd.isna(student_df[ver_column].max()):
@@ -323,7 +325,7 @@ class MatplotlibService:
         if ta_df is None:
             ta_df = self.des._get_ta_data_for_ta(
                 ta_name,
-                ta_df=self.des._get_ta_data_for_question(question_index=question_idx),
+                ta_df=self.des._get_ta_data_for_question(question_idx),
             )
 
         assert isinstance(ta_df, pd.DataFrame)
@@ -586,9 +588,7 @@ class MatplotlibService:
         plt.xlim(
             [
                 -0.5,
-                self.des._get_ta_data_for_question(question_index=question_idx)[
-                    "max_score"
-                ].max()
+                self.des._get_ta_data_for_question(question_idx)["max_score"].max()
                 + 0.5,
             ]
         )
@@ -710,9 +710,14 @@ class MinimalPlotService:
         assert format in _acceptable_formats
         _ensure_all_figures_closed()
         sns.set_theme()
-        sns.kdeplot(data=np.array(total_score_list), fill=True)
+        sns.kdeplot(
+            data=np.array(total_score_list),
+            fill=True,
+            clip=(0, SpecificationService.get_total_marks()),
+        )
+        plt.xlim(0, SpecificationService.get_total_marks())
         # Overlay the student's score by highlighting the bar
-        if highlighted_score:
+        if highlighted_score is not None:
             # this gives x-coord of bar, we get the y-coord from the ylim of the plot
             plt.bar(highlighted_score, plt.ylim()[1], color=HIGHLIGHT_COLOR, alpha=0.5)
 
@@ -791,7 +796,7 @@ class MinimalPlotService:
         else:
             return get_graph_as_base64(graph_bytes)
 
-    def lollypop_of_pedagogy_tags(
+    def lollipop_of_pedagogy_tags(
         self,
         tag_to_questions,
         question_idx_score_dict,
@@ -799,7 +804,7 @@ class MinimalPlotService:
         *,
         format: str = "base64",
     ) -> BytesIO | str:
-        """Generate a lollypop graph of pedagogy tag scores.
+        """Generate a lollipop graph of pedagogy tag scores.
 
         Args:
             tag_to_questions: dict mapping tag-name to list of questions with that tag.

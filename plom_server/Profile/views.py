@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Bryan Tanady
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -31,13 +32,13 @@ class ProfileView(LoginRequiredMixin, View):
         """
         form = EditProfileForm(instance=request.user)
         try:
-            # TODO: first?  but more generally, why not support multiple groups?
-            group = request.user.groups.all()[0].name
+            # concatenate group names separated with a comma and a space
+            groups = ", ".join([g.name for g in request.user.groups.all()])
         except IndexError:
-            group = None
+            groups = None
         context = {
             "form": form,
-            "user_group": group,
+            "user_groups": groups,
             "email": request.user.email,
         }
         return render(request, self.profile_page, context)

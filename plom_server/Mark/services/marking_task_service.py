@@ -9,6 +9,7 @@
 # Copyright (C) 2024-2025 Bryan Tanady
 
 import json
+import logging
 import pathlib
 import random
 from typing import Any
@@ -19,17 +20,16 @@ from django.db.models import QuerySet, Count, Q
 from django.db import transaction
 from rest_framework import serializers
 
+from plom.misc_utils import unpack_task_code
 from plom.tagging import is_valid_tag_text
 from plom_server.Papers.services import ImageBundleService, PaperInfoService
 from plom_server.Papers.models import Paper
 
-from . import marking_priority, mark_task
-from ..models import (
-    MarkingTask,
-    MarkingTaskTag,
-    MarkingTaskPriority,
-    Annotation,
-)
+from . import MarkingPriorityService, mark_task
+from ..models import MarkingTask, MarkingTaskTag, Annotation
+
+
+log = logging.getLogger("MarkingTaskService")
 
 
 class MarkingTaskService:
@@ -74,7 +74,7 @@ class MarkingTaskService:
         except ValueError as err:
             raise RuntimeError(f"Server does not have a question-version map - {err}")
 
-        task_code = f"q{paper.paper_number:04}g{question_index}"
+        task_code = f"{paper.paper_number:04}g{question_index}"
 
         # other tasks with this code are now 'out of date'
         # as per #3220 do not erase assigned user.
@@ -90,8 +90,8 @@ class MarkingTaskService:
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
-            strategy = marking_priority.get_mark_priority_strategy()
-            if strategy == MarkingTaskPriority.PAPER_NUMBER:
+            strategy = MarkingPriorityService.get_mark_priority_strategy()
+            if strategy == "paper_number":
                 priority = Paper.objects.count() - paper.paper_number
             else:
                 priority = random.randint(0, 1000)
@@ -117,9 +117,24 @@ class MarkingTaskService:
         paper_question_version_list: list[tuple[int, int, int]],
         *,
         copy_old_tags: bool = True,
-    ):
+    ) -> None:
+        """In an efficient way, create and update all marking tasks at once.
+
+        This was added for DB performance reasons, and the caller presumably
+        does some work to pre-assemble the inputs, rather than looping one
+        at a time.
+
+        Args:
+            paper_question_version_list: each entry is a tuple of
+                `paper_number`, `question_index`, and `version`.
+
+        Keyword Args:
+            copy_old_tags: copy over any old tags from the previous tasks.
+                Note this currently may have a performance hit as it uses
+                a loop.
+        """
         # create all the task codes
-        task_codes = [f"q{X[0]:04}g{X[1]}" for X in paper_question_version_list]
+        task_codes = [f"{X[0]:04}g{X[1]}" for X in paper_question_version_list]
         # use this to get all existing marking tasks
         existing_tasks = (
             MarkingTask.objects.filter(code__in=task_codes)
@@ -135,7 +150,7 @@ class MarkingTaskService:
             priorities[X.code] = X.marking_priority
             existing_tags[X.code] = X.markingtasktag_set.all()
         # get priority strategy for new tasks
-        strategy = marking_priority.get_mark_priority_strategy()
+        strategy = MarkingPriorityService.get_mark_priority_strategy()
         total_papers = Paper.objects.count()
         # create new tasks using any existing priorities
         # unfortunately we need the associated paper-objects
@@ -146,10 +161,10 @@ class MarkingTaskService:
         # finally get on with building things
         new_tasks = []
         for pn, qi, v in paper_question_version_list:
-            code = f"q{pn:04}g{qi}"
+            code = f"{pn:04}g{qi}"
             if code in priorities:
                 priority = priorities[code]
-            elif strategy == MarkingTaskPriority.PAPER_NUMBER:
+            elif strategy == "paper_number":
                 priority = total_papers - pn
             else:
                 priority = random.randint(0, 1000)
@@ -214,10 +229,7 @@ class MarkingTaskService:
             ValueError: invalid code.
             RuntimeError: code valid but task does not exist.
         """
-        try:
-            paper_number, question_idx = mark_task.unpack_code(code)
-        except AssertionError as e:
-            raise ValueError(f"{code} is not a valid task code: {e}") from e
+        paper_number, question_idx = unpack_task_code(code)
         try:
             return mark_task.get_latest_task(paper_number, question_idx)
         except ObjectDoesNotExist as e:
@@ -370,9 +382,10 @@ class MarkingTaskService:
         This is a file system (later object store) hit, which will have some IO cost.
 
         Args:
-            code (str): key of the associated task.
-            data (dict): information about the mark, rubrics, and annotation images.
-            plomfile (str): a JSON field representing annotation data.
+            code: key of the associated task.
+            data: information about the mark, rubrics, and annotation images.
+            plomfile: a JSON field representing annotation data, the contents
+                of the so-called "plom file".
 
         Returns:
             Two things in a tuple;
@@ -439,6 +452,7 @@ class MarkingTaskService:
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
+            # TODO: this looks like direct file access on the server, Issue #3888.
             img_path = pathlib.Path(image_data["server_path"])
             if not img_path.exists():
                 raise serializers.ValidationError("Invalid original-image in request.")
@@ -550,12 +564,13 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    @transaction.atomic
     def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
         """Get an existing tag, or create if necessary, based on the given text.
 
         Args:
-            user: the user creating/attaching the tag.
+            user: the user creating the tag, if a new tag needs to be
+                created.  If the tag already exists, we DO NOT update
+                the user.
             tag_text: the text of the tag.
 
         Returns:
@@ -568,12 +583,67 @@ class MarkingTaskService:
             raise serializers.ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-        try:
-            tag_obj = MarkingTaskTag.objects.get(text=tag_text)
-        except MarkingTaskTag.DoesNotExist:
-            # no such tag exists, so create one
-            tag_obj = MarkingTaskTag.objects.create(user=user, text=tag_text)
+        tag_obj, _created = MarkingTaskTag.objects.get_or_create(
+            text=tag_text, defaults={"user": user}
+        )
+        if _created:
+            # "The bank might keep declining 'em. But these hundred dollar cheques,
+            #  I'm signin' 'em."  -- Street Sweeper Social Club re: Issue #2642
+            log.debug('New tag "%d" created by %s', tag_obj, user)
         return tag_obj
+
+    @transaction.atomic
+    def bulk_get_or_create_tag(
+        self, user: User, tag_texts: list[str]
+    ) -> list[MarkingTaskTag]:
+        """Get existing tags, or create if necessary, based on the given texts.
+
+        Args:
+            user: the user creating/attaching the tag.
+            tag_texts: the text of the tags.
+
+        Returns:
+            a list referencing the tags
+
+        Raises:
+            serializers.ValidationError: if the tag text is not legal.
+        """
+        # Validation
+        for text in tag_texts:
+            if not is_valid_tag_text(text):
+                raise serializers.ValidationError(
+                    f'Invalid tag text: "{text}"; contains disallowed characters'
+                )
+
+        # Remove duplicates (preserve order)
+        seen = set()
+        tag_texts_unique = []
+        for x in tag_texts:
+            if x not in seen:
+                seen.add(x)
+                tag_texts_unique.append(x)
+
+        # Get all existing tags for this user
+        existing_tags = MarkingTaskTag.objects.filter(
+            user=user, text__in=tag_texts_unique
+        )
+
+        existing_map = {tag.text: tag for tag in existing_tags}
+
+        # Figure out which tags need to be created
+        to_create = [text for text in tag_texts_unique if text not in existing_map]
+        new_tags = [MarkingTaskTag(user=user, text=text) for text in to_create]
+
+        if new_tags:
+            MarkingTaskTag.objects.bulk_create(new_tags)
+
+            # Re-query just the new ones
+            new_objs = MarkingTaskTag.objects.filter(user=user, text__in=to_create)
+            for tag in new_objs:
+                existing_map[tag.text] = tag
+
+        # Return in original order (de-duped)
+        return [existing_map[text] for text in tag_texts_unique]
 
     def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Add an existing tag to an existing marking task.
@@ -631,7 +701,7 @@ class MarkingTaskService:
 
         Args:
             tag_text: which tag to add, creating it if necessary.
-            code: from which task, for example ``"q0123g5"`` for paper
+            code: from which task, for example ``"0123g5"`` for paper
                 123 question 5.
             user: who is doing the tagging.
                 TODO: record who tagged: Issue #2840.
@@ -654,7 +724,7 @@ class MarkingTaskService:
 
         Args:
             tag_text: which tag to remove.
-            code: from which task, for example ``"q0123g5"`` for paper
+            code: from which task, for example ``"0123g5"`` for paper
                 123 question 5.
 
         Raises:
@@ -740,8 +810,6 @@ class MarkingTaskService:
         except Paper.DoesNotExist:
             raise ValueError(f"Cannot find paper {paper_number}")
 
-        ibs = ImageBundleService()
-
         # now we know there is at least one task (either valid or out of date)
         valid_tasks = MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
@@ -768,7 +836,8 @@ class MarkingTaskService:
             pass
 
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
-        if ibs.is_given_paper_question_ready(paper_obj, question_index):
+        pq_pair = (paper_obj.paper_number, question_index)
+        if ImageBundleService.check_if_paper_question_pairs_ready([pq_pair])[pq_pair]:
             self.create_task(paper_obj, question_index)
 
     @transaction.atomic

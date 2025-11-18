@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2025 Philip D. Loewen
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -13,7 +14,17 @@
     <div class="card d-inline-flex">
         <div class="card-body">
             <ul class="list fs-4">
-                <li>{{ total_papers }} papers produced</li>
+                <li>{{ total_papers }} papers defined and printed</li>
+                {% if unpushed_bundles %}
+                    <li>
+                        {{ unpushed_bundles }} bundle(s) uploaded to staging area but not yet pushed <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    </li>
+                {% else %}
+                    <li>
+                        all uploaded bundles have been pushed <i class="bi bi-check-circle text-success"></i>
+                    </li>
+                {% endif %}
+                <li>{{ pushed_bundles }} bundle(s) pushed</li>
                 <li>
                     {{ completed_papers }} complete papers pushed
                     {% if incomplete_papers %}
@@ -22,16 +33,6 @@
                         &mdash; all pushed papers are complete <i class="bi bi-check-circle text-success"></i>
                     {% endif %}
                 </li>
-                <li>{{ pushed_bundles }} bundle(s) pushed</li>
-                {% if unpushed_bundles %}
-                    <li>
-                        {{ unpushed_bundles }} bundle(s) uploaded but not yet pushed <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                    </li>
-                {% else %}
-                    <li>
-                        all uploaded bundles have been pushed <i class="bi bi-check-circle text-success"></i>
-                    </li>
-                {% endif %}
             </ul>
             <!-- d-inline-flex makes the div shrink-fit to the content -->
             <div class="list-group d-inline-flex">
@@ -41,35 +42,32 @@
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_staged' %}">
-                    <p class="fs-4">Staged bundles</p>
+                    <p class="fs-4">Staged bundles ({{ unpushed_bundles }} available)</p>
                     <p>&emsp;&ensp;Assign extra-pages and deal with any unknown pages before they are pushed.</p>
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_pushed' %}">
-                    <p class="fs-4">View pushed bundles</p>
+                    <p class="fs-4">View pushed bundles ({{ pushed_bundles }} available)</p>
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_complete' %}">
-                    <p class="fs-4">View complete pushed papers</p>
+                    <p class="fs-4">View complete pushed papers ({{ completed_papers }} available)</p>
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_incomplete' %}">
                     <p class="fs-4">
-                        View incomplete pushed papers
+                        View incomplete pushed papers ({{ incomplete_papers }} available)
                         {% if incomplete_papers %}<i class="bi bi-exclamation-diamond-fill text-warning"></i>{% endif %}
                     </p>
                     {% if incomplete_papers %}
                         <p>
-                            &emsp;&ensp;There are currently {{ incomplete_papers }} incomplete papers
-                            {% if user_is_manager %}&mdash; a manager can repair them.{% endif %}
+                            {% if user_is_manager %}&mdash; A manager can repair incomplete papers.{% endif %}
                         </p>
-                    {% else %}
-                        <p>&emsp;&ensp;There are no such papers currently.</p>
                     {% endif %}
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_discard' %}">
-                    <p class="fs-4">View discarded images from pushed bundles</p>
+                    <p class="fs-4">View discarded images from pushed bundles ({{ number_of_discards }} available)</p>
                     <p>
                         &emsp;&ensp;View images discarded from bundles when pushed to the main server
                         {% if user_is_manager %}&mdash; a manager can reassign them if needed.{% endif %}

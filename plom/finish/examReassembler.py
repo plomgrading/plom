@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
-
-from __future__ import annotations
+# Copyright (C) 2025 Aidan Murphy
 
 import tempfile
 from pathlib import Path
@@ -12,7 +11,7 @@ from typing import Any
 import PIL.Image
 import pymupdf
 
-from plom import __version__
+from plom.finish import __version__
 from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
 
 
@@ -25,10 +24,10 @@ margin = 10
 def reassemble(
     outname: str | Path,
     shortName: str,
-    sid: str,
-    coverfile: str | Path,
-    id_images,
-    marked_pages,
+    sid_or_other_id_info: str | None,
+    coverfile: str | Path | None,
+    id_images: list[dict[str, Any]],
+    marked_pages: list[str],
     dnm_images,
     *,
     nonmarked_images: list[dict[str, Any]] | None = None,
@@ -38,7 +37,8 @@ def reassemble(
     Args:
         outname (str/pathlib.Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
-        sid (str): Student ID, to be written into metadata.
+        sid_or_other_id_info: Student ID, or similar string to be written
+            into metadata.  Could also be None, which means don't write it.
         coverfile (str/pathlib.Path): a coversheet already in PDF format.
             Pass None to omit (deprecated "totalling mode" did this).
         id_images (list): dict of images with keys "filename" (`pathlib.Path`)
@@ -102,9 +102,13 @@ def reassemble(
         exam, nonmarked_images, "seen but deemed not relevant to any question."
     )
 
+    if sid_or_other_id_info is None:
+        title = f"{shortName}"
+    else:
+        title = f"{shortName} {sid_or_other_id_info}"
     exam.set_metadata(
         {
-            "title": f"{shortName} {sid}",
+            "title": title,
             "producer": f"Plom {__version__}",
         }
     )

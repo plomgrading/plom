@@ -4,8 +4,6 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 import argparse
 import re
 import shutil

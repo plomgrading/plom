@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.plom_exceptions import PlomConflict
 from plom.scan.question_list_utils import check_question_list
 from plom_server.Papers.services import SpecificationService
 from ...services import ScanCastService, ScanService
@@ -56,17 +57,15 @@ class Command(BaseCommand):
     def assign_extra_page(
         self, username, bundle_name, index, paper_number, question_idx_list
     ):
-        scs = ScanCastService()
         try:
-            scs.assign_extra_page_cmd(
+            ScanCastService.assign_extra_page_cmd(
                 username, bundle_name, index, paper_number, question_idx_list
             )
-        except ValueError as e:
+        except (ValueError, PlomConflict) as e:
             raise CommandError(e)
 
     def clear_extra_page_data(self, username, bundle_name, index):
-        scs = ScanCastService()
-        scs.clear_extra_page_cmd(username, bundle_name, index)
+        ScanCastService.clear_extra_page_cmd(username, bundle_name, index)
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(

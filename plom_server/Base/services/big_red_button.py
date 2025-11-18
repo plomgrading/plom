@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
@@ -27,9 +27,11 @@ def reset_assessment_preparation_database():
     # Remove all test database rows
     PaperCreatorService.remove_all_papers_from_db(background=False)
 
-    # Remove classlist
-    StagingStudentService().remove_all_students()
+    # Remove classlist and reset prename setting.
+    StagingStudentService.remove_all_students()
     PrenameSettingService().set_prenaming_setting(False)
+    # reset the prename box position too.
+    PrenameSettingService.reset_prenaming_coords()
 
     # Remove and delete source PDFs
     SourceService.delete_all_source_pdfs()

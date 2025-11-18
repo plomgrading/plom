@@ -1,16 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Papers.models import Bundle
 from ..services import ForgiveMissingService
 
 
 class TestForgiveMissingService(TestCase):
-    # A bit minimal: TODO: put a spec in place and test properly
+    """Test various facets which replace missing fixed pages."""
+
+    # A bit minimal: TODO: test properly
+
+    @config_test({"test_spec": "demo"})
+    def setUp(self) -> None:
+        pass
 
     def test_subs_bundle_no_images(self) -> None:
         self.assertEqual(ForgiveMissingService.get_list_of_all_missing_dnm_pages(), [])

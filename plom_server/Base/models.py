@@ -15,7 +15,6 @@ from django.db import models, transaction
 from django.utils import timezone
 from django_huey import get_queue
 
-from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 # TODO: Using the @signal decorator did not work with both queues
 # from django_huey import signal
@@ -218,8 +217,6 @@ class HueyTaskTracker(models.Model):
 # ---------------------------------
 # Define a singleton model as per
 # https://steelkiwi.com/blog/practical-application-singleton-design-pattern/
-#
-# Then use this to define tables for PrenamingSetting and ClasslistCSV
 # ---------------------------------
 
 
@@ -267,33 +264,22 @@ class Tag(models.Model):
         return str(self.text)
 
 
-class SettingsModel(SingletonABCModel):
-    """Global configurable settings."""
+class SettingsModel(models.Model):
+    """Store settings in key-value pairs where the values can be any JSON."""
 
-    # TODO: intention is a tri-state: "permissive", "per-user", "locked"
-    who_can_create_rubrics = models.TextField(default="permissive")
-    who_can_modify_rubrics = models.TextField(default="per-user")
-    feedback_rules = models.JSONField(default=dict)
+    key = models.CharField(max_length=64, unique=True)
+    value = models.JSONField(default=str)
 
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the SettingsModel."""
-        obj, created = cls.objects.get_or_create(
-            pk=1,
-            defaults={
-                "who_can_create_rubrics": "permissive",
-                "who_can_modify_rubrics": "per-user",
-                "feedback_rules": {},
-            },
-        )
-        return obj
+    def __str__(self):
+        """Convert a key-value setting to a string representation."""
+        return f"Key-Value setting id {self.id}: {self.key} = {self.value}"
 
-    @classmethod
-    def get_feedback_rules(cls):
-        rules = cls.load().feedback_rules
-        if not rules:
-            return static_feedback_rules
-        return rules
+
+class SettingsBooleanModel(models.Model):
+    """Currently unused."""
+
+    key = models.CharField(max_length=64, unique=True)
+    value = models.BooleanField()
 
 
 class BaseImage(models.Model):

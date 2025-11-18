@@ -2,6 +2,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
 from pathlib import Path
@@ -9,10 +10,11 @@ from statistics import mean, median, mode, stdev, quantiles
 from typing import Any
 
 from django.conf import settings
+from django.utils.text import slugify
 
 from plom_server.Papers.services import SpecificationService
-from ..services import StudentMarkService
 from plom_server.QuestionTags.services import QuestionTagService
+from ..services import StudentMarkService
 
 
 def _get_descriptive_statistics_from_score_list(
@@ -22,7 +24,16 @@ def _get_descriptive_statistics_from_score_list(
 
     Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
     """
-    quants = quantiles(scores)
+    if len(scores) > 1:
+        quants = quantiles(scores)
+        standard_deviation = stdev(scores)
+    else:
+        # Functions quantiles() and stdev() don't work in the
+        # degenerate case of just one score. Define appropriate
+        # results directly.
+        quants = [scores[0], scores[0], scores[0]]
+        standard_deviation = 0.0
+
     return {
         "count": len(scores),
         "max": max(scores),
@@ -30,14 +41,14 @@ def _get_descriptive_statistics_from_score_list(
         "median": median(scores),
         "mean": mean(scores),
         "mode": mode(scores),
-        "stddev": stdev(scores),
+        "stddev": standard_deviation,
         "percentile25": quants[0],
-        "percentile75": quants[1],
+        "percentile75": quants[2],
     }
 
 
 def brief_report_pdf_builder(
-    paper_number,
+    paper_number: int,
     total_score_list: list[float],
     question_score_lists: dict[int, list[float]],
 ) -> dict[str, Any]:
@@ -77,6 +88,7 @@ def brief_report_pdf_builder(
         "totalMarks": SpecificationService.get_total_marks(),
         "name": paper_info["name"],
         "sid": paper_info["sid"],
+        "paper_number": paper_number,
         "grade": paper_info["total"],
         "total_stats": _get_descriptive_statistics_from_score_list(total_score_list),
         "kde_graph": MinimalPlotService.kde_plot_of_total_marks(
@@ -91,7 +103,7 @@ def brief_report_pdf_builder(
         "pedagogy_tags": None,
         "pedagogy_tags_graph": None,
     }
-    # don't generate the lollypop graph is there are no pedagogy tags
+    # don't generate the lollipop graph if there are no pedagogy tags
     tag_to_questions = QuestionTagService.get_tag_to_question_links()
     if tag_to_questions:
         qidx_to_html = SpecificationService.get_question_labels_str_and_html_map()
@@ -104,7 +116,7 @@ def brief_report_pdf_builder(
             )
             for ptag, qidx_list in tag_to_questions.items()
         }
-        context["pedagogy_tags_graph"] = MinimalPlotService().lollypop_of_pedagogy_tags(
+        context["pedagogy_tags_graph"] = MinimalPlotService().lollipop_of_pedagogy_tags(
             tag_to_questions,
             {qi: paper_info[qi] for qi in question_score_lists},
             paper_info["question_max_marks"],
@@ -139,7 +151,13 @@ def brief_report_pdf_builder(
     pdf_data = HTML(string=rendered_html, base_url="").write_pdf(stylesheets=[css])
     shortname = SpecificationService.get_shortname()
     sid = paper_info["sid"]
-    filename = f"{shortname}_report_{sid}.pdf"
+    if sid is None:
+        # in this case, name has a hint such as "Blank paper" or "No ID given"
+        why_none = slugify(paper_info["name"])
+        filename = f"{shortname}_report_paper{paper_number:04}_{why_none}.pdf"
+    else:
+        filename = f"{shortname}_report_{sid}.pdf"
+
     return {
         "bytes": pdf_data,
         "filename": filename,
@@ -150,8 +168,8 @@ def brief_report_pdf_builder(
 class BuildStudentReportService:
     """Class that contains helper functions for building student report pdf."""
 
+    @staticmethod
     def build_brief_report(
-        self,
         paper_number: int,
         total_score_list: list[float],
         question_score_lists: dict[int, list[float]],

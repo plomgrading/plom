@@ -7,6 +7,7 @@
     Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}
     Marker progress and quotas
 {% endblock title %}
@@ -68,77 +69,82 @@
             {% endif %}
         </div>
     </div>
-    <!-- TODO: make this table sortable -->
     <div class="table-responsive">
-        <table class="table text-center align-middle">
-            <tr>
-                <th>Username</th>
-                <th>Task Marked</th>
-                <th>Task Claimed</th>
-                <th>Quota Limit</th>
-                <th>Quota Tasks</th>
-            </tr>
-            {% for username, progress in users_progress.items %}
-                <tr class="{% if progress.quota_limit == progress.tasks_marked %} table-success {% endif %}">
-                    <td>
-                        {{ username }}
-                        {% if messages %}
-                            {% for message in messages %}
-                                {% if 'quota_warning' in message.tags and progress.would_exceed_default_limit %}
-                                    <i class="bi bi-exclamation-triangle-fill text-warning"
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#confirmSetQuota"
-                                       data-username="{{ username }}"></i>
-                                {% endif %}
-                            {% endfor %}
-                        {% endif %}
-                        {% if progress.has_quota_limit %}
-                            <i class="bi bi-exclamation-diamond-fill text-info"
-                               data-bs-toggle="tooltip"
-                               title="Quota limited"></i>
-                        {% endif %}
-                    </td>
-                    <td>{{ progress.tasks_marked }}</td>
-                    <td>{{ progress.tasks_claimed }}</td>
-                    <td>
-                        {% if progress.has_quota_limit %}
-                            {{ progress.quota_limit }}
-                            <button class="btn btn-outline-primary ms-1"
-                                    type="button"
-                                    data-bs-toggle="modal"
-                                    data-username="{{ username }}"
-                                    data-limit="{{ progress.quota_limit }}"
-                                    data-bs-target="#editLimit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <form action="{% url 'unset_quota' username %}"
-                                  style="display:inline"
-                                  method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-secondary">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        {% else %}
-                            <form action="{% url 'set_quota' username %}"
-                                  style="display:inline"
-                                  method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-primary">Enable</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <!-- TODO: hardcoded tag here, must match question_marking.py -->
-                        <a class="btn btn-primary"
-                           href="{% url 'progress_marking_task_filter' %}?username={{ username }}&the_tag=during_quota">
-                            view
-                        </a>
-                    </td>
+        <table class="table text-center align-middle sortable">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Task Marked</th>
+                    <th>Task Claimed</th>
+                    <th>Quota Limit</th>
+                    <th>Quota Tasks</th>
                 </tr>
-            {% endfor %}
+            </thead>
+            <tbody>
+                {% for username, progress in users_progress.items %}
+                    <tr class="{% if progress.quota_limit == progress.tasks_marked %} table-success {% endif %}">
+                        <td>
+                            {{ username }}
+                            {% if messages %}
+                                {% for message in messages %}
+                                    {% if 'quota_warning' in message.tags and progress.would_exceed_default_limit %}
+                                        <i class="bi bi-exclamation-triangle-fill text-warning"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#confirmSetQuota"
+                                           data-username="{{ username }}"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            {% if progress.has_quota_limit %}
+                                <i class="bi bi-exclamation-diamond-fill text-info"
+                                   data-bs-toggle="tooltip"
+                                   title="Quota limited"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ progress.tasks_marked }}</td>
+                        <td>{{ progress.tasks_claimed }}</td>
+                        <!-- really need custom key here, Issue #4026 -->
+                        <td sorttable_customkey={{ progress.quota_limit_or_zero }}>
+                            {% if progress.has_quota_limit %}
+                                {{ progress.quota_limit }}
+                                <button class="btn btn-outline-primary ms-1"
+                                        type="button"
+                                        data-bs-toggle="modal"
+                                        data-username="{{ username }}"
+                                        data-limit="{{ progress.quota_limit }}"
+                                        data-bs-target="#editLimit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form action="{% url 'unset_quota' username %}"
+                                      style="display:inline"
+                                      method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-secondary">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <form action="{% url 'set_quota' username %}"
+                                      style="display:inline"
+                                      method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-primary">Enable</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- TODO: hardcoded tag here, must match question_marking.py -->
+                            <a class="btn btn-primary"
+                               href="{% url 'progress_marking_task_filter' %}?username={{ username }}&the_tag=during_quota">
+                                view
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
+    <hr />
     <div class="mb-3">
         <form method="get" action="">
             <div>
@@ -156,113 +162,44 @@
             <b>Latest Updated Annotation: {{ latest_updated_annotation_human_time }}</b>
         </p>
     </div>
-    <div>
-        <ul class="nav nav-tabs" id="annotationTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active"
-                        id="filter-by-user-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#filterByUserTab"
-                        type="button"
-                        role="tab"
-                        aria-controls="filterByUserTab"
-                        aria-selected="true">Filter By User</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link"
-                        id="filter-by-question-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#filterByQuestionTab"
-                        type="button"
-                        role="tab"
-                        aria-controls="filterByQuestionTab"
-                        aria-selected="false">Filter By Question</button>
-            </li>
-        </ul>
-        <div class="tab-content" id="annotationTabContent">
-            <div class="tab-pane fade show active"
-                 id="filterByUserTab"
-                 role="tabpanel"
-                 aria-labelledby="filter-by-user-tab">
-                <table class="table text-center align-middle sortable">
-                    <thead>
+    <div class="table-responsive">
+        <table class="table text-center align-middle sortable">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Question</th>
+                    <th>Version</th>
+                    <th>Annotation Count</th>
+                    <th>Average Marking Time</th>
+                    <th>Percentage Marked</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for username, annotations in annotations_grouped_by_user.items %}
+                    {% for data in annotations %}
                         <tr>
-                            <th>Username</th>
-                            <th>Question Index</th>
-                            <th>Question Version</th>
-                            <th>Annotations Count</th>
-                            <th>Average Marking Time</th>
-                            <th>Percentage Marked</th>
+                            <td>{{ username }}</td>
+                            <td>{{ data.question_label_html|safe }}</td>
+                            <td>{{ data.question_version }}</td>
+                            <td>{{ data.annotations_count }}</td>
+                            <td sorttable_customkey={{ data.average_marking_time_sort_key_hack }}>
+                                {{ data.average_marking_time }}
+                            </td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar"
+                                         role="progressbar"
+                                         style="width: {{ data.percentage_marked }}%"
+                                         aria-valuenow="{{ data.percentage_marked }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">{{ data.percentage_marked }}%</div>
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for username, annotations in annotations_grouped_by_user.items %}
-                            {% for question_data, annotation_data in annotations.items %}
-                                <tr>
-                                    <td>{{ username }}</td>
-                                    <td>{{ question_data.0 }}</td>
-                                    <td>{{ question_data.1 }}</td>
-                                    <td>{{ annotation_data.annotations_count }}</td>
-                                    <td sorttable_customkey={{ annotation_data.date_format }}>
-                                        {{ annotation_data.average_marking_time }}
-                                    </td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar"
-                                                 role="progressbar"
-                                                 style="width: {{ annotation_data.percentage_marked }}%"
-                                                 aria-valuenow="{{ annotation_data.percentage_marked }}"
-                                                 aria-valuemin="0"
-                                                 aria-valuemax="100">{{ annotation_data.percentage_marked }}%</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="tab-pane fade"
-                 id="filterByQuestionTab"
-                 role="tabpanel"
-                 aria-labelledby="filter-by-question-tab">
-                <table class="table text-center align-middle sortable">
-                    <thead>
-                        <tr>
-                            <th>Question (Index , Version)</th>
-                            <th>Username</th>
-                            <th>Annotations Count</th>
-                            <th>Average Marking Time</th>
-                            <th>Percentage Marked</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for question, annotation_data in annotations_grouped_by_question_ver.items %}
-                            {% for annotation in annotation_data.annotations %}
-                                <tr>
-                                    <td>{{ question.0 }} , {{ question.1 }}</td>
-                                    <td>{{ annotation.marker }}</td>
-                                    <td>{{ annotation.annotations_count }}</td>
-                                    <td sorttable_customkey={{ annotation.date_format }}>
-                                        {{ annotation.average_marking_time }}
-                                    </td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar"
-                                                 role="progressbar"
-                                                 style="width: {{ annotation.percentage_marked }}%"
-                                                 aria-valuenow="{{ annotation.percentage_marked }}"
-                                                 aria-valuemin="0"
-                                                 aria-valuemax="100">{{ annotation.percentage_marked }}%</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
     <!-- Hidden element to pass message data and username -->
     <div id="messages"
@@ -270,10 +207,9 @@
          data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
          data-username="{{ username }}"></div>
     {% include "./modal_forms.html" %}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-          rel="stylesheet" />
+    <script src="{% static 'js3rdparty/jquery-3.6.4.min.js' %}"></script>
+    <script src="{% static 'js3rdparty/select2.min.js' %}"></script>
+    <link href="{% static 'css3rdparty/select2.min.css' %}" rel="stylesheet" />
     <script>
         $('#editLimit').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);

@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
-name = "plomdemo"
-longName = "Midterm Demo using Plom"
+name = "example_3q"
+longName = "Three-question example using Plom"
 
 numberOfVersions = 2
 numberOfPages = 6
@@ -19,10 +20,9 @@ mark = 5
 label = "Q(2)"
 pages = [4]
 mark = 5
-select = "fix"
+select = 1
 
 [[question]]
 label = "Ex.3"
 pages = [5, 6]
 mark = 10
-select = "shuffle"

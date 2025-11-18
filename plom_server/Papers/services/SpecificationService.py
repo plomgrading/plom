@@ -26,7 +26,7 @@ from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_spec,
 )
-
+from plom_server.Papers.models import MobilePage
 
 log = logging.getLogger("SpecificationService")
 
@@ -237,22 +237,6 @@ def get_private_seed() -> str:
     """Return the private seed."""
     spec = Specification.objects.get()
     return spec.privateSeed
-
-
-def _store_validated_spec(validated_spec: dict) -> None:
-    """Takes the validated test specification and stores it in the db.
-
-    Note this is used in unit testing but otherwise has no callers as
-    of April 2025.  Instead, consider :func:`install_spec_from_dict` or
-    the helpers :func:`install_spec_from_toml_file` and
-    :func:`install_spec_from_toml_string`.
-
-    Args:
-        validated_spec: A dictionary containing a validated test
-            specification.
-    """
-    serializer = SpecSerializer()
-    serializer.create(validated_spec)
 
 
 def remove_spec() -> None:
@@ -475,8 +459,8 @@ def get_total_marks() -> int:
 
 @transaction.atomic
 def n_pages_for_question(question_index) -> int:
-    question = SpecQuestion.objects.get(question_index=question_index)
-    return len(question.pages)
+    """Return the number of pages used for the given question."""
+    return SpecQuestion.objects.filter(question_index=question_index).count()
 
 
 @transaction.atomic
@@ -535,8 +519,8 @@ def get_question_labels() -> list[str]:
     """Get the question labels in a list.
 
     Returns:
-        The question labels in a list, in the order of
-        increasing question index.
+        The question labels in a list, in the order of increasing
+        question index.
     """
     return [label for _, label in get_question_index_label_pairs()]
 
@@ -589,40 +573,30 @@ def _render_html_question_label(qidx: int, qlabel: str) -> str:
 
 
 def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
-    """HTML code for rendering a specified list of question labels.
+    """Return a string of question labels, given a list of question indices.
+
+    If the list contains positive integers, return their labels.
+
+    If the list contains the special value MobilePage.DNM_qidx, then return the
+    string ``"Do Not Mark"``.
 
     If the list is empty or the special value ``None``, then return the
     string ``"None"``.
     """
     if not qindices:
         return "None"
+    if MobilePage.DNM_qidx in qindices:
+        return "Do Not Mark"
     T = get_question_labels_str_and_html_map()
+    # return ", ".join(T[qidx][1] for qidx in sorted(qindices)) # Nicer, but breaks CI
     return ", ".join(T[qidx][1] for qidx in qindices)
 
 
-def get_question_selection_method(question_index: int) -> str:
-    """Get the selection method (shuffle/fix) of the given question.
-
-    Args:
-        question_index: question indexed from 1.
+def get_selection_method_of_all_questions() -> dict[int, list[int] | None]:
+    """Get the selection method for all questions.
 
     Returns:
-        The version selection method (shuffle or fix) as string.
-
-    Raises:
-        ObjectDoesNotExist: no question exists with the given index.
-
-    As of Oct 2024, no one is calling this.  Deprecated?
-    """
-    question = SpecQuestion.objects.get(question_index=question_index)
-    return question.select
-
-
-def get_selection_method_of_all_questions() -> dict[int, str]:
-    """Get the selection method (shuffle/fix) all questions.
-
-    Returns:
-        Dict of {q_index: selection} where selection is 'fix' or 'shuffle'.
+        Dict of {q_index: selection} where selection is a list of versions, or None.
     """
     selection_method = {}
     for question in SpecQuestion.objects.all().order_by("question_index"):

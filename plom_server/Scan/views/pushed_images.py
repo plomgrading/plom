@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2025 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
@@ -9,6 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh
 from django.contrib import messages
 
 from plom_server.Base.base_group_views import ScannerLeadMarkerOrManagerView
+from plom_server.Finish.services import ReassembleService
 from ..services import (
     hard_rotate_image_from_file_by_exif_and_angle,
     ForgiveMissingService,
@@ -34,8 +36,18 @@ class PushedImageView(ScannerLeadMarkerOrManagerView):
         return HttpResponseClientRefresh()
 
 
-class DiscardWholePaperView(ScannerLeadMarkerOrManagerView):
-    """Discard all images of a given paper."""
+class WholePaperView(ScannerLeadMarkerOrManagerView):
+    """Perform operations on all images of a given paper."""
+
+    def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
+        """Get an unmarked paper."""
+        pdf_bytestream = ReassembleService.get_unmarked_paper(paper_number)
+
+        return FileResponse(
+            pdf_bytestream,  # filename set in service function
+            as_attachment=True,
+            content_type="application/pdf",
+        )
 
     def delete(self, request: HttpRequest, *, paper_number: int) -> HttpResponse:
         """Discard a whole paper by its paper number."""

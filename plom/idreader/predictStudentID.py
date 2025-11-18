@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (c) 2022 Edith Coates
+# Copyright (c) 2025 Deep Shah
 
 """Use image processing to extract and "read" student numbers.
 
@@ -18,6 +19,7 @@ import numpy as np
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
+import onnxruntime as ort  # type: ignore
 
 from .model_utils import load_model
 
@@ -180,13 +182,26 @@ def get_digit_images(ID_box, num_digits):
     return processed_digits_images_list
 
 
+def _np_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
+    """Helper function to convert model logits to probabilities."""
+    x = x - np.max(x, axis=axis, keepdims=True)
+    e = np.exp(x)
+    return e / np.sum(e, axis=axis, keepdims=True)
+
+
 def get_digit_prob(
-    prediction_model, id_page_file, top, bottom, num_digits, *, debug=True
+    prediction_model: ort.InferenceSession,
+    id_page_file,
+    top,
+    bottom,
+    num_digits,
+    *,
+    debug=True,
 ):
     """Return a list of probability predictions for the student ID digits on the cropped image.
 
     Args:
-        prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
+        prediction_model (ort.InferenceSession): Prediction model.
         id_page_file (str/pathlib.Path): File path for the image which includes the ID box.
         top (float): Top boundary of image in `[0, 1]`.
         bottom (float): Bottom boundary of image in `[0, 1]`.
@@ -227,14 +242,16 @@ def get_digit_prob(
             # cv2.waitKey(0)
 
     prob_lists = []
+    input_name = prediction_model.get_inputs()[0].name
+    output_name = prediction_model.get_outputs()[0].name
     for digit_image in processed_digits_images:
         # get it into format needed by model predictor
         # TODO: is this the same as just flattening:
         # digit_vector = digit_image.flatten()
-        digit_vector = np.expand_dims(digit_image, 0)
-        digit_vector = digit_vector.reshape((1, np.prod(digit_image.shape)))
-        number_pred_prob = prediction_model.predict_proba(digit_vector)
-        prob_lists.append(number_pred_prob[0])
+        x = (digit_image.astype(np.float32) / 255.0)[None, None, :, :]
+        logits = prediction_model.run([output_name], {input_name: x})[0]
+        probs = _np_softmax(logits, axis=1)[0].tolist()
+        prob_lists.append(probs)
 
     return prob_lists
 
@@ -252,7 +269,7 @@ def compute_probabilities(image_file_paths, top, bottom, num_digits):
     Returns:
         dict: A dictionary which involves the probabilities for each image file.
     """
-    prediction_model = load_model()
+    prediction_model, _ = load_model()
 
     # Dictionary of test numbers their digit-probabilities
     probabilities = {}

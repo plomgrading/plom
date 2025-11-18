@@ -3,6 +3,7 @@
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2025 Bryan Tanady
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -27,7 +28,7 @@
                         <h3 class="mb-2">{{ request.user.first_name }}</h3>
                         <p class="mb-2">{{ request.user.username }}</p>
                         <p class="text-muted mb-4">
-                            &ldquo;{{ user_group }}&rdquo; group <span class="mx-2">|</span> <a href="mailto:{{ email }}">{{ email }}</a>
+                            Groups: {{ user_groups }}<span class="mx-2">|</span> <a href="mailto:{{ email }}">{{ email }}</a>
                         </p>
                     </div>
                 </div>

@@ -81,7 +81,7 @@ class Command(BaseCommand):
         self.stdout.write("Queued reassembly of all papers and reports")
 
     def download_zip(self, zip_path):
-        zipper = ReassembleService().get_zipfly_generator()
+        zipper = ReassembleService.get_zipfly_generator()
         if zip_path.exists():
             raise CommandError(f"File '{zip_path}' already exists.")
         with zip_path.open("wb") as fh:

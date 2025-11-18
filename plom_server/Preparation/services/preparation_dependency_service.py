@@ -2,6 +2,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from plom.plom_exceptions import PlomDependencyConflict
 
@@ -19,7 +20,7 @@ from plom.plom_exceptions import PlomDependencyConflict
 # give assert raising tests followed by true/false returning functions
 
 
-# 1 the spec depends on nothing, but sources and QVMap depend on the spec
+# 1 = the spec depends on nothing, but sources and QVMap depend on the spec
 def assert_can_modify_spec():
     from plom_server.Papers.services import PaperInfoService
     from . import PapersPrinted, SourceService
@@ -39,13 +40,13 @@ def assert_can_modify_spec():
     # TODO: in theory, we could allow finer-grained edits, such as points.
     if PaperInfoService.is_paper_database_populated():
         raise PlomDependencyConflict(
-            "Cannot save a new spec while there is a existing "
-            "paper-question-version map: try deleting that first?"
+            "Cannot save a new spec while there is an existing "
+            "paper-question-version map: try deleting that first."
         )
 
 
 # 2 = the sources depend on the spec, and built-papers depend on the sources
-def assert_can_modify_sources():
+def assert_can_modify_sources(*, deleting: bool = False) -> None:
     from . import PapersPrinted
     from plom_server.Papers.services import SpecificationService
     from plom_server.BuildPaperPDF.services import BuildPapersService
@@ -53,9 +54,10 @@ def assert_can_modify_sources():
     # cannot modify sources if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
-    # if there is no spec, then cannot modify sources
-    if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no specification")
+    # if there is no spec, then cannot modify sources (unless deleting)
+    if not deleting:
+        if not SpecificationService.is_there_a_spec():
+            raise PlomDependencyConflict("There is no specification.")
     # cannot modify sources if any papers have been produced
     if BuildPapersService().are_any_papers_built():
         raise PlomDependencyConflict(
@@ -78,11 +80,13 @@ def assert_can_modify_classlist():
     if PrenameSettingService().get_prenaming_setting():
         if PaperInfoService.is_paper_database_populated():
             raise PlomDependencyConflict(
-                "Database has been populated with some prenamed papers, cannot change the classlist."
+                "Database has been populated with some prenamed papers,"
+                " so the classlist cannot be changed."
             )
         if PaperInfoService.is_paper_database_being_updated_in_background():
             raise PlomDependencyConflict(
-                "Database is being updated currently with some prenamed papers, cannot change the classlist."
+                "Database is now being updated with some prenamed papers,"
+                " so the classlist cannot be changed."
             )
 
 
@@ -106,11 +110,11 @@ def assert_can_enable_disable_prenaming():
     # if the qv-mapping/database is built then cannot modify prenaming.
     if PaperInfoService.is_paper_database_populated():
         raise PlomDependencyConflict(
-            "The database has been populated, so cannot change the prenaming setting."
+            "The database has been populated, so the prenaming setting cannot be changed."
         )
     if PaperInfoService.is_paper_database_being_updated_in_background():
         raise PlomDependencyConflict(
-            "Database is being updated currently, so cannot change the prenaming setting."
+            "Database is being updated currently, so the prenaming setting cannot be changed."
         )
 
 
@@ -139,7 +143,9 @@ def assert_can_modify_prenaming_config():
     # (Note Issue #3390: ID pages can have other versions but I think this restriction
     # is (mostly?) about drawing the UI, which currently uses only version 1.)
     if not SourceService.get_source(1)["uploaded"]:
-        raise PlomDependencyConflict("Exam version 1 source PDF hasn't been uploaded.")
+        raise PlomDependencyConflict(
+            "Source PDF for assessment version 1 has not been uploaded."
+        )
 
     # cannot configure prenaming if ID page is unknown
     if not SpecificationService.is_there_a_spec():
@@ -147,7 +153,7 @@ def assert_can_modify_prenaming_config():
 
 
 # 4 - qvmap depends on the spec, build papers depends on the qvmap
-def assert_can_modify_qv_mapping_database():
+def assert_can_modify_qv_mapping_database(*, deleting: bool = False) -> None:
     from . import PapersPrinted, PrenameSettingService, StagingStudentService
     from plom_server.Papers.services import SpecificationService
     from plom_server.BuildPaperPDF.services import BuildPapersService
@@ -155,16 +161,17 @@ def assert_can_modify_qv_mapping_database():
     # cannot modify qv mapping / database if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
-    # cannot modify the qv-mapping if there is no spec
-    if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no specification")
+    # cannot modify the qv-mapping if there is no spec (but deleting ok)
+    if not deleting:
+        if not SpecificationService.is_there_a_spec():
+            raise PlomDependencyConflict("There is no assessment spec.")
 
     # if prenaming set, then we must have a classlist before can modify qv-map.
     # else we can modify independent of the classlist.
     if PrenameSettingService().get_prenaming_setting():
         if not StagingStudentService().are_there_students():
             raise PlomDependencyConflict(
-                "Prenaming enabled, but no classlist has been uploaded"
+                "Prenaming is enabled, but no classlist has been uploaded."
             )
         else:  # have classlist and prenaming set, so can modify qv-map
             pass
@@ -186,13 +193,13 @@ def assert_can_rebuild_test_pdfs():
         raise PlomDependencyConflict("Papers have been printed.")
     # and we need sources-pdfs and a populated db
     if not SourceService.are_all_sources_uploaded():
-        raise PlomDependencyConflict("Not all source PDFs have been uploaded.")
+        raise PlomDependencyConflict("Some source PDFs have not been uploaded.")
     if not PaperInfoService.is_paper_database_populated():
         raise PlomDependencyConflict(
-            "The qv-mapping has been built and the database have been populated."
+            "The database does not contain a complete set of paper definitions."
         )
     if PaperInfoService.is_paper_database_being_updated_in_background():
-        raise PlomDependencyConflict("Database is being updated.")
+        raise PlomDependencyConflict("The database is being updated.")
 
 
 # now the true/false versions of these functions
@@ -228,7 +235,7 @@ def can_enable_disable_prenaming():
     """Checks if server state permits enabling/disabling of prenaming.
 
     Returns:
-        bool: True if permitted, False if not.
+        bool: True if changes are permitted, False if not.
     """
     try:
         assert_can_enable_disable_prenaming()
@@ -241,7 +248,7 @@ def can_modify_prenaming_config():
     """Checks if server state permits modification of prenaming config.
 
     Returns:
-        bool: True if permitted, False if not.
+        bool: True if changes are permitted, False if not.
     """
     try:
         assert_can_modify_prenaming_config()

@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
 
 """Command line tool to start a Plom demonstration server."""
 
@@ -16,6 +17,8 @@ import csv
 import os
 import re
 import subprocess
+import sys
+import time
 from pathlib import Path
 from shlex import split
 from tempfile import TemporaryDirectory
@@ -24,10 +27,39 @@ from time import sleep
 from plom.textools import buildLaTeX
 from plom_server import __version__
 
+from plom_server.scripts.launch_plom_server import (
+    launch_gunicorn_production_server_process,
+    launch_django_dev_server_process,
+)
+
+
 # TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
-# so temporarily set to "."; we've fix it in main()
+# so temporarily set it to "."; we'll fix it in main()
 demo_files = Path(".")
+
+global _demo_script_launch_time
+_demo_script_launch_time: None | float = None
+
+
+def saytime(comment: str) -> None:
+    """Echo information about how long we've been running."""
+    global _demo_script_launch_time
+    now = time.localtime()
+
+    if _demo_script_launch_time is None:
+        _demo_script_launch_time = time.monotonic()
+        print(f"\n{time.strftime('%H:%M:%S', now)}: Launching the timer.\n")
+    if comment:
+        elapsed = time.monotonic() - _demo_script_launch_time
+        print(
+            f"\n{time.strftime('%H:%M:%S', now)}: "
+            f"{comment} "
+            f"[{elapsed:.0f} s since launch]\n"
+        )
+
+    sys.stdout.flush()
+    sys.stderr.flush()
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -170,6 +202,23 @@ def run_django_manage_command(cmd) -> None:
     subprocess.run(split(full_cmd), check=True)
 
 
+def run_plom_cli_command(cmd: str) -> None:
+    """Run the given plom-cli command and wait for return.
+
+    Command must finish successfully (zero return code).
+
+    Args:
+        cmd: the command to run, in a form close to what would be entered
+            after `plom-cli` or `python3 -m plom.cli` on the command line.
+            The full command will be echoed to stdout.
+    """
+    cmd = "python3 -m plom.cli " + cmd
+    print(f"\nIssuing this command: {cmd}\n")
+    # Some gitlab CI environments do not expose plom-cli
+    # (but things are in a bad way if python3 -m doesn't work)
+    subprocess.run(split(cmd), check=True)
+
+
 def popen_django_manage_command(cmd) -> subprocess.Popen:
     """Run the given Django command using a process Popen and return a handle to the process.
 
@@ -213,65 +262,12 @@ def launch_huey_processes() -> list[subprocess.Popen]:
     ]
 
 
-def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
-    """Launch Django's native development server.
-
-    Note that this should never be used in production.
-
-    KWargs:
-        port: the port for the server.
-
-    """
-    # TODO - put in an 'are we in production' check.
-
-    print("Launching Django development server.")
-    # this needs to be run in the background
-    if port:
-        print(f"Dev server will run on port {port}")
-        return popen_django_manage_command(f"runserver {port}")
-    else:
-        return popen_django_manage_command("runserver")
-
-
-def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
-    """Launch the Gunicorn web server.
-
-    Note that for production, this should be used instead of Django's
-    built-in development server.
-
-    If the WEB_CONCURRENCY environment variable is set, we use that many
-    worker processes.  Otherwise we use a default value (currently 2).
-
-    Args:
-        port: the port for the server.
-
-    Returns:
-        Open ``Popen`` on the gunicorn process.
-    """
-    print("Launching Gunicorn web-server.")
-    # TODO - put in an 'are we in production' check.
-    num_workers = int(os.environ.get("WEB_CONCURRENCY", 2))
-    cmd = f"gunicorn wsgi --workers {num_workers}"
-
-    # TODO: temporary increase to 60s by default, Issue #3676
-    timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)
-    cmd += f" --timeout {timeout}"
-
-    # TODO: long-term code here:
-    # timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", "")
-    # # just omit and use gunicorn's default if unspecified
-    # if timeout:
-    #     cmd += f" --timeout {timeout}"
-
-    cmd += f" --bind 0.0.0.0:{port}"
-    return subprocess.Popen(split(cmd))
-
-
 def upload_demo_assessment_spec_file() -> None:
-    """Use 'plom_preparation_spec' to upload a demo assessment spec."""
+    """Upload a demo assessment spec."""
     print("Uploading demo assessment spec")
     spec_file = demo_files / "demo_assessment_spec.toml"
-    run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+    # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+    run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
@@ -326,11 +322,12 @@ def build_demo_assessment_source_pdfs() -> None:
 
 
 def upload_demo_assessment_source_files():
-    """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
+    """Upload demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     for v in (1, 2, 3):
         source_pdf = f"assessment_v{v}.pdf"
-        run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+        # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+        run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
 
 
 def upload_demo_solution_files():
@@ -345,7 +342,7 @@ def upload_demo_solution_files():
 
 
 def upload_demo_classlist(length="normal", prename=True):
-    """Use 'plom_preparation_classlist' to the appropriate classlist for the demo."""
+    """Upload a classlist for the demo."""
     if length == "long":
         cl_path = demo_files / "cl_for_long_demo.csv"
     elif length == "plaid":
@@ -355,7 +352,9 @@ def upload_demo_classlist(length="normal", prename=True):
     else:  # for normal
         cl_path = demo_files / "cl_for_demo.csv"
 
-    run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+    run_plom_cli_command("delete-classlist")
+    # run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+    run_plom_cli_command(f"upload-classlist {cl_path}")
 
     if prename:
         run_django_manage_command("plom_preparation_prenaming --enable")
@@ -474,11 +473,17 @@ def run_demo_preparation_commands(
     run_django_manage_command("plom_create_demo_users")
     run_django_manage_command("plom_leadmarker_membership --toggle demoMarker1")
     run_django_manage_command("plom_leadmarker_membership --toggle demoMarker2")
+
+    saytime("Users created.")
+
     if stop_after == "users":
         print("Stopping after users created.")
         return False
 
     upload_demo_assessment_spec_file()
+
+    saytime("Assessment specification is uploaded.")
+
     if stop_after == "spec":
         print("Stopping after assessment specification uploaded.")
         return False
@@ -488,6 +493,9 @@ def run_demo_preparation_commands(
     if solutions:
         upload_demo_solution_files()
     upload_demo_classlist(length, prename)
+
+    saytime("Finished uploading assessment sources and classlist.")
+
     if stop_after == "sources":
         print("Stopping after assessment sources and classlist uploaded.")
         return False
@@ -504,11 +512,16 @@ def run_demo_preparation_commands(
             read_hack_and_resave_qvmap(tmp_qv_path)
             upload_the_qvmap(tmp_qv_path)
 
+    saytime("Finished populating the database and tweaking the qvmap.")
+
     if stop_after == "populate":
         print("Stopping after paper-database populated.")
         return False
 
     build_all_papers_and_wait()
+
+    saytime("Finished building the papers.")
+
     if stop_after == "papers-built":
         print("Stopping after papers_built.")
         return False
@@ -523,6 +536,8 @@ def run_demo_preparation_commands(
     print("For testing purposes, set papers are not printed and then set it again.")
     run_django_manage_command("plom_preparation_status --set todo")
     run_django_manage_command("plom_preparation_status --set finished")
+
+    saytime("")
 
     return True
 
@@ -565,6 +580,7 @@ def upload_the_bundles(length="normal"):
     # now trigger reading of qr-codes
     run_django_manage_command(f"plom_demo_bundles --length {length} --action read")
     run_django_manage_command("plom_staging_bundles wait")
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action map_hw")
 
 
 def push_the_bundles(length):
@@ -623,6 +639,7 @@ def _ensure_client_available():
     try:
         # tell MyPy to ignore this for testing
         import plomclient  # type: ignore[import-not-found]
+        from plomclient.client import __version__ as clientversion  # type: ignore
     except ImportError as err:
         print("*" * 64)
         print()
@@ -631,7 +648,10 @@ def _ensure_client_available():
             f"which is not installed:\n  {err}.\n"
             "Either install plom-client, or stop the demo earlier."
         ) from None
-    print(f"Good we have plom-client installed, version {plomclient.__version__}")
+    print(
+        f"Good we have plom-client installed, version {clientversion},"
+        f" found at {plomclient}"
+    )
 
 
 def run_the_randoider(*, port):
@@ -801,6 +821,12 @@ def main():
     """The Plom demo script."""
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
+    os.environ["PLOM_SERVER"] = "http://localhost:8000"
+    os.environ["PLOM_USERNAME"] = "manager"
+    os.environ["PLOM_PASSWORD"] = "1234"
+
+    saytime("")  # Launch the chatty timer.
 
     args = get_parser().parse_args()
 
@@ -831,10 +857,17 @@ def main():
 
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")
+
+    saytime("Finished refreshing the database.")
+
     # build the user-groups and the admin and manager users
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
+
+    run_django_manage_command("plom_get_static_javascript")
+
+    saytime("Finished making groups and early users, extra pages, and scrap paper.")
 
     if not args.development:
         run_django_manage_command("collectstatic --clear --no-input")
@@ -873,6 +906,7 @@ def main():
             ):
                 break
 
+            saytime("Launching scanning process ...")
             print(">> Scanning of papers")
             if not run_demo_bundle_scan_commands(
                 length=args.length,
@@ -883,6 +917,7 @@ def main():
                 break
 
             print("*" * 50)
+            saytime("Launching marking process ...")
             print(">> Ready for marking")
             if not run_marking_commands(
                 port=args.port, stop_after=stop_after, half_marks=args.half_marks
@@ -891,10 +926,12 @@ def main():
 
             print("*" * 50)
             print(">> Ready for finishing")
+            saytime("Launching finishing process ....")
             run_finishing_commands(stop_after=stop_after, solutions=args.solutions)
             break
 
         if args.development:
+            saytime("Development server is running, with all setup complete.")
             if wait_at_end:
                 wait_for_user_to_type_quit()
             else:
@@ -909,6 +946,7 @@ def main():
             hp.terminate()
         if server_process:
             server_process.terminate()
+        saytime("Cleanup commands all issued. Stopping now.")
         print("^" * 50)
 
 

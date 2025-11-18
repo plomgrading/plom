@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -31,7 +32,7 @@ project = "Plom"
 copyright = "2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 author = "Andrew Rechnitzer, Colin B. Macdonald, and others"
 
-from plom import __version__
+from plom.common import __version__
 
 release = __version__
 
@@ -87,7 +88,6 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 html_theme_options = {
-    "display_version": True,
     "flyout_display": "hidden",
     "version_selector": True,
 }

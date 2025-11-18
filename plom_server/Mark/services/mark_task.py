@@ -60,26 +60,3 @@ def get_latest_task(
                 "  You're likely asking for the wrong version."
             )
     return r
-
-
-def unpack_code(code: str) -> tuple[int, int]:
-    """Return a tuple of (paper_number, question_index) from a task code string.
-
-    Args:
-        code: a task code which is a string like "q0001g1".  Requires code to be
-            at least 4 characters long.  Requires code to start with "q" and
-            contain a "g" somewhere after the second character, but not be the
-            last character and the rest of the characters to be numeric.
-    """
-    assert len(code) >= len("q0g0"), f'code "{code}" has the wrong length'
-    assert code[0] == "q", f'code "{code}" does not start with "q"'
-
-    split_index = code.find("g", 2)
-
-    assert split_index != -1, f'"g" must be present in code "{code}"'
-    assert split_index != len(code) - 1, f'"g" cannot be last char in code "{code}"'
-
-    paper_number = int(code[1:split_index])
-    question_idx = int(code[split_index + 1 :])
-
-    return paper_number, question_idx

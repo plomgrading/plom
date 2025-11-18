@@ -7,15 +7,15 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Bryan Tanady
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-
 from model_bakery import baker
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
-from plom_server.Base.tests import config_test
+from plom_server.TestingSupport.utils import config_test
 from plom_server.Mark.models.annotations import Annotation
 from plom_server.Mark.models.tasks import MarkingTask
 from plom_server.Papers.models import Paper
@@ -158,8 +158,8 @@ class RubricServiceTests_extra_validation(TestCase):
         with self.assertRaises(serializers.ValidationError):
             RubricService.create_rubric(rub)
 
-    def test_create_rubric_invalid_versions(self) -> None:
-        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
+    def test_create_rubric_versions_invalid(self) -> None:
+        for bad_versions in ("[1, 2]", [1, 1.2], "1, 1.2", "1, sth", "abc"):
             rub = {
                 "kind": "neutral",
                 "value": 0,
@@ -169,6 +169,19 @@ class RubricServiceTests_extra_validation(TestCase):
                 "versions": bad_versions,
             }
             with self.assertRaises(serializers.ValidationError):
+                RubricService.create_rubric(rub)
+
+    def test_create_rubric_versions_out_of_range(self) -> None:
+        for oor_versions in ("-1", "999", "-1, 1", "-1, 999"):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "versions": oor_versions,
+            }
+            with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
                 RubricService.create_rubric(rub)
 
     def test_create_rubric_valid_parameters(self) -> None:
@@ -227,7 +240,7 @@ class RubricServiceTests(TestCase):
             user=user1,
             tags="",
             meta="asdfg",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -242,53 +255,53 @@ class RubricServiceTests(TestCase):
             user=user2,
             tags="",
             meta="hjklz",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
         self.relative_rubric = baker.make(
             Rubric,
             kind="relative",
-            display_delta="+2.5",
-            value=2.5,
+            display_delta="+2.0",
+            value=2.0,
             out_of=0.0,
             text="yuiop",
             question_index=1,
             user=user2,
             tags="",
             meta="hjklz",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
         self.modified_relative_rubric = baker.make(
             Rubric,
             kind="relative",
-            display_delta="+2.5",
-            value=2.5,
+            display_delta="+3.0",
+            value=3.0,
             user=user2,
         )
 
         self.absolute_rubric = baker.make(
             Rubric,
             kind="absolute",
-            display_delta="1.5 of 5.0",
-            value=1.5,
+            display_delta="2.0 of 5.0",
+            value=2.0,
             out_of=5.0,
             text="mnbvc",
             question_index=3,
             user=user1,
             tags="",
             meta="lkjhg",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
         self.modified_absolute_rubric = baker.make(
             Rubric,
             kind="absolute",
-            display_delta="1.5 of 5.0",
-            value=1.5,
+            display_delta="3.0 of 5.0",
+            value=3.0,
             out_of=5.0,
             user=user2,
         )
@@ -306,7 +319,6 @@ class RubricServiceTests(TestCase):
             "meta": "asdfg",
             "username": "Liam",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -325,15 +337,14 @@ class RubricServiceTests(TestCase):
     def test_create_relative_rubric(self) -> None:
         simulated_client_data = {
             "kind": "relative",
-            "display_delta": "+2.5",
-            "value": 2.5,
+            "display_delta": "+2.0",
+            "value": 2.0,
             "out_of": 0.0,
             "text": "yuiop",
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -352,15 +363,14 @@ class RubricServiceTests(TestCase):
     def test_create_absolute_rubric(self) -> None:
         simulated_client_data = {
             "kind": "absolute",
-            "display_delta": "1.5 of 5.0",
-            "value": 1.5,
+            "display_delta": "2.0 of 5.0",
+            "value": 2.0,
             "out_of": 5.0,
             "text": "mnbvc",
             "tags": "",
             "meta": "lkjhg",
             "username": "Liam",
             "question_index": 3,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -402,7 +412,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
@@ -418,15 +427,14 @@ class RubricServiceTests(TestCase):
         simulated_client_data = {
             "rid": rid,
             "kind": "relative",
-            "display_delta": "+2.5",
-            "value": 2.5,
+            "display_delta": "+3.0",
+            "value": 3.0,
             "out_of": 0.0,
             "text": "yuiop",
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
@@ -446,15 +454,14 @@ class RubricServiceTests(TestCase):
         simulated_client_data = {
             "rid": rid,
             "kind": "absolute",
-            "display_delta": "1.5 of 5.0",
-            "value": 1.5,
+            "display_delta": "3.0 of 5.0",
+            "value": 3.0,
             "out_of": 5.0,
             "text": "yuiop",
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
@@ -474,14 +481,14 @@ class RubricServiceTests(TestCase):
         simulated_client_data = {
             "rid": rid,
             "kind": "absolute",
-            "value": 2.57,
+            "value": 2,
             "out_of": 3,
             "text": "yuiop",
             "username": "Olivia",
             "question_index": 1,
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
-        self.assertEqual(r["display_delta"], "2.57 of 3")
+        self.assertEqual(r["display_delta"], "2 of 3")
 
     def test_modify_absolute_rubric_change_value_no_autogen_display(self) -> None:
         rid = self.modified_absolute_rubric.rid
@@ -489,15 +496,15 @@ class RubricServiceTests(TestCase):
         simulated_client_data = {
             "rid": rid,
             "kind": "absolute",
-            "value": 2.5,
+            "value": 2,
             "out_of": 3,
-            "display_delta": "2.50 of 3.00",
+            "display_delta": "2.00 of 3.00",
             "text": "yuiop",
             "username": "Olivia",
             "question_index": 1,
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
-        self.assertEqual(r["display_delta"], "2.50 of 3.00")
+        self.assertEqual(r["display_delta"], "2.00 of 3.00")
 
     def test_modify_rubric_change_kind(self) -> None:
         """Test RubricService.modify_rubric(), can change the "kind" of rubrics.

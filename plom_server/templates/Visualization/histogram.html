@@ -5,7 +5,7 @@
 -->
 {% load static %}
 {% block main_content %}
-    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="{% static 'js3rdparty/d3.v6.min.js' %}"></script>
     <script src="{% static 'js/histogram.js' %}"></script>
     <script>
     parentDiv = this.document.currentScript.parentElement.id;

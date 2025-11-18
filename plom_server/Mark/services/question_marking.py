@@ -12,6 +12,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
 from django.db import transaction
 
+from plom.misc_utils import unpack_task_code
 from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
@@ -165,6 +166,17 @@ class QuestionMarkingService:
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
 
+        Args:
+            code: a string like "0123g4".
+
+        Keyword Args:
+            user: which user.
+            marking_data: TODO.
+            annotation_data: TODO.
+            annotation_image: TODO.
+            annotation_image_md5sum: TODO.
+            require_latest_rubrics: TODO.
+
         Raises:
             ValueError: anything related to a poorly formed bad request,
                 such as invalid code, or wrong image format.
@@ -176,10 +188,7 @@ class QuestionMarkingService:
                 Or client is trying submit out-of-date rubrics when
                 ``require_latest_rubrics`` is True.
         """
-        try:
-            papernum, question_idx = mark_task.unpack_code(code)
-        except AssertionError as e:
-            raise ValueError(e) from e
+        papernum, question_idx = unpack_task_code(code)
 
         # TODO: we could invert the logic here: from the integrity check
         # we know which task the client is trying to modify.  We can later
@@ -245,3 +254,12 @@ class QuestionMarkingService:
         # TODO: consider moving this into the helper in annotations.py
         task.status = MarkingTask.COMPLETE
         task.save()
+
+        if require_latest_rubrics:
+            # strip any "rubric_changed" tags
+            try:
+                MarkingTaskService().remove_tag_text_from_task_code(
+                    "rubric_changed", task.code
+                )
+            except ValueError:
+                pass

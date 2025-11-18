@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 
 import csv
 from io import StringIO
 
+from django.core.exceptions import ValidationError
+from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 
@@ -21,7 +23,6 @@ class TaskOrderPageView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         """Get the main page for task ordering."""
         template_name = "TaskOrder/task_order_landing.html"
-        tos = TaskOrderService()
 
         context = self.build_context()
         order_form = TaskOrderForm()
@@ -30,7 +31,7 @@ class TaskOrderPageView(ManagerRequiredView):
         order_form.fields["order_tasks_by"].initial = request.session.get(
             "order_tasks_by",
         )
-        paper_to_priority_dict = tos.get_paper_number_to_priority_list()
+        paper_to_priority_dict = TaskOrderService.get_paper_number_to_priority_list()
 
         context.update(
             {
@@ -47,22 +48,34 @@ class TaskOrderPageView(ManagerRequiredView):
     def upload_task_priorities(request: HttpRequest) -> HttpResponse:
         """Upload the task priorities as a CSV file and update the database."""
         if request.method == "POST":
-            tos = TaskOrderService()
-
             order_by = request.POST.get("order_tasks_by")
             request.session["order_tasks_by"] = order_by
 
             custom_order = {}
-            if order_by == "custom":
-                form = UploadFileForm(request.POST, request.FILES)
-                if not request.FILES:
-                    return HttpResponse("No file uploaded")
-                if not form.is_valid():
-                    return HttpResponse("Invalid form: " + form.errors.as_text())
-                file = form.cleaned_data["file"]
-                custom_order = tos.handle_file_upload(file)
+            try:
+                if order_by == "custom":
 
-            tos.update_priority_ordering(order_by, custom_order=custom_order)
+                    form = UploadFileForm(request.POST, request.FILES)
+                    if not request.FILES:
+                        raise ValidationError("No file uploaded")
+
+                    elif not form.is_valid():
+                        raise ValidationError("Invalid form: " + form.errors.as_text())
+
+                    else:
+                        file = form.cleaned_data["file"]
+                        custom_order = TaskOrderService.handle_file_upload(file)
+                TaskOrderService.update_priority_ordering(
+                    order_by, custom_order=custom_order
+                )
+            except ValidationError as e:
+                messages.error(request, str(e.message))
+
+            except ValueError as e:
+                messages.error(request, str(e))
+
+            else:
+                messages.success(request, "Task order updated successfully")
 
         return redirect("task_order_landing")
 
@@ -71,7 +84,7 @@ class TaskOrderPageView(ManagerRequiredView):
         """Download the task priorities."""
         shortname = SpecificationService.get_short_name_slug()
         keys = TaskOrderService.get_csv_header()
-        priorities = TaskOrderService().get_task_priorities_download()
+        priorities = TaskOrderService.get_task_priorities_download()
 
         f = StringIO()
         w = csv.DictWriter(f, keys)

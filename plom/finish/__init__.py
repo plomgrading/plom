@@ -7,8 +7,7 @@ __copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from plom import __version__
-from plom import Default_Port
+from plom.common import Default_Port, __version__
 
 from .utils import rand_integer_code, salted_int_hash_from_str
 from .utils import rand_hex, salted_hex_hash_from_str
@@ -24,7 +23,6 @@ from .clear_manager_login import clear_manager_login
 
 from .spreadsheet import pull_spreadsheet
 from .reassemble_completed import reassemble_paper, reassemble_all_papers
-from .assemble_solutions import assemble_solutions
 from .rubric_downloads import download_rubric_files
 from .coded_return import make_coded_return_webpage
 from .audit import audit
@@ -40,7 +38,6 @@ __all__ = [
     "pull_spreadsheet",
     "reassemble_paper",
     "reassemble_all_papers",
-    "assemble_solutions",
     "download_rubric_files",
     "make_coded_return_webpage",
 ]

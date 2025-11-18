@@ -22,7 +22,7 @@ def test_ok_to_contain_unused_column_names(tmpdir) -> None:
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         assert success
         assert warn_err == []
 
@@ -39,7 +39,7 @@ def test_no_ID_column_fails(tmpdir) -> None:
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
 
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         assert not success
         assert len(warn_err) == 1
         assert warn_err[0]["warn_or_err"] == "error"
@@ -56,7 +56,7 @@ def test_two_ID_column_fails(tmpdir) -> None:
             f.write('"ID","Name","id","paper_number"\n')
             f.write('12345678,"Doe",98765432,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         expected = [
             {
                 "warn_or_err": "error",
@@ -83,7 +83,7 @@ def test_two_id_column_same_case_fails_issue3667(tmpdir) -> None:
             f.write('"id","Name","id","paper_number"\n')
             f.write('12345678,"Doe",98765432,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         expected = [
             {
                 "warn_or_err": "error",
@@ -113,7 +113,7 @@ def test_no_name_column_fails(tmpdir) -> None:
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
 
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         assert not success
         assert len(warn_err) == 1
         assert warn_err[0]["warn_or_err"] == "error"
@@ -130,7 +130,7 @@ def test_two_name_column_fails(tmpdir) -> None:
             f.write('"ID","name","Name","paper_number"\n')
             f.write('12345678,"Doe","John",7\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         expected = [
             {
                 "warn_or_err": "error",
@@ -157,7 +157,7 @@ def test_two_papernumber_column_fails(tmpdir) -> None:
             f.write('"ID","name","paper_number","PAper_NUmber"\n')
             f.write('12345678,"Doe,John",7,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         expected = [
             {
                 "warn_or_err": "error",
@@ -190,7 +190,7 @@ def test_casefold_column_names1(tmpdir) -> None:
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         assert success
         assert warn_err == []
 
@@ -209,7 +209,7 @@ def test_casefold_column_names2(tmpdir) -> None:
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         assert success
         assert warn_err == []
 
@@ -228,7 +228,7 @@ def test_casefold_column_names3(tmpdir) -> None:
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         assert success
         assert warn_err == []
 
@@ -251,7 +251,7 @@ def test_missing_student_info(tmpdir) -> None:
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
         assert not success
         expected = [
             {
@@ -295,7 +295,7 @@ def test_check_classlist_length(tmpdir) -> None:
             f.write('12345678,"Doe",1\n')
             f.write('12345679,"Doer",2\n')
             f.write('12345680,"Doerr",3\n')
-        success, warn_err = vlad.validate_csv(foo, spec=spec)
+        success, warn_err, _ = vlad.validate_csv(foo, spec=spec)
         assert success
         expected = [
             {
@@ -320,7 +320,7 @@ def test_short_name_warning1(tmpdir) -> None:
             f.write('"id","name","paper_number"\n')
             f.write('12345677,"D",1\n')
             f.write('12345678,"",2\n')
-        success, warn_err = vlad.validate_csv(foo)
+        success, warn_err, _ = vlad.validate_csv(foo)
         # should get warnings
         # {'warn_or_err': 'warning', 'werr_line': 2, 'werr_text': "Name 'D' is very short  - please verify."},
         # {'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': "Name '' is very short  - please verify."}
@@ -353,7 +353,7 @@ def test_non_latin_name(tmpdir) -> None:
             f.write('"id","name","paper_number"\n')
             f.write('12345677,"Doe, Ursula",1\n')
             f.write('12345678,"Doe, 学生",2\n')
-    success, warn_err = vlad.validate_csv(foo)
+    success, warn_err, _ = vlad.validate_csv(foo)
     assert success
     assert not warn_err
 
@@ -367,7 +367,7 @@ def test_partial_papernumbers(tmpdir) -> None:
             f.write('"id","name","paper_number"\n')
             f.write('12345677,"Doe, Ursula",1\n')
             f.write('12345678,"Doe, Bob",\n')
-    success, warn_err = vlad.validate_csv(foo)
+    success, warn_err, _ = vlad.validate_csv(foo)
     assert success
     assert warn_err == []
 
@@ -381,7 +381,7 @@ def test_repeated_papernumbers(tmpdir) -> None:
             f.write('"id","name","paper_number"\n')
             f.write('12345677,"Doe, Ursula",1\n')
             f.write('12345678,"Doe, Bob",1,\n')
-    success, warn_err = vlad.validate_csv(foo)
+    success, warn_err, _ = vlad.validate_csv(foo)
     assert not success
     expected = [
         {
@@ -406,7 +406,7 @@ def test_sentinel_papernumbers(tmpdir) -> None:
             f.write('12345677,"Doe, Ursula",1\n')
             f.write('12345678,"Doe, Bob",\n')
             f.write('12345679,"Doe, Bobby",-1\n')
-    success, warn_err = vlad.validate_csv(foo)
+    success, warn_err, _ = vlad.validate_csv(foo)
     assert success
     assert warn_err == []
 
@@ -424,7 +424,7 @@ def test_bad_papernumbers(tmpdir) -> None:
             f.write('12345680,"Doe, Rob",-17.3\n')
             f.write('12345681,"Doe, Robby",-7.0\n')
             f.write('12345682,"Doe, Bobbert",7.0\n')
-    success, warn_err = vlad.validate_csv(foo)
+    success, warn_err, _ = vlad.validate_csv(foo)
     assert not success
     expected = [
         {
@@ -469,9 +469,18 @@ def test_leading_zero_sid(tmp_path) -> None:
     assert vlad.check_is_non_canvas_csv(foo)
     df = clean_non_canvas_csv(foo)
     assert "id" in df.columns
-    success, warn_err = vlad.validate_csv(foo, spec=None)
+    success, warn_err, _ = vlad.validate_csv(foo, spec=None)
     assert success
     assert warn_err == []
     # and 00123400 still in there!
     d = df["id"].to_dict()
     assert "00123400" in d.values()
+
+
+def test_nearly_empty_file(tmp_path) -> None:
+    vlad = PlomClasslistValidator()
+    foo = tmp_path / "foo.csv"
+    with foo.open("w") as f:
+        f.write("\n")
+    success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+    assert not success
