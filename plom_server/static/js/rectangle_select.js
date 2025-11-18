@@ -11,6 +11,7 @@
 var image = document.getElementById('reference_image');
 var canvas = document.getElementById('canvas');
 
+// These are input elements that any page using this javascript must provide
 var h_th_left = document.getElementById('thb_left');
 var h_th_top = document.getElementById('thb_top');
 var h_th_right = document.getElementById('thb_right');
