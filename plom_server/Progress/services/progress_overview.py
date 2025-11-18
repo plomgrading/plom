@@ -168,7 +168,7 @@ class ProgressOverviewService:
             dat[X["question_index"]][
                 MarkingTask(status=X["status"]).get_status_display()
             ] = X["the_count"]
-        if n_papers:
+        if n_papers is not None:
             for qi, d in dat.items():
                 present = sum([v for x, v in d.items()])
                 d.update({"Missing": n_papers - present})
