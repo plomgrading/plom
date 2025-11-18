@@ -37,13 +37,10 @@
     </div>
     <div class="card m-2">
         <div class="card-body pb-0">
-            <!-- temporarily disabled: Issue #4035: put /question_clustering/ in manually to get there -->
-            <a class="btn btn-secondary disabled"
-               href="{% url 'question_clustering_home' %}"
-               disabled>Question Clustering</a>
+            <a class="btn btn-secondary" href="{% url 'question_clustering_home' %}">Question Clustering</a>
             <p>
                 Cluster question based on answer similarity.  Experimental!
-                Temporarily disabled...
+                May cause high server load!
             </p>
         </div>
     </div>
