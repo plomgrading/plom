@@ -34,6 +34,17 @@ While preparing the test, we suggest writing something like *"Please start
 a new page NOW"* at the start of each question.
 
 
+How do I make a "UTF-8" csv file?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Plom requires a UTF-8 encoded classlist.  UTF-8 can handle almost all
+languages within a single character set.  Using Microsoft Excel, you
+can choose ``CVS UTF-8 (Comma delimited)`` after selecting *"Save As"*.
+Other software will have similar options while exporting to CSV.
+Both ``utf-8`` and the Microsoft ``utf-8-sig`` variant with
+byte-order-mark are acceptable.
+
+
 
 Marking
 -------
