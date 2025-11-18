@@ -295,18 +295,18 @@ class IdentifyTaskService:
         if ImageBundleService().is_given_paper_ready_for_id_ing(paper_obj):
             self.create_task(paper_obj)
 
+    @staticmethod
     @transaction.atomic
-    def update_task_priority(
-        self, paper_obj: Paper, increasing_cert: bool = True
-    ) -> None:
+    def update_task_priority(paper_obj: Paper, *, increasing_cert: bool = True) -> None:
         """Update the iding_priority field for PaperIDTasks.
 
         Args:
             paper_obj: the paper whose priority to update.
 
-        Kwargs:
-            increasing_cert: determines whether the sorting order for the priorities
-                based on certainties is in increasing order. If false, it is in decreasing order.
+        Keyword Args:
+            increasing_cert: determines whether the sorting order for
+                the priorities based on certainties is in increasing
+                order. If false, it is in decreasing order.
 
         Raises:
             ValueError: The prediction or task does not exist for the given paper.
