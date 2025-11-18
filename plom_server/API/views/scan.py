@@ -64,7 +64,7 @@ class ScanListBundles(APIView):
             force = False
 
         try:
-            bundle_id, msg, warnings = ScanService.upload_bundle(
+            info_dict = ScanService.upload_bundle(
                 pdf, user, read_after=True, force=force
             )
         except ValidationError as e:
@@ -72,10 +72,7 @@ class ScanListBundles(APIView):
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
-        return Response(
-            {"bundle_id": bundle_id, "msg": msg, "warnings": warnings},
-            status=status.HTTP_200_OK,
-        )
+        return Response(info_dict, status=status.HTTP_200_OK)
 
 
 class ScanBundleActions(APIView):

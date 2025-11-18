@@ -98,7 +98,7 @@ class ScanService:
         force_render: bool = False,
         read_after: bool = False,
         force: bool = False,
-    ) -> tuple[int, str, str]:
+    ) -> dict[str, Any]:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, trigger a background job to split PDF into page images and
@@ -129,9 +129,9 @@ class ScanService:
                 to be uploaded which would otherwise be an error.
 
         Returns:
-            A tuple, with first entry the bundle id, the primary key of
-            the newly-created bundle, followed by a human-readable
-            success message, and then a human-readable list of warnings.
+            A dict of info about the new bundle, including the bundle_id
+            (primary key), the bundle_name, a human-readable message
+            of success, and then a human-readable list of warnings.
 
         Raises:
             ValidationError: _uploaded_pdf_file isn't a valid pdf or
@@ -243,19 +243,24 @@ class ScanService:
             brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
         else:
             brief_hash = pdf_hash
-        success_msg = (
+        msg = (
             f"Uploaded {slug} with {number_of_pages} pages "
             f"and hash {brief_hash}. "
             "Background processing started."
         )
-        return bundle_obj.pk, success_msg, "; ".join(warnings)
+        return {
+            "bundle_id": bundle_obj.pk,
+            "bundle_name": bundle_obj.slug,
+            "msg": msg,
+            "warnings": "; ".join(warnings),
+        }
 
     @classmethod
     def upload_bundle_cmd(
         cls,
         pdf_file_path: str | pathlib.Path,
         username: str,
-    ) -> int:
+    ) -> dict[str, Any]:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
         Checks if the supplied username has permissions to access and upload scans.
@@ -265,7 +270,7 @@ class ScanService:
             username: the username string of who is uploading the file.
 
         Returns:
-            The bundle id, the primary key of the newly-created bundle.
+            A dict of info, as per :method:`upload_bundle`.
 
         Raises:
             ValueError: username invalid or not in scanner group.
@@ -286,8 +291,7 @@ class ScanService:
         with open(pdf_file_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        r = cls.upload_bundle(pdf_file_object, user_obj)
-        return r[0]
+        return cls.upload_bundle(pdf_file_object, user_obj)
 
     @staticmethod
     def split_and_save_bundle_images(

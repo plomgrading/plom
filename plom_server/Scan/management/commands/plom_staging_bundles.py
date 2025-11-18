@@ -28,12 +28,11 @@ class Command(BaseCommand):
     def upload_pdf(self, username: str, source_pdf: str) -> None:
         """Upload a pdf bundle to the staging area."""
         try:
-            bundle_id = ScanService.upload_bundle_cmd(source_pdf, username)
+            info_dict = ScanService.upload_bundle_cmd(source_pdf, username)
         except (ValueError, PlomConflict) as err:
             raise CommandError(err)
-        self.stdout.write(
-            f"Uploaded {source_pdf} as bundle {bundle_id}: background processing started."
-        )
+        for k, v in info_dict.items():
+            self.stdout.write(f"{k}: {v}")
 
     def staging_bundle_status(self, bundle_name=None):
         scanner = ScanService()
