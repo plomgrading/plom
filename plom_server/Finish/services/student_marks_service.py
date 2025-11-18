@@ -34,7 +34,7 @@ class StudentMarkService:
 
     @staticmethod
     def _get_marked_unmarked_paper_querysets() -> tuple[QuerySet, QuerySet]:
-        """Get a list of papers which are and aren't completely marked.
+        """Get lists (as unevaluated QuerySets) of papers which are and aren't completely marked.
 
         This will only fetch 'used' papers, see
         :method:`ManageScanService._get_used_unused_paper_querysets()` for
@@ -48,7 +48,6 @@ class StudentMarkService:
             A tuple of two querysets, the first contains all completely
             marked papers. The second contains the papers which aren't
             completely marked.
-
         """
         exam_question_indices: list = SpecificationService.get_question_indices()
         complete_tasks = MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
@@ -125,7 +124,7 @@ class StudentMarkService:
         definitions of used and unused papers.
         """
         _, unmarked_papers = cls._get_marked_unmarked_paper_querysets()
-        return len(unmarked_papers) == 0
+        return unmarked_papers.count() == 0
 
     @staticmethod
     def _get_n_questions_marked(paper: Paper) -> int:
