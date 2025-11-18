@@ -55,7 +55,12 @@ class MarkingInformationView(ManagerRequiredView):
         ]
 
         # TODO: OUT_OF_DATE tasks? Issue #2924
-        total_tasks = MarkingTaskService.get_n_total_tasks()
+        # TODO: maybe maybe all this code is DEPRECATED, as this view isn't
+        # TODO: even exposed...
+        total_tasks = MarkingTaskService.get_n_total_tasks_including_outdated()
+        total_tasks2 = MarkingTaskService.get_n_valid_tasks()
+        print(total_tasks)
+        print(total_tasks2)
         all_marked = StudentMarkService.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question

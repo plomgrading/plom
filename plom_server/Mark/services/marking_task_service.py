@@ -348,8 +348,11 @@ class MarkingTaskService:
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
 
     @staticmethod
-    def get_n_total_tasks() -> int:
-        """Return the total number of tasks in the database, including "out-of-date" tasks."""
+    def get_n_total_tasks_including_outdated() -> int:
+        """Return the total number of tasks in the database, including "out-of-date" tasks.
+
+        This is probably not the function you are looking for; see :method:`get_n_valid_tasks`.
+        """
         return MarkingTask.objects.all().count()
 
     @staticmethod
