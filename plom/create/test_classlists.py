@@ -5,7 +5,6 @@
 from pytest import raises
 from pathlib import Path
 
-from plom.spec_verifier import SpecVerifier
 from plom.misc_utils import working_directory
 from .classlistValidator import PlomClasslistValidator
 from .buildClasslist import clean_non_canvas_csv
@@ -22,7 +21,7 @@ def test_ok_to_contain_unused_column_names(tmpdir) -> None:
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         assert success
         assert warn_err == []
 
@@ -39,7 +38,7 @@ def test_no_ID_column_fails(tmpdir) -> None:
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
 
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         assert not success
         assert len(warn_err) == 1
         assert warn_err[0]["warn_or_err"] == "error"
@@ -56,7 +55,7 @@ def test_two_ID_column_fails(tmpdir) -> None:
             f.write('"ID","Name","id","paper_number"\n')
             f.write('12345678,"Doe",98765432,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         expected = [
             {
                 "warn_or_err": "error",
@@ -83,7 +82,7 @@ def test_two_id_column_same_case_fails_issue3667(tmpdir) -> None:
             f.write('"id","Name","id","paper_number"\n')
             f.write('12345678,"Doe",98765432,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         expected = [
             {
                 "warn_or_err": "error",
@@ -101,6 +100,38 @@ def test_two_id_column_same_case_fails_issue3667(tmpdir) -> None:
             assert X in warn_err
 
 
+def test_no_ID_key_fails() -> None:
+    vlad = PlomClasslistValidator()
+    cl = [{"idZ": "12345678", "name": "Doe", "paper_number": 3}]
+    success, warn_err = vlad.validate(cl)
+    assert not success
+    assert len(warn_err) == 1
+    assert warn_err[0]["warn_or_err"] == "error"
+    assert warn_err[0]["werr_line"] == 0
+    assert warn_err[0]["werr_text"].startswith('Missing "id"')
+
+    cl = [{"id": "12345678", "nameZ": "Doe", "paper_number": 3}]
+    success, warn_err = vlad.validate(cl)
+    assert not success
+    assert len(warn_err) == 1
+    assert warn_err[0]["warn_or_err"] == "error"
+    assert warn_err[0]["werr_line"] == 0
+    assert warn_err[0]["werr_text"].startswith('Missing "name"')
+
+
+def test_no_ID_key_nonhomogeneous() -> None:
+    vlad = PlomClasslistValidator()
+    cl = [
+        {"id": "12345678", "name": "Doe", "paper_number": 3},
+        {"idZ": "11223344", "name": "Doer", "paper_number": 4},
+    ]
+    success, warn_err = vlad.validate(cl)
+    assert not success
+    assert len(warn_err) == 1
+    assert warn_err[0]["warn_or_err"] == "error"
+    assert warn_err[0]["werr_line"] == 1
+
+
 def test_no_name_column_fails(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
@@ -113,7 +144,7 @@ def test_no_name_column_fails(tmpdir) -> None:
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
 
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         assert not success
         assert len(warn_err) == 1
         assert warn_err[0]["warn_or_err"] == "error"
@@ -130,7 +161,7 @@ def test_two_name_column_fails(tmpdir) -> None:
             f.write('"ID","name","Name","paper_number"\n')
             f.write('12345678,"Doe","John",7\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         expected = [
             {
                 "warn_or_err": "error",
@@ -157,7 +188,7 @@ def test_two_papernumber_column_fails(tmpdir) -> None:
             f.write('"ID","name","paper_number","PAper_NUmber"\n')
             f.write('12345678,"Doe,John",7,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         expected = [
             {
                 "warn_or_err": "error",
@@ -190,7 +221,7 @@ def test_casefold_column_names1(tmpdir) -> None:
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         assert success
         assert warn_err == []
 
@@ -209,7 +240,7 @@ def test_casefold_column_names2(tmpdir) -> None:
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         assert success
         assert warn_err == []
 
@@ -228,7 +259,7 @@ def test_casefold_column_names3(tmpdir) -> None:
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         assert success
         assert warn_err == []
 
@@ -251,7 +282,7 @@ def test_missing_student_info(tmpdir) -> None:
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert set(df.columns) == set(("id", "name", "paper_number"))
-        success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+        success, warn_err, _ = vlad.validate_csv(foo)
         assert not success
         expected = [
             {
@@ -274,35 +305,6 @@ def test_missing_student_info(tmpdir) -> None:
                 "werr_line": 4,
                 "werr_text": "Name 'A' is very short  - please verify.",
             },
-        ]
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
-
-
-def test_check_classlist_length(tmpdir) -> None:
-    # Check that classlist is not longer than number to produce
-    # should warn that we are not producing enough tests.
-    tmpdir = Path(tmpdir)
-    vlad = PlomClasslistValidator()
-    spec = SpecVerifier.demo(num_to_produce=2)
-
-    with working_directory(tmpdir):
-        foo = tmpdir / "foo.csv"
-        with open(foo, "w") as f:
-            f.write('"id","name","paper_number"\n')
-            f.write('12345678,"Doe",1\n')
-            f.write('12345679,"Doer",2\n')
-            f.write('12345680,"Doerr",3\n')
-        success, warn_err, _ = vlad.validate_csv(foo, spec=spec)
-        assert success
-        expected = [
-            {
-                "warn_or_err": "warning",
-                "werr_line": 0,
-                "werr_text": "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2",
-            }
         ]
         # check these lists against each other - order not important
         assert len(warn_err) == len(expected)
@@ -469,7 +471,7 @@ def test_leading_zero_sid(tmp_path) -> None:
     assert vlad.check_is_non_canvas_csv(foo)
     df = clean_non_canvas_csv(foo)
     assert "id" in df.columns
-    success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+    success, warn_err, _ = vlad.validate_csv(foo)
     assert success
     assert warn_err == []
     # and 00123400 still in there!
@@ -482,5 +484,5 @@ def test_nearly_empty_file(tmp_path) -> None:
     foo = tmp_path / "foo.csv"
     with foo.open("w") as f:
         f.write("\n")
-    success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+    success, warn_err, _ = vlad.validate_csv(foo)
     assert not success

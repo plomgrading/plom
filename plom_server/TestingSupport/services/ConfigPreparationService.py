@@ -79,11 +79,9 @@ def upload_classlist(config: PlomServerConfig):
     assert classlist_path is not None
     assert not isinstance(classlist_path, str)
     try:
-        with classlist_path.open("rb") as classlist_f:
-            sss = StagingStudentService()
-            success, warnings = sss.validate_and_use_classlist_csv(
-                classlist_f, ignore_warnings=True
-            )
+        success, warnings = StagingStudentService.validate_and_use_classlist_csv(
+            classlist_path, ignore_warnings=True
+        )
         if not success:
             raise PlomConfigCreationError("Unable to upload classlist.")
     except Exception as e:

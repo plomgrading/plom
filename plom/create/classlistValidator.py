@@ -12,11 +12,6 @@ from typing import Any, Sequence
 
 from plom.rules import validateStudentID
 
-# important classlist headers - all casefolded
-sid_field = "id".casefold()
-fullname_field = "name".casefold()
-papernumber_field = "paper_number".casefold()
-
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
 
@@ -60,10 +55,10 @@ class PlomClasslistValidator:
             for row in reader:
                 row["_src_line"] = reader.line_num
                 # canonicalize cases, replacing whatever case was there before
-                row[sid_field] = row.pop(id_key)
-                row[fullname_field] = row.pop(name_key)
+                row["id"] = row.pop(id_key)
+                row["name"] = row.pop(name_key)
                 if paper_number_key is not None:
-                    row[papernumber_field] = row.pop(paper_number_key)
+                    row["paper_number"] = row.pop(paper_number_key)
                 classAsDicts.append(row)
             return classAsDicts
 
@@ -95,11 +90,11 @@ class PlomClasslistValidator:
         papernumber_keys: list[str | None] = []
         for x in headers:
             cfx = x.casefold()
-            if cfx == sid_field:
+            if cfx == "id":
                 id_keys.append(x)
-            if cfx == fullname_field:
+            if cfx == "name":
                 fullname_keys.append(x)
-            if cfx == papernumber_field:
+            if cfx == "paper_number":
                 papernumber_keys.append(x)
 
         # Check for repeated column names, Issue #3667.
@@ -130,24 +125,32 @@ class PlomClasslistValidator:
 
         # We explicitly allow casefolding (but could change our minds?)
         # See #3822 and #1140.
-        # if id_keys != [sid_field]:
+        # if id_keys != ["id"]:
         #     raise ValueError(f"'id' present but incorrect case; header: {headers}")
-        # if fullname_keys != [fullname_field]:
+        # if fullname_keys != ["name"]:
         #     raise ValueError(f"'name' present but incorrect case; header: {headers}")
 
         return [id_keys[0], fullname_keys[0], papernumber_keys[0]]
 
-    def check_ID_column(self, id_key, classList) -> tuple[bool, list]:
+    def check_ID_column(
+        self, classlist: list[dict[str, str | int]]
+    ) -> tuple[bool, list]:
         """Check the ID column of the classlist."""
         err = []
         ids_used = defaultdict(list)
-        for x in classList:
+        for idx, row in enumerate(classlist):
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = validateStudentID(x[id_key])
+            idv = validateStudentID(row["id"])
+
+            where = row.get("_src_line", None)
+            if where is None:
+                # don't have _src_line, maybe not from csv file, use 1-index
+                where = idx + 1
+
             if idv[0] is False:
-                err.append([x["_src_line"], idv[1]])
-            ids_used[x[id_key]].append(x["_src_line"])
+                err.append([where, idv[1]])
+            ids_used[row["id"]].append(where)
         for x, v in ids_used.items():
             if len(v) > 1:
                 if len(str(x)) == 0:  # for #3091 - explicit error for blank ID
@@ -169,7 +172,9 @@ class PlomClasslistValidator:
         """
         return x in ("", None, "-1", -1)
 
-    def check_paper_number_column(self, papernum_key, classList) -> tuple[bool, list]:
+    def check_paper_number_column(
+        self, classlist: list[dict[str, str | int]]
+    ) -> tuple[bool, list]:
         """Check the papernumber column of the classlist.
 
         Entries must either be blank, or integers >= -1.
@@ -182,7 +187,7 @@ class PlomClasslistValidator:
             """True if input can be converted to an int."""
             try:
                 int(x)
-            except ValueError:
+            except (ValueError, TypeError):
                 return False
             return True
 
@@ -193,45 +198,53 @@ class PlomClasslistValidator:
             """
             try:
                 v = float(x)
-            except ValueError:
+            except (ValueError, TypeError):
                 return False
             return (int(v) == v) and (v >= 0)
 
         err = []
         numbers_used = defaultdict(list)
-        for x in classList:
-            pn = x.get(papernum_key, None)
+        for idx, row in enumerate(classlist):
+            pn = row.get("paper_number", None)
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
             if self.is_paper_number_sentinel(pn):
                 continue  # notice that this handles pn being None.
+            assert pn is not None
+
+            where = row.get("_src_line", None)
+            if where is None:
+                # don't have _src_line, maybe not from csv file, use 1-index
+                where = idx + 1
+
             if is_an_int(pn):
                 if int(pn) < 0:
                     err.append(
                         [
-                            x["_src_line"],
-                            f"Paper-number {x[papernum_key]} must be a non-negative integer, or blank or '-1' to indicate 'do not prename'",
+                            where,
+                            f"Paper-number {pn} must be a non-negative integer, "
+                            "or blank or '-1' to indicate 'do not prename'",
                         ]
                     )
             else:
-                if is_nearly_a_non_negative_int(x[papernum_key]):
+                if is_nearly_a_non_negative_int(pn):
                     err.append(
                         [
-                            x["_src_line"],
-                            f"Paper-number {x[papernum_key]} is nearly, but not quite, a non-negative integer",
+                            where,
+                            f"Paper-number {pn} is nearly, but not quite, a non-negative integer",
                         ]
                     )
                     continue
                 else:
                     err.append(
                         [
-                            x["_src_line"],
-                            f"Paper-number {x[papernum_key]} is not a non-negative integer",
+                            where,
+                            f"Paper-number {pn} is not a non-negative integer",
                         ]
                     )
                     continue
 
             # otherwise store the used papernumber.
-            numbers_used[x[papernum_key]].append(x["_src_line"])
+            numbers_used[pn].append(where)
         for x, v in numbers_used.items():
             if len(v) > 1:
                 err.append(
@@ -242,43 +255,28 @@ class PlomClasslistValidator:
         else:
             return (True, [])
 
-    def check_name_column(self, fullname_key, classList) -> list:
+    def check_name_column(self, classlist: list[dict[str, str | int]]) -> list:
         """Check name column return any warnings."""
         warn = []
-        for x in classList:
+        for idx, x in enumerate(classlist):
+            where = x.get("_src_line", None)
+            if where is None:
+                # don't have _src_line, maybe not from csv file, use 1-index
+                where = idx + 1
+
+            tmp = x["name"]
             # check non-trivial length after removing spaces and commas
-            tmp = x[fullname_key].replace(" ", "").replace(",", "")
+            if not isinstance(tmp, str):
+                warn.append([where, f'Name should be str, but "{tmp}" is {type(tmp)}'])
+                continue
+            tmp = tmp.replace(" ", "").replace(",", "")
             # warn if name-field is very short
             if len(tmp) < 2:  # TODO - decide a better bound here
-                warn.append(
-                    [x["_src_line"], f"Name '{tmp}' is very short  - please verify."]
-                )
+                warn.append([where, f"Name '{tmp}' is very short  - please verify."])
         return warn
 
-    def check_classlist_against_spec(self, spec, classlist_length: int) -> list[str]:
-        """Validate the classlist-length against spec parameters.
-
-        Args:
-            spec (None/dict/SpecVerifier): an optional test specification,
-                if given then run additional classlist-related tests.
-            classlist_length: the number of students in the classlist.
-
-        Returns:
-            If 'numberToProduce' is positive but less than classlist_length
-            then returns [warning_message], else returns empty list.
-        """
-        if spec is None:
-            return []
-        elif spec["numberToProduce"] == -1:
-            return []
-        elif spec["numberToProduce"] < classlist_length:
-            return [
-                f"Classlist is long. Classlist contains {classlist_length} names, but spec:numberToProduce is {spec['numberToProduce']}"
-            ]
-        return []
-
     def validate_csv(
-        self, filename: Path | str, *, spec=None
+        self, filename: Path | str
     ) -> tuple[bool, list[dict[str, Any]], list[dict[str, Any]]]:
         """Validate the classlist csv and return summaries of any errors and warnings.
 
@@ -286,10 +284,6 @@ class PlomClasslistValidator:
             filename: a csv file from which to try to load the classlist.
                 It must be UTF-8-encoded.  Microsoft's "utf-8-sig" with
                 "FEFF" byte-order-mark is also reluctantly accepted.
-
-        Keyword Args:
-            spec (None/dict/SpecVerifier): an optional test specification,
-                if given then run additional classlist-related tests.
 
         Returns:
             ``(valid, warnings_and_errors, cl_as_list_of_dicts)`` where
@@ -317,10 +311,43 @@ class PlomClasslistValidator:
             e = "CSV file seems to be empty (headers only)"
             werr.append({"warn_or_err": "warn", "werr_line": 0, "werr_text": e})
 
+        valid, _werr2 = self.validate(cl_as_dicts)
+        werr.extend(_werr2)
+        return (valid, werr, cl_as_dicts)
+
+    def validate(
+        self, cl_as_dicts: list[dict[str, Any]]
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate a proposed classlist and return summaries of any errors and warnings.
+
+        Args:
+            cl_as_dicts: a list of dicts with fields "id", "name",
+                and optionally "paper_number".
+
+        Returns:
+            ``(valid, warnings_and_errors)`` as described in :method:`validate_csv`.
+        """
+        werr = []
         # collect all errors and warnings before bailing out.
         validity = True
+
+        for row_idx, row in enumerate(cl_as_dicts):
+            for key in ("id", "name"):
+                if key not in row.keys():
+                    validity = False
+                    werr.append(
+                        {
+                            "warn_or_err": "error",
+                            "werr_line": row_idx,
+                            "werr_text": f'Missing "{key}" column',
+                        }
+                    )
+                if not validity:
+                    # bail early as later tests rely on key names
+                    return (validity, werr)
+
         # check the ID column - again, potentially errors here (not just warnings)
-        success, errors = self.check_ID_column(sid_field, cl_as_dicts)
+        success, errors = self.check_ID_column(cl_as_dicts)
         if not success:  # format errors and set invalid
             validity = False
             for e in errors:
@@ -329,7 +356,7 @@ class PlomClasslistValidator:
                 )
 
         # check the paperNumber column - again, potentially errors here (not just warnings)
-        success, errors = self.check_paper_number_column(papernumber_field, cl_as_dicts)
+        success, errors = self.check_paper_number_column(cl_as_dicts)
         if not success:  # format errors and set invalid
             validity = False
             for e in errors:
@@ -337,16 +364,13 @@ class PlomClasslistValidator:
                     {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
                 )
 
-        # check against spec - only warnings returned
-        for w in self.check_classlist_against_spec(spec, len(cl_as_dicts)):
-            werr.append({"warn_or_err": "warning", "werr_line": 0, "werr_text": w})
         # check the name column - only warnings returned
-        for w in self.check_name_column(fullname_field, cl_as_dicts):
+        for w in self.check_name_column(cl_as_dicts):
             werr.append(
                 {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
             )
 
-        return (validity, werr, cl_as_dicts)
+        return (validity, werr)
 
     def check_is_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Detect if a csv file is likely a Canvas-exported classlist.
@@ -369,8 +393,8 @@ class PlomClasslistValidator:
     def check_is_non_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Read the csv file and check if id and name columns exist.
 
-        1. Check if id is present or any of possible_sid_fields.
-        2. Check if name is preset or any of possible_fullname_fields.
+        1. Check if id is present.
+        2. Check if name is preset.
 
         Arguments:
             csv_file_name: the csv file.
@@ -394,11 +418,11 @@ class PlomClasslistValidator:
         for x in column_names:
             cfx = x.casefold()
             print(">>>> checking ", cfx)
-            if cfx == sid_field:
+            if cfx == "id":
                 id_cols.append(x)
-            if cfx == fullname_field:
+            if cfx == "name":
                 fullname_cols.append(x)
-            if cfx == papernumber_field:
+            if cfx == "paper_number":
                 papernumber_cols.append(x)
 
         if not id_cols:
@@ -415,7 +439,7 @@ class PlomClasslistValidator:
             print(f"Columns present = {column_names}")
             return False
         elif len(fullname_cols) > 1:
-            print("Multiple name columns - {fullname_cols}")
+            print(f"Multiple name columns - {fullname_cols}")
             print(f"Columns present = {column_names}")
             return False
 
