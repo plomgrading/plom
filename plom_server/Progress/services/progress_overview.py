@@ -147,17 +147,19 @@ class ProgressOverviewService:
     ) -> dict[int, dict[str, int]]:
         """Return a dict of counts of marking tasks by their status for each question.
 
-        Note that, if n_papers is supplied, then the number of missing
-        tasks is also computed. Also note that this excludes
-        out-of-date tasks.
+        Keyword Args:
+            n_papers: if is supplied, then the number of missing
+                tasks is also computed. Also note that this excludes
+                out-of-date tasks.
+
+        Returns:
+            A dict of dict - one for each question-index.
+            For each index the dict is "{status: count}" for each of
+            "To Do", "Complete", "Out".  If `n_papers`` was specified
+            there is also "Missing".
         """
-        # return a dict of dict - one for each question-index.
-        # for each index the dict is {status: count} for each of todo, complete, out
-        # exclude OUT OF DATE tasks
-        dat = {
-            qi: {"To Do": 0, "Complete": 0, "Out": 0}
-            for qi in SpecificationService.get_question_indices()
-        }
+        qindices = SpecificationService.get_question_indices()
+        dat = {qi: {"To Do": 0, "Complete": 0, "Out": 0} for qi in qindices}
         for X in (
             MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
             .values("status", "question_index")
@@ -167,9 +169,9 @@ class ProgressOverviewService:
                 MarkingTask(status=X["status"]).get_status_display()
             ] = X["the_count"]
         if n_papers:
-            for qi in SpecificationService.get_question_indices():
-                present = sum([v for x, v in dat[qi].items()])
-                dat[qi].update({"Missing": n_papers - present})
+            for qi, d in dat.items():
+                present = sum([v for x, v in d.items()])
+                d.update({"Missing": n_papers - present})
         return dat
 
     @transaction.atomic
