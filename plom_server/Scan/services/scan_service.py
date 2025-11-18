@@ -79,6 +79,11 @@ def _(x: str) -> str:
 log = logging.getLogger(__name__)
 
 
+def random_chars(n: int) -> str:
+    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+    return "".join(random.choices(alphabet, k=n))
+
+
 class ScanService:
     """Functions for staging scanned test-papers."""
 
@@ -205,6 +210,19 @@ class ScanService:
                 if not force:
                     raise PlomConflict(msg)
                 warnings.append(msg)
+
+            # if necessary, unique-ify the slug with a random suffix
+            # (we're inside a durable atomic: no race condition here)
+            if StagingBundle.objects.filter(slug=slug).exists():
+                while True:
+                    _slug = slug + "_" + random_chars(6)
+                    if not StagingBundle.objects.filter(slug=_slug).exists():
+                        warnings.append(
+                            f'Using bundle name "{_slug}"'
+                            f' because "{slug}" is not unique'
+                        )
+                        slug = _slug
+                        break
 
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
