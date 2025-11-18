@@ -306,13 +306,14 @@ class PlomClasslistValidator:
                 "you may need to export it as a UTF-8 file.  "
                 f"{err.__class__.__name__}: {err}"
             )
-            url = "https://plom.readthedocs.io/en/latest/faq.html#how-do-i-make-a-utf-8-csv-file"
+            # TODO: we could extend the werr structure to include "more info"
+            # url = "https://plom.readthedocs.io/en/latest/faq.html#how-do-i-make-a-utf-8-csv-file"
             werr.append(
                 {
                     "warn_or_err": "error",
                     "werr_line": 0,
                     "werr_text": errstr,
-                    "werr_more_info_url": url,
+                    # "werr_more_info_url": url,
                 }
             )
             return (False, werr, [])
