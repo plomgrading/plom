@@ -189,7 +189,8 @@ class MarkingTaskService:
                         X.markingtasktag_set.add(tag_obj)
                     X.save()
 
-    def get_marking_progress(self, question: int, version: int) -> tuple[int, int]:
+    @staticmethod
+    def get_marking_progress(question: int, version: int) -> tuple[int, int]:
         """Send back current marking progress counts to the client.
 
         Args:
@@ -341,15 +342,18 @@ class MarkingTaskService:
             assigned_user=None, status=MarkingTask.TO_DO
         )
 
-    def get_n_marked_tasks(self) -> int:
+    @staticmethod
+    def get_n_marked_tasks() -> int:
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
 
-    def get_n_total_tasks(self) -> int:
-        """Return the total number of tasks in the database."""
+    @staticmethod
+    def get_n_total_tasks() -> int:
+        """Return the total number of tasks in the database, including "out-of-date" tasks."""
         return MarkingTask.objects.all().count()
 
-    def get_n_valid_tasks(self) -> int:
+    @staticmethod
+    def get_n_valid_tasks() -> int:
         """Return the total number of tasks in the database, excluding out of date tasks."""
         return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
 

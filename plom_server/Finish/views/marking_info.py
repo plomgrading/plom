@@ -28,7 +28,6 @@ class MarkingInformationView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Get the Student Marks HTML page."""
-        mts = MarkingTaskService()
         d3s = D3Service()
         des = DataExtractionService()
         tms = TaMarkingService()
@@ -39,7 +38,7 @@ class MarkingInformationView(ManagerRequiredView):
         n_questions = SpecificationService.get_n_questions()
         marked_question_counts = [
             [
-                mts.get_marking_progress(version=v, question=q_idx)
+                MarkingTaskService.get_marking_progress(version=v, question=q_idx)
                 for v in SpecificationService.get_list_of_versions()
             ]
             for q_idx in SpecificationService.get_question_indices()
@@ -55,7 +54,8 @@ class MarkingInformationView(ManagerRequiredView):
             for qi in SpecificationService.get_question_indices()
         ]
 
-        total_tasks = mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
+        # TODO: OUT_OF_DATE tasks? Issue #2924
+        total_tasks = MarkingTaskService.get_n_total_tasks()
         all_marked = StudentMarkService.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
