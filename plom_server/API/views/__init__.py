@@ -68,6 +68,8 @@ from .scan import (
 
 from .finish import (
     FinishReassembled,
+    FinishReport,
+    FinishSolution,
     FinishUnmarked,
 )
 

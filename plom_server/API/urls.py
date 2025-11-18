@@ -38,6 +38,8 @@ from .views import (
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
+    FinishReport,
+    FinishSolution,
     FinishUnmarked,
     REPspreadsheet,
     REPidentified,
@@ -110,6 +112,16 @@ urlpatterns = [
         "api/beta/finish/reassembled/<int:papernum>",
         FinishReassembled.as_view(),
         name="api_Finish_reassembled",
+    ),
+    path(
+        "api/beta/finish/solution/<int:papernum>",
+        FinishSolution.as_view(),
+        name="api_Finish_solution",
+    ),
+    path(
+        "api/beta/finish/report/<int:papernum>",
+        FinishReport.as_view(),
+        name="api_Finish_solution",
     ),
     path(
         "api/beta/finish/unmarked/<int:papernum>",

@@ -43,6 +43,10 @@ from plom.cli import (
     get_pqvmap_as_csv_string,
     get_reassembled,
     get_all_reassembled,
+    get_report,
+    get_all_reports,
+    get_solution,
+    get_all_solutions,
     get_unmarked,
     get_all_unmarked,
     id_paper,
@@ -160,6 +164,48 @@ def get_parser() -> argparse.ArgumentParser:
         description="""
             Download a reassembled paper as a PDF file from the server.
             Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            all papers that exist on the server in their reassembled states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-report",
+        help="Get a report for a reassembled paper.",
+        description="""
+            Download a report for a paper as a PDF file from the server.
+            Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            all papers that exist on the server in their reassembled states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-solution",
+        help="Get the solutions file for a given paper.",
+        description="""
+            Download solutions for a paper as a PDF file from the server.
+            Will fail if the solutions file is not assembled yet.
         """,
     )
     s.add_argument("papernum", type=int, default=None, nargs="?")
@@ -600,6 +646,40 @@ def main():
             r = get_all_reassembled(msgr=m, verbose=args.verbose)
             print(
                 f'wrote {r["num-papers"]} reassembled papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
+    elif args.command == "get-report":
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_report(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote student report for paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_reports(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} student report files to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
+    elif args.command == "get-solution":
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_solution(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote solution for paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_solutions(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} solution files to '
                 f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
             )
 
