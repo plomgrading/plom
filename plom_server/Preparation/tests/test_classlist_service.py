@@ -119,7 +119,19 @@ class TestClasslistService(TestCase):
             success, warn_err = Service.validate_and_use_classlist_csv(tmp)
             self.assertFalse(success)
             (row,) = warn_err
-            self.assertTrue("'11111111' is used multiple" in row["werr_text"])
+            self.assertIn("'11111111' is used multiple", row["werr_text"])
+
+    def test_iso8859_non_utf8_classlist_readable_error_about_encoding(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir) / "foo.csv"
+            with tmp.open("wb") as f:
+                f.write("id,name\n".encode("iso8859"))
+                f.write('11111111,"Élise Voïart"\n'.encode("iso8859"))
+            success, warn_err = Service.validate_and_use_classlist_csv(tmp)
+            self.assertFalse(success)
+            (row,) = warn_err
+            self.assertIn("encoding", row["werr_text"])
+            self.assertIn("need to export it as a UTF-8", row["werr_text"])
 
     def test_feffid_bom_classlist_issue_3200(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -138,7 +150,6 @@ class TestClasslistService(TestCase):
     def test_misdetected_dialect_bom_crlf_issue_3938(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir) / "foo.csv"
-            # tmp = Path("/home/cbm") / "foo.csv"
             with tmp.open("wb") as f:
                 f.write(codecs.BOM_UTF8)
                 f.write("id,name\r\n".encode("utf8"))
