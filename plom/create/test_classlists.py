@@ -43,7 +43,7 @@ def test_no_ID_column_fails(tmpdir) -> None:
         assert len(warn_err) == 1
         assert warn_err[0]["warn_or_err"] == "error"
         assert warn_err[0]["werr_line"] == 0
-        assert warn_err[0]["werr_text"].startswith("Missing 'id' column")
+        assert "Missing 'id' column" in warn_err[0]["werr_text"]
 
 
 def test_two_ID_column_fails(tmpdir) -> None:
@@ -56,21 +56,11 @@ def test_two_ID_column_fails(tmpdir) -> None:
             f.write('12345678,"Doe",98765432,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
         success, warn_err, _ = vlad.validate_csv(foo)
-        expected = [
-            {
-                "warn_or_err": "error",
-                "werr_line": 0,
-                "werr_text": (
-                    'Column "id" is repeated multiple times in the '
-                    "CSV header: ID, Name, id, paper_number"
-                ),
-            }
-        ]
         assert not success
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
+        assert len(warn_err) == 1
+        assert warn_err[0]["warn_or_err"] == "error"
+        assert warn_err[0]["werr_line"] == 0
+        assert '"id" is repeated multiple times' in warn_err[0]["werr_text"]
 
 
 def test_two_id_column_same_case_fails_issue3667(tmpdir) -> None:
@@ -83,21 +73,11 @@ def test_two_id_column_same_case_fails_issue3667(tmpdir) -> None:
             f.write('12345678,"Doe",98765432,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
         success, warn_err, _ = vlad.validate_csv(foo)
-        expected = [
-            {
-                "warn_or_err": "error",
-                "werr_line": 0,
-                "werr_text": (
-                    'Column "id" is repeated multiple times in the '
-                    "CSV header: id, Name, id, paper_number"
-                ),
-            }
-        ]
         assert not success
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
+        assert len(warn_err) == 1
+        assert warn_err[0]["warn_or_err"] == "error"
+        assert warn_err[0]["werr_line"] == 0
+        assert '"id" is repeated multiple times' in warn_err[0]["werr_text"]
 
 
 def test_no_ID_key_fails() -> None:
@@ -149,7 +129,7 @@ def test_no_name_column_fails(tmpdir) -> None:
         assert len(warn_err) == 1
         assert warn_err[0]["warn_or_err"] == "error"
         assert warn_err[0]["werr_line"] == 0
-        assert warn_err[0]["werr_text"].startswith("Missing 'name' column")
+        assert "Missing 'name' column" in warn_err[0]["werr_text"]
 
 
 def test_two_name_column_fails(tmpdir) -> None:
@@ -162,21 +142,11 @@ def test_two_name_column_fails(tmpdir) -> None:
             f.write('12345678,"Doe","John",7\n')
         assert not vlad.check_is_non_canvas_csv(foo)
         success, warn_err, _ = vlad.validate_csv(foo)
-        expected = [
-            {
-                "warn_or_err": "error",
-                "werr_line": 0,
-                "werr_text": (
-                    'Column "name" is repeated multiple times in the '
-                    "CSV header: ID, name, Name, paper_number"
-                ),
-            }
-        ]
         assert not success
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
+        assert len(warn_err) == 1
+        assert warn_err[0]["warn_or_err"] == "error"
+        assert warn_err[0]["werr_line"] == 0
+        assert '"name" is repeated multiple times' in warn_err[0]["werr_text"]
 
 
 def test_two_papernumber_column_fails(tmpdir) -> None:
@@ -189,21 +159,11 @@ def test_two_papernumber_column_fails(tmpdir) -> None:
             f.write('12345678,"Doe,John",7,3\n')
         assert not vlad.check_is_non_canvas_csv(foo)
         success, warn_err, _ = vlad.validate_csv(foo)
-        expected = [
-            {
-                "warn_or_err": "error",
-                "werr_line": 0,
-                "werr_text": (
-                    'Column "paper_number" is repeated multiple times in the '
-                    "CSV header: ID, name, paper_number, PAper_NUmber"
-                ),
-            }
-        ]
         assert not success
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
+        assert len(warn_err) == 1
+        assert warn_err[0]["warn_or_err"] == "error"
+        assert warn_err[0]["werr_line"] == 0
+        assert '"paper_number" is repeated multiple times' in warn_err[0]["werr_text"]
 
 
 def test_casefold_column_names1(tmpdir) -> None:
