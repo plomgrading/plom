@@ -124,7 +124,7 @@ class StudentMarkService:
         definitions of used and unused papers.
         """
         _, unmarked_papers = cls._get_marked_unmarked_paper_querysets()
-        return unmarked_papers.count() == 0
+        return not unmarked_papers.exists()
 
     @staticmethod
     def _get_n_questions_marked(paper: Paper) -> int:
