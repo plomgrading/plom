@@ -134,8 +134,10 @@ wet_css_js_3rd_party:
 copyright_year:
   image: fedora:42
   stage: static_analysis
+  rules:
+    # Tags don't have this defined and non-empty. This job doesn't run on releases
+    - if: $CI_COMMIT_BRANCH
   before_script:
-    - echo $CI_COMMIT_TAG
     - dnf install -y python3 glab git
     - git --version
     - glab --version
@@ -154,9 +156,6 @@ copyright_year:
     - git checkout $CI_COMMIT_BRANCH --
     - git branch -avv
   script:
-    - echo $CI_COMMIT_TAG
-    # exit early if we think we're on a tag
-    - if [[ $CI_COMMIT_TAG ]] ; then exit 0; fi
     - echo "Considering the following commits to this branch (since '${TARGET_BRANCH}'):"
     - git shortlog ${TARGET_BRANCH}..${CI_COMMIT_BRANCH} --
     - echo "Those commits touch the following files:"
@@ -164,7 +163,7 @@ copyright_year:
     - git diff --name-only ${TARGET_BRANCH}...${CI_COMMIT_BRANCH} --
     - ./maint/is-copyright-uptodate.py `git diff --name-only ${TARGET_BRANCH}...$CI_COMMIT_BRANCH --`
     - echo "Note that there are some files that do not have/need copyright headers"
-    - if [ ${NUM_MRS} -gt 1 ]; then exit 1; fi
+    - if [ ${NUM_MRS} -gt 1 ]; then echo "'NUM_MRS' ('${NUM_MRS}' is greater than 1, exiting...)"; exit 1; fi
   allow_failure: true
 
 

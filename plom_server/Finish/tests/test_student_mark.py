@@ -14,9 +14,7 @@ from ..services import StudentMarkService
 
 
 class TestStudentMarkService(TestCase):
-    """Tests for Finish.service.StudentMarkService."""
-
-    sms = StudentMarkService
+    """Tests for StudentMarkService."""
 
     @config_test(
         {
@@ -49,9 +47,9 @@ class TestStudentMarkService(TestCase):
                 task.save()
 
         for i in range(0, 6):
-            assert self.sms.is_paper_marked(papers[i])
+            assert StudentMarkService.is_paper_marked(papers[i])
         for i in range(6, 10):
-            assert not self.sms.is_paper_marked(papers[i])
+            assert not StudentMarkService.is_paper_marked(papers[i])
 
     def test_are_all_papers_marked(self) -> None:
         """Are all questions on all (relevant) papers marked?"""
@@ -82,8 +80,7 @@ class TestStudentMarkService(TestCase):
                 baker.make(MobilePage, paper=paper, question_index=qn, image=img)
 
         # all papers unmarked
-        sms_instance = self.sms()
-        assert not sms_instance.are_all_papers_marked()
+        assert not StudentMarkService.are_all_papers_marked()
         # papers 1-5 are "marked"
         # papers 6-8 are "unmarked"
         # papers 9, 10 are "unmarked"
@@ -99,7 +96,7 @@ class TestStudentMarkService(TestCase):
                 task = tasks.get(paper=paper, question_index=j)
                 task.status = MarkingTask.COMPLETE
                 task.save()
-        assert not sms_instance.are_all_papers_marked()
+        assert not StudentMarkService.are_all_papers_marked()
         # papers 1-5 are "marked"
         # papers 6-8 are "unmarked"
         # papers 9, 10 are "marked"
@@ -109,14 +106,14 @@ class TestStudentMarkService(TestCase):
                 task = tasks.get(paper=paper, question_index=j)
                 task.status = MarkingTask.COMPLETE
                 task.save()
-        assert not sms_instance.are_all_papers_marked()
+        assert not StudentMarkService.are_all_papers_marked()
         # all papers have all questions marked
         for paper in papers[1:11]:
             for j in range(1, 4):
                 task = tasks.get(paper=paper, question_index=j)
                 task.status = MarkingTask.COMPLETE
                 task.save()
-        assert sms_instance.are_all_papers_marked()
+        assert StudentMarkService.are_all_papers_marked()
 
         # discard a paper - this will out of date marking tasks
         # but they belong to a paper which is now 'unused'
@@ -124,7 +121,7 @@ class TestStudentMarkService(TestCase):
             self.user0, papers[9].paper_number, dry_run=False
         )
         assert MarkingTask.objects.filter(status=MarkingTask.OUT_OF_DATE).exists()
-        assert sms_instance.are_all_papers_marked()
+        assert StudentMarkService.are_all_papers_marked()
 
         # out of date the first paper:
         for paper in papers[1:2]:
@@ -132,7 +129,7 @@ class TestStudentMarkService(TestCase):
                 task = tasks.get(paper=paper, question_index=j)
                 task.status = MarkingTask.OUT_OF_DATE
                 task.save()
-        assert not sms_instance.are_all_papers_marked()
+        assert not StudentMarkService.are_all_papers_marked()
 
     def test__get_marked_unmarked_paper_querysets(self) -> None:
         """Does it correctly fetch marked/unmarked papers?"""
@@ -164,14 +161,13 @@ class TestStudentMarkService(TestCase):
 
         def check(marked_correct, unmarked_correct):
             marked_queryset, unmarked_queryset = (
-                self.sms._get_marked_unmarked_paper_querysets()
+                StudentMarkService._get_marked_unmarked_paper_querysets()
             )
             # equality checks between sets are unordered (and give better fail messages)
             self.assertEqual(set(marked_queryset), set(marked_correct))
             self.assertEqual(set(unmarked_queryset), set(unmarked_correct))
 
         # all papers unmarked
-        sms_instance = self.sms()
         check([], papers[0:10])
 
         # papers 1-5 are "marked"
@@ -224,4 +220,4 @@ class TestStudentMarkService(TestCase):
                 task.status = MarkingTask.OUT_OF_DATE
                 task.save()
         check(papers[1:9] + papers[10:11], papers[0:1])
-        assert not sms_instance.are_all_papers_marked()
+        assert not StudentMarkService.are_all_papers_marked()

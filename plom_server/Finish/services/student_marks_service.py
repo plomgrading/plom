@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Andreas Buttenschoen
 # Copyright (C) 2025 Aden Chan
@@ -15,7 +15,7 @@ from io import StringIO
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Exists, OuterRef, Count
+from django.db.models import Exists, OuterRef, Count, Q
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
@@ -34,7 +34,7 @@ class StudentMarkService:
 
     @staticmethod
     def _get_marked_unmarked_paper_querysets() -> tuple[QuerySet, QuerySet]:
-        """Get a list of papers which are and aren't completely marked.
+        """Get lists (as unevaluated QuerySets) of papers which are and aren't completely marked.
 
         This will only fetch 'used' papers, see
         :method:`ManageScanService._get_used_unused_paper_querysets()` for
@@ -48,7 +48,6 @@ class StudentMarkService:
             A tuple of two querysets, the first contains all completely
             marked papers. The second contains the papers which aren't
             completely marked.
-
         """
         exam_question_indices: list = SpecificationService.get_question_indices()
         complete_tasks = MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
@@ -87,21 +86,31 @@ class StudentMarkService:
         return marked_papers_queryset, unmarked_papers_queryset
 
     @staticmethod
-    def is_paper_marked(paper: Paper) -> bool:
+    def is_paper_marked(paper: Paper, n_questions: int | None = None) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
-            paper: a reference to a Paper instance
+            paper: a reference to a Paper instance.
+            n_questions: number of questions in the test. Pass n_questions to reduce
+                repetitive db_query of n_questions.  If omitted, it will be computed.
 
         Returns:
             bool: True when all questions in the given paper are marked.
         """
-        # TODO: Is this the most efficient way to compute marked vs unmarked?
-        paper_tasks = MarkingTask.objects.filter(paper=paper)
-        n_completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE).count()
-        n_out_of_date_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE).count()
-        n_all_tasks = paper_tasks.count()
-        n_questions = SpecificationService.get_n_questions()
+        if not n_questions:
+            n_questions = SpecificationService.get_n_questions()
+
+        # Use .aggregate to Select all Counts(*) in one query
+        counts = MarkingTask.objects.filter(paper=paper).aggregate(
+            complete=Count("id", filter=Q(status=MarkingTask.COMPLETE)),
+            out_of_date=Count("id", filter=Q(status=MarkingTask.OUT_OF_DATE)),
+            all=Count("id"),
+        )
+
+        n_completed_tasks = counts["complete"]
+        n_out_of_date_tasks = counts["out_of_date"]
+        n_all_tasks = counts["all"]
+
         # make sure one completed task for each question and that all tasks are complete or out of date.
         return (n_completed_tasks == n_questions) and (
             n_completed_tasks + n_out_of_date_tasks == n_all_tasks
@@ -115,7 +124,7 @@ class StudentMarkService:
         definitions of used and unused papers.
         """
         _, unmarked_papers = cls._get_marked_unmarked_paper_querysets()
-        return len(unmarked_papers) == 0
+        return not unmarked_papers.exists()
 
     @staticmethod
     def _get_n_questions_marked(paper: Paper) -> int:
