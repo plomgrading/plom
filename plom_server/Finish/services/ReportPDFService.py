@@ -117,7 +117,9 @@ def pdf_builder(
     task_count_dict = mts.get_task_counts_dict()
     total_valid_tasks = task_count_dict["valid"]
     marked_tasks = task_count_dict["complete"]
-    # separate code path from StudentMarkService.are_all_papers_marked
+    # separate code path from StudentMarkService.are_all_papers_marked(), but
+    # this does the same thing, its just cheaper in this case b/c we already
+    # got some data from the DB.
     all_marked = marked_tasks == total_valid_tasks and total_valid_tasks > 0
 
     mpls.ensure_all_figures_closed()
