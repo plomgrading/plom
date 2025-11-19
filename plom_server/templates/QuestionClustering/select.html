@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2025 Bryan Tanady
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 <!-- Adopted from templates/Rectangles/select.html -->
 {% extends "base/base.html" %}
@@ -31,6 +32,9 @@
                 <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
             </div>
             <div class="col-6">
+                <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
+                     have special names that read/written by javascript, to sync
+                     interactive box drawing to the coordinates in the inputs. -->
                 <p>The absolute coordinates of the selection.</p>
                 <ul>
                     <li>

@@ -2,37 +2,39 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024-2025 Andrew Rechnitze
     Copyright (C) 2024-2025 Bryan Tanady
+    Copyright (C) 2025 Colin B. Macdonald
 */
 
-// Code idea copied from 
+// Code idea copied from
 // https://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
 
 var image = document.getElementById('reference_image');
 var canvas = document.getElementById('canvas');
 
+// These are input elements that any page using this javascript must provide
 var h_th_left = document.getElementById('thb_left');
 var h_th_top = document.getElementById('thb_top');
 var h_th_right = document.getElementById('thb_right');
 var h_th_bottom = document.getElementById('thb_bottom');
 
-var h_plom_tl_x= document.getElementById('plom_left');
-var h_plom_tl_y= document.getElementById('plom_top');
-var h_plom_br_x= document.getElementById('plom_right');
-var h_plom_br_y= document.getElementById('plom_bottom');
+var h_plom_tl_x = document.getElementById('plom_left');
+var h_plom_tl_y = document.getElementById('plom_top');
+var h_plom_br_x = document.getElementById('plom_right');
+var h_plom_br_y = document.getElementById('plom_bottom');
 
-var handleRadius = 8 
+var handleRadius = 10
 
 var dragTL = dragBL = dragTR = dragBR = false;
 var dragWholeRect = false;
 
-var rect={}
-var current_canvas_rect={}
+var rect = {}
+var current_canvas_rect = {}
 
 var mouseX, mouseY
 var startX, startY
 
-// the initial rectangle should be given in [0,1] coords.
-var initial_rect = [0.1,0.1,0.1+0.2,0.1+0.1]
+// the initial rectangle should be given in [0, 1] coords.
+var initial_rect = [0.1, 0.1, 0.1 + 0.2, 0.1 + 0.1]
 function setInitialIDBoxRectangle(id_box_rect) {
   initial_rect = id_box_rect;
 }
@@ -51,7 +53,7 @@ var th_height = th_bottom - th_top;
 var effective_image_width = 1700;
 var effective_image_height = 2200;
 // update these values after the image has loaded
-image.onload = function(){
+image.onload = function() {
   effective_image_width = image.naturalWidth;
   effective_image_height = image.naturalHeight;
 
@@ -68,7 +70,7 @@ image.onload = function(){
 }
 
 // drawRectInCanvas() connected functions -- START
-function updateHiddenInputs(){
+function updateHiddenInputs() {
   var inverse_ratio_w =  effective_image_width / canvas.width;
   var inverse_ratio_h = effective_image_height / canvas.height ;
   h_th_left.value = Math.round(rect.left * inverse_ratio_w)
@@ -100,9 +102,8 @@ function drawHandles() {
   drawCircle(rect.left, rect.top + rect.height, handleRadius);
 }
 
-function drawPlomBits() 
-{
-// draw plom coordinate system
+function drawPlomBits() {
+  // draw plom coordinate system
   var ctx = canvas.getContext("2d");
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
@@ -120,8 +121,7 @@ function drawPlomBits()
   ctx.rect(top_left_coord[0]*ratio_w, top_left_coord[1]*ratio_h, (bottom_right_coord[0]-top_left_coord[0])*ratio_w, (bottom_right_coord[1]-top_left_coord[1])*ratio_h);
   ctx.stroke();
 }
-function drawRectInCanvas()
-{
+function drawRectInCanvas() {
   var ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
@@ -169,17 +169,11 @@ function getMousePos(canvas, evt) {
 }
 
 function mouseDown(e) {
-  var pos = getMousePos(this,e);
+  var pos = getMousePos(this, e);
   mouseX = pos.x;
   mouseY = pos.y;
-  // 0. inside movable rectangle
-  if (checkInRect(mouseX, mouseY, rect)){
-      dragWholeRect=true;
-      startX = mouseX;
-      startY = mouseY;
-  }
   // 1. top left
-  else if (checkCloseEnough(mouseX, rect.left) && checkCloseEnough(mouseY, rect.top)) {
+  if (checkCloseEnough(mouseX, rect.left) && checkCloseEnough(mouseY, rect.top)) {
       dragTL = true;
   }
   // 2. top right
@@ -194,7 +188,12 @@ function mouseDown(e) {
   else if (checkCloseEnough(mouseX, rect.left + rect.width) && checkCloseEnough(mouseY, rect.top + rect.height)) {
       dragBR = true;
   }
-  // (5.) none of them
+  // 5. inside movable rectangle
+  else if (checkInRect(mouseX, mouseY, rect)) {
+      dragWholeRect = true;
+      startX = mouseX;
+      startY = mouseY;
+  }
   else {
       // handle not resizing
   }
@@ -202,8 +201,8 @@ function mouseDown(e) {
 }
 //mousedown connected functions -- END
 
-function mouseMove(e) {    
-  var pos = getMousePos(this,e);
+function mouseMove(e) {
+  var pos = getMousePos(this, e);
   mouseX = pos.x;
   mouseY = pos.y;
   if (dragWholeRect) {
@@ -211,10 +210,10 @@ function mouseMove(e) {
       e.stopPropagation();
       dx = mouseX - startX;
       dy = mouseY - startY;
-      if ((rect.left+dx)>0 && (rect.left+dx+rect.width)<canvas.width){
+      if ((rect.left+dx)>0 && (rect.left+dx+rect.width)<canvas.width) {
         rect.left += dx;
       }
-      if ((rect.top+dy)>0 && (rect.top+dy+rect.height)<canvas.height){
+      if ((rect.top+dy)>0 && (rect.top+dy+rect.height)<canvas.height) {
         rect.top += dy;
       }
       startX = mouseX;
@@ -224,7 +223,7 @@ function mouseMove(e) {
       e.stopPropagation();
       var newSideX = Math.abs(rect.left+rect.width - mouseX)
       var newSideY = Math.abs(rect.height + rect.top - mouseY);
-      if ( (newSideX>20) && (newSideY>20)){
+      if ( (newSideX>20) && (newSideY>20)) {
         rect.left = rect.left + rect.width - newSideX;
         rect.top = rect.height + rect.top - newSideY;
         rect.width = newSideX; rect.height = newSideY;
@@ -234,7 +233,7 @@ function mouseMove(e) {
       e.stopPropagation();
       var newSideX = Math.abs(mouseX-rect.left);
       var newSideY = Math.abs(rect.height + rect.top - mouseY);
-      if ( (newSideX>20) && (newSideY>20)) {
+      if ( (newSideX>20) && (newSideY>20) ) {
           rect.top = rect.height + rect.top - newSideY;
           rect.width = newSideX;
           rect.height = newSideY;
@@ -244,7 +243,7 @@ function mouseMove(e) {
       e.stopPropagation();
       var newSideX = Math.abs(rect.left+rect.width-mouseX);
       var newSideY = Math.abs(rect.top - mouseY);
-      if ( (newSideX>20) && (newSideY>20)){
+      if ( (newSideX>20) && (newSideY>20) ) {
         rect.left = rect.left + rect.width - newSideX;
         rect.width = newSideX; rect.height = newSideY;
       }
@@ -253,21 +252,21 @@ function mouseMove(e) {
       e.stopPropagation();
       var newSideX = Math.abs(mouseX-rect.left);
       var newSideY = Math.abs(rect.top - mouseY);
-      if ( (newSideX>20) && (newSideY>20)){
-       rect.width = newSideX; rect.height = newSideY;
-      }      
+      if ( (newSideX>20) && (newSideY>20) ) {
+        rect.width = newSideX; rect.height = newSideY;
+      }
   }
   drawRectInCanvas();
 }
 
-function updateCurrentCanvasRect(){
+function updateCurrentCanvasRect() {
   current_canvas_rect.height = canvas.height
   current_canvas_rect.width = canvas.width
   current_canvas_rect.top = image.offsetTop
   current_canvas_rect.left = image.offsetLeft
 }
 
-function repositionCanvas(){
+function repositionCanvas() {
   //make canvas same as image, which may have changed size and position
   canvas.height = image.height;
   canvas.width = image.width;
@@ -285,7 +284,7 @@ function repositionCanvas(){
   drawRectInCanvas();
 }
 
-function initCanvas(){
+function initCanvas() {
   canvas.height = image.height;
   canvas.width = image.width;
   canvas.style.top = image.offsetTop + "px";;
@@ -293,7 +292,7 @@ function initCanvas(){
   updateCurrentCanvasRect();
 }
 
-function initRect(){
+function initRect() {
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
 
@@ -304,7 +303,7 @@ function initRect(){
 }
 
 
-function init(){
+function init() {
   canvas.addEventListener('mousedown', mouseDown, false);
   canvas.addEventListener('mouseup', mouseUp, false);
   canvas.addEventListener('mousemove', mouseMove, false);
@@ -316,7 +315,7 @@ function init(){
   drawRectInCanvas();
 }
 
-window.addEventListener('load',init)
-window.addEventListener('resize',repositionCanvas)
+window.addEventListener('load', init)
+window.addEventListener('resize', repositionCanvas)
 
 //
