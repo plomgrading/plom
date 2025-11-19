@@ -6,7 +6,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 
 import json
 import logging
@@ -16,7 +16,7 @@ from typing import Any
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count, Q
 from django.db import transaction
 from rest_framework import serializers
 
@@ -189,7 +189,8 @@ class MarkingTaskService:
                         X.markingtasktag_set.add(tag_obj)
                     X.save()
 
-    def get_marking_progress(self, question: int, version: int) -> tuple[int, int]:
+    @staticmethod
+    def get_marking_progress(question: int, version: int) -> tuple[int, int]:
         """Send back current marking progress counts to the client.
 
         Args:
@@ -341,17 +342,41 @@ class MarkingTaskService:
             assigned_user=None, status=MarkingTask.TO_DO
         )
 
-    def get_n_marked_tasks(self) -> int:
+    @staticmethod
+    def get_n_marked_tasks() -> int:
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
 
-    def get_n_total_tasks(self) -> int:
-        """Return the total number of tasks in the database."""
+    @staticmethod
+    def get_n_total_tasks_including_outdated() -> int:
+        """Return the total number of tasks in the database, including "out-of-date" tasks.
+
+        This is probably not the function you are looking for; see :method:`get_n_valid_tasks`.
+        """
         return MarkingTask.objects.all().count()
 
-    def get_n_valid_tasks(self) -> int:
+    @staticmethod
+    def get_n_valid_tasks() -> int:
         """Return the total number of tasks in the database, excluding out of date tasks."""
         return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
+
+    def get_task_counts_dict(self) -> dict[str, int]:
+        """Get a dict of task count for various task status.
+
+        This function is created to minimize db_query called for every task status count.
+
+        Returns:
+            A dict mapping task status to the number of tasks with that status.
+            These are the supported keys: ["todo", "out", "complete", "out_of_date", "valid", "all"].
+        """
+        return MarkingTask.objects.aggregate(
+            todo=Count("id", filter=Q(status=MarkingTask.TO_DO)),
+            out=Count("id", filter=Q(status=MarkingTask.OUT)),
+            complete=Count("id", filter=Q(status=MarkingTask.COMPLETE)),
+            out_of_date=Count("id", filter=Q(status=MarkingTask.OUT_OF_DATE)),
+            valid=Count("id", filter=~Q(status=MarkingTask.OUT_OF_DATE)),
+            all=Count("id"),
+        )
 
     def validate_and_clean_marking_data(
         self, code: str, data: dict[str, Any], plomfile: str

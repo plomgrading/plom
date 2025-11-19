@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Deep Shah
@@ -75,6 +75,10 @@ class MatplotlibService:
         self.student_df = self.des._get_student_data()
         self.ta_df = self.des._get_ta_data()
         self.formats = _acceptable_formats
+
+        # Maps to minimize db query for every conversion of index to label or max_mark
+        self.q_label_map = SpecificationService.get_question_labels_map()
+        self.q_max_mark_map = SpecificationService.get_questions_max_marks()
 
     @staticmethod
     def ensure_all_figures_closed() -> None:
@@ -174,7 +178,7 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        qlabel = SpecificationService.get_question_label(question_idx)
+        qlabel = self.q_label_map[question_idx]
         ver_column = qlabel + "_version"
         mark_column = qlabel + "_mark"
         plot_series = []
@@ -191,7 +195,7 @@ class MatplotlibService:
             plot_series.append(student_df[mark_column])
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        maxmark = SpecificationService.get_question_mark(question_idx)
+        maxmark = self.q_max_mark_map[question_idx]
         bins = np.arange(maxmark + RANGE_BIN_OFFSET) - 0.5
 
         ax.hist(
@@ -317,7 +321,7 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the histogram.
         """
-        qlabel = SpecificationService.get_question_label(question_idx)
+        qlabel = self.q_label_map[question_idx]
         if ta_df is None:
             ta_df = self.des._get_ta_data_for_ta(
                 ta_name,
@@ -401,7 +405,7 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the histogram.
         """
-        qlabel = SpecificationService.get_question_label(question_idx)
+        qlabel = self.q_label_map[question_idx]
         if marking_times_df is None:
             df = self.ta_df
         else:
@@ -482,7 +486,7 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the scatter plot.
         """
-        qlabel = SpecificationService.get_question_label(question_idx)
+        qlabel = self.q_label_map[question_idx]
         assert format in self.formats
         self.ensure_all_figures_closed()
 
@@ -513,7 +517,7 @@ class MatplotlibService:
             ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
 
         plt.grid(True, alpha=0.5)
-        maxmark = SpecificationService.get_question_mark(question_idx)
+        maxmark = self.q_max_mark_map[question_idx]
         plt.xlim(left=-0.5, right=maxmark + 0.5)
         plt.ylim(bottom=-0.2)
 
@@ -550,7 +554,7 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the boxplot.
         """
-        qlabel = SpecificationService.get_question_label(question_idx)
+        qlabel = self.q_label_map[question_idx]
         assert len(marks) == len(marker_names)
         assert format in self.formats
         self.ensure_all_figures_closed()
@@ -617,7 +621,8 @@ class MatplotlibService:
 
         plt.figure(figsize=(6.8, 4.2), tight_layout=True)
 
-        question_indices = SpecificationService.get_question_indices()
+        question_indices = list(self.q_label_map.keys())
+        question_labels = list(self.q_label_map.values())
         if versions is True:
             averages = self.des.get_averages_on_all_questions_versions_as_percentage(
                 overall=True
@@ -658,7 +663,7 @@ class MatplotlibService:
         plt.ylabel("Average mark (%)")
         plt.xticks(
             question_indices,
-            labels=SpecificationService.get_question_labels(),
+            labels=question_labels,
         )
 
         graph_bytes = get_graph_as_BytesIO(plt.gcf())
