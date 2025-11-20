@@ -29,6 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+
+### Fixed
+
+
+
+
+## [0.19.5] - 2025-11-20
+
+### Changed
 * Compare handwriting now explains why if it shows a non-ID page (for example, if the ID page is itself unknown).
 * Updating the annotations (sending new marking data) from the client will remove any `rubric_changed` tags, which should improve the process of making major edits to in-use rubrics.
 * Improvements to command-line tools and error handling.
@@ -37,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Packaging of the QuestionClustering app was broken.
 * Fix for filenames containing random characters for individual reassembled/report/solution downloads.
 * Fix for duplicate reassembled filenames for blank papers, ditto reports and solutions.
-* Misc bug fixes and UI tweaks.
+* Misc bug fixes, performance improvements and UI tweaks.
 
 
 
@@ -1583,7 +1592,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.19.4...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.19.5...main
+[0.19.5]: https://gitlab.com/plom/plom/-/compare/v0.19.4...v0.19.5
 [0.19.4]: https://gitlab.com/plom/plom/-/compare/v0.19.3...v0.19.4
 [0.19.3]: https://gitlab.com/plom/plom/-/compare/v0.19.2...v0.19.3
 [0.19.2]: https://gitlab.com/plom/plom/-/compare/v0.18.3...v0.19.2
