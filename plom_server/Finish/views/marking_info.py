@@ -18,7 +18,7 @@ from ..services import StudentMarkService, TaMarkingService, AnnotationDataServi
 class MarksDownloadView(ManagerRequiredView):
     """View to download marks."""
 
-    def get(self, request: HttpRequest) -> HttpResponse:
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Download marks as a csv file."""
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
@@ -53,7 +53,7 @@ class MarksDownloadView(ManagerRequiredView):
 class TAInfoDownloadView(ManagerRequiredView):
     """View to download TA info."""
 
-    def get(self, request: HttpRequest) -> HttpResponse:
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()
         csv_as_string = tms.build_ta_info_csv_as_string()
@@ -78,7 +78,7 @@ class TAInfoDownloadView(ManagerRequiredView):
 class AnnotationsInfoDownloadView(ManagerRequiredView):
     """View to download Annotation info."""
 
-    def get(self, request: HttpRequest) -> HttpResponse:
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Download annotation information as a csv file."""
         ads = AnnotationDataService()
         csv_as_string = ads.get_csv_data_as_string()
