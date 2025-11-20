@@ -295,18 +295,18 @@ class IdentifyTaskService:
         if ImageBundleService().is_given_paper_ready_for_id_ing(paper_obj):
             self.create_task(paper_obj)
 
+    @staticmethod
     @transaction.atomic
-    def update_task_priority(
-        self, paper_obj: Paper, increasing_cert: bool = True
-    ) -> None:
+    def update_task_priority(paper_obj: Paper, *, increasing_cert: bool = True) -> None:
         """Update the iding_priority field for PaperIDTasks.
 
         Args:
             paper_obj: the paper whose priority to update.
 
-        Kwargs:
-            increasing_cert: determines whether the sorting order for the priorities
-                based on certainties is in increasing order. If false, it is in decreasing order.
+        Keyword Args:
+            increasing_cert: determines whether the sorting order for
+                the priorities based on certainties is in increasing
+                order. If false, it is in decreasing order.
 
         Raises:
             ValueError: The prediction or task does not exist for the given paper.
@@ -342,17 +342,3 @@ class IdentifyTaskService:
         for task in tasks:
             task.iding_priority = 0
         PaperIDTask.objects.bulk_update(tasks, ["iding_priority"])
-
-    def update_task_priority_cmd(self, increasing_cert: bool = True) -> None:
-        """A wrapper around update_task_priority() for toggling between ID sorting order.
-
-        Modifies the priority of all tasks marked as TODO.
-
-        Args:
-            increasing_cert: a boolean flag that indicates whether the ID tasks
-                are presented in order of increasing certainty.
-                If false, they are presented in order of decreasing certainty.
-        """
-        todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
-        for task in todo_tasks:
-            self.update_task_priority(task.paper, increasing_cert=increasing_cert)
