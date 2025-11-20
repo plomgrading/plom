@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Packaging of the QuestionClustering app was broken.
 * Fix for filenames containing random characters for individual reassembled/report/solution downloads.
 * Fix for duplicate reassembled filenames for blank papers, ditto reports and solutions.
-* Misc bug fixes and UI tweaks.
+* Misc bug fixes, performance improvements and UI tweaks.
 
 
 
