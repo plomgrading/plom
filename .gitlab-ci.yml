@@ -314,7 +314,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=25.9.0"
+    - pip3 install "black~=25.11.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -450,7 +450,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.14.2
+    - pip install ruff~=0.14.5
   script:
     - ruff check .
     # ruff format .
@@ -461,7 +461,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.14.2
+    - pip install ruff~=0.14.5
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
