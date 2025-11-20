@@ -180,7 +180,8 @@ class ScannerUploadView(ScannerRequiredView):
         except ValidationError as e:
             messages.add_message(request, messages.ERROR, e.message)
             return HttpResponseClientRefresh()
-        messages.add_message(request, messages.WARNING, "Warning: " + warnings)
+        if warnings:
+            messages.add_message(request, messages.WARNING, "Warning: " + warnings)
         messages.add_message(request, messages.INFO, "Success: " + success_msg)
         return HttpResponseClientRefresh()
 
