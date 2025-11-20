@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2025 Philip D. Loewen
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -14,7 +15,7 @@
         Staged bundles
     </a>
     <a class="btn btn-primary"
-       href="{% url 'scan_bundle_thumbnails' 'all' bundle_id %}">View bundle</a>
+       href="{% url 'scan_bundle_thumbnails' bundle_id %}">View bundle</a>
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card w-75">
