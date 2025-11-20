@@ -523,6 +523,14 @@ no-question-numbers:
   allow_failure: true
 
 
+eslint:
+  image: node:24.11.1
+  stage: static_analysis
+  script:
+    - npm install eslint
+    - npx eslint plom_server/**/*.js
+
+
 webplom_test:
   stage: test
   needs: ["container-image"]
