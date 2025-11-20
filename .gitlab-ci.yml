@@ -28,10 +28,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:28.5.1
+image: docker:28.5.2
 
 services:
-  - docker:28.5.1-dind
+  - docker:28.5.2-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -335,7 +335,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.11.0
+    - pip install pytest pytest-cov coverage[toml]~=7.12.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -391,9 +391,8 @@ pylint:
   needs: ["container-image"]
   image: $IM
   before_script:
-    # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=4.0.1  # codespell:ignore astroid
-    - pip install pylint~=4.0.2
+    - pip install astroid~=4.0.2  # codespell:ignore astroid
+    - pip install pylint~=4.0.3
   script:
     - pylint plom
     - pylint plom_server
@@ -529,7 +528,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.11.0
+    - pip install coverage~=7.12.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -553,7 +552,7 @@ webplom_api_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.11.0
+    - pip install coverage~=7.12.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
