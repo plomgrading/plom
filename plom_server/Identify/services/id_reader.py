@@ -159,7 +159,7 @@ class IDReaderService:
 
         IdentifyTaskService.update_task_priority(paper)
 
-    def delete_ID_predictions(self, *, predictor: str | None = None) -> None:
+    def delete_ID_predictions(self, predictor: str | None = None) -> None:
         """Delete all ID predictions, or optionally all from a particular predictor."""
         if predictor:
             IDPrediction.objects.filter(predictor=predictor).delete()
