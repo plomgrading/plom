@@ -195,7 +195,6 @@ packages = [
     "plom_server.TestingSupport.services",
     "plom_server.UserManagement",
     "plom_server.UserManagement.services",
-    "plom_server.Visualization",
     "plom_ml",
     "plom_ml.clustering",
     "plom_ml.clustering.embedding",
