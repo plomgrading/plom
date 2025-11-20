@@ -6,7 +6,7 @@
 
 # Any utilities that don't have there own version can use this one
 # Also in plom_server/__init__.py
-__version__ = "0.19.6"
+__version__ = "0.19.7.dev0"
 
 import sys
 
