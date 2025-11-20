@@ -1064,7 +1064,7 @@ class ScanService:
             ValueError: When the bundle is currently being pushed
             ValueError: When the bundle has already been pushed,
             ValueError: When the qr codes have not all been read,
-            ValueError: When the bundle is not prefect (eg still has errors or unknowns),
+            ValueError: When the bundle is not perfect (eg still has errors or unknowns),
             PlomPushCollisionException: When images in the bundle collide with existing pushed images
             PlomBundleLockedException: When any bundle is push-locked, or the current one is locked/push-locked.
             ObjectDoesNotExist: no such bundle.
