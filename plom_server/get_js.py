@@ -106,16 +106,6 @@ table = [
         ],
     },
     {
-        "name": "d3.js",
-        "license": "BSD",
-        "files": [
-            {
-                "url": "https://d3js.org/d3.v6.min.js",
-                "hash": "sha256-+7jaYCp29O1JusNWHaYtgUn6EhuP0VaFuswhNV06MyI=",
-            },
-        ],
-    },
-    {
         # Sorttable by Stuart Langridge, https://github.com/stuartlangridge/sorttable
         "name": "sorttable",
         "license": "X11",  # https://www.kryogenix.org/code/browser/sorttable/#licence
