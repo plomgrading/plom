@@ -135,15 +135,13 @@
                                 <button class="btn btn-warning"
                                         hx-post="{% url 'scan_push_all' bundle_id %}"
                                         hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
-                                        x-bind:disabled="midPush"
-                                        @htmx:before-send="midPush=true;">Push</button>
+                                        x-bind:disabled="midPush">Push</button>
                             {% else %}
                                 <button class="btn btn-danger"
                                         hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
                                         hx-post="{% url 'scan_push_all' bundle_id %}"
                                         hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
-                                        x-bind:disabled="midPush"
-                                        @htmx:before-send="midPush=true;">Push</button>
+                                        x-bind:disabled="midPush">Push</button>
                             {% endif %}
                         </span>
                     {% else %}

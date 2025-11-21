@@ -35,7 +35,6 @@ from .manage_bundle import (
     BundleThumbnailsSummaryFragmentView,
     GetBundleThumbnailView,
     BundleLockView,
-    BundlePushBadErrorView,
     RecentStagedBundleRedirectView,
     HandwritingComparisonView,
     GeneratePaperPDFView,
