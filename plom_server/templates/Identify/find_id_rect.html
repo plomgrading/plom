@@ -109,11 +109,13 @@
         </div>
     </div>
 </div>
-<script type="text/javascript">
-  var corner_data = {{qr_info|safe}};
-  var top_left_coord = {{top_left|safe}};
-  var bottom_right_coord = {{bottom_right|safe}};
-</script>
 <script src="{% static '/js/rectangle_select.js' %}"></script>
+<script type="text/javascript">
+  // these are declared in the above 'rectangle_select.js'script
+  // and are required to allow it to function
+  corner_dat = {{qr_info|safe}};
+  top_left_coord = {{top_left|safe}};
+  bottom_right_coord = {{bottom_right|safe}};
+</script>
 {% if initial_rectangle %}<script>setInitialIDBoxRectangle({{initial_rectangle}});</script>{% endif %}
 {% endblock main_content %}

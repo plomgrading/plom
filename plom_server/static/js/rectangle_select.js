@@ -44,6 +44,9 @@ function setInitialIDBoxRectangle(id_box_rect) {
   initial_rect = id_box_rect;
 }
 
+// these must be initialised in the template
+var top_left_coord;
+var bottom_right_coord;
 
 // some starting values
 var th_left = 0;
