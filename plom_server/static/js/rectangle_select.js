@@ -24,7 +24,9 @@ var h_plom_br_y = document.getElementById('plom_bottom');
 
 var handleRadius = 10
 
-var dragTL = dragBL = dragTR = dragBR = false;
+var dragTL, dragBL, dragTR, dragBR;
+dragTL = dragBL = dragTR = dragBR = false;
+
 var dragWholeRect = false;
 
 var rect = {}
@@ -35,6 +37,9 @@ var startX, startY
 
 // the initial rectangle should be given in [0, 1] coords.
 var initial_rect = [0.1, 0.1, 0.1 + 0.2, 0.1 + 0.1]
+/* exported setInitialIDBoxRectangle */
+// above is the correct way, but not working :(
+// eslint-disable-next-line no-unused-vars
 function setInitialIDBoxRectangle(id_box_rect) {
   initial_rect = id_box_rect;
 }
@@ -110,7 +115,7 @@ function drawPlomBits() {
   ctx.strokeStyle = "#ff8000";
   ctx.setLineDash([2,4])
   ctx.fillStyle = "#ff8000";
-  for (let [k,v] of Object.entries(rect)) {
+  for (let v of Object.values(rect)) {
     ctx.beginPath();
     ctx.arc(v[0]*ratio_w,v[1]*ratio_h,8, 0,2*Math.PI);
     ctx.fill();
@@ -138,7 +143,7 @@ function drawRectInCanvas() {
 }
 //drawRectInCanvas() connected functions -- END
 
-function mouseUp(e) {
+function mouseUp() {
   dragTL = dragTR = dragBL = dragBR = false;
   dragWholeRect = false;
 }
@@ -208,8 +213,8 @@ function mouseMove(e) {
   if (dragWholeRect) {
       e.preventDefault();
       e.stopPropagation();
-      dx = mouseX - startX;
-      dy = mouseY - startY;
+      let dx = mouseX - startX;
+      let dy = mouseY - startY;
       if ((rect.left+dx)>0 && (rect.left+dx+rect.width)<canvas.width) {
         rect.left += dx;
       }
@@ -221,8 +226,8 @@ function mouseMove(e) {
   } else if (dragTL) {
       e.preventDefault();
       e.stopPropagation();
-      var newSideX = Math.abs(rect.left+rect.width - mouseX)
-      var newSideY = Math.abs(rect.height + rect.top - mouseY);
+      let newSideX = Math.abs(rect.left+rect.width - mouseX)
+      let newSideY = Math.abs(rect.height + rect.top - mouseY);
       if ( (newSideX>20) && (newSideY>20)) {
         rect.left = rect.left + rect.width - newSideX;
         rect.top = rect.height + rect.top - newSideY;
@@ -231,8 +236,8 @@ function mouseMove(e) {
   } else if (dragTR) {
       e.preventDefault();
       e.stopPropagation();
-      var newSideX = Math.abs(mouseX-rect.left);
-      var newSideY = Math.abs(rect.height + rect.top - mouseY);
+      let newSideX = Math.abs(mouseX-rect.left);
+      let newSideY = Math.abs(rect.height + rect.top - mouseY);
       if ( (newSideX>20) && (newSideY>20) ) {
           rect.top = rect.height + rect.top - newSideY;
           rect.width = newSideX;
@@ -241,8 +246,8 @@ function mouseMove(e) {
   } else if (dragBL) {
       e.preventDefault();
       e.stopPropagation();
-      var newSideX = Math.abs(rect.left+rect.width-mouseX);
-      var newSideY = Math.abs(rect.top - mouseY);
+      let newSideX = Math.abs(rect.left+rect.width-mouseX);
+      let newSideY = Math.abs(rect.top - mouseY);
       if ( (newSideX>20) && (newSideY>20) ) {
         rect.left = rect.left + rect.width - newSideX;
         rect.width = newSideX; rect.height = newSideY;
@@ -250,8 +255,8 @@ function mouseMove(e) {
   } else if (dragBR) {
       e.preventDefault();
       e.stopPropagation();
-      var newSideX = Math.abs(mouseX-rect.left);
-      var newSideY = Math.abs(rect.top - mouseY);
+      let newSideX = Math.abs(mouseX-rect.left);
+      let newSideY = Math.abs(rect.top - mouseY);
       if ( (newSideX>20) && (newSideY>20) ) {
         rect.width = newSideX; rect.height = newSideY;
       }
