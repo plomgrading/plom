@@ -22,15 +22,14 @@ class PushAllPageImages(ScannerRequiredView):
     def post(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         try:
             ScanService().push_bundle_to_server(bundle_id, request.user)
-        except (ValueError, PlomBundleLockedException) as err:
-            return HttpResponse(err, status=409)
+        except ValueError as err:
+            return HttpResponse(err, status=400)
         except PlomPushCollisionException as err:
-            return HttpResponse(
-                f"Collision error: {err}: view the bundle for more information",
-                status=409,
-            )
-        except RuntimeError as err:
             return HttpResponse(err, status=409)
+        except PlomBundleLockedException as err:
+            return HttpResponse(err, status=406)
+        except RuntimeError as err:
+            return HttpResponse(f"Unexpected error: {err}", status=500)
         except Exception as err:
             # TODO: we don't like generic exception handlers but we got bit by
             # Issue #3926 so now catch all the unexpected errors too.

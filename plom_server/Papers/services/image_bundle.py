@@ -102,7 +102,8 @@ class ImageBundleService:
         4. Bulk-create images
 
         Raises:
-            RuntimeError
+            RuntimeError: an unexpected error, something we already checked
+                has failed.
             PlomPushCollisionException
             ValueError
             ObjectDoesNotExist

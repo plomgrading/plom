@@ -104,6 +104,10 @@ class ScanBundleActions(APIView):
             return _error_response(err, status=status.HTTP_409_CONFLICT)
         except PlomBundleLockedException as err:
             return _error_response(err, status=status.HTTP_406_NOT_ACCEPTABLE)
+        except RuntimeError as err:
+            return _error_response(
+                f"Unexpected error: {err}", status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
 

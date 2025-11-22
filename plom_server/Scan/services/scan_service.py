@@ -1194,7 +1194,7 @@ class ScanService:
         except PlomPushCollisionException as err:
             raise_this_after = err
         except RuntimeError as err:
-            # This should only be for **very bad** errors
+            # This should only be for **very bad** (unexpected) errors
             raise_this_after = err
         finally:
             # unlock the bundle when we are done
