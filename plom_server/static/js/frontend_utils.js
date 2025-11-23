@@ -3,6 +3,7 @@
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Bryan Tanady
+    Copyright (C) 2025 Aidan Murphy
 */
 
 const firstWordList = ['adorable', 'adventurous', 'aggressive', 'agreeable', 'alert', 'alive', 'amused', 'angry', 'annoyed', 'anxious', 'attractive', 'average', 'bad', 'beautiful', 'better', 'bewildered', 'blue', 'blushing', 'bored', 'brainy', 'brave', 'breakable', 'bright', 'busy', 'calm', 'careful', 'cautious', 'charming', 'cheerful', 'clean', 'clear', 'clever', 'cloudy', 'clumsy', 'colourful', 'combative', 'comfortable', 'concerned', 'confused', 'cooperative', 'crazy', 'curious', 'cute', 'dangerous', 'delightful', 'determined', 'different', 'distinct', 'dizzy', 'eager', 'easy', 'elated', 'elegant', 'energetic', 'enthusiastic', 'excited', 'expensive', 'exuberant', 'fair', 'faithful', 'famous', 'fancy', 'fantastic', 'fine', 'friendly', 'funny', 'gentle', 'gifted', 'glamorous', 'gleaming', 'glorious', 'good', 'gorgeous', 'handsome', 'happy', 'healthy', 'helpful', 'hilarious', 'hungry', 'important', 'innocent', 'jolly', 'kind', 'light', 'lively', 'lovely', 'lucky', 'magnificent', 'misty', 'muddy', 'mushy', 'mysterious', 'naughty', 'nice', 'oldfashioned', 'outstanding', 'perfect', 'powerful', 'precious', 'real', 'relieved', 'rich', 'shiny', 'smiling', 'sparkling', 'successful', 'super', 'thoughtful', 'wandering', 'xenogeneic', 'young'];

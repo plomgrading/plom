@@ -3,6 +3,7 @@
     Copyright (C) 2024-2025 Andrew Rechnitze
     Copyright (C) 2024-2025 Bryan Tanady
     Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2025 Aidan Murphy
 */
 
 // Code idea copied from
