@@ -120,19 +120,19 @@
                 <!--<span class="visually-hidden">BUSY</span>-->
             </div>
             {% if has_been_processed %}
-                <a class="btn btn-success"
+                <a class="btn btn-primary"
                    href="{% url 'scan_bundle_thumbnails' bundle_id %}">View</a>
                 {% if has_qr_codes %}
                     <span>
                         {% if is_perfect %}
                             {% if n_incomplete == 0 %}
-                                <button class="btn btn-warning"
+                                <button class="btn btn-success"
                                         hx-post="{% url 'scan_push_all' bundle_id %}"
                                         hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
                                         hx-indicator="#busy_indicator_{{ bundle_id }}"
                                         hx-disabled-elt="this">Push</button>
                             {% else %}
-                                <button class="btn btn-danger"
+                                <button class="btn btn-warning"
                                         hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
                                         hx-post="{% url 'scan_push_all' bundle_id %}"
                                         hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
@@ -141,7 +141,7 @@
                             {% endif %}
                         </span>
                     {% else %}
-                        <button class="btn btn-warning" disabled>Push</button>
+                        <button class="btn btn-danger" disabled>Push</button>
                     {% endif %}
                 {% elif is_mid_qr_read %}
                 {% else %}
@@ -152,10 +152,14 @@
             {% endif %}
             <a class="btn btn-secondary"
                target="_"
-               href="{% url 'scan_get_bundle' bundle_id %}">Download</a>
+               href="{% url 'scan_get_bundle' bundle_id %}"
+               title="Download bundle">
+                <i class="bi bi-download"></i></a>
             <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
                hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
-               hx-confirm="Are you sure?">Remove</a>
+               hx-confirm="Are you sure?"
+               title="Delete bundle">
+                <i class="bi bi-trash"></i></a>
         </div>
     </div>
     <div>
