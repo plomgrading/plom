@@ -83,12 +83,13 @@
                         </li>
                     {% else %}
                     {% endif %}
-                    {% if n_incomplete %}
-                        <li>
-                            Incomplete papers: {{ n_incomplete }} <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                        </li>
-                    {% endif %}
                 {% endif %}
+                {% if n_incomplete %}
+                    <li>
+                        Incomplete papers: {{ n_incomplete }} <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    </li>
+                {% endif %}
+                <!-- collisions too expensive to calculate?  Issue #4089 -->
             {% else %}
                 {% if is_mid_qr_read %}
                     <li>
