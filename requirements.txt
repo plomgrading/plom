@@ -44,8 +44,8 @@ imutils==0.5.4
 matplotlib==3.10.7
 model-bakery==1.20.5
 numpy==2.2.6  # >= 2.3.0 needs Python 3.11
-opencv-python-headless==4.12.0.88
 onnxruntime==1.22.1
+opencv-python-headless==4.12.0.88
 packaging==25.0
 pandas==2.3.3
 passlib==1.7.4
@@ -71,7 +71,6 @@ weasyprint==66.0
 whitenoise==6.11.0
 zipfly==6.0.5
 zxing-cpp==2.3.0
-onnxruntime==1.22.1
 huggingface_hub==0.34.4
 
 #---------- for dev / debug work - comment out unless using it.
