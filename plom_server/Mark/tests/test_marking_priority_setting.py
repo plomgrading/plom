@@ -66,7 +66,7 @@ class MarkingTaskPriorityTests(TestCase):
 
     def test_set_priority_shuffle(self) -> None:
         """Test setting priority to SHUFFLE."""
-        MarkingPriorityService.set_marking_piority_shuffle()
+        MarkingPriorityService.set_marking_priority_shuffle()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
         )

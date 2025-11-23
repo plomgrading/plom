@@ -48,7 +48,7 @@ def get_tasks_to_update_priority_by_q_v(
 
 
 @transaction.atomic
-def set_marking_piority_shuffle() -> None:
+def set_marking_priority_shuffle() -> None:
     """Set the priority to shuffle: every marking task gets a random priority value."""
     tasks = _get_tasks_to_update_priority()
     for task in tasks:

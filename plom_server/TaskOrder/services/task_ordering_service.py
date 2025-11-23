@@ -35,7 +35,7 @@ class TaskOrderService:
                 (for existing tasks).
         """
         if order == "shuffle":
-            MarkingPriorityService.set_marking_piority_shuffle()
+            MarkingPriorityService.set_marking_priority_shuffle()
         elif order == "custom":
             assert custom_order is not None, "must provide custom_order kwarg"
             MarkingPriorityService.set_marking_priority_custom(
