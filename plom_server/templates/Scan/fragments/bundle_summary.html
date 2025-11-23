@@ -35,9 +35,7 @@
                     {% elif n_incomplete == 0 %}
                         <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                         has no pages requiring attention -
-                        <button class="btn btn-success"
-                                hx-confirm="Please confirm that you want to push this bundle."
-                                hx-post="{% url 'scan_push_all' bundle_id %}">>Push</button>
+                        <button class="btn btn-success" hx-post="{% url 'scan_push_all' bundle_id %}">Push</button>
                     {% else %}
                         has no problems, but contains incomplete papers. You can
                         <!-- Issue #3411: provide link to additional info -->
