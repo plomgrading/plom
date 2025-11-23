@@ -200,21 +200,31 @@ def download_file(url: str, save_to: Path, *, filename: str | None = None) -> No
 def check_or_download_file(
     url: str, save_to: Path, filename: str, *, hash: str | None = None
 ) -> None:
-    """Download if not present, then check file hash."""
+    """Download if not present, then check file hash.
+
+    If hash fails, erase and try to download (once, no loop).
+    """
     f = save_to / filename
     if f.exists():
-        print(f" *  {f}")
+        print(f" * {f}")
     else:
         print(f"Downloading {f}...")
         download_file(url, save_to, filename=filename)
-    check_file(f, hash=hash)
+    try:
+        check_file(f, hash=hash)
+    except ValueError as e:
+        print(f"   Failed hash check:\n{e}")
+        print(f"   Erasing and trying to re-download {f}...")
+        f.unlink()
+        download_file(url, save_to, filename=filename)
+        check_file(f, hash=hash)
 
 
 def check_or_download_and_unzip(save_to, filename, zipurl, hash):
     """If file exists, check if hash, else download it by downloading and unpacking a zip."""
     f = save_to / filename
     if f.exists():
-        print(f" *  {f}")
+        print(f" * {f}")
     else:
         print(f"Downloading {f}...")
         with tempfile.TemporaryDirectory() as _td:
@@ -236,19 +246,19 @@ def check_file(f, hash: str | None = None):
     elif hash.startswith("sha384-"):
         if hash != sha384:
             raise ValueError(
-                f"Downloaded sha384 for {f} does not match records!\n"
-                f"records:  {hash}\n"
-                f"download: {sha384}"
+                f"   Downloaded sha384 for {f} does not match records!\n"
+                f"   - records:  {hash}\n"
+                f"   - download: {sha384}"
             )
         print(f"    {sha384}")
     else:
         if hash != sha256:
             raise ValueError(
-                f"Downloaded sha256 for {f} does not match records!\n"
-                f"records:  {hash}\n"
-                f"download: {sha256}\n"
+                f"   Downloaded sha256 for {f} does not match records!\n"
+                f"   - records:  {hash}\n"
+                f"   - download: {sha256}"
             )
-        print(f"    {sha256}")
+        print(f"   {sha256}")
 
 
 def download_javascript_and_css_to_static(destdir: None | str = None):
