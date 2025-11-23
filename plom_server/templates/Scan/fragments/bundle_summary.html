@@ -35,18 +35,26 @@
                     {% elif n_incomplete == 0 %}
                         <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                         has no pages requiring attention -
-                        <button class="btn btn-success" hx-post="{% url 'scan_push_all' bundle_id %}">Push</button>
+                        <button class="btn btn-success"
+                                hx-post="{% url 'scan_push_all' bundle_id %}"
+                                hx-target-error="#push_error_msgs">Push</button>
                     {% else %}
                         has no problems, but contains incomplete papers. You can
                         <!-- Issue #3411: provide link to additional info -->
                         <button class="btn btn-danger"
                                 hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
-                                hx-post="{% url 'scan_push_all' bundle_id %}">Push</button>
+                                hx-post="{% url 'scan_push_all' bundle_id %}"
+                                hx-target-error="#push_error_msgs">Push</button>
                         but it is not recommended
                     {% endif %}
                 {% endif %}
                 {% if not is_perfect %}has pages that require your attention{% endif %}
             </h5>
+            <div>
+                <!-- this is the target for any htmx error messages from "push" -->
+                <!-- p-0 border-0 here tries to hide the div when its empty -->
+                <div id="push_error_msgs" class="p-0 border-0 alert alert-danger hide"></div>
+            </div>
             {% if n_incomplete %}
                 <div class="alert alert-warning">
                     <details>
