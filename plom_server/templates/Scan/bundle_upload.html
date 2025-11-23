@@ -29,7 +29,7 @@
                           enctype="multipart/form-data"
                           hx-post="{% url 'scan_upload' %}"
                           hx-disabled-elt="#upload_btn, #pdf_file, #read_after, #force_render"
-                          hx-indicator="#myindicator">
+                          hx-indicator="#upload_indicator">
                         {% csrf_token %}
                         <div class="mb-2">
                             <input class="form-control form-control-lg"
@@ -87,7 +87,7 @@
                         <!-- hx-disabled-elt="self" on this button doesn't work b/c this button doesn't have hx-post -->
                         <!-- https://stackoverflow.com/questions/78888026/setting-hx-disabled-elt-not-disabling-my-button -->
                         <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
-                        <span id="myindicator" class="htmx-indicator">
+                        <span id="upload_indicator" class="htmx-indicator">
                             <img src="{% static 'ball_triangle.svg' %}" />
                             upload in progress
                             <progress id="progress" value="0" max="100"></progress>

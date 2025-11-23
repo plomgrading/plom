@@ -30,25 +30,41 @@
                 {% endif %}
                 <q><tt>{{ slug }}</tt></q>
                 {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
-                    {% if n_collisions %}
-                        contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}.
-                    {% elif n_incomplete == 0 %}
-                        <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
-                        has no pages requiring attention -
-                        <button class="btn btn-success"
-                                hx-post="{% url 'scan_push_all' bundle_id %}"
-                                hx-target-error="#push_error_msgs">Push</button>
+                    {% if n_collisions and n_incomplete %}
+                        contains colliding page images and incomplete papers.
+                    {% elif n_collisions %}
+                        contains colliding page images.
+                    {% elif n_incomplete %}
+                        has no pages requiring attention, but contains incomplete papers.
                     {% else %}
-                        has no problems, but contains incomplete papers. You can
-                        <!-- Issue #3411: provide link to additional info -->
-                        <button class="btn btn-danger"
-                                hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
-                                hx-post="{% url 'scan_push_all' bundle_id %}"
-                                hx-target-error="#push_error_msgs">Push</button>
-                        but it is not recommended
+                        has no pages requiring attention.
                     {% endif %}
                 {% endif %}
                 {% if not is_perfect %}has pages that require your attention{% endif %}
+                {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
+                    &nbsp;
+                    {% if n_collisions %}
+                        <button class="btn btn-danger disabled" disabled>Push</button>
+                    {% elif n_incomplete == 0 %}
+                        <button class="btn btn-success"
+                                hx-post="{% url 'scan_push_all' bundle_id %}"
+                                hx-target-error="#push_error_msgs"
+                                hx-indicator="#push_indicator"
+                                hx-disabled-elt="this">Push</button>
+                    {% else %}
+                        <button class="btn btn-danger"
+                                hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
+                                hx-post="{% url 'scan_push_all' bundle_id %}"
+                                hx-target-error="#push_error_msgs"
+                                hx-indicator="#push_indicator"
+                                hx-disabled-elt="this">Push</button>
+                    {% endif %}
+                {% endif %}
+                <div id="push_indicator"
+                     class="htmx-indicator spinner-border spinner-border-sm"
+                     role="status">
+                    <!--<span class="visually-hidden">BUSY</span>-->
+                </div>
             </h5>
             <div>
                 <!-- this is the target for any htmx error messages from "push" -->
