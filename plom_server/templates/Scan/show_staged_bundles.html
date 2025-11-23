@@ -40,9 +40,7 @@
                         <th>Pages/Papers</th>
                         <th>Actions</th>
                     </thead>
-                    <!-- put this alpine variable here, so that all push buttons in these fragments can be disabled when any bundle pushed -->
-                    <!-- annoyingly there is a case difference between js and python true/false, hence the string hacks -->
-                    <tbody x-data="{midPush: '{{ is_any_bundle_push_locked }}'=='True' }">
+                    <tbody>
                         {% for bundle in staged_bundles %}
                             <tr hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.id %}"
                                 hw-swap="innerHTML"

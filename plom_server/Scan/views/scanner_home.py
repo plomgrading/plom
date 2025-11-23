@@ -78,9 +78,6 @@ class ScannerStagedView(ScannerRequiredView):
                     "is_push_locked": bundle.is_push_locked,
                 }
             )
-            # flag if any bundle is push-locked
-            if bundle.is_push_locked:
-                context["is_any_bundle_push_locked"] = True
         context["staged_bundles"] = staged_bundles
         return render(request, "Scan/show_staged_bundles.html", context)
 
@@ -127,7 +124,6 @@ class ScannerUploadView(ScannerRequiredView):
         scanner = ScanService()
         context.update(
             {
-                "is_any_bundle_push_locked": False,
                 "papers_have_been_printed": PapersPrinted.have_papers_been_printed(),
                 "bundle_size_limit": settings.MAX_BUNDLE_SIZE / 1024 / 1024,
                 "bundle_page_limit": settings.MAX_BUNDLE_PAGES,
