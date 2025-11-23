@@ -14,23 +14,25 @@
          x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
         <div>
             <h5>
+                <!-- First the textual summary of the bundle -->
                 {% if is_pushed %}
                     <i class="bi bi-check-square text-success"></i>
                     Pushed bundle
+                    <q><tt>{{ slug }}</tt></q>
+                {% elif not has_page_images %}
+                    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    Unprocessed bundle
+                    <q><tt>{{ slug }}</tt></q>
+                {% elif not finished_reading_qr %}
+                    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    Unread bundle
+                    <q><tt>{{ slug }}</tt></q>
                 {% else %}
-                    {% if not has_page_images %}
-                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                        Unprocessed bundle
-                    {% elif not finished_reading_qr %}
-                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                        Unread bundle
-                    {% else %}
-                        Staged bundle
-                    {% endif %}
-                {% endif %}
-                <q><tt>{{ slug }}</tt></q>
-                {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
-                    {% if n_collisions and n_incomplete %}
+                    Staged bundle
+                    <q><tt>{{ slug }}</tt></q>
+                    {% if not is_perfect %}
+                        has pages that require your attention.
+                    {% elif n_collisions and n_incomplete %}
                         contains colliding page images and incomplete papers.
                     {% elif n_collisions %}
                         contains colliding page images.
@@ -40,8 +42,8 @@
                         has no pages requiring attention.
                     {% endif %}
                 {% endif %}
-                {% if not is_perfect %}has pages that require your attention{% endif %}
-                {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
+                <!-- Now in some cases a push button -->
+                {% if not is_pushed and has_page_images and finished_reading_qr and is_perfect %}
                     &nbsp;
                     {% if n_collisions %}
                         <button class="btn btn-danger disabled" disabled>Push</button>
@@ -59,12 +61,12 @@
                                 hx-indicator="#push_indicator"
                                 hx-disabled-elt="this">Push</button>
                     {% endif %}
+                    <div id="push_indicator"
+                         class="htmx-indicator spinner-border spinner-border-sm"
+                         role="status">
+                        <!--<span class="visually-hidden">BUSY</span>-->
+                    </div>
                 {% endif %}
-                <div id="push_indicator"
-                     class="htmx-indicator spinner-border spinner-border-sm"
-                     role="status">
-                    <!--<span class="visually-hidden">BUSY</span>-->
-                </div>
             </h5>
             <div>
                 <!-- this is the target for any htmx error messages from "push" -->
