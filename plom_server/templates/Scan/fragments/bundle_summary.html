@@ -34,21 +34,16 @@
                         contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}.
                     {% elif n_incomplete == 0 %}
                         <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
-                        <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
                         has no pages requiring attention -
                         <button class="btn btn-success"
                                 hx-confirm="Please confirm that you want to push this bundle."
-                                hx-post="{% url 'scan_push_all' bundle_id %}"
-                                x-bind:disabled="midPush"
-                                @htmx:before-send="midPush=true;">Push</button>
+                                hx-post="{% url 'scan_push_all' bundle_id %}">>Push</button>
                     {% else %}
                         has no problems, but contains incomplete papers. You can
                         <!-- Issue #3411: provide link to additional info -->
                         <button class="btn btn-danger"
                                 hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
-                                hx-post="{% url 'scan_push_all' bundle_id %}"
-                                x-bind:disabled="midPush"
-                                @htmx:before-send="midPush=true;">Push</button>
+                                hx-post="{% url 'scan_push_all' bundle_id %}">Push</button>
                         but it is not recommended
                     {% endif %}
                 {% endif %}
