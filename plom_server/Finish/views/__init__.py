@@ -3,8 +3,9 @@
 # Copyright (C) 2024 Bryan Tanady
 
 from .marking_info import (
-    MarkingInformationPaperView,
-    MarkingInformationView,
+    MarksDownloadView,
+    TAInfoDownloadView,
+    AnnotationsInfoDownloadView,
 )
 from .reassembly import (
     ReassemblePapersView,
