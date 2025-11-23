@@ -50,7 +50,7 @@ packaging==25.0
 pandas==2.3.3
 passlib==1.7.4
 Pillow==12.0.0
-psycopg[binary]==3.2.12
+psycopg[binary]==3.2.13
 pydyf==0.11.0
 pymupdf==1.26.6
 PyMySQL==1.1.2
