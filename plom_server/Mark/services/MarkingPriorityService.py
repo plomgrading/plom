@@ -11,10 +11,8 @@ See also the closely-related
 :class:`plom_server.TaskOrder.services.TaskOrderService`.
 """
 
-import random
-
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Func
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.models import Paper
@@ -51,9 +49,9 @@ def get_tasks_to_update_priority_by_q_v(
 def set_marking_priority_shuffle() -> None:
     """Set the priority to shuffle: every marking task gets a random priority value."""
     tasks = _get_tasks_to_update_priority()
-    for task in tasks:
-        task.marking_priority = random.randint(0, 1000)
-    MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
+    tasks.update(
+        marking_priority=Func(Func(function="RANDOM") * 1000, function="FLOOR")
+    )
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
 
