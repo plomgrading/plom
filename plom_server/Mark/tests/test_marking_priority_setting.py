@@ -73,7 +73,7 @@ class MarkingTaskPriorityTests(TestCase):
         )
         for task in tasks:
             self.assertTrue(
-                task.marking_priority <= 1000 and task.marking_priority >= 0
+                task.marking_priority >= 0 and isinstance(task.marking_priority, int)
             )
 
         self.assertEqual(MarkingPriorityService.get_mark_priority_strategy(), "shuffle")

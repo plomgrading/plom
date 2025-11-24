@@ -51,7 +51,13 @@ def set_marking_priority_shuffle() -> None:
     """Set the priority to shuffle: every marking task gets a random priority value."""
     tasks = _get_tasks_to_update_priority()
     tasks.update(
-        marking_priority=Func(Func(function="RANDOM") * 1000, function="FLOOR")
+        # this bit constructs an SQL query. All work happens within the DB.
+        # we want a positive int, but RANDOM implementation is different from DB to DB
+        # postgres picks a float between 0 and 1 - needs CEIL
+        # sqlite picks a _signed_ 64 bit integer - needs ABS
+        marking_priority=Func(
+            Func(Func(function="RANDOM") * 1000, function="CEIL"), function="ABS"
+        )
     )
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
