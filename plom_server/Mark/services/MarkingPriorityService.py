@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Aidan Murphy
 
 """Functions for setting and modifying priority for marking tasks.
 
