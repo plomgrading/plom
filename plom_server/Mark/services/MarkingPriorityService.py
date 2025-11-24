@@ -14,6 +14,7 @@ See also the closely-related
 
 from django.db import transaction
 from django.db.models import QuerySet, Func
+from django.db.models.functions import Random
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.models import Paper
@@ -53,11 +54,8 @@ def set_marking_priority_shuffle() -> None:
     tasks.update(
         # this bit constructs an SQL query. All work happens within the DB.
         # we want a positive int, but RANDOM implementation is different from DB to DB
-        # postgres picks a float between 0 and 1 - needs CEIL
-        # sqlite picks a _signed_ 64 bit integer - needs ABS
-        marking_priority=Func(
-            Func(Func(function="RANDOM") * 1000, function="CEIL"), function="ABS"
-        )
+        # so we use Django's Random()
+        marking_priority=Func(Random() * 1000, function="FLOOR")
     )
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
