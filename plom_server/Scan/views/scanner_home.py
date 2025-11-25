@@ -181,7 +181,9 @@ class ScannerUploadView(ScannerRequiredView):
             messages.add_message(request, messages.ERROR, e.message)
             return HttpResponseClientRefresh()
         if info["warnings"]:
-            messages.add_message(request, messages.WARNING, "Warning: " + info["warnings"])
+            messages.add_message(
+                request, messages.WARNING, "Warning: " + info["warnings"]
+            )
         messages.add_message(request, messages.INFO, "Success: " + info["msg"])
         return HttpResponseClientRefresh()
 
