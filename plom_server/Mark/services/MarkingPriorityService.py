@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Aidan Murphy
 
 """Functions for setting and modifying priority for marking tasks.
 
@@ -11,10 +12,9 @@ See also the closely-related
 :class:`plom_server.TaskOrder.services.TaskOrderService`.
 """
 
-import random
-
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Func, OuterRef, Subquery
+from django.db.models.functions import Random
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.models import Paper
@@ -48,25 +48,45 @@ def get_tasks_to_update_priority_by_q_v(
 
 
 @transaction.atomic
-def set_marking_piority_shuffle() -> None:
-    """Set the priority to shuffle: every marking task gets a random priority value."""
+def set_marking_priority_shuffle() -> None:
+    """Set the priority to shuffle: every marking task gets a random priority value.
+
+    All work happens on the DB side. Take care when editing this function and
+    consider performance at scale.
+    """
     tasks = _get_tasks_to_update_priority()
-    for task in tasks:
-        task.marking_priority = random.randint(0, 1000)
-    MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
+    tasks.update(
+        # this bit constructs an SQL query. All work happens within the DB.
+        # we want a positive int, but RANDOM implementation is different from DB to DB
+        # so we use Django's Random()
+        marking_priority=Func(Random() * 1000, function="FLOOR")
+    )
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
 
 @transaction.atomic
 def set_marking_priority_paper_number() -> None:
-    """Set the priority inversely proportional to the paper number."""
+    """Set the priority inversely proportional to the paper number.
+
+    Some complex Django expressions to ensure most processing happens
+    on the db side. Take care when editing this and consider
+    performance at scale.
+    """
     largest_paper_num = (
         Paper.objects.all().order_by("-paper_number").first().paper_number
     )
     tasks = _get_tasks_to_update_priority()
-    for task in tasks:
-        task.marking_priority = largest_paper_num - task.paper.paper_number
-    MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
+
+    # this subquery is a workaround for an UPDATE with a JOIN statement
+    # (not allowed in Django)
+    # it reads something like 'JOIN PAPER on OUTERTABLE.paper=PAPER.id'
+    # where OUTERTABLE isn't specified until the subquery is embedded
+    # in a different Django expression.
+    papernum_subquery = Paper.objects.filter(id=OuterRef("paper")).values(
+        "paper_number"
+    )
+
+    tasks.update(marking_priority=largest_paper_num - Subquery(papernum_subquery))
     Settings.key_value_store_set("task_order_strategy", "paper_number")
 
 

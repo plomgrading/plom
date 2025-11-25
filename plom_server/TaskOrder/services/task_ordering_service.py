@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 from csv import DictReader
 
@@ -35,7 +36,7 @@ class TaskOrderService:
                 (for existing tasks).
         """
         if order == "shuffle":
-            MarkingPriorityService.set_marking_piority_shuffle()
+            MarkingPriorityService.set_marking_priority_shuffle()
         elif order == "custom":
             assert custom_order is not None, "must provide custom_order kwarg"
             MarkingPriorityService.set_marking_priority_custom(
