@@ -84,6 +84,13 @@ def random_chars(n: int) -> str:
     return "".join(random.choices(alphabet, k=n))
 
 
+def uniquify_str_against_list(s: str, lst_of_strs: list[str]) -> str:
+    ss = s
+    while ss in lst_of_strs:
+        ss = s + "_" + random_chars(6)
+    return ss
+
+
 class ScanService:
     """Functions for staging scanned test-papers."""
 
@@ -211,18 +218,17 @@ class ScanService:
                     raise PlomConflict(msg)
                 warnings.append(msg)
 
-            # if necessary, unique-ify the slug with a random suffix
+            # if necessary, uniquify the slug with a random suffix
             # (we're inside a durable atomic: no race condition here)
-            if StagingBundle.objects.filter(slug=slug).exists():
-                while True:
-                    _slug = slug + "_" + random_chars(6)
-                    if not StagingBundle.objects.filter(slug=_slug).exists():
-                        warnings.append(
-                            f'Using bundle name "{_slug}"'
-                            f' because "{slug}" is not unique'
-                        )
-                        slug = _slug
-                        break
+            current_slugs = list(
+                StagingBundle.objects.all().values_list("slug", flat=True)
+            )
+            if slug in current_slugs:
+                _slug = slug
+                slug = uniquify_str_against_list(_slug, current_slugs)
+                warnings.append(
+                    f'Using bundle name "{slug}" because "{_slug}" was not unique'
+                )
 
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
