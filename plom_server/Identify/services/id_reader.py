@@ -200,6 +200,12 @@ class IDReaderService:
         else:
             IDPrediction.objects.all().delete()
 
+    @classmethod
+    def delete_all_ML_ID_predictions(cls) -> None:
+        """Delete all ID predictions related to machine-learning methods."""
+        for predictor_name in ("MLLAP", "MLGreedy", "MLBestGuess"):
+            cls.delete_ID_predictions(predictor_name)
+
     @staticmethod
     def bulk_add_or_update_prename_ID_predictions(
         user: User,

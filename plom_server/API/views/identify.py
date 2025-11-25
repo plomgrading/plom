@@ -71,17 +71,16 @@ class GetIDPredictions(APIView):
         return Response(status=status.HTTP_200_OK)
 
     def delete(self, request: Request, *, predictor: str | None = None) -> Response:
-        """Remove ID predictions from either a particular predictor or all predictors."""
+        """Remove ID predictions from either a particular predictor or all ML predictors."""
         if predictor:
             try:
                 IDReaderService.delete_ID_predictions(predictor)
-                return Response(status=status.HTTP_200_OK)
             except RuntimeError as e:
                 return _error_response(e, status.HTTP_400_BAD_REQUEST)
-        else:
-            for predictor_name in ("MLLAP", "MLGreedy", "MLBestGuess"):
-                IDReaderService.delete_ID_predictions(predictor_name)
             return Response(status=status.HTTP_200_OK)
+
+        IDReaderService.delete_all_ML_ID_predictions()
+        return Response(status=status.HTTP_200_OK)
 
 
 class IDgetDoneTasks(APIView):
