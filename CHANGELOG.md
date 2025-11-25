@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Could not delete MLBestGuess predictions via the UI.
+* Quick fix for faster task re-ordering in larger courses.
 
 
 
