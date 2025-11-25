@@ -43,10 +43,9 @@ class Command(BaseCommand):
         except MultipleObjectsReturned:
             raise CommandError("The ID reader is already running.")
 
-    def delete_ID_predictions(self) -> None:
-        self.stdout.write("Deleting all MLLAP and MLGreedy ID predictions.")
-        IDReaderService().delete_ID_predictions("MLLAP")
-        IDReaderService().delete_ID_predictions("MLGreedy")
+    def delete_all_ML_ID_predictions(self) -> None:
+        self.stdout.write("Deleting all machine learning ID predictions.")
+        IDReaderService.delete_all_ML_ID_predictions()
 
     def wait_for_reader(self) -> None:
         self.stdout.write("Waiting for any background ID reader processes to finish")
@@ -108,6 +107,6 @@ class Command(BaseCommand):
         elif kwargs["wait"]:
             self.wait_for_reader()
         elif kwargs["delete"]:
-            self.delete_ID_predictions()
+            self.delete_all_ML_ID_predictions()
         else:
             self.print_help("manage.py", "plom_run_id_reader")

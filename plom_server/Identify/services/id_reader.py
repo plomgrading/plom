@@ -9,7 +9,7 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import cv2 as cv
 
@@ -192,13 +192,23 @@ class IDReaderService:
             user, paper_num, student_id, certainty, predictor
         )
 
-    @transaction.atomic
-    def delete_ID_predictions(self, predictor: str | None = None) -> None:
-        """Delete all ID predictions from a particular predictor."""
+    @staticmethod
+    def delete_ID_predictions(predictor: str | None = None) -> None:
+        """Delete all ID predictions, or optionally all from a particular predictor."""
         if predictor:
             IDPrediction.objects.filter(predictor=predictor).delete()
         else:
             IDPrediction.objects.all().delete()
+
+    @classmethod
+    def delete_all_ML_ID_predictions(cls) -> None:
+        """Delete all ID predictions related to machine-learning methods."""
+        for predictor_name in cls.all_ML_ID_predictor_names():
+            cls.delete_ID_predictions(predictor_name)
+
+    @staticmethod
+    def all_ML_ID_predictor_names() -> Iterable[str]:
+        return ("MLLAP", "MLGreedy", "MLBestGuess")
 
     @staticmethod
     def bulk_add_or_update_prename_ID_predictions(

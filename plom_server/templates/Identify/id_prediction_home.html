@@ -17,57 +17,39 @@
         {% if id_reader_task_status.status == "Complete" %}
             <p class="my-4">
                 <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLGreedy" %}">Delete Greedy predictions</button>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">
-                    Delete BestGuess predictions
-                </button>
+                {% for predictor in list_of_ML_predictors %}
+                    <button class="btn btn-warning"
+                            hx-delete="{% url 'id_prediction_delete' predictor %}"
+                            hx-confirm="Are you sure?">Delete {{ predictor }} predictions</button>
+                {% endfor %}
             </p>
             <span class="alert alert-success my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "Error" %}
             <p class="my-4">
                 <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLGreedy" %}">Delete Greedy predictions</button>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">
-                    Delete BestGuess predictions
-                </button>
+                {% for predictor in list_of_ML_predictors %}
+                    <button class="btn btn-warning"
+                            hx-delete="{% url 'id_prediction_delete' predictor %}"
+                            hx-confirm="Are you sure?">Delete {{ predictor }} predictions</button>
+                {% endfor %}
             </p>
             <span class="alert alert-warning my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "To Do" %}
             <p class="my-4">
                 <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</a>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLGreedy" %}">Delete Greedy predictions</button>
-                <button class="btn btn-warning"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'id_prediction_delete' "MLBestGuess" %}">
-                    Delete BestGuess predictions
-                </button>
+                {% for predictor in list_of_ML_predictors %}
+                    <button class="btn btn-warning"
+                            hx-delete="{% url 'id_prediction_delete' predictor %}"
+                            hx-confirm="Are you sure?">Delete {{ predictor }} predictions</button>
+                {% endfor %}
             </p>
             <span class="alert alert-info my-4">Reader not yet run.</span>
         {% else %}
             <p class="my-4">
                 <button disabled class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</button>
-                <button class="btn btn-warning" disabled>Delete LAP predictions</button>
-                <button class="btn btn-warning" disabled>Delete Greedy predictions</button>
-                <button class="btn btn-warning" disabled>Delete BestGuess predictions</button>
+                {% for predictor in list_of_ML_predictors %}
+                    <button class="btn btn-warning" disabled>Delete {{ predictor }} predictions</button>
+                {% endfor %}
                 <a class="btn btn-primary" href="{% url 'id_prediction_home' %}"><i class="bi bi-arrow-clockwise"></i></a>
             </p>
             <span class="alert alert-info my-4">{{ id_reader_task_status.message }}</span>
