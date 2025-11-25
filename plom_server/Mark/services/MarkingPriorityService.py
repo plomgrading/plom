@@ -13,7 +13,7 @@ See also the closely-related
 """
 
 from django.db import transaction
-from django.db.models import QuerySet, Func
+from django.db.models import QuerySet, Func, OuterRef, Subquery
 from django.db.models.functions import Random
 
 from plom_server.Base.services import Settings
@@ -49,7 +49,11 @@ def get_tasks_to_update_priority_by_q_v(
 
 @transaction.atomic
 def set_marking_priority_shuffle() -> None:
-    """Set the priority to shuffle: every marking task gets a random priority value."""
+    """Set the priority to shuffle: every marking task gets a random priority value.
+
+    All work happens on the DB side. Take care when editing this function and
+    consider performance at scale.
+    """
     tasks = _get_tasks_to_update_priority()
     tasks.update(
         # this bit constructs an SQL query. All work happens within the DB.
@@ -62,14 +66,27 @@ def set_marking_priority_shuffle() -> None:
 
 @transaction.atomic
 def set_marking_priority_paper_number() -> None:
-    """Set the priority inversely proportional to the paper number."""
+    """Set the priority inversely proportional to the paper number.
+
+    Some complex Django expressions to ensure most processing happens
+    on the db side. Take care when editing this and consider
+    performance at scale.
+    """
     largest_paper_num = (
         Paper.objects.all().order_by("-paper_number").first().paper_number
     )
     tasks = _get_tasks_to_update_priority()
-    for task in tasks:
-        task.marking_priority = largest_paper_num - task.paper.paper_number
-    MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
+
+    # this subquery is a workaround for an UPDATE with a JOIN statement
+    # (not allowed in Django)
+    # it reads something like 'JOIN PAPER on OUTERTABLE.paper=PAPER.id'
+    # where OUTERTABLE isn't specified until the subquery is embedded
+    # in a different Django expression.
+    papernum_subquery = Paper.objects.filter(id=OuterRef("paper")).values(
+        "paper_number"
+    )
+
+    tasks.update(marking_priority=largest_paper_num - Subquery(papernum_subquery))
     Settings.key_value_store_set("task_order_strategy", "paper_number")
 
 
