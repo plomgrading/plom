@@ -192,9 +192,9 @@ class IDReaderService:
             user, paper_num, student_id, certainty, predictor
         )
 
-    @transaction.atomic
-    def delete_ID_predictions(self, predictor: str | None = None) -> None:
-        """Delete all ID predictions from a particular predictor."""
+    @staticmethod
+    def delete_ID_predictions(predictor: str | None = None) -> None:
+        """Delete all ID predictions, or optionally all from a particular predictor."""
         if predictor:
             IDPrediction.objects.filter(predictor=predictor).delete()
         else:

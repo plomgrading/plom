@@ -44,9 +44,9 @@ class Command(BaseCommand):
             raise CommandError("The ID reader is already running.")
 
     def delete_ID_predictions(self) -> None:
-        self.stdout.write("Deleting all MLLAP and MLGreedy ID predictions.")
-        IDReaderService().delete_ID_predictions("MLLAP")
-        IDReaderService().delete_ID_predictions("MLGreedy")
+        self.stdout.write("Deleting all machine learning ID predictions.")
+        for predictor_name in ("MLLAP", "MLGreedy", "MLBestGuess"):
+            IDReaderService.delete_ID_predictions(predictor_name)
 
     def wait_for_reader(self) -> None:
         self.stdout.write("Waiting for any background ID reader processes to finish")

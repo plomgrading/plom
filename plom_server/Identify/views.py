@@ -67,7 +67,7 @@ class IDPredictionHXDeleteView(ManagerRequiredView):
         """
         if predictor not in ("MLLAP", "MLGreedy", "MLBestGuess"):
             return HttpResponse(f'No such predictor "{predictor}"', status=400)
-        IDReaderService().delete_ID_predictions(predictor)
+        IDReaderService.delete_ID_predictions(predictor)
         return HttpResponseClientRedirect(reverse("id_prediction_home"))
 
 
