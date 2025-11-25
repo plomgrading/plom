@@ -9,7 +9,7 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import cv2 as cv
 
@@ -207,7 +207,7 @@ class IDReaderService:
             cls.delete_ID_predictions(predictor_name)
 
     @staticmethod
-    def all_ML_ID_predictor_names() -> tuple[str]:
+    def all_ML_ID_predictor_names() -> Iterable[str]:
         return ("MLLAP", "MLGreedy", "MLBestGuess")
 
     @staticmethod
