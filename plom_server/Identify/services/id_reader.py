@@ -203,8 +203,12 @@ class IDReaderService:
     @classmethod
     def delete_all_ML_ID_predictions(cls) -> None:
         """Delete all ID predictions related to machine-learning methods."""
-        for predictor_name in ("MLLAP", "MLGreedy", "MLBestGuess"):
+        for predictor_name in cls.all_ML_ID_predictor_names():
             cls.delete_ID_predictions(predictor_name)
+
+    @staticmethod
+    def all_ML_ID_predictor_names() -> tuple[str]:
+        return ("MLLAP", "MLGreedy", "MLBestGuess")
 
     @staticmethod
     def bulk_add_or_update_prename_ID_predictions(

@@ -51,7 +51,12 @@ class IDPredictionView(ManagerRequiredView):
                         {"identified": id_task_info[pn]["student_id"]}
                     )
 
-        context.update({"predictions": prediction_table})
+        context.update(
+            {
+                "predictions": prediction_table,
+                "list_of_ML_predictors": IDReaderService.all_ML_ID_predictor_names(),
+            }
+        )
 
         return render(request, "Identify/id_prediction_home.html", context)
 
@@ -64,8 +69,10 @@ class IDPredictionHXDeleteView(ManagerRequiredView):
 
         Currently there is a hard-coded list of which predictions can be removed.
         Asking for something not the on the list is a 400 error.
+
+        Note: currently this routine cannot be used to erase prename predictions.
         """
-        if predictor not in ("MLLAP", "MLGreedy", "MLBestGuess"):
+        if predictor not in IDReaderService.all_ML_ID_predictor_names():
             return HttpResponse(f'No such predictor "{predictor}"', status=400)
         IDReaderService.delete_ID_predictions(predictor)
         return HttpResponseClientRedirect(reverse("id_prediction_home"))
