@@ -9,7 +9,7 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import cv2 as cv
 
@@ -159,12 +159,55 @@ class IDReaderService:
 
         IdentifyTaskService.update_task_priority(paper)
 
-    def delete_ID_predictions(self, predictor: str | None = None) -> None:
+    def add_or_change_ID_prediction_cmd(
+        self,
+        username: str,
+        paper_num: int,
+        student_id: str,
+        certainty: float,
+        predictor: str,
+    ) -> None:
+        """Wrapper around add_or_change_ID_prediction for use by the management command-line tool.
+
+        Checks whether username is valid and fetches the corresponding User from the DB.
+
+        Args:
+            username: the username to associate with the new prediction.
+            paper_num: the paper number of the ID page whose ID prediction to add/change.
+            student_id: the student ID with which to update the predictions in the DB.
+            certainty: the confidence value associated with the prediction.
+            predictor: identifier defining the type of prediction that is being added/changed.
+
+        Raises:
+            ValueError: if the username provided is not valid, or is not part of the manager group.
+        """
+        try:
+            user = User.objects.get(username__iexact=username, groups__name="manager")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            ) from e
+        self.add_or_change_ID_prediction(
+            user, paper_num, student_id, certainty, predictor
+        )
+
+    @staticmethod
+    def delete_ID_predictions(predictor: str | None = None) -> None:
         """Delete all ID predictions, or optionally all from a particular predictor."""
         if predictor:
             IDPrediction.objects.filter(predictor=predictor).delete()
         else:
             IDPrediction.objects.all().delete()
+
+    @classmethod
+    def delete_all_ML_ID_predictions(cls) -> None:
+        """Delete all ID predictions related to machine-learning methods."""
+        for predictor_name in cls.all_ML_ID_predictor_names():
+            cls.delete_ID_predictions(predictor_name)
+
+    @staticmethod
+    def all_ML_ID_predictor_names() -> Iterable[str]:
+        return ("MLLAP", "MLGreedy", "MLBestGuess")
 
     @staticmethod
     def bulk_add_or_update_prename_ID_predictions(
