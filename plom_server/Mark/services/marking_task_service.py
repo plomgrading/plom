@@ -159,7 +159,9 @@ class MarkingTaskService:
             existing_tags[X.code] = X.markingtasktag_set.all()
         # get priority strategy for new tasks
         strategy = MarkingPriorityService.get_mark_priority_strategy()
-        total_papers = Paper.objects.count()
+        largest_paper_num = (
+            Paper.objects.all().order_by("-paper_number").first().paper_number
+        )
         # create new tasks using any existing priorities
         # unfortunately we need the associated paper-objects
         # and need to be able to look-up from paper-number
@@ -173,7 +175,10 @@ class MarkingTaskService:
             if code in priorities:
                 priority = priorities[code]
             elif strategy == "paper_number":
-                priority = total_papers - pn
+                # TODO: this logic is duplicated in at least two other places
+                # See `set_marking_priority_paper_number` in another file
+                # and :method:`create_task` in this same file.
+                priority = largest_paper_num - pn
             else:
                 priority = random.randint(0, 1000)
             new_tasks.append(
