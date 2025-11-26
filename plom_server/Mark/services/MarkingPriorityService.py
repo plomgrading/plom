@@ -130,10 +130,6 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> Non
 
 
 def modify_task_priority(task: MarkingTask, new_priority: int) -> None:
-    """Modify the priority of a single marking task.
-
-    This is used in unit testing but is currently otherwise unused
-    (probably b/c we use a bulk setting strategy).
-    """
+    """Modify the priority of a single marking task."""
     task.marking_priority = new_priority
     task.save()
