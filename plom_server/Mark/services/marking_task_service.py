@@ -90,10 +90,11 @@ class MarkingTaskService:
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
-            # Note: for some dumb reason, this logic is largely repeated here
-            # from `MarkingPriorityService.py`.
+            # Note: for some reason that no longer makes much sense, the logic is
+            # largely repeated here from `MarkingPriorityService.py`.
             # Make sure you change both if you make changes here.  Or ya know,
             # fix the logic to live in just one place!
+            # see issue #4096
             strategy = MarkingPriorityService.get_mark_priority_strategy()
             if strategy == "paper_number":
                 largest_paper_num = (

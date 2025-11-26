@@ -72,11 +72,14 @@ def set_marking_priority_paper_number() -> None:
     on the db side. Take care when editing this and consider
     performance at scale.
 
-    Note: for some dumb reason, this logic is largely repeated in
+    Note: for some reason that doesnt make much sense to anyone and
+    definitely needs to be fixed , this logic is largely repeated in
     `marking_task_service.py` in :class:`MarkingTaskService`.  Make
     sure you change both if you make changes here.  Or ya know, fix
     the logic to live in just one place!
+
     """
+    # See issue #4096
     largest_paper_num = (
         Paper.objects.all().order_by("-paper_number").first().paper_number
     )
