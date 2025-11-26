@@ -72,7 +72,7 @@ def set_marking_priority_paper_number() -> None:
     on the db side. Take care when editing this and consider
     performance at scale.
 
-    Note: for some reason that doesnt make much sense to anyone and
+    Note: for some reason that doesn't make much sense to anyone and
     definitely needs to be fixed , this logic is largely repeated in
     `marking_task_service.py` in :class:`MarkingTaskService`.  Make
     sure you change both if you make changes here.  Or ya know, fix
@@ -108,9 +108,9 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> Non
             in custom_order, it remains the same. If the key is valid, but the corresponding
             task doesn't exist, the entry is ignored.
     """
-    assert isinstance(custom_order, dict), (
-        "`custom_order` must be of type dict[tuple[int, int], int]."
-    )
+    assert isinstance(
+        custom_order, dict
+    ), "`custom_order` must be of type dict[tuple[int, int], int]."
 
     tasks = _get_tasks_to_update_priority()
     tasks_to_update = []
