@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2025 Aidan Murphy
@@ -108,9 +108,9 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> Non
             in custom_order, it remains the same. If the key is valid, but the corresponding
             task doesn't exist, the entry is ignored.
     """
-    assert isinstance(
-        custom_order, dict
-    ), "`custom_order` must be of type dict[tuple[int, int], int]."
+    assert isinstance(custom_order, dict), (
+        "`custom_order` must be of type dict[tuple[int, int], int]."
+    )
 
     tasks = _get_tasks_to_update_priority()
     tasks_to_update = []
