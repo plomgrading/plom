@@ -11,7 +11,6 @@
 import json
 import logging
 import pathlib
-import random
 from typing import Any
 
 from django.contrib.auth.models import User
@@ -90,21 +89,7 @@ class MarkingTaskService:
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
-            # Note: for some reason that no longer makes much sense, the logic is
-            # largely repeated here from `MarkingPriorityService.py`.
-            # Make sure you change both if you make changes here.  Or ya know,
-            # fix the logic to live in just one place!
-            # see issue #4096
-            strategy = MarkingPriorityService.get_mark_priority_strategy()
-            if strategy == "paper_number":
-                largest_paper_num = (
-                    Paper.objects.all().order_by("-paper_number").first().paper_number
-                )
-                # max just in case #4096
-                priority = max(0, largest_paper_num - paper.paper_number)
-            else:
-                # TODO: careful this 1000 is also repeated elsewherre.
-                priority = random.randint(0, 1000)
+            priority = MarkingPriorityService.compute_priority(paper.paper_number)
 
         the_task = MarkingTask.objects.create(
             assigned_user=user,
@@ -176,14 +161,10 @@ class MarkingTaskService:
             code = f"{pn:04}g{qi}"
             if code in priorities:
                 priority = priorities[code]
-            elif strategy == "paper_number":
-                # TODO: this logic is duplicated in at least two other places
-                # See `set_marking_priority_paper_number` in another file
-                # and :method:`create_task` in this same file.
-                # max just in case #4096
-                priority = max(0, largest_paper_num - pn)
             else:
-                priority = random.randint(0, 1000)
+                priority = MarkingPriorityService.compute_priority(
+                    pn, strategy=strategy, largest_paper_num=largest_paper_num
+                )
             new_tasks.append(
                 MarkingTask(
                     assigned_user=None,

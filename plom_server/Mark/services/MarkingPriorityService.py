@@ -12,6 +12,8 @@ See also the closely-related
 :class:`plom_server.TaskOrder.services.TaskOrderService`.
 """
 
+import random
+
 from django.db import transaction
 from django.db.models import QuerySet, Func, OuterRef, Subquery
 from django.db.models.functions import Random
@@ -62,6 +64,38 @@ def set_marking_priority_shuffle() -> None:
         marking_priority=Func(Random() * 1000, function="FLOOR")
     )
     Settings.key_value_store_set("task_order_strategy", "shuffle")
+
+
+def compute_priority(
+    papernum: int, *, strategy: str | None = None, largest_paper_num: int | None = None
+) -> int:
+    """Compute the priority for a new task.
+
+    Args:
+        papernum: some calculations rely on the paper number.
+
+    Keyword Args:
+        strategy: which strategy should we use for the calculation?
+            If omitted we can query the database.
+        largest_paper_num: some calculations need to know this.  If
+            not provided, we will query the database but you may
+            wish to provide it for efficiency if you're calling about
+            multiple tasks.
+
+    Note: logic is repeated elsewhere in the file, be careful.
+    """
+    if strategy is None:
+        strategy = get_mark_priority_strategy()
+    if strategy == "paper_number":
+        if largest_paper_num is None:
+            largest_paper_num = (
+                Paper.objects.all().order_by("-paper_number").first().paper_number
+            )
+        priority = largest_paper_num - papernum
+    else:
+        # TODO: careful this 1000 is also repeated elsewherre.
+        priority = random.randint(0, 1000)
+    return priority
 
 
 @transaction.atomic
