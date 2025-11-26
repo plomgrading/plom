@@ -167,7 +167,7 @@ class ScannerUploadView(ScannerRequiredView):
         read_after = request.POST.get("read_after") == "on"
         force = request.POST.get("accept_duplicates") == "on"
         try:
-            bundle_id, success_msg, warnings = ScanService.upload_bundle(
+            info = ScanService.upload_bundle(
                 bundle_file,
                 user,
                 force_render=force_render,
@@ -180,9 +180,11 @@ class ScannerUploadView(ScannerRequiredView):
         except ValidationError as e:
             messages.add_message(request, messages.ERROR, e.message)
             return HttpResponseClientRefresh()
-        if warnings:
-            messages.add_message(request, messages.WARNING, "Warning: " + warnings)
-        messages.add_message(request, messages.INFO, "Success: " + success_msg)
+        if info["warnings"]:
+            messages.add_message(
+                request, messages.WARNING, "Warning: " + info["warnings"]
+            )
+        messages.add_message(request, messages.INFO, "Success: " + info["msg"])
         return HttpResponseClientRefresh()
 
 
