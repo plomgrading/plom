@@ -90,10 +90,18 @@ class MarkingTaskService:
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
+            # Note: for some dumb reason, this logic is largely repeated here
+            # from `MarkingPriorityService.py`.
+            # Make sure you change both if you make changes here.  Or ya know,
+            # fix the logic to live in just one place!
             strategy = MarkingPriorityService.get_mark_priority_strategy()
             if strategy == "paper_number":
-                priority = Paper.objects.count() - paper.paper_number
+                largest_paper_num = (
+                    Paper.objects.all().order_by("-paper_number").first().paper_number
+                )
+                priority = largest_paper_num - paper.paper_number
             else:
+                # TODO: careful this 1000 is also repeated elsewherre.
                 priority = random.randint(0, 1000)
 
         the_task = MarkingTask.objects.create(
