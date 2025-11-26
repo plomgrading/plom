@@ -95,6 +95,9 @@ def compute_priority(
     else:
         # TODO: careful this 1000 is also repeated elsewherre.
         priority = random.randint(0, 1000)
+    # in case of bugs, priority should always be positive, for some unknonn
+    # reason that would be revisited.
+    priority = max(0, priority)
     return priority
 
 
