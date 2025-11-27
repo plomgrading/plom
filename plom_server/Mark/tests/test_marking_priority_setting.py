@@ -54,6 +54,12 @@ class MarkingTaskPriorityTests(TestCase):
         assert p >= 0
         assert p == 6
 
+    def test_priority_compute_out_of_range(self) -> None:
+        # tiny demo only has a few papers so if we request out-of-range papernum
+        # it could still go negative (but there is a cap in place to
+        p = MarkingPriorityService.compute_priority(1_000_000, strategy="paper_number")
+        assert p >= 0
+
     def test_set_priority_papernum(self) -> None:
         """Test that PAPER_NUMBER is the default strategy."""
         n_papers = Paper.objects.count()
