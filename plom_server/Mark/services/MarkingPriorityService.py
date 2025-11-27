@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2025 Aidan Murphy
@@ -71,7 +71,15 @@ def set_marking_priority_paper_number() -> None:
     Some complex Django expressions to ensure most processing happens
     on the db side. Take care when editing this and consider
     performance at scale.
+
+    Note: for some reason that doesn't make much sense to anyone and
+    definitely needs to be fixed , this logic is largely repeated in
+    `marking_task_service.py` in :class:`MarkingTaskService`.  Make
+    sure you change both if you make changes here.  Or ya know, fix
+    the logic to live in just one place!
+
     """
+    # See issue #4096
     largest_paper_num = (
         Paper.objects.all().order_by("-paper_number").first().paper_number
     )
@@ -122,10 +130,6 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> Non
 
 
 def modify_task_priority(task: MarkingTask, new_priority: int) -> None:
-    """Modify the priority of a single marking task.
-
-    This is used in unit testing but is currently otherwise unused
-    (probably b/c we use a bulk setting strategy).
-    """
+    """Modify the priority of a single marking task."""
     task.marking_priority = new_priority
     task.save()
