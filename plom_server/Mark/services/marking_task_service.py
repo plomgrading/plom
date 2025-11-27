@@ -100,7 +100,8 @@ class MarkingTaskService:
                 largest_paper_num = (
                     Paper.objects.all().order_by("-paper_number").first().paper_number
                 )
-                priority = largest_paper_num - paper.paper_number
+                # max just in case #4096
+                priority = max(0, largest_paper_num - paper.paper_number)
             else:
                 # TODO: careful this 1000 is also repeated elsewherre.
                 priority = random.randint(0, 1000)
@@ -179,7 +180,8 @@ class MarkingTaskService:
                 # TODO: this logic is duplicated in at least two other places
                 # See `set_marking_priority_paper_number` in another file
                 # and :method:`create_task` in this same file.
-                priority = largest_paper_num - pn
+                # max just in case #4096
+                priority = max(0, largest_paper_num - pn)
             else:
                 priority = random.randint(0, 1000)
             new_tasks.append(
