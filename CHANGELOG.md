@@ -31,6 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+
+
+
+## [0.19.7] - 2025-11-26
+
+### Fixed
 * Could not delete MLBestGuess predictions via the UI.
 * Quick fix for faster task re-ordering in larger courses.
 * Quick fix for error about negative task priorities for papers not starting from 1.
@@ -1601,7 +1608,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.19.6...main
+[0.19.7]: https://gitlab.com/plom/plom/-/compare/v0.19.6...v0.19.7
 [0.19.6]: https://gitlab.com/plom/plom/-/compare/v0.19.5...v0.19.6
 [0.19.5]: https://gitlab.com/plom/plom/-/compare/v0.19.4...v0.19.5
 [0.19.4]: https://gitlab.com/plom/plom/-/compare/v0.19.3...v0.19.4
