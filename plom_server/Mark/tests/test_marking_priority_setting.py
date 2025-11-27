@@ -47,6 +47,13 @@ class MarkingTaskPriorityTests(TestCase):
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "paper_number")
 
+    def test_stand_alone_priority_compute(self) -> None:
+        p = MarkingPriorityService.compute_priority(
+            10, strategy="paper_number", largest_paper_num=16
+        )
+        assert p >= 0
+        assert p == 6
+
     def test_set_priority_papernum(self) -> None:
         """Test that PAPER_NUMBER is the default strategy."""
         n_papers = Paper.objects.count()
