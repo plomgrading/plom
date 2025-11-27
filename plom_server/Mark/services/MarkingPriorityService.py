@@ -55,6 +55,10 @@ def set_marking_priority_shuffle() -> None:
 
     All work happens on the DB side. Take care when editing this function and
     consider performance at scale.
+
+    Note: logic here is repeated in :function:`compute_priority` which
+    is used in `marking_task_service.py`.  Make sure you change both if
+    you make changes here.
     """
     tasks = _get_tasks_to_update_priority()
     tasks.update(
@@ -82,7 +86,8 @@ def compute_priority(
             wish to provide it for efficiency if you're calling about
             multiple tasks.
 
-    Note: logic is repeated elsewhere in the file, be careful.
+    Note: logic is repeated elsewhere in this file, be careful making
+    changes to ensure consistency.
     """
     if strategy is None:
         strategy = get_mark_priority_strategy()
@@ -109,12 +114,9 @@ def set_marking_priority_paper_number() -> None:
     on the db side. Take care when editing this and consider
     performance at scale.
 
-    Note: for some reason that doesn't make much sense to anyone and
-    definitely needs to be fixed , this logic is largely repeated in
-    `marking_task_service.py` in :class:`MarkingTaskService`.  Make
-    sure you change both if you make changes here.  Or ya know, fix
-    the logic to live in just one place!
-
+    Note: logic here is repeated in :function:`compute_priority` which
+    is used in `marking_task_service.py`.  Make sure you change both if
+    you make changes here.
     """
     # See issue #4096
     largest_paper_num = (
