@@ -1709,6 +1709,7 @@ def huey_parent_split_bundle_chore(
     Raises:
         ValueError: various error situations about the input.
         RuntimeError: child chore failed.
+        AssertionError: unexpected situations, such as zero-length bundle.
     """
     assert task is not None
 
@@ -1716,6 +1717,7 @@ def huey_parent_split_bundle_chore(
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
     bundle_length = bundle_obj.number_of_pages
     assert bundle_length is not None, "Should know bundle length before processing"
+    assert bundle_length > 0, "Bundle length should be non-zero"
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
