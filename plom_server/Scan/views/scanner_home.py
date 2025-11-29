@@ -294,7 +294,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             context.update(
                 {
                     "number_of_split_pages": done,
-                    "percent_split": 0 if numpgs is None else (100 * done) // numpgs,
+                    "percent_split": 0 if not numpgs else (100 * done) // numpgs,
                 }
             )
         if context["is_mid_qr_read"]:
@@ -302,7 +302,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             context.update(
                 {
                     "number_of_read_pages": done,
-                    "percent_read": 0 if numpgs is None else (100 * done) // numpgs,
+                    "percent_read": 0 if not numpgs else (100 * done) // numpgs,
                 }
             )
 
