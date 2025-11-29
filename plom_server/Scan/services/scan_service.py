@@ -180,9 +180,16 @@ class ScanService:
 
         try:
             with pymupdf.open(stream=file_bytes) as pdf_doc:
+                if not pdf_doc.is_pdf:
+                    raise ValidationError("File is not a valid PDF")
+                # I'm not sure this check is any different but probably doesn't hurt
                 if "PDF" not in pdf_doc.metadata["format"]:
                     raise ValidationError("File is not a valid PDF")
                 number_of_pages = pdf_doc.page_count
+                if number_of_pages == 0:
+                    raise ValidationError(
+                        "File seems to contain no pages?  Perhaps it is not a valid PDF"
+                    )
                 if number_of_pages > settings.MAX_BUNDLE_PAGES:
                     raise ValidationError(
                         f"Uploaded pdf with {number_of_pages} pages"
