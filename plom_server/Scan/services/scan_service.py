@@ -185,6 +185,13 @@ class ScanService:
                 # I'm not sure this check is any different but probably doesn't hurt
                 if "PDF" not in pdf_doc.metadata["format"]:
                     raise ValidationError("File is not a valid PDF")
+
+                if pdf_doc.is_repaired:
+                    msg = "PyMuPDF had to repair this PDF: perhaps it is damaged in some way?"
+                    # if not force:
+                    #     raise ValidationError(msg)
+                    warnings.append(msg)
+
                 number_of_pages = pdf_doc.page_count
                 if number_of_pages == 0:
                     raise ValidationError(
