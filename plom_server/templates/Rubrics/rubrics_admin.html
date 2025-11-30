@@ -48,10 +48,10 @@
                 {% csrf_token %}
                 <div class="form-group mr-2">{{ rubric_halfmark_form }}</div>
                 <button type="submit"
-                        class="btn btn-danger"
+                        class="btn btn-outline-danger"
                         name="init_system_rubrics"
                         {% if not rubrics %}disabled{% endif %}
-                        {% if half_point_rubrics %}disabled{% endif %}>Create half mark rubrics (OPTIONAL)</button>
+                        {% if half_point_rubrics %}disabled{% endif %}>Create &plusmn;half-mark delta rubrics</button>
             </form>
             <p>
                 Introduce two additional rubrics to each question: +&#189; and -&#189;.
