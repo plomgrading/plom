@@ -930,8 +930,7 @@ class RubricService:
             ) from e
         if Rubric.objects.filter(value__exact=0.5).filter(text__exact=".").exists():
             raise ValueError(
-                "Could not create \N{VULGAR FRACTION ONE HALF}-mark delta brubrics:"
-                " they already exist"
+                "Could not create half-mark delta rubrics b/c they already exist"
             )
         cls._build_half_mark_delta_rubrics(username)
 
