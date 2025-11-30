@@ -282,12 +282,8 @@ class Command(BaseCommand):
 
         elif opt["command"] == "half":
             try:
-                if RubricService().build_half_mark_delta_rubrics(opt["username"]):
-                    self.stdout.write(self.style.SUCCESS("Half-mark rubrics added."))
-                else:
-                    raise CommandError(
-                        "Could not add half-mark rubrics - check if they are already present."
-                    )
+                RubricService.build_half_mark_delta_rubrics(opt["username"])
+                self.stdout.write(self.style.SUCCESS("Half-mark rubrics added."))
             except ValueError as e:
                 raise CommandError(e)
         else:
