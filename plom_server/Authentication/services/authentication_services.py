@@ -119,7 +119,7 @@ class AuthenticationServices:
         cls, username: str, group_name: str, **kwargs
     ) -> str:
         """Create a user and add them to a group."""
-        cls.create_user_and_add_to_groups(username, [group_name], **kwargs)
+        return cls.create_user_and_add_to_groups(username, [group_name], **kwargs)
 
     @staticmethod
     def create_manager_user(
