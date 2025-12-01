@@ -4,6 +4,7 @@
 
 USER_TYPE_WITH_MANAGER_CHOICES = [
     ("marker", "Marker"),
+    ("lead_marker", "Lead Marker"),
     ("scanner", "Scanner"),
     ("manager", "Manager"),
 ]
