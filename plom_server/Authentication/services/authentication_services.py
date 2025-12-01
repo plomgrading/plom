@@ -60,8 +60,8 @@ class AuthenticationServices:
 
     @staticmethod
     @transaction.atomic
-    def create_user_and_add_to_group(
-        username: str, group_name: str, *, email: str | None = None
+    def create_user_and_add_to_groups(
+        username: str, group_names: list[str], *, email: str | None = None
     ) -> str:
         """Create a user and add them to a group.
 
@@ -69,7 +69,8 @@ class AuthenticationServices:
 
         Args:
             username: The username of the user.
-            group_name: The name of the group.  This must already exist.
+            group_names: The names of groups to add this user to.
+                These must already exist.
 
         Keyword Args:
             email: optional email address for the user.
@@ -83,18 +84,16 @@ class AuthenticationServices:
             IntegrityError: user already exists; or perhaps a nearby one
                 does, such as one that differs only in case.
         """
-        if group_name == "admin":
-            raise ValueError(
-                f"cannot create a user belonging to the {group_name} group."
-            )
+        if "admin" in group_names:
+            raise ValueError('Cannot create a user belonging to the "admin" group')
 
-        groups = [Group.objects.get(name=group_name)]
-        # some users belong to more than one group.
-        if group_name == "manager":
-            # maybe should call create_manager_user instead
-            groups.append(Group.objects.get(name="scanner"))
-        elif group_name == "lead_marker":
-            groups.append(Group.objects.get(name="marker"))
+        # some groups imply other ones
+        if "manager" in group_names:
+            if "scanner" not in group_names:
+                group_names.append("scanner")
+        if "lead_marker" in group_names:
+            if "marker" not in group_names:
+                group_names.append("marker")
 
         # if username that matches in case exists, fail.  Note that doesn't seem
         # to get raises by the call to "create_user" although it DOES get flagged
@@ -106,12 +105,21 @@ class AuthenticationServices:
                 f'username "{username}" already exists or differs only in case'
             )
 
+        groups = Group.objects.filter(name__in=group_names)
         user = User.objects.create_user(username=username, email=email, password=None)
         user.groups.add(*groups)
         user.is_active = False
         user.save()
 
         return user.username
+
+    @classmethod
+    @transaction.atomic
+    def create_user_and_add_to_group(
+        cls, username: str, group_name: str, **kwargs
+    ) -> str:
+        """Create a user and add them to a group."""
+        cls.create_user_and_add_to_groups(username, [group_name], **kwargs)
 
     @staticmethod
     def create_manager_user(
