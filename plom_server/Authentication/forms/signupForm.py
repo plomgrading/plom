@@ -24,11 +24,10 @@ class CreateSingleUserForm(forms.ModelForm):
         widget=forms.EmailInput(attrs={"placeholder": "Optional"}),
     )
 
-    user_types = forms.CharField(
-        label="What user type would you like to create?",
-        widget=forms.RadioSelect(
-            choices=USER_TYPE_WITH_MANAGER_CHOICES, attrs={"class": "me-2"}
-        ),
+    user_types = forms.MultipleChoiceField(
+        choices=USER_TYPE_WITH_MANAGER_CHOICES,
+        label="What groups should the user belong to?",
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "me-2"}),
         initial="marker",
     )
 

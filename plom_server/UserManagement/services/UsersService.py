@@ -12,13 +12,12 @@ from django.forms.models import model_to_dict
 def get_user_info() -> dict:
     users = {
         "managers": User.objects.filter(groups__name="manager"),
-        "scanners": User.objects.filter(groups__name="scanner").exclude(
-            groups__name="manager"
-        ),
+        "scanners": User.objects.filter(groups__name="scanner"),
         "lead_markers": User.objects.filter(groups__name="lead_marker"),
         "markers": User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         ),
+        "identifiers": User.objects.filter(groups__name="identifiers"),
     }
     return users
 

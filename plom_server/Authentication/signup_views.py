@@ -38,10 +38,11 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
         if form.is_valid():
             username = form.cleaned_data.get("username")
             user_email = form.cleaned_data.get("email")
-            user_type = form.cleaned_data.get("user_types")
+            group_names = form.cleaned_data.get("user_types")
+            assert isinstance(group_names, list)
 
-            created_username = AuthenticationServices.create_user_and_add_to_group(
-                username, group_name=user_type, email=user_email
+            created_username = AuthenticationServices.create_user_and_add_to_groups(
+                username, group_names, email=user_email
             )
             usernames_list = list(created_username.split(" "))
             password_reset_links = (

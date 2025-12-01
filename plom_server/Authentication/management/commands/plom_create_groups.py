@@ -20,7 +20,15 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        group_list = ["admin", "manager", "marker", "scanner", "demo", "lead_marker"]
+        group_list = (
+            "admin",
+            "manager",
+            "marker",
+            "scanner",
+            "demo",
+            "lead_marker",
+            "identifier",
+        )
 
         for group in group_list:
             _, created = Group.objects.get_or_create(name=group)
