@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2025 Colin B. Macdonald
 
 USER_TYPE_WITH_MANAGER_CHOICES = [
     ("marker", "Marker"),
@@ -7,7 +8,7 @@ USER_TYPE_WITH_MANAGER_CHOICES = [
     ("manager", "Manager"),
 ]
 
-USER_TYPE_WITHOUT_MANAGER_CHOICES = [
+USER_TYPE_BULK_CHOICES = [
     ("marker", "Marker"),
     ("scanner", "Scanner"),
 ]

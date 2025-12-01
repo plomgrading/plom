@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, User
@@ -13,8 +13,7 @@ class Command(BaseCommand):
     """Create the user groups.
 
     This is the command for "python manage.py plom_create_groups".
-    It creates "admin", "manager", "marker", and "scanner" groups, as
-    well as "demo" and "lead_marker".
+    It creates the groups needed for Plom to work.
 
     Any existing superusers will be automatically added to the admin
     group (but you can add others later).

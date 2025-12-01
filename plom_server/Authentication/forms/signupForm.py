@@ -11,7 +11,7 @@ from django.forms import ValidationError
 from .choices import (
     USERNAME_CHOICES,
     USER_TYPE_WITH_MANAGER_CHOICES,
-    USER_TYPE_WITHOUT_MANAGER_CHOICES,
+    USER_TYPE_BULK_CHOICES,
 )
 
 
@@ -82,7 +82,7 @@ class CreateMultiUsersForm(forms.Form):
     user_types = forms.CharField(
         label="What user type would you like to create?",
         widget=forms.RadioSelect(
-            choices=USER_TYPE_WITHOUT_MANAGER_CHOICES, attrs={"class": "me-2"}
+            choices=USER_TYPE_BULK_CHOICES, attrs={"class": "me-2"}
         ),
         initial="marker",
     )

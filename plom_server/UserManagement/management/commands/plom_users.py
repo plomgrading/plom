@@ -16,10 +16,7 @@ from ...services import UsersService
 
 
 class Command(BaseCommand):
-    """Show and manipulate non-admin users.
-
-    Toggle markers/lead_markers, import users, list users.
-    """
+    """Show and manipulate users."""
 
     def list_users(self) -> None:
         user_info: dict = UsersService.get_user_info()
