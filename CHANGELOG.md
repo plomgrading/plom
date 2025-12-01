@@ -1608,6 +1608,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.19.7...main
 [0.19.7]: https://gitlab.com/plom/plom/-/compare/v0.19.6...v0.19.7
 [0.19.6]: https://gitlab.com/plom/plom/-/compare/v0.19.5...v0.19.6
 [0.19.5]: https://gitlab.com/plom/plom/-/compare/v0.19.4...v0.19.5
