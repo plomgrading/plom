@@ -59,14 +59,31 @@ class AuthenticationServices:
         return user_list
 
     @staticmethod
+    def apply_group_name_implications(group_names_in: list[str]) -> list[str]:
+        group_names = group_names_in.copy()
+        # some groups imply other ones
+        if "manager" in group_names:
+            if "scanner" not in group_names:
+                group_names.append("scanner")
+            if "identifier" not in group_names:
+                group_names.append("identifier")
+        if "lead_marker" in group_names:
+            if "marker" not in group_names:
+                group_names.append("marker")
+            # TODO: in the future, maybe not all lead markers need be identifiers
+            if "identifier" not in group_names:
+                group_names.append("identifier")
+        return group_names
+
+    @classmethod
     @transaction.atomic
     def create_user_and_add_to_groups(
+        cls,
         username: str,
         group_names: list[str],
         *,
         email: str | None = None,
         password: str | None = None,
-        is_active: bool = False,
     ) -> str:
         """Create a user and add them to a group.
 
@@ -79,14 +96,7 @@ class AuthenticationServices:
 
         Keyword Args:
             email: optional email address for the user.
-            password: used to explicitly set a password, generally rarely,
-                for example in demos.  The default (`None`) should be combined
-                with `is_active=False` (also the default).
-                Warning: password=None should not be combined with is_active=True,
-                not sure what happens, perhaps nothing good.
-            is_active: default False.  Newly-created users cannot login;
-                typically they need to follow link to activate their
-                account.
+            password: if omitted (default), the user will be inactive.
 
         Returns:
             The username of the created user.
@@ -96,19 +106,13 @@ class AuthenticationServices:
             ValueError: illegal user group received
             IntegrityError: user already exists; or perhaps a nearby one
                 does, such as one that differs only in case.
+
+        Note: If a password is supplied, the user will be set active.
         """
         if "admin" in group_names:
             raise ValueError('Cannot create a user belonging to the "admin" group')
 
-        # some groups imply other ones
-        if "manager" in group_names:
-            if "scanner" not in group_names:
-                group_names.append("scanner")
-            if "identifier" not in group_names:
-                group_names.append("identifier")
-        if "lead_marker" in group_names:
-            if "marker" not in group_names:
-                group_names.append("marker")
+        group_names = cls.apply_group_name_implications(group_names)
 
         # if username that matches in case exists, fail.  Note that doesn't seem
         # to get raises by the call to "create_user" although it DOES get flagged
@@ -131,7 +135,8 @@ class AuthenticationServices:
             username=username, email=email, password=password
         )
         user.groups.add(*groups)
-        user.is_active = is_active
+        if not password:
+            user.is_active = False
         user.save()
 
         return user.username
@@ -144,9 +149,9 @@ class AuthenticationServices:
         """Create a user and add them to a group."""
         return cls.create_user_and_add_to_groups(username, [group_name], **kwargs)
 
-    @staticmethod
+    @classmethod
     def create_manager_user(
-        username: str, *, password: str | None = None, email: str | None = None
+        cls, username: str, *, password: str | None = None, email: str | None = None
     ) -> None:
         """Create a manager user.
 
@@ -159,27 +164,16 @@ class AuthenticationServices:
 
         Note: If a password is supplied, the user will be set active.
         """
+        group_names = cls.apply_group_name_implications(["manager"])
         with transaction.atomic(durable=True):
-            try:
-                manager_group = Group.objects.get(name="manager")
-            except Group.DoesNotExist:
-                raise ValueError(
-                    "Cannot create manager-user: manager-group has not been created."
-                ) from None
-            try:
-                scanner_group = Group.objects.get(name="scanner")
-            except Group.DoesNotExist:
-                raise ValueError(
-                    "Cannot create manager-user: scanner-group has not been created."
-                ) from None
-
-            manager = User.objects.create_user(
+            groups = Group.objects.filter(name__in=group_names)
+            user = User.objects.create_user(
                 username=username, email=email, password=password
             )
             if not password:
-                manager.is_active = False
-            manager.groups.add(manager_group, scanner_group)
-            manager.save()
+                user.is_active = False
+            user.groups.add(*groups)
+            user.save()
 
     def create_users_from_csv(self, f: Path | str | bytes) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.

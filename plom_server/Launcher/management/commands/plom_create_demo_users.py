@@ -106,7 +106,7 @@ class Command(BaseCommand):
                 self.stderr.write(f'User "{username}" already exists, skipping')
             else:
                 AuthenticationServices.create_user_and_add_to_group(
-                    username, "scanner", email=email, password=password, is_active=True
+                    username, "scanner", email=email, password=password
                 )
                 user_passwords[username] = password
 
@@ -119,7 +119,7 @@ class Command(BaseCommand):
                 self.stderr.write(f'User "{username}" already exists, skipping')
             else:
                 AuthenticationServices.create_user_and_add_to_group(
-                    username, "marker", email=email, password=password, is_active=True
+                    username, "marker", email=email, password=password
                 )
                 user_passwords[username] = password
 
