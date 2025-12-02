@@ -19,19 +19,13 @@ class Command(BaseCommand):
     """Show and manipulate users."""
 
     def list_users(self) -> None:
-        user_info: dict = UsersService.get_user_info()
+        user_list = UsersService.get_list_of_user_info()
 
-        if not any(user_info.values()):
+        if not user_list:
             self.stdout.write("no users found.")
             return
 
-        # reshape user_info into something more extensible
-        user_list = []
-        for user_group, users in user_info.items():
-            for user in users:
-                user_list.append([user, user_group, user.last_login])
-
-        self.stdout.write(str(tabulate(user_list, tablefmt="simple")))
+        self.stdout.write(str(tabulate(user_list, headers="keys")))
 
     def handle_import(self, file_path: Path, *, set_password: bool = False) -> None:
         """Imports users from a csv file and display to stdout."""

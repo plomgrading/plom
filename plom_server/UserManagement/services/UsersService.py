@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Aidan Murphy
 # Copyright (C) 2025 Bryan Tanady
+
+from typing import Any
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -22,6 +24,18 @@ def get_user_info() -> dict:
         "identifiers": User.objects.filter(groups__name="identifier"),
     }
     return users
+
+
+def get_list_of_user_info() -> list[dict[str, Any]]:
+    """Get a list of info about Users."""
+    return [
+        {
+            "username": user.username,
+            "groups": ", ".join(user.groups.values_list("name", flat=True)),
+            "last_login": user.last_login,
+        }
+        for user in User.objects.all()
+    ]
 
 
 def get_users_groups_info() -> dict[str, list]:

@@ -11,6 +11,7 @@ from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
 
 from plom_server.Authentication.services import AuthenticationServices
+from plom_server.UserManagement.services import UsersService
 
 
 # -m to get number of scanners and markers
@@ -36,9 +37,7 @@ class Command(BaseCommand):
         number_of_markers = 8
         admin_group = Group.objects.get(name="admin")
         manager_group = Group.objects.get(name="manager")
-        marker_group = Group.objects.get(name="marker")
-        scanner_group = Group.objects.get(name="scanner")
-        user_info: dict[str, list[str]] = {"Username": [], "Password": [], "Group": []}
+        user_passwords = {}
 
         # Here is to create a single demo admin user
         # is_staff means they can use the django admin tools
@@ -57,9 +56,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"User {username} created and added to {admin_group} group"
             )
-            user_info["Username"].append(username)
-            user_info["Password"].append(password)
-            user_info["Group"].append(admin_group)
+            user_passwords[username] = password
         except IntegrityError as err:
             self.stderr.write(f"{username} already exists!")
             raise CommandError(err)
@@ -84,6 +81,7 @@ class Command(BaseCommand):
                 user_obj.set_password(password)
                 user_obj.email = email
                 user_obj.save()
+                user_passwords[username] = password
                 continue
             except User.DoesNotExist:
                 pass
@@ -94,10 +92,7 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f"User {username} created and added to {manager_group} group"
                 )
-                user_info["Username"].append(username)
-                user_info["Password"].append(password)
-                user_info["Group"].append(manager_group)
-                user_info["Group"].append(scanner_group)
+                user_passwords[username] = password
             except IntegrityError as err:
                 self.stderr.write(f"{username} already exists!")
                 raise CommandError(err)
@@ -113,12 +108,7 @@ class Command(BaseCommand):
                 AuthenticationServices.create_user_and_add_to_group(
                     username, "scanner", email=email, password=password, is_active=True
                 )
-                self.stdout.write(
-                    f"User {username} created and added to {scanner_group} group"
-                )
-                user_info["Username"].append(username)
-                user_info["Password"].append(password)
-                user_info["Group"].append(scanner_group)
+                user_passwords[username] = password
 
         # create markers
         for n in range(number_of_markers):
@@ -131,14 +121,19 @@ class Command(BaseCommand):
                 AuthenticationServices.create_user_and_add_to_group(
                     username, "marker", email=email, password=password, is_active=True
                 )
-                self.stdout.write(
-                    f"User {username} created and added to {marker_group} group"
-                )
-                user_info["Username"].append(username)
-                user_info["Password"].append(password)
-                user_info["Group"].append(marker_group)
+                user_passwords[username] = password
 
+        user_list = UsersService.get_list_of_user_info()
+        # rebuild to reorder, and lookup passwords
+        user_list = [
+            {
+                "Username": d["username"],
+                "Password": user_passwords.get(d["username"], None),
+                "Groups": d["groups"],
+            }
+            for d in user_list
+        ]
         self.stdout.write("\nDemo usernames and passwords")
         self.stdout.write(
-            str(tabulate(user_info, headers="keys", tablefmt="simple_outline"))
+            str(tabulate(user_list, headers="keys", tablefmt="simple_outline"))
         )
