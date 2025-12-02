@@ -185,7 +185,7 @@ class AuthenticationServices:
 
         Returns:
             A list of dicts containing information for each user, each entry
-            has keys `username`, `usergroup`, and `reset_link`.
+            has keys `username`, `groups`, and `link`.
 
         Raises:
             KeyError: .csv file is missing required fields: `username`, `usergroup`.
@@ -214,16 +214,16 @@ class AuthenticationServices:
                 group = user_dict["usergroup"]
                 try:
                     self.create_user_and_add_to_group(user_dict["username"], group)
-                except Group.DoesNotExist as e:
+                except ValueError as e:
                     raise ObjectDoesNotExist(
                         f'Error near row {idx + 1}: Group "{group}" does not exist? {e}'
                     ) from e
                 user = User.objects.get(username=user_dict["username"])
                 users_added.append(
                     {
-                        "username": user_dict["username"],
-                        "usergroup": group,
-                        "reset_link": self.generate_link(user),
+                        "username": user.username,
+                        "groups": ", ".join(user.groups.values_list("name", flat=True)),
+                        "link": self.generate_link(user),
                     }
                 )
 

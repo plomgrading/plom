@@ -55,7 +55,7 @@
                             <li>'username'</li>
                             <li>'usergroup'. This can be one of:</li>
                             <ul>
-                                {% for user_group in user_groups %}<li>{{ user_group }}</li>{% endfor %}
+                                {% for group in valid_user_groups %}<li>{{ group }}</li>{% endfor %}
                             </ul>
                         </ul>
                         <p>
@@ -87,6 +87,7 @@
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">Usernames</th>
+                        <th scope="col">Groups</th>
                         <th scope="col">Links</th>
                         <th scope="col">
                             {% if tsv %}
@@ -106,16 +107,17 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for username, link in links.items %}
+                    {% for user in links %}
                         <tr>
-                            <th class="counterCell"></th>
-                            <th>{{ username }}</th>
-                            <td id="link">{{ link }}</td>
+                            <td class="counterCell"></td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.groups }}</td>
+                            <td id="link">{{ user.link }}</td>
                             <td>
                                 <button class="btn btn-primary"
                                         style="margin-left: 4px"
                                         onclick="copyText(this)"
-                                        data-copyText="{{ link }}"
+                                        data-copyText="{{ user.link }}"
                                         id="copy-button-{{ forloop.counter0 }}">Copy</button>
                             </td>
                         </tr>

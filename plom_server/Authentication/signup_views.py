@@ -20,6 +20,21 @@ from .services import AuthenticationServices
 from .forms.signupForm import CreateSingleUserForm, CreateMultiUsersForm
 
 
+def _common_make_csv_tsv(user_list) -> tuple[str, str]:
+    fieldnames = ["Username", "Reset Link"]
+    with StringIO() as iostream:
+        writer = csv.writer(iostream, delimiter="\t")
+        writer.writerow(fieldnames)
+        writer.writerows([[u["username"], u["link"]] for u in user_list])
+        tsv_string = iostream.getvalue()
+    with StringIO() as iostream:
+        writer = csv.writer(iostream, delimiter=",")
+        writer.writerow(fieldnames)
+        writer.writerows([[u["username"], u["link"]] for u in user_list])
+        csv_string = iostream.getvalue()
+    return (csv_string, tsv_string)
+
+
 class SingleUserSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
     form = CreateSingleUserForm()
@@ -45,16 +60,28 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 username, group_names, email=user_email
             )
             usernames_list = list(created_username.split(" "))
-            password_reset_links = (
-                AuthenticationServices().generate_password_reset_links_dict(
-                    request=request, username_list=usernames_list
-                )
+            links = AuthenticationServices().generate_password_reset_links_dict(
+                request=request, username_list=usernames_list
             )
+
+            # TODO: maybe groups should come back from the create_user_and_add_to_groups...?
+            from django.contrib.auth.models import User
+
+            user = User.objects.get(username=created_username)
+            Groups = ", ".join(user.groups.values_list("name", flat=True))
+            links = [
+                {
+                    "username": created_username,
+                    "groups": Groups,
+                    "link": links[created_username],
+                }
+            ]
+
             context = {
                 "form": form,
                 "current_page": "single",
                 "link_expiry_period": self.link_expiry_period,
-                "links": password_reset_links,
+                "links": links,
             }
         else:
             context = {
@@ -101,30 +128,24 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
         else:
             raise RuntimeError("Tertium non datur: unexpected third choice!")
 
-        password_reset_links = (
-            AuthenticationServices().generate_password_reset_links_dict(
-                request=request, username_list=usernames_list
-            )
+        links = AuthenticationServices().generate_password_reset_links_dict(
+            request=request, username_list=usernames_list
         )
 
-        # tsv's and csv's
-        with StringIO() as iostream:
-            writer = csv.writer(iostream, delimiter="\t")
-            writer.writerows(password_reset_links.items())
-            tsv_string = iostream.getvalue()
+        # TODO: these are missing groups
+        print(links)
+        user_list = [
+            {"username": k, "groups": "meh", "link": v} for k, v in links.items()
+        ]
+        print(links)
 
-        fields = ["Username", "Reset Link"]
-        with StringIO() as iostream:
-            writer = csv.writer(iostream, delimiter=",")
-            writer.writerow(fields)
-            writer.writerows(password_reset_links.items())
-            csv_string = iostream.getvalue()
+        csv_string, tsv_string = _common_make_csv_tsv(user_list)
 
         context = {
             "form": self.form,
             "current_page": "multiple",
             "link_expiry_period": self.link_expiry_period,
-            "links": password_reset_links,
+            "links": links,
             "tsv": tsv_string,
             "csv": csv_string,
         }
@@ -144,14 +165,15 @@ class ImportUsers(AdminOrManagerRequiredView):
         "exampleName37,manager"
     )
     # TODO: this bunch of strings should exist somewhere else
-    user_groups = ["marker", "lead_marker", "scanner", "manager"]
+    # TODO: ...and I know where...
+    valid_user_groups = ["marker", "lead_marker", "scanner", "manager"]
 
     def get(self, request):
         context = {
             "current_page": "import",
             "link_expiry_period": self.link_expiry_period,
             "example_input_csv": self.example_csv,
-            "user_groups": self.user_groups,
+            "valid_user_groups": self.valid_user_groups,
         }
         return render(request, self.template_name, context)
 
@@ -160,7 +182,7 @@ class ImportUsers(AdminOrManagerRequiredView):
             "current_page": "import",
             "link_expiry_period": self.link_expiry_period,
             "example_input_csv": self.example_csv,
-            "user_groups": self.user_groups,
+            "valid_user_groups": self.valid_user_groups,
         }
 
         if request.FILES[".csv"].size > settings.MAX_FILE_SIZE:
@@ -172,7 +194,6 @@ class ImportUsers(AdminOrManagerRequiredView):
             return render(request, self.template_name, context)
         csv_bytes = request.FILES[".csv"].file.getvalue()
 
-        user_list = {}
         try:
             user_list = AuthenticationServices().create_users_from_csv(csv_bytes)
         except (IntegrityError, KeyError, ValueError) as e:
@@ -182,32 +203,15 @@ class ImportUsers(AdminOrManagerRequiredView):
             messages.error(
                 request,
                 f"Problem with one or more rows in {request.FILES['.csv'].name}:\n"
-                f"{e}\n The valid usergroups are: {', '.join(self.user_groups)}.",
+                f"{e}\n The valid usergroups are: {', '.join(self.valid_user_groups)}.",
             )
             return render(request, self.template_name, context)
 
-        users = {user["username"]: user["reset_link"] for user in user_list}
-        with StringIO() as iostream:
-            writer = csv.DictWriter(
-                iostream,
-                fieldnames=list(user_list[0].keys()),
-                delimiter="\t",
-            )
-            writer.writeheader()
-            writer.writerows(user_list)
-            tsv_string = iostream.getvalue()
-        with StringIO() as iostream:
-            writer = csv.DictWriter(
-                iostream,
-                fieldnames=list(user_list[0].keys()),
-            )
-            writer.writeheader()
-            writer.writerows(user_list)
-            csv_string = iostream.getvalue()
+        csv_string, tsv_string = _common_make_csv_tsv(user_list)
 
         context.update(
             {
-                "links": users,
+                "links": user_list,
                 "tsv": tsv_string,
                 "csv": csv_string,
             }
