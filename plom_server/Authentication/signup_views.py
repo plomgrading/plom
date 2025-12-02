@@ -116,12 +116,12 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
         user_type = form.cleaned_data.get("user_types")
 
         if username_choices == "basic":
-            usernames_list = AuthenticationServices().generate_list_of_basic_usernames(
-                group_name=user_type, num_users=num_users
+            usernames_list = AuthenticationServices.make_multiple_numbered_users(
+                num_users, group_name=user_type
             )
         elif username_choices == "funky":
-            usernames_list = AuthenticationServices().generate_list_of_funky_usernames(
-                group_name=user_type, num_users=num_users
+            usernames_list = AuthenticationServices.make_multiple_funky_named_users(
+                num_users, group_name=user_type
             )
         else:
             raise RuntimeError("Tertium non datur: unexpected third choice!")

@@ -32,15 +32,16 @@ class AuthenticationServices:
         "identifier",
     )
 
+    @classmethod
     @transaction.atomic
-    def generate_list_of_basic_usernames(
-        self, group_name: str, num_users: int, *, basename: str | None = None
+    def make_multiple_numbered_users(
+        cls, num_users: int, group_name: str, *, basename: str | None = None
     ) -> list[str]:
-        """Generate a list of basic numbered usernames.
+        """Generate a list of basic numbered usernames and creates those users.
 
         Args:
-            group_name: The name of the group.
             num_users: The number of users to generate.
+            group_name: The name of the group.
 
         Keyword Args:
             basename: The base part of the username, to which numbers
@@ -59,7 +60,7 @@ class AuthenticationServices:
         while len(user_list) < num_users:
             username_number += 1
             try:
-                username = self.create_user_and_add_to_group(
+                username = cls.create_user_and_add_to_group(
                     basename + str(username_number),
                     group_name,
                 )
@@ -240,14 +241,15 @@ class AuthenticationServices:
 
         return users_added
 
-    def generate_list_of_funky_usernames(
-        self, group_name: str, num_users: int
+    @classmethod
+    def make_multiple_funky_named_users(
+        cls, num_users: int, group_name: str
     ) -> list[str]:
-        """Generate a list of "funky usernames" and add them to a group.
+        """Generate a list of "funky usernames", create them and add to a group.
 
         Args:
-            group_name: The name of the group.
             num_users: The number of users to generate.
+            group_name: The name of the group.
 
         Returns:
             List of generated usernames.
@@ -255,14 +257,15 @@ class AuthenticationServices:
         funky_username_list = generate_username(num_users)
         user_list = []
         for username in funky_username_list:
-            new_user = self._check_and_create_funky_usernames(
+            new_user = cls._check_and_create_funky_usernames(
                 username=username, group_name=group_name
             )
             user_list.append(new_user)
 
         return user_list
 
-    def _check_and_create_funky_usernames(self, username: str, group_name: str) -> str:
+    @classmethod
+    def _check_and_create_funky_usernames(cls, username: str, group_name: str) -> str:
         """Check if a username exists, and if it does, generate a new one recursively.
 
         Args:
@@ -274,11 +277,11 @@ class AuthenticationServices:
         """
         if User.objects.filter(username=username).exists():
             new_username = generate_username(1)
-            return self._check_and_create_funky_usernames(
+            return cls._check_and_create_funky_usernames(
                 username=new_username, group_name=group_name
             )
         else:
-            user = self.create_user_and_add_to_group(username, group_name)
+            user = cls.create_user_and_add_to_group(username, group_name)
             return user
 
     @transaction.atomic
