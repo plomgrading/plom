@@ -20,17 +20,17 @@ from .services import AuthenticationServices
 from .forms.signupForm import CreateSingleUserForm, CreateMultiUsersForm
 
 
-def _common_make_csv_tsv(user_list) -> tuple[str, str]:
+def _common_make_csv_tsv(userlist: list[dict[str, str]]) -> tuple[str, str]:
     fieldnames = ["Username", "Reset Link"]
     with StringIO() as iostream:
         writer = csv.writer(iostream, delimiter="\t")
         writer.writerow(fieldnames)
-        writer.writerows([[u["username"], u["link"]] for u in user_list])
+        writer.writerows([[u["username"], u["link"]] for u in userlist])
         tsv_string = iostream.getvalue()
     with StringIO() as iostream:
         writer = csv.writer(iostream, delimiter=",")
         writer.writerow(fieldnames)
-        writer.writerows([[u["username"], u["link"]] for u in user_list])
+        writer.writerows([[u["username"], u["link"]] for u in userlist])
         csv_string = iostream.getvalue()
     return (csv_string, tsv_string)
 
@@ -65,7 +65,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 username, group_names, email=user_email
             )
             usernames_list = list(created_username.split(" "))
-            links = AuthenticationServices().generate_password_reset_links_dict(
+            _links = AuthenticationServices().generate_password_reset_links_dict(
                 request=request, username_list=usernames_list
             )
 
@@ -74,14 +74,14 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
 
             user = User.objects.get(username=created_username)
             Groups = ", ".join(user.groups.values_list("name", flat=True))
-            links = [
+            userlist = [
                 {
                     "username": created_username,
                     "groups": Groups,
-                    "link": links[created_username],
+                    "link": _links[created_username],
                 }
             ]
-            context.update({"links": links})
+            context.update({"links": userlist})
         else:
             context.update({"error": form.errors})
         return render(request, self.template_name, context)
@@ -126,22 +126,18 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
         else:
             raise RuntimeError("Tertium non datur: unexpected third choice!")
 
-        links = AuthenticationServices().generate_password_reset_links_dict(
+        _links = AuthenticationServices().generate_password_reset_links_dict(
             request=request, username_list=usernames_list
         )
-
         # TODO: these are missing groups
-        print(links)
-        user_list = [
-            {"username": k, "groups": "meh", "link": v} for k, v in links.items()
+        userlist = [
+            {"username": k, "groups": "meh", "link": v} for k, v in _links.items()
         ]
-        print(links)
 
-        csv_string, tsv_string = _common_make_csv_tsv(user_list)
-
+        csv_string, tsv_string = _common_make_csv_tsv(userlist)
         context.update(
             {
-                "links": links,
+                "links": userlist,
                 "tsv": tsv_string,
                 "csv": csv_string,
             }
@@ -190,7 +186,7 @@ class ImportUsers(AdminOrManagerRequiredView):
         csv_bytes = request.FILES[".csv"].file.getvalue()
 
         try:
-            user_list = AuthenticationServices().create_users_from_csv(csv_bytes)
+            userlist = AuthenticationServices().create_users_from_csv(csv_bytes)
         except (IntegrityError, KeyError, ValueError) as e:
             messages.error(request, str(e))
             return render(request, self.template_name, context)
@@ -202,11 +198,10 @@ class ImportUsers(AdminOrManagerRequiredView):
             )
             return render(request, self.template_name, context)
 
-        csv_string, tsv_string = _common_make_csv_tsv(user_list)
-
+        csv_string, tsv_string = _common_make_csv_tsv(userlist)
         context.update(
             {
-                "links": user_list,
+                "links": userlist,
                 "tsv": tsv_string,
                 "csv": csv_string,
             }
