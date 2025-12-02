@@ -96,7 +96,7 @@ class AuthenticationServices:
         *,
         email: str | None = None,
         password: str | None = None,
-    ) -> str:
+    ) -> tuple[str, list[str]]:
         """Create a user and add them to a group.
 
         Note that by default that new user will not be active.
@@ -111,7 +111,9 @@ class AuthenticationServices:
             password: if omitted (default), the user will be inactive.
 
         Returns:
-            The username of the created user.
+            The username of the created user, and a list of groups to which
+            they were added.  Note this might be a superset of the requested
+            groups b/c some groups imply others.
 
         Raises:
             ObjectDoesNotExist: no such group.
@@ -151,13 +153,13 @@ class AuthenticationServices:
             user.is_active = False
         user.save()
 
-        return user.username
+        return user.username, groups_name_list
 
     @classmethod
     @transaction.atomic
     def create_user_and_add_to_group(
         cls, username: str, group_name: str, **kwargs
-    ) -> str:
+    ) -> tuple[str, list[str]]:
         """Create a user and add them to a group."""
         return cls.create_user_and_add_to_groups(username, [group_name], **kwargs)
 

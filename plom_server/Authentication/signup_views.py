@@ -61,23 +61,18 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
             group_names = form.cleaned_data.get("user_types")
             assert isinstance(group_names, list)
 
-            created_username = AuthenticationServices.create_user_and_add_to_groups(
-                username, group_names, email=user_email
+            created_username, groups_list = (
+                AuthenticationServices.create_user_and_add_to_groups(
+                    username, group_names, email=user_email
+                )
             )
-            usernames_list = list(created_username.split(" "))
             _links = AuthenticationServices().generate_password_reset_links_dict(
-                request=request, username_list=usernames_list
+                request=request, username_list=[created_username]
             )
-
-            # TODO: maybe groups should come back from the create_user_and_add_to_groups...?
-            from django.contrib.auth.models import User
-
-            user = User.objects.get(username=created_username)
-            Groups = ", ".join(user.groups.values_list("name", flat=True))
             userlist = [
                 {
                     "username": created_username,
-                    "groups": Groups,
+                    "groups": ", ".join(groups_list),
                     "link": _links[created_username],
                 }
             ]
