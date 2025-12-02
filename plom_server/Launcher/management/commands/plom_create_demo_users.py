@@ -103,20 +103,16 @@ class Command(BaseCommand):
                 raise CommandError(err)
 
         # create scanners
-        for n in range(1, number_of_scanners + 1):
-            username = f"demoScanner{n}"
+        for n in range(number_of_scanners):
+            username = f"demoScanner{n + 1}"
             password = username
             email = f"{username}@example.com"
             if User.objects.filter(username=username).exists():
                 self.stderr.write(f'User "{username}" already exists, skipping')
             else:
-                user = User.objects.create_user(
-                    username=username, email=email, password=password
+                AuthenticationServices.create_user_and_add_to_group(
+                    username, "scanner", email=email, password=password, is_active=True
                 )
-                user.groups.add(scanner_group)
-                user.is_active = True
-                user.save()
-
                 self.stdout.write(
                     f"User {username} created and added to {scanner_group} group"
                 )
@@ -125,20 +121,16 @@ class Command(BaseCommand):
                 user_info["Group"].append(scanner_group)
 
         # create markers
-        for n in range(1, number_of_markers + 1):
-            username = f"demoMarker{n}"
+        for n in range(number_of_markers):
+            username = f"demoMarker{n + 1}"
             password = username
             email = f"{username}@example.com"
             if User.objects.filter(username=username).exists():
                 self.stderr.write(f'User "{username}" already exists, skipping')
             else:
-                user = User.objects.create_user(
-                    username=username, email=email, password=password
+                AuthenticationServices.create_user_and_add_to_group(
+                    username, "marker", email=email, password=password, is_active=True
                 )
-                user.groups.add(marker_group)
-                user.is_active = True
-                user.save()
-
                 self.stdout.write(
                     f"User {username} created and added to {marker_group} group"
                 )

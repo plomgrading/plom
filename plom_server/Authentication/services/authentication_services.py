@@ -61,7 +61,12 @@ class AuthenticationServices:
     @staticmethod
     @transaction.atomic
     def create_user_and_add_to_groups(
-        username: str, group_names: list[str], *, email: str | None = None
+        username: str,
+        group_names: list[str],
+        *,
+        email: str | None = None,
+        password: str | None = None,
+        is_active: bool = False,
     ) -> str:
         """Create a user and add them to a group.
 
@@ -74,6 +79,14 @@ class AuthenticationServices:
 
         Keyword Args:
             email: optional email address for the user.
+            password: used to explicitly set a password, generally rarely,
+                for example in demos.  The default (`None`) should be combined
+                with `is_active=False` (also the default).
+                Warning: password=None should not be combined with is_active=True,
+                not sure what happens, perhaps nothing good.
+            is_active: default False.  Newly-created users cannot login;
+                typically they need to follow link to activate their
+                account.
 
         Returns:
             The username of the created user.
@@ -114,9 +127,11 @@ class AuthenticationServices:
             if x not in groups_name_list:
                 raise ValueError(f'Cannot add user to non-existent Group "{x}"')
 
-        user = User.objects.create_user(username=username, email=email, password=None)
+        user = User.objects.create_user(
+            username=username, email=email, password=password
+        )
         user.groups.add(*groups)
-        user.is_active = False
+        user.is_active = is_active
         user.save()
 
         return user.username
