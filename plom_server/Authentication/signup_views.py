@@ -37,12 +37,12 @@ def _common_make_csv_tsv(user_list) -> tuple[str, str]:
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
-    form = CreateSingleUserForm()
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
 
     def get(self, request):
+        form = CreateSingleUserForm()
         context = {
-            "form": self.form,
+            "form": form,
             "current_page": "single",
             "link_expiry_period": self.link_expiry_period,
         }
@@ -50,6 +50,11 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
 
     def post(self, request):
         form = CreateSingleUserForm(request.POST)
+        context = {
+            "form": form,
+            "current_page": "single",
+            "link_expiry_period": self.link_expiry_period,
+        }
         if form.is_valid():
             username = form.cleaned_data.get("username")
             user_email = form.cleaned_data.get("email")
@@ -76,31 +81,20 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                     "link": links[created_username],
                 }
             ]
-
-            context = {
-                "form": form,
-                "current_page": "single",
-                "link_expiry_period": self.link_expiry_period,
-                "links": links,
-            }
+            context.update({"links": links})
         else:
-            context = {
-                "form": form,
-                "current_page": "single",
-                "link_expiry_period": self.link_expiry_period,
-                "error": form.errors,
-            }
+            context.update({"error": form.errors})
         return render(request, self.template_name, context)
 
 
 class MultiUsersSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_multiple_users.html"
-    form = CreateMultiUsersForm()
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
 
     def get(self, request):
+        form = CreateMultiUsersForm()
         context = {
-            "form": self.form,
+            "form": form,
             "current_page": "multiple",
             "link_expiry_period": self.link_expiry_period,
         }
@@ -108,11 +102,15 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
 
     def post(self, request):
         form = CreateMultiUsersForm(request.POST)
-
         if not form.is_valid():
             # yellow screen of death on dev, not sure on production
             raise RuntimeError("Unexpectedly invalid form")
 
+        context = {
+            "form": form,
+            "current_page": "multiple",
+            "link_expiry_period": self.link_expiry_period,
+        }
         num_users = form.cleaned_data.get("num_users")
         username_choices = form.cleaned_data.get("basic_or_funky_username")
         user_type = form.cleaned_data.get("user_types")
@@ -141,14 +139,13 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
 
         csv_string, tsv_string = _common_make_csv_tsv(user_list)
 
-        context = {
-            "form": self.form,
-            "current_page": "multiple",
-            "link_expiry_period": self.link_expiry_period,
-            "links": links,
-            "tsv": tsv_string,
-            "csv": csv_string,
-        }
+        context.update(
+            {
+                "links": links,
+                "tsv": tsv_string,
+                "csv": csv_string,
+            }
+        )
         return render(request, self.template_name, context)
 
 
