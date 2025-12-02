@@ -93,9 +93,6 @@ class AuthenticationServices:
                 group_names.append("scanner")
             if "identifier" not in group_names:
                 group_names.append("identifier")
-            # just for testing
-            # if "marker" not in group_names:
-            #     group_names.append("marker")
         if "lead_marker" in group_names:
             if "marker" not in group_names:
                 group_names.append("marker")
