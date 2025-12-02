@@ -21,6 +21,17 @@ from random_username.generate import generate_username
 class AuthenticationServices:
     """A service class for managing authentication-related tasks."""
 
+    # TODO: is "demo" really a thing?
+    plom_user_groups_list = (
+        "admin",
+        "manager",
+        "marker",
+        "scanner",
+        "demo",
+        "lead_marker",
+        "identifier",
+    )
+
     @transaction.atomic
     def generate_list_of_basic_usernames(
         self, group_name: str, num_users: int, *, basename: str | None = None

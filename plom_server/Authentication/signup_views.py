@@ -161,9 +161,7 @@ class ImportUsers(AdminOrManagerRequiredView):
         "ExampleName14,scanner\n"
         "exampleName37,manager"
     )
-    # TODO: this bunch of strings should exist somewhere else
-    # TODO: ...and I know where...
-    valid_user_groups = ["marker", "lead_marker", "scanner", "manager"]
+    valid_user_groups = AuthenticationServices.plom_user_groups_list
 
     def get(self, request):
         context = {

@@ -8,6 +8,8 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, User
 from django.db import transaction
 
+from plom_server.Authentication.services import AuthenticationServices
+
 
 class Command(BaseCommand):
     """Create the user groups.
@@ -20,17 +22,7 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        group_list = (
-            "admin",
-            "manager",
-            "marker",
-            "scanner",
-            "demo",
-            "lead_marker",
-            "identifier",
-        )
-
-        for group in group_list:
+        for group in AuthenticationServices.plom_user_groups_list:
             _, created = Group.objects.get_or_create(name=group)
             if created:
                 self.stdout.write(f'Group "{group}" has been added')
