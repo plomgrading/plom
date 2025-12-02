@@ -83,8 +83,8 @@ class AuthenticationServices:
             if "marker" not in group_names:
                 group_names.append("marker")
             # TODO: in the future, maybe not all lead markers need be identifiers
-            if "identifier" not in group_names:
-                group_names.append("identifier")
+            # if "identifier" not in group_names:
+            #     group_names.append("identifier")
         return group_names
 
     @classmethod
