@@ -41,6 +41,7 @@ class AuthenticationServices_user_creation(TestCase):
         # call_command("plom_create_groups")
         baker.make(Group, name="manager")
         baker.make(Group, name="scanner")
+        baker.make(Group, name="identifiers")
         AuthenticationServices.create_user_and_add_to_group("m", "manager")
         user1 = User.objects.get(username="m", groups__name="scanner")
         user2 = User.objects.get(username="m", groups__name="manager")
@@ -49,6 +50,7 @@ class AuthenticationServices_user_creation(TestCase):
     def test_case_insensitive_username_collision(self) -> None:
         baker.make(Group, name="manager")
         baker.make(Group, name="scanner")
+        baker.make(Group, name="identifiers")
         AuthenticationServices.create_user_and_add_to_group("Euler", "manager")
         with self.assertRaises(IntegrityError):
             AuthenticationServices.create_user_and_add_to_group("euler", "manager")
