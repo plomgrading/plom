@@ -55,30 +55,31 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
             "current_page": "single",
             "link_expiry_period": self.link_expiry_period,
         }
-        if form.is_valid():
-            username = form.cleaned_data.get("username")
-            user_email = form.cleaned_data.get("email")
-            group_names = form.cleaned_data.get("user_types")
-            assert isinstance(group_names, list)
-
-            created_username, groups_list = (
-                AuthenticationServices.create_user_and_add_to_groups(
-                    username, group_names, email=user_email
-                )
-            )
-            _links = AuthenticationServices().generate_password_reset_links_dict(
-                request=request, username_list=[created_username]
-            )
-            userlist = [
-                {
-                    "username": created_username,
-                    "groups": ", ".join(groups_list),
-                    "link": _links[created_username],
-                }
-            ]
-            context.update({"links": userlist})
-        else:
+        if not form.is_valid():
             context.update({"error": form.errors})
+            return render(request, self.template_name, context)
+
+        username = form.cleaned_data.get("username")
+        user_email = form.cleaned_data.get("email")
+        group_names = form.cleaned_data.get("user_types")
+        assert isinstance(group_names, list)
+
+        created_username, groups_list = (
+            AuthenticationServices.create_user_and_add_to_groups(
+                username, group_names, email=user_email
+            )
+        )
+        _links = AuthenticationServices().generate_password_reset_links_dict(
+            request=request, username_list=[created_username]
+        )
+        userlist = [
+            {
+                "username": created_username,
+                "groups": ", ".join(groups_list),
+                "link": _links[created_username],
+            }
+        ]
+        context.update({"links": userlist})
         return render(request, self.template_name, context)
 
 
@@ -111,22 +112,23 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
         user_type = form.cleaned_data.get("user_types")
 
         if username_choices == "basic":
-            usernames_list = AuthenticationServices.make_multiple_numbered_users(
+            users_and_groups = AuthenticationServices.make_multiple_numbered_users(
                 num_users, group_name=user_type
             )
         elif username_choices == "funky":
-            usernames_list = AuthenticationServices.make_multiple_funky_named_users(
+            users_and_groups = AuthenticationServices.make_multiple_funky_named_users(
                 num_users, group_name=user_type
             )
         else:
             raise RuntimeError("Tertium non datur: unexpected third choice!")
 
-        _links = AuthenticationServices().generate_password_reset_links_dict(
-            request=request, username_list=usernames_list
+        _links_dict = AuthenticationServices().generate_password_reset_links_dict(
+            request=request, username_list=[x[0] for x in users_and_groups]
         )
-        # TODO: these are missing groups
+        # for u, g in users_and_groups:
         userlist = [
-            {"username": k, "groups": "meh", "link": v} for k, v in _links.items()
+            {"username": u, "groups": ", ".join(g), "link": _links_dict[u]}
+            for u, g in users_and_groups
         ]
 
         csv_string, tsv_string = _common_make_csv_tsv(userlist)
@@ -193,6 +195,8 @@ class ImportUsers(AdminOrManagerRequiredView):
             )
             return render(request, self.template_name, context)
 
+        for u in userlist:
+            u["groups"] = ", ".join(u["groups"])
         csv_string, tsv_string = _common_make_csv_tsv(userlist)
         context.update(
             {

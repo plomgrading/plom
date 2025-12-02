@@ -36,7 +36,7 @@ class AuthenticationServices:
     @transaction.atomic
     def make_multiple_numbered_users(
         cls, num_users: int, group_name: str, *, basename: str | None = None
-    ) -> list[str]:
+    ) -> list[tuple[str, list[str]]]:
         """Generate a list of basic numbered usernames and creates those users.
 
         Args:
@@ -49,22 +49,22 @@ class AuthenticationServices:
                 with a capital letter.
 
         Returns:
-            List of generated basic numbered usernames.
+            List of pairs, each being a generated username and its group(s).
         """
         if not basename:
             basename = group_name.capitalize()
 
-        user_list: list[str] = []
+        user_list: list[tuple[str, list[str]]] = []
         username_number = 0
 
         while len(user_list) < num_users:
             username_number += 1
             try:
-                username = cls.create_user_and_add_to_group(
+                username, groups = cls.create_user_and_add_to_group(
                     basename + str(username_number),
                     group_name,
                 )
-                user_list.append(username)
+                user_list.append((username, groups))
             except IntegrityError:
                 pass
 
@@ -140,7 +140,8 @@ class AuthenticationServices:
 
         groups = Group.objects.filter(name__in=group_names)
         # We need one-to-one between the group_names (strs) and the Groups
-        groups_name_list = groups.values_list("name", flat=True)
+        # list() so its not a QuerySet
+        groups_name_list = list(groups.values_list("name", flat=True))
         for x in group_names:
             if x not in groups_name_list:
                 raise ValueError(f'Cannot add user to non-existent Group "{x}"')
@@ -182,7 +183,8 @@ class AuthenticationServices:
         with transaction.atomic(durable=True):
             groups = Group.objects.filter(name__in=group_names)
             # We need one-to-one between the group_names (strs) and the Groups
-            groups_name_list = groups.values_list("name", flat=True)
+            # list() so its not a QuerySet
+            groups_name_list = list(groups.values_list("name", flat=True))
             for x in group_names:
                 if x not in groups_name_list:
                     raise ValueError(f'Cannot add user to non-existent Group "{x}"')
@@ -233,7 +235,9 @@ class AuthenticationServices:
             for idx, user_dict in enumerate(user_list):
                 group = user_dict["usergroup"]
                 try:
-                    self.create_user_and_add_to_group(user_dict["username"], group)
+                    u, g = self.create_user_and_add_to_group(
+                        user_dict["username"], group
+                    )
                 except ValueError as e:
                     raise ObjectDoesNotExist(
                         f'Error near row {idx + 1}: Group "{group}" does not exist? {e}'
@@ -241,8 +245,8 @@ class AuthenticationServices:
                 user = User.objects.get(username=user_dict["username"])
                 users_added.append(
                     {
-                        "username": user.username,
-                        "groups": ", ".join(user.groups.values_list("name", flat=True)),
+                        "username": u,
+                        "groups": g,
                         "link": self.generate_link(user),
                     }
                 )
@@ -252,7 +256,7 @@ class AuthenticationServices:
     @classmethod
     def make_multiple_funky_named_users(
         cls, num_users: int, group_name: str
-    ) -> list[str]:
+    ) -> list[tuple[str, list[str]]]:
         """Generate a list of "funky usernames", create them and add to a group.
 
         Args:
@@ -265,15 +269,17 @@ class AuthenticationServices:
         funky_username_list = generate_username(num_users)
         user_list = []
         for username in funky_username_list:
-            new_user = cls._check_and_create_funky_usernames(
+            u, g = cls._check_and_create_funky_usernames(
                 username=username, group_name=group_name
             )
-            user_list.append(new_user)
+            user_list.append((u, g))
 
         return user_list
 
     @classmethod
-    def _check_and_create_funky_usernames(cls, username: str, group_name: str) -> str:
+    def _check_and_create_funky_usernames(
+        cls, username: str, group_name: str
+    ) -> tuple[str, list[str]]:
         """Check if a username exists, and if it does, generate a new one recursively.
 
         Args:
@@ -289,8 +295,8 @@ class AuthenticationServices:
                 username=new_username, group_name=group_name
             )
         else:
-            user = cls.create_user_and_add_to_group(username, group_name)
-            return user
+            u, g = cls.create_user_and_add_to_group(username, group_name)
+            return (u, g)
 
     @transaction.atomic
     def generate_password_reset_links_dict(
