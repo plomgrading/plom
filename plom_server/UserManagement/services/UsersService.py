@@ -8,8 +8,10 @@ from django.db import transaction
 from django.forms.models import model_to_dict
 
 
-# TODO: can probably do this in one call
 def get_user_info() -> dict:
+    # TODO: can probably do this in one call
+    # all_users = User.objects.all().prefetch_related("auth_token")
+    # for x in all_users:
     users = {
         "managers": User.objects.filter(groups__name="manager"),
         "scanners": User.objects.filter(groups__name="scanner"),
