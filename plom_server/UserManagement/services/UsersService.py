@@ -19,7 +19,7 @@ def get_user_info() -> dict:
         "markers": User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         ),
-        "identifiers": User.objects.filter(groups__name="identifiers"),
+        "identifiers": User.objects.filter(groups__name="identifier"),
     }
     return users
 

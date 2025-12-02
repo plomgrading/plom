@@ -62,6 +62,7 @@ class UserPage(ManagerRequiredView):
             "markers": users["markers"],
             "lead_markers": users["lead_markers"],
             "managers": users["managers"],
+            "identifiers": users["identifiers"],
             "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)

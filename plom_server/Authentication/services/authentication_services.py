@@ -92,7 +92,7 @@ class AuthenticationServices:
             if "scanner" not in group_names:
                 group_names.append("scanner")
             if "identifier" not in group_names:
-                group_names.append("identifiers")
+                group_names.append("identifier")
             # just for testing
             # if "marker" not in group_names:
             #     group_names.append("marker")

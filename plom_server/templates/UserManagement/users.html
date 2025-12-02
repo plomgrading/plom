@@ -191,7 +191,7 @@
             <div>
                 <p>
                     Accounts who can identify papers:
-                    {% for user in managers %}{{ user.username }},{% endfor %}
+                    {{ identifiers|join:", " }}
                 </p>
             </div>
         </div>
