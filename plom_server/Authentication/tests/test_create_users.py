@@ -13,7 +13,7 @@ from ..services import AuthenticationServices
 class AuthenticationServices_user_creation(TestCase):
 
     def test_create_manager_needs_groups(self) -> None:
-        with self.assertRaisesRegex(ValueError, "group .* not .* created"):
+        with self.assertRaisesRegex(ValueError, "non-existent Group"):
             AuthenticationServices.create_manager_user("manager")
 
     def test_create_manager(self) -> None:
@@ -21,6 +21,7 @@ class AuthenticationServices_user_creation(TestCase):
         # call_command("plom_create_groups")
         baker.make(Group, name="manager")
         baker.make(Group, name="scanner")
+        baker.make(Group, name="identifier")
         AuthenticationServices.create_manager_user("m")
         user1 = User.objects.get(username="m", groups__name="scanner")
         user2 = User.objects.get(username="m", groups__name="manager")
@@ -30,6 +31,7 @@ class AuthenticationServices_user_creation(TestCase):
         # call_command("plom_create_groups")
         baker.make(Group, name="manager")
         baker.make(Group, name="scanner")
+        baker.make(Group, name="identifier")
         AuthenticationServices.create_manager_user("man1")
         user = User.objects.get(username="man1")
         self.assertFalse(user.is_active)
@@ -59,21 +61,21 @@ class AuthenticationServices_user_creation(TestCase):
 
     def test_create_admin_fails(self) -> None:
         baker.make(Group, name="admin")
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Cannot create .*admin"):
             AuthenticationServices.create_user_and_add_to_group("Don_Admin", "admin")
 
     def test_error_to_create_in_non_existing_group(self) -> None:
         baker.make(Group, name="marker")
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "non-existent Group"):
             AuthenticationServices.create_user_and_add_to_groups(
                 "Marker", ["marker", "foobar"]
             )
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "non-existent Group"):
             AuthenticationServices.create_user_and_add_to_groups("Marker", ["foobar"])
 
     def test_lead_marker_requires_marker(self) -> None:
         baker.make(Group, name="lead_marker")
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "non-existent Group .*marker"):
             AuthenticationServices.create_user_and_add_to_group(
                 "Lee_Marker", "lead_marker"
             )

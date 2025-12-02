@@ -179,6 +179,12 @@ class AuthenticationServices:
         group_names = cls.apply_group_name_implications(["manager"])
         with transaction.atomic(durable=True):
             groups = Group.objects.filter(name__in=group_names)
+            # We need one-to-one between the group_names (strs) and the Groups
+            groups_name_list = groups.values_list("name", flat=True)
+            for x in group_names:
+                if x not in groups_name_list:
+                    raise ValueError(f'Cannot add user to non-existent Group "{x}"')
+
             user = User.objects.create_user(
                 username=username, email=email, password=password
             )
