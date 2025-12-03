@@ -75,6 +75,7 @@ class AuthenticationServices_user_creation(TestCase):
 
     def test_lead_marker_requires_marker(self) -> None:
         baker.make(Group, name="lead_marker")
+        baker.make(Group, name="identifier")
         with self.assertRaisesRegex(ValueError, "non-existent Group .*marker"):
             AuthenticationServices.create_user_and_add_to_group(
                 "Lee_Marker", "lead_marker"
@@ -87,5 +88,6 @@ class AuthenticationServices_user_creation(TestCase):
 
     def test_lead_marker_automatically_implies_marker(self) -> None:
         baker.make(Group, name="marker")
+        baker.make(Group, name="identifier")
         baker.make(Group, name="lead_marker")
         AuthenticationServices.create_user_and_add_to_group("Lee_Marker", "lead_marker")
