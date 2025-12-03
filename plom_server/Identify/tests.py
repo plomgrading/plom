@@ -19,6 +19,7 @@ from django.core.exceptions import (
 from django.db import IntegrityError
 from model_bakery import baker
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Papers.models import Paper, Image, IDPage
 from .services import IdentifyTaskService, IDProgressService, IDDirectService
 from .models import PaperIDTask, PaperIDAction
@@ -126,14 +127,13 @@ class IdentifyTaskTests(TestCase):
 
     def test_claim_task(self) -> None:
         """Test a simple case of ``IdentifyTaskService.claim_task()``."""
-        its = IdentifyTaskService()
-        with self.assertRaises(RuntimeError):
-            its.claim_task(self.marker0, 1)
+        with self.assertRaises(ObjectDoesNotExist):
+            IdentifyTaskService.claim_task(self.marker0, 1)
 
         p1 = baker.make(Paper, paper_number=1)
         task = baker.make(PaperIDTask, paper=p1)
 
-        its.claim_task(self.marker0, 1)
+        IdentifyTaskService.claim_task(self.marker0, 1)
         task.refresh_from_db()
 
         self.assertEqual(task.status, PaperIDTask.OUT)
@@ -141,12 +141,11 @@ class IdentifyTaskTests(TestCase):
 
     def test_out_claim_task(self) -> None:
         """Test that claiming a task throws an error if the task is currently out."""
-        its = IdentifyTaskService()
         p1 = baker.make(Paper, paper_number=1)
         baker.make(PaperIDTask, paper=p1, status=PaperIDTask.OUT)
 
-        with self.assertRaises(RuntimeError):
-            its.claim_task(self.marker0, 1)
+        with self.assertRaises(PlomConflict):
+            IdentifyTaskService.claim_task(self.marker0, 1)
 
     def test_identify_paper(self) -> None:
         """Test a simple case for ``IdentifyTaskService.identify_paper()``."""
@@ -204,19 +203,18 @@ class IdentifyTaskTests(TestCase):
         for k in range(1, 3):
             paper = baker.make(Paper, paper_number=k)
             its.create_task(paper)
-            its.claim_task(self.marker0, k)
+            IdentifyTaskService.claim_task(self.marker0, k)
 
         its.identify_paper(self.marker0, 1, "1", "ABC")
-        self.assertRaises(
-            IntegrityError, its.identify_paper, self.marker0, 2, "1", "ABC"
-        )
+        with self.assertRaises(IntegrityError):
+            its.identify_paper(self.marker0, 2, "1", "ABC")
 
     def test_claim_and_surrender(self) -> None:
         for k in range(1, 5):
             paper = baker.make(Paper, paper_number=k)
             IdentifyTaskService().create_task(paper)
         for k in range(1, 3):
-            IdentifyTaskService().claim_task(self.marker0, k)
+            IdentifyTaskService.claim_task(self.marker0, k)
         IdentifyTaskService.surrender_all_tasks(self.marker0)
 
     def test_id_task_misc(self) -> None:
@@ -227,11 +225,12 @@ class IdentifyTaskTests(TestCase):
             its.create_task(paper)
 
         for k in range(1, 3):
-            its.claim_task(self.marker0, k)
+            IdentifyTaskService.claim_task(self.marker0, k)
             its.identify_paper(self.marker0, k, f"{k}", f"A{k}")
 
         # test reclaiming a completed task
-        self.assertRaises(RuntimeError, its.claim_task, self.marker1, 1)
+        with self.assertRaises(PlomConflict):
+            IdentifyTaskService.claim_task(self.marker1, 1)
 
         # test user ID'ing a task that does not belong to them
         self.assertRaises(
@@ -266,7 +265,7 @@ class IdentifyTaskTests(TestCase):
         paper3 = baker.make(Paper, paper_number=3)
         baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.OUT_OF_DATE)
         baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.TO_DO)
-        its.claim_task(self.marker0, 3)
+        IdentifyTaskService.claim_task(self.marker0, 3)
         its.identify_paper(self.marker0, 3, "3", "ABC")
         its.identify_paper(self.marker0, 3, "4", "CBA")
         its.set_paper_idtask_outdated(3)
@@ -280,14 +279,14 @@ class IdentifyTaskTests(TestCase):
         idp1 = baker.make(IDPage, paper=paper1, image=img1)
         # make a new task for it, claim it, and id it.
         its.create_task(paper1)
-        its.claim_task(self.marker0, 1)
+        IdentifyTaskService.claim_task(self.marker0, 1)
         its.identify_paper(self.marker0, 1, "3", "ABC")
         # now give the idpage a new image and set task as out of date (will create a new task)
         img2 = baker.make(Image)
         idp1.image = img2
         idp1.save()
         its.set_paper_idtask_outdated(1)
-        its.claim_task(self.marker0, 1)
+        IdentifyTaskService.claim_task(self.marker0, 1)
         its.identify_paper(self.marker0, 1, "4", "ABCD")
 
     def test_get_all_id_task_count(self) -> None:
@@ -310,7 +309,7 @@ class IdentifyTaskTests(TestCase):
             its.create_task(paper)
 
         for n in range(1, 2):
-            its.claim_task(self.marker0, n)
+            IdentifyTaskService.claim_task(self.marker0, n)
             its.identify_paper(self.marker0, n, f"99{n}", f"AB{n}")
 
         info_dict = {
