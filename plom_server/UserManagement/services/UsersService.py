@@ -5,6 +5,7 @@
 
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.forms.models import model_to_dict
 
 
 # TODO: can probably do this in one call
@@ -32,6 +33,11 @@ def get_users_groups_info() -> dict[str, list]:
         user.username: list(user.groups.values_list("name", flat=True))
         for user in User.objects.all()
     }
+
+
+def get_user_as_dict(username: str) -> dict:
+    """Get a User object as a dict."""
+    return model_to_dict(User.objects.get_by_natural_key(username))
 
 
 def delete_user(username: str, requester_id: int | None = None) -> str:
