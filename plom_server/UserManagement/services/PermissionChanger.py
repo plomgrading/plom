@@ -140,3 +140,5 @@ def toggle_lead_marker_group_membership(username: str):
         raise ValueError(f"User {username} not a marker.")
 
     toggle_user_membership_in_group(username, "lead_marker")
+    # TODO: not quite right as doesn't respect the invariant both or neither
+    toggle_user_membership_in_group(username, "identifier")
