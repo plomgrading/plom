@@ -126,17 +126,22 @@ class Messenger(BaseMessenger):
 
     # ------------------------
 
-    def IDclaimThisTask(self, code):
+    def claim_id_task(self, paper_num: int) -> None:
+        """Claim a particular ID task."""
         with self.SRmutex:
             try:
                 response = self.patch(
-                    f"/ID/tasks/{code}",
+                    f"/ID/tasks/{paper_num}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason)
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason)
                 if response.status_code == 409:
                     raise PlomTakenException(response.reason)
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
