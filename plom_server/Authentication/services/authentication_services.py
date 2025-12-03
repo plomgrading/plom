@@ -72,8 +72,8 @@ class AuthenticationServices:
 
     @staticmethod
     def apply_group_name_implications(group_names_in: list[str]) -> list[str]:
+        """Some groups imply others; add any implied groups to the list."""
         group_names = group_names_in.copy()
-        # some groups imply other ones
         if "manager" in group_names:
             if "scanner" not in group_names:
                 group_names.append("scanner")
