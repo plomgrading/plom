@@ -154,7 +154,7 @@ class IDclaimThisTask(APIView):
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
-    def put(self, request, paper_id: int) -> Response:
+    def put(self, request: Request, *, paper_num: int) -> Response:
         """Assigns a name and a student ID to the paper.
 
         Raises:
@@ -166,10 +166,10 @@ class IDclaimThisTask(APIView):
         user = request.user
         its = IdentifyTaskService()
         try:
-            its.identify_paper(user, paper_id, data["sid"], data["sname"])
+            its.identify_paper(user, paper_num, data["sid"], data["sname"])
         except PermissionDenied as err:  # task not assigned to that user
             return _error_response(err, status=status.HTTP_403_FORBIDDEN)
-        except ObjectDoesNotExist as err:  # no valid task for that paper_id
+        except ObjectDoesNotExist as err:  # no valid task for that paper_num
             return _error_response(err, status=status.HTTP_404_NOT_FOUND)
         except IntegrityError as err:  # attempt to assign SID already used
             return _error_response(err, status.HTTP_409_CONFLICT)
