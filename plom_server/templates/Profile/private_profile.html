@@ -1,0 +1,58 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
+    Copyright (C) 2025 Bryan Tanady
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Profile
+{% endblock title %}
+{% block page_heading %}
+    Profile
+{% endblock page_heading %}
+{% block main_content %}
+    <div style="display: grid; grid-template-columns: auto auto;">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div id="profile-card" class="col-md-12 col-xl-8">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="mt-3 mb-4">
+                            <img src="{% static 'defaultUserIcon.png' %}"
+                                 class="rounded-circle img-fluid"
+                                 style="width: 100px" />
+                        </div>
+                        <!-- we use django.contrib.auth's first_name field; last_name unused -->
+                        <h3 class="mb-2">{{ request.user.first_name }}</h3>
+                        <p class="mb-2">{{ request.user.username }}</p>
+                        <p class="text-muted mb-4">
+                            Groups: {{ user_groups }}<span class="mx-2">|</span> <a href="mailto:{{ email }}">{{ email }}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row d-flex justify-content-left align-items-center h-100">
+            <div id="edit-user" class="col-md-12 col-xl-8">
+                <form class="form" method="post">
+                    {% csrf_token %}
+                    <p>Username: {{ request.user.username }}</p>
+                    <p id="name-label">Preferred name: {{ form.first_name }}</p>
+                    <p class="text-muted lh-1">
+                        <small>
+                            (Note: your username may appear to other
+                            users, in URLs and other places: we're
+                            working on fixing this, patience please)
+                        </small>
+                    </p>
+                    <p id="email-label">Email: {{ form.email }}</p>
+                    <br />
+                    <a class="btn btn-secondary" href={% url 'self-password-reset' %}>Change Password</a>
+                    <button class="btn btn-success" type="submit">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
