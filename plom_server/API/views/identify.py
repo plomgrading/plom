@@ -84,6 +84,7 @@ class GetIDPredictions(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+# GET: /ID/tasks/complete
 class IDgetDoneTasks(APIView):
     """When a id-client logs on they request a list of papers they have already IDd.
 
@@ -99,6 +100,7 @@ class IDgetDoneTasks(APIView):
     # TODO: how do we log?
 
 
+# GET: /ID/tasks/available
 class IDgetNextTask(APIView):
     """Responds with a code for the the next available identify task.
 
@@ -126,6 +128,8 @@ class IDprogressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
+# PATCH: /ID/tasks/{paper_num}
+# PUT: /ID/tasks/{paper_num}
 class IDclaimThisTask(APIView):
     def patch(self, request: Request, *, paper_num: int) -> Response:
         """Claims this identifying task for the user.
@@ -135,7 +139,6 @@ class IDclaimThisTask(APIView):
             HTTP_404_NOT_FOUND: there is no valid id-ing task for that paper.
             HTTP_409_CONFLICT: task already taken.
         """
-        print(request.user)
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "identifier" not in group_list:
             return _error_response(
