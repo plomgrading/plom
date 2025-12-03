@@ -8,8 +8,6 @@
 
 from datetime import timedelta
 
-from django.utils import timezone
-from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.exceptions import (
     ObjectDoesNotExist,
@@ -17,6 +15,8 @@ from django.core.exceptions import (
     MultipleObjectsReturned,
 )
 from django.db import IntegrityError
+from django.test import TestCase
+from django.utils import timezone
 from model_bakery import baker
 
 from plom.plom_exceptions import PlomConflict
@@ -29,8 +29,8 @@ class IdentifyTaskTests(TestCase):
     """Tests for ``Identify.services.IdentifyTaskService`` and ``Identify.services.IDProgressService`` functions."""
 
     def setUp(self) -> None:
-        self.marker0: User = baker.make(User, username="marker0")
-        self.marker1: User = baker.make(User, username="marker1")
+        self.user0: User = baker.make(User, username="user0")
+        self.user1: User = baker.make(User, username="user1")
         return super().setUp()
 
     def test_are_there_id_tasks(self) -> None:
@@ -44,18 +44,18 @@ class IdentifyTaskTests(TestCase):
     def test_get_done_tasks(self) -> None:
         """Test ``IdentifyTaskService.get_done_tasks()``."""
         its = IdentifyTaskService()
-        self.assertEqual(its.get_done_tasks(user=self.marker0), [])
+        self.assertEqual(its.get_done_tasks(user=self.user0), [])
 
         paper = baker.make(Paper, paper_number=1)
         task = baker.make(
             PaperIDTask,
             paper=paper,
             status=PaperIDTask.COMPLETE,
-            assigned_user=self.marker0,
+            assigned_user=self.user0,
         )
         id_act = baker.make(
             PaperIDAction,
-            user=self.marker0,
+            user=self.user0,
             task=task,
             student_name="A",
             student_id="1",
@@ -64,14 +64,14 @@ class IdentifyTaskTests(TestCase):
         task.latest_action = id_act
         task.save()
 
-        result = its.get_done_tasks(user=self.marker0)
+        result = its.get_done_tasks(user=self.user0)
         self.assertEqual(result, [[1, "1", "A"]])
 
     def test_get_latest_id_task(self) -> None:
         """Test ``IdentifyTaskService.get_latest_id_results()``."""
         its = IdentifyTaskService()
         paper = baker.make(Paper, paper_number=1)
-        task1 = baker.make(PaperIDTask, paper=paper, assigned_user=self.marker0)
+        task1 = baker.make(PaperIDTask, paper=paper, assigned_user=self.user0)
         self.assertIsNone(its.get_latest_id_results(task=task1))
 
         start_time = timezone.now()
@@ -79,7 +79,7 @@ class IdentifyTaskTests(TestCase):
             PaperIDAction,
             time=start_time,
             task=task1,
-            user=self.marker0,
+            user=self.user0,
             is_valid=True,
         )
         task1.latest_action = first
@@ -128,16 +128,16 @@ class IdentifyTaskTests(TestCase):
     def test_claim_task(self) -> None:
         """Test a simple case of ``IdentifyTaskService.claim_task()``."""
         with self.assertRaises(ObjectDoesNotExist):
-            IdentifyTaskService.claim_task(self.marker0, 1)
+            IdentifyTaskService.claim_task(self.user0, 1)
 
         p1 = baker.make(Paper, paper_number=1)
         task = baker.make(PaperIDTask, paper=p1)
 
-        IdentifyTaskService.claim_task(self.marker0, 1)
+        IdentifyTaskService.claim_task(self.user0, 1)
         task.refresh_from_db()
 
         self.assertEqual(task.status, PaperIDTask.OUT)
-        self.assertEqual(task.assigned_user, self.marker0)
+        self.assertEqual(task.assigned_user, self.user0)
 
     def test_out_claim_task(self) -> None:
         """Test that claiming a task throws an error if the task is currently out."""
@@ -145,29 +145,29 @@ class IdentifyTaskTests(TestCase):
         baker.make(PaperIDTask, paper=p1, status=PaperIDTask.OUT)
 
         with self.assertRaises(PlomConflict):
-            IdentifyTaskService.claim_task(self.marker0, 1)
+            IdentifyTaskService.claim_task(self.user0, 1)
 
     def test_identify_paper(self) -> None:
         """Test a simple case for ``IdentifyTaskService.identify_paper()``."""
         its = IdentifyTaskService()
         with self.assertRaises(ObjectDoesNotExist):
-            its.identify_paper(self.marker1, 1, "1", "A")
+            its.identify_paper(self.user1, 1, "1", "A")
 
         p1 = baker.make(Paper, paper_number=1)
 
         task = baker.make(
-            PaperIDTask, paper=p1, status=PaperIDTask.OUT, assigned_user=self.marker0
+            PaperIDTask, paper=p1, status=PaperIDTask.OUT, assigned_user=self.user0
         )
 
-        its.identify_paper(self.marker0, 1, "1", "A")
+        its.identify_paper(self.user0, 1, "1", "A")
         task.refresh_from_db()
 
         self.assertEqual(task.status, PaperIDTask.COMPLETE)
         self.assertEqual(
-            task.assigned_user, self.marker0
+            task.assigned_user, self.user0
         )  # Assumption: user keeps task after ID'ing
 
-        action = PaperIDAction.objects.get(user=self.marker0, task=task)
+        action = PaperIDAction.objects.get(user=self.user0, task=task)
         self.assertEqual(action.student_name, "A")
         self.assertEqual(action.student_id, "1")
 
@@ -203,19 +203,19 @@ class IdentifyTaskTests(TestCase):
         for k in range(1, 3):
             paper = baker.make(Paper, paper_number=k)
             its.create_task(paper)
-            IdentifyTaskService.claim_task(self.marker0, k)
+            IdentifyTaskService.claim_task(self.user0, k)
 
-        its.identify_paper(self.marker0, 1, "1", "ABC")
+        its.identify_paper(self.user0, 1, "1", "ABC")
         with self.assertRaises(IntegrityError):
-            its.identify_paper(self.marker0, 2, "1", "ABC")
+            its.identify_paper(self.user0, 2, "1", "ABC")
 
     def test_claim_and_surrender(self) -> None:
         for k in range(1, 5):
             paper = baker.make(Paper, paper_number=k)
             IdentifyTaskService().create_task(paper)
         for k in range(1, 3):
-            IdentifyTaskService.claim_task(self.marker0, k)
-        IdentifyTaskService.surrender_all_tasks(self.marker0)
+            IdentifyTaskService.claim_task(self.user0, k)
+        IdentifyTaskService.surrender_all_tasks(self.user0)
 
     def test_id_task_misc(self) -> None:
         """Test the number of id'd papers."""
@@ -225,21 +225,21 @@ class IdentifyTaskTests(TestCase):
             its.create_task(paper)
 
         for k in range(1, 3):
-            IdentifyTaskService.claim_task(self.marker0, k)
-            its.identify_paper(self.marker0, k, f"{k}", f"A{k}")
+            IdentifyTaskService.claim_task(self.user0, k)
+            its.identify_paper(self.user0, k, f"{k}", f"A{k}")
 
         # test reclaiming a completed task
         with self.assertRaises(PlomConflict):
-            IdentifyTaskService.claim_task(self.marker1, 1)
+            IdentifyTaskService.claim_task(self.user1, 1)
 
         # test user ID'ing a task that does not belong to them
         self.assertRaises(
-            PermissionDenied, its.identify_paper, self.marker1, 1, "1", "A1"
+            PermissionDenied, its.identify_paper, self.user1, 1, "1", "A1"
         )
 
         # test re-id'ing a task
         for k in range(1, 3):
-            its.identify_paper(self.marker0, k, f"{k + 2}", f"A{k + 2}")
+            its.identify_paper(self.user0, k, f"{k + 2}", f"A{k + 2}")
 
         # test task existence
         paper = baker.make(Paper, paper_number=10)
@@ -265,9 +265,9 @@ class IdentifyTaskTests(TestCase):
         paper3 = baker.make(Paper, paper_number=3)
         baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.OUT_OF_DATE)
         baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.TO_DO)
-        IdentifyTaskService.claim_task(self.marker0, 3)
-        its.identify_paper(self.marker0, 3, "3", "ABC")
-        its.identify_paper(self.marker0, 3, "4", "CBA")
+        IdentifyTaskService.claim_task(self.user0, 3)
+        its.identify_paper(self.user0, 3, "3", "ABC")
+        its.identify_paper(self.user0, 3, "4", "CBA")
         its.set_paper_idtask_outdated(3)
 
     def test_idtask_recreate(self) -> None:
@@ -279,15 +279,15 @@ class IdentifyTaskTests(TestCase):
         idp1 = baker.make(IDPage, paper=paper1, image=img1)
         # make a new task for it, claim it, and id it.
         its.create_task(paper1)
-        IdentifyTaskService.claim_task(self.marker0, 1)
-        its.identify_paper(self.marker0, 1, "3", "ABC")
+        IdentifyTaskService.claim_task(self.user0, 1)
+        its.identify_paper(self.user0, 1, "3", "ABC")
         # now give the idpage a new image and set task as out of date (will create a new task)
         img2 = baker.make(Image)
         idp1.image = img2
         idp1.save()
         its.set_paper_idtask_outdated(1)
-        IdentifyTaskService.claim_task(self.marker0, 1)
-        its.identify_paper(self.marker0, 1, "4", "ABCD")
+        IdentifyTaskService.claim_task(self.user0, 1)
+        its.identify_paper(self.user0, 1, "4", "ABCD")
 
     def test_get_all_id_task_count(self) -> None:
         ids = IDProgressService()
@@ -309,8 +309,8 @@ class IdentifyTaskTests(TestCase):
             its.create_task(paper)
 
         for n in range(1, 2):
-            IdentifyTaskService.claim_task(self.marker0, n)
-            its.identify_paper(self.marker0, n, f"99{n}", f"AB{n}")
+            IdentifyTaskService.claim_task(self.user0, n)
+            its.identify_paper(self.user0, n, f"99{n}", f"AB{n}")
 
         info_dict = {
             1: {
@@ -319,7 +319,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "991",
                 "student_name": "AB1",
                 "in_classlist": False,
-                "username": "marker0",
+                "username": "user0",
             },
             2: {"idpageimage_pk": None, "status": "To Do", "prediction": None},
         }
@@ -334,7 +334,7 @@ class IdentifyTaskTests(TestCase):
             paper = baker.make(Paper, paper_number=n)
             its.create_task(paper)
         for n in range(1, 3):
-            IDDirectService.identify_direct(self.marker0, n, f"99{n}", f"AB{n}")
+            IDDirectService.identify_direct(self.user0, n, f"99{n}", f"AB{n}")
         info_dict = {
             1: {
                 "idpageimage_pk": None,
@@ -342,7 +342,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "991",
                 "student_name": "AB1",
                 "in_classlist": False,
-                "username": "marker0",
+                "username": "user0",
             },
             2: {
                 "idpageimage_pk": None,
@@ -350,7 +350,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "992",
                 "student_name": "AB2",
                 "in_classlist": False,
-                "username": "marker0",
+                "username": "user0",
             },
         }
 
