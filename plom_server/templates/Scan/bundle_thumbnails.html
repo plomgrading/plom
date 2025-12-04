@@ -19,9 +19,9 @@
     <div class="my-2">
         <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
         {% if is_pushed %}
-            <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundle overview</a>
+            <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundles</a>
         {% endif %}
-        <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundle overview</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundles</a>
     </div>
     <div class="my-2">
         <a class="btn btn-secondary"
