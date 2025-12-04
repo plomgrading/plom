@@ -133,7 +133,7 @@
                                         hx-disabled-elt="this">Push</button>
                             {% else %}
                                 <button class="btn btn-warning"
-                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
+                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
                                         hx-post="{% url 'scan_push_all' bundle_id %}"
                                         hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
                                         hx-indicator="#busy_indicator_{{ bundle_id }}"
