@@ -14,46 +14,65 @@
          x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
         <div>
             <h5>
+                <!-- First the textual summary of the bundle -->
                 {% if is_pushed %}
                     <i class="bi bi-check-square text-success"></i>
                     Pushed bundle
+                    <q><tt>{{ slug }}</tt></q>
+                {% elif not has_page_images %}
+                    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    Unprocessed bundle
+                    <q><tt>{{ slug }}</tt></q>
+                {% elif not finished_reading_qr %}
+                    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    Unread bundle
+                    <q><tt>{{ slug }}</tt></q>
                 {% else %}
-                    {% if not has_page_images %}
-                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                        Unprocessed bundle
-                    {% elif not finished_reading_qr %}
-                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                        Unread bundle
+                    Staged bundle
+                    <q><tt>{{ slug }}</tt></q>
+                    {% if not is_perfect %}
+                        has pages that require your attention.
+                    {% elif n_collisions and n_incomplete %}
+                        contains colliding page images and incomplete papers.
+                    {% elif n_collisions %}
+                        contains colliding page images.
+                    {% elif n_incomplete %}
+                        has no pages requiring attention, but contains incomplete papers.
                     {% else %}
-                        Staged bundle
+                        has no pages requiring attention.
                     {% endif %}
                 {% endif %}
-                <q><tt>{{ slug }}</tt></q>
-                {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
+                <!-- Now in some cases a push button -->
+                {% if not is_pushed and has_page_images and finished_reading_qr and is_perfect %}
+                    &nbsp;
                     {% if n_collisions %}
-                        contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}.
+                        <button class="btn btn-danger disabled" disabled>Push</button>
                     {% elif n_incomplete == 0 %}
-                        <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
-                        <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                        has no pages requiring attention -
                         <button class="btn btn-success"
-                                hx-confirm="Please confirm that you want to push this bundle."
                                 hx-post="{% url 'scan_push_all' bundle_id %}"
-                                x-bind:disabled="midPush"
-                                @htmx:before-send="midPush=true;">Push</button>
+                                hx-target-error="#push_error_msgs"
+                                hx-indicator="#push_indicator"
+                                hx-disabled-elt="this">Push</button>
                     {% else %}
-                        has no problems, but contains incomplete papers. You can
-                        <!-- Issue #3411: provide link to additional info -->
-                        <button class="btn btn-danger"
+                        <button class="btn btn-warning"
                                 hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
                                 hx-post="{% url 'scan_push_all' bundle_id %}"
-                                x-bind:disabled="midPush"
-                                @htmx:before-send="midPush=true;">Push</button>
-                        but it is not recommended
+                                hx-target-error="#push_error_msgs"
+                                hx-indicator="#push_indicator"
+                                hx-disabled-elt="this">Push</button>
                     {% endif %}
+                    <div id="push_indicator"
+                         class="htmx-indicator spinner-border spinner-border-sm"
+                         role="status">
+                        <!--<span class="visually-hidden">BUSY</span>-->
+                    </div>
                 {% endif %}
-                {% if not is_perfect %}has pages that require your attention{% endif %}
             </h5>
+            <div>
+                <!-- this is the target for any htmx error messages from "push" -->
+                <!-- p-0 border-0 here tries to hide the div when its empty -->
+                <div id="push_error_msgs" class="p-0 border-0 alert alert-danger"></div>
+            </div>
             {% if n_incomplete %}
                 <div class="alert alert-warning">
                     <details>

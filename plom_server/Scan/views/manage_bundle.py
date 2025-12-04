@@ -331,30 +331,6 @@ class BundleLockView(ScannerRequiredView):
         return render(request, "Scan/bundle_is_locked.html", context)
 
 
-class BundlePushCollisionView(ScannerRequiredView):
-    """Display an error message that a collision was detected during push."""
-
-    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
-        context = self.build_context()
-        bundle = ScanService().get_bundle_from_pk(bundle_id)
-        context.update({"slug": bundle.slug, "bundle_id": bundle_id})
-        reasons = [f"{msg}" for msg in messages.get_messages(request)]
-        context.update({"reasons": reasons})
-        return render(request, "Scan/bundle_push_collision.html", context)
-
-
-class BundlePushBadErrorView(ScannerRequiredView):
-    """Display an error message that something unexpected happened during push."""
-
-    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
-        context = self.build_context()
-        bundle = ScanService().get_bundle_from_pk(bundle_id)
-        context.update({"slug": bundle.slug, "bundle_id": bundle_id})
-        reasons = [f"{msg}" for msg in messages.get_messages(request)]
-        context.update({"reasons": reasons})
-        return render(request, "Scan/bundle_push_bad_error.html", context)
-
-
 class RecentStagedBundleRedirectView(ScannerRequiredView):
     """Handle a redirection, either to the newest unpushed bundle or the overall list."""
 
