@@ -95,7 +95,12 @@ def create_qv_map_and_papers(config: PlomServerConfig):
     """
     qvmap: dict[int, dict[int | str, int]] = {}
     if config.num_to_produce:
-        qvmap = PQVMappingService().make_version_map(config.num_to_produce)
+        if config.first_paper_number:
+            qvmap = PQVMappingService().make_version_map(
+                config.num_to_produce, first=config.first_paper_number
+            )
+        else:
+            qvmap = PQVMappingService().make_version_map(config.num_to_produce)
     else:
         # TODO: extra validation steps here?
         try:
