@@ -85,7 +85,7 @@ def password_change_redirect(request):
 class ProfileView(ManagerRequiredView):
     """Actions related to public facing user profiles."""
 
-    def get(self, request: HttpRequest, username: str) -> HttpResponse:
+    def get(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Get the profile page as seen by another user.
 
         Args:
