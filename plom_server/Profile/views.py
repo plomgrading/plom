@@ -42,7 +42,6 @@ class PrivateProfileView(LoginRequiredMixin, View):
         context = {
             "form": form,
             "user_groups": groups,
-            "email": request.user.email,
         }
         return render(request, "Profile/private_profile.html", context)
 
