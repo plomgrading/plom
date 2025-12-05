@@ -22,7 +22,7 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        for group in AuthenticationServices.plom_user_groups_list:
+        for group in AuthenticationServices.all_plom_user_groups_list:
             _, created = Group.objects.get_or_create(name=group)
             if created:
                 self.stdout.write(f'Group "{group}" has been added')

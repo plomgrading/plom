@@ -37,9 +37,30 @@
                 </div>
             </div>
             <div class="col-8 align-self-start">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
                         <a href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}">marking tasks</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <h6 class="card-header">User groups:</h6>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'profile' user.username %}">
+                            {% csrf_token %}
+                            <fieldset>
+                                {% for g in all_groups %}
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="{{ g.name }}"
+                                               name="{{ g.name }}"
+                                               {% if g.checked %}checked{% endif %} />
+                                        <label class="form-check-label" for="{{ g.name }}">{{ g.label }}</label>
+                                    </div>
+                                {% endfor %}
+                            </fieldset>
+                            <button type="submit" class="btn btn-secondary" name="todo_needed_or_not">Change groups</button>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -14,7 +14,7 @@ from django.views.generic import View
 
 from plom_server.Authentication.services import AuthenticationServices
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.UserManagement.services import UsersService
+from plom_server.UserManagement.services import UsersService, PermissionChanger
 from .edit_profile_form import EditProfileForm
 
 
@@ -87,8 +87,28 @@ class ProfileView(ManagerRequiredView):
         """
         user_dict = UsersService.get_user_as_dict(username)
         user_groups = UsersService.get_users_groups_info()[username]
+        all_groups_list = AuthenticationServices.plom_user_groups_list
+        # TODO: maybe we should manually-ish filter out "demo"?
+        all_groups_info = [
+            {
+                "name": g,
+                "label": g,  # potentially with html links etc
+                "checked": g in user_groups,
+            }
+            for g in all_groups_list
+        ]
         context = {
             "user": user_dict,
             "user_groups": ", ".join(user_groups),
+            "all_groups": all_groups_info,
         }
         return render(request, "Profile/profile.html", context)
+
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
+        all_groups_list = AuthenticationServices.plom_user_groups_list
+        new_groups = []
+        for g in all_groups_list:
+            if request.POST.get(g) == "on":
+                new_groups.append(g)
+        PermissionChanger.change_user_groups(username, new_groups)
+        return redirect("profile", username)

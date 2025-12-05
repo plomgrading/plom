@@ -8,6 +8,7 @@ from django.db import transaction
 from plom_server.API.services import TokenService
 from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
+from plom_server.Authentication.services import AuthenticationServices
 
 
 @transaction.atomic
@@ -77,7 +78,8 @@ def set_all_markers_active(active: bool):
 
 
 @transaction.atomic
-def add_user_to_group(username, groupname):
+def _add_user_to_group(username: str, groupname: str) -> None:
+    """Low-level routine, does not enforce dependencies."""
     try:
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
@@ -91,7 +93,7 @@ def add_user_to_group(username, groupname):
 
 
 @transaction.atomic
-def remove_user_from_group(username, groupname):
+def _remove_user_from_group(username: str, groupname: str) -> None:
     try:
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
@@ -121,7 +123,7 @@ def toggle_user_membership_in_group(username, groupname):
         user_obj.groups.add(group_obj)
 
 
-def is_user_in_group(username, groupname):
+def is_user_in_group(username: str, groupname: str) -> bool:
     try:
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
@@ -142,3 +144,21 @@ def toggle_lead_marker_group_membership(username: str):
     toggle_user_membership_in_group(username, "lead_marker")
     # TODO: not quite right as doesn't respect the invariant both or neither
     toggle_user_membership_in_group(username, "identifier")
+
+
+def change_user_groups(username: str, groups: list[str]) -> list[str]:
+    """Change to which groups a user belongs, respecting implications.
+
+    Returns:
+        The list of strings of the groupnames that were actually
+        set.  Because some groups depend on others, you might get
+        a superset of the input.
+    """
+    groups = AuthenticationServices.apply_group_name_implications(groups)
+
+    for g in AuthenticationServices.plom_user_groups_list:
+        if g in groups:
+            _add_user_to_group(username, g)
+        else:
+            _remove_user_from_group(username, g)
+    return groups

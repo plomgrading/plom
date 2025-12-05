@@ -23,6 +23,15 @@ class AuthenticationServices:
 
     # TODO: is "demo" really a thing?
     plom_user_groups_list = (
+        "manager",
+        "marker",
+        "scanner",
+        "demo",
+        "lead_marker",
+        "identifier",
+    )
+    # additionally, there is a "admin" group, not user-facing
+    all_plom_user_groups_list = (
         "admin",
         "manager",
         "marker",
