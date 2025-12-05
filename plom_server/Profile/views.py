@@ -41,7 +41,7 @@ class PrivateProfileView(LoginRequiredMixin, View):
             # concatenate group names separated with a comma and a space
             groups = ", ".join([g.name for g in request.user.groups.all()])
         except IndexError:
-            groups = None
+            groups = ""
         context = {
             "form": form,
             "user_groups": groups,
@@ -59,10 +59,10 @@ class PrivateProfileView(LoginRequiredMixin, View):
             Profile HTML page.
         """
         try:
-            # TODO: first?  but more generally, why not support multiple groups?
-            group = request.user.groups.all()[0].name
+            # concatenate group names separated with a comma and a space
+            groups = ", ".join([g.name for g in request.user.groups.all()])
         except IndexError:
-            group = None
+            groups = ""
         form = EditProfileForm(request.POST, instance=request.user)
         if not form.is_valid():
             messages.error(request, f"Unexpectedly invalid form: {form}")
@@ -70,7 +70,7 @@ class PrivateProfileView(LoginRequiredMixin, View):
         form.save()
         context = {
             "form": form,
-            "user_group": group,
+            "user_groups": groups,
             "email": request.user.email,
         }
         return render(request, "Profile/private_profile.html", context)
