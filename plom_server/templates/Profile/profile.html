@@ -27,11 +27,11 @@
                         </div>
                         <!-- we use django.contrib.auth's first_name field; last_name unused -->
                         <h3 class="mb-2">{{ user.first_name }}</h3>
-                        <p class="mb-2">{{ request.user.username }}</p>
+                        <p class="mb-2">{{ user.username }}</p>
                         <p class="text-muted mb-4">
                             Groups: {{ user_groups }}
                             <span class="mx-2">|</span>
-                            <a href="mailto:{{ email }}">{{ email }}</a>
+                            <a href="mailto:{{ user.email }}">{{ user.email }}</a>
                         </p>
                     </div>
                 </div>

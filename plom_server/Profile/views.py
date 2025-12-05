@@ -78,6 +78,8 @@ class ProfileView(ManagerRequiredView):
 
         Args:
             request: an Http request.
+
+        Keyword Args:
             username: the username of the user's profile to fetch.
 
         Returns:
