@@ -17,11 +17,16 @@ log = logging.getLogger(__name__)
 
 
 @transaction.atomic
-def get_users_groups(username: str):
+def get_users_groups(username: str) -> list[str]:
+    """Get a list of groups (as strings) from a username."""
     try:
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
         raise ValueError(f"No such user {username}")
+    return _get_users_groups(user_obj)
+
+
+def _get_users_groups(user_obj: User) -> list[str]:
     return list(user_obj.groups.values_list("name", flat=True))
 
 
@@ -82,33 +87,21 @@ def set_all_markers_active(active: bool):
             TokenService.drop_api_token(user)
 
 
-def _add_user_to_group(username: str, groupname: str) -> None:
+def _add_user_to_group(user_obj: User, groupname: str) -> None:
     """Low-level routine to add user to group, does not enforce dependencies, fewer checks."""
-    try:
-        # TODO: select for update
-        user_obj = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist:
-        raise ValueError(f"Cannot find user with name {username}.")
     try:
         group_obj = Group.objects.get_by_natural_key(groupname)
     except Group.DoesNotExist:
         raise ValueError(f"Cannot find group with name {groupname}.")
-
     user_obj.groups.add(group_obj)
 
 
-def _remove_user_from_group(username: str, groupname: str) -> None:
+def _remove_user_from_group(user_obj: User, groupname: str) -> None:
     """Low-level routine to user from group, with few checks."""
-    try:
-        # TODO: select for update
-        user_obj = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist:
-        raise ValueError(f"Cannot find user with name {username}.")
     try:
         group_obj = Group.objects.get_by_natural_key(groupname)
     except Group.DoesNotExist:
         raise ValueError(f"Cannot find group with name {groupname}.")
-
     user_obj.groups.remove(group_obj)
 
 
@@ -185,9 +178,16 @@ def change_user_groups(
         raise ValueError('Cannot change membership from the "admin" group')
 
     with transaction.atomic():
+        try:
+            # TODO: select for update?  But we never user_obj.save...?
+            # TODO: this is something about many-to-many
+            user_obj = User.objects.get_by_natural_key(username)
+        except User.DoesNotExist:
+            raise ValueError(f"Cannot find user with name {username}.")
+
         # If removing manager access, ensure there will still *be* managers...
         # we're inside an atomic block to prevent races around this.
-        current_groups = get_users_groups(username)
+        current_groups = _get_users_groups(user_obj)
         if "manager" in current_groups and "manager" not in groups:
             num_managers = User.objects.filter(groups__name="manager").count()
             if num_managers < 2:
@@ -200,7 +200,7 @@ def change_user_groups(
             if g == "admin":
                 continue
             if g in groups:
-                _add_user_to_group(username, g)
+                _add_user_to_group(user_obj, g)
             else:
                 if whoami is not None:
                     if whoami == username and g == "manager":
@@ -210,5 +210,5 @@ def change_user_groups(
                         )
                         log.warn(msg)
                         raise RuntimeError(msg)
-                _remove_user_from_group(username, g)
+                _remove_user_from_group(user_obj, g)
     return groups
