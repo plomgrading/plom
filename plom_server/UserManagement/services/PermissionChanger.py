@@ -82,7 +82,6 @@ def set_all_markers_active(active: bool):
             TokenService.drop_api_token(user)
 
 
-@transaction.atomic
 def _add_user_to_group(username: str, groupname: str) -> None:
     """Low-level routine to add user to group, does not enforce dependencies, fewer checks."""
     try:
@@ -98,7 +97,6 @@ def _add_user_to_group(username: str, groupname: str) -> None:
     user_obj.groups.add(group_obj)
 
 
-@transaction.atomic
 def _remove_user_from_group(username: str, groupname: str) -> None:
     """Low-level routine to user from group, with few checks."""
     try:
@@ -186,28 +184,31 @@ def change_user_groups(
     if "admin" in groups:
         raise ValueError('Cannot change membership from the "admin" group')
 
-    # If removing manager access, ensure there will still *be* managers...
-    current_groups = get_users_groups(username)
-    if "manager" in current_groups and "manager" not in groups:
-        num_managers = User.objects.filter(groups__name="manager").count()
-        if num_managers < 2:
-            raise RuntimeError(
-                f'Removing manager access from "{username}" would leave no manager accounts'
-            )
+    with transaction.atomic():
+        # If removing manager access, ensure there will still *be* managers...
+        # we're inside an atomic block to prevent races around this.
+        current_groups = get_users_groups(username)
+        if "manager" in current_groups and "manager" not in groups:
+            num_managers = User.objects.filter(groups__name="manager").count()
+            if num_managers < 2:
+                raise RuntimeError(
+                    f'Removing manager access from "{username}" would'
+                    " leave no manager accounts"
+                )
 
-    for g in AuthenticationServices.plom_user_groups_list:
-        if g == "admin":
-            continue
-        if g in groups:
-            _add_user_to_group(username, g)
-        else:
-            if whoami is not None:
-                if whoami == username and g == "manager":
-                    msg = (
-                        f'Cowardly preventing "{username}" from locking'
-                        " themselves out of their own manager account"
-                    )
-                    log.warn(msg)
-                    raise RuntimeError(msg)
-            _remove_user_from_group(username, g)
+        for g in AuthenticationServices.plom_user_groups_list:
+            if g == "admin":
+                continue
+            if g in groups:
+                _add_user_to_group(username, g)
+            else:
+                if whoami is not None:
+                    if whoami == username and g == "manager":
+                        msg = (
+                            f'Cowardly preventing "{username}" from locking'
+                            " themselves out of their own manager account"
+                        )
+                        log.warn(msg)
+                        raise RuntimeError(msg)
+                _remove_user_from_group(username, g)
     return groups
