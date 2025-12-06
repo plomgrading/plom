@@ -50,10 +50,12 @@
                             <fieldset>
                                 {% for g in all_groups %}
                                     <div class="form-check">
+                                        <!-- autocomplete means the buttons reset on ctrl-R, perhaps Firefox-specific -->
                                         <input class="form-check-input"
                                                type="checkbox"
                                                id="{{ g.name }}"
                                                name="{{ g.name }}"
+                                               autocomplete="off"
                                                {% if g.checked %}checked{% endif %}
                                                {% if g.disabled %}disabled{% endif %} />
                                         <label class="form-check-label" for="{{ g.name }}">{{ g.label }}</label>
