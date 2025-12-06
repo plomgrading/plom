@@ -20,6 +20,8 @@ from plom_server.Papers.models import (
 from plom_server.Identify.services import IdentifyTaskService
 from plom_server.Mark.services import MarkingTaskService
 
+from ..models import StagingBundle
+
 
 class ManageDiscardService:
     """Functions for overseeing discarding pushed images."""
@@ -138,6 +140,42 @@ class ManageDiscardService:
             )
 
         return None
+
+    @transaction.atomic
+    def discard_whole_bundle_by_id(
+        self, user_obj: User, bundle_id: int, *, dry_run: bool = True
+    ):
+        """Discard all pages pushed in a given bundle.
+
+        Args:
+            user_obj (User): the User who is discarding
+            bundle_id (int): the id of the bundle being discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+
+        Raises:
+            ValueError: no such page, no image attached to page, unexpectedly
+                unknown page type, maybe other cases.
+        """
+        # get all pages
+
+        with transaction.atomic():
+            bundle_obj = (
+                StagingBundle.objects.select_for_update().filter(pk=bundle_id).get()
+            )
+            if not bundle_obj.pushed:
+                raise ValueError(
+                    "Bundle hasn't been pushed, please modify it in staging."
+                )
+
+        # discard all pages
+
+        # update bundle to say "discarded"
 
     @transaction.atomic
     def discard_whole_paper_by_number(
