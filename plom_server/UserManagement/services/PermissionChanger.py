@@ -173,6 +173,10 @@ def change_user_groups(
         set.  Because some groups depend on others, you might get
         a superset of the input.
 
+    There are various restrictions.  For example, you may not remove
+    all users from the "manager" group.  You may not change membership
+    of the "admin" group.
+
     Raises:
         RuntimeError: some sort of footgun was prevented, such as you
             may not lock yourself out of your own manager account.
@@ -181,6 +185,15 @@ def change_user_groups(
     groups = AuthenticationServices.apply_group_name_implications(groups)
     if "admin" in groups:
         raise ValueError('Cannot change membership from the "admin" group')
+
+    # If removing manager access, ensure there will still *be* managers...
+    current_groups = get_users_groups(username)
+    if "manager" in current_groups and "manager" not in groups:
+        num_managers = User.objects.filter(groups__name="manager").count()
+        if num_managers < 2:
+            raise RuntimeError(
+                f'Removing manager access from "{username}" would leave no manager accounts'
+            )
 
     for g in AuthenticationServices.plom_user_groups_list:
         if g == "admin":
