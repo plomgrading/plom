@@ -1037,15 +1037,18 @@ class ScanService:
             return False
         return True
 
-    def are_bundles_perfect(self) -> dict[str, bool]:
+    @classmethod
+    def are_bundles_perfect(cls) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is perfect."""
-        # TODO: does this need a prefetch for stagingimage?
         return {
-            bundle_obj.slug: self._is_bundle_obj_perfect(bundle_obj)
-            for bundle_obj in StagingBundle.objects.all()
+            bundle_obj.slug: cls._is_bundle_obj_perfect(bundle_obj)
+            for bundle_obj in StagingBundle.objects.all().prefetch_related(
+                "stagingimage_set"
+            )
         }
 
-    def are_bundles_pushed(self) -> dict[str, bool]:
+    @staticmethod
+    def are_bundles_pushed() -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is pushed."""
         return {
             bundle_obj.slug: bundle_obj.pushed
