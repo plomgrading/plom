@@ -159,23 +159,27 @@ class ManageDiscardService:
             what would be attempted).
 
         Raises:
-            ValueError: no such page, no image attached to page, unexpectedly
-                unknown page type, maybe other cases.
+            ValueError: Attempting to discard the contents of an unpushed bundle.
         """
-        # get all pages
+        staging_bundle_obj = (
+            StagingBundle.objects.select_for_update().filter(pk=bundle_id).get()
+        )
+        bundle_obj = staging_bundle_obj.bundle_set.get()
+        if not bundle_obj:
+            raise ValueError("Bundle hasn't been pushed, please modify it in staging.")
 
+        msg = ""
         with transaction.atomic():
-            bundle_obj = (
-                StagingBundle.objects.select_for_update().filter(pk=bundle_id).get()
-            )
-            if not bundle_obj.pushed:
-                raise ValueError(
-                    "Bundle hasn't been pushed, please modify it in staging."
-                )
-
-        # discard all pages
-
-        # update bundle to say "discarded"
+            images = bundle_obj.image_set.all()
+            # TODO: probably some prefetch/select _related stuff here
+            for fp in FixedPage.objects.filter(image__in=images):
+                if fp.image:
+                    msg += self.discard_pushed_fixed_page(
+                        user_obj, fp.pk, dry_run=dry_run
+                    )
+            for mp in MobilePage.objects.filter(image__in=images):
+                msg += self.discard_pushed_mobile_page(user_obj, mp.pk, dry_run=dry_run)
+        return msg
 
     @transaction.atomic
     def discard_whole_paper_by_number(

@@ -143,3 +143,14 @@ class SubstituteImageView(ScannerLeadMarkerOrManagerView):
         if img_obj is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
         return FileResponse(img_obj.baseimage.image_file)
+
+
+class PushedBundleView(ScannerLeadMarkerOrManagerView):
+    """Operations related to pushed bundles."""
+
+    def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
+        """Discard all images pushed in a given bundle."""
+        ManageDiscardService().discard_whole_bundle_by_id(
+            request.user, bundle_id, dry_run=False
+        )
+        return HttpResponseClientRefresh()

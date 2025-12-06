@@ -70,6 +70,9 @@
                                     <a class="btn btn-secondary"
                                        target="_"
                                        href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
+                                    <a class="btn btn-danger"
+                                       target="_"
+                                       hx-delete="{% url 'pushed_bundle' bundle.id %}">Discard contents</a>
                                 </td>
                             </tr>
                         {% endfor %}
