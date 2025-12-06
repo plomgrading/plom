@@ -200,6 +200,7 @@ def change_user_groups(
             if g == "admin":
                 continue
             if g in groups:
+                # TODO: some pre-fetching or similar to avoid looking up groups?
                 _add_user_to_group(user_obj, g)
             else:
                 if whoami is not None:
