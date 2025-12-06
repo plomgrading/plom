@@ -2,6 +2,8 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
+import logging
+
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 
@@ -9,6 +11,9 @@ from plom_server.API.services import TokenService
 from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
 from plom_server.Authentication.services import AuthenticationServices
+
+
+log = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -146,13 +151,28 @@ def toggle_lead_marker_group_membership(username: str):
     toggle_user_membership_in_group(username, "identifier")
 
 
-def change_user_groups(username: str, groups: list[str]) -> list[str]:
+def change_user_groups(
+    username: str, groups: list[str], *, whoami: str | None = None
+) -> list[str]:
     """Change to which groups a user belongs, respecting implications.
+
+    Args:
+        username: which user to change.
+        groups: which groups we would like them in.
+
+    Keywords Args:
+        whoami: optional username string of the calling user.
+            If you pass this, we'll prevent managers from
+            locking themselves out of the manager group.
 
     Returns:
         The list of strings of the groupnames that were actually
         set.  Because some groups depend on others, you might get
         a superset of the input.
+
+    Raises:
+        RuntimeError: some sort of footgun was prevented, such as you
+            may not lock yourself out of your own manager account.
     """
     groups = AuthenticationServices.apply_group_name_implications(groups)
 
@@ -160,5 +180,13 @@ def change_user_groups(username: str, groups: list[str]) -> list[str]:
         if g in groups:
             _add_user_to_group(username, g)
         else:
+            if whoami is not None:
+                if whoami == username and g == "manager":
+                    msg = (
+                        f'Cowardly preventing "{username}" from locking'
+                        " themselves out of their own manager account"
+                    )
+                    log.warn(msg)
+                    raise RuntimeError(msg)
             _remove_user_from_group(username, g)
     return groups

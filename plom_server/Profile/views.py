@@ -111,5 +111,12 @@ class ProfileView(ManagerRequiredView):
         for g in all_groups_list:
             if request.POST.get(g) == "on":
                 new_groups.append(g)
-        PermissionChanger.change_user_groups(username, new_groups)
+        try:
+            PermissionChanger.change_user_groups(
+                username, new_groups, whoami=request.user.username
+            )
+        except RuntimeError as err:
+            # TODO: what should the error handling be?
+            messages.error(request, err)
+            return redirect("home")
         return redirect("profile", username)
