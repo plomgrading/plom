@@ -84,8 +84,9 @@ def set_all_markers_active(active: bool):
 
 @transaction.atomic
 def _add_user_to_group(username: str, groupname: str) -> None:
-    """Low-level routine, does not enforce dependencies."""
+    """Low-level routine to add user to group, does not enforce dependencies, fewer checks."""
     try:
+        # TODO: select for update
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
         raise ValueError(f"Cannot find user with name {username}.")
@@ -99,7 +100,9 @@ def _add_user_to_group(username: str, groupname: str) -> None:
 
 @transaction.atomic
 def _remove_user_from_group(username: str, groupname: str) -> None:
+    """Low-level routine to user from group, with few checks."""
     try:
+        # TODO: select for update
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
         raise ValueError(f"Cannot find user with name {username}.")
@@ -173,10 +176,15 @@ def change_user_groups(
     Raises:
         RuntimeError: some sort of footgun was prevented, such as you
             may not lock yourself out of your own manager account.
+        ValueError: someone tried to do something illegal.
     """
     groups = AuthenticationServices.apply_group_name_implications(groups)
+    if "admin" in groups:
+        raise ValueError('Cannot change membership from the "admin" group')
 
     for g in AuthenticationServices.plom_user_groups_list:
+        if g == "admin":
+            continue
         if g in groups:
             _add_user_to_group(username, g)
         else:

@@ -109,13 +109,17 @@ class ProfileView(ManagerRequiredView):
         all_groups_list = AuthenticationServices.plom_user_groups_list
         new_groups = []
         for g in all_groups_list:
+            if g == "admin":
+                # Trying to change the admin group will loudly fail.
+                # Client-side *displays* it, but we don't want changes.
+                continue
             if request.POST.get(g) == "on":
                 new_groups.append(g)
         try:
             PermissionChanger.change_user_groups(
                 username, new_groups, whoami=request.user.username
             )
-        except RuntimeError as err:
+        except (RuntimeError, ValueError) as err:
             # TODO: what should the error handling be?
             messages.error(request, err)
             return redirect("home")
