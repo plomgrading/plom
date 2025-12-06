@@ -106,6 +106,12 @@ class ProfileView(ManagerRequiredView):
         return render(request, "Profile/profile.html", context)
 
     def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
+        """Manager users can post changes to the groups of a particular user.
+
+        On success, it triggers a reload of the `get` method.
+
+        Only manager users can POST here b/c this is a `ManagerRequiredView`.
+        """
         all_groups_list = AuthenticationServices.plom_user_groups_list
         new_groups = []
         for g in all_groups_list:
