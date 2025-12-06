@@ -54,7 +54,8 @@
                                                type="checkbox"
                                                id="{{ g.name }}"
                                                name="{{ g.name }}"
-                                               {% if g.checked %}checked{% endif %} />
+                                               {% if g.checked %}checked{% endif %}
+                                               {% if g.disabled %}disabled{% endif %} />
                                         <label class="form-check-label" for="{{ g.name }}">{{ g.label }}</label>
                                     </div>
                                 {% endfor %}

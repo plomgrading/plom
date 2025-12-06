@@ -94,6 +94,7 @@ class ProfileView(ManagerRequiredView):
                 "name": g,
                 "label": g,  # potentially with html links etc
                 "checked": g in user_groups,
+                "disabled": True if g == "admin" else False,
             }
             for g in all_groups_list
         ]
