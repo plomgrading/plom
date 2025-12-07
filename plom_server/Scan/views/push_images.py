@@ -21,7 +21,7 @@ class PushAllPageImages(ScannerRequiredView):
 
     def post(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         try:
-            ScanService().push_bundle_to_server(bundle_id, request.user)
+            ScanService.push_bundle_to_server(bundle_id, request.user)
         except ValueError as err:
             return HttpResponse(err, status=400)
         except PlomPushCollisionException as err:

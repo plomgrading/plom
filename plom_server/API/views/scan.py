@@ -95,7 +95,7 @@ class ScanBundleActions(APIView):
             )
 
         try:
-            ScanService().push_bundle_to_server(bundle_id, request.user)
+            ScanService.push_bundle_to_server(bundle_id, request.user)
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         except ValueError as err:

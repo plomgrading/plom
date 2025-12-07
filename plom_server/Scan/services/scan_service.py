@@ -1004,9 +1004,9 @@ class ScanService:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
         self.read_qr_codes(bundle_obj.pk)
 
-    @transaction.atomic
-    def is_bundle_perfect(self, bundle_pk: int) -> bool:
-        """Tests if the bundle (given by its pk) is perfect.
+    @classmethod
+    def is_bundle_perfect(cls, bundle_pk: int) -> bool:
+        """Checks if the bundle (given by its pk) is perfect.
 
         A bundle is perfect when
           * no unread pages, no error-pages, no unknown-pages, and
@@ -1016,8 +1016,12 @@ class ScanService:
           * are extra-pages with data
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        # a bundle is perfect if it has
+        return cls._is_bundle_obj_perfect(bundle_obj)
 
+    @staticmethod
+    @transaction.atomic
+    def _is_bundle_obj_perfect(bundle_obj: StagingBundle) -> bool:
+        """Checks if the bundle object is perfect."""
         # check for unread, unknown, error pages
         if bundle_obj.stagingimage_set.filter(
             image_type__in=[
@@ -1033,14 +1037,18 @@ class ScanService:
             return False
         return True
 
-    def are_bundles_perfect(self) -> dict[str, bool]:
+    @classmethod
+    def are_bundles_perfect(cls) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is perfect."""
         return {
-            bundle_obj.slug: self.is_bundle_perfect(bundle_obj.pk)
-            for bundle_obj in StagingBundle.objects.all()
+            bundle_obj.slug: cls._is_bundle_obj_perfect(bundle_obj)
+            for bundle_obj in StagingBundle.objects.all().prefetch_related(
+                "stagingimage_set"
+            )
         }
 
-    def are_bundles_pushed(self) -> dict[str, bool]:
+    @staticmethod
+    def are_bundles_pushed() -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is pushed."""
         return {
             bundle_obj.slug: bundle_obj.pushed
@@ -1122,7 +1130,8 @@ class ScanService:
         bundle_obj.is_push_locked = not (bundle_obj.is_push_locked)
         bundle_obj.save()
 
-    def push_bundle_to_server(self, bundle_obj_pk: int, user_obj: User) -> None:
+    @classmethod
+    def push_bundle_to_server(cls, bundle_obj_pk: int, user_obj: User) -> None:
         """Push a legal bundle from staging to the core server.
 
         Args:
@@ -1167,8 +1176,7 @@ class ScanService:
                 raise ValueError("QR codes are not all read - cannot push bundle.")
 
             # make sure bundle is "perfect"
-            # note function takes a bundle-pk as argument
-            if not self.is_bundle_perfect(bundle_obj.pk):
+            if not cls._is_bundle_obj_perfect(bundle_obj):
                 raise ValueError("The bundle is imperfect, cannot push.")
             # the bundle is valid so we can push it --- set the lock.
             bundle_obj.is_push_locked = True
