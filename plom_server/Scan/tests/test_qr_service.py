@@ -14,7 +14,6 @@ from plom_server.Scan.models import (
     KnownStagingImage,
     UnknownStagingImage,
     ExtraStagingImage,
-    DiscardStagingImage,
     ErrorStagingImage,
 )
 from plom_server.Scan.services import QRService
@@ -214,15 +213,13 @@ class QRServiceTest(TestCase):
         self.assertEqual(img.image_type, StagingImage.EXTRA)
         self.assertTrue(ExtraStagingImage.objects.filter(staging_image=img).exists())
 
-        # Scrap -> DISCARD -> DiscardStagingImage
+        # Scrap -> DISCARD
         img = StagingImage.objects.get(pk=self.img_scrap.pk)
         self.assertEqual(img.image_type, StagingImage.DISCARD)
-        self.assertTrue(DiscardStagingImage.objects.filter(staging_image=img).exists())
 
-        # Bundle Separator -> DISCARD -> DiscardStagingImage
+        # Bundle Separator -> DISCARD
         img = StagingImage.objects.get(pk=self.img_bundle_separator.pk)
         self.assertEqual(img.image_type, StagingImage.DISCARD)
-        self.assertTrue(DiscardStagingImage.objects.filter(staging_image=img).exists())
 
         # Collision -> both images marked ERROR, with collision message
         for img in (self.img_col1, self.img_col2):

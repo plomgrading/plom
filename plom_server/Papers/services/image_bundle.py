@@ -117,7 +117,6 @@ class ImageBundleService:
             "baseimage",
             "knownstagingimage",
             "extrastagingimage",
-            "discardstagingimage",
         )
 
         # Staging has checked this - but we check again here to be very sure
@@ -255,9 +254,8 @@ class ImageBundleService:
                         )
                     )
             elif staged.image_type == StagingImage.DISCARD:
-                disc = staged.discardstagingimage
                 new_discard_pages.append(
-                    DiscardPage(image=image, discard_reason=disc.discard_reason)
+                    DiscardPage(image=image, discard_reason=staged.discard_reason)
                 )
             else:
                 raise ValueError(

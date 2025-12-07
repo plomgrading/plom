@@ -27,6 +27,10 @@ class StagingImage(models.Model):
     Fields:
         rotation: currently this only deals with 0, 90, 180, 270, -90.
             fractional rotations are handled elsewhere,
+        discard_reason: if the image is of type DISCARD, this will give
+            human-readable explanation, such as who discarded it and what
+            it was before.  Should generally be empty if this StagingImage
+            isn't discarded, or perhaps wasn't recently.
     """
 
     # some implicit constructor is generating pylint errors:
@@ -52,6 +56,7 @@ class StagingImage(models.Model):
     rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)
     image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
+    discard_reason = models.TextField(default="")
 
 
 class StagingThumbnail(models.Model):
@@ -92,13 +97,6 @@ class UnknownStagingImage(models.Model):
     staging_image = models.OneToOneField(
         StagingImage, primary_key=True, on_delete=models.CASCADE
     )
-
-
-class DiscardStagingImage(models.Model):
-    staging_image = models.OneToOneField(
-        StagingImage, primary_key=True, on_delete=models.CASCADE
-    )
-    discard_reason = models.TextField()
 
 
 class ErrorStagingImage(models.Model):

@@ -14,7 +14,6 @@ from plom_server.Papers.services import PaperInfoService, SpecificationService
 from ..models import (
     StagingBundle,
     StagingImage,
-    DiscardStagingImage,
     ExtraStagingImage,
     UnknownStagingImage,
     KnownStagingImage,
@@ -179,8 +178,7 @@ class ScanCastService:
             reason = f"Error page discarded by {user_obj.username}"
         else:
             raise RuntimeError(f"Should not be here! {image_type}")
-
-        DiscardStagingImage.objects.create(staging_image=img, discard_reason=reason)
+        img.discard_reason = reason
         img.save()
 
     @classmethod
@@ -229,10 +227,7 @@ class ScanCastService:
             # Be very careful to update the image type when doing this sort of operation.
             img.unknownstagingimage.delete()
             img.image_type = StagingImage.DISCARD
-            DiscardStagingImage.objects.create(
-                staging_image=img,
-                discard_reason=f"Unknown page discarded by {user_obj.username}",
-            )
+            img.discard_reason = f"Unknown page discarded by {user_obj.username}"
             img.save()
 
     @transaction.atomic
@@ -326,7 +321,8 @@ class ScanCastService:
         # TODO - keep more detailed history so easier to undo.
         # Hence we have this branching for time being.
         if image_type == StagingImage.DISCARD:
-            img.discardstagingimage.delete()
+            # TODO: img.discard_reason = ""?
+            pass
         elif image_type == StagingImage.KNOWN:
             img.knownstagingimage.delete()
         elif image_type == StagingImage.EXTRA:
@@ -374,18 +370,13 @@ class ScanCastService:
 
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
-        discard_images = bundle_obj.stagingimage_set.select_related(
-            "discardstagingimage"
-        ).filter(image_type=StagingImage.DISCARD)
-        # be careful locking with nullable relations - see select_for_update docs.
-        discard_images_locked = discard_images.select_for_update().exclude(
-            discardstagingimage=None
-        )
-
+        discard_images = bundle_obj.stagingimage_set.filter(
+            image_type=StagingImage.DISCARD
+        ).select_for_update()
         # now that we have the discards, remove associated data and create associated unknown info.
-        for img in discard_images_locked:
+        for img in discard_images:
             # Be very careful to update the image type when doing this sort of operation.
-            img.discardstagingimage.delete()
+            # TODO: img.discard_reason = ""?
             img.image_type = StagingImage.UNKNOWN
             UnknownStagingImage.objects.create(staging_image=img)
             img.save()
@@ -697,7 +688,8 @@ class ScanCastService:
         # TODO - keep more detailed history so easier to undo.
         # Hence we have this branching for time being.
         if image_type == StagingImage.DISCARD:
-            img.discardstagingimage.delete()
+            # TODO: img.discard_reason = ""?
+            pass
         elif image_type == StagingImage.KNOWN:
             img.knownstagingimage.delete()
         elif image_type == StagingImage.UNKNOWN:
@@ -814,7 +806,8 @@ class ScanCastService:
             )
         # okay - now it is safe to cast the current image to a known page
         if img.image_type == StagingImage.DISCARD:
-            img.discardstagingimage.delete()
+            # TODO: img.discard_reason = ""?
+            pass
         elif img.image_type == StagingImage.UNKNOWN:
             img.unknownstagingimage.delete()
         elif img.image_type == StagingImage.ERROR:

@@ -1309,12 +1309,8 @@ class ScanService:
                 "reason": img.errorstagingimage.error_reason
             }
 
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.DISCARD
-        ).prefetch_related("discardstagingimage"):
-            pages[img.bundle_order]["info"] = {
-                "reason": img.discardstagingimage.discard_reason
-            }
+        for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD):
+            pages[img.bundle_order]["info"] = {"reason": img.discard_reason}
 
         for img in bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.KNOWN
@@ -1480,7 +1476,7 @@ class ScanService:
         if img.image_type == StagingImage.ERROR:
             info = {"reason": img.errorstagingimage.error_reason}
         elif img.image_type == StagingImage.DISCARD:
-            info = {"reason": img.discardstagingimage.discard_reason}
+            info = {"reason": img.discard_reason}
         elif img.image_type == StagingImage.KNOWN:
             info = {
                 "paper_number": img.knownstagingimage.paper_number,
@@ -1638,7 +1634,6 @@ class ScanService:
         pages = []
         for img in (
             bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD)
-            .prefetch_related("discardstagingimage")
             .all()
             .order_by("bundle_order")
         ):
@@ -1648,7 +1643,7 @@ class ScanService:
                     "order": f"{img.bundle_order}",
                     "zfill_order": f"{img.bundle_order}".zfill(n_digits),
                     "rotation": img.rotation,
-                    "reason": img.discardstagingimage.discard_reason,
+                    "reason": img.discard_reason,
                 }
             )
         return pages

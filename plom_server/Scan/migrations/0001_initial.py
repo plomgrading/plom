@@ -45,6 +45,7 @@ class Migration(migrations.Migration):
                         default="UNREAD",
                     ),
                 ),
+                ("discard_reason", models.TextField(default="")),
                 (
                     "baseimage",
                     models.OneToOneField(
@@ -91,21 +92,6 @@ class Migration(migrations.Migration):
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
-            ],
-        ),
-        migrations.CreateModel(
-            name="DiscardStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                ("discard_reason", models.TextField()),
             ],
         ),
         migrations.CreateModel(

@@ -12,7 +12,6 @@ from .staging_images import (
     KnownStagingImage,
     ExtraStagingImage,
     UnknownStagingImage,
-    DiscardStagingImage,
     ErrorStagingImage,
 )
 

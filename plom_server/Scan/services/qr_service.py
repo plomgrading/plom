@@ -19,7 +19,6 @@ from ..models import (
     UnknownStagingImage,
     KnownStagingImage,
     ExtraStagingImage,
-    DiscardStagingImage,
     ErrorStagingImage,
 )
 
@@ -147,18 +146,14 @@ class QRService:
             for k in scrap_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.DISCARD
+                img.discard_reason = "Scrap paper"
                 img.save()
-                DiscardStagingImage.objects.create(
-                    staging_image=img, discard_reason="Scrap paper"
-                )
             # save all the bundle-separator-paper pages.
             for k in bsep_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.DISCARD
+                img.discard_reason = "Bundle separator paper"
                 img.save()
-                DiscardStagingImage.objects.create(
-                    staging_image=img, discard_reason="Bundle separator paper"
-                )
             # save all the error-pages with the error string
             for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
