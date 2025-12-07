@@ -663,7 +663,9 @@ out-of-tree-scratch:
           python3-zxing-cpp
           python3-psycopg3
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-PyMuPDF
+          python3-PyMySQL
+          python3-scikit-learn python3-scikit-image
           python3-weasyprint python3-whitenoise
           python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
@@ -750,8 +752,11 @@ fedora-django-tests:
           python3-zxing-cpp
           python3-psycopg3
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-PyMuPDF
+          python3-PyMySQL
+          python3-scikit-learn python3-scikit-image
           python3-weasyprint python3-whitenoise
+          python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
     - pip --version

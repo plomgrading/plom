@@ -30,7 +30,7 @@ Tested on Fedora 43.  Some stuff from the package manager:
         python3-seaborn python3-cairosvg \
         python3-arrow \
         python3-pillow python3-pandas \
-        python3-PyMuPDF python3-scikit-learn \
+        python3-PyMuPDF python3-scikit-learn python3-scikit-image \
         python3-requests-toolbelt \
         python3-pip python3-wheel python3-setuptools \
         python3-tomlkit python3-tqdm python3-urllib3 \
