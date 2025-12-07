@@ -652,6 +652,7 @@ out-of-tree-scratch:
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
+          python3-devel
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
