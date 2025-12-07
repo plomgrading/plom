@@ -132,7 +132,7 @@ wet_css_js_3rd_party:
 # By default we assume the target is origin/main but if a MR is open,
 # we try to determine the target branch and use that instead.
 copyright_year:
-  image: fedora:42
+  image: fedora:43
   stage: static_analysis
   rules:
     # Tags don't have this defined and non-empty. This job doesn't run on releases
@@ -392,7 +392,7 @@ pylint:
   image: $IM
   before_script:
     - pip install astroid~=4.0.2  # codespell:ignore astroid
-    - pip install pylint~=4.0.3
+    - pip install pylint~=4.0.4
   script:
     - pylint plom
     - pylint plom_server
@@ -410,7 +410,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.18.2
+    - pip install mypy~=1.19.0
   script:
     - mypy --version
     - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
@@ -449,7 +449,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.14.6
+    - pip install ruff~=0.14.8
   script:
     - ruff check .
     # ruff format .
@@ -460,7 +460,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.14.6
+    - pip install ruff~=0.14.8
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -606,7 +606,7 @@ webplom_demo:
     - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after reports
 
 
-# ensure we can run the code some other than inside itself!
+# ensure we can run the code somewhere other than inside itself!
 out-of-tree:
   services:
     - postgres
@@ -633,7 +633,7 @@ out-of-tree:
   allow_failure: true
 
 
-# ensure we can run the code some other than inside itself!
+# ensure we can run the code somewhere other than inside itself!
 out-of-tree-scratch:
   services:
     - postgres
@@ -645,13 +645,14 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:42
+  image: fedora:43
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
+          python3-devel
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
@@ -663,8 +664,12 @@ out-of-tree-scratch:
           python3-zxing-cpp
           python3-psycopg3
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-PyMuPDF
+          python3-PyMySQL
+          python3-scikit-learn python3-scikit-image
+          python3-numpy python3-scipy
           python3-weasyprint python3-whitenoise
+          python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
     - pip --version
@@ -731,7 +736,7 @@ fedora-django-tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:42
+  image: fedora:43
   when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
@@ -749,8 +754,11 @@ fedora-django-tests:
           python3-zxing-cpp
           python3-psycopg3
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-PyMuPDF
+          python3-PyMySQL
+          python3-scikit-learn python3-scikit-image
           python3-weasyprint python3-whitenoise
+          python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
     - pip --version
