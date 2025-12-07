@@ -63,6 +63,11 @@ class StagingImage(models.Model):
             if JSON fields are complicated.  All code should be using the
             `paper_number` field to decide if the EXTRA page has been assigned
             or not.
+        history: a somewhat human-readable log of actions done to this image.
+            Each string should be separated by a semicolon `";"`.  This string
+            can growth larger with repeated operations; if that becomes a performance
+            problem, or if we want to add time-stamps etc, then we could add a new
+            StagingImageEvent table.
     """
 
     # some implicit constructor is generating pylint errors:
@@ -104,6 +109,7 @@ class StagingImage(models.Model):
     discard_reason = models.TextField(default="")
     # used for ERROR
     error_reason = models.TextField(default="")
+    history = models.TextField(blank=True, null=False, default="")
 
 
 class StagingThumbnail(models.Model):

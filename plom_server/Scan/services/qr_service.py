@@ -109,17 +109,22 @@ class QRService:
                     # this indicates a collision, and so handled by error-images
                     continue
                 img = StagingImage.objects.get(pk=img_list[0])
-                (test_paper, page_number, version) = parse_paper_page_version(tpv)
-                img.paper_number = test_paper
+                (papernum, page_number, version) = parse_paper_page_version(tpv)
+                img.paper_number = papernum
                 img.page_number = page_number
                 img.version = version
                 img.image_type = StagingImage.KNOWN
+                img.history += (
+                    f"; Made known ({papernum}, {page_number}, {version})"
+                    " based on QR codes"
+                )
                 img.save()
 
             # save all the images with no-qrs.
             for k in no_qr_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.UNKNOWN
+                img.history += "; Had no QR codes, making unknown"
                 img.save()
             # save all the extra-pages.
             for k in extra_imgs:
@@ -127,24 +132,28 @@ class QRService:
                 img.image_type = StagingImage.EXTRA
                 img.paper_number = None
                 img.question_idx_list = None
+                img.history += "; Made extra based on special extra sheet QR codes"
                 img.save()
             # save all the scrap-paper pages.
             for k in scrap_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.DISCARD
                 img.discard_reason = "Scrap paper"
+                img.history += "; Discarded based on special scrap paper QR codes"
                 img.save()
             # save all the bundle-separator-paper pages.
             for k in bsep_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.DISCARD
                 img.discard_reason = "Bundle separator paper"
+                img.history += "; Discarded based on special bundle separator QR codes"
                 img.save()
             # save all the error-pages with the error string
             for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.ERROR
                 img.error_reason = err_str
+                img.history += f"; Made into error image: {err_str}"
                 img.save()
 
     @staticmethod

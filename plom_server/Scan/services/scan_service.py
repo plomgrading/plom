@@ -1801,6 +1801,7 @@ def huey_parent_split_bundle_chore(
                         bundle_order=X["order"],
                         image_type=StagingImage.UNREAD,
                         baseimage=bimg,
+                        history=f"Created in bundle {bundle_obj.id} order {X['order']}",
                     )
                 with open(X["thumb_path"], "rb") as fh:
                     StagingThumbnail.objects.create(
@@ -1893,6 +1894,7 @@ def huey_parent_read_qr_codes_chore(
             img = StagingImage.objects.select_for_update().get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
             img.rotation = X["rotation"]
+            img.history += f"; {len(X['parsed_qr'])} QR codes read, rotation set to {X['rotation']}"
             img.save()
             # the thumbnail may need rotation.
             if img.rotation:

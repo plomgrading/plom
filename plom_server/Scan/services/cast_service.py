@@ -154,9 +154,6 @@ class ScanCastService:
         img.image_type = StagingImage.DISCARD
 
         # Now delete the old type information
-        # TODO - keep more detailed history so easier to undo.
-        # Hence we have this branching for time being.
-
         if image_type == StagingImage.UNKNOWN:
             reason = f"Unknown page discarded by {user_obj.username}"
         elif image_type == StagingImage.KNOWN:
@@ -174,6 +171,7 @@ class ScanCastService:
             reason = f"Error page discarded by {user_obj.username}"
         else:
             raise RuntimeError(f"Should not be here! {image_type}")
+        img.history += "; " + reason
         img.discard_reason = reason
         img.save()
 
@@ -305,14 +303,12 @@ class ScanCastService:
 
         # Be very careful to update the image type when doing this sort of operation.
         img.image_type = StagingImage.UNKNOWN
+        img.history += f"; {image_type} made unknown by {user_obj}"
         # delete the old type information
-        # TODO - keep more detailed history so easier to undo.
-        # Hence we have this branching for time being.
         if image_type == StagingImage.DISCARD:
-            # TODO: img.discard_reason = ""?
+            img.discard_reason = ""
             pass
         elif image_type == StagingImage.KNOWN:
-            # TODO: or leave this info for easier undo?
             img.paper_number = None
             img.page_number = None
             img.version = None
@@ -364,7 +360,8 @@ class ScanCastService:
             image_type=StagingImage.DISCARD
         ).select_for_update()
         for img in discard_images:
-            # TODO: img.discard_reason = ""?
+            img.discard_reason = ""
+            img.history += f"; bulk unknowify all discards by {user_obj}"
             img.image_type = StagingImage.UNKNOWN
             img.save()
 
@@ -443,6 +440,10 @@ class ScanCastService:
 
         eximg.paper_number = paper_number
         eximg.question_idx_list = assign_to_question_indices
+        eximg.history += (
+            f"; Extra information {paper_number}, {assign_to_question_indices}"
+            f" provided by {user_obj}"
+        )
         eximg.save()
 
     @classmethod
@@ -563,6 +564,7 @@ class ScanCastService:
 
         img.paper_number = None
         img.question_idx_list = None
+        img.history += f"; Extra page info cleared by {user_obj}"
         img.save()
 
     @classmethod
@@ -662,13 +664,12 @@ class ScanCastService:
             )
 
         # delete the old type information
-        # TODO - keep more detailed history so easier to undo.
-        # Hence we have this branching for time being.
         if image_type == StagingImage.DISCARD:
-            # TODO: img.discard_reason = ""?
+            img.discard_reason = ""
             pass
         elif image_type == StagingImage.KNOWN:
             # TODO: maybe we can leave the paper_number in place as EXTRA can use it
+            # TODO: careful, would need overhaul, see `models/image_staging.py`
             img.paper_number = None
             img.page_number = None
             img.version = None
@@ -680,6 +681,7 @@ class ScanCastService:
             raise RuntimeError("Cannot recognise image type")
 
         img.image_type = StagingImage.EXTRA
+        img.history += f"; {image_type} made extra by {user_obj}"
         # TODO: if it had a paper_number already should we keep it?
         img.paper_number = None
         img.question_idx_list = None
@@ -786,8 +788,7 @@ class ScanCastService:
             )
         # okay - now it is safe to cast the current image to a known page
         if img.image_type == StagingImage.DISCARD:
-            # TODO: img.discard_reason = ""?
-            pass
+            img.discard_reason = ""
         elif img.image_type == StagingImage.UNKNOWN:
             pass
         elif img.image_type == StagingImage.ERROR:
@@ -803,6 +804,11 @@ class ScanCastService:
         img.paper_number = paper_number
         img.page_number = page_number
         img.version = version_in_db
+        img.history += (
+            f"; {img.image_type} made known"
+            f" ({paper_number}, {page_number}, {version_in_db})"
+            f" by {user_obj}"
+        )
         img.image_type = StagingImage.KNOWN
         img.save()
 
