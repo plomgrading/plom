@@ -392,7 +392,7 @@ pylint:
   image: $IM
   before_script:
     - pip install astroid~=4.0.2  # codespell:ignore astroid
-    - pip install pylint~=4.0.3
+    - pip install pylint~=4.0.4
   script:
     - pylint plom
     - pylint plom_server
@@ -410,7 +410,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.18.2
+    - pip install mypy~=1.19.0
   script:
     - mypy --version
     - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
