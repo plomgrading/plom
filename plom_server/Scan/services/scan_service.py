@@ -1656,7 +1656,7 @@ class ScanService:
         # get all the known paper/pages in the bundle
         bundle_ppbo_list = StagingImage.objects.filter(
             bundle=bundle_obj, image_type=StagingImage.KNOWN
-        ).values_list("paper_number", "page_number", "staging_image__bundle_order")
+        ).values_list("paper_number", "page_number", "bundle_order")
         bundle_papers_list = list(set([X[0] for X in bundle_ppbo_list]))
         if not bundle_papers_list:
             return []
