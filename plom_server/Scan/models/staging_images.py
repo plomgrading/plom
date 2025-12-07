@@ -93,12 +93,6 @@ class ExtraStagingImage(models.Model):
     question_idx_list = models.JSONField(default=None, null=True)
 
 
-class UnknownStagingImage(models.Model):
-    staging_image = models.OneToOneField(
-        StagingImage, primary_key=True, on_delete=models.CASCADE
-    )
-
-
 class ErrorStagingImage(models.Model):
     staging_image = models.OneToOneField(
         StagingImage, primary_key=True, on_delete=models.CASCADE

@@ -16,7 +16,6 @@ from plom_server.Papers.services import PaperInfoService
 from ..models import (
     StagingImage,
     StagingBundle,
-    UnknownStagingImage,
     KnownStagingImage,
     ExtraStagingImage,
     ErrorStagingImage,
@@ -135,7 +134,6 @@ class QRService:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.UNKNOWN
                 img.save()
-                UnknownStagingImage.objects.create(staging_image=img)
             # save all the extra-pages.
             for k in extra_imgs:
                 img = StagingImage.objects.get(pk=k)

@@ -15,7 +15,6 @@ from ..models import (
     StagingBundle,
     StagingImage,
     ExtraStagingImage,
-    UnknownStagingImage,
     KnownStagingImage,
 )
 
@@ -165,7 +164,6 @@ class ScanCastService:
         # Hence we have this branching for time being.
 
         if image_type == StagingImage.UNKNOWN:
-            img.unknownstagingimage.delete()
             reason = f"Unknown page discarded by {user_obj.username}"
         elif image_type == StagingImage.KNOWN:
             img.knownstagingimage.delete()
@@ -216,16 +214,8 @@ class ScanCastService:
 
         unknown_images = bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.UNKNOWN
-        ).select_related("unknownstagingimage")
-        # see 'select_for_update' docs - you have to be careful with nullable relations.
-        unknown_images_locked = unknown_images.select_for_update().exclude(
-            unknownstagingimage=None
-        )
-
-        # now that we have the unknowns, remove associated data and create associated discard info.
-        for img in unknown_images_locked:
-            # Be very careful to update the image type when doing this sort of operation.
-            img.unknownstagingimage.delete()
+        ).select_for_update()
+        for img in unknown_images:
             img.image_type = StagingImage.DISCARD
             img.discard_reason = f"Unknown page discarded by {user_obj.username}"
             img.save()
@@ -332,9 +322,6 @@ class ScanCastService:
         else:
             raise RuntimeError("Cannot recognise image type")
 
-        UnknownStagingImage.objects.create(
-            staging_image=img,
-        )
         img.save()
 
     @transaction.atomic
@@ -373,12 +360,9 @@ class ScanCastService:
         discard_images = bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.DISCARD
         ).select_for_update()
-        # now that we have the discards, remove associated data and create associated unknown info.
         for img in discard_images:
-            # Be very careful to update the image type when doing this sort of operation.
             # TODO: img.discard_reason = ""?
             img.image_type = StagingImage.UNKNOWN
-            UnknownStagingImage.objects.create(staging_image=img)
             img.save()
 
     @staticmethod
@@ -693,7 +677,7 @@ class ScanCastService:
         elif image_type == StagingImage.KNOWN:
             img.knownstagingimage.delete()
         elif image_type == StagingImage.UNKNOWN:
-            img.unknownstagingimage.delete()
+            pass
         elif image_type == StagingImage.ERROR:
             img.errorstagingimage.delete()
         else:
@@ -809,7 +793,7 @@ class ScanCastService:
             # TODO: img.discard_reason = ""?
             pass
         elif img.image_type == StagingImage.UNKNOWN:
-            img.unknownstagingimage.delete()
+            pass
         elif img.image_type == StagingImage.ERROR:
             img.errorstagingimage.delete()
         else:

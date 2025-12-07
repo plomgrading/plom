@@ -13,7 +13,6 @@ from .models import (
     PagesToImagesChore,
     ManageParseQRChore,
     KnownStagingImage,
-    UnknownStagingImage,
     ExtraStagingImage,
     ErrorStagingImage,
 )
@@ -25,6 +24,5 @@ admin.site.register(StagingThumbnail)
 admin.site.register(KnownStagingImage)
 admin.site.register(ExtraStagingImage)
 admin.site.register(ErrorStagingImage)
-admin.site.register(UnknownStagingImage)
 admin.site.register(PagesToImagesChore)
 admin.site.register(ManageParseQRChore)

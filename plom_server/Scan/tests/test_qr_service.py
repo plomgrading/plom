@@ -12,7 +12,6 @@ from plom_server.Scan.models import (
     StagingBundle,
     StagingImage,
     KnownStagingImage,
-    UnknownStagingImage,
     ExtraStagingImage,
     ErrorStagingImage,
 )
@@ -195,10 +194,9 @@ class QRServiceTest(TestCase):
         """Test QRService in classifying StagingImages."""
         QRService.classify_staging_images_based_on_QR_codes(self.bundle)
 
-        # No-QR -> UNKNOWN + UnknownStagingImage
+        # No-QR -> UNKNOWN
         img = StagingImage.objects.get(pk=self.img_no_qr.pk)
         self.assertEqual(img.image_type, StagingImage.UNKNOWN)
-        self.assertTrue(UnknownStagingImage.objects.filter(staging_image=img).exists())
 
         # Known -> KNOWN + KnownStagingImage has correct fields
         img = StagingImage.objects.get(pk=self.img_known.pk)
