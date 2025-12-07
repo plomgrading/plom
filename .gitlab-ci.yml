@@ -606,7 +606,7 @@ webplom_demo:
     - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after reports
 
 
-# ensure we can run the code some other than inside itself!
+# ensure we can run the code somewhere other than inside itself!
 out-of-tree:
   services:
     - postgres
@@ -667,6 +667,7 @@ out-of-tree-scratch:
           python3-PyMuPDF
           python3-PyMySQL
           python3-scikit-learn python3-scikit-image
+          python3-numpy python3-scipy
           python3-weasyprint python3-whitenoise
           python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
