@@ -1300,12 +1300,8 @@ class ScanService:
                 "page_label": "",  # filled-in below
             }
 
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.ERROR
-        ).prefetch_related("errorstagingimage"):
-            pages[img.bundle_order]["info"] = {
-                "reason": img.errorstagingimage.error_reason
-            }
+        for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.ERROR):
+            pages[img.bundle_order]["info"] = {"reason": img.error_reason}
 
         for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD):
             pages[img.bundle_order]["info"] = {"reason": img.discard_reason}
@@ -1464,7 +1460,7 @@ class ScanService:
             "qr_codes": img.parsed_qr,
         }
         if img.image_type == StagingImage.ERROR:
-            info = {"reason": img.errorstagingimage.error_reason}
+            info = {"reason": img.error_reason}
         elif img.image_type == StagingImage.DISCARD:
             info = {"reason": img.discard_reason}
         elif img.image_type == StagingImage.KNOWN:

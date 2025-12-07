@@ -31,6 +31,9 @@ class StagingImage(models.Model):
             human-readable explanation, such as who discarded it and what
             it was before.  Should generally be empty if this StagingImage
             isn't discarded, or perhaps wasn't recently.
+        error_reason: if the image is of type ERROR, this will give a
+            human-readable error message.  Should generally be empty if this
+            StagingImage isn't in error.
         paper_number: used by type KNOWN or EXTRA, undefined for other types.
             if KNOWN, then this *must* be non-None, and gives the paper number
             of the known image.
@@ -69,8 +72,6 @@ class StagingImage(models.Model):
     rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)
     image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
-    # used for DISCARD
-    discard_reason = models.TextField(default="")
     # used by KNOWN/EXTRA
     paper_number = models.PositiveIntegerField(null=True, default=None)
     # used by KNOWN
@@ -79,6 +80,10 @@ class StagingImage(models.Model):
     # Used by EXTRA
     # https://docs.djangoproject.com/en/4.1/topics/db/queries/#storing-and-querying-for-none
     question_idx_list = models.JSONField(default=None, null=True)
+    # used for DISCARD
+    discard_reason = models.TextField(default="")
+    # used for ERROR
+    error_reason = models.TextField(default="")
 
 
 class StagingThumbnail(models.Model):
@@ -95,10 +100,3 @@ class StagingThumbnail(models.Model):
     )
     image_file = models.ImageField(upload_to=_staging_thumbnail_upload_path)
     time_of_last_update = models.DateTimeField(auto_now=True)
-
-
-class ErrorStagingImage(models.Model):
-    staging_image = models.OneToOneField(
-        StagingImage, primary_key=True, on_delete=models.CASCADE
-    )
-    error_reason = models.TextField()

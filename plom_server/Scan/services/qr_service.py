@@ -13,11 +13,7 @@ from plom.tpv_utils import parse_paper_page_version
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import PaperInfoService
-from ..models import (
-    StagingImage,
-    StagingBundle,
-    ErrorStagingImage,
-)
+from ..models import StagingImage, StagingBundle
 
 
 class QRService:
@@ -148,10 +144,8 @@ class QRService:
             for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.ERROR
+                img.error_rason = err_str
                 img.save()
-                ErrorStagingImage.objects.create(
-                    staging_image=img, error_reason=err_str
-                )
 
     @staticmethod
     def _check_consistent_qrs(parsed_qr_dict: dict[str, dict[str, Any]]) -> None:

@@ -12,13 +12,11 @@ from .models import (
     StagingThumbnail,
     PagesToImagesChore,
     ManageParseQRChore,
-    ErrorStagingImage,
 )
 
 # This makes models appear in the admin interface
 admin.site.register(StagingBundle)
 admin.site.register(StagingImage)
 admin.site.register(StagingThumbnail)
-admin.site.register(ErrorStagingImage)
 admin.site.register(PagesToImagesChore)
 admin.site.register(ManageParseQRChore)

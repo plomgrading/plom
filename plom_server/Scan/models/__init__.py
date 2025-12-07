@@ -6,11 +6,7 @@
 
 from .staging_bundle import StagingBundle
 
-from .staging_images import (
-    StagingImage,
-    StagingThumbnail,
-    ErrorStagingImage,
-)
+from .staging_images import StagingImage, StagingThumbnail
 
 from .scan_background_chores import (
     PagesToImagesChore,
