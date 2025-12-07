@@ -26,7 +26,7 @@ from ..models import (
 
 class QRService:
     @classmethod
-    def create_staging_images_based_on_QR_codes(cls, bundle: StagingBundle) -> None:
+    def classify_staging_images_based_on_QR_codes(cls, bundle: StagingBundle) -> None:
         """Classify the StagingImages of a StagingBundle based on previously-read QR codes.
 
         Args:

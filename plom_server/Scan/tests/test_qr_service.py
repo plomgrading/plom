@@ -194,7 +194,7 @@ class QRServiceTest(TestCase):
 
     def test_classification(self):
         """Test QRService in classifying StagingImages."""
-        QRService.create_staging_images_based_on_QR_codes(self.bundle)
+        QRService.classify_staging_images_based_on_QR_codes(self.bundle)
 
         # No-QR -> UNKNOWN + UnknownStagingImage
         img = StagingImage.objects.get(pk=self.img_no_qr.pk)
@@ -234,11 +234,11 @@ class QRServiceTest(TestCase):
     def test_bundle_no_qr(self):
         """Test exception is correctly raised when attempting to push unread QR bundle."""
         with self.assertRaises(ValueError):
-            QRService.create_staging_images_based_on_QR_codes(self.bundle_unread_qr)
+            QRService.classify_staging_images_based_on_QR_codes(self.bundle_unread_qr)
 
     def test_invalid_bundles(self):
         """Test exception is correctly raised when there are invalid pages in the bundle."""
-        QRService.create_staging_images_based_on_QR_codes(self.invalid_bundle)
+        QRService.classify_staging_images_based_on_QR_codes(self.invalid_bundle)
 
         # Invalid QR
         img = StagingImage.objects.get(pk=self.img_invalid_qr.pk)
