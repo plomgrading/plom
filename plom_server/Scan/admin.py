@@ -12,8 +12,6 @@ from .models import (
     StagingThumbnail,
     PagesToImagesChore,
     ManageParseQRChore,
-    KnownStagingImage,
-    ExtraStagingImage,
     ErrorStagingImage,
 )
 
@@ -21,8 +19,6 @@ from .models import (
 admin.site.register(StagingBundle)
 admin.site.register(StagingImage)
 admin.site.register(StagingThumbnail)
-admin.site.register(KnownStagingImage)
-admin.site.register(ExtraStagingImage)
 admin.site.register(ErrorStagingImage)
 admin.site.register(PagesToImagesChore)
 admin.site.register(ManageParseQRChore)

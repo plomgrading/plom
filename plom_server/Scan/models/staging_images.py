@@ -31,6 +31,19 @@ class StagingImage(models.Model):
             human-readable explanation, such as who discarded it and what
             it was before.  Should generally be empty if this StagingImage
             isn't discarded, or perhaps wasn't recently.
+        paper_number: used by type KNOWN or EXTRA, undefined for other types.
+            if KNOWN, then this *must* be non-None, and gives the paper number
+            of the known image.
+            if EXTRA, then it *could* be an integer or None.  None means that
+            the extra page has not be assigned yet.  See also `question_idx_list`.
+        page_number: used by type KNOWN, undefined for other types.  KNOWN
+            images *must* have a non-None integer value.
+        version: used by type KNOWN, undefined for other types.  KNOWN
+            images *must* have a non-None integer value.
+        question_idx_list: used by type EXTRA.  Note that the null/None semantics
+            if JSON fields are complicated.  All code should be using the
+            `paper_number` field to decide if the EXTRA page has been assigned
+            or not.
     """
 
     # some implicit constructor is generating pylint errors:
@@ -56,7 +69,16 @@ class StagingImage(models.Model):
     rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)
     image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
+    # used for DISCARD
     discard_reason = models.TextField(default="")
+    # used by KNOWN/EXTRA
+    paper_number = models.PositiveIntegerField(null=True, default=None)
+    # used by KNOWN
+    page_number = models.PositiveIntegerField(null=True, default=None)
+    version = models.PositiveIntegerField(null=True, default=None)
+    # Used by EXTRA
+    # https://docs.djangoproject.com/en/4.1/topics/db/queries/#storing-and-querying-for-none
+    question_idx_list = models.JSONField(default=None, null=True)
 
 
 class StagingThumbnail(models.Model):
@@ -73,24 +95,6 @@ class StagingThumbnail(models.Model):
     )
     image_file = models.ImageField(upload_to=_staging_thumbnail_upload_path)
     time_of_last_update = models.DateTimeField(auto_now=True)
-
-
-class KnownStagingImage(models.Model):
-    staging_image = models.OneToOneField(
-        StagingImage, primary_key=True, on_delete=models.CASCADE
-    )
-    paper_number = models.PositiveIntegerField(null=False)
-    page_number = models.PositiveIntegerField(null=False)
-    version = models.PositiveIntegerField(null=False)
-
-
-class ExtraStagingImage(models.Model):
-    staging_image = models.OneToOneField(
-        StagingImage, primary_key=True, on_delete=models.CASCADE
-    )
-    paper_number = models.PositiveIntegerField(null=True, default=None)
-    # https://docs.djangoproject.com/en/4.1/topics/db/queries/#storing-and-querying-for-none
-    question_idx_list = models.JSONField(default=None, null=True)
 
 
 class ErrorStagingImage(models.Model):

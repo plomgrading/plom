@@ -16,8 +16,6 @@ from plom_server.Papers.services import PaperInfoService
 from ..models import (
     StagingImage,
     StagingBundle,
-    KnownStagingImage,
-    ExtraStagingImage,
     ErrorStagingImage,
 )
 
@@ -115,20 +113,13 @@ class QRService:
                     # this indicates a collision, and so handled by error-images
                     continue
                 img = StagingImage.objects.get(pk=img_list[0])
+                (test_paper, page_number, version) = parse_paper_page_version(tpv)
+                img.paper_number = test_paper
+                img.page_number = page_number
+                img.version = version
                 img.image_type = StagingImage.KNOWN
                 img.save()
-                (
-                    test_paper,
-                    page_number,
-                    version,
-                ) = parse_paper_page_version(tpv)
 
-                KnownStagingImage.objects.create(
-                    staging_image=img,
-                    paper_number=test_paper,
-                    page_number=page_number,
-                    version=version,
-                )
             # save all the images with no-qrs.
             for k in no_qr_imgs:
                 img = StagingImage.objects.get(pk=k)
@@ -138,8 +129,9 @@ class QRService:
             for k in extra_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.EXTRA
+                img.paper_number = None
+                img.question_idx_list = None
                 img.save()
-                ExtraStagingImage.objects.create(staging_image=img)
             # save all the scrap-paper pages.
             for k in scrap_imgs:
                 img = StagingImage.objects.get(pk=k)

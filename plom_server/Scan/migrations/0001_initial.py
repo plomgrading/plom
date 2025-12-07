@@ -46,6 +46,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("discard_reason", models.TextField(default="")),
+                ("paper_number", models.PositiveIntegerField(default=None, null=True)),
+                ("page_number", models.PositiveIntegerField(default=None, null=True)),
+                ("version", models.PositiveIntegerField(default=None, null=True)),
+                ("question_idx_list", models.JSONField(default=None, null=True)),
                 (
                     "baseimage",
                     models.OneToOneField(
@@ -107,39 +111,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("error_reason", models.TextField()),
-            ],
-        ),
-        migrations.CreateModel(
-            name="ExtraStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                ("paper_number", models.PositiveIntegerField(default=None, null=True)),
-                ("question_idx_list", models.JSONField(default=None, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name="KnownStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                ("paper_number", models.PositiveIntegerField()),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
             ],
         ),
         migrations.CreateModel(
