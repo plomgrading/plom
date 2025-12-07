@@ -146,7 +146,7 @@ class ScanCastServiceTests(TestCase):
             ScanCastService.discard_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=img_type
             )
-            # verify that no error image remains and that a discard image now exists
+            # verify that the original image class is gone
             stimg.refresh_from_db()
             with self.assertRaises(ObjectDoesNotExist):
                 typemodel.objects.get(staging_image=stimg)  # type: ignore[attr-defined]
@@ -174,14 +174,14 @@ class ScanCastServiceTests(TestCase):
             # grab the corresponding staging_image
             stimg = StagingImage.objects.get(bundle=self.bundle, bundle_order=ord)
             self.assertIsNotNone(getattr(stimg, typestr))
-            # verify no discard image there
+            # verify no unknown image there
             with self.assertRaises(ObjectDoesNotExist):
                 UnknownStagingImage.objects.get(staging_image=stimg)
-            # cast it to a discard
+            # cast it to a unknown
             ScanCastService().unknowify_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=img_type
             )
-            # verify that no error image remains and that a discard image now exists
+            # verify that the original image class is gone
             stimg.refresh_from_db()
             with self.assertRaises(ObjectDoesNotExist):
                 typemodel.objects.get(staging_image=stimg)  # type: ignore[attr-defined]
