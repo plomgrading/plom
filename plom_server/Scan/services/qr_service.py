@@ -144,7 +144,7 @@ class QRService:
             for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.ERROR
-                img.error_rason = err_str
+                img.error_reason = err_str
                 img.save()
 
     @staticmethod
