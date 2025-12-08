@@ -3,7 +3,10 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 USER_TYPE_WITH_MANAGER_CHOICES = [
-    ("marker", "Marker (a standard account for marking papers)"),
+    (
+        "marker",
+        "Marker (the standard marking account for large classes, where markers have rigidly defined roles)",
+    ),
     (
         "lead_marker",
         'Lead Marker (can see and edit marking of other users, track progress, etc, implies "Marker")',

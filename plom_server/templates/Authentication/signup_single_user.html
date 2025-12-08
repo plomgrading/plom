@@ -9,8 +9,16 @@
 {% block card_content %}
     <form method="post" action="">
         {% csrf_token %}
-        {{ form.user_types.label }}
-        {{ form.user_types }}
+        <div>
+            {{ form.user_types.label }}
+            {{ form.user_types }}
+            <p>
+                <small class="text-muted">
+                    (Some group choices imply others; read more about
+                    <a href="https://plom.readthedocs.io/en/latest/marking.html#permissions-and-lead-markers">user groups in Plom&apos;s documentation</a>.)
+                </small>
+            </p>
+        </div>
         <p class="mt-3">
             {{ form.username.label }}
             {{ form.username }}
