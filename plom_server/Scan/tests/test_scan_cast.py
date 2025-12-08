@@ -10,7 +10,6 @@ from model_bakery import baker
 from ..models import StagingBundle, StagingImage
 from ..models import (
     KnownStagingImage,
-    ErrorStagingImage,
     ExtraStagingImage,
 )
 from ..services import ScanCastService
@@ -38,7 +37,7 @@ class ScanCastServiceTests(TestCase):
         elif image_type == StagingImage.DISCARD:
             pass
         elif image_type == StagingImage.ERROR:
-            baker.make(ErrorStagingImage, staging_image=img)
+            pass
         else:
             raise RuntimeError(f"Do not recognise image type '{image_type}'")
 
@@ -104,8 +103,8 @@ class ScanCastServiceTests(TestCase):
         for img_type, typemodel, typestr, reason in [
             (
                 StagingImage.ERROR,
-                ErrorStagingImage,
-                "errorstagingimage",
+                None,
+                None,
                 "Error page discarded by user0",
             ),
             (
@@ -158,7 +157,7 @@ class ScanCastServiceTests(TestCase):
 
     def test_cast_to_unknown(self) -> None:
         for img_type, typemodel, typestr in [
-            (StagingImage.ERROR, ErrorStagingImage, "errorstagingimage"),
+            (StagingImage.ERROR, None, None),
             (StagingImage.EXTRA, ExtraStagingImage, "extrastagingimage"),
             (StagingImage.KNOWN, KnownStagingImage, "knownstagingimage"),
             (StagingImage.DISCARD, None, None),

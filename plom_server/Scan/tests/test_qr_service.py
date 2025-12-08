@@ -13,7 +13,6 @@ from plom_server.Scan.models import (
     StagingImage,
     KnownStagingImage,
     ExtraStagingImage,
-    ErrorStagingImage,
 )
 from plom_server.Scan.services import QRService
 from plom_server.Base.models import BaseImage
@@ -223,8 +222,7 @@ class QRServiceTest(TestCase):
         for img in (self.img_col1, self.img_col2):
             img = StagingImage.objects.get(pk=img.pk)
             self.assertEqual(img.image_type, StagingImage.ERROR)
-            err = ErrorStagingImage.objects.get(staging_image=img)
-            self.assertIn("collides", err.error_reason)
+            self.assertIn("collides", img.error_reason)
 
     def test_bundle_no_qr(self):
         """Test exception is correctly raised when attempting to push unread QR bundle."""
@@ -238,11 +236,9 @@ class QRServiceTest(TestCase):
         # Invalid QR
         img = StagingImage.objects.get(pk=self.img_invalid_qr.pk)
         self.assertEqual(img.image_type, StagingImage.ERROR)
-        err = ErrorStagingImage.objects.get(staging_image=img)
-        self.assertIn("Invalid qr-code", err.error_reason)
+        self.assertIn("Invalid qr-code", img.error_reason)
 
         # Inconsistent page_types
         img = StagingImage.objects.get(pk=self.img_inconsistent_types.pk)
         self.assertEqual(img.image_type, StagingImage.ERROR)
-        err = ErrorStagingImage.objects.get(staging_image=img)
-        self.assertIn("Inconsistent qr-codes", err.error_reason)
+        self.assertIn("Inconsistent qr-codes", img.error_reason)
