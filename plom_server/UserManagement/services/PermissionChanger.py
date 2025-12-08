@@ -105,33 +105,20 @@ def _remove_user_from_group(user_obj: User, groupname: str) -> None:
     user_obj.groups.remove(group_obj)
 
 
-@transaction.atomic
-def toggle_user_membership_in_group(username, groupname):
-    try:
-        user_obj = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist:
-        raise ValueError(f"Cannot find user with name {username}.")
-    try:
-        group_obj = Group.objects.get_by_natural_key(groupname)
-    except Group.DoesNotExist:
-        raise ValueError(f"Cannot find group with name {groupname}.")
-
-    if group_obj in user_obj.groups.all():
-        user_obj.groups.remove(group_obj)
-    else:
-        user_obj.groups.add(group_obj)
-
-
 def is_user_in_group(username: str, groupname: str) -> bool:
+    """Check if a particular username (a string) is in a groupname (also a string)."""
     try:
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
         raise ValueError(f"Cannot find user with name {username}.")
+    return _is_user_in_group(user_obj, groupname)
+
+
+def _is_user_in_group(user_obj: User, groupname: str) -> bool:
     try:
         group_obj = Group.objects.get_by_natural_key(groupname)
     except Group.DoesNotExist:
         raise ValueError(f"Cannot find group with name {groupname}.")
-
     return group_obj in user_obj.groups.all()
 
 
@@ -145,15 +132,20 @@ def toggle_lead_marker_group_membership(username: str) -> None:
     Raises:
         ValueError: if the user is not a "marker".
     """
-    if not is_user_in_group(username, "marker"):
+    try:
+        user_obj = User.objects.get_by_natural_key(username)
+    except User.DoesNotExist:
+        raise ValueError(f"Cannot find user with name {username}.")
+
+    if not _is_user_in_group(user_obj, "marker"):
         raise ValueError(f"User {username} not a marker.")
 
-    if is_user_in_group(username, "lead_marker"):
-        toggle_user_membership_in_group(username, "lead_marker")
+    if _is_user_in_group(user_obj, "lead_marker"):
+        _remove_user_from_group(user_obj, "lead_marker")
     else:
-        toggle_user_membership_in_group(username, "lead_marker")
+        _add_user_to_group(user_obj, "lead_marker")
         # for backwards compat, we enable identifier (but not in reverse)
-        _add_user_to_group(User.objects.get_by_natural_key(username), "identifier")
+        _add_user_to_group(user_obj, "identifier")
 
 
 def change_user_groups(
