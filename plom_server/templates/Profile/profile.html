@@ -61,6 +61,12 @@
                                         <label class="form-check-label" for="{{ g.name }}">{{ g.label }}</label>
                                     </div>
                                 {% endfor %}
+                                <p>
+                                    <small class="text-muted">
+                                        (Some choices imply others; read more about
+                                        <a href="https://plom.readthedocs.io/en/latest/marking.html#permissions-and-lead-markers">user groups in Plom&apos;s documentation</a>.)
+                                    </small>
+                                </p>
                             </fieldset>
                             <button type="submit" class="btn btn-secondary" name="todo_needed_or_not">Change groups</button>
                         </form>

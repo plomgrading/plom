@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2020 Andrew Rechnitzer
-   Copyright (C) 2021-2022, 2024 Colin B. Macdonald
+   Copyright (C) 2021-2022, 2024-2025 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 The marking process
@@ -146,3 +146,10 @@ more lead markers in charge of each question.
     consistency and/or professional development of mentorees.
   - Leads might track per-question progress and coordinate changes in
     teams as overall marking progresses.
+
+
+The "identifier" group
+^^^^^^^^^^^^^^^^^^^^^^
+
+Users in the "identifier" group can access the ID pages
+and :ref:`identify papers <identifying>`.

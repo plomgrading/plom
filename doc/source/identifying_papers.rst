@@ -4,6 +4,8 @@
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
+.. _identifying:
+
 Identifying papers
 ==================
 
@@ -61,6 +63,8 @@ Confirming and/or manually identifying
 --------------------------------------
 
 This is currently done using :ref:`the desktop client <plom-client>`.
+Users who perform identifying must be added to the "identifier" group,
+including "manager" users.
 
 Identifying is typically quick compared to marking and you will not need
 to assign much person-time.
@@ -83,8 +87,8 @@ Clicking ``Blank page...`` will ask you to confirm the situation.
 I made a mistake identifying: how can I revert an ID?
 -----------------------------------------------------
 
-Login to the web interface as either a manager or
-:ref:`lead marker <lead-markers>` account.
+Login to the web interface as either a "manager" or
+"identifier" account.
 Go to "Identifying Progress" and click on ``clear`` by the paper you
 wish to reset.
 
