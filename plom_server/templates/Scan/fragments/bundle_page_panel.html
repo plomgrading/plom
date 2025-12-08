@@ -48,10 +48,11 @@
                                 <li>version: {{ current_page.info.version }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
-                                    {{ current_page.qr_codes|length }} qr-codes read:
                                     <button type="button"
-                                            class="btn btn-outline-dark dropdown-toggle"
-                                            data-bs-toggle="dropdown">info</button>
+                                            class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                            data-bs-toggle="dropdown">
+                                        {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                    </button>
                                     <ul class="dropdown-menu">
                                         {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                     </ul>
@@ -67,10 +68,11 @@
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 {% if current_page.qr_codes %}
                                     <li>
-                                        {{ current_page.qr_codes|length }} qr-codes read:
                                         <button type="button"
-                                                class="btn btn-outline-dark dropdown-toggle"
-                                                data-bs-toggle="dropdown">info</button>
+                                                class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                                data-bs-toggle="dropdown">
+                                            {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                        </button>
                                         <ul class="dropdown-menu">
                                             {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
@@ -95,10 +97,11 @@
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 {% if current_page.qr_codes %}
                                     <li>
-                                        {{ current_page.qr_codes|length }} qr-codes read:
                                         <button type="button"
-                                                class="btn btn-outline-dark dropdown-toggle"
-                                                data-bs-toggle="dropdown">info</button>
+                                                class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                                data-bs-toggle="dropdown">
+                                            {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                        </button>
                                         <ul class="dropdown-menu">
                                             {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
@@ -115,10 +118,11 @@
                                 <li>{{ current_page.info.reason }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
-                                    {{ current_page.qr_codes|length }} qr-codes read:
                                     <button type="button"
-                                            class="btn btn-outline-dark dropdown-toggle"
-                                            data-bs-toggle="dropdown">info</button>
+                                            class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                            data-bs-toggle="dropdown">
+                                        {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                    </button>
                                     <ul class="dropdown-menu">
                                         {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code }}</li>{% endfor %}
                                     </ul>
