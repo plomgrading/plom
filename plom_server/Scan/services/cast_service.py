@@ -303,7 +303,7 @@ class ScanCastService:
 
         # Be very careful to update the image type when doing this sort of operation.
         img.image_type = StagingImage.UNKNOWN
-        img.history += f"; {image_type} made unknown by {user_obj}"
+        img.history += f"; {img.get_image_type_display()} made unknown by {user_obj}"
         # delete the old type information
         if image_type == StagingImage.DISCARD:
             img.discard_reason = ""
@@ -681,7 +681,7 @@ class ScanCastService:
             raise RuntimeError("Cannot recognise image type")
 
         img.image_type = StagingImage.EXTRA
-        img.history += f"; {image_type} made extra by {user_obj}"
+        img.history += f"; {img.get_image_type_display()} made extra by {user_obj}"
         # TODO: if it had a paper_number already should we keep it?
         img.paper_number = None
         img.question_idx_list = None
@@ -805,7 +805,7 @@ class ScanCastService:
         img.page_number = page_number
         img.version = version_in_db
         img.history += (
-            f"; {img.image_type} made known"
+            f"; {img.get_image_type_display()} made known"
             f" ({paper_number}, {page_number}, {version_in_db})"
             f" by {user_obj}"
         )

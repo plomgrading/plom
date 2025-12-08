@@ -68,6 +68,7 @@ class HueyTaskTracker(models.Model):
     ERROR = StatusChoices.ERROR
 
     huey_id = models.UUIDField(null=True)
+    # self.get_status_display is automatically created
     status = models.IntegerField(
         null=False, choices=StatusChoices.choices, default=TO_DO
     )
