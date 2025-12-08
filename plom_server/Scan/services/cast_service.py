@@ -150,9 +150,6 @@ class ScanCastService:
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
             )
 
-        # Be very careful to update the image type when doing this sort of operation.
-        img.image_type = StagingImage.DISCARD
-
         # Now delete the old type information
         if image_type == StagingImage.UNKNOWN:
             reason = f"Unknown page discarded by {user_obj.username}"
@@ -171,7 +168,9 @@ class ScanCastService:
             reason = f"Error page discarded by {user_obj.username}"
         else:
             raise RuntimeError(f"Should not be here! {image_type}")
+
         img.history += "; " + reason
+        img.image_type = StagingImage.DISCARD
         img.discard_reason = reason
         img.save()
 
@@ -212,8 +211,10 @@ class ScanCastService:
             image_type=StagingImage.UNKNOWN
         ).select_for_update()
         for img in unknown_images:
+            s = f"{img.get_image_type_display()} bulk discarded by {user_obj.username}"
+            img.history += "; " + s
             img.image_type = StagingImage.DISCARD
-            img.discard_reason = f"Unknown page discarded by {user_obj.username}"
+            img.discard_reason = s
             img.save()
 
     @transaction.atomic
@@ -301,9 +302,6 @@ class ScanCastService:
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
             )
 
-        # Be very careful to update the image type when doing this sort of operation.
-        img.image_type = StagingImage.UNKNOWN
-        img.history += f"; {img.get_image_type_display()} made unknown by {user_obj}"
         # delete the old type information
         if image_type == StagingImage.DISCARD:
             img.discard_reason = ""
@@ -321,6 +319,8 @@ class ScanCastService:
         else:
             raise RuntimeError("Cannot recognise image type")
 
+        img.history += f"; {img.get_image_type_display()} made unknown by {user_obj}"
+        img.image_type = StagingImage.UNKNOWN
         img.save()
 
     @transaction.atomic
@@ -680,8 +680,8 @@ class ScanCastService:
         else:
             raise RuntimeError("Cannot recognise image type")
 
-        img.image_type = StagingImage.EXTRA
         img.history += f"; {img.get_image_type_display()} made extra by {user_obj}"
+        img.image_type = StagingImage.EXTRA
         # TODO: if it had a paper_number already should we keep it?
         img.paper_number = None
         img.question_idx_list = None
