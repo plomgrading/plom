@@ -3,11 +3,14 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 USER_TYPE_WITH_MANAGER_CHOICES = [
-    ("marker", "Marker"),
-    ("lead_marker", "Lead Marker"),
-    ("identifier", "Identifier"),
-    ("scanner", "Scanner"),
-    ("manager", "Manager"),
+    ("marker", "Marker (a standard account for marking papers)"),
+    (
+        "lead_marker",
+        'Lead Marker (can see and edit marking of other users, track progress, etc, implies "Marker")',
+    ),
+    ("identifier", "Identifier (can see ID pages and identify papers with students)"),
+    ("scanner", "Scanner (can scan papers into the system)"),
+    ("manager", 'Manager (overall manager account, implies "Scanner" & "Identifier")'),
 ]
 
 USER_TYPE_BULK_CHOICES = [
