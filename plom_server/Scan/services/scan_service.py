@@ -1920,7 +1920,7 @@ def huey_parent_read_qr_codes_chore(
     bundle_obj.refresh_from_db()
     # this could unexpected raise ValueError errors which would be caught
     # by the general catch-all handler
-    QRService.create_staging_images_based_on_QR_codes(bundle_obj)
+    QRService.classify_staging_images_based_on_QR_codes(bundle_obj)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

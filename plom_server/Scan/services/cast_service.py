@@ -121,7 +121,8 @@ class ScanCastService:
 
         Keyword Args:
             image_type: the *current* type of the image that we wish to
-                discard.
+                discard.  You don't need to specify this but you can as
+                an additional consistency check.
 
         Returns:
             None.
