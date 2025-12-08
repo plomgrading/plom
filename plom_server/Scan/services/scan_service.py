@@ -1458,6 +1458,7 @@ class ScanService:
             "zfill_order": f"{img.bundle_order}".zfill(n_digits),
             "rotation": img.rotation,
             "qr_codes": img.parsed_qr,
+            "history": img.history,
         }
         if img.image_type == StagingImage.ERROR:
             info = {"reason": img.error_reason}
