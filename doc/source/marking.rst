@@ -43,7 +43,6 @@ Tracking progress
 -----------------
 
 You can use manager accounts to keep an eye on progress.
-If you are using the older legacy server, see :doc:`manage`.
 
 
 Tagging tasks
