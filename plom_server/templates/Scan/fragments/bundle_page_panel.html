@@ -39,6 +39,9 @@
                     </button>
                 </div>
                 <div class="card-body p-2 py-0">
+                    Temporary history display:
+                    <br />
+                    {{ current_page.history }}
                     {% if current_page.status == 'known' %}
                         <div class="alert alert-success my-2 p-2">
                             <h5 class="alert-heading">Known</h5>
