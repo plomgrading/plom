@@ -72,7 +72,11 @@ class AuthenticationServices:
 
     @staticmethod
     def apply_group_name_implications(group_names_in: list[str]) -> list[str]:
-        """Some groups imply others; add any implied groups to the list."""
+        """Some groups imply others; add any implied groups to the list.
+
+        Related logic appears in other places such as the subclasses of
+        :class:`RoleRequiredView` in ``Base/base_group_views.py``.
+        """
         group_names = group_names_in.copy()
         if "manager" in group_names:
             if "scanner" not in group_names:
