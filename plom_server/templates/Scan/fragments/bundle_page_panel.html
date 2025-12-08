@@ -41,7 +41,7 @@
                 <div class="card-body p-2 py-0">
                     {% if current_page.status == 'known' %}
                         <div class="alert alert-success my-2 p-2">
-                            <h6 class="alert-heading">Known</h6>
+                            <h5 class="alert-heading">Known</h5>
                             <ul class="mb-0">
                                 <li>paper: {{ current_page.info.paper_number }}</li>
                                 <li>page: {{ current_page.info.page_number }}</li>
@@ -61,7 +61,7 @@
                         </div>
                     {% elif current_page.status == 'extra' %}
                         <div class="alert alert-info my-2 p-2">
-                            <h6 class="alert-heading">Extra</h6>
+                            <h5 class="alert-heading">Extra</h5>
                             <ul class="mb-0">
                                 <li>paper: {{ current_page.info.paper_number }}</li>
                                 <li>questions: {{ current_page.info.question_list_html | safe }}</li>
@@ -84,14 +84,14 @@
                         </div>
                     {% elif current_page.status == 'unknown' %}
                         <div class="alert alert-warning my-2 p-2">
-                            <h6 class="alert-heading">Unknown</h6>
+                            <h5 class="alert-heading">Unknown</h5>
                             <ul class="mb-0">
                                 <li>No qr-codes could be read</li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'discard' %}
                         <div class="alert alert-dark my-2 p-2">
-                            <h6 class="alert-heading">Discard</h6>
+                            <h5 class="alert-heading">Discard</h5>
                             <ul class="mb-0">
                                 <li>{{ current_page.info.reason }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
@@ -113,7 +113,7 @@
                         </div>
                     {% elif current_page.status == 'error' %}
                         <div class="alert alert-danger my-2 p-2">
-                            <h6 class="alert-heading">Error</h6>
+                            <h5 class="alert-heading">Error</h5>
                             <ul class="mb-0">
                                 <li>{{ current_page.info.reason }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
@@ -131,7 +131,7 @@
                         </div>
                     {% elif current_page.status == 'unread' %}
                         <div class="alert alert-dark my-2">
-                            <h6 class="alert-heading">Unread</h6>
+                            <h5 class="alert-heading">Unread</h5>
                             <ul>
                                 <li>Have not read qr-codes yet</li>
                             </ul>
