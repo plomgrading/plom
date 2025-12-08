@@ -136,13 +136,24 @@ def is_user_in_group(username: str, groupname: str) -> bool:
 
 
 @transaction.atomic
-def toggle_lead_marker_group_membership(username: str):
+def toggle_lead_marker_group_membership(username: str) -> None:
+    """Toggle leader marker status on a marker account.
+
+    For backwards compatibility, promoting a marker to "lead_marker"
+    also makes them an "identifier", but not in reverse.
+
+    Raises:
+        ValueError: if the user is not a "marker".
+    """
     if not is_user_in_group(username, "marker"):
         raise ValueError(f"User {username} not a marker.")
 
-    toggle_user_membership_in_group(username, "lead_marker")
-    # TODO: not quite right as doesn't respect the invariant both or neither
-    toggle_user_membership_in_group(username, "identifier")
+    if is_user_in_group(username, "lead_marker"):
+        toggle_user_membership_in_group(username, "lead_marker")
+    else:
+        toggle_user_membership_in_group(username, "lead_marker")
+        # for backwards compat, we enable identifier (but not in reverse)
+        _add_user_to_group(User.objects.get_by_natural_key(username), "identifier")
 
 
 def change_user_groups(
