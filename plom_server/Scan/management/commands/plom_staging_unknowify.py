@@ -26,7 +26,7 @@ class Command(BaseCommand):
                 f"as user {username} without type check."
             )
         else:
-            image_type = ScanCastService().string_to_staging_image_type(image_type_str)
+            image_type = ScanCastService.string_to_staging_image_type(image_type_str)
             self.stdout.write(
                 f"Attempting to unknowify image of type '{image_type}' "
                 f"at position {order} from bundle {bundle_name} as user {username}"

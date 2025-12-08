@@ -15,14 +15,12 @@ class Command(BaseCommand):
     def discard_image_type_from_bundle(
         self, username, bundle_name, order, *, image_type=None
     ):
-        scs = ScanCastService()
-
         if image_type is None:
             self.stdout.write(
                 f"Discarding image at position {order} from bundle {bundle_name} as user {username} without type check."
             )
         else:
-            image_type = scs.string_to_staging_image_type(image_type)
+            image_type = ScanCastService.string_to_staging_image_type(image_type)
             self.stdout.write(
                 f"Attempting to discardimage of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
             )
