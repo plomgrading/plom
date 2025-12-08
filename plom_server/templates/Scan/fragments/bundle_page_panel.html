@@ -39,9 +39,6 @@
                     </button>
                 </div>
                 <div class="card-body p-2 py-0">
-                    Temporary history display:
-                    <br />
-                    {{ current_page.history }}
                     {% if current_page.status == 'known' %}
                         <div class="alert alert-success my-2 p-2">
                             <h5 class="alert-heading">Known</h5>
@@ -200,6 +197,24 @@
                                    hx-on:htmx:after-request="refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                     <i class="bi-arrow-clockwise fs-5"></i>
                                 </a>
+                            </div>
+                        </div>
+                        <div class="accordion mt-2" id="reset_accordion">
+                            <div class="accordion-item">
+                                <p class="accordion-header" id="accordion_heading1">
+                                    <button class="accordion-button collapsed"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#collapse1"
+                                            aria-expanded="false"
+                                            aria-controls="collapse1">Log</button>
+                                </p>
+                                <div id="collapse1"
+                                     class="accordion-collapse collapse"
+                                     aria-labelledby="accordion_heading1"
+                                     data-bs-parent="#reset_accordion">
+                                    <div class="accordion-body">{{ current_page.history }}</div>
+                                </div>
                             </div>
                         </div>
                         <!-- common error handling dump -->
