@@ -30,7 +30,7 @@
                             {% if index == 1 %}disabled{% endif %}>
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
+                    <h6 class="card-title text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
                     <button type="button"
                             class="btn btn-secondary mx-2"
                             onclick="clickThumbnail({{ index|add:1 }})"
