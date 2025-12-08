@@ -67,13 +67,13 @@ class UserPage(ManagerRequiredView):
         }
         return render(request, "UserManagement/users.html", context)
 
-    def post(self, request: HttpRequest, username: str) -> HttpResponse:
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Set user to active or inactive."""
         PermissionChanger.toggle_user_active(username)
 
         return HttpResponseClientRefresh()
 
-    def delete(self, request: HttpRequest, username: str) -> HttpResponse:
+    def delete(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Delete user."""
         try:
             delete_user(username, request.user.id)
@@ -101,8 +101,16 @@ class UserPage(ManagerRequiredView):
         PermissionChanger.set_all_markers_active(False)
         return redirect("/users")
 
-    @login_required
-    def toggleLeadMarker(self, username):
+
+class UserToggleLeadMarker(ManagerRequiredView):
+    """Class that handles the views in UserInfo Page."""
+
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
+        """Post a username to toggle them between lead_marker and not.
+
+        For *backwards compatbiility*, using this view to make someone a
+        lead marker also makes them an identifier.  But not conversely.
+        """
         PermissionChanger.toggle_lead_marker_group_membership(username)
         return HttpResponseClientRefresh()
 

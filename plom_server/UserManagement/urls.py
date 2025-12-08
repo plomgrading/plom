@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2025 Aidan Murphy
 
@@ -26,7 +26,7 @@ urlpatterns = [
     path("enableMarkers/", views.UserPage.enableMarkers, name="enableMarkers"),
     path(
         "toggleLeadMarker/<str:username>",
-        views.UserPage.toggleLeadMarker,
+        views.UserToggleLeadMarker.as_view(),
         name="toggleLeadMarker",
     ),
     path("explosion", views.HTMXExplodeView.as_view(), name="htmx_explode"),
