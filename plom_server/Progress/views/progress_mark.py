@@ -9,7 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from plom_server.Base.base_group_views import (
-    MarkerLeadMarkerOrManagerView,
+    MarkerOrManagerView,
     LeadMarkerOrManagerView,
 )
 
@@ -19,7 +19,7 @@ from plom_server.Mark.services import MarkingStatsService
 from ..services import ProgressOverviewService
 
 
-class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
+class ProgressMarkHome(MarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
@@ -45,7 +45,7 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
         return render(request, "Progress/Mark/mark_home.html", context)
 
 
-class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
+class ProgressMarkStartMarking(MarkerOrManagerView):
     """Display a page telling users how to get the client and get started."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
@@ -58,7 +58,7 @@ class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
         return render(request, "Progress/Mark/mark_papers.html", context)
 
 
-class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
+class ProgressMarkStatsView(MarkerOrManagerView):
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
