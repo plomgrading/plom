@@ -8,12 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
 
-from plom_server.Scan.models import (
-    StagingBundle,
-    StagingImage,
-    KnownStagingImage,
-    ExtraStagingImage,
-)
+from plom_server.Scan.models import StagingBundle, StagingImage
 from plom_server.Scan.services import QRService
 from plom_server.Base.models import BaseImage
 from plom_server.Base.services import Settings
@@ -197,18 +192,16 @@ class QRServiceTest(TestCase):
         img = StagingImage.objects.get(pk=self.img_no_qr.pk)
         self.assertEqual(img.image_type, StagingImage.UNKNOWN)
 
-        # Known -> KNOWN + KnownStagingImage has correct fields
+        # Known -> KNOWN
         img = StagingImage.objects.get(pk=self.img_known.pk)
         self.assertEqual(img.image_type, StagingImage.KNOWN)
-        ks = KnownStagingImage.objects.get(staging_image=img)
-        self.assertEqual(ks.paper_number, 1)
-        self.assertEqual(ks.page_number, 3)
-        self.assertEqual(ks.version, 1)
+        self.assertEqual(img.paper_number, 1)
+        self.assertEqual(img.page_number, 3)
+        self.assertEqual(img.version, 1)
 
-        # Extra -> EXTRA + ExtraStagingImage
+        # Extra -> EXTRA
         img = StagingImage.objects.get(pk=self.img_extra.pk)
         self.assertEqual(img.image_type, StagingImage.EXTRA)
-        self.assertTrue(ExtraStagingImage.objects.filter(staging_image=img).exists())
 
         # Scrap -> DISCARD
         img = StagingImage.objects.get(pk=self.img_scrap.pk)

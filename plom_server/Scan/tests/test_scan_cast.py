@@ -8,10 +8,6 @@ from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from model_bakery import baker
 
 from ..models import StagingBundle, StagingImage
-from ..models import (
-    KnownStagingImage,
-    ExtraStagingImage,
-)
 from ..services import ScanCastService
 
 from plom.plom_exceptions import PlomBundleLockedException
@@ -21,25 +17,12 @@ class ScanCastServiceTests(TestCase):
     def make_image(self, image_type):
         # put images into first available order
         number_of_pages = self.bundle.stagingimage_set.count()
-        img = baker.make(
+        baker.make(
             StagingImage,
             bundle=self.bundle,
             bundle_order=number_of_pages,
             image_type=image_type,
         )
-
-        if image_type == StagingImage.UNKNOWN:
-            pass
-        elif image_type == StagingImage.KNOWN:
-            baker.make(KnownStagingImage, staging_image=img)
-        elif image_type == StagingImage.EXTRA:
-            baker.make(ExtraStagingImage, staging_image=img)
-        elif image_type == StagingImage.DISCARD:
-            pass
-        elif image_type == StagingImage.ERROR:
-            pass
-        else:
-            raise RuntimeError(f"Do not recognise image type '{image_type}'")
 
     def setUp(self) -> None:
         # make scan-group, two users, one with permissions and the other not.
@@ -100,32 +83,12 @@ class ScanCastServiceTests(TestCase):
         )
 
     def test_cast_to_discard(self) -> None:
-        for img_type, typemodel, typestr, reason in [
-            (
-                StagingImage.ERROR,
-                None,
-                None,
-                "Error page discarded by user0",
-            ),
-            (
-                StagingImage.EXTRA,
-                ExtraStagingImage,
-                "extrastagingimage",
-                "Extra page discarded by user0",
-            ),
-            (
-                StagingImage.KNOWN,
-                KnownStagingImage,
-                "knownstagingimage",
-                "Known page discarded by user0",
-            ),
-            (
-                StagingImage.UNKNOWN,
-                None,
-                None,
-                "Unknown page discarded by user0",
-            ),
-        ]:
+        for img_type, reason in (
+            (StagingImage.ERROR, "Error page discarded by user0"),
+            (StagingImage.EXTRA, "Extra page discarded by user0"),
+            (StagingImage.KNOWN, "Known page discarded by user0"),
+            (StagingImage.UNKNOWN, "Unknown page discarded by user0"),
+        ):
             # get the order of an page from the bundle
             ord = (
                 self.bundle.stagingimage_set.filter(image_type=img_type)
@@ -135,8 +98,6 @@ class ScanCastServiceTests(TestCase):
 
             # grab the corresponding staging_image
             stimg = StagingImage.objects.get(bundle=self.bundle, bundle_order=ord)
-            if typestr is not None:
-                self.assertIsNotNone(getattr(stimg, typestr))
             # verify no discard image there
             with self.assertRaises(ObjectDoesNotExist):
                 StagingImage.objects.filter(image_type=StagingImage.DISCARD).get(
@@ -146,22 +107,18 @@ class ScanCastServiceTests(TestCase):
             ScanCastService.discard_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=img_type
             )
-            # verify that the original image class is gone
+            # verify that its now a discard image with the right reason
             stimg.refresh_from_db()
-            if typemodel is not None:
-                with self.assertRaises(ObjectDoesNotExist):
-                    typemodel.objects.get(staging_image=stimg)  # type: ignore[attr-defined]
-            # verify that its a discard image with the right reason
             self.assertEqual(stimg.image_type, StagingImage.DISCARD)
             self.assertEqual(stimg.discard_reason, reason)
 
     def test_cast_to_unknown(self) -> None:
-        for img_type, typemodel, typestr in [
-            (StagingImage.ERROR, None, None),
-            (StagingImage.EXTRA, ExtraStagingImage, "extrastagingimage"),
-            (StagingImage.KNOWN, KnownStagingImage, "knownstagingimage"),
-            (StagingImage.DISCARD, None, None),
-        ]:
+        for img_type in (
+            StagingImage.ERROR,
+            StagingImage.EXTRA,
+            StagingImage.KNOWN,
+            StagingImage.DISCARD,
+        ):
             # get the order of an page from the bundle
             ord = (
                 self.bundle.stagingimage_set.filter(image_type=img_type)
@@ -170,8 +127,6 @@ class ScanCastServiceTests(TestCase):
             )
             # grab the corresponding staging_image
             stimg = StagingImage.objects.get(bundle=self.bundle, bundle_order=ord)
-            if typestr is not None:
-                self.assertIsNotNone(getattr(stimg, typestr))
             # verify no unknown image there
             with self.assertRaises(ObjectDoesNotExist):
                 StagingImage.objects.filter(image_type=StagingImage.UNKNOWN).get(
@@ -181,12 +136,8 @@ class ScanCastServiceTests(TestCase):
             ScanCastService().unknowify_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=img_type
             )
-            # verify that the original image class is gone
+            # verify that its now now UNKNOWN
             stimg.refresh_from_db()
-            if typemodel is not None:
-                with self.assertRaises(ObjectDoesNotExist):
-                    typemodel.objects.get(staging_image=stimg)  # type: ignore[attr-defined]
-            # verify that an unknown image exists
             self.assertEqual(stimg.image_type, StagingImage.UNKNOWN)
 
     def test_attempt_discard_discard(self) -> None:
