@@ -7,8 +7,6 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
-import pathlib
-import uuid
 from collections import defaultdict
 
 from django.contrib.auth.models import User
@@ -127,24 +125,6 @@ class ImageBundleService:
             staging_bundle=staged_bundle,
         )
         uploaded_bundle.save()
-
-        def image_save_name(staged) -> str:
-            if staged.image_type == StagingImage.KNOWN:
-                prefix = f"known_{staged.paper_number}_{staged.page_number}_"
-            elif staged.image_type == StagingImage.EXTRA:
-                prefix = f"extra_{staged.paper_number}_"
-                for q in staged.question_idx_list:
-                    prefix += f"{q}_"
-                # otherwise if no question index use dnm
-                if not staged.question_idx_list:
-                    prefix += "dnm_"
-            elif staged.image_type == StagingImage.DISCARD:
-                prefix = "discard_"
-            else:
-                prefix = ""
-
-            suffix = pathlib.Path(staged.baseimage.image_file.name).suffix
-            return prefix + str(uuid.uuid4()) + suffix
 
         # we create all the images as O(n) but then update
         # fixed-pages and associated structures in O(1) - I hope
