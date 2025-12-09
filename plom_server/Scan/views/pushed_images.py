@@ -9,7 +9,10 @@ from django.http import FileResponse, HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.contrib import messages
 
-from plom_server.Base.base_group_views import ScannerLeadMarkerOrManagerView
+from plom_server.Base.base_group_views import (
+    ScannerLeadMarkerOrManagerView,
+    ManagerRequiredView,
+)
 from plom_server.Finish.services import ReassembleService
 from ..services import (
     hard_rotate_image_from_file_by_exif_and_angle,
@@ -145,7 +148,7 @@ class SubstituteImageView(ScannerLeadMarkerOrManagerView):
         return FileResponse(img_obj.baseimage.image_file)
 
 
-class PushedBundleView(ScannerLeadMarkerOrManagerView):
+class PushedBundleView(ManagerRequiredView):
     """Operations related to pushed bundles."""
 
     def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
