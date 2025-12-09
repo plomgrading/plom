@@ -61,6 +61,10 @@ class StagingImage(models.Model):
     DISCARD = ImageTypeChoices.DISCARD
     ERROR = ImageTypeChoices.ERROR
 
+    image_type = models.TextField(
+        choices=ImageTypeChoices.choices, null=False, default=UNREAD
+    )
+
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.
     bundle_order = models.PositiveIntegerField(null=True)
@@ -71,7 +75,6 @@ class StagingImage(models.Model):
     parsed_qr = models.JSONField(default=dict, null=True)
     rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)
-    image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
     # used by KNOWN/EXTRA
     paper_number = models.PositiveIntegerField(null=True, default=None)
     # used by KNOWN

@@ -27,10 +27,6 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("bundle_order", models.PositiveIntegerField(null=True)),
-                ("parsed_qr", models.JSONField(default=dict, null=True)),
-                ("rotation", models.IntegerField(default=None, null=True)),
-                ("pushed", models.BooleanField(default=False)),
                 (
                     "image_type",
                     models.TextField(
@@ -45,6 +41,10 @@ class Migration(migrations.Migration):
                         default="UNREAD",
                     ),
                 ),
+                ("bundle_order", models.PositiveIntegerField(null=True)),
+                ("parsed_qr", models.JSONField(default=dict, null=True)),
+                ("rotation", models.IntegerField(default=None, null=True)),
+                ("pushed", models.BooleanField(default=False)),
                 ("paper_number", models.PositiveIntegerField(default=None, null=True)),
                 ("page_number", models.PositiveIntegerField(default=None, null=True)),
                 ("version", models.PositiveIntegerField(default=None, null=True)),
