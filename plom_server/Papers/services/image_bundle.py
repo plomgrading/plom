@@ -37,14 +37,7 @@ from . import SpecificationService
 
 
 class ImageBundleService:
-    """Class to encapsulate all functions around validated page images and bundles."""
-
-    def create_bundle(self, name: str, pdf_hash: str) -> Bundle:
-        """Create a bundle and store its name and sha256 hash."""
-        if Bundle.objects.filter(pdf_hash=pdf_hash).exists():
-            raise RuntimeError("A bundle with that hash already exists.")
-        bundle = Bundle.objects.create(name=name, pdf_hash=pdf_hash)
-        return bundle
+    """Class to encapsulate functions around validated page images and bundles."""
 
     def image_exists(self, imghash: str) -> bool:
         """Return True if a page image with the input hash exists in the database."""

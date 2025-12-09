@@ -76,23 +76,6 @@ class ImageBundleTests(TestCase):
 
         return super().setUp()
 
-    def test_create_bundle(self) -> None:
-        """Test ImageBundlseService.create_bundle()."""
-        n_bundles = Bundle.objects.all().count()
-        self.assertEqual(n_bundles, 0)
-
-        ibs = ImageBundleService()
-        ibs.create_bundle("bundle1", "abcde")
-
-        n_bundles = Bundle.objects.all().count()
-        self.assertEqual(n_bundles, 1)
-
-        with self.assertRaises(RuntimeError):
-            ibs.create_bundle("bundle2", "abcde")
-
-        n_bundles = Bundle.objects.all().count()
-        self.assertEqual(n_bundles, 1)
-
     def test_all_staged_imgs_valid(self) -> None:
         """Test ImageBundleService.all_staged_imgs_valid().
 
