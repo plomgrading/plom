@@ -10,9 +10,10 @@ from model_bakery import baker
 
 from django.contrib.auth.models import User
 
-from plom_server.Scan.models import StagingImage, StagingBundle
+from plom_server.Base.models import BaseImage
 from plom_server.Preparation.services import PapersPrinted
 from plom_server.Preparation.models import StagingPQVMapping
+from plom_server.Scan.models import StagingImage, StagingBundle
 from ..services import ImageBundleService, SpecificationService
 from ..models import (
     Bundle,
@@ -23,7 +24,6 @@ from ..models import (
     QuestionPage,
     MobilePage,
 )
-from plom_server.Base.models import BaseImage
 
 
 class ImageBundleTests(TestCase):
