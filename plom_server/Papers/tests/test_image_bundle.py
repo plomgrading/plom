@@ -259,8 +259,8 @@ class ImageBundleTests(TestCase):
 
         self.assertEqual(res, [(st_img6, img4, 3, 1)])
 
-    def test_perfect_bundle(self) -> None:
-        """Test that upload_valid_bundle() works as intended with a valid staged bundle."""
+    def test_push_perfect_bundle(self) -> None:
+        """Test that push_valid_bundle() works as intended with a valid staged bundle."""
         bundle = baker.make(StagingBundle, pdf_hash="abcdef", user=self.user)
         baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
@@ -291,8 +291,7 @@ class ImageBundleTests(TestCase):
             version=1,
         )
 
-        ibs = ImageBundleService()
-        ibs.upload_valid_bundle(bundle, self.user)
+        ImageBundleService.push_valid_bundle(bundle, self.user)
 
         self.assertEqual(Bundle.objects.all()[0].pdf_hash, bundle.pdf_hash)
         self.assertEqual(

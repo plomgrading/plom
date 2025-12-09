@@ -68,7 +68,8 @@ class ImageBundleService:
                 return True
         return False
 
-    def upload_valid_bundle(self, staged_bundle: StagingBundle, user_obj: User) -> None:
+    @classmethod
+    def push_valid_bundle(cls, staged_bundle: StagingBundle, user_obj: User) -> None:
         """Upload all the pages using bulk calls under certain assumptions.
 
         Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
@@ -96,11 +97,11 @@ class ImageBundleService:
         ).prefetch_related("baseimage")
 
         # Staging has checked this - but we check again here to be very sure
-        if not self.all_staged_imgs_valid(bundle_images):
+        if not cls.all_staged_imgs_valid(bundle_images):
             raise RuntimeError("Some pages in this bundle do not have QR data.")
 
         # Staging has checked this - but we check again here to be very sure
-        collide = self.find_internal_collisions(bundle_images)
+        collide = cls.find_internal_collisions(bundle_images)
         if len(collide) > 0:
             # just make a list of bundle-orders of the colliding images
             collide_error_list = [[Y.bundle_order for Y in X] for X in collide]
@@ -109,7 +110,7 @@ class ImageBundleService:
             )
 
         # Staging has not checked this - we need to do it here
-        collide = self.find_external_collisions(bundle_images)
+        collide = cls.find_external_collisions(bundle_images)
         if len(collide) > 0:
             # just make a list of bundle-orders of the colliding images
             collide_error_list2 = sorted([X[0].bundle_order for X in collide])
@@ -222,12 +223,12 @@ class ImageBundleService:
         from plom_server.Identify.services import IDReaderService
 
         # bulk create the associated marking tasks in O(1)
-        ready = self._get_ready_questions_in_bundle(uploaded_bundle)
+        ready = cls._get_ready_questions_in_bundle(uploaded_bundle)
         MarkingTaskService.bulk_create_and_update_marking_tasks(ready)
 
         # bulk create the associated ID tasks in O(1).
         papers = [
-            id_page.paper for id_page in self.get_id_pages_in_bundle(uploaded_bundle)
+            id_page.paper for id_page in cls._get_id_pages_in_bundle(uploaded_bundle)
         ]
         IdentifyTaskService.bulk_create_id_tasks(papers)
         # now create any prename-predictions
@@ -256,8 +257,10 @@ class ImageBundleService:
 
         return paper_number, page_number
 
+    # TODO: why is this method here instead of in the staging code?
+    @staticmethod
     @transaction.atomic
-    def all_staged_imgs_valid(self, staged_imgs: QuerySet) -> bool:
+    def all_staged_imgs_valid(staged_imgs: QuerySet[StagingImage]) -> bool:
         """Check that all staged images in the bundle are ready to be uploaded.
 
         Each image must be "known" or "discard" or be
@@ -288,9 +291,10 @@ class ImageBundleService:
         # total matches number of pages in the bundle.
         return True
 
+    @staticmethod
     @transaction.atomic
     def find_internal_collisions(
-        self, staged_imgs: QuerySet[StagingImage]
+        staged_imgs: QuerySet[StagingImage],
     ) -> list[list[int]]:
         """Check for collisions *within* a bundle.
 
@@ -324,7 +328,7 @@ class ImageBundleService:
     @staticmethod
     @transaction.atomic
     def find_external_collisions(
-        staged_imgs: QuerySet,
+        staged_imgs: QuerySet[StagingImage],
     ) -> list[tuple[StagingImage, Image, int, int]]:
         """Check for collisions between images in the input list and all the *currently uploaded* images.
 
@@ -407,8 +411,8 @@ class ImageBundleService:
         ]
         return pqv_updated_and_ready
 
-    @transaction.atomic
-    def get_id_pages_in_bundle(self, bundle: Bundle) -> QuerySet[IDPage]:
+    @staticmethod
+    def _get_id_pages_in_bundle(bundle: Bundle) -> QuerySet[IDPage]:
         """Get all of the ID pages in an uploaded bundle, in order to initialize ID tasks.
 
         Args:
@@ -419,8 +423,8 @@ class ImageBundleService:
         """
         return IDPage.objects.filter(image__bundle=bundle).prefetch_related("paper")
 
-    @transaction.atomic
-    def is_given_paper_ready_for_id_ing(self, paper_obj: Paper) -> bool:
+    @staticmethod
+    def is_given_paper_ready_for_id_ing(paper_obj: Paper) -> bool:
         """Check if the id page of the given paper has an image and so is ready for id-ing.
 
         Args:
