@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased Development
 
 ### Added
+* more fine-grained access control for users.  For example, you can make an account that is both a "manager" and a "marker".
 * ability for "force" upload of duplicate scan bundles.
 
 ### Removed
 
 ### Changed
+* only users in the new "identifier" group can identify papers.  Managers are always in the "identifier" group.
+* for backwards compatibility, promoting a "marker" to a "lead_marker" automatically adds them to the "identifier" group.
 * public code handling has changed to be more flexible.
 * improvements to classlist handling for developers.
 
