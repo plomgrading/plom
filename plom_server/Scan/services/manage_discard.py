@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from plom_server.Papers.models import (
+    Bundle,
     Paper,
     FixedPage,
     MobilePage,
@@ -141,15 +142,14 @@ class ManageDiscardService:
 
         return None
 
-    @transaction.atomic
-    def discard_whole_bundle_by_id(
-        self, user_obj: User, bundle_id: int, *, dry_run: bool = True
-    ):
-        """Discard all pages pushed in a given bundle.
+    def discard_whole_staging_bundle_by_id(
+        self, user_obj: User, staging_bundle_id: int, *, dry_run: bool = True
+    ) -> str:
+        """Discard all pages pushed in a given StagingBundle.
 
         Args:
-            user_obj (User): the User who is discarding
-            bundle_id (int): the id of the bundle being discarded
+            user_obj: the User who is discarding
+            staging_bundle_id: the id of the bundle being discarded
 
         Keyword Args:
             dry_run: really do it or just pretend?
@@ -161,13 +161,29 @@ class ManageDiscardService:
         Raises:
             ValueError: Attempting to discard the contents of an unpushed bundle.
         """
-        staging_bundle_obj = (
-            StagingBundle.objects.select_for_update().filter(pk=bundle_id).get()
-        )
+        staging_bundle_obj = StagingBundle.objects.filter(pk=staging_bundle_id).get()
         bundle_obj = staging_bundle_obj.bundle_set.get()
-        if not bundle_obj:
+        if not staging_bundle_obj.pushed:
             raise ValueError("Bundle hasn't been pushed, please modify it in staging.")
+        return self._discard_whole_bundle(user_obj, bundle_obj, dry_run=dry_run)
 
+    @transaction.atomic
+    def _discard_whole_bundle(
+        self, user_obj: User, bundle_obj: Bundle, *, dry_run: bool = True
+    ) -> str:
+        """Discard all pages pushed in a given bundle.
+
+        Args:
+            user_obj: the User who is discarding
+            bundle_obj: the bundle being discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+        """
         msg = ""
         with transaction.atomic():
             images = bundle_obj.image_set.all()
