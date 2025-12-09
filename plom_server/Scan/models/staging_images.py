@@ -78,7 +78,9 @@ class StagingImage(models.Model):
     ERROR = ImageTypeChoices.ERROR
 
     # self.get_image_type_display is automatically created
-    image_type = models.TextField(choices=ImageTypeChoices.choices, null=False)
+    image_type = models.TextField(
+        choices=ImageTypeChoices.choices, null=False, blank=False
+    )
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.
