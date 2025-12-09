@@ -65,14 +65,19 @@
                                     </ul>
                                 </td>
                                 <td>
-                                    <a class="btn btn-success"
-                                       href="{% url 'scan_bundle_thumbnails' bundle.id %}">View</a>
-                                    <a class="btn btn-secondary"
-                                       target="_"
-                                       href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
-                                    <a class="btn btn-danger"
-                                       target="_"
-                                       hx-delete="{% url 'pushed_bundle' bundle.id %}">Discard contents</a>
+                                    <span>
+                                        <a class="btn btn-success"
+                                           href="{% url 'scan_bundle_thumbnails' bundle.id %}">View</a>
+                                    </span>
+                                    <span>
+                                        <a class="btn btn-secondary"
+                                           target="_"
+                                           href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
+                                    </span>
+                                    <span hx-target="this" hx-target-error="this">
+                                        <a class="btn btn-danger"
+                                           hx-delete="{% url 'pushed_bundle' bundle.id %}">Discard contents</a>
+                                    </span>
                                 </td>
                             </tr>
                         {% endfor %}

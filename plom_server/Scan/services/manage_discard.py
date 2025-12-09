@@ -162,9 +162,11 @@ class ManageDiscardService:
             ValueError: Attempting to discard the contents of an unpushed bundle.
         """
         staging_bundle_obj = StagingBundle.objects.filter(pk=staging_bundle_id).get()
-        bundle_obj = staging_bundle_obj.bundle_set.get()
         if not staging_bundle_obj.pushed:
-            raise ValueError("Bundle hasn't been pushed, please modify it in staging.")
+            raise ValueError(
+                f"bundle '{staging_bundle_obj.slug}' hasn't been pushed, please modify it in staging."
+            )
+        bundle_obj = staging_bundle_obj.bundle_set.get()
         return self._discard_whole_bundle(user_obj, bundle_obj, dry_run=dry_run)
 
     @transaction.atomic

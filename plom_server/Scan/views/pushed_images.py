@@ -153,7 +153,11 @@ class PushedBundleView(ManagerRequiredView):
 
     def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         """Discard all images pushed in a given bundle."""
-        ManageDiscardService().discard_whole_staging_bundle_by_id(
-            request.user, bundle_id, dry_run=False
-        )
-        return HttpResponseClientRefresh()
+        try:
+            ManageDiscardService().discard_whole_staging_bundle_by_id(
+                request.user, bundle_id, dry_run=False
+            )
+        except ValueError as e:
+            return HttpResponse(f"Error: {e}", status=404)
+
+        return HttpResponse("Success: discarded bundle")
