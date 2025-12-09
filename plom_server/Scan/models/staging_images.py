@@ -61,9 +61,7 @@ class StagingImage(models.Model):
     DISCARD = ImageTypeChoices.DISCARD
     ERROR = ImageTypeChoices.ERROR
 
-    image_type = models.TextField(
-        choices=ImageTypeChoices.choices, null=False, default=UNREAD
-    )
+    image_type = models.TextField(choices=ImageTypeChoices.choices, null=False)
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.

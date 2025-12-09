@@ -37,8 +37,7 @@ class Migration(migrations.Migration):
                             ("EXTRA", "Extra"),
                             ("DISCARD", "Discard"),
                             ("ERROR", "Error"),
-                        ],
-                        default="UNREAD",
+                        ]
                     ),
                 ),
                 ("bundle_order", models.PositiveIntegerField(null=True)),

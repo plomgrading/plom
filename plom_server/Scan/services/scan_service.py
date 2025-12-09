@@ -1797,7 +1797,10 @@ def huey_parent_split_bundle_chore(
                         image_hash=X["image_hash"],
                     )
                     img = StagingImage.objects.create(
-                        bundle=bundle_obj, bundle_order=X["order"], baseimage=bimg
+                        bundle=bundle_obj,
+                        bundle_order=X["order"],
+                        image_type=StagingImage.UNREAD,
+                        baseimage=bimg,
                     )
                 with open(X["thumb_path"], "rb") as fh:
                     StagingThumbnail.objects.create(
