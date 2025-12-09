@@ -273,6 +273,9 @@ class ImageBundleService:
         Returns:
             True if all images are valid, False otherwise.
         """
+        # conflict if imported at top
+        from plom_server.Scan.services import ScanService
+
         # while this is done by staging, we redo it here to be **very** sure.
         if staged_imgs.filter(
             image_type__in=[
@@ -282,9 +285,9 @@ class ImageBundleService:
             ]
         ).exists():
             return False
-        if staged_imgs.filter(
-            image_type=StagingImage.EXTRA, paper_number__isnull=True
-        ).exists():
+        # All Extra images must be assigned
+        extras = staged_imgs.filter(image_type=StagingImage.EXTRA)
+        if not ScanService.do_all_these_extra_images_have_data(extras):
             return False
         # to do the complement of this search we'd need to count
         # knowns, discards and extra-with-data and make sure that

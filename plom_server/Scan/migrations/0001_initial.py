@@ -47,7 +47,10 @@ class Migration(migrations.Migration):
                 ("paper_number", models.PositiveIntegerField(default=None, null=True)),
                 ("page_number", models.PositiveIntegerField(default=None, null=True)),
                 ("version", models.PositiveIntegerField(default=None, null=True)),
-                ("question_idx_list", models.JSONField(default=None, null=True)),
+                (
+                    "question_idx_list",
+                    models.JSONField(blank=True, default=None, null=True),
+                ),
                 ("discard_reason", models.TextField(default="")),
                 ("error_reason", models.TextField(default="")),
                 ("history", models.TextField(blank=True, default="")),

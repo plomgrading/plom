@@ -26,6 +26,7 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 from django.forms import ValidationError
 from django.utils import timezone
 from django.utils.text import slugify
@@ -916,14 +917,42 @@ class ScanService:
         return bundle.stagingimage_set.filter(
             image_type=StagingImage.EXTRA,
             paper_number__isnull=False,
+            question_idx_list__isnull=False,
         ).count()
 
-    @transaction.atomic
-    def do_all_extra_images_have_data(self, bundle: StagingBundle) -> int:
-        # check whether all extra pages have paper-numbers
-        epages = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-        return not epages.filter(paper_number__isnull=True).exists()
-        # if you can find an extra page with a null paper_number
+    @classmethod
+    def do_all_extra_images_in_bundle_have_data(cls, bundle: StagingBundle) -> bool:
+        """Check whether all extra pages in a bundle have paper-numbers and questions."""
+        with transaction.atomic():
+            extras = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
+            return cls.do_all_these_extra_images_have_data(extras)
+
+    @staticmethod
+    def do_all_these_extra_images_have_data(extras: QuerySet[StagingImage]) -> bool:
+        """Check whether a given collection of extra pages have paper-numbers and questions."""
+        with transaction.atomic():
+            with_complete_data = extras.filter(
+                paper_number__isnull=False, question_idx_list__isnull=False
+            )
+            num_wo_complete_data = extras.count() - with_complete_data.count()
+            if num_wo_complete_data == 0:
+                return True
+            return False
+        # # An alternative approach: if we find any page where we know
+        # # paper-number **xor** questions then we don't have data for all
+        # if extras.filter(
+        #     paper_number__isnull=True, question_idx_list__isnull=True
+        # ).exists():
+        #     return False
+        # if extras.filter(
+        #     paper_number__isnull=True, question_idx_list__isnull=False
+        # ).exists():
+        #     return False
+        # if extras.filter(
+        #     paper_number__isnull=False, question_idx_list__isnull=True
+        # ).exists():
+        #     return False
+        # return True
 
     @transaction.atomic
     def get_n_error_images(self, bundle: StagingBundle) -> int:

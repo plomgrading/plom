@@ -60,9 +60,13 @@ class StagingImage(models.Model):
         version: used by type KNOWN, undefined for other types.  KNOWN
             images *must* have a non-None integer value.
         question_idx_list: used by type EXTRA.  Note that the null/None semantics
-            if JSON fields are complicated.  All code should be using the
-            `paper_number` field to decide if the EXTRA page has been assigned
-            or not.
+            of JSON fields are complicated.  If you store a "JSON null" (e.g.,
+            ``json.dumps(None)``) in this, its not well-defined what happens so don't
+            do that.  For example, if you know `paper_number` but don't yet know
+            the questions, set `obj.question_idx_list = None`.
+            When you do know it, it can be a list of integers, or an empty list.
+            Currently the empty list means the image is assigned to the "DNM"
+            (do not mark) group.
         history: a somewhat human-readable log of actions done to this image.
             Each string should be separated by a semicolon `";"`.  This string
             can growth larger with repeated operations; if that becomes a performance
@@ -103,8 +107,8 @@ class StagingImage(models.Model):
     page_number = models.PositiveIntegerField(null=True, default=None)
     version = models.PositiveIntegerField(null=True, default=None)
     # Used by EXTRA
-    # https://docs.djangoproject.com/en/4.1/topics/db/queries/#storing-and-querying-for-none
-    question_idx_list = models.JSONField(default=None, null=True)
+    # https://docs.djangoproject.com/en/6.0/topics/db/queries/#storing-and-querying-for-none
+    question_idx_list = models.JSONField(default=None, null=True, blank=True)
     # used for DISCARD
     discard_reason = models.TextField(default="")
     # used for ERROR
