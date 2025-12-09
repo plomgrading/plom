@@ -14,7 +14,8 @@ from plom_server.Base.models import BaseImage
 class StagingImage(models.Model):
     """An image of a scanned page that isn't validated.
 
-    Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
+    Note that bundle_order is the 1-indexed position of the image with the pdf.
+    This contrasts with pymupdf (for example) for which pages are 0-indexed.
 
     Also note: staging bundles (and these associated staging images and base
     images) can be deleted by the user - hence the base images are
@@ -22,11 +23,26 @@ class StagingImage(models.Model):
     the user to delete the associated staging bundle (and staging images, base
     images).
 
-    TODO: document other fields.
-
     Fields:
+        image_type: a mandatory argument for what type of image this is.
+            The values are an enum.  If you want them printed for humans,
+            call `get_image_type_display()`.  StagingImages typically start
+            as UNREAD and then change their `image_type` as they are classified
+            either by machine or by human.
+        bundle: which StagingBundle does this image belong to?
+        bundle_order: this is the "PDF page" of the image: the position within
+            the bundle it came from.  One might say "page" but we don't b/c
+            of ambiguities: a "page" might mean a double-sided sheet of paper,
+            and more importantly, QR-coded images have an associated `page_number`
+            within the assessment.
+        baseimage: an immutable underlying image, including the on-disc storage.
+            These can be shared with other models, namely `Image` that are
+            created when the StagingBundle is pushed.
+        parsed_qr: some information about any QR codes found on the page.
         rotation: currently this only deals with 0, 90, 180, 270, -90.
             fractional rotations are handled elsewhere,
+        pushed: whether this bundle has been "pushed", making it ready for
+            marking and generally harder to change.
         discard_reason: if the image is of type DISCARD, this will give
             human-readable explanation, such as who discarded it and what
             it was before.  Should generally be empty if this StagingImage
@@ -61,6 +77,7 @@ class StagingImage(models.Model):
     DISCARD = ImageTypeChoices.DISCARD
     ERROR = ImageTypeChoices.ERROR
 
+    # self.get_image_type_display is automatically created
     image_type = models.TextField(choices=ImageTypeChoices.choices, null=False)
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
