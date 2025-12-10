@@ -26,12 +26,16 @@
                     <li>These bundles have been pushed to the main server.</li>
                     <li>Markers may have already starting marking these pages.</li>
                     <li>
-                        Its not possible to remove an entire pushed bundle.  However, you
-                        can make modifications in the lists of papers:
+                        Bundles are generally meaningful during scanning;
+                        if you need to change anything after pushing,
+                        you may want to look at the global lists of
                         <a class="btn btn-outline-secondary btn-sm align-baseline"
-                           href="{% url 'scan_list_complete' %}">complete papers</a>
+                           href="{% url 'scan_list_complete' %}">Complete papers</a>,
                         <a class="btn btn-outline-secondary btn-sm align-baseline"
-                           href="{% url 'scan_list_incomplete' %}">incomplete papers</a>
+                           href="{% url 'scan_list_incomplete' %}">Incomplete papers</a>,
+                        or
+                        <a class="btn btn-outline-secondary btn-sm align-baseline"
+                           href="{% url 'scan_list_discard' %}">Discarded page images</a>.
                     </li>
                 </ul>
             </p>
