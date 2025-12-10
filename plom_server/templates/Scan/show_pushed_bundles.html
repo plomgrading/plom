@@ -38,8 +38,6 @@
             {% if pushed_bundles %}
                 <table class="table table-sm table-bordered text-center sortable">
                     <thead>
-                        <!-- make sure thumbnail not too wide -->
-                        <th style="width: 8vw;">Thumbnail</th>
                         <th>Bundle name</th>
                         <th>Uploaded by</th>
                         <th>Pages/Papers</th>
@@ -48,11 +46,6 @@
                     <tbody>
                         {% for bundle in pushed_bundles %}
                             <tr>
-                                <td>
-                                    <div class="bundle-thumb">
-                                        <img src="{% url 'scan_get_thumbnail' bundle.id 1 %}" />
-                                    </div>
-                                </td>
                                 <td>{{ bundle.slug }}.pdf</td>
                                 <td>{{ bundle.username }}</td>
                                 <td class="text-start">

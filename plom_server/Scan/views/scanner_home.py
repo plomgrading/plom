@@ -93,10 +93,6 @@ class ScannerPushedView(ScannerRequiredView):
             if not bundle.pushed:
                 continue
             date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
-            if bundle.has_page_images:
-                cover_img_rotation = scanner.get_first_image(bundle).rotation
-            else:
-                cover_img_rotation = 0
             n_pages = scanner.get_n_images(bundle)
             _papers = scanner.get_bundle_paper_numbers(bundle)
             pretty_print_paper_list = format_int_list_with_runs(_papers)
@@ -111,7 +107,6 @@ class ScannerPushedView(ScannerRequiredView):
                     "n_pages": n_pages,
                     "n_papers": n_papers,
                     "pretty_print_paper_list": pretty_print_paper_list,
-                    "cover_angle": cover_img_rotation,
                 }
             )
         context["pushed_bundles"] = pushed_bundles
