@@ -43,7 +43,7 @@
                 <table class="table table-sm table-bordered text-center sortable">
                     <thead>
                         <th>Bundle name</th>
-                        <th>Uploaded by</th>
+                        <th>Users</th>
                         <th>Contents</th>
                         <th>Actions</th>
                     </thead>
@@ -51,7 +51,11 @@
                         {% for bundle in pushed_bundles %}
                             <tr>
                                 <td>{{ bundle.slug }}.pdf</td>
-                                <td>{{ bundle.username }}</td>
+                                <td>
+                                    <tt>{{ bundle.staged_username }}</tt> scanned
+                                    <br />
+                                    <tt>{{ bundle.pushed_username }}</tt> pushed
+                                </td>
                                 <td class="text-start">
                                     <ul>
                                         <li>{{ bundle.n_pages }} pages</li>
@@ -65,18 +69,18 @@
                                 <td>
                                     <span>
                                         <a class="btn btn-success"
-                                           href="{% url 'scan_bundle_thumbnails' bundle.id %}">View staging bundle</a>
+                                           href="{% url 'scan_bundle_thumbnails' bundle.staging_bundle_id %}">View staging bundle</a>
                                     </span>
                                     <span>
                                         <a class="btn btn-secondary"
                                            target="_"
-                                           href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
+                                           href="{% url 'scan_get_bundle' bundle.staging_bundle_id %}">Download</a>
                                     </span>
                                     <details>
                                         <summary>More actions</summary>
                                         <span hx-target="this" hx-target-error="this">
                                             <a class="btn btn-danger"
-                                               hx-delete="{% url 'pushed_bundle' bundle.id %}"
+                                               hx-delete="{% url 'pushed_bundle' bundle.staging_bundle_id %}"
                                                hx-confirm="Caution: this will invalidate any marking tasks that use the pages in this bundle.  Are you sure you wish to continue?"><i class="bi bi-exclamation-diamond-fill"></i> Discard all contents</a>
                                         </span>
                                     </details>

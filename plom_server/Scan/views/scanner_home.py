@@ -90,24 +90,25 @@ class ScannerPushedView(ScannerRequiredView):
 
         for bundle in ManageScanService.get_pushed_bundles():
             staging_bundle = bundle.staging_bundle
-            date_time = timezone.make_aware(
-                datetime.fromtimestamp(staging_bundle.timestamp)
-            )
+            # date_time = timezone.make_aware(
+            #     datetime.fromtimestamp(staging_bundle.timestamp)
+            # )
             n_pages = scanner.get_n_images(staging_bundle)
             _papers = scanner.get_bundle_paper_numbers(staging_bundle)
             pretty_print_paper_list = format_int_list_with_runs(_papers)
             n_papers = len(_papers)
             # this is the wrong kind of discard
             # n_discards = scanner.get_n_discard_images(staging_bundle)
-            n_discards = ManageScanService.get_n_discards_in_pushed_bundle(bundle.pk)
+            n_discards = ManageScanService.get_n_discards_in_pushed_bundle(bundle)
 
             pushed_bundles.append(
                 {
-                    "id": staging_bundle.pk,
+                    "staging_bundle_id": staging_bundle.pk,
                     "slug": staging_bundle.slug,
-                    "timestamp": staging_bundle.timestamp,
-                    "time_uploaded": arrow.get(date_time).humanize(),
-                    "username": staging_bundle.user.username,
+                    # "timestamp": staging_bundle.timestamp,
+                    # "time_uploaded": arrow.get(date_time).humanize(),
+                    "staged_username": staging_bundle.user.username,
+                    "pushed_username": bundle.user.username,
                     "n_pages": n_pages,
                     "n_papers": n_papers,
                     "pretty_print_paper_list": pretty_print_paper_list,
