@@ -72,11 +72,14 @@
                                            target="_"
                                            href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
                                     </span>
-                                    <span hx-target="this" hx-target-error="this">
-                                        <a class="btn btn-danger"
-                                           hx-delete="{% url 'pushed_bundle' bundle.id %}"
-                                           hx-confirm="Caution: this will invalidate any marking tasks that use these pages.  Are you sure you wish to continue?">Discard contents</a>
-                                    </span>
+                                    <details>
+                                        <summary>More actions</summary>
+                                        <span hx-target="this" hx-target-error="this">
+                                            <a class="btn btn-danger"
+                                               hx-delete="{% url 'pushed_bundle' bundle.id %}"
+                                               hx-confirm="Caution: this will invalidate any marking tasks that use the pages in this bundle.  Are you sure you wish to continue?"><i class="bi bi-exclamation-diamond-fill"></i> Discard all contents</a>
+                                        </span>
+                                    </details>
                                 </td>
                             </tr>
                         {% endfor %}

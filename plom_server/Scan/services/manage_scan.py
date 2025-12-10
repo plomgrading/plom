@@ -367,6 +367,13 @@ class ManageScanService:
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
+    @staticmethod
+    def get_pushed_bundles() -> QuerySet[Bundle]:
+        """Get all the pushed Bundles, with a prefetch on the related Staging Bundles."""
+        return Bundle.objects.filter(_is_system=False).prefetch_related(
+            "staging_bundle"
+        )
+
     def get_number_pushed_bundles(self) -> int:
         """Return the number of pushed bundles (excluding system bundles)."""
         return Bundle.objects.filter(_is_system=False).count()

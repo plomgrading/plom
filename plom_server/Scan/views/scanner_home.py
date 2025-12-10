@@ -88,14 +88,8 @@ class ScannerPushedView(ScannerRequiredView):
         scanner = ScanService()
         pushed_bundles = []
 
-        for staging_bundle in scanner.get_all_staging_bundles():
-            # only keep pushed bundles
-            if not staging_bundle.pushed:
-                continue
-            from plom_server.Papers.models import Bundle
-
-            # TODO: missing a prefetch?
-            bundle = Bundle.objects.get(staging_bundle=staging_bundle)
+        for bundle in ManageScanService.get_pushed_bundles():
+            staging_bundle = bundle.staging_bundle
             date_time = timezone.make_aware(
                 datetime.fromtimestamp(staging_bundle.timestamp)
             )
