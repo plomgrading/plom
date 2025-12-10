@@ -495,6 +495,18 @@ class ManageScanService:
         }
 
     @staticmethod
+    def get_n_images(bundle: Bundle | int) -> int:
+        """Get the number of page images in a Bundle from the number of Images.
+
+        This could be the same thing as :method:`ScanService.get_n_images` but
+        semantically it might be sometimes more correct to query the Bundle
+        not the StagingBundle.
+        """
+        if isinstance(bundle, int):
+            return Image.objects.filter(bundle_id=bundle).count()
+        return Image.objects.filter(bundle=bundle).count()
+
+    @staticmethod
     def get_n_discards_in_pushed_bundle(bundle: Bundle | int) -> int:
         """Count how many DiscardPage a pushed bundle has.
 
@@ -506,7 +518,7 @@ class ManageScanService:
             ObjectDoesNotExist: if you pass an invalid bundle id.
         """
         if isinstance(bundle, int):
-            return DiscardPage.objects.filter(image__bundle__id=bundle).count()
+            return DiscardPage.objects.filter(image__bundle_id=bundle).count()
         return DiscardPage.objects.filter(image__bundle=bundle).count()
 
     @transaction.atomic
