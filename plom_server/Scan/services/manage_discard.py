@@ -169,7 +169,6 @@ class ManageDiscardService:
         bundle_obj = staging_bundle_obj.bundle_set.get()
         return self._discard_whole_bundle(user_obj, bundle_obj, dry_run=dry_run)
 
-    @transaction.atomic
     def _discard_whole_bundle(
         self, user_obj: User, bundle_obj: Bundle, *, dry_run: bool = True
     ) -> str:
