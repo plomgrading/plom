@@ -487,6 +487,21 @@ class ManageScanService:
             "bundle_order": dp_obj.image.bundle_order,
         }
 
+    @staticmethod
+    def get_n_discards_in_pushed_bundle(bundle: Bundle | int) -> int:
+        """Count how many DiscardPage a pushed bundle has.
+
+        Args:
+            bundle: a pushed bundle, not a staging bundle.  You can pass
+                either the Django Bundle objects or an integer ID.
+
+        Raises:
+            ObjectDoesNotExist: if you pass an invalid bundle id.
+        """
+        if isinstance(bundle, int):
+            return DiscardPage.objects.filter(image__bundle__id=bundle).count()
+        return DiscardPage.objects.filter(image__bundle=bundle).count()
+
     @transaction.atomic
     def get_discarded_page_info(self) -> list[dict[str, Any]]:
         """Get information on all discarded pages.

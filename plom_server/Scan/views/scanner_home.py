@@ -88,25 +88,36 @@ class ScannerPushedView(ScannerRequiredView):
         scanner = ScanService()
         pushed_bundles = []
 
-        for bundle in scanner.get_all_staging_bundles():
+        for staging_bundle in scanner.get_all_staging_bundles():
             # only keep pushed bundles
-            if not bundle.pushed:
+            if not staging_bundle.pushed:
                 continue
-            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
-            n_pages = scanner.get_n_images(bundle)
-            _papers = scanner.get_bundle_paper_numbers(bundle)
+            from plom_server.Papers.models import Bundle
+
+            # TODO: missing a prefetch?
+            bundle = Bundle.objects.get(staging_bundle=staging_bundle)
+            date_time = timezone.make_aware(
+                datetime.fromtimestamp(staging_bundle.timestamp)
+            )
+            n_pages = scanner.get_n_images(staging_bundle)
+            _papers = scanner.get_bundle_paper_numbers(staging_bundle)
             pretty_print_paper_list = format_int_list_with_runs(_papers)
             n_papers = len(_papers)
+            # this is the wrong kind of discard
+            # n_discards = scanner.get_n_discard_images(staging_bundle)
+            n_discards = ManageScanService.get_n_discards_in_pushed_bundle(bundle.pk)
+
             pushed_bundles.append(
                 {
-                    "id": bundle.pk,
-                    "slug": bundle.slug,
-                    "timestamp": bundle.timestamp,
+                    "id": staging_bundle.pk,
+                    "slug": staging_bundle.slug,
+                    "timestamp": staging_bundle.timestamp,
                     "time_uploaded": arrow.get(date_time).humanize(),
-                    "username": bundle.user.username,
+                    "username": staging_bundle.user.username,
                     "n_pages": n_pages,
                     "n_papers": n_papers,
                     "pretty_print_paper_list": pretty_print_paper_list,
+                    "n_discards": n_discards,
                 }
             )
         context["pushed_bundles"] = pushed_bundles

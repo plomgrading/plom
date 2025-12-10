@@ -40,7 +40,7 @@
                     <thead>
                         <th>Bundle name</th>
                         <th>Uploaded by</th>
-                        <th>Pages/Papers</th>
+                        <th>Contents</th>
                         <th>Actions</th>
                     </thead>
                     <tbody>
@@ -55,6 +55,7 @@
                                             {{ bundle.n_papers }} paper{{ bundle.n_papers|pluralize }}:
                                             {{ bundle.pretty_print_paper_list }}
                                         </li>
+                                        {% if bundle.n_discards %}<li>{{ bundle.n_discards }} discarded images</li>{% endif %}
                                     </ul>
                                 </td>
                                 <td>
