@@ -76,7 +76,8 @@
                                     </span>
                                     <span hx-target="this" hx-target-error="this">
                                         <a class="btn btn-danger"
-                                           hx-delete="{% url 'pushed_bundle' bundle.id %}">Discard contents</a>
+                                           hx-delete="{% url 'pushed_bundle' bundle.id %}"
+                                           hx-confirm="Caution: this will invalidate any marking tasks that use these pages.  Are you sure you wish to continue?">Discard contents</a>
                                     </span>
                                 </td>
                             </tr>
