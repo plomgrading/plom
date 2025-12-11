@@ -606,7 +606,7 @@ class BaseMessenger:
     # ------------------------
     # ------------------------
     # Authentication stuff
-    def get_user_roles(self) -> str | None:
+    def get_user_roles(self) -> list[str]:
         """Obtain user's roles from the server.
 
         Args:
