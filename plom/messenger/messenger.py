@@ -152,7 +152,9 @@ class Messenger(BaseMessenger):
         Exceptions:
             PlomConflict: `studentID` already used on a different paper.
             PlomTakenException: someone else owns that task.  This is unexpected
-                if you Claimed this task.
+                if you Claimed this task.  It can also happen, rarely, if
+                you were in the "identifier" group when you claimed the task
+                but were removed from the group before returning the ID.
             PlomRangeException: no such test number or not yet scanned
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
