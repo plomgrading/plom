@@ -126,17 +126,22 @@ class Messenger(BaseMessenger):
 
     # ------------------------
 
-    def IDclaimThisTask(self, code):
+    def claim_id_task(self, paper_num: int) -> None:
+        """Claim a particular ID task."""
         with self.SRmutex:
             try:
                 response = self.patch(
-                    f"/ID/tasks/{code}",
+                    f"/ID/tasks/{paper_num}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason)
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason)
                 if response.status_code == 409:
                     raise PlomTakenException(response.reason)
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -426,7 +431,8 @@ class Messenger(BaseMessenger):
             PlomRangeException: no such test number or not yet scanned
             PlomVersionMismatchException: the version supplied does not
                 match the task's version.
-            PlomAuthenticationException:
+            PlomAuthenticationException: trouble logging in.
+            PlomNoPermission: your account cannot claim task.
             PlomSeriousException: generic unexpected error
         """
         if self.is_server_api_less_than(115):
@@ -450,6 +456,8 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 409:
                     raise PlomTakenException(response.reason) from None
                 if response.status_code == 417:
@@ -606,6 +614,8 @@ class Messenger(BaseMessenger):
             happen; consider refactoring to avoid needing this to return anything.
 
         Raises:
+            PlomAuthenticationException: trouble logging in.
+            PlomNoPermission: your account is not allowed to submit marking.
             PlomAuthenticationException
             PlomConflict: integrity check failed, perhaps manager
                 altered task.
@@ -804,6 +814,8 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 406:
                     raise PlomConflict(response.reason) from None
                 if response.status_code == 409:

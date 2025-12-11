@@ -5,17 +5,17 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Aidan Murphy
 
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect
-from django.views.generic import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render, redirect
+from django.views.generic import View
 
-from .edit_profile_form import EditProfileForm
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.UserManagement.services import UsersService
+from plom_server.UserManagement.services import UsersService, PermissionChanger
+from .edit_profile_form import EditProfileForm
 
 
 class PrivateProfileView(LoginRequiredMixin, View):
@@ -23,9 +23,6 @@ class PrivateProfileView(LoginRequiredMixin, View):
 
     So named 'Private' because each user can only view their own.
     """
-
-    login_url = "login"
-    form = EditProfileForm()
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Get the current user profile page.
@@ -41,11 +38,10 @@ class PrivateProfileView(LoginRequiredMixin, View):
             # concatenate group names separated with a comma and a space
             groups = ", ".join([g.name for g in request.user.groups.all()])
         except IndexError:
-            groups = None
+            groups = ""
         context = {
             "form": form,
             "user_groups": groups,
-            "email": request.user.email,
         }
         return render(request, "Profile/private_profile.html", context)
 
@@ -58,38 +54,32 @@ class PrivateProfileView(LoginRequiredMixin, View):
         Returns:
             Profile HTML page.
         """
-        try:
-            # TODO: first?  but more generally, why not support multiple groups?
-            group = request.user.groups.all()[0].name
-        except IndexError:
-            group = None
         form = EditProfileForm(request.POST, instance=request.user)
         if not form.is_valid():
+            # raise ValidationError("Invalid form: " + form.errors.as_text())
+            # TODO: what should the error handling be?
             messages.error(request, f"Unexpectedly invalid form: {form}")
             return redirect("home")
         form.save()
-        context = {
-            "form": form,
-            "user_group": group,
-            "email": request.user.email,
-        }
-        return render(request, "Profile/private_profile.html", context)
+        return redirect("private_profile")
 
 
 def password_change_redirect(request):
     request_domain = get_current_site(request).domain
-    link = AuthenticationServices().generate_link(request.user, request_domain)
+    link = AuthService.generate_link(request.user, request_domain)
     return redirect(link)
 
 
 class ProfileView(ManagerRequiredView):
     """Actions related to public facing user profiles."""
 
-    def get(self, request: HttpRequest, username: str) -> HttpResponse:
+    def get(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Get the profile page as seen by another user.
 
         Args:
             request: an Http request.
+
+        Keyword Args:
             username: the username of the user's profile to fetch.
 
         Returns:
@@ -97,8 +87,46 @@ class ProfileView(ManagerRequiredView):
         """
         user_dict = UsersService.get_user_as_dict(username)
         user_groups = UsersService.get_users_groups_info()[username]
+        all_groups_list = AuthService.plom_user_groups_list
+        # TODO: maybe we should manually-ish filter out "demo"?
+        all_groups_info = [
+            {
+                "name": g,
+                "label": g,  # potentially with html links etc
+                "checked": g in user_groups,
+                "disabled": True if g == "admin" else False,
+            }
+            for g in all_groups_list
+        ]
         context = {
             "user": user_dict,
             "user_groups": ", ".join(user_groups),
+            "all_groups": all_groups_info,
         }
         return render(request, "Profile/profile.html", context)
+
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
+        """Manager users can post changes to the groups of a particular user.
+
+        On success, it triggers a reload of the `get` method.
+
+        Only manager users can POST here b/c this is a `ManagerRequiredView`.
+        """
+        all_groups_list = AuthService.plom_user_groups_list
+        new_groups = []
+        for g in all_groups_list:
+            if g == "admin":
+                # Trying to change the admin group will loudly fail.
+                # Client-side *displays* it, but we don't want changes.
+                continue
+            if request.POST.get(g) == "on":
+                new_groups.append(g)
+        try:
+            PermissionChanger.change_user_groups(
+                username, new_groups, whoami=request.user.username
+            )
+        except (RuntimeError, ValueError) as err:
+            # TODO: what should the error handling be?
+            messages.error(request, err)
+            return redirect("home")
+        return redirect("profile", username)

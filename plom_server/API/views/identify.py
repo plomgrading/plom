@@ -11,6 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Identify.services import ClasslistService
 from plom_server.Identify.services import (
     IDDirectService,
@@ -83,6 +84,7 @@ class GetIDPredictions(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+# GET: /ID/tasks/complete
 class IDgetDoneTasks(APIView):
     """When a id-client logs on they request a list of papers they have already IDd.
 
@@ -98,6 +100,7 @@ class IDgetDoneTasks(APIView):
     # TODO: how do we log?
 
 
+# GET: /ID/tasks/available
 class IDgetNextTask(APIView):
     """Responds with a code for the the next available identify task.
 
@@ -125,18 +128,33 @@ class IDprogressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
+# PATCH: /ID/tasks/{paper_num}
+# PUT: /ID/tasks/{paper_num}
 class IDclaimThisTask(APIView):
-    def patch(self, request, paper_id):
-        """Claims this identifying task for the user."""
-        its = IdentifyTaskService()
+    def patch(self, request: Request, *, paper_num: int) -> Response:
+        """Claims this identifying task for the user.
+
+        Raises:
+            HTTP_403_FORBIDDEN: user is not allowed to identify papers.
+            HTTP_404_NOT_FOUND: there is no valid id-ing task for that paper.
+            HTTP_409_CONFLICT: task already taken.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "identifier" not in group_list:
+            return _error_response(
+                'Only "identifier" users can claim ID tasks',
+                status.HTTP_403_FORBIDDEN,
+            )
+
         try:
-            its.claim_task(request.user, paper_id)
+            IdentifyTaskService.claim_task(request.user, paper_num)
             return Response(status=status.HTTP_200_OK)
-        except RuntimeError as e:
-            # TODO: legacy server and client all conflate various errors to 409
+        except ObjectDoesNotExist as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
-    def put(self, request, paper_id: int) -> Response:
+    def put(self, request: Request, *, paper_num: int) -> Response:
         """Assigns a name and a student ID to the paper.
 
         Raises:
@@ -148,10 +166,10 @@ class IDclaimThisTask(APIView):
         user = request.user
         its = IdentifyTaskService()
         try:
-            its.identify_paper(user, paper_id, data["sid"], data["sname"])
+            its.identify_paper(user, paper_num, data["sid"], data["sname"])
         except PermissionDenied as err:  # task not assigned to that user
             return _error_response(err, status=status.HTTP_403_FORBIDDEN)
-        except ObjectDoesNotExist as err:  # no valid task for that paper_id
+        except ObjectDoesNotExist as err:  # no valid task for that paper_num
             return _error_response(err, status=status.HTTP_404_NOT_FOUND)
         except IntegrityError as err:  # attempt to assign SID already used
             return _error_response(err, status.HTTP_409_CONFLICT)

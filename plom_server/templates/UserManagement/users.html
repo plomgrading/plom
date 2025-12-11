@@ -187,6 +187,17 @@
     </div>
     <div class="card my-2">
         <div class="card-body">
+            <h4 class="card-title">Identifiers</h4>
+            <div>
+                <p>
+                    Accounts who can identify papers:
+                    {{ identifiers|join:", " }}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
             <h4 class="card-title">Managers</h4>
             <div class="table-responsive">
                 <table class="table table-striped sortable">
