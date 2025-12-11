@@ -19,7 +19,7 @@ from plom_server.Papers.services import SpecificationService
 from plom_server.UserManagement.models import Quota
 
 
-class UserInfoServices:
+class UserInfoService:
     """Functions for User Info HTML page."""
 
     @classmethod

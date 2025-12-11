@@ -22,7 +22,7 @@ from plom.plom_exceptions import (
 
 from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
-from plom_server.Progress.services import UserInfoServices
+from plom_server.Progress.services import UserInfoService
 from .utils import _error_response
 
 
@@ -219,7 +219,7 @@ class MarkTask(APIView):
         version = int_or_None(data.get("ver"))
 
         username = request.user.username
-        progress = UserInfoServices.get_user_progress(username=username)
+        progress = UserInfoService.get_user_progress(username=username)
         n, m = mts.get_marking_progress(question, version)
         progress["total_tasks_marked"] = n
         progress["total_tasks"] = m

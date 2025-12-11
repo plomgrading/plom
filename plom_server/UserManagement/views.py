@@ -26,7 +26,7 @@ from django.urls import reverse
 from plom.misc_utils import humanize_seconds
 from plom_server.Authentication.services import AuthService
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.Progress.services.userinfo_service import UserInfoServices
+from plom_server.Progress.services.userinfo_service import UserInfoService
 from .services import PermissionChanger
 from .services import QuotaService
 from .services.UsersService import get_user_info, delete_user
@@ -163,7 +163,7 @@ class SetQuotaView(ManagerRequiredView):
         # Special flag received when user confirms to force setting, ignoring limit restriction.
         if "force_set_quota" in request.POST:
             complete, claimed = (
-                UserInfoServices.get_total_annotated_and_claimed_count_by_user(username)
+                UserInfoService.get_total_annotated_and_claimed_count_by_user(username)
             )
             quota, created = Quota.objects.get_or_create(user=user, limit=complete)
 
