@@ -158,10 +158,18 @@ class IDclaimThisTask(APIView):
         """Assigns a name and a student ID to the paper.
 
         Raises:
-            HTTP_403_FORBIDDEN: user is not the assigned user for the id-ing task for that paper
+            HTTP_403_FORBIDDEN: user is not the assigned user for the
+                ID-ing task for that paper, or the user is not in the
+                "identifier" group.
             HTTP_404_NOT_FOUND: there is no valid id-ing task for that paper
             HTTP_409_CONFLICT: the student_id has already been assigned to another paper  (not yet implemented)
         """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "identifier" not in group_list:
+            return _error_response(
+                'Only "identifier" users can assign IDs',
+                status.HTTP_403_FORBIDDEN,
+            )
         data = request.data
         user = request.user
         its = IdentifyTaskService()
