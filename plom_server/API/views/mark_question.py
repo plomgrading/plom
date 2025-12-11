@@ -103,7 +103,17 @@ class MarkTask(APIView):
         send version, we set it to None which means no such check will
         be made: you're claiming the task regardless of what version it is.
         400 for a poorly formatted request, such as invalid task code.
+        If you're not in the "marker" group, you'll get a 403 error.
         """
+        calling_user = request.user
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "marker" not in group_list:
+            return _error_response(
+                f"You ({calling_user}) cannot claim marking tasks because"
+                ' your account is not in the "marker" group',
+                status.HTTP_403_FORBIDDEN,
+            )
+
         data = request.query_params
         version = data.get("version", None)
         if version is not None:
@@ -149,7 +159,17 @@ class MarkTask(APIView):
             406: integrity fail: client submitted to out-of-date task.
             409: task has changed.
             410: task is non-existent, either never was, or has now gone away.
+            403: you're not in the "marker" group.
         """
+        calling_user = request.user
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "marker" not in group_list:
+            return _error_response(
+                f"You ({calling_user}) cannot mark tasks because"
+                ' your account is not in the "marker" group',
+                status.HTTP_403_FORBIDDEN,
+            )
+
         mts = MarkingTaskService()
         data = request.POST
         files = request.FILES
