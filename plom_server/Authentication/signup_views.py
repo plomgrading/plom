@@ -16,7 +16,7 @@ from django.shortcuts import render
 
 from plom.misc_utils import humanize_seconds
 from plom_server.Base.base_group_views import AdminOrManagerRequiredView
-from .services import AuthenticationServices
+from .services import AuthService
 from .forms.signupForm import CreateSingleUserForm, CreateMultiUsersForm
 
 
@@ -64,12 +64,10 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
         group_names = form.cleaned_data.get("user_types")
         assert isinstance(group_names, list)
 
-        created_username, groups_list = (
-            AuthenticationServices.create_user_and_add_to_groups(
-                username, group_names, email=user_email
-            )
+        created_username, groups_list = AuthService.create_user_and_add_to_groups(
+            username, group_names, email=user_email
         )
-        _links = AuthenticationServices().generate_password_reset_links_dict(
+        _links = AuthService().generate_password_reset_links_dict(
             request=request, username_list=[created_username]
         )
         userlist = [
@@ -112,17 +110,17 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
         user_type = form.cleaned_data.get("user_types")
 
         if username_choices == "basic":
-            users_and_groups = AuthenticationServices.make_multiple_numbered_users(
+            users_and_groups = AuthService.make_multiple_numbered_users(
                 num_users, group_name=user_type
             )
         elif username_choices == "funky":
-            users_and_groups = AuthenticationServices.make_multiple_funky_named_users(
+            users_and_groups = AuthService.make_multiple_funky_named_users(
                 num_users, group_name=user_type
             )
         else:
             raise RuntimeError("Tertium non datur: unexpected third choice!")
 
-        _links_dict = AuthenticationServices().generate_password_reset_links_dict(
+        _links_dict = AuthService().generate_password_reset_links_dict(
             request=request, username_list=[x[0] for x in users_and_groups]
         )
         # for u, g in users_and_groups:
@@ -154,7 +152,7 @@ class ImportUsers(AdminOrManagerRequiredView):
         "ExampleName14,scanner\n"
         "exampleName37,manager"
     )
-    valid_user_groups = AuthenticationServices.plom_user_groups_list
+    valid_user_groups = AuthService.plom_user_groups_list
 
     def get(self, request):
         context = {
@@ -183,7 +181,7 @@ class ImportUsers(AdminOrManagerRequiredView):
         csv_bytes = request.FILES[".csv"].file.getvalue()
 
         try:
-            userlist = AuthenticationServices().create_users_from_csv(csv_bytes)
+            userlist = AuthService.create_users_from_csv(csv_bytes)
         except (IntegrityError, KeyError, ValueError) as e:
             messages.error(request, str(e))
             return render(request, self.template_name, context)

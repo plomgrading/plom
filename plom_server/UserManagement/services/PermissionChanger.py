@@ -10,7 +10,7 @@ from django.db import transaction
 from plom_server.API.services import TokenService
 from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 
 
 log = logging.getLogger(__name__)
@@ -176,7 +176,7 @@ def change_user_groups(
             may not lock yourself out of your own manager account.
         ValueError: someone tried to do something illegal.
     """
-    groups = AuthenticationServices.apply_group_name_implications(groups)
+    groups = AuthService.apply_group_name_implications(groups)
     if "admin" in groups:
         raise ValueError('Cannot change membership from the "admin" group')
 
@@ -199,7 +199,7 @@ def change_user_groups(
                     " leave no manager accounts"
                 )
 
-        for g in AuthenticationServices.plom_user_groups_list:
+        for g in AuthService.plom_user_groups_list:
             if g == "admin":
                 continue
             if g in groups:

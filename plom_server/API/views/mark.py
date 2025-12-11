@@ -22,7 +22,7 @@ from plom_server.Mark.services import (
 from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import Image
 
-from plom_server.Progress.services import UserInfoServices
+from plom_server.Progress.services import UserInfoService
 
 from .utils import _error_response
 
@@ -69,7 +69,7 @@ class MarkingProgress(APIView):
         """Get dict of information about progress and quota status."""
         # TODO: consider version/question into query params to make them optional
         username = request.user.username
-        progress = UserInfoServices.get_user_progress(username=username)
+        progress = UserInfoService.get_user_progress(username=username)
         mts = MarkingTaskService()
         n, m = mts.get_marking_progress(question, version)
         progress["total_tasks_marked"] = n

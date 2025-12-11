@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views.generic import View
 
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.UserManagement.services import UsersService, PermissionChanger
 from .edit_profile_form import EditProfileForm
@@ -66,7 +66,7 @@ class PrivateProfileView(LoginRequiredMixin, View):
 
 def password_change_redirect(request):
     request_domain = get_current_site(request).domain
-    link = AuthenticationServices().generate_link(request.user, request_domain)
+    link = AuthService.generate_link(request.user, request_domain)
     return redirect(link)
 
 
@@ -87,7 +87,7 @@ class ProfileView(ManagerRequiredView):
         """
         user_dict = UsersService.get_user_as_dict(username)
         user_groups = UsersService.get_users_groups_info()[username]
-        all_groups_list = AuthenticationServices.plom_user_groups_list
+        all_groups_list = AuthService.plom_user_groups_list
         # TODO: maybe we should manually-ish filter out "demo"?
         all_groups_info = [
             {
@@ -112,7 +112,7 @@ class ProfileView(ManagerRequiredView):
 
         Only manager users can POST here b/c this is a `ManagerRequiredView`.
         """
-        all_groups_list = AuthenticationServices.plom_user_groups_list
+        all_groups_list = AuthService.plom_user_groups_list
         new_groups = []
         for g in all_groups_list:
             if g == "admin":

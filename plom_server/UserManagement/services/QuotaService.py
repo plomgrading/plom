@@ -7,7 +7,7 @@ from django.db import transaction
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 
-from plom_server.Progress.services import UserInfoServices
+from plom_server.Progress.services import UserInfoService
 from ..models import Quota
 
 
@@ -28,7 +28,7 @@ def can_set_quota(user: User, limit: int | None = None) -> bool:
     Returns:
         True if the user can be set to the quota, otherwise false.
     """
-    complete, claimed = UserInfoServices.get_total_annotated_and_claimed_count_by_user(
+    complete, claimed = UserInfoService.get_total_annotated_and_claimed_count_by_user(
         user.username
     )
     if limit is None:

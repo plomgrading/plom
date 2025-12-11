@@ -13,7 +13,7 @@ from plom_server.Base.base_group_views import (
     LeadMarkerOrManagerView,
 )
 
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Papers.services import SpecificationService
 from plom_server.Mark.services import MarkingStatsService
 from ..services import ProgressOverviewService
@@ -51,7 +51,7 @@ class ProgressMarkStartMarking(MarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         """Respond to Get method requests to the Mark Papers page."""
         context = self.build_context()
-        server_link = AuthenticationServices.get_base_link(
+        server_link = AuthService.get_base_link(
             default_host=get_current_site(request).domain
         )
         context.update({"server_link": server_link})

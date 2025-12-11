@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * only users in the new "identifier" group can identify papers.  Managers are always in the "identifier" group.
-* for backwards compatibility, promoting a "marker" to a "lead_marker" automatically adds them to the "identifier" group.
+* for backwards compatibility, promoting a "marker" to a "lead marker" automatically adds them to the "identifier" group.
+* only users in the "marker" group can mark papers, this includes lead markers.
 * public code handling has changed to be more flexible.
 * improvements to classlist handling for developers.
 

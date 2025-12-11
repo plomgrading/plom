@@ -18,7 +18,7 @@ from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
 
 
-class AuthenticationServices:
+class AuthService:
     """A service class for managing authentication-related tasks."""
 
     # TODO: is "demo" really a thing?
@@ -31,6 +31,34 @@ class AuthenticationServices:
         "lead_marker",
         "identifier",
     )
+
+    @classmethod
+    def create_groups(cls) -> tuple[list[str], list[str]]:
+        groups_created = []
+        groups_already_existing = []
+        for group in cls.plom_user_groups_list:
+            _, created = Group.objects.get_or_create(name=group)
+            if created:
+                groups_created.append(_.name)
+            else:
+                groups_already_existing.append(_.name)
+        return groups_created, groups_already_existing
+
+    @staticmethod
+    def ensure_superusers_in_admin_group() -> tuple[list[str], list[str]]:
+        added = []
+        already_in = []
+        with transaction.atomic():
+            admin_group = Group.objects.get(name="admin")
+            # get all existing superusers and ensure they are in the admin group
+            for user in User.objects.filter(is_superuser=True).select_for_update():
+                if user.groups.filter(name="admin").exists():
+                    already_in.append(user.username)
+                else:
+                    user.groups.add(admin_group)
+                    user.save()
+                    added.append(user.username)
+        return added, already_in
 
     @classmethod
     @transaction.atomic
@@ -198,7 +226,8 @@ class AuthenticationServices:
             user.groups.add(*groups)
             user.save()
 
-    def create_users_from_csv(self, f: Path | str | bytes) -> list[dict[str, str]]:
+    @classmethod
+    def create_users_from_csv(cls, f: Path | str | bytes) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.
 
         This is an atomic operation: either all users are created or all fail.
@@ -236,7 +265,7 @@ class AuthenticationServices:
             for idx, user_dict in enumerate(user_list):
                 group = user_dict["usergroup"]
                 try:
-                    u, g = self.create_user_and_add_to_group(
+                    u, g = cls.create_user_and_add_to_group(
                         user_dict["username"], group
                     )
                 except ValueError as e:
@@ -248,7 +277,7 @@ class AuthenticationServices:
                     {
                         "username": u,
                         "groups": g,
-                        "link": self.generate_link(user),
+                        "link": cls.generate_link(user),
                     }
                 )
 
@@ -319,8 +348,8 @@ class AuthenticationServices:
             links_dict[username] = self.generate_link(user, request_domain)
         return links_dict
 
-    @transaction.atomic
-    def generate_link(self, user: User, hostname: str = "") -> str:
+    @classmethod
+    def generate_link(cls, user: User, hostname: str = "") -> str:
         """Generate a password reset link for a user.
 
         Args:
@@ -334,7 +363,7 @@ class AuthenticationServices:
 
         See :method:`get_base_link` for details about how to influence this link.
         """
-        baselink = self.get_base_link(default_host=hostname)
+        baselink = cls.get_base_link(default_host=hostname)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         link = baselink + f"reset/{uid}/{token}"
