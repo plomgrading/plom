@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
 
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.UserManagement.services import UsersService
 
 
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             except User.DoesNotExist:
                 pass
             try:
-                AuthenticationServices.create_manager_user(
+                AuthService.create_manager_user(
                     username, email=email, password=password
                 )
                 self.stdout.write(
@@ -105,7 +105,7 @@ class Command(BaseCommand):
             if User.objects.filter(username=username).exists():
                 self.stderr.write(f'User "{username}" already exists, skipping')
             else:
-                AuthenticationServices.create_user_and_add_to_group(
+                AuthService.create_user_and_add_to_group(
                     username, "scanner", email=email, password=password
                 )
                 user_passwords[username] = password
@@ -118,7 +118,7 @@ class Command(BaseCommand):
             if User.objects.filter(username=username).exists():
                 self.stderr.write(f'User "{username}" already exists, skipping')
             else:
-                AuthenticationServices.create_user_and_add_to_group(
+                AuthService.create_user_and_add_to_group(
                     username, "marker", email=email, password=password
                 )
                 user_passwords[username] = password

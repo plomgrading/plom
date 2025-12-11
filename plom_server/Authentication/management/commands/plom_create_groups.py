@@ -6,7 +6,7 @@
 
 from django.core.management.base import BaseCommand
 
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 
 
 class Command(BaseCommand):
@@ -20,12 +20,12 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        [added, already] = AuthenticationServices.create_groups()
+        [added, already] = AuthService.create_groups()
         for group in already:
             self.stderr.write(f'Group "{group}" already exists')
         for group in added:
             self.stdout.write(f'Group "{group}" has been added')
-        [added, already] = AuthenticationServices.ensure_superusers_in_admin_group()
+        [added, already] = AuthService.ensure_superusers_in_admin_group()
         admin = "admin"
         for u in already:
             self.stderr.write(f'Superuser "{u}" is already in the "{admin}" group')

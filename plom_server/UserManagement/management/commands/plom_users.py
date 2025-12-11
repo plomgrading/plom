@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from ...services import UsersService
 
 
@@ -30,7 +30,7 @@ class Command(BaseCommand):
     def handle_import(self, file_path: Path, *, set_password: bool = False) -> None:
         """Imports users from a csv file and display to stdout."""
         try:
-            new_user_list = AuthenticationServices().create_users_from_csv(file_path)
+            new_user_list = AuthService.create_users_from_csv(file_path)
         except (IntegrityError, ObjectDoesNotExist, KeyError) as e:
             raise CommandError(e)
 

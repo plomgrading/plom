@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser, CommandError
@@ -9,7 +9,7 @@ from django.db import transaction
 from django.contrib.auth.models import User, Group
 
 from plom.aliceBob import simple_password
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 
 
 class Command(BaseCommand):
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 "Cannot initialize server - manager user already exists."
             )
         try:
-            AuthenticationServices.create_manager_user(username, password=password)
+            AuthService.create_manager_user(username, password=password)
         except ValueError as e:
             raise CommandError(e) from None
 

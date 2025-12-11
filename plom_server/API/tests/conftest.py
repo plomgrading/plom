@@ -14,7 +14,7 @@ import django
 import pytest
 from rest_framework.test import APIClient
 
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Base.models import User
 from plom_server.Papers.models import Paper
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
@@ -44,10 +44,8 @@ def user(db):
     Returns:
         A new User instance saved to the test database.
     """
-    AuthenticationServices.create_groups()
-    username, __ = AuthenticationServices.create_user_and_add_to_group(
-        "alice", "marker"
-    )
+    AuthService.create_groups()
+    username, __ = AuthService.create_user_and_add_to_group("alice", "marker")
     return User.objects.get(username=username)
 
 

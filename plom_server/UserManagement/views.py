@@ -24,7 +24,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from plom.misc_utils import humanize_seconds
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
@@ -122,7 +122,7 @@ class PasswordResetPage(ManagerRequiredView):
         """Get the password reset page for a particular user."""
         user_obj = User.objects.get(username=username)
         request_domain = get_current_site(request).domain
-        link = AuthenticationServices().generate_link(user_obj, request_domain)
+        link = AuthService.generate_link(user_obj, request_domain)
         context = {
             "username": username,
             "link": link,
