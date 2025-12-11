@@ -606,8 +606,8 @@ class BaseMessenger:
     # ------------------------
     # ------------------------
     # Authentication stuff
-    def get_user_role(self) -> str | None:
-        """Obtain user's role from the server.
+    def get_user_roles(self) -> str | None:
+        """Obtain user's roles from the server.
 
         Args:
             user: the username of the user.
@@ -617,9 +617,8 @@ class BaseMessenger:
             PlomSeriousException: something unexpected happened.
 
         Returns:
-            If it is legacy server, returns "". Otherwise returns
-            either of ["lead_marker", "marker", "scanner", "manager"]
-            if the user is recognized.
+            Returns a list of groups that the user belongs to such as
+            ["lead_marker", "marker", "scanner", "manager"].
         """
         if self.is_legacy_server():
             raise PlomNoServerSupportException("Operation not supported in Legacy.")
@@ -628,9 +627,14 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get_auth(path)
-                # throw errors when response code != 200.
                 response.raise_for_status()
-                return response.text
+                if self.is_server_api_less_than(116):
+                    # older servers respond with a single string
+                    _role = response.text
+                    if _role == "lead_marker":
+                        return ["marker", "identifier", "lead_marker"]
+                    return [_role]
+                return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
