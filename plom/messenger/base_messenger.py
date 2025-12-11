@@ -618,7 +618,8 @@ class BaseMessenger:
 
         Returns:
             Returns a list of groups that the user belongs to such as
-            ["lead_marker", "marker", "scanner", "manager"].
+            ["lead_marker", "marker", "scanner"].  Can also
+            include "identifier" and "manager", and perhaps others.
         """
         if self.is_legacy_server():
             raise PlomNoServerSupportException("Operation not supported in Legacy.")
