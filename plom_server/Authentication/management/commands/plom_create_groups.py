@@ -5,8 +5,6 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import Group, User
-from django.db import transaction
 
 from plom_server.Authentication.services import AuthenticationServices
 
@@ -22,24 +20,14 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        for group in AuthenticationServices.plom_user_groups_list:
-            _, created = Group.objects.get_or_create(name=group)
-            if created:
-                self.stdout.write(f'Group "{group}" has been added')
-            else:
-                self.stderr.write(f'Group "{group}" already exists')
-
-        with transaction.atomic():
-            admin_group = Group.objects.get(name="admin")
-            # get all existing superusers and ensure they are in the admin group
-            for user in User.objects.filter(is_superuser=True).select_for_update():
-                if user.groups.filter(name="admin").exists():
-                    self.stderr.write(
-                        f"Superuser {user.username} is already in the 'admin' group."
-                    )
-                else:
-                    user.groups.add(admin_group)
-                    user.save()
-                    self.stdout.write(
-                        f"Added superuser {user.username} to the 'admin' group"
-                    )
+        [added, already] = AuthenticationServices.create_groups()
+        for group in already:
+            self.stderr.write(f'Group "{group}" already exists')
+        for group in added:
+            self.stdout.write(f'Group "{group}" has been added')
+        [added, already] = AuthenticationServices.ensure_superusers_in_admin_group()
+        admin = "admin"
+        for u in already:
+            self.stderr.write(f'Superuser "{u}" is already in the "{admin}" group')
+        for u in added:
+            self.stdout.write(f'Added superuser "{u}" to the "{admin}" group')

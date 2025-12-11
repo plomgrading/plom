@@ -32,6 +32,34 @@ class AuthenticationServices:
         "identifier",
     )
 
+    @staticmethod
+    def create_groups() -> tuple[list[str], list[str]]:
+        groups_created = []
+        groups_already_existing = []
+        for group in AuthenticationServices.plom_user_groups_list:
+            _, created = Group.objects.get_or_create(name=group)
+            if created:
+                groups_created.append(_.name)
+            else:
+                groups_already_existing.append(_.name)
+        return groups_created, groups_already_existing
+
+    @staticmethod
+    def ensure_superusers_in_admin_group() -> tuple[list[str], list[str]]:
+        added = []
+        already_in = []
+        with transaction.atomic():
+            admin_group = Group.objects.get(name="admin")
+            # get all existing superusers and ensure they are in the admin group
+            for user in User.objects.filter(is_superuser=True).select_for_update():
+                if user.groups.filter(name="admin").exists():
+                    already_in.append(user.username)
+                else:
+                    user.groups.add(admin_group)
+                    user.save()
+                    added.append(user.username)
+        return added, already_in
+
     @classmethod
     @transaction.atomic
     def make_multiple_numbered_users(

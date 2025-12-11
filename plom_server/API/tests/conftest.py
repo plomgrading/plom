@@ -44,6 +44,7 @@ def user(db):
     Returns:
         A new User instance saved to the test database.
     """
+    AuthenticationServices.create_groups()
     username, __ = AuthenticationServices.create_user_and_add_to_group(
         "alice", "marker"
     )
