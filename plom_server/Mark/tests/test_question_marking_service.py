@@ -25,7 +25,7 @@ class QuestionMarkingServiceTests(TestCase):
             status=MarkingTask.TO_DO,
             paper__paper_number=3,
             code="3",
-            marking_priority=2,
+            marking_priority=2.0,
         )
         baker.make(
             MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=4, code="4"
@@ -35,7 +35,7 @@ class QuestionMarkingServiceTests(TestCase):
             status=MarkingTask.TO_DO,
             paper__paper_number=5,
             code="5",
-            marking_priority=1,
+            marking_priority=1.0,
         )
 
         task = QuestionMarkingService.get_first_available_task()

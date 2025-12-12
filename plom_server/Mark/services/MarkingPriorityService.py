@@ -15,7 +15,7 @@ See also the closely-related
 import random
 
 from django.db import transaction
-from django.db.models import QuerySet, Func, OuterRef, Subquery
+from django.db.models import QuerySet, OuterRef, Subquery
 from django.db.models.functions import Random
 
 from plom_server.Base.services import Settings
@@ -61,12 +61,8 @@ def set_marking_priority_shuffle() -> None:
     you make changes here.
     """
     tasks = _get_tasks_to_update_priority()
-    tasks.update(
-        # this bit constructs an SQL query. All work happens within the DB.
-        # we want a positive int, but RANDOM implementation is different from DB to DB
-        # so we use Django's Random()
-        marking_priority=Func(Random() * 1000, function="FLOOR")
-    )
+    # this bit constructs an SQL query. All work happens within the DB.
+    tasks.update(marking_priority=Random() * 1000)
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
 
@@ -138,7 +134,9 @@ def set_marking_priority_paper_number() -> None:
 
 
 @transaction.atomic
-def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> None:
+def set_marking_priority_custom(
+    custom_order: dict[tuple[int, int], int | float],
+) -> None:
     """Set the priority to a custom ordering.
 
     Args:
@@ -168,7 +166,7 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> Non
     Settings.key_value_store_set("task_order_strategy", "custom")
 
 
-def modify_task_priority(task: MarkingTask, new_priority: int) -> None:
+def modify_task_priority(task: MarkingTask, new_priority: int | float) -> None:
     """Modify the priority of a single marking task."""
     task.marking_priority = new_priority
     task.save()

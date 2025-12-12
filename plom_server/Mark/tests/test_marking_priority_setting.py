@@ -37,7 +37,7 @@ class MarkingTaskPriorityTests(TestCase):
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "shuffle")
 
-        custom_priority = {(1, 1): 1}
+        custom_priority = {(1, 1): 1.0}
         TaskOrderService.update_priority_ordering(
             "custom", custom_order=custom_priority
         )
@@ -93,15 +93,15 @@ class MarkingTaskPriorityTests(TestCase):
         )
         for task in tasks:
             self.assertTrue(
-                task.marking_priority >= 0 and isinstance(task.marking_priority, int),
-                msg=f"marking_priority {task.marking_priority} isn't >= 0 and an integer",
+                task.marking_priority >= 0 and isinstance(task.marking_priority, float),
+                msg=f"marking_priority {task.marking_priority} isn't >= 0 and a float",
             )
 
         self.assertEqual(MarkingPriorityService.get_mark_priority_strategy(), "shuffle")
 
     def test_set_priority_custom(self) -> None:
         """Test setting priority to CUSTOM."""
-        custom_order = {(1, 1): 9, (2, 1): 356, (3, 2): 0}
+        custom_order = {(1, 1): 9.0, (2, 1): 356.5, (3, 2): 0.0}
         MarkingPriorityService.set_marking_priority_custom(custom_order)
 
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
@@ -142,11 +142,11 @@ class MarkingTaskPriorityTests(TestCase):
             "paper_number",
         )
 
-        MarkingPriorityService.modify_task_priority(last_task, 1000)
+        MarkingPriorityService.modify_task_priority(last_task, 1000.0)
         last_task.refresh_from_db()
         for task in tasks.all():
             if task == last_task:
-                self.assertEqual(task.marking_priority, 1000)
+                self.assertEqual(task.marking_priority, 1000.0)
             else:
                 self.assertEqual(
                     task.marking_priority, largest_paper_num - task.paper.paper_number

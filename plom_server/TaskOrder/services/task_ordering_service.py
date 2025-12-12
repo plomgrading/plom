@@ -24,7 +24,7 @@ class TaskOrderService:
     def update_priority_ordering(
         order: str,
         *,
-        custom_order: None | dict[tuple[int, int], int] = None,
+        custom_order: None | dict[tuple[int, int], int | float] = None,
     ) -> None:
         """Update the priority ordering of tasks.
 
@@ -47,7 +47,7 @@ class TaskOrderService:
 
     @staticmethod
     def _get_task_priorities() -> (
-        tuple[dict[tuple[int, int], tuple[int, str]], set[int]]
+        tuple[dict[tuple[int, int], tuple[float, str]], set[int]]
     ):
         """Get the task priorities dict and set of paper numbers in MarkingTask.
 
@@ -75,7 +75,7 @@ class TaskOrderService:
     @classmethod
     def get_paper_number_to_priority_list(
         cls,
-    ) -> dict[int, list[tuple[int, str] | tuple[None, str]]]:
+    ) -> dict[int, list[tuple[float, str] | tuple[None, str]]]:
         """Get the mapping from a paper number to the list of (priority, status).
 
         If a marking task is missing, it will be flagged
@@ -105,7 +105,7 @@ class TaskOrderService:
         return ["Paper Number", "Question Index", "Priority Value", "Status"]
 
     @classmethod
-    def get_task_priorities_download(cls) -> list[dict[str, int | str]]:
+    def get_task_priorities_download(cls) -> list[dict[str, int | str | float]]:
         """Get the task priorities for download."""
         task_priorities = cls._get_task_priorities()[0]
         return [
@@ -122,7 +122,7 @@ class TaskOrderService:
         ]
 
     @staticmethod
-    def handle_file_upload(csv_data: DictReader) -> dict[tuple[int, int], int]:
+    def handle_file_upload(csv_data: DictReader) -> dict[tuple[int, int], int | float]:
         """Handle uploaded file data of task priorities.
 
         Args:
