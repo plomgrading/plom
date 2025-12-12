@@ -495,7 +495,7 @@ class ManageScanService:
         }
 
     @staticmethod
-    def get_n_images(bundle: Bundle | int) -> int:
+    def get_n_images_in_pushed_bundle(bundle: Bundle | int) -> int:
         """Get the number of page images in a Bundle from the number of Images.
 
         This could be the same thing as :method:`ScanService.get_n_images` but

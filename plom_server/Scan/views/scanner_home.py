@@ -89,7 +89,7 @@ class ScannerPushedView(ScannerRequiredView):
 
         for bundle in ManageScanService.get_pushed_bundles():
             staging_bundle = bundle.staging_bundle
-            n_pages = ManageScanService.get_n_images(bundle)
+            n_pages = ManageScanService.get_n_images_in_pushed_bundle(bundle)
             _papers = ScanService.get_bundle_paper_numbers(staging_bundle)
             pretty_print_paper_list = format_int_list_with_runs(_papers)
             n_papers = len(_papers)
