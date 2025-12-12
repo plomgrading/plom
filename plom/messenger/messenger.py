@@ -347,14 +347,9 @@ class Messenger(BaseMessenger):
         Raises:
             PlomRangeException: no such task, or no such user.
             PlomNoPermission: you don't have permission to reassign tasks.
-            PlomNoServerSupportException: server too old, does not support.
             PlomAuthenticationException: no logged in.
             PlomSeriousException: generic unexpected error.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support reassign"
-            )
         if self.is_server_api_less_than(114):
             code = f"q{papernum:04}g{qidx}"
             url = f"/MK/tasks/{code}/reassign/{username}"

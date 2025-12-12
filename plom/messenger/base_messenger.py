@@ -49,7 +49,6 @@ Plom_API_Version = 116  # Our API version
 # We can support earlier servers by special-case code, so
 # define an allow-list of versions we support.
 Supported_Server_API_Versions = [
-    112,  # 2024-09
     113,  # 2025-01
     114,  # 2025-05
     115,  # 2025-09
