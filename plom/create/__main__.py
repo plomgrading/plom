@@ -179,10 +179,6 @@ def get_parser():
         help="How many fake exam papers for the demo (defaults to 20 if omitted)",
     )
 
-    # seems like this should hide it but it does not
-    # spP = sub.add_parser("parse", help=argparse.SUPPRESS)
-    spP = sub.add_parser("parse", help="Parse spec file (REMOVED)")
-
     spP = sub.add_parser(
         "validatespec",
         help="Check a spec file for validity.",

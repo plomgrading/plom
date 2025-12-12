@@ -4,7 +4,7 @@
 
 import functools
 
-from plom.messenger import Messenger
+from plom.messenger import PlomAdminMessenger as Messenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
