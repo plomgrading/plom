@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2018-2024 Colin B. Macdonald
+# Copyright (C) 2018-2025 Colin B. Macdonald
 
 import functools
 
