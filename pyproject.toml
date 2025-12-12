@@ -234,7 +234,6 @@ version = {attr = 'plom.common.__version__'}
 
 [project.scripts]
 plom-create = "plom.create.__main__:main"
-plom-scan = "plom.scan.__main__:main"
 plom-finish = "plom.finish.__main__:main"
 plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
