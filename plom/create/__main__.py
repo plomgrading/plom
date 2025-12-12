@@ -42,7 +42,6 @@ from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
-from plom.create import save_version_map
 
 from plom.manage_user_files import write_csv_user_list
 from plom.manage_user_files import get_raw_user_dict_from_csv
@@ -266,25 +265,6 @@ def get_parser():
         """,
     )
 
-    spQVM = sub.add_parser(
-        "get-ver-map",
-        help="Save question-version map from the database",
-        description="""
-            The question-version map shows which questions have which
-            version for each paper.
-            This map is created server-side by the 'make-db' command.
-            This .csv file can be used to reconstruct the database in
-            case of catastrophe: we recommend keeping a backup copy.
-        """,
-    )
-    spQVM.add_argument(
-        "file",
-        nargs="?",
-        help="""
-            Filename, csv or json format.  Default: 'question_version_map.csv'.
-        """,
-    )
-
     sub.add_parser(
         "extra-pages",
         help="Make an extra pages PDF",
@@ -446,7 +426,6 @@ def get_parser():
     for sp in (
         sp_status,
         sp_uploadspec,
-        spQVM,
         sp_class,
         sp_user,
         sp_users,
@@ -586,10 +565,6 @@ def main():
         finally:
             msgr.closeUser()
             msgr.stop()
-
-    elif args.command == "get-ver-map":
-        f = save_version_map(args.file, msgr=(args.server, args.password))
-        print(f"Question-version map saved to {f}")
 
     elif args.command == "extra-pages":
         print("Building extra page in case students need more space...")

@@ -39,10 +39,6 @@ from .push_pull_rubrics import upload_rubrics, download_rubrics
 from .push_pull_rubrics import upload_demo_rubrics
 from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_file
 
-from plom.version_maps import version_map_from_file, version_map_to_csv
-from .version_map_utils import download_version_map
-from .version_map_utils import save_version_map
-
 from .scribble_utils import make_scribbles
 from .scribble_hw_utils import make_hw_scribbles
 
@@ -61,10 +57,6 @@ __all__ = [
     "upload_demo_rubrics",
     "upload_rubrics_from_file",
     "download_rubrics_to_file",
-    "version_map_from_file",
-    "version_map_to_csv",
-    "download_version_map",
-    "save_version_map",
     "PlomClasslistValidator",
     "build_extra_page_pdf",
     "build_scrap_paper_pdf",
