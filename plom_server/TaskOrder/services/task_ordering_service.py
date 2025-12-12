@@ -8,7 +8,6 @@
 from csv import DictReader
 
 from plom_server.Mark.models import MarkingTask
-from plom_server.Mark.services import MarkingPriorityService
 from plom_server.Papers.services import SpecificationService
 
 
@@ -18,32 +17,6 @@ class TaskOrderService:
     See also the closely-related
     :py:`plom_server.Mark.services.MarkingPriorityService`.
     """
-
-    # TODO: consider move to MarkingPriorityService?
-    @staticmethod
-    def update_priority_ordering(
-        order: str,
-        *,
-        custom_order: None | dict[tuple[int, int], int | float] = None,
-    ) -> None:
-        """Update the priority ordering of tasks.
-
-        Args:
-            order: one of "shuffle", "paper_number", or "custom".
-
-        Keyword Args:
-            custom_order: a dictionary specifying a custom task ordering
-                (for existing tasks).
-        """
-        if order == "shuffle":
-            MarkingPriorityService.set_marking_priority_shuffle()
-        elif order == "custom":
-            assert custom_order is not None, "must provide custom_order kwarg"
-            MarkingPriorityService.set_marking_priority_custom(
-                custom_order=custom_order
-            )
-        else:
-            MarkingPriorityService.set_marking_priority_paper_number()
 
     @staticmethod
     def _get_task_priorities() -> (

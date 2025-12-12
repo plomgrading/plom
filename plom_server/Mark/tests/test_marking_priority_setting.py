@@ -7,7 +7,6 @@ from django.test import TestCase
 
 from plom_server.TestingSupport.utils import config_test
 from plom_server.Papers.models import Paper
-from plom_server.TaskOrder.services import TaskOrderService
 
 from ..models import MarkingTask
 from ..services import QuestionMarkingService, MarkingPriorityService
@@ -33,18 +32,18 @@ class MarkingTaskPriorityTests(TestCase):
         self.assertIn(strategy, ("paper_number", "shuffle"))
 
     def test_taskorder_update(self) -> None:
-        TaskOrderService.update_priority_ordering("shuffle")
+        MarkingPriorityService.update_priority_ordering("shuffle")
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "shuffle")
 
         custom_priority = {(1, 1): 1.0}
-        TaskOrderService.update_priority_ordering(
+        MarkingPriorityService.update_priority_ordering(
             "custom", custom_order=custom_priority
         )
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "custom")
 
-        TaskOrderService.update_priority_ordering("papernum")
+        MarkingPriorityService.update_priority_ordering("paper_number")
         strategy = MarkingPriorityService.get_mark_priority_strategy()
         self.assertEqual(strategy, "paper_number")
 

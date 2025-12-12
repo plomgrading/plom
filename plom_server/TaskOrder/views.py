@@ -12,6 +12,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 
 from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Mark.services import MarkingPriorityService
 from plom_server.Papers.services import SpecificationService
 from .forms import TaskOrderForm, UploadFileForm
 from .services import TaskOrderService
@@ -65,7 +66,7 @@ class TaskOrderPageView(ManagerRequiredView):
                     else:
                         file = form.cleaned_data["file"]
                         custom_order = TaskOrderService.handle_file_upload(file)
-                TaskOrderService.update_priority_ordering(
+                MarkingPriorityService.update_priority_ordering(
                     order_by, custom_order=custom_order
                 )
             except ValidationError as e:
