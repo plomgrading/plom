@@ -34,17 +34,15 @@ from stdiomask import getpass
 import plom.create
 from plom.create import __version__, Default_Port
 from plom.spec_verifier import SpecVerifier
-from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
+from plom.plom_exceptions import PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
-from plom.create import build_database, build_papers, build_extra_page_pdf
+from plom.create import build_extra_page_pdf
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
-from plom.create import version_map_from_file
 from plom.create import save_version_map
-from plom.version_maps import check_version_map
 
 from plom.manage_user_files import write_csv_user_list
 from plom.manage_user_files import get_raw_user_dict_from_csv
@@ -272,19 +270,6 @@ def get_parser():
         """,
     )
 
-    spDB = sub.add_parser(
-        "make-db",
-        help="Populate the database",
-        description="""
-            See "make" below, but here only the database is populated and
-            no papers will be built.  You can then call "make" later.""",
-    )
-    spDB.add_argument(
-        "--from-file",
-        metavar="FILE",
-        help="Read the version map from FILE.",
-    )
-
     spQVM = sub.add_parser(
         "get-ver-map",
         help="Save question-version map from the database",
@@ -302,57 +287,6 @@ def get_parser():
         help="""
             Filename, csv or json format.  Default: 'question_version_map.csv'.
         """,
-    )
-
-    spB = sub.add_parser(
-        "make",
-        help="Make the PDFs",
-        description="""
-            Build papers (and if necessary the database) from the test
-            specification.  Based on the classlist "paper_number" column,
-            some of the papers may have names printed on them from the
-            classlist ("pre-named") and the remainder will be blank.
-            As they are created, the prenamed papers will be inserted
-            into the prediction table with the predictor set to "prename".
-            If you want to change the prenames: (1) force upload a new
-            classlist, and (2) see the "predictions" command to erase
-            the "prename" predictor.
-        """,
-    )
-    spB.add_argument(
-        "--no-pdf",
-        action="store_true",
-        help="Do not generate real PDFs - instead generate empty files.",
-    )
-    spB.add_argument(
-        "--without-qr",
-        action="store_true",
-        help="Produce PDFs without QR codes and staple-corner indicators.",
-    )
-    spB.add_argument(
-        "-n", "--number", type=int, help="used for building a specific paper number"
-    )
-    spB.add_argument(
-        "-x",
-        "--namebox-xpos",
-        metavar="X",
-        type=float,
-        help="""
-            Specify horizontal centre of the name/ID box that will be printed
-            on named papers, a float from 0 (left) to 100 (right) of the page.
-            Defaults to 50.""",
-    )
-    spB.add_argument(
-        "-m",
-        "-y",
-        "--namebox-ypos",
-        metavar="Y",
-        type=float,
-        help="""
-            Specify vertical location of the name/ID that will be printed on
-            named papers, a float from 0 (top) to 100 (bottom) of the
-            page.
-            Defaults to 42.""",
     )
 
     sub.add_parser(
@@ -516,9 +450,7 @@ def get_parser():
     for sp in (
         sp_status,
         sp_uploadspec,
-        spDB,
         spQVM,
-        spB,
         sp_class,
         sp_user,
         sp_users,
@@ -659,38 +591,10 @@ def main():
             msgr.closeUser()
             msgr.stop()
 
-    elif args.command == "make-db":
-        if args.from_file is None:
-            build_database(msgr=(args.server, args.password))
-        else:
-            qvmap = version_map_from_file(args.from_file)
-            msgr = start_messenger(args.server, args.password)
-            try:
-                spec = msgr.get_spec()
-                # TODO: hardcoded for legacy server restrictions
-                check_version_map(qvmap, spec, legacy=True)
-                build_database(vermap=qvmap, msgr=msgr)
-            finally:
-                msgr.closeUser()
-                msgr.stop()
-
     elif args.command == "get-ver-map":
         f = save_version_map(args.file, msgr=(args.server, args.password))
         print(f"Question-version map saved to {f}")
 
-    elif args.command == "make":
-        try:
-            build_database(msgr=(args.server, args.password))
-        except PlomExistingDatabase:
-            print("Since we already have a database, move on to making papers")
-        build_papers(
-            indexToMake=args.number,
-            xcoord=args.namebox_xpos,
-            ycoord=args.namebox_ypos,
-            fakepdf=args.no_pdf,
-            no_qr=args.without_qr,
-            msgr=(args.server, args.password),
-        )
     elif args.command == "extra-pages":
         print("Building extra page in case students need more space...")
         build_extra_page_pdf(destination_dir=Path.cwd())
