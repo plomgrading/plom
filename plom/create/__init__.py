@@ -21,7 +21,11 @@ from .start_messenger import start_messenger, with_manager_messenger
 from .start_messenger import clear_manager_login
 
 from .buildDatabaseAndPapers import build_database, build_papers
-from .mergeAndCodePages import make_PDF
+from .mergeAndCodePages import (
+    make_PDF,
+    create_QR_codes,
+    create_invalid_QR_and_bar_codes,
+)
 from .build_extra_page_with_qrcodes import build_extra_page_pdf
 from .build_scrap_paper_with_qrcodes import build_scrap_paper_pdf
 from .build_bundle_separators_with_qrcodes import build_bundle_separator_paper_pdf
@@ -46,7 +50,6 @@ from .scribble_hw_utils import make_hw_scribbles
 
 # what you get from "from plom.create import *"
 __all__ = [
-    "clear_manager_login",
     "get_demo_classlist",
     "process_classlist_file",
     "upload_classlist",
@@ -63,6 +66,8 @@ __all__ = [
     "version_map_to_csv",
     "download_version_map",
     "save_version_map",
-    "status",
     "PlomClasslistValidator",
+    "build_extra_page_pdf",
+    "build_scrap_paper_pdf",
+    "build_bundle_separator_paper_pdf",
 ]

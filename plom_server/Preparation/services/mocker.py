@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pymupdf
 
-from plom.create.mergeAndCodePages import make_PDF
+from plom.create import make_PDF
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from .preparation_dependency_service import assert_can_modify_prenaming_config
