@@ -33,7 +33,6 @@ from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
 from plom.finish import reassemble_paper, reassemble_all_papers
 from plom.finish import download_rubric_files
-from plom.finish import audit
 from plom.finish import make_coded_return_webpage
 import plom.finish.check_completed
 import plom.finish.reassemble_ID_only
@@ -208,13 +207,6 @@ def get_parser():
             Download list of rubrics as json and the test-rubric use matrix (indexed by test-number and rubric-key) also as json.
         """,
     )
-    spAudit = sub.add_parser(
-        "audit",
-        help="Construct an audit of all image files used",
-        description="""
-        Download an audit of all files + bundles used. Saved as 'audit.json'.
-        """,
-    )
     spClear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
@@ -228,7 +220,6 @@ def get_parser():
         spSolution,
         spCodedReturn,
         spRubric,
-        spAudit,
     ):
         x.add_argument(
             "-s",
@@ -307,8 +298,6 @@ def main():
         )
     elif args.command == "rubric":
         download_rubric_files(msgr=(args.server, args.password))
-    elif args.command == "audit":
-        audit(msgr=(args.server, args.password))
 
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
