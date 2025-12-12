@@ -212,7 +212,6 @@ packages = [
     "plom/templateTestSpec.toml",
     "plom/templateSolutionSpec.toml",
     "plom/templateUserList.csv",
-    "plom/demoClassList.csv",
     "plom/demo_rubrics.toml",
     "plom/create/extra_pages_src.tex",
     "plom/create/scrap_paper_src.tex",

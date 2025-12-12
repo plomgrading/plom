@@ -27,15 +27,12 @@ import sys
 import argparse
 import os
 from pathlib import Path
-from textwrap import dedent
 
 from stdiomask import getpass
 
 import plom.create
 from plom.create import __version__, Default_Port
 from plom.spec_verifier import SpecVerifier
-from plom.plom_exceptions import PlomServerNotReady
-from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
 from plom.create import build_extra_page_pdf
 from plom.create.demotools import buildDemoSourceFiles
@@ -210,61 +207,6 @@ def get_parser():
         help="defaults to '%(default)s'.",
     )
 
-    sp_class = sub.add_parser(
-        "class",
-        help="Read in a classlist",
-        description="Get student names/numbers from csv, process, and upload to server.",
-        epilog=dedent(
-            """
-            The classlist can be a .csv file exported from Canvas (specifically,
-            Canvas -> Grades -> Actions -> Export).  Plom will do a little bit of
-            checking such as dropping names like "Test Student".
-
-            Alternatively, the classlist can be a .csv file with column headers:
-              * id - student ID number
-              * name - student name in a single field
-              * paper_number - the test-number to assign to that student for
-                               prenaming papers. If unsure, include the column,
-                               but leave it blank. Each paper_number must be
-                               unique and on legacy servers they must be in the
-                               range [1, NumberToProduce] but they need not be
-                               contiguous nor ordered.
-
-            Plom will accept uppercase or lowercase column headers.
-            """
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    sp_class.add_argument(
-        "-i",
-        "--ignore-warnings",
-        action="store_true",
-        help="Ignore any classlist warnings and upload anyway.",
-    )
-
-    group = sp_class.add_mutually_exclusive_group(required=True)
-    group.add_argument("classlist", nargs="?", help="filename in csv format")
-    group.add_argument(
-        "--demo",
-        action="store_true",
-        help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
-    )
-    sp_class.add_argument(
-        "--force",
-        action="store_true",
-        help="""
-            By default, it is an error to upload a new classlist.
-            This overrides that check; for which you accept responsibility.
-            On a legacy server, if you are using "numberToProduce = -1"
-            then the first classlist will have chosen a value; you may
-            want to reupload your spec before pushing a second classlist.
-            This is a non-exaustive list of what could go wrong.
-            If you've already produced and printed papers, you should be
-            careful with this option, although we are not aware of any
-            specific problems it would cause.
-        """,
-    )
-
     sub.add_parser(
         "extra-pages",
         help="Make an extra pages PDF",
@@ -426,7 +368,6 @@ def get_parser():
     for sp in (
         sp_status,
         sp_uploadspec,
-        sp_class,
         sp_user,
         sp_users,
         sp_pred,
@@ -535,36 +476,6 @@ def main():
             msgr.stop()
         print('Creating "sourceVersions/" directory for your test source PDFs.')
         Path("sourceVersions").mkdir(exist_ok=True)
-
-    elif args.command == "class":
-        msgr = start_messenger(args.server, args.password)
-        try:
-            try:
-                spec = msgr.get_spec()
-            except PlomServerNotReady:
-                print("Server does not yet have a test-spec. We cannot proceed.")
-                sys.exit(1)  # TODO = more graceful exit
-
-            if args.demo:
-                classlist = get_demo_classlist(spec)
-                upload_classlist(classlist, msgr=msgr, force=args.force)
-            else:
-                success, classlist = process_classlist_file(
-                    args.classlist, spec, ignore_warnings=args.ignore_warnings
-                )
-                if success:
-                    try:
-                        upload_classlist(classlist, msgr=msgr, force=args.force)
-                    except Exception as err:  # TODO - make a better error handler here
-                        print(
-                            "An error occurred when uploading the valid classlist: ",
-                            err,
-                        )
-                else:
-                    print("Could not process classlist - see messages above")
-        finally:
-            msgr.closeUser()
-            msgr.stop()
 
     elif args.command == "extra-pages":
         print("Building extra page in case students need more space...")
