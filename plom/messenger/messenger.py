@@ -68,10 +68,7 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.get(
-                    "/ID/progress",
-                    json={"user": self.user, "token": self.token},
-                )
+                response = self.get_auth("/ID/progress")
                 # throw errors when response code != 200.
                 response.raise_for_status()
                 return response.json()
@@ -91,10 +88,7 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.get(
-                "/ID/tasks/available",
-                json={"user": self.user, "token": self.token},
-            )
+            response = self.get_auth("/ID/tasks/available")
             # throw errors when response code != 200.
             response.raise_for_status()
             if response.status_code == 204:
@@ -108,21 +102,15 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
     def IDrequestDoneTasks(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/ID/tasks/complete",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            idList = response.json()
-            return idList
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/ID/tasks/complete")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     # ------------------------
 
