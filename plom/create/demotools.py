@@ -6,7 +6,6 @@
 
 """Build pdf files for a demo test and provide demo classlists."""
 
-import sys
 from importlib import resources
 from pathlib import Path
 
@@ -77,16 +76,3 @@ def buildLaTeXExam2(src, filename):
         print(">>> Latex problems - see above <<<")
         return False
     return True
-
-
-def main():
-    soln_flag = False
-    if len(sys.argv) == 2:
-        if sys.argv[1] == "solutions":
-            soln_flag = True
-    if not buildDemoSourceFiles(solutions=soln_flag):
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
