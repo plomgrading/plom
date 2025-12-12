@@ -70,9 +70,3 @@ Technical docs
 
 * The command-line tool :doc:`plom-cli` can be used to upload files
   from the command line.
-
-* The command-line tool :doc:`plom-scan` is the current front-end for
-  most tasks related to scanning work onto legacy servers.
-
-* For scripting or other advanced usage, you can ``import plom.scan``
-  in your own Python code.  See :doc:`module-plom-scan`.
