@@ -301,28 +301,6 @@ class BaseMessenger:
         assert self.session
         return self.session.post(self.base + url, *args, **kwargs)
 
-    def put(self, url: str, *args, **kwargs) -> requests.Response:
-        """Perform a PUT method on a URL."""
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = self.default_timeout
-
-        if (
-            not self.is_legacy_server()
-            and "json" in kwargs
-            and "token" in kwargs["json"]
-        ):
-            if not self.token:
-                raise PlomAuthenticationException("Trying auth'd operation w/o token")
-            assert isinstance(self.token, dict)
-            token_str = self.token["token"]
-            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
-            json = kwargs["json"]
-            json.pop("token")
-            kwargs["json"] = json
-
-        assert self.session
-        return self.session.put(self.base + url, *args, **kwargs)
-
     def put_auth(self, url: str, *args, **kwargs) -> requests.Response:
         """Perform a PUT method on a URL, with a token for authorization."""
         if "timeout" not in kwargs:
@@ -1057,13 +1035,9 @@ class BaseMessenger:
 
         with self.SRmutex:
             try:
-                response = self.put(
+                response = self.put_auth(
                     "/MK/rubric",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "rubric": new_rubric,
-                    },
+                    json={"rubric": new_rubric},
                 )
                 response.raise_for_status()
                 new_rubric = response.json()
