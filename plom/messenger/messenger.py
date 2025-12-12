@@ -113,10 +113,7 @@ class Messenger(BaseMessenger):
         """Claim a particular ID task."""
         with self.SRmutex:
             try:
-                response = self.patch(
-                    f"/ID/tasks/{paper_num}",
-                    json={"user": self.user, "token": self.token},
-                )
+                response = self.patch_auth(f"/ID/tasks/{paper_num}")
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:

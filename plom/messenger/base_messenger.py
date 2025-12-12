@@ -351,49 +351,12 @@ class BaseMessenger:
         assert self.session
         return self.session.delete(self.base + url, *args, **kwargs)
 
-    def delete(self, url: str, *args, **kwargs) -> requests.Response:
+    def delete_raw(self, url: str, *args, **kwargs) -> requests.Response:
         """Perform a DELETE method on a URL."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-
-        if (
-            not self.is_legacy_server()
-            and "json" in kwargs
-            and "token" in kwargs["json"]
-        ):
-            if not self.token:
-                raise PlomAuthenticationException("Trying auth'd operation w/o token")
-            assert isinstance(self.token, dict)
-            token_str = self.token["token"]
-            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
-            json = kwargs["json"]
-            json.pop("token")
-            kwargs["json"] = json
-
         assert self.session
         return self.session.delete(self.base + url, *args, **kwargs)
-
-    def patch(self, url: str, *args, **kwargs) -> requests.Response:
-        """Perform a PATCH method on a URL."""
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = self.default_timeout
-
-        if (
-            not self.is_legacy_server()
-            and "json" in kwargs
-            and "token" in kwargs["json"]
-        ):
-            if not self.token:
-                raise PlomAuthenticationException("Trying auth'd operation w/o token")
-            assert isinstance(self.token, dict)
-            token_str = self.token["token"]
-            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
-            json = kwargs["json"]
-            json.pop("token")
-            kwargs["json"] = json
-
-        assert self.session
-        return self.session.patch(self.base + url, *args, **kwargs)
 
     def patch_auth(self, url: str, *args, **kwargs) -> requests.Response:
         """Perform a PATCH method on a URL with a token for authentication."""
@@ -670,7 +633,7 @@ class BaseMessenger:
                     raise PlomNoServerSupportException(
                         "older server does not support clear auth"
                     )
-                response = self.delete(
+                response = self.delete_raw(
                     "/get_token/", json={"username": user, "password": pw}
                 )
                 response.raise_for_status()
@@ -1018,9 +981,9 @@ class BaseMessenger:
             task = "q" + task
         with self.SRmutex:
             try:
-                response = self.patch(
+                response = self.patch_auth(
                     f"/tags/{task}",
-                    json={"user": self.user, "token": self.token, "tag_text": tag_text},
+                    json={"tag_text": tag_text},
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
@@ -1049,13 +1012,9 @@ class BaseMessenger:
             task = "q" + task
         with self.SRmutex:
             try:
-                response = self.delete(
+                response = self.delete_auth(
                     f"/tags/{task}",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "tag_text": tag_text,
-                    },
+                    json={"tag_text": tag_text},
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
@@ -1284,13 +1243,9 @@ class BaseMessenger:
 
         with self.SRmutex:
             try:
-                response = self.patch(
+                response = self.patch_auth(
                     url,
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "rubric": new_rubric,
-                    },
+                    json={"rubric": new_rubric},
                 )
                 response.raise_for_status()
                 new_rubric = response.json()
