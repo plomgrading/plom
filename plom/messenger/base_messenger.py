@@ -262,27 +262,9 @@ class BaseMessenger:
     def server(self) -> str:
         return self.base
 
-    def get(self, url: str, *args, **kwargs) -> requests.Response:
+    def get_raw(self, url: str, *args, **kwargs) -> requests.Response:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-
-        # Legacy servers expect "user" and "token" in the json.
-        # Now with django we pass a token in the header.
-        # TODO: rework this when/if we stop supporting legacy servers.
-        if (
-            not self.is_legacy_server()
-            and "json" in kwargs
-            and "token" in kwargs["json"]
-        ):
-            if not self.token:
-                raise PlomAuthenticationException("Trying auth'd operation w/o token")
-            assert isinstance(self.token, dict)
-            token_str = self.token["token"]
-            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
-            json = kwargs["json"]
-            json.pop("token")
-            kwargs["json"] = json
-
         assert self.session
         return self.session.get(self.base + url, *args, **kwargs)
 
@@ -465,9 +447,11 @@ class BaseMessenger:
         try:
             try:
                 if interactive:
-                    response = self.get("/Version", timeout=self._interactive_timeout)
+                    response = self.get_raw(
+                        "/Version", timeout=self._interactive_timeout
+                    )
                 else:
-                    response = self.get("/Version")
+                    response = self.get_raw("/Version")
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -481,9 +465,11 @@ class BaseMessenger:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
                 if interactive:
-                    response = self.get("/Version", timeout=self._interactive_timeout)
+                    response = self.get_raw(
+                        "/Version", timeout=self._interactive_timeout
+                    )
                 else:
-                    response = self.get("/Version")
+                    response = self.get_raw("/Version")
                 response.raise_for_status()
                 return response.text
         except requests.exceptions.InvalidURL as err:
@@ -548,7 +534,7 @@ class BaseMessenger:
         """
         with self.SRmutex:
             try:
-                response = self.get("/Version")
+                response = self.get_raw("/Version")
                 response.raise_for_status()
                 return response.text
             except requests.HTTPError as e:
@@ -566,7 +552,7 @@ class BaseMessenger:
         """
         with self.SRmutex:
             try:
-                response = self.get("/info/server")
+                response = self.get_raw("/info/server")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
