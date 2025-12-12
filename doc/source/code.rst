@@ -30,8 +30,6 @@ plom
 
    module-plom-scan
 
-   module-plom-solutions
-
    module-plom-finish
 
    module-plom-other

@@ -136,7 +136,6 @@ packages = [
     "plom.scan",
     "plom.finish",
     "plom.idreader",
-    "plom.solutions",
     "plom.canvas",
     "plom.scripts",
     "plom_server",
@@ -234,7 +233,6 @@ version = {attr = 'plom.common.__version__'}
 [project.scripts]
 plom-create = "plom.create.__main__:main"
 plom-finish = "plom.finish.__main__:main"
-plom-solutions = "plom.solutions.__main__:main"
 plom-new-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-demo = "plom_server.scripts.launch_plom_demo_server:main"
 plom-cli = "plom.cli.__main__:main"

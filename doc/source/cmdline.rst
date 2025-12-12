@@ -13,7 +13,6 @@ Plom includes various command-line tools for managing servers:
    plom-cli
    plom-create
    plom-scan
-   plom-solutions
    plom-finish
 
 There are also commands to launch the server and client themselves:
