@@ -20,7 +20,6 @@ import requests
 import urllib3
 
 from plom.common import Default_Port, __version__
-from plom.version_maps import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAPIException,
@@ -716,57 +715,6 @@ class BaseMessenger:
                 if response.status_code == 416:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-    def getQuestionVersionMap(self, papernum):
-        """Get the question-version map for one paper.
-
-        Returns:
-            dict: keys are question number (`int`) and values are their
-            version (`int`).  Note the raw API call uses strings for
-            keys b/c of JSON (transport) limitations but this function
-            converts them for us.
-
-        Raises:
-            PlomServerNotReady: server does not yet have a version map,
-                e.g., b/c it has not been built, or server has no spec.
-        """
-        with self.SRmutex:
-            try:
-                response = self.get_auth(f"/plom/admin/questionVersionMap/{papernum}")
-                response.raise_for_status()
-            except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                elif response.status_code == 409:
-                    raise PlomServerNotReady(response.reason) from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
-        # JSON casts dict keys to str, force back to ints
-        return {int(q): v for q, v in response.json().items()}
-
-    def getGlobalQuestionVersionMap(self):
-        """Get the question-version map for all papers.
-
-        Returns:
-            dict: keys are the paper numbers (`int`) and each value is a row
-            of the version map: another dict with questions as question
-            number (`int`) and value version (`int`).  Note the raw API call
-            uses strings for keys b/c of JSON (transport) limitations but
-            this function converts them for us.
-            If we don't yet have a version map, the result is an empty dict.
-
-        Raises:
-            PlomAuthenticationException: login troubles.
-        """
-        with self.SRmutex:
-            try:
-                response = self.get_auth("/plom/admin/questionVersionMap")
-                response.raise_for_status()
-            except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
-        # JSON casts dict keys to str, force back to ints
-        return undo_json_packing_of_version_map(response.json())
 
     def IDrequestClasslist(self):
         """Ask server for the classlist.
