@@ -368,7 +368,7 @@ class ManageScanService:
         return page.image
 
     @staticmethod
-    def get_pushed_bundles() -> QuerySet[Bundle]:
+    def get_pushed_bundles_w_staging_prefetch() -> QuerySet[Bundle]:
         """Get all the pushed Bundles, with a prefetch on the related Staging Bundles."""
         return Bundle.objects.filter(_is_system=False).prefetch_related(
             "staging_bundle"

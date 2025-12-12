@@ -87,7 +87,7 @@ class ScannerPushedView(ScannerRequiredView):
         context = self.build_context()
         pushed_bundles = []
 
-        for bundle in ManageScanService.get_pushed_bundles():
+        for bundle in ManageScanService.get_pushed_bundles_w_staging_prefetch():
             staging_bundle = bundle.staging_bundle
             n_pages = ManageScanService.get_n_images_in_pushed_bundle(bundle)
             _papers = ScanService.get_bundle_paper_numbers(staging_bundle)
