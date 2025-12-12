@@ -14,29 +14,23 @@ from .utils import rand_hex, salted_hex_hash_from_str
 
 
 CSVFilename = "marks.csv"
-RubricListFilename = "rubric_list.json"
-TestRubricMatrixFilename = "test_rubric_matrix.json"
 
+# largely legacy stuff
 from .start_messenger import start_messenger
 from .start_messenger import with_finish_messenger
 from .clear_manager_login import clear_manager_login
 
 from .spreadsheet import pull_spreadsheet
 from .reassemble_completed import reassemble_paper, reassemble_all_papers
-from .rubric_downloads import download_rubric_files
 from .coded_return import make_coded_return_webpage
 
 from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from .return_tools import make_canvas_gradefile
 
+# stuff plom_server uses
+from .coverPageBuilder import makeCover
+from .examReassembler import reassemble
 
-# TODO: expose the contents from __main__ here
+
 # what you get from "from plom.finish import *"
-__all__ = [
-    "clear_manager_login",
-    "pull_spreadsheet",
-    "reassemble_paper",
-    "reassemble_all_papers",
-    "download_rubric_files",
-    "make_coded_return_webpage",
-]
+__all__ = []

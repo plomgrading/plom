@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2018-2024 Colin B. Macdonald
+# Copyright (C) 2018-2025 Colin B. Macdonald
 
 import functools
 
-from plom.messenger import ManagerMessenger
+from plom.messenger import Messenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
 def start_messenger(server=None, pwd=None):
-    msgr = ManagerMessenger(server)
+    msgr = Messenger(server)
     msgr.start()
 
     try:
@@ -40,7 +40,7 @@ def with_finish_messenger(f):
     def wrapped(*args, **kwargs):
         # if we have a messenger, nothing special, just call function
         msgr = kwargs.get("msgr")
-        if isinstance(msgr, ManagerMessenger):
+        if isinstance(msgr, Messenger):
             return f(*args, **kwargs)
 
         # if not, we assume its appropriate args to make a messenger
