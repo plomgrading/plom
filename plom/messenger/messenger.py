@@ -568,16 +568,11 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.get(
+            response = self.get_auth(
                 f"/MK/user/{self.user}/{question}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "question": question,
-                },
+                json={"question": question},
             )
             response.raise_for_status()
-
             if response.status_code == 200:
                 return response.json()
             elif response.status_code == 204:

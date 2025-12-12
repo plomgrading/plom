@@ -952,22 +952,12 @@ class BaseMessenger:
         raise NotImplementedError("TODO: this method is not implemented")
         with self.SRmutex:
             try:
-                response = self.get(
+                response = self.get_auth(
                     "/plom/admin/sidToTest",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "sid": student_id,
-                    },
+                    json={"sid": student_id},
                 )
                 response.raise_for_status()
                 r = response.json()
-                # TODO: could remove workaround when we stop supported 0.14.1
-                if len(r) <= 2:
-                    if r[0]:
-                        r.append("[Older server; cannot tell if ided or prenamed]")
-                    else:
-                        r.append("")
                 r = tuple(r)
                 return r
             except requests.HTTPError as e:
@@ -1441,13 +1431,9 @@ class BaseMessenger:
             integrity = ""
         with self.SRmutex:
             try:
-                response = self.get(
+                response = self.get_auth(
                     url,
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "integrity": integrity,
-                    },
+                    json={"integrity": integrity},
                 )
                 response.raise_for_status()
                 return response.json()
