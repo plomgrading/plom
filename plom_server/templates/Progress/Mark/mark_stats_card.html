@@ -6,7 +6,7 @@
      Copyright (C) 2025 Deep Shah
 -->
 <div class="card">
-    <div class="card-body">
+    <div class="card-body p-2">
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h6 class="card-title d-inline-block mb-0">Question {{ question_label }}&nbsp;v{{ version }}</h6>
@@ -30,21 +30,22 @@
                 <h6>Score Distribution</h6>
                 {% if histogram_data %}
                     <div>
-                        <svg width="100%" height="36" aria-label="Score distribution histogram">
+                        <svg width="100%" height="45" aria-label="Score distribution histogram">
                             {% for bar in histogram_data %}
                                 <g>
-                                <rect x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" fill="#0d6efd">
+                                <rect x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" fill="#999">
                                 <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
                                 </rect>
-                                <text x="{{ bar.text_x }}%" y="22" text-anchor="middle" dominant-baseline="hanging" font-size="smaller" fill="#555">{{ bar.score }}</text>
+                                <text x="{{ bar.text_x }}%" y="25" text-anchor="middle" dominant-baseline="hanging" font-size="smaller" fill="#555">{{ bar.score }}</text>
                                 </g>
                             {% endfor %}
                         </svg>
                     </div>
                 {% else %}
+                    <!-- TODO: whut? -->
                     <p>This question has a maximum mark of 0.</p>
                 {% endif %}
-                <div class="mt-2">
+                <div class="mt-0">
                     <a href="{% url 'progress_mark_details' question_idx version %}"
                        class="btn btn-primary btn-sm">View Details</a>
                     <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"

@@ -34,7 +34,7 @@
         {% for qn in questions %}
             <div class="row">
                 {% for vn in versions %}
-                    <div class="col"
+                    <div class="col p-1"
                          hx-trigger="load"
                          hx-get="{% url 'progress_mark_stats' qn vn %}"></div>
                 {% endfor %}

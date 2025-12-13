@@ -91,8 +91,8 @@ class ProgressMarkStatsView(MarkerOrManagerView):
         if max_mark > 0:
             max_count = max(score_counts.values()) if score_counts else 1
 
-            svg_height = 30
-            svg_bar_max_height = 20
+            svg_height = 35
+            svg_bar_max_height = 25
 
             bar_width_percentage = 100 / (max_mark + 1)
 
