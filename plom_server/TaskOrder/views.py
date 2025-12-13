@@ -52,7 +52,7 @@ class TaskOrderPageView(ManagerRequiredView):
             order_by = request.POST.get("order_tasks_by")
             request.session["order_tasks_by"] = order_by
 
-            custom_order = {}
+            custom_order: dict[tuple[int, int], int | float] = {}
             try:
                 if order_by == "custom":
 

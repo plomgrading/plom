@@ -109,6 +109,6 @@ class TaskOrderService:
         custom_priorities = {}
         for row in csv_data:
             key = (int(row["Paper Number"]), int(row["Question Index"]))
-            custom_priorities[key] = int(row["Priority Value"])
+            custom_priorities[key] = float(row["Priority Value"])
 
         return custom_priorities
