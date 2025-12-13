@@ -144,11 +144,47 @@ class ProgressOverviewService:
 
     @transaction.atomic
     def get_mark_task_status_counts(
+        self, n_papers: int | None = None
+    ) -> dict[int, dict[str, int]]:
+        """Return a dict of counts of marking tasks by their status for each question.
+
+        Keyword Args:
+            n_papers: if is supplied, then the number of missing
+                tasks is also computed. Also note that this excludes
+                out-of-date tasks.
+
+        Returns:
+            A dict of dict - one for each question-index.
+            For each index the dict is "{status: count}" for each of
+            "To Do", "Complete", "Out".  If `n_papers`` was specified
+            there is also "Missing".
+        """
+        qindices = SpecificationService.get_question_indices()
+        dat = {qi: {"To Do": 0, "Complete": 0, "Out": 0} for qi in qindices}
+        for X in (
+            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+            .values("status", "question_index")
+            .annotate(the_count=Count("status"))
+        ):
+            dat[X["question_index"]][
+                MarkingTask(status=X["status"]).get_status_display()
+            ] = X["the_count"]
+        if n_papers is not None:
+            for qi, d in dat.items():
+                present = sum([v for x, v in d.items()])
+                d.update({"Missing": n_papers - present})
+        return dat
+
+    @transaction.atomic
+    def get_mark_task_status_counts_SUMMER(
         self, n_papers: int, question_idx: int = None, version: int = None
     ) -> dict:
         """Get the counts of marking tasks by their status.
 
         Now optionally filters by question index and version.
+
+        TODO: figure out the overlap between this and the other two
+        similarly-named `get_mark_task_status_counts` methods.
         """
         tasks_query = MarkingTask.objects.all()
 

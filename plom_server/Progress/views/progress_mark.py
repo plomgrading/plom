@@ -76,7 +76,7 @@ class ProgressMarkStatsView(MarkerOrManagerView):
 
         n_papers = tasks.values("paper").distinct().count()
 
-        marking_task_status_counts = pos.get_mark_task_status_counts(
+        marking_task_status_counts = pos.get_mark_task_status_counts_SUMMER(
             n_papers=n_papers, question_idx=question_idx, version=version
         )
 
