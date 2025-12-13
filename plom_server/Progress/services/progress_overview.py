@@ -177,7 +177,7 @@ class ProgressOverviewService:
 
     @transaction.atomic
     def get_mark_task_status_counts_SUMMER(
-        self, n_papers: int, question_idx: int = None, version: int = None
+        self, n_papers: int, question_idx: int | None = None, version: int | None = None
     ) -> dict:
         """Get the counts of marking tasks by their status.
 
