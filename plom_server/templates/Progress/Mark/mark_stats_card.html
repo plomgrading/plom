@@ -2,7 +2,7 @@
      SPDX-License-Identifier: AGPL-3.0-or-later
      Copyright (C) 2023-2024 Andrew Rechnitzer
      Copyright (C) 2024 Aidan Murphy
-     Copyright (C) 2024 Colin B. Macdonald
+     Copyright (C) 2024-2025 Colin B. Macdonald
      Copyright (C) 2025 Deep Shah
 -->
 <div class="card">
@@ -30,13 +30,13 @@
                 <h6>Score Distribution</h6>
                 {% if histogram_data %}
                     <div>
-                        <svg width="100%" height="30" aria-label="Score distribution histogram">
+                        <svg width="100%" height="36" aria-label="Score distribution histogram">
                             {% for bar in histogram_data %}
                                 <g>
                                 <rect x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" fill="#0d6efd">
                                 <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
                                 </rect>
-                                <text x="{{ bar.text_x }}%" y="28" text-anchor="middle" font-size="9" fill="#555">{{ bar.score }}</text>
+                                <text x="{{ bar.text_x }}%" y="22" text-anchor="middle" dominant-baseline="hanging" font-size="smaller" fill="#555">{{ bar.score }}</text>
                                 </g>
                             {% endfor %}
                         </svg>
