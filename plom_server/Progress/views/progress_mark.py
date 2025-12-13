@@ -80,6 +80,9 @@ class ProgressMarkStatsView(MarkerOrManagerView):
             n_papers=n_papers, question_idx=question_idx, version=version
         )
 
+        # todo: yechh but template doesn't like spaces?
+        marking_task_status_counts["ToDo"] = marking_task_status_counts.pop("To Do")
+
         scores = mss.get_scores_for_question_version(question_idx, version)
         score_counts = Counter(scores)
 
