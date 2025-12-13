@@ -13,7 +13,7 @@
             </div>
             <div style="width: 150px;">
                 {% with dat=marking_task_status_counts %}
-                    {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat.Complete n_todo=dat.ToDo n_out=dat.Out n_missing=dat.Missing %}
+                    {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat.Complete n_todo=dat|get_item:"To Do" n_out=dat.Out n_missing=dat.Missing %}
                 {% endwith %}
             </div>
         </div>
@@ -25,7 +25,7 @@
                 <p class="mb-1">
                     Of the {{ n_papers }} papers, {{ marking_task_status_counts.Complete }} are marked,
                     {{ marking_task_status_counts.Out }} are out with markers,
-                    and {{ marking_task_status_counts.ToDo }} are ready to be marked.
+                    and {{ marking_task_status_counts|get_item:"To Do" }} are ready to be marked.
                 </p>
                 <h6>Score Distribution</h6>
                 {% if histogram_data %}
