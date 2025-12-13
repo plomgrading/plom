@@ -142,10 +142,14 @@ class ManageDiscardService:
 
         return None
 
-    def discard_whole_staging_bundle_by_id(
+    def discard_pushed_staging_bundle_contents(
         self, user_obj: User, staging_bundle_id: int, *, dry_run: bool = True
     ) -> str:
         """Discard all pages pushed in a given StagingBundle.
+
+        This function operates on pushed bundles, it doesn't do anything to
+        StagingBundles or their contents (see
+        :method:`ScanService.remove_bundle_by_pk` for deleting StagingBundles).
 
         Args:
             user_obj: the User who is discarding
@@ -187,14 +191,12 @@ class ManageDiscardService:
         """
         msg = ""
         with transaction.atomic():
-            images = bundle_obj.image_set.all()
-            # TODO: probably some prefetch/select _related stuff here
-            for fp in FixedPage.objects.filter(image__in=images):
+            for fp in FixedPage.objects.filter(image__bundle=bundle_obj):
                 if fp.image:
                     msg += self.discard_pushed_fixed_page(
                         user_obj, fp.pk, dry_run=dry_run
                     )
-            for mp in MobilePage.objects.filter(image__in=images):
+            for mp in MobilePage.objects.filter(image__bundle=bundle_obj):
                 msg += self.discard_pushed_mobile_page(user_obj, mp.pk, dry_run=dry_run)
         return msg
 
