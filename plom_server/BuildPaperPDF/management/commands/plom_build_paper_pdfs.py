@@ -137,9 +137,10 @@ class Command(BaseCommand):
         self.stdout.write(f"Revoked {N} build paper PDF chores")
 
     def download_specific_paper(self, paper_number: int) -> None:
-        bp_service = BuildPapersService()
         try:
-            (name, b) = bp_service.get_paper_recommended_name_and_bytes(paper_number)
+            (name, b) = BuildPapersService.get_paper_recommended_name_and_bytes(
+                paper_number
+            )
         except ValueError as err:
             raise CommandError(err)
 
@@ -148,9 +149,8 @@ class Command(BaseCommand):
         self.stdout.write(f'Saved paper {paper_number} as "{name}"')
 
     def download_all_papers(self) -> None:
-        bps = BuildPapersService()
         short_name = SpecificationService.get_short_name_slug()
-        zgen = bps.get_zipfly_generator(short_name)
+        zgen = BuildPapersService.get_zipfly_generator(short_name)
         with open(f"{short_name}.zip", "wb") as fh:
             self.stdout.write(f"Opening {short_name}.zip to write the zip-file")
             tot_size = 0

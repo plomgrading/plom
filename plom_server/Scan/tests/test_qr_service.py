@@ -2,7 +2,12 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Colin B. Macdonald
 
+from io import BytesIO
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from PIL import Image
+
 from plom_server.Scan.models import (
     StagingBundle,
     StagingImage,
@@ -14,9 +19,7 @@ from plom_server.Scan.models import (
 )
 from plom_server.Scan.services import QRService
 from plom_server.Base.models import BaseImage
-from django.core.files.uploadedfile import SimpleUploadedFile
-from io import BytesIO
-from PIL import Image
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import Paper, FixedPage, MobilePage
 
@@ -38,9 +41,9 @@ class QRServiceTest(TestCase):
                 {"pages": [3], "mark": 5},
                 {"pages": [4], "mark": 5},
             ],
-            "publicCode": "123",
         }
-        SpecificationService.install_spec_from_dict(spec_dict, force_public_code=True)
+        SpecificationService.install_spec_from_dict(spec_dict)
+        Settings.set_public_code("123456")
 
         # setup paper and pages
         paper = Paper.objects.create(paper_number=1)
@@ -95,7 +98,7 @@ class QRServiceTest(TestCase):
                     "tpv": "0000100301",
                     "page_type": "plom_qr",
                     "page_info": {
-                        "public_code": "123",
+                        "public_code": "123456",
                         "paper_id": 1,
                         "page_num": 3,
                         "version_num": 1,
@@ -127,7 +130,7 @@ class QRServiceTest(TestCase):
                     "tpv": "0000100401",
                     "page_type": "plom_qr",
                     "page_info": {
-                        "public_code": "123",
+                        "public_code": "123456",
                         "paper_id": 1,
                         "page_num": 4,
                         "version_num": 1,
@@ -143,7 +146,7 @@ class QRServiceTest(TestCase):
                     "tpv": "0000100401",
                     "page_type": "plom_qr",
                     "page_info": {
-                        "public_code": "123",
+                        "public_code": "123456",
                         "paper_id": 1,
                         "page_num": 5,
                         "version_num": 1,
@@ -163,7 +166,7 @@ class QRServiceTest(TestCase):
                     "tpv": "0000100401",
                     "page_type": "invalid_qr",
                     "page_info": {
-                        "public_code": "123",
+                        "public_code": "123456",
                         "paper_id": 1,
                         "page_num": 3,
                         "version_num": 1,
@@ -179,19 +182,19 @@ class QRServiceTest(TestCase):
                 "NE": {
                     "tpv": "0000100401",
                     "page_type": "plom_qr",
-                    "page_info": {"public_code": "123"},
+                    "page_info": {"public_code": "123456"},
                 },
                 "NW": {
                     "tpv": "0000100401",
                     "page_type": "plomB",
-                    "page_info": {"public_code": "123"},
+                    "page_info": {"public_code": "123456"},
                 },
             },
         )
 
     def test_classification(self):
         """Test QRService in classifying StagingImages."""
-        QRService.create_staging_images_based_on_QR_codes(self.bundle)
+        QRService.classify_staging_images_based_on_QR_codes(self.bundle)
 
         # No-QR -> UNKNOWN + UnknownStagingImage
         img = StagingImage.objects.get(pk=self.img_no_qr.pk)
@@ -231,11 +234,11 @@ class QRServiceTest(TestCase):
     def test_bundle_no_qr(self):
         """Test exception is correctly raised when attempting to push unread QR bundle."""
         with self.assertRaises(ValueError):
-            QRService.create_staging_images_based_on_QR_codes(self.bundle_unread_qr)
+            QRService.classify_staging_images_based_on_QR_codes(self.bundle_unread_qr)
 
     def test_invalid_bundles(self):
         """Test exception is correctly raised when there are invalid pages in the bundle."""
-        QRService.create_staging_images_based_on_QR_codes(self.invalid_bundle)
+        QRService.classify_staging_images_based_on_QR_codes(self.invalid_bundle)
 
         # Invalid QR
         img = StagingImage.objects.get(pk=self.img_invalid_qr.pk)

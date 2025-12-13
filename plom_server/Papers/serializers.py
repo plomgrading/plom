@@ -13,7 +13,6 @@ from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
 from plom.spec_verifier import SpecVerifier
-from plom.tpv_utils import new_magic_code
 
 from .models import SpecQuestion, Specification, SolnSpecification, SolnSpecQuestion
 
@@ -44,8 +43,8 @@ class SpecSerializer(serializers.ModelSerializer):
     numberOfPages = serializers.IntegerField(min_value=1)
     numberOfQuestions = serializers.IntegerField(min_value=1)
     totalMarks = serializers.IntegerField(min_value=0)
+    # TODO: is Seed used?  consider removing from the Specification
     privateSeed = serializers.CharField(default=new_private_seed)
-    publicCode = serializers.CharField(default=new_magic_code)
     idPage = serializers.IntegerField(min_value=1)
     doNotMarkPages = serializers.ListField(child=serializers.IntegerField(min_value=1))
     question = serializers.DictField(child=SpecQuestionSerializer())

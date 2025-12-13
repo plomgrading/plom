@@ -328,6 +328,17 @@ def new_magic_code(seed=None) -> str:
     return magic
 
 
+def is_valid_public_code(code: str) -> bool:
+    """Check the validity of a public code, a six-digit string."""
+    if not isinstance(code, str):
+        return False
+    if not code.isdigit():
+        return False
+    if len(code) != 6:
+        return False
+    return True
+
+
 def isValidExtraPageCode(code: str) -> bool:
     """Is this a valid Plom-extra-page code?
 

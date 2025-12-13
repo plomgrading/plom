@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aden Chan
 
@@ -27,7 +27,7 @@ class DataExtractionService:
     """
 
     def __init__(self):
-        student_dict = StudentMarkService.get_all_marking_info_faster()
+        student_dict = StudentMarkService.get_all_marking_info()
         student_keys = StudentMarkService._get_csv_header()
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
@@ -35,6 +35,10 @@ class DataExtractionService:
         ta_dict = tms.build_csv_data()
         ta_keys = tms.get_csv_header()
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
+
+        # Maps to minimize db query for every conversion of index to label or max_mark
+        self.q_label_map = SpecificationService.get_question_labels_map()
+        self.q_max_mark_map = SpecificationService.get_questions_max_marks()
 
     def _get_ta_data(self) -> pd.DataFrame:
         """Return the dataframe of TA data.
@@ -117,16 +121,16 @@ class DataExtractionService:
 
     def _get_average_on_question_as_percentage(self, qidx: int) -> float:
         """Return the average mark on a specific question as a percentage."""
-        qlabel = SpecificationService.get_question_label(qidx)
-        maxmark = SpecificationService.get_question_max_mark(qidx)
+        qlabel = self.q_label_map[qidx]
+        maxmark = self.q_max_mark_map[qidx]
         return 100 * self.student_df[f"{qlabel}_mark"].mean() / maxmark
 
     def _get_average_on_question_version_as_percentage(
         self, question_index: int, version_number: int
     ) -> float:
         """Return the average mark on a specific question as a percentage."""
-        qlabel = SpecificationService.get_question_label(question_index)
-        maxmark = SpecificationService.get_question_max_mark(question_index)
+        qlabel = self.q_label_map[question_index]
+        maxmark = self.q_max_mark_map[question_index]
         version_df = self.student_df[
             (self.student_df[f"{qlabel}_version"] == version_number)
         ]
@@ -160,23 +164,12 @@ class DataExtractionService:
 
         for v in SpecificationService.get_list_of_versions():
             _averages = []
-            for q in SpecificationService.get_question_indices():
+            for q in self.q_label_map.keys():
                 _averages.append(
                     self._get_average_on_question_version_as_percentage(q, v)
                 )
             averages.append(_averages)
 
-        return averages
-
-    def _get_average_grade_on_question(self, qlabel: str) -> float:
-        """Return the average grade on a specific question (not percentage)."""
-        return self.student_df[f"{qlabel}_mark"].mean()
-
-    def get_average_grade_on_all_questions(self) -> list[tuple[int, str, float]]:
-        """Return the average grade on each question (not percentage)."""
-        averages = []
-        for qidx, qlabel in SpecificationService.get_question_index_label_pairs():
-            averages.append((qidx, qlabel, self._get_average_grade_on_question(qlabel)))
         return averages
 
     def _get_marks_for_all_questions(

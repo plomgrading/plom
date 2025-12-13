@@ -105,9 +105,10 @@ class StartOneReassembly(ManagerRequiredView):
         ReassembleService().reset_single_paper_reassembly(paper_number)
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
-    def get(self, request, paper_number):
-        pdf_file = ReassembleService().get_single_reassembled_file(paper_number)
-        return FileResponse(pdf_file)
+    def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
+        """Download one of the reassembled papers."""
+        pdf_file, filename = ReassembleService.get_single_reassembled_file(paper_number)
+        return FileResponse(pdf_file, filename=filename)
 
     def put(self, request, paper_number):  # called by "re-reassemble"
         ReassembleService().reset_single_paper_reassembly(paper_number)
@@ -124,11 +125,12 @@ class StartAllReassembly(ManagerRequiredView):
         ReassembleService().reset_all_paper_reassembly()
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> StreamingHttpResponse:
+        """A streaming download of all the solution PDFs in one big dynamically-generated zipfile."""
         # using zipfly python package.  see django example here
         # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
         short_name = slugify(SpecificationService.get_shortname())
-        zgen = ReassembleService().get_zipfly_generator()
+        zgen = ReassembleService.get_zipfly_generator()
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = (
             f"attachment; filename={short_name}_reassembled.zip"
@@ -154,7 +156,7 @@ class DownloadRangeOfReassembled(ManagerRequiredView):
         if last_paper:
             short_name += f"_to_{last_paper}"
         try:
-            zgen = ReassembleService().get_zipfly_generator(
+            zgen = ReassembleService.get_zipfly_generator(
                 first_paper=first_paper, last_paper=last_paper
             )
         except ValueError as err:

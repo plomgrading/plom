@@ -14,24 +14,20 @@ from plom.plom_exceptions import (
 
 
 @with_messenger
-def upload_spec(spec_toml: Path, *, force_public_code: bool = False, msgr) -> bool:
+def upload_spec(spec_toml: Path, *, msgr) -> bool:
     """Upload a new spec from a local toml file.
 
     Args:
         spec_toml: Path to a .toml file containing a valid assessment spec.
 
     Keyword Args:
-        force_public_code: Usually the spec must not include "publicCode"
-            Pass True to cancel that rule.
         msgr: An active Messenger object.
 
     Returns:
         True if the server's specification was updated, otherwise False.
     """
     try:
-        check = msgr.new_server_upload_spec(
-            spec_toml, force_public_code=force_public_code
-        )
+        check = msgr.upload_spec(spec_toml)
     except (
         PlomAuthenticationException,
         PlomConflict,

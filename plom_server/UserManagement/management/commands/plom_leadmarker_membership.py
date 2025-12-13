@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -8,10 +8,7 @@ from ...services import PermissionChanger
 
 
 class Command(BaseCommand):
-    """Show users membership of the marker and lead markers groups.
-
-    Also allow toggling of membership of the lead-marker group.
-    """
+    """Toggles membership of the lead_marker group."""
 
     def show_group_membership(self, username):
         try:

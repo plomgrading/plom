@@ -29,7 +29,7 @@
                           enctype="multipart/form-data"
                           hx-post="{% url 'scan_upload' %}"
                           hx-disabled-elt="#upload_btn, #pdf_file, #read_after, #force_render"
-                          hx-indicator="#myindicator">
+                          hx-indicator="#upload_indicator">
                         {% csrf_token %}
                         <div class="mb-2">
                             <input class="form-control form-control-lg"
@@ -56,10 +56,38 @@
                                 use <q>safe mode rendering</q> of each page
                             </label>
                         </div>
+                        <div class="accordion mt-2" id="reset_accordion">
+                            <div class="accordion-item">
+                                <p class="accordion-header" id="accordion_heading1">
+                                    <button class="accordion-button collapsed"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#collapse1"
+                                            aria-expanded="false"
+                                            aria-controls="collapse1">Additional options</button>
+                                </p>
+                                <div id="collapse1"
+                                     class="accordion-collapse collapse"
+                                     aria-labelledby="accordion_heading1"
+                                     data-bs-parent="#reset_accordion">
+                                    <div class="accordion-body">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   id="accept_duplicates"
+                                                   name="accept_duplicates" />
+                                            <label class="form-check-label" for="accept_duplicates">
+                                                <i class="bi bi-exclamation-diamond-fill text-warning"></i> allow duplicate bundle uploads
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- hx-disabled-elt="self" on this button doesn't work b/c this button doesn't have hx-post -->
                         <!-- https://stackoverflow.com/questions/78888026/setting-hx-disabled-elt-not-disabling-my-button -->
                         <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
-                        <span id="myindicator" class="htmx-indicator">
+                        <span id="upload_indicator" class="htmx-indicator">
                             <img src="{% static 'ball_triangle.svg' %}" />
                             upload in progress
                             <progress id="progress" value="0" max="100"></progress>

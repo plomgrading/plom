@@ -25,7 +25,7 @@ def config_test(config_input: str | dict | None = None):
         config_input: the configuration is taken from this dict which
             can have various fields.  One important field is
             ``test_spec``, which can be either a string naming a local
-            toml file or the path to a toml file, continuing a test spec.
+            toml file or the path to a toml file, containing a test spec.
             It can also be the string ``"demo"``, which uses a default
             choice.  ``test_sources`` and ``classlist`` behaves similarly.
             Other common fields include ``num_to_produce``, ``qvmap``

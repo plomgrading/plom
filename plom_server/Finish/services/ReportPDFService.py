@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2025 Andrew Rechnitzer
+# Copyright (C) 2025 Bryan Tanady
 
 from datetime import datetime
 from pathlib import Path
@@ -112,8 +113,14 @@ def pdf_builder(
     average_mark = des.get_totals_average()
     median_mark = des.get_totals_median()
     stdev_mark = des.get_totals_stdev()
-    total_tasks = mts.get_n_total_tasks()
-    all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
+
+    task_count_dict = mts.get_task_counts_dict()
+    total_valid_tasks = task_count_dict["valid"]
+    marked_tasks = task_count_dict["complete"]
+    # separate code path from StudentMarkService.are_all_papers_marked(), but
+    # this does the same thing, its just cheaper in this case b/c we already
+    # got some data from the DB.
+    all_marked = marked_tasks == total_valid_tasks and total_valid_tasks > 0
 
     mpls.ensure_all_figures_closed()
 

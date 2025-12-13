@@ -47,7 +47,8 @@ class ScanCastService:
     # Page casting helper function
     # ----------------------------------------
 
-    def string_to_staging_image_type(self, img_str: str) -> models.TextChoices:
+    @staticmethod
+    def string_to_staging_image_type(img_str: str) -> models.TextChoices:
         """A helper function to translate from string to the staging image enum type."""
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
@@ -121,7 +122,8 @@ class ScanCastService:
 
         Keyword Args:
             image_type: the *current* type of the image that we wish to
-                discard.
+                discard.  You don't need to specify this but you can as
+                an additional consistency check.
 
         Returns:
             None.

@@ -29,7 +29,6 @@ urlpatterns = [
     path("rubrics/", include("plom_server.Rubrics.urls")),
     path("paper_tags/", include("plom_server.Tags.urls")),
     path("finish/", include("plom_server.Finish.urls")),
-    path("visualization/", include("plom_server.Visualization.urls")),
     path("reports/", include("plom_server.Reports.urls")),
     path("task_order/", include("plom_server.TaskOrder.urls")),
     path("rectangles/", include("plom_server.Rectangles.urls")),

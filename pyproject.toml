@@ -46,7 +46,7 @@ dependencies = [
     "canvasapi>=3.0.0",
     "cryptography>=41.0.3",
     "pyOpenSSL>=23.2.0",
-    "django>=5.1.1",
+    "django>=5.1.1, <6.0.0",  # TODO: temporary block on Django 6
     "django-braces>=1.15.0",
     "django-filter>=23.2",
     "django-htmx>=1.14.0",
@@ -92,8 +92,8 @@ dependencies = [
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=2.2.1",
-    "onnxruntime>=1.22.1",
-    "huggingface_hub>=0.34.3",
+    "onnxruntime>=1.20.1",
+    "huggingface-hub>=0.30.2",
     # "nplusone>=1.0.0",
     # "django-silk>=5.2.0",
     # plom_ml stuff
@@ -195,7 +195,6 @@ packages = [
     "plom_server.TestingSupport.services",
     "plom_server.UserManagement",
     "plom_server.UserManagement.services",
-    "plom_server.Visualization",
     "plom_ml",
     "plom_ml.clustering",
     "plom_ml.clustering.embedding",

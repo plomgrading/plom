@@ -17,6 +17,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
+from django.utils.text import slugify
 from django_huey import db_task, get_queue
 import huey
 import huey.api
@@ -156,9 +157,8 @@ class BuildSolutionService:
 
         # build the solution coverpage in a tempdir
         # open it as a pymupdf doc and then append the soln pages to it.
-        reas = ReassembleService()
         with tempfile.TemporaryDirectory() as tmpdir:
-            cp_path = reas.build_paper_cover_page(
+            cp_path = ReassembleService.build_paper_cover_page(
                 Path(tmpdir), paper_obj, solution=True
             )
             with pymupdf.open(cp_path) as dest_doc:
@@ -174,17 +174,25 @@ class BuildSolutionService:
                     )
 
                 shortname = SpecificationService.get_shortname()
-                sid_sname_pair = StudentMarkService.get_paper_id_or_none(paper_obj)
-                if sid_sname_pair:
-                    # make sure filename matches legacy - see #3405
-                    fname = f"{shortname}_solutions_{sid_sname_pair[0]}.pdf"
-                    if watermark:
-                        self.watermark_pages(
-                            dest_doc, f"Solutions for {sid_sname_pair[0]}"
-                        )
+                sid_name_pair = StudentMarkService.get_paper_id_or_none(paper_obj)
+                if sid_name_pair is None:
+                    # Maybe this code path can't happen with current UI?
+                    fname = (
+                        f"{shortname}_solutions_paper{paper_number:04}_unidentified.pdf"
+                    )
+                    who_watermark = f"paper{paper_number:04}"
                 else:
-                    # make sure filename matches legacy - see #3405
-                    fname = f"{shortname}_solutions_{paper_number:04}.pdf"
+                    student_id, student_name = sid_name_pair
+                    if student_id is None:
+                        # in this case student_name has a hint such as "Blank paper" or "No ID given"
+                        why_none = slugify(student_name)
+                        fname = f"{shortname}_solutions_paper{paper_number:04}_{why_none}.pdf"
+                        who_watermark = f"paper{paper_number:04}"
+                    else:
+                        fname = f"{shortname}_solutions_{student_id}.pdf"
+                        who_watermark = f"{student_id}"
+                if watermark:
+                    self.watermark_pages(dest_doc, f"Solutions for {who_watermark}")
 
                 return (dest_doc.tobytes(), fname)
 
@@ -309,15 +317,15 @@ class BuildSolutionService:
                 continue
             self.queue_single_solution_build(data["paper_num"])
 
-    @transaction.atomic
-    def get_single_solution_pdf_file(self, paper_number: int) -> File:
+    @staticmethod
+    def get_single_solution_pdf_file(paper_number: int) -> tuple[File, str]:
         """Get the django-file of the solution pdf for the given paper.
 
         Args:
-            paper_number (int): The paper number to re-assemble.
+            paper_number: which paper to we want a solution for.
 
         Returns:
-            File: the django-File of the solution pdf.
+            Tuple of the the django-File of the solution pdf and the filename.
 
         Raises:
             ObjectDoesNotExist: no such paper or solution build chore, or if
@@ -329,7 +337,7 @@ class BuildSolutionService:
             obsolete=False,
             status=BuildSolutionPDFChore.COMPLETE,
         )
-        return chore.pdf_file
+        return (chore.pdf_file, chore.display_filename)
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
         """Mark a solution pdf build chore as obsolete and try to cancel it if queued in Huey.
@@ -385,8 +393,8 @@ class BuildSolutionService:
                 N += 1
         return N
 
-    @transaction.atomic
-    def get_completed_pdf_files_and_names(self) -> list[tuple[File, str]]:
+    @staticmethod
+    def get_completed_pdf_files_and_names() -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of solutions.
 
         Returns:
@@ -399,8 +407,8 @@ class BuildSolutionService:
             )
         ]
 
-    @transaction.atomic
-    def get_zipfly_generator(self, *, chunksize: int = 1024 * 1024) -> zipfly.ZipFly:
+    @classmethod
+    def get_zipfly_generator(cls, *, chunksize: int = 1024 * 1024) -> zipfly.ZipFly:
         """Return a streaminmg zipfile generator for archive of the solution pdfs.
 
         Keyword Args:
@@ -414,7 +422,7 @@ class BuildSolutionService:
                 "fs": pdf_file.path,
                 "n": f"solutions/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
+            for pdf_file, display_filename in cls.get_completed_pdf_files_and_names()
         ]
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)

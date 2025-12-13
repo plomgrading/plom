@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
+    Copyright (C) 2025 Colin Macdonald
 -->
 {% extends "Authentication/signup_base.html" %}
 {% load static %}
@@ -15,6 +16,8 @@
         {{ form.basic_or_funky_username }}
         <p class="mt-3 mb-1">How many users would you like to create?</p>
         {{ form.num_users }}
-        <input class="btn btn-primary" type="submit" value="Create">
+        <p class="mt-3">
+            <input class="btn btn-primary" type="submit" value="Create">
+        </p>
     </form>
 {% endblock card_content %}

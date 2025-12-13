@@ -10,7 +10,7 @@
 {% load static %}
 <ul class="nav flex-column mt-2">
     <li class="nav-item">
-        <a class="nav-link link-secondary" href="{% url 'profile' %}">
+        <a class="nav-link link-secondary" href="{% url 'private_profile' %}">
             {% if request.user.first_name %}
                 {{ request.user.first_name }}
             {% else %}

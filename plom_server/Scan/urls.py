@@ -43,8 +43,6 @@ from .views import (
     UnknowifyAllDiscardsHTMXView,
     RotateImageView,
     BundleLockView,
-    BundlePushCollisionView,
-    BundlePushBadErrorView,
     RecentStagedBundleRedirectView,
     HandwritingComparisonView,
     GeneratePaperPDFView,
@@ -192,16 +190,6 @@ urlpatterns = [
         "bundle_lock/<int:bundle_id>/",
         BundleLockView.as_view(),
         name="scan_bundle_lock",
-    ),
-    path(
-        "bundle_push_collision/<int:bundle_id>/",
-        BundlePushCollisionView.as_view(),
-        name="scan_bundle_push_collision",
-    ),
-    path(
-        "bundle_push_error/<int:bundle_id>/",
-        BundlePushBadErrorView.as_view(),
-        name="scan_bundle_push_error",
     ),
     path(
         "compare-handwriting/<int:bundle_id>/<int:index>/",

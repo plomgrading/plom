@@ -12,12 +12,7 @@ from pathlib import Path
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
 import plom
-from plom.create.classlistValidator import (
-    PlomClasslistValidator,
-    fullname_field,
-    papernumber_field,
-    sid_field,
-)
+from plom.create.classlistValidator import PlomClasslistValidator
 from plom.finish.return_tools import import_canvas_csv
 
 # Note: file is full of pandas warnings, which I think are false positives
@@ -41,7 +36,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
 
     Returns:
         pandas.DataFrame: data with columns `id` and `name`
-        and possibly `papernum` if you had such a column in the input.
+        and possibly `paper_number` if you had such a column in the input.
         With ``minimalist=True`` kwarg specified, this is all you get,
         otherwise the original columns will be included too, except
         those renamed to create the required columns.
@@ -57,7 +52,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # find the id column and clean it up.
     id_column = None
     for c in df.columns:
-        if c.casefold() == sid_field:
+        if c.casefold() == "id":
             id_column = c
             break
     if id_column is None:
@@ -71,7 +66,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # find the name column and clean it up.
     fullname_column = None
     for c in df.columns:
-        if c.casefold() == fullname_field.casefold():
+        if c.casefold() == "name":
             fullname_column = c
             break
     if fullname_column is None:
@@ -108,7 +103,7 @@ def find_paper_number_column(df, *, make=True):
     # find the paper-number column and clean it up.
     papernumber_column = None
     for c in df.columns:
-        if c.casefold() == papernumber_field.casefold():
+        if c.casefold() == "paper_number":
             papernumber_column = c
             break
     if not papernumber_column:
@@ -226,11 +221,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column. Student names
-    must be in a *single* 'name' column. There is some flexibility
-    in those titles, see
-
-    - :func:`plom.create.possible_sid_fields`
-    - :func:`plom.create.possible_fullname_fields`
+    must be in a *single* 'name' column.
 
     Alternatively, give a .csv exported from Canvas (experimental!)
 
@@ -258,7 +249,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
     vlad = PlomClasslistValidator()
 
     if not vlad.check_is_canvas_csv(student_csv_file_name):
-        success, warn_err, _ = vlad.validate_csv(student_csv_file_name, spec=spec)
+        success, warn_err, _ = vlad.validate_csv(student_csv_file_name)
 
         if success is False:
             # validation failed, return warning, error list

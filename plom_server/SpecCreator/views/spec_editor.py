@@ -31,7 +31,7 @@ class SpecEditorView(ManagerRequiredView):
         context.update({"editable_toml": ""})
         context.update({"is_there_a_spec": SpecificationService.is_there_a_spec()})
         if SpecificationService.is_there_a_spec():
-            toml = SpecificationService.get_the_spec_as_toml(include_public_code=False)
+            toml = SpecificationService.get_the_spec_as_toml()
             context.update({"editable_toml": toml})
         return render(request, "SpecCreator/launch-page.html", context)
 
@@ -51,8 +51,6 @@ class SpecEditorView(ManagerRequiredView):
             }
         )
         data = request.POST
-
-        force_public_code = data.get("force-public-code")
 
         gave_toml_file = data.get("which_action") == "upload_file"
         if gave_toml_file:
@@ -85,9 +83,7 @@ class SpecEditorView(ManagerRequiredView):
                 context["msg"] = "Specification passes validity checks."
                 context["success"] = True
             else:
-                SpecificationService.install_spec_from_toml_string(
-                    spec, force_public_code=force_public_code
-                )
+                SpecificationService.install_spec_from_toml_string(spec)
                 # Spec saved successfully - redirect to the summary page.
                 return HttpResponseClientRedirect(reverse("spec_summary"))
         except PlomDependencyConflict as e:

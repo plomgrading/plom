@@ -43,6 +43,10 @@ from plom.cli import (
     get_pqvmap_as_csv_string,
     get_reassembled,
     get_all_reassembled,
+    get_report,
+    get_all_reports,
+    get_solution,
+    get_all_solutions,
     get_unmarked,
     get_all_unmarked,
     id_paper,
@@ -130,11 +134,11 @@ def get_parser() -> argparse.ArgumentParser:
             mentions even a single student ID already present on the server.
         """,
     )
-    _add_server_args(s)
     s.add_argument(
         "csvfile",
         help="a CSV file with column headers 'id','name', and [optionally] 'paper_number'.",
     )
+    _add_server_args(s)
 
     s = sub.add_parser(
         "get-marks",
@@ -142,13 +146,6 @@ def get_parser() -> argparse.ArgumentParser:
         description="""
             Retrieve marks, IDs, and other information about generated exam papers.
         """,
-    )
-    s.add_argument(
-        "papernum",
-        nargs="?",
-        type=int,
-        default=None,
-        help="Specify a paper. If unspecified, will retrieve marks for all papers.",
     )
     _add_server_args(s)
 
@@ -167,6 +164,48 @@ def get_parser() -> argparse.ArgumentParser:
         description="""
             Download a reassembled paper as a PDF file from the server.
             Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            all papers that exist on the server in their reassembled states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-report",
+        help="Get a report for a reassembled paper.",
+        description="""
+            Download a report for a paper as a PDF file from the server.
+            Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int, default=None, nargs="?")
+    s.add_argument(
+        "--all",
+        default=None,
+        action="store_true",
+        help="""
+            Can be specified instead of 'papernum'. This will attempt to download
+            all papers that exist on the server in their reassembled states.
+        """,
+    )
+    s.add_argument("-v", "--verbose", default=False, action="store_true")
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-solution",
+        help="Get the solutions file for a given paper.",
+        description="""
+            Download solutions for a paper as a PDF file from the server.
+            Will fail if the solutions file is not assembled yet.
         """,
     )
     s.add_argument("papernum", type=int, default=None, nargs="?")
@@ -209,6 +248,16 @@ def get_parser() -> argparse.ArgumentParser:
         description="Upload a bundle of page images in a PDF file.",
     )
     s.add_argument("pdf", help="a PDF file.")
+    s.add_argument(
+        "--force",
+        default=None,
+        action="store_true",
+        help="""
+            Force the upload of a PDF file that would otherwise be an error,
+            in some cases.  Currently this can be used to upload duplicate
+            bundles.
+        """,
+    )
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -228,8 +277,8 @@ def get_parser() -> argparse.ArgumentParser:
             Use the `list-bundles` command to check on the status of your bundle.
         """,
     )
-    _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "upload-source",
@@ -239,7 +288,6 @@ def get_parser() -> argparse.ArgumentParser:
             replacing the existing source, if any.
         """,
     )
-    _add_server_args(s)
     s.add_argument(
         "source_pdf",
         help="A PDF file containing a valid assessment source.",
@@ -251,13 +299,13 @@ def get_parser() -> argparse.ArgumentParser:
         default=1,
         help="Source version number (default 1).",
     )
+    _add_server_args(s)
 
     s = sub.add_parser(
         "delete-source",
         help="Delete an assessment source PDF.",
         description="Remove the indicated assessment source.",
     )
-    _add_server_args(s)
     s.add_argument(
         "-v",
         dest="version",
@@ -265,6 +313,7 @@ def get_parser() -> argparse.ArgumentParser:
         default=1,
         help="Source version number (default 1).",
     )
+    _add_server_args(s)
 
     s = sub.add_parser(
         "upload-spec",
@@ -272,16 +321,26 @@ def get_parser() -> argparse.ArgumentParser:
         description="Upload a .toml file containing an assessment specification.",
     )
     s.add_argument("tomlfile", help="The assessment specification.")
-    s.add_argument(
-        "--force-public-code",
-        default=False,
-        action="store_true",
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-public-code",
         help="""
-            Allow specifying the "publicCode" which prevents uploading
+            Get "public code", which is used to prevent uploading
             papers from a different server.
+        """,
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "set-public-code",
+        help="""
+            Override the usually randomly chosen "public code", which is used
+            to prevent uploading papers from a different server.
             Read the docs before using this!
         """,
     )
+    s.add_argument("sixdig", help="Six digit numeric code.")
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -294,15 +353,15 @@ def get_parser() -> argparse.ArgumentParser:
             Use the `list-bundles` command to check on the status of your bundle.
         """,
     )
-    _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "wait-bundle",
         help="Wait for a bundle to finish processing, NOT IMPLEMENTED YET",
     )
-    _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "id-paper",
@@ -316,17 +375,17 @@ def get_parser() -> argparse.ArgumentParser:
             to you.
         """,
     )
-    _add_server_args(s)
     s.add_argument("papernum", type=int, help="Which paper number to identify")
     s.add_argument("--sid", type=str)
     s.add_argument("--name", type=str)
+    _add_server_args(s)
 
     s = sub.add_parser(
         "un-id-paper",
         help="Unidentify a paper, removing the association with a student",
     )
-    _add_server_args(s)
     s.add_argument("papernum", type=int, help="Which paper number to identify")
+    _add_server_args(s)
 
     s = sub.add_parser(
         "reset-task",
@@ -336,16 +395,8 @@ def get_parser() -> argparse.ArgumentParser:
             The task will need to be marked again.
         """,
     )
-    _add_server_args(s)
     s.add_argument("papernum", type=int, help="Which paper to reset")
     s.add_argument("question_idx", type=int, help="Which question to reset")
-
-    # TODO: perhaps unnecessary for modern Plom
-    s = sub.add_parser(
-        "clear",
-        help='Clear "scanner" login',
-        description='Clear "scanner" login after a crash or other expected event.',
-    )
     _add_server_args(s)
 
     sp_map = sub.add_parser(
@@ -395,7 +446,6 @@ def get_parser() -> argparse.ArgumentParser:
         extract the rectangle from the scanned paper with that page number and version.
         """,
     )
-
     s.add_argument(
         "--version",
         "-v",
@@ -409,14 +459,12 @@ def get_parser() -> argparse.ArgumentParser:
         required=True,
         help="The page number of the paper that will be extracted",
     )
-
     s.add_argument(
         "--papernum",
         type=int,
         required=True,
         help="The paper number to be extracted",
     )
-
     s.add_argument(
         "--left",
         "-l",
@@ -437,7 +485,6 @@ def get_parser() -> argparse.ArgumentParser:
         If not provided then default to 0
         """,
     )
-
     s.add_argument(
         "--right",
         "-r",
@@ -448,7 +495,6 @@ def get_parser() -> argparse.ArgumentParser:
         If not provided then default to 1
         """,
     )
-
     s.add_argument(
         "--bottom",
         "-b",
@@ -469,8 +515,53 @@ def get_parser() -> argparse.ArgumentParser:
         where {version}, {page_num}, and {paper_num} are replaced by their respective values.
         """,
     )
-
     _add_server_args(s)
+
+    s = sub.add_parser(
+        "tags",
+        help="List tags",
+        description="""
+          List all the tags defined on the server.
+        """,
+    )
+    s.add_argument(
+        "--list",
+        action="store_true",
+        help="""List the tags on the server (default behaviour).""",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "tag",
+        help="Add/remove tags from papers",
+        description="""
+          Add or remove tags from a paper and question.
+        """,
+    )
+    s.add_argument(
+        "--rm",
+        action="store_true",
+        help="""Remove tag(s) from paper (if omitted we add tags).""",
+    )
+    s.add_argument(
+        "task",
+        help="""
+            Which task to tag, e.g., 0123g4 for paper 123 question 4.
+        """,
+    )
+    s.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
+    _add_server_args(s)
+
+    # perhaps unnecessary for modern Plom?
+    s = sub.add_parser(
+        "clear",
+        help="Clear your login",
+        description="""
+            Clear your login after a crash or other expected event.
+        """,
+    )
+    _add_server_args(s)
+
     return parser
 
 
@@ -495,14 +586,15 @@ def main():
     m = (args.server, args.username, args.password)
 
     if args.command == "upload-bundle":
-        r = upload_bundle(Path(args.pdf), msgr=m)
-        print(r)
+        r = upload_bundle(Path(args.pdf), msgr=m, force=args.force)
+        for k, v in r.items():
+            print(f"{k}: {v}")
     elif args.command == "list-bundles":
         list_bundles(msgr=m)
     elif args.command == "push-bundle":
         msgr = start_messenger(args.server, args.username, args.password)
         try:
-            r = msgr.new_server_push_bundle(args.bundle_id)
+            r = msgr.push_bundle(args.bundle_id)
             print(r)
         finally:
             msgr.closeUser()
@@ -533,7 +625,7 @@ def main():
         print(r)
 
     elif args.command == "get-marks":
-        r = get_marks_as_csv_string(papernum=args.papernum, msgr=m)
+        r = get_marks_as_csv_string(msgr=m)
         print(r)
 
     elif args.command == "get-pqvmap":
@@ -554,6 +646,40 @@ def main():
             r = get_all_reassembled(msgr=m, verbose=args.verbose)
             print(
                 f'wrote {r["num-papers"]} reassembled papers to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
+    elif args.command == "get-report":
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_report(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote student report for paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_reports(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} student report files to '
+                f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
+            )
+
+    elif args.command == "get-solution":
+        # XNOR - we only want one or the other
+        if (args.all is not None) == (args.papernum is not None):
+            raise RuntimeError('please specify exactly one of "--all" or "[papernum]"')
+        if args.papernum is not None:
+            r = get_solution(args.papernum, msgr=m, verbose=args.verbose)
+            print(
+                f"wrote solution for paper number {args.papernum} to "
+                f'file {r["filename"]} [{r["content-length"]} bytes]'
+            )
+        elif args.all:
+            r = get_all_solutions(msgr=m, verbose=args.verbose)
+            print(
+                f'wrote {r["num-papers"]} solution files to '
                 f'"{r["dirname"]}/" [{r["content-length"]} bytes]'
             )
 
@@ -587,14 +713,32 @@ def main():
     elif args.command == "upload-spec":
         r = upload_spec(
             Path(args.tomlfile),
-            force_public_code=args.force_public_code,
             msgr=(args.server, args.username, args.password),
         )
+
+    elif args.command == "get-public-code":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            r = msgr.get_public_code()
+            print(r)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    elif args.command == "set-public-code":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            msgr.set_public_code(args.sixdig)
+            r = msgr.get_public_code()
+            print(r)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "delete-bundle":
         msgr = start_messenger(args.server, args.username, args.password)
         try:
-            r = msgr.new_server_delete_bundle(args.bundle_id)
+            r = msgr.delete_bundle(args.bundle_id)
             print(r)
         finally:
             msgr.closeUser()
@@ -612,9 +756,6 @@ def main():
         success = upload_classlist(Path(args.csvfile), msgr=m)
         sys.exit(0 if success else 1)
 
-    elif args.command == "clear":
-        clear_login(args.server, args.username, args.password)
-
     elif args.command == "extract-rectangle":
         region = {
             "left": args.left if args.left else 0,
@@ -626,6 +767,37 @@ def main():
         success = extract_rectangle(
             args.version, args.pagenum, args.papernum, region, args.out_path, msgr=m
         )
+
+    elif args.command == "tags":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            tags = msgr.get_all_tags()
+            print("Tags on server:\n    " + "\n    ".join(t for tid, t in tags))
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    elif args.command == "tag":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            # TODO: perhaps we want something like --paper 123 --question 4
+            # task = f"{paper:04}g{question}"
+            task = args.task
+            if args.rm:
+                print(f"Task {task}, removing tags: {args.tags}")
+                for t in args.tags:
+                    msgr.remove_single_tag(task, t)
+            else:
+                print(f"Task {task}, adding tags: {args.tags}")
+                for t in args.tags:
+                    msgr.add_single_tag(task, t)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    elif args.command == "clear":
+        clear_login(args.server, args.username, args.password)
+
     else:
         get_parser().print_help()
 

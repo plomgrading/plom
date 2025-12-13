@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased Development
+
+### Added
+* more fine-grained access control for users.  For example, you can make an account that is both a "manager" and a "marker".
+* ability for "force" upload of duplicate scan bundles.
+
+### Removed
+
+### Changed
+* only users in the new "identifier" group can identify papers.  Managers are always in the "identifier" group.
+* for backwards compatibility, promoting a "marker" to a "lead marker" automatically adds them to the "identifier" group.
+* only users in the "marker" group can mark papers, this includes lead markers.
+* public code handling has changed to be more flexible.
+* improvements to classlist handling for developers.
+
+### Fixed
+
+
+
+
 ## [Unreleased]
 
 ### Added
@@ -13,11 +33,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+
+### Fixed
+
+
+
+
+## [0.19.7] - 2025-11-26
+
+### Fixed
+* Could not delete MLBestGuess predictions via the UI.
+* Quick fix for faster task re-ordering in larger courses.
+* Quick fix for error about negative task priorities for papers not starting from 1.
+
+
+
+## [0.19.6] - 2025-11-20
+
+### Fixed
+* Fix a crash when pushing a bundle with collisions.
+
+
+
+## [0.19.5] - 2025-11-20
+
+### Changed
 * Compare handwriting now explains why if it shows a non-ID page (for example, if the ID page is itself unknown).
+* Updating the annotations (sending new marking data) from the client will remove any `rubric_changed` tags, which should improve the process of making major edits to in-use rubrics.
 * Improvements to command-line tools and error handling.
 
 ### Fixed
 * Packaging of the QuestionClustering app was broken.
+* Fix for filenames containing random characters for individual reassembled/report/solution downloads.
+* Fix for duplicate reassembled filenames for blank papers, ditto reports and solutions.
+* Misc bug fixes, performance improvements and UI tweaks.
 
 
 
@@ -1563,7 +1612,10 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.19.4...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.19.7...main
+[0.19.7]: https://gitlab.com/plom/plom/-/compare/v0.19.6...v0.19.7
+[0.19.6]: https://gitlab.com/plom/plom/-/compare/v0.19.5...v0.19.6
+[0.19.5]: https://gitlab.com/plom/plom/-/compare/v0.19.4...v0.19.5
 [0.19.4]: https://gitlab.com/plom/plom/-/compare/v0.19.3...v0.19.4
 [0.19.3]: https://gitlab.com/plom/plom/-/compare/v0.19.2...v0.19.3
 [0.19.2]: https://gitlab.com/plom/plom/-/compare/v0.18.3...v0.19.2

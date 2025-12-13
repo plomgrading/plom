@@ -10,8 +10,20 @@ from pathlib import Path
 import pymupdf
 
 from plom.create.mergeAndCodePages import make_PDF
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from .preparation_dependency_service import assert_can_modify_prenaming_config
+
+
+def _make_example_public_code() -> str:
+    code = "000000"
+    public_code = Settings.get_public_code()
+    if public_code is not None:
+        assert len(public_code) == 6
+    # ensure mocked papers won't scan by using wrong public code
+    if code == public_code:
+        code = "999999"
+    return code
 
 
 class ExamMockerService:
@@ -29,19 +41,13 @@ class ExamMockerService:
         """
         spec = SpecificationService.get_the_spec()
         num_questions = SpecificationService.get_n_questions()
+        example_code = _make_example_public_code()
 
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
         from .SourceService import _get_source_file
 
         # TODO: Issue #3888 this does direct file access, fails for remote storage?
         source_path = Path(_get_source_file(version).path)
-
-        # ensure mocked papers won't scan by using wrong public code
-        assert len(spec["publicCode"]) == 6
-        if spec["publicCode"] == "000000":
-            spec["publicCode"] = "999999"
-        else:
-            spec["publicCode"] = "000000"
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)
@@ -53,6 +59,7 @@ class ExamMockerService:
                 spec,
                 0,
                 qvmap_row,
+                public_code=example_code,
                 where=tmpdir,
                 source_versions={version: source_path},
                 paperstr="<Mock>",
@@ -75,6 +82,7 @@ class ExamMockerService:
         spec = SpecificationService.get_the_spec()
         num_questions = SpecificationService.get_n_questions()
         id_page_number = SpecificationService.get_id_page_number()
+        example_code = _make_example_public_code()
 
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
         from .SourceService import _get_source_file
@@ -96,6 +104,7 @@ class ExamMockerService:
                 {"name": "McMockFace, Mocky", "id": "00000001"},
                 xcoord,
                 ycoord,
+                public_code=example_code,
                 where=tmpdir,
                 source_versions={version: source_path},
                 paperstr="<Mock>",

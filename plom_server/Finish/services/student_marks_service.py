@@ -3,17 +3,20 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Andreas Buttenschoen
 # Copyright (C) 2025 Aden Chan
 # Copyright (C) 2025 Aidan Murphy
 
 import csv
+import hashlib
 from io import StringIO
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Exists, OuterRef, Count, Q
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from plom_server.Identify.models import PaperIDTask
@@ -22,7 +25,6 @@ from plom_server.Mark.models import MarkingTask
 from plom_server.Papers.models.paper_structure import Paper
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Scan.services import ManageScanService
-import hashlib
 
 
 class StudentMarkService:
@@ -31,20 +33,84 @@ class StudentMarkService:
     # TODO: unit tests for many of these methods
 
     @staticmethod
-    def is_paper_marked(paper: Paper) -> bool:
+    def _get_marked_unmarked_paper_querysets() -> tuple[QuerySet, QuerySet]:
+        """Get lists (as unevaluated QuerySets) of papers which are and aren't completely marked.
+
+        This will only fetch 'used' papers, see
+        :method:`ManageScanService._get_used_unused_paper_querysets()` for
+        definitions of used and unused papers.
+        A marked paper will have one complete marking
+        task for each question.
+        An unmarked paper is any used paper which isn't marked. This means
+        'partially marked' papers are unmarked.
+
+        Returns:
+            A tuple of two querysets, the first contains all completely
+            marked papers. The second contains the papers which aren't
+            completely marked.
+        """
+        exam_question_indices: list = SpecificationService.get_question_indices()
+        complete_tasks = MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
+
+        # a subquery to find papers which have at least one complete marking task
+        # for each question. This returns a list of Paper.pk, not Paper.paper_number
+        # I suspect the first filter isn't necessary, but better safe than sorry
+        complete_tasks_counted = (
+            complete_tasks.values("paper")
+            .filter(question_index__in=exam_question_indices)
+            .annotate(counts=Count("question_index", distinct=True))
+            .filter(counts=len(exam_question_indices))
+            .values_list("paper", flat=True)
+        )
+
+        marked_papers_queryset = Paper.objects.filter(pk__in=complete_tasks_counted)
+
+        used_papers_queryset, _ = ManageScanService._get_used_unused_paper_querysets()
+
+        # all used papers must be marked or unmarked
+        unmarked_papers_queryset = used_papers_queryset.filter(
+            ~Exists(
+                marked_papers_queryset.filter(paper_number=OuterRef("paper_number"))
+            )
+        )
+
+        # TODO: a previous inefficient (loops-based) function also checked that
+        # all tasks are complete or out of date for a complete paper - perhaps
+        # this function should do the same?
+
+        # make sure one completed task for each question and that all tasks are complete or out of date.
+        # return (n_completed_tasks == n_questions) and (
+        #     n_completed_tasks + n_out_of_date_tasks == n_all_tasks
+        # )
+
+        return marked_papers_queryset, unmarked_papers_queryset
+
+    @staticmethod
+    def is_paper_marked(paper: Paper, n_questions: int | None = None) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
-            paper: a reference to a Paper instance
+            paper: a reference to a Paper instance.
+            n_questions: number of questions in the test. Pass n_questions to reduce
+                repetitive db_query of n_questions.  If omitted, it will be computed.
 
         Returns:
             bool: True when all questions in the given paper are marked.
         """
-        paper_tasks = MarkingTask.objects.filter(paper=paper)
-        n_completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE).count()
-        n_out_of_date_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE).count()
-        n_all_tasks = paper_tasks.count()
-        n_questions = SpecificationService.get_n_questions()
+        if not n_questions:
+            n_questions = SpecificationService.get_n_questions()
+
+        # Use .aggregate to Select all Counts(*) in one query
+        counts = MarkingTask.objects.filter(paper=paper).aggregate(
+            complete=Count("id", filter=Q(status=MarkingTask.COMPLETE)),
+            out_of_date=Count("id", filter=Q(status=MarkingTask.OUT_OF_DATE)),
+            all=Count("id"),
+        )
+
+        n_completed_tasks = counts["complete"]
+        n_out_of_date_tasks = counts["out_of_date"]
+        n_all_tasks = counts["all"]
+
         # make sure one completed task for each question and that all tasks are complete or out of date.
         return (n_completed_tasks == n_questions) and (
             n_completed_tasks + n_out_of_date_tasks == n_all_tasks
@@ -54,17 +120,14 @@ class StudentMarkService:
     def are_all_papers_marked(cls) -> bool:
         """Return True if all used papers are marked.
 
-        See :func: ManageScanService._get_used_unused_paper_querysets() for
+        See :method:`ManageScanService._get_used_unused_paper_querysets()` for
         definitions of used and unused papers.
         """
-        used_papers, _ = ManageScanService._get_used_unused_paper_querysets()
+        _, unmarked_papers = cls._get_marked_unmarked_paper_querysets()
+        return not unmarked_papers.exists()
 
-        for paper in used_papers:
-            if not cls.is_paper_marked(paper):
-                return False
-        return True
-
-    def get_n_questions_marked(self, paper: Paper) -> int:
+    @staticmethod
+    def _get_n_questions_marked(paper: Paper) -> int:
         """Return the number of questions that are marked in a paper.
 
         Args:
@@ -75,7 +138,8 @@ class StudentMarkService:
             paper=paper, status=MarkingTask.COMPLETE
         ).count()
 
-    def get_last_updated_timestamp(self, paper: Paper) -> timezone.datetime:
+    @staticmethod
+    def _get_last_updated_timestamp(paper: Paper) -> timezone.datetime:
         """Return the latest update timestamp from the PaperIDTask or MarkingTask.
 
         Args:
@@ -115,14 +179,16 @@ class StudentMarkService:
             return timezone.now()  # if no updates return the current time.
 
     @staticmethod
-    def get_paper_id_or_none(paper: Paper) -> tuple[str, str] | None:
+    def get_paper_id_or_none(paper: Paper) -> tuple[str | None, str] | None:
         """Return a tuple of (student ID, student name) if the paper has been identified. Otherwise, return None.
 
         Args:
             paper: a reference to a Paper instance
 
         Returns:
-            a tuple (str, str) or None
+            A tuple (str, str) or None.  Note that a paper can be ID'd
+            with sid `None`, in which case we get back ``(None, str)``
+            where the second string is an explanation.
         """
         try:
             action = (
@@ -134,8 +200,9 @@ class StudentMarkService:
             return None
         return action.student_id, action.student_name
 
+    @staticmethod
     def get_question_version_and_mark(
-        self, paper: Paper, question_idx: int
+        paper: Paper, question_idx: int
     ) -> tuple[int, float | None]:
         """For a particular paper and question index, return the question version and score.
 
@@ -168,67 +235,9 @@ class StudentMarkService:
             mark = None
         return version, mark
 
-    def _paper_spreadsheet_dict(self, paper: Paper) -> dict[str, Any]:
-        """Return a dictionary representing a paper.
-
-        Args:
-            paper: a reference to a Paper instance.
-
-        Returns:
-            A dictionary whose keys are PaperNumber, StudentID, StudentName,
-            identified, marked, mark and version of each question, Total, and
-            last_update.
-        """
-        paper_dict = {"PaperNumber": paper.paper_number}
-        warnings = []
-
-        paper_id_info = self.get_paper_id_or_none(paper)
-        if paper_id_info:
-            student_id, student_name = paper_id_info
-            paper_dict["StudentID"] = student_id
-            paper_dict["StudentName"] = student_name
-        else:
-            paper_dict["StudentID"] = ""
-            paper_dict["StudentName"] = ""
-            warnings.append("[Not identified]")
-        paper_dict["identified"] = paper_id_info is not None
-
-        paper_marked = self.is_paper_marked(paper)
-
-        paper_dict["marked"] = paper_marked
-        if paper_marked:
-            total = 0.0
-        else:
-            warnings.append("[Not marked]")
-            paper_dict["Total"] = None
-
-        for qi, qlabel in SpecificationService.get_question_index_label_pairs():
-            version, mark = self.get_question_version_and_mark(paper, qi)
-            paper_dict[f"{qlabel}_mark"] = mark
-            paper_dict[f"{qlabel}_version"] = version
-            # if paper is marked then compute the total
-            if paper_marked:
-                assert mark is not None
-                total += mark
-        if paper_marked:
-            paper_dict["Total"] = total
-
-        if warnings:
-            paper_dict.update({"warnings": ",".join(warnings)})
-
-        paper_dict["last_update"] = self.get_last_updated_timestamp(paper)
-        return paper_dict
-
-    def get_spreadsheet_data(self) -> dict[str, Any]:
-        """Return a dictionary with all of the required data for a reassembly spreadsheet."""
-        spreadsheet_data = {}
-        papers = Paper.objects.all()
-        for paper in papers:
-            spreadsheet_data[paper.paper_number] = self._paper_spreadsheet_dict(paper)
-        return spreadsheet_data
-
+    @classmethod
     def get_paper_status(
-        self, paper: Paper
+        cls, paper: Paper
     ) -> tuple[bool, bool, int, timezone.datetime]:
         """Return a list of [scanned?, identified?, n questions marked, time of last update] for a given paper.
 
@@ -238,16 +247,19 @@ class StudentMarkService:
         Returns:
             tuple of [bool, bool, int, datetime]
         """
-        paper_id_info = self.get_paper_id_or_none(paper)
+        paper_id_info = cls.get_paper_id_or_none(paper)
         is_id = paper_id_info is not None
         is_scanned = ManageScanService.is_paper_completely_scanned(paper.paper_number)
-        n_marked = self.get_n_questions_marked(paper)
-        last_modified = self.get_last_updated_timestamp(paper)
+        n_marked = cls._get_n_questions_marked(paper)
+        last_modified = cls._get_last_updated_timestamp(paper)
 
         return (is_scanned, is_id, n_marked, last_modified)
 
-    def get_identified_papers(self) -> dict[str, list[str]]:
-        """Return a dictionary with all of the identified papers and their names and IDs.
+    def get_identified_papers(self) -> dict[int, tuple[str | None, str]]:
+        """Return a dictionary with all of the identified papers and their names and IDs, with potentially INEFFICIENT DB operations.
+
+        TODO: only called by an unused legacy API code, see "API/views/reports.py"
+        TODO: so this can be removed soon.
 
         Returns:
             dictionary: keys are paper numbers, values are a list of [str, str]
@@ -258,78 +270,11 @@ class StudentMarkService:
             paper_id_info = self.get_paper_id_or_none(paper)
             if paper_id_info:
                 student_id, student_name = paper_id_info
-                spreadsheet_data[paper.paper_number] = [student_id, student_name]
+                spreadsheet_data[paper.paper_number] = (student_id, student_name)
         return spreadsheet_data
 
-    def get_marks_from_paper(self, paper_num: int) -> dict:
-        """Get the marks for a paper.
-
-        Args:
-            paper_num: The paper number.
-
-        Returns:
-            Dict keyed by paper number whose values are a dictionary holding
-            the mark information for each question in the paper.
-        """
-        try:
-            paper_obj = Paper.objects.get(paper_number=paper_num)
-        except Paper.DoesNotExist:
-            return {}
-        marking_tasks = (
-            paper_obj.markingtask_set.all()
-            .select_related("latest_annotation")
-            .exclude(status=MarkingTask.OUT_OF_DATE)
-        )
-        questions: dict[int, str | dict] = {}
-        for marking_task in marking_tasks.order_by("question_index"):
-            current_annotation = marking_task.latest_annotation
-            if current_annotation:
-                questions[marking_task.question_index] = {
-                    "question": marking_task.question_index,
-                    "version": marking_task.question_version,
-                    "out_of": current_annotation.annotation_data["maxMark"],
-                    "student_mark": current_annotation.score,
-                }
-            else:
-                # String value so that it questions.get(i) doesn't return None
-                questions[marking_task.question_index] = "Not marked"
-
-        return {paper_num: questions}
-
-    def get_all_marks(self) -> dict:
-        """Get the marks for all papers.
-
-        Returns:
-            Dict containing the mark information for each question in each paper. Keyed by
-            paper number whose values are a dictionary holding the mark information for each
-            question in the paper.
-        """
-        paper_nums = MarkingTask.objects.values_list(
-            "paper__paper_number", flat=True
-        ).distinct()
-        marks = {}
-        for paper_num in paper_nums:
-            marks.update(self.get_marks_from_paper(paper_num))
-        # Sort by paper number
-        return {k: marks[k] for k in sorted(marks)}
-
-    def get_marks_from_paper_set(self, paper_set: set) -> dict:
-        """Get the marks for a set of papers.
-
-        Args:
-            paper_set: The set of (int) paper numbers.
-
-        Returns:
-            Dict containing the mark information for each question in each paper. Keyed by paper number whose
-            values are a dictionary holding the mark information for each question in the paper.
-        """
-        marks = {}
-        for paper_num in paper_set:
-            marks.update(self.get_marks_from_paper(paper_num))
-
-        return marks
-
-    def get_n_of_question_marked(self, question: int, *, version: int = 0) -> int:
+    @staticmethod
+    def get_n_of_question_marked(question: int, *, version: int = 0) -> int:
         """Get the count of how many papers have marked a specific question.
 
         Args:
@@ -419,7 +364,7 @@ class StudentMarkService:
         Returns:
             The csv in string format.
         """
-        student_marks = cls.get_all_marking_info_faster()
+        student_marks = cls.get_all_marking_info()
 
         keys = cls._get_csv_header(
             version_info=version_info,
@@ -446,8 +391,12 @@ class StudentMarkService:
         return csv_io.getvalue()
 
     @staticmethod
-    def get_all_marking_info_faster() -> list[dict[str, Any]]:
+    def get_all_marking_info() -> list[dict[str, Any]]:
         """Build a list of dictionaries being the rows of the marking spreadsheet.
+
+        Returns:
+            A list of dicts, with keys appropriate for the columns of Plom's
+            `marks.csv` spreadsheet.
 
         Raises:
             RuntimeError: if there are two complete ID-tasks for the same paper,

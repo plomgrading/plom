@@ -43,10 +43,9 @@ class Command(BaseCommand):
         if not source_path.exists():
             self.stderr.write(f"Cannot open {source_csv}. Stopping.")
 
-        with open(source_path, "rb") as fh:
-            success, warnings = StagingStudentService.validate_and_use_classlist_csv(
-                fh, ignore_warnings=ignore_warnings
-            )
+        success, warnings = StagingStudentService.validate_and_use_classlist_csv(
+            source_path, ignore_warnings=ignore_warnings
+        )
 
         if success and not warnings:
             self.stdout.write("Upload has no warnings.")

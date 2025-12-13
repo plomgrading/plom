@@ -4,6 +4,7 @@
 
 import hashlib
 import io
+from typing import Any
 
 import pymupdf
 
@@ -37,27 +38,24 @@ class SolnSourceService:
             == SpecificationService.get_n_versions()
         )
 
-    def get_solution_pdf_hashes(self) -> dict[int, None | str]:
-        """Returns dict of hash of each uploaded solution pdf, or Nones if pdf missing."""
-        soln_pdfs: dict[int, None | str] = {
-            v: None for v in SpecificationService.get_list_of_versions()
-        }
-        for spdf in SolutionSourcePDF.objects.all():
-            soln_pdfs[spdf.version] = spdf.pdf_hash
-        return soln_pdfs
+    @staticmethod
+    def get_list_of_sources() -> list[dict[str, Any]]:
+        """Return a list of dicts describing all versions of the solutions, uploaded or not."""
 
-    @transaction.atomic
-    def get_list_of_sources(self) -> dict[int, None | tuple[str, str]]:
-        """Return a dict of all versions, uploaded or not."""
-        status: dict[int, None | tuple[str, str]] = {
-            v: None for v in SpecificationService.get_list_of_versions()
-        }
-        for soln_pdf_obj in SolutionSourcePDF.objects.all():
-            status[soln_pdf_obj.version] = (
-                soln_pdf_obj.source_pdf.url,
-                soln_pdf_obj.pdf_hash,
-            )
-        return status
+        def _get_source_dict(v):
+            try:
+                x = SolutionSourcePDF.objects.filter(version=v).get()
+                return {
+                    "version": x.version,
+                    "uploaded": True,
+                    "hash": x.pdf_hash,
+                    "original_filename": x.original_filename,
+                }
+            except SolutionSourcePDF.DoesNotExist:
+                return {"version": v, "uploaded": False}
+
+        vers = SpecificationService.get_list_of_versions()
+        return [_get_source_dict(v) for v in vers]
 
     @staticmethod
     def remove_solution_pdf(version: int):
@@ -89,7 +87,8 @@ class SolnSourceService:
         for obj in SolutionSourcePDF.objects.all():
             cls.remove_solution_pdf(obj.version)
 
-    def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
+    @staticmethod
+    def get_soln_pdf_for_download(version: int) -> io.BytesIO:
         """Return bytes of solution pdf for given version."""
         if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")
@@ -121,26 +120,23 @@ class SolnSourceService:
         with pymupdf.open(stream=file_bytes) as doc:
             if len(doc) != SolnSpecService.get_n_pages():
                 raise ValueError(
-                    f"Solution pdf does has {len(doc)} pages - needs {SolnSpecService.get_n_pages()}."
+                    f"Solution pdf does has {len(doc)} pages - should have "
+                    f"{SolnSpecService.get_n_pages()} to match soln spec."
                 )
 
             doc_hash = hashlib.sha256(file_bytes).hexdigest()
-            # check if there is an existing solution with that hash
-            if SolutionSourcePDF.objects.filter(pdf_hash=doc_hash).exists():
-                raise ValueError(
-                    f"Another solution pdf with hash {doc_hash} has already been uploaded."
-                )
-            # create the DB entry
             SolutionSourcePDF.objects.create(
                 version=version,
                 source_pdf=File(io.BytesIO(file_bytes), name=f"solution{version}.pdf"),
                 pdf_hash=doc_hash,
+                original_filename=in_memory_file.name,
             )
             # We need to create solution images for display in the client
             # Assembly of solutions for each paper will use the source pdfs, not these images.
             self._create_solution_images(version, doc)
 
-    def _create_solution_images(self, version: int, doc: pymupdf.Document) -> None:
+    @staticmethod
+    def _create_solution_images(version: int, doc: pymupdf.Document) -> None:
         """Create one solution image for each question of the given version, for client.
 
         Images are extracted at 150 DPI.

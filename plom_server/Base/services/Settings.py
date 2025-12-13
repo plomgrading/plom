@@ -4,6 +4,7 @@
 from copy import deepcopy
 from typing import Any
 
+from plom.tpv_utils import new_magic_code, is_valid_public_code
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from ..models import SettingsModel
 
@@ -118,3 +119,31 @@ def set_who_can_modify_rubrics(x: str) -> None:
     if x not in choices:
         raise ValueError(f'"{x}" is invalid, must be one of {choices}')
     key_value_store_set("who_can_modify_rubrics", x)
+
+
+def get_public_code() -> str | None:
+    """Return the public code or None if there isn't one."""
+    return key_value_store_get_or_none("public_code")
+
+
+def set_public_code(public_code: str) -> None:
+    """Change the public code."""
+    if not is_valid_public_code(public_code):
+        raise ValueError("invalid public code")
+    key_value_store_set("public_code", public_code)
+
+
+def get_or_create_new_public_code():
+    """Carefully return the current public code or create a new one.
+
+    If two people call almost simultaneously, they should get the same code.
+    """
+    obj, _created = SettingsModel.objects.get_or_create(
+        key="public_code", defaults={"value": new_magic_code()}
+    )
+    return obj.value
+
+
+def create_new_random_public_code():
+    """Create a new random public code, independent of whether one already exists."""
+    set_public_code(new_magic_code())

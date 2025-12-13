@@ -10,20 +10,20 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from plom_server.Base.base_group_views import (
-    MarkerLeadMarkerOrManagerView,
+    MarkerOrManagerView,
     LeadMarkerOrManagerView,
 )
 
 from collections import Counter
 
 from plom_server.Mark.models import MarkingTask
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Papers.services import SpecificationService
 from plom_server.Mark.services import MarkingStatsService
 from ..services import ProgressOverviewService
 
 
-class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
+class ProgressMarkHome(MarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
@@ -49,21 +49,20 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
         return render(request, "Progress/Mark/mark_home.html", context)
 
 
-class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
+class ProgressMarkStartMarking(MarkerOrManagerView):
     """Display a page telling users how to get the client and get started."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Respond to Get method requests to the Mark Papers page."""
         context = self.build_context()
-        server_link = AuthenticationServices.get_base_link(
+        server_link = AuthService.get_base_link(
             default_host=get_current_site(request).domain
         )
         context.update({"server_link": server_link})
         return render(request, "Progress/Mark/mark_papers.html", context)
 
 
-class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
-
+class ProgressMarkStatsView(MarkerOrManagerView):
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:

@@ -21,11 +21,11 @@ class StagingBundle(models.Model):
     TODO: document other fields.
 
     Fields:
-        number_of_pages: how many pages this bundle has.  Initially
-            this can be unknown (None); in that case, when we start
-            processing the bundle, it will be set.  Optionally, if
-            you know this initially you can set it *before* the
-            processing has started.  TODO: I might remove that!
+        number_of_pages: how many pages this bundle has.  Older code
+            initially allowed this to be unknown (None); currently
+            we set it when creating a bundle, although a future change
+            to avoid opening the PDF only in worker threads (Huey)
+            might revisit that, so its still allowed to be None for now.
         has_page_images: this bundle has been processed to create
             StagingImages.
         has_qr_codes: the StagingImages of this bundle have been

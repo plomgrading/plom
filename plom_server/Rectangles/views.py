@@ -15,7 +15,6 @@ from django.core.files.base import ContentFile
 from django.shortcuts import render
 
 from plom_server.Papers.services import SpecificationService, PaperInfoService
-from plom_server.Preparation.services import SourceService
 from plom_server.Base.base_group_views import ManagerRequiredView
 from .services import get_reference_qr_coords_for_page, RectangleExtractor
 
@@ -29,7 +28,7 @@ class RectangleHomeView(ManagerRequiredView):
             {
                 "num_versions": SpecificationService.get_n_versions(),
                 "number_of_pages": SpecificationService.get_n_pages(),
-                "uploaded_sources": SourceService.get_list_of_sources(),
+                # "sources": SourceService.get_list_of_sources(),
                 "version_list": SpecificationService.get_list_of_versions(),
                 "page_list": SpecificationService.get_list_of_pages,
             }

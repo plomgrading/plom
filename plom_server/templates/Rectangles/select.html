@@ -1,6 +1,8 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -29,6 +31,9 @@
                 <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
             </div>
             <div class="col-6">
+                <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
+                     have special names that read/written by javascript, to sync
+                     interactive box drawing to the coordinates in the inputs. -->
                 <p>The absolute coordinates of the selection.</p>
                 <ul>
                     <li>
@@ -71,10 +76,12 @@
         </div>
     </div>
 </div>
-<script type="text/javascript">
-  var corner_dat = {{qr_info|safe}};
-  var top_left_coord = {{top_left|safe}};
-  var bottom_right_coord = {{bottom_right|safe}};
-</script>
 <script src="{% static '/js/rectangle_select.js' %}"></script>
+<script type="text/javascript">
+  // these are declared in the above 'rectangle_select.js'script
+  // and are required to allow it to function
+  corner_dat = {{qr_info|safe}};
+  top_left_coord = {{top_left|safe}};
+  bottom_right_coord = {{bottom_right|safe}};
+</script>
 {% endblock main_content %}

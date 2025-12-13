@@ -47,7 +47,6 @@ Instructors and TAs can do this but in the past it would fail for
 the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 """
 
-
 import argparse
 import os
 import sys
@@ -56,6 +55,7 @@ import string
 import time
 from datetime import datetime, timezone
 from getpass import getpass
+from typing import Any
 
 from tabulate import tabulate
 from tqdm import tqdm
@@ -70,12 +70,7 @@ from plom.common import (
     Default_Port,
 )
 from plom.cli import start_messenger
-from plom.plom_exceptions import (
-    PlomAuthenticationException,
-    PlomSeriousException,
-    PlomNoPermission,
-    PlomNoPaper,
-)
+from plom.plom_exceptions import PlomException
 
 
 # bump this a bit if you change this script
@@ -205,7 +200,6 @@ def get_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="""
-            NOT IMPLEMENTED.
             Upload individualized solutions, in addition to reassembled papers
             (default: off).
         """,
@@ -219,7 +213,6 @@ def get_parser() -> argparse.ArgumentParser:
         "--reports",
         action="store_true",
         help="""
-            NOT IMPLEMENTED.
             Upload individualized student reports, in addition to reassembled papers
             (default: off).
         """,
@@ -497,27 +490,28 @@ def get_canvas_id_dict(
 # functions to interact with a Plom server
 
 
-def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
+def restructure_plom_marks(plom_marks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Change the key on the Plom marks dicts to student number.
 
     **WARNING: sometimes requires user interaction.**
     This function will remove any papers with warnings attached.
 
     Returns:
-        A dict of exam marks keyed by student ids.
+        A list of dicts.
     """
     simplified_list = []
     # we won't attempt to push papers on the discard list to Canvas
     discard_list = []
-    for paper_num, mark_dict in plom_marks_dict.items():
+    for mark_dict in plom_marks:
         # Oct. 8th - the distinction between None and "" is significant
         # None means the paper was ID'd as having a blank coverpage
         # "" means the paper hasn't been ID'd yet and we will implicitly discard it
+        # Oct. 24th: the API now gives only those that are ID'd so this may not happen
         if mark_dict[PLOM_STUDENT_ID] == "":
             continue
 
         # Oct. 8th - we explicitly discard unmarked papers
-        if PLOM_WARNINGS in mark_dict.keys():
+        if mark_dict[PLOM_WARNINGS]:
             discard_list.append(mark_dict)
             continue
 
@@ -540,12 +534,6 @@ def restructure_plom_marks_dict(plom_marks_dict: dict) -> list[dict[str, int]]:
 
 def main():
     args = get_parser().parse_args()
-
-    unsupported_options = [args.solutions, args.reports]
-    if any(unsupported_options):
-        raise NotImplementedError(
-            "Solutions and Reports aren't supported yet, exiting."
-        )
 
     try:
         from dotenv import load_dotenv
@@ -621,9 +609,7 @@ def main():
     print(CHECKMARK)
 
     # iterate over this
-    student_marks = restructure_plom_marks_dict(
-        plom_messenger.new_server_get_paper_marks()
-    )
+    student_marks = restructure_plom_marks(plom_messenger.get_paper_marks())
     print(f"Plom marks retrieved (for {len(student_marks)} examinees).")
 
     # put canvas submissions in a dict for fast recall
@@ -672,7 +658,7 @@ def main():
         if args.dry_run:
             if args.papers:
                 try:
-                    file_info = plom_messenger.new_server_get_reassembled(paper_number)
+                    file_info = plom_messenger.get_reassembled(paper_number)
                     successes.append(
                         {
                             "file/mark": file_info["filename"],
@@ -681,12 +667,7 @@ def main():
                             "student_canvas_id": student_canvas_id,
                         }
                     )
-                except (
-                    PlomAuthenticationException,
-                    PlomNoPermission,
-                    PlomNoPaper,
-                    PlomSeriousException,
-                ) as e:
+                except PlomException as e:
                     print(e)
                     plom_timeouts.append(
                         {
@@ -708,23 +689,56 @@ def main():
                     }
                 )
             if args.reports:
-                raise NotImplementedError("No Plom API")
-                pass
+                try:
+                    file_info = plom_messenger.get_report(paper_number)
+                    successes.append(
+                        {
+                            "file/mark": file_info["filename"],
+                            "student_id": student_id,
+                            "student_name": student_name,
+                            "student_canvas_id": student_canvas_id,
+                        }
+                    )
+                except PlomException as e:
+                    print(e)
+                    plom_timeouts.append(
+                        {
+                            "paper_number": paper_number,
+                            "student_id": student_id,
+                            "error": e,
+                        }
+                    )
+                finally:
+                    if os.path.exists(file_info["filename"]):
+                        os.remove(file_info["filename"])
             if args.solutions:
-                raise NotImplementedError("No Plom API")
+                try:
+                    file_info = plom_messenger.get_solution(paper_number)
+                    successes.append(
+                        {
+                            "file/mark": file_info["filename"],
+                            "student_id": student_id,
+                            "student_name": student_name,
+                            "student_canvas_id": student_canvas_id,
+                        }
+                    )
+                except PlomException as e:
+                    print(e)
+                    plom_timeouts.append(
+                        {
+                            "paper_number": paper_number,
+                            "student_id": student_id,
+                            "error": e,
+                        }
+                    )
             continue
 
-        # no real multithreading in python, so order doesn't really matter here
+        # no real parallelism in python, so order doesn't really matter here
         if args.papers:
             try:
-                file_info = plom_messenger.new_server_get_reassembled(paper_number)
+                file_info = plom_messenger.get_reassembled(paper_number)
                 student_canvas_submission.upload_comment(file_info["filename"])
-            except (
-                PlomAuthenticationException,
-                PlomNoPermission,
-                PlomNoPaper,
-                PlomSeriousException,
-            ) as e:
+            except PlomException as e:
                 print(e)
                 plom_timeouts.append(
                     {
@@ -764,12 +778,63 @@ def main():
             time.sleep(random.uniform(0.1, 0.3))
 
         if args.solutions:
-            raise NotImplementedError("No Plom API")
-            pass
+            try:
+                file_info = plom_messenger.get_solution(paper_number)
+                student_canvas_submission.upload_comment(file_info["filename"])
+            except PlomException as e:
+                print(e)
+                plom_timeouts.append(
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": e,
+                    }
+                )
+            # TODO: should look at the negative response from Canvas
+            except CanvasException as e:
+                print(e)
+                canvas_timeouts.append(
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": e,
+                    }
+                )
+            finally:
+                if os.path.exists(file_info["filename"]):
+                    os.remove(file_info["filename"])
+
+            time.sleep(random.uniform(0.1, 0.3))
 
         if args.reports:
-            raise NotImplementedError("No Plom API")
-            pass
+            try:
+                file_info = plom_messenger.get_report(paper_number)
+                student_canvas_submission.upload_comment(file_info["filename"])
+            except PlomException as e:
+                print(e)
+                plom_timeouts.append(
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": e,
+                    }
+                )
+            # TODO: should look at the negative response from Canvas
+            except CanvasException as e:
+                print(e)
+                canvas_timeouts.append(
+                    {
+                        "paper_number": paper_number,
+                        "student_id": student_id,
+                        "error": e,
+                    }
+                )
+            finally:
+                if os.path.exists(file_info["filename"]):
+                    os.remove(file_info["filename"])
+
+            time.sleep(random.uniform(0.1, 0.3))
+
         count += 1
     print("\n")
     print(f"pushed {count} papers without issue\n")

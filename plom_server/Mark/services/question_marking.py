@@ -220,10 +220,9 @@ class QuestionMarkingService:
         tag_marked_during_quota = "during_quota"
 
         # Check if the user has quota limits
-        from plom_server.Progress.services import UserInfoServices
+        from plom_server.Progress.services import UserInfoService
 
-        uis = UserInfoServices()
-        progress = uis.get_user_progress(username=user.username)
+        progress = UserInfoService.get_user_progress(username=user.username)
         if progress["user_has_quota_limit"]:
             if progress["user_tasks_marked"] < progress["user_quota_limit"] or (
                 task.status == MarkingTask.COMPLETE
@@ -254,3 +253,12 @@ class QuestionMarkingService:
         # TODO: consider moving this into the helper in annotations.py
         task.status = MarkingTask.COMPLETE
         task.save()
+
+        if require_latest_rubrics:
+            # strip any "rubric_changed" tags
+            try:
+                MarkingTaskService().remove_tag_text_from_task_code(
+                    "rubric_changed", task.code
+                )
+            except ValueError:
+                pass
