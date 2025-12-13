@@ -58,9 +58,8 @@ def score_histogram(score_list, max_score, min_score=0, bin_width=1):
 class MarkingStatsService:
     """Functions for getting marking stats."""
 
-    def get_scores_for_question_version(
-        self, question_idx: int, version: int
-    ) -> list[int]:
+    @staticmethod
+    def get_scores_for_question_version(question_idx: int, version: int) -> list[int]:
         """Retrieves a list of all scores for a specific question and version.
 
         From the latest annotations of completed tasks.
