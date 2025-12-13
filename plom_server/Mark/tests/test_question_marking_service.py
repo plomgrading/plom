@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
 from model_bakery import baker
