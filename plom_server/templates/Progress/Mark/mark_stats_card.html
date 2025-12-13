@@ -22,14 +22,14 @@
                 <span class="text-muted small">Details</span>
             </summary>
             <div class="mt-1">
-                <p>
+                <p class="mb-1">
                     Of the {{ n_papers }} papers, {{ marking_task_status_counts.Complete }} are marked,
                     {{ marking_task_status_counts.Out }} are out with markers,
                     and {{ marking_task_status_counts.ToDo }} are ready to be marked.
                 </p>
                 <h6>Score Distribution</h6>
                 {% if histogram_data %}
-                    <div style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                    <div>
                         <svg width="100%" height="30" aria-label="Score distribution histogram">
                             {% for bar in histogram_data %}
                                 <g>
@@ -44,11 +44,11 @@
                 {% else %}
                     <p>This question has a maximum mark of 0.</p>
                 {% endif %}
-                <div class="mt-3">
+                <div class="mt-2">
                     <a href="{% url 'progress_mark_details' question_idx version %}"
-                       class="btn btn-primary">View Details</a>
+                       class="btn btn-primary btn-sm">View Details</a>
                     <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
-                       class="btn btn-secondary">Filter Annotations</a>
+                       class="btn btn-secondary btn-sm">Filter Annotations</a>
                 </div>
             </div>
         </details>
