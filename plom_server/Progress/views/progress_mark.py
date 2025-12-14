@@ -76,8 +76,10 @@ class ProgressMarkStatsView(MarkerOrManagerView):
 
         n_papers = tasks.values("paper").distinct().count()
 
-        marking_task_status_counts = pos.get_mark_task_status_counts_SUMMER(
-            n_papers=n_papers, question_idx=question_idx, version=version
+        marking_task_status_counts = pos.get_mark_task_status_counts_by_qv(
+            question_idx,
+            version,
+            n_papers=n_papers,
         )
 
         scores = mss.get_scores_for_question_version(question_idx, version)
@@ -172,7 +174,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "hist_values": list(hist_values),
                 "user_hists": user_hists_and_stats,
                 "remaining_tasks": remaining_tasks,
-                "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
+                "status_counts": ProgressOverviewService.get_mark_task_status_counts_by_qv(
                     question_idx, version
                 ),
             }
@@ -219,8 +221,8 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
-                "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_idx, version=None
+                "status_counts": ProgressOverviewService.get_mark_task_status_counts_by_qv(
+                    question_idx
                 ),
             }
         )

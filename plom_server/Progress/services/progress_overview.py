@@ -175,71 +175,56 @@ class ProgressOverviewService:
                 d.update({"Missing": n_papers - present})
         return dat
 
-    @transaction.atomic
-    def get_mark_task_status_counts_SUMMER(
-        self, n_papers: int, question_idx: int | None = None, version: int | None = None
-    ) -> dict:
-        """Get the counts of marking tasks by their status.
-
-        Now optionally filters by question index and version.
-
-        TODO: figure out the overlap between this and the other two
-        similarly-named `get_mark_task_status_counts` methods.
-        """
-        tasks_query = MarkingTask.objects.all()
-
-        if question_idx is not None:
-            tasks_query = tasks_query.filter(question_index=question_idx)
-        if version is not None:
-            tasks_query = tasks_query.filter(question_version=version)
-
-        status_counts = (
-            tasks_query.values("status")
-            .annotate(count=Count("status"))
-            .order_by("status")
-        )
-
-        counts = {
-            "Complete": 0,
-            "To Do": 0,
-            "Out": 0,
-            "Out Of Date": 0,
-            "Missing": n_papers,
-        }
-
-        total_tasks = 0
-        for item in status_counts:
-            status_label = MarkingTask.StatusChoices(item["status"]).label
-            if status_label in counts:
-                counts[status_label] = item["count"]
-                total_tasks += item["count"]
-
-        counts["Missing"] = max(0, n_papers - total_tasks)
-
-        return counts
-
+    @staticmethod
     @transaction.atomic
     def get_mark_task_status_counts_by_qv(
-        self, question_index: int, version: int | None = None
+        question_index: int | None = None,
+        version: int | None = None,
+        *,
+        n_papers: int | None = None,
     ) -> dict[str, int]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
 
-        Note that, if version is not supplied (or None) then count by
-        question only. Also note that this excludes out-of-date tasks.
+        Args:
+            question_index: restrict to a particular question.  If omitted
+                (or None) then count without question restriction.
+            version: restrict to a particular version.  If omitted (or None)
+                then count without version restriction.
 
+        Keyword Args:
+            n_papers: if is supplied, then the number of missing
+                tasks is also computed. Also note that this excludes
+                out-of-date tasks.
+
+        Returns:
+            A dict with keys "To Do", "Complete", "Out", and---if `n_papers`
+            was specified---"Missing".
+
+        Note that this excludes out-of-date tasks.
         """
-        dat = {"To Do": 0, "Complete": 0, "Out": 0}
-        query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).filter(
-            question_index=question_index
-        )
-        # filter by version if supplied
-        if version:
-            query = query.filter(question_version=version)
+        counts = {
+            MarkingTask.TO_DO.label: 0,
+            MarkingTask.COMPLETE.label: 0,
+            MarkingTask.OUT.label: 0,
+        }
 
-        for X in query.values("status").annotate(the_count=Count("status")):
-            dat[MarkingTask(status=X["status"]).get_status_display()] = X["the_count"]
+        tasks_query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
 
-        return dat
+        if question_index is not None:
+            tasks_query = tasks_query.filter(question_index=question_index)
+        if version is not None:
+            tasks_query = tasks_query.filter(question_version=version)
+
+        for X in tasks_query.values("status").annotate(count=Count("status")):
+            status_label = MarkingTask.StatusChoices(X["status"]).label
+            counts[status_label] = X["count"]
+
+        if n_papers is not None:
+            present = sum([c for k, c in counts.items()])
+            # max 0 just in case of programming error
+            counts.update({"Missing": max(0, n_papers - present)})
+
+        return counts
 
     @transaction.atomic
     def get_first_last_used_paper_number(self) -> tuple[int, int]:
