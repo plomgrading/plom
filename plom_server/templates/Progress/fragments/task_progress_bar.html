@@ -49,14 +49,15 @@
                                      data-bs-title="complete {{ n_complete }}"></div>
                             {% endif %}
                             {% if n_out > 0 %}
-                                <div class="progress-bar bg-info bg-opacity-75"
+                                <div class="progress-bar bg-warning bg-opacity-75"
                                      style="width: {{ p_out }}%"
                                      data-bs-toggle="tooltip"
                                      data-bs-placement="bottom"
                                      data-bs-title="out {{ n_out }}"></div>
                             {% endif %}
                             {% if n_todo > 0 %}
-                                <div class="progress-bar bg-warning bg-opacity-75"
+                                <!-- no need to render a bar, but we want the tooltip -->
+                                <div class="progress-bar bg-transparent"
                                      style="width: {{ p_todo }}%"
                                      data-bs-toggle="tooltip"
                                      data-bs-placement="bottom"
