@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023, 2025 Colin B. Macdonald
     Copyright (C) 2025 Bryan Tanady
 -->
 {% extends "base/base.html" %}
@@ -24,9 +24,11 @@
         <div class="container w-100 alert alert-warning">
             There are {{ missing_task_count }} missing tasks.
             {% if user_is_manager %}
-                <a href="{% url 'scan_list_incomplete' %}">Click here</a> to examine the tasks.
+                You may want to examine the
+                <a class="btn btn-outline-secondary btn-sm align-baseline"
+                   href="{% url 'scan_list_incomplete' %}">list of incomplete paper</a>.
             {% else %}
-                Manager can examine the missing tasks.
+                Use a manager account to examine the list of incomplete papers.
             {% endif %}
         </div>
     {% endif %}
