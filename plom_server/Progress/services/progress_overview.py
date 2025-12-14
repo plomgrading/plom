@@ -142,9 +142,10 @@ class ProgressOverviewService:
             dat.update({"Missing": n_papers - present})
         return dat
 
+    @staticmethod
     @transaction.atomic
     def get_mark_task_status_counts(
-        self, n_papers: int | None = None
+        *, n_papers: int | None = None
     ) -> dict[int, dict[str, int]]:
         """Return a dict of counts of marking tasks by their status for each question.
 
@@ -154,26 +155,35 @@ class ProgressOverviewService:
                 out-of-date tasks.
 
         Returns:
-            A dict of dict - one for each question-index.
+            A dict of dict - one for each question-index (and int).
             For each index the dict is "{status: count}" for each of
             "To Do", "Complete", "Out".  If `n_papers`` was specified
             there is also "Missing".
         """
         qindices = SpecificationService.get_question_indices()
-        dat = {qi: {"To Do": 0, "Complete": 0, "Out": 0} for qi in qindices}
-        for X in (
-            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-            .values("status", "question_index")
-            .annotate(the_count=Count("status"))
+        assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
+        dict_of_counts = {
+            qi: {
+                MarkingTask.TO_DO.label: 0,
+                MarkingTask.COMPLETE.label: 0,
+                MarkingTask.OUT.label: 0,
+            }
+            for qi in qindices
+        }
+
+        tasks_query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+
+        for X in tasks_query.values("status", "question_index").annotate(
+            count=Count("status")
         ):
-            dat[X["question_index"]][
-                MarkingTask(status=X["status"]).get_status_display()
-            ] = X["the_count"]
+            status_label = MarkingTask.StatusChoices(X["status"]).label
+            dict_of_counts[X["question_index"]][status_label] = X["count"]
         if n_papers is not None:
-            for qi, d in dat.items():
-                present = sum([v for x, v in d.items()])
-                d.update({"Missing": n_papers - present})
-        return dat
+            for qi, d in dict_of_counts.items():
+                present = sum([c for k, c in d.items()])
+                # max 0 just in case of programming error
+                d.update({"Missing": max(0, n_papers - present)})
+        return dict_of_counts
 
     @staticmethod
     @transaction.atomic
@@ -202,6 +212,7 @@ class ProgressOverviewService:
 
         Note that this excludes out-of-date tasks.
         """
+        assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
         counts = {
             MarkingTask.TO_DO.label: 0,
             MarkingTask.COMPLETE.label: 0,
