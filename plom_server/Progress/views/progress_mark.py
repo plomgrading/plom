@@ -27,18 +27,10 @@ class ProgressMarkHome(MarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
-        pos = ProgressOverviewService()
-        id_task_overview, _ = pos.get_task_overview()
-        papers_with_a_task = list(id_task_overview.keys())
-        n_papers = len(papers_with_a_task)
-        mark_task_status_counts = pos.get_mark_task_status_counts(n_papers=n_papers)
-        missing_task_count = sum(
-            [
-                count_dict["Missing"]
-                for qi, count_dict in mark_task_status_counts.items()
-            ]
+        missing_per_question = (
+            ProgressOverviewService.n_missing_marking_tasks_for_each_question()
         )
-
+        missing_task_count = sum(n for k, n in missing_per_question.items())
         context.update(
             {
                 "versions": SpecificationService.get_list_of_versions(),

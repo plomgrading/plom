@@ -100,6 +100,48 @@ class ProgressOverviewService:
 
         return (id_task_overview, marking_task_overview)
 
+    @staticmethod
+    def n_papers_with_at_least_one_marking_task() -> int:
+        """The number of papers that are currently being marked."""
+        # Note prefetch("papers") is unnecessary with values_list
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        return tasks.values_list("paper__paper_number", flat=True).distinct().count()
+
+    @staticmethod
+    def n_marking_tasks_for_each_question() -> dict[int, int]:
+        """Return the number of marking tasks for each question, as a dict keyed by question index."""
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        question_indices = SpecificationService.get_question_indices()
+        # Perhaps fewer queries to work with pairs (qi, papernum):
+        # tasks.values_list("question_index", "paper__paper_number")
+        return {
+            qi: tasks.filter(question_index=qi)
+            .values_list("paper__paper_number", flat=True)
+            .distinct()
+            .count()
+            for qi in question_indices
+        }
+
+    @staticmethod
+    def n_missing_marking_tasks_for_each_question() -> dict[int, int]:
+        """Return the number of missing marking tasks for each question, as a dict keyed by question index.
+
+        Note: its harder to find this at the level of versions.  I think
+        this would have to involve looking at the incomplete papers, to check
+        which specific versions are missing.
+        """
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        question_indices = SpecificationService.get_question_indices()
+        N = tasks.values_list("paper__paper_number", flat=True).distinct().count()
+        return {
+            qi: N
+            - tasks.filter(question_index=qi)
+            .values_list("paper__paper_number", flat=True)
+            .distinct()
+            .count()
+            for qi in question_indices
+        }
+
     @transaction.atomic
     def get_completed_id_task_count(self) -> int:
         """Return number of completed ID tasks."""
