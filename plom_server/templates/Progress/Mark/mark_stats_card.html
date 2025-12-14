@@ -26,8 +26,11 @@
                     Of the {{ n_papers }} papers, {{ marking_task_status_counts.Complete }} are marked,
                     {{ marking_task_status_counts.Out }} are out with markers,
                     and {{ marking_task_status_counts|get_item:"To Do" }} are ready to be marked.
+                    {% if marking_task_status_counts.Missing %}
+                        <span class="text-danger">{{ marking_task_status_counts.Missing }} tasks are missing.</span>
+                    {% endif %}
                 </p>
-                <h6>Score Distribution</h6>
+                <h6>Score distribution:</h6>
                 {% if histogram_data %}
                     <div class="text-body text-opacity-50">
                         <svg width="100%" height="45" aria-label="Score distribution histogram">
