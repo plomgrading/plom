@@ -294,7 +294,7 @@ make a ``csv`` file with one row, using a completely new paper number:
 say 1020.  Next we
 need :ref:`command line access to the server <cmdline_in_container>`.
 
-Using the command line access, use ``django-command plom-qvmap`` and
+Using the command line access, use ``django-admin plom-qvmap`` and
 see the ``append`` option.  Now you should be able to assign the
 conflicting work to paper 1020.
 
