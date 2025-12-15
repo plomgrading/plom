@@ -123,7 +123,7 @@ class ProgressOverviewService:
         }
 
     @staticmethod
-    def missing_marking_tasks_by_qv() -> dict[int, list[int]]:
+    def _missing_task_pqv_triplets() -> list[tuple[int, int, int]]:
         """Return which tasks are missing from each question, compared against the in-use papers."""
         tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         question_indices = SpecificationService.get_question_indices()
@@ -136,10 +136,8 @@ class ProgressOverviewService:
         for qi in question_indices:
             inuse = set([pn for q, pn in pairs if q == qi])
             notfound[qi] = list(overall_papers.difference(inuse))
-        print(notfound)
         # now further subdivide by version by checking the version-map
         missing_pairs = [(pn, qi) for qi, papers in notfound.items() for pn in papers]
-        print(missing_pairs)
         # TODO: N more DB queries, expensive if many missing: need a bulk version getter?
         # TODO: for example, one could get the qvmap and query offline, or just get the QuestionPages
         # (which exist even if the paper isn't in-use!)
@@ -147,7 +145,6 @@ class ProgressOverviewService:
             (pn, qi, PaperInfoService.get_version_from_paper_question(pn, qi))
             for pn, qi in missing_pairs
         ]
-        print(missing_triplets)
         return missing_triplets
 
     @staticmethod
@@ -255,13 +252,14 @@ class ProgressOverviewService:
                 d.update({"Missing": max(0, n_papers - present)})
         return dict_of_counts
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
     def get_mark_task_status_counts_by_qv(
+        cls,
         question_index: int | None = None,
         version: int | None = None,
         *,
-        n_papers: int | None = None,
+        compute_missing: bool = False,
     ) -> dict[str, int]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
 
@@ -272,12 +270,12 @@ class ProgressOverviewService:
                 then count without version restriction.
 
         Keyword Args:
-            n_papers: if is supplied, then the number of missing
-                tasks is also computed. Also note that this excludes
-                out-of-date tasks.
+            compute_missing: default False, but if True, also determine
+                how many tasks are missing, compared to the list of in-use
+                paper.
 
         Returns:
-            A dict with keys "To Do", "Complete", "Out", and---if `n_papers`
+            A dict with keys "To Do", "Complete", "Out", and---if `compute_missing`
             was specified---"Missing".
 
         Note that this excludes out-of-date tasks.
@@ -300,10 +298,29 @@ class ProgressOverviewService:
             status_label = MarkingTask.StatusChoices(X["status"]).label
             counts[status_label] = X["count"]
 
-        if n_papers is not None:
-            present = sum([c for k, c in counts.items()])
-            # max 0 just in case of programming error
-            counts.update({"Missing": max(0, n_papers - present)})
+        if not compute_missing:
+            return counts
+
+        triplets = cls._missing_task_pqv_triplets()
+        if version is None:
+            # TODO: I think it can be computed easier when version is None
+            # cls.n_missing_marking_tasks_for_each_question()
+            if question_index is None:
+                counts["Missing"] = len(triplets)
+            else:
+                counts["Missing"] = len(
+                    [p for p, q, v in triplets if q == question_index]
+                )
+        else:
+            if question_index is None:
+                counts["Missing"] = len([p for p, q, v in triplets if v == version])
+            else:
+                counts["Missing"] = len(
+                    [p for p, q, v in triplets if (q, v) == (question_index, version)]
+                )
+
+        # TODO: add a "Total" key?
+        # status_counts_total = sum([n for k, n in status_counts.items()])
 
         return counts
 

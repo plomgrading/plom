@@ -61,13 +61,7 @@ class ProgressMarkStatsView(MarkerOrManagerView):
         mss = MarkingStatsService()
 
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
-            question_idx,
-            version,
-        )
-        # TODO: still WIP but the idea seems sound
-        triplets = ProgressOverviewService.missing_marking_tasks_by_qv()
-        status_counts["Missing"] = len(
-            [p for p, q, v in triplets if (q, v) == (question_idx, version)]
+            question_idx, version, compute_missing=True
         )
         status_counts_total = sum([n for k, n in status_counts.items()])
 
@@ -154,12 +148,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         )
 
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
-            question_idx, version
-        )
-        # TODO: still WIP but the idea seems sound
-        triplets = ProgressOverviewService.missing_marking_tasks_by_qv()
-        status_counts["Missing"] = len(
-            [p for p, q, v in triplets if (q, v) == (question_idx, version)]
+            question_idx, version, compute_missing=True
         )
         status_counts_total = sum([n for k, n in status_counts.items()])
 
@@ -207,6 +196,11 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 v * scale for v in hist_values
             ]
 
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+            question_idx, compute_missing=True
+        )
+        status_counts_total = sum([n for k, n in status_counts.items()])
+
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
         )
@@ -220,9 +214,8 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
-                "status_counts": ProgressOverviewService.get_mark_task_status_counts_by_qv(
-                    question_idx
-                ),
+                "task_status_counts": status_counts,
+                "task_status_counts_total": status_counts_total,
             }
         )
 
