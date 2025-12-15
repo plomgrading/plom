@@ -67,7 +67,7 @@ class MarkingTaskService:
             raise KeyError(f"Invalid question index: {question_index}")
         # get the version of the given paper/question
         try:
-            question_version = PaperInfoService().get_version_from_paper_question(
+            question_version = PaperInfoService.get_version_from_paper_question(
                 paper.paper_number, question_index
             )
         except ValueError as err:

@@ -27,7 +27,9 @@
                 <div class="card-text">
                     <div class="row">
                         <div class="col">
-                            {% include "Progress/fragments/task_progress_bar.html" with total=stats.all_task_count n_complete=status_counts.Complete n_todo=status_counts|get_item:"To Do" n_out=status_counts.Out %}
+                            {% with d=task_status_counts total=task_status_counts_total %}
+                                {% include "Progress/fragments/task_progress_bar.html" with n_complete=d.Complete n_todo=d|get_item:"To Do" n_out=d.Out n_missing=d.Missing %}
+                            {% endwith %}
                             <table class="table table-sm table-bordered text-center">
                                 <thead>
                                     <tr>

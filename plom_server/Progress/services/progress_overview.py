@@ -13,7 +13,7 @@ from plom.misc_utils import pprint_score
 
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
-from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 
 
 class ProgressOverviewService:
@@ -121,6 +121,34 @@ class ProgressOverviewService:
             .count()
             for qi in question_indices
         }
+
+    @staticmethod
+    def missing_marking_tasks_by_qv() -> dict[int, list[int]]:
+        """Return which tasks are missing from each question, compared against the in-use papers."""
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        question_indices = SpecificationService.get_question_indices()
+        # extract (qi, papernum) pairs from the database, for offline processing
+        pairs = list(
+            tasks.values_list("question_index", "paper__paper_number").distinct()
+        )
+        overall_papers = set([pn for q, pn in pairs])
+        notfound = {}
+        for qi in question_indices:
+            inuse = set([pn for q, pn in pairs if q == qi])
+            notfound[qi] = list(overall_papers.difference(inuse))
+        print(notfound)
+        # now further subdivide by version by checking the version-map
+        missing_pairs = [(pn, qi) for qi, papers in notfound.items() for pn in papers]
+        print(missing_pairs)
+        # TODO: N more DB queries, expensive if many missing: need a bulk version getter?
+        # TODO: for example, one could get the qvmap and query offline, or just get the QuestionPages
+        # (which exist even if the paper isn't in-use!)
+        missing_triplets = [
+            (pn, qi, PaperInfoService.get_version_from_paper_question(pn, qi))
+            for pn, qi in missing_pairs
+        ]
+        print(missing_triplets)
+        return missing_triplets
 
     @staticmethod
     def n_missing_marking_tasks_for_each_question() -> dict[int, int]:

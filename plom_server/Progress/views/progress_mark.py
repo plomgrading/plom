@@ -16,7 +16,6 @@ from plom_server.Base.base_group_views import (
 
 from collections import Counter
 
-from plom_server.Mark.models import MarkingTask
 from plom_server.Authentication.services import AuthService
 from plom_server.Papers.services import SpecificationService
 from plom_server.Mark.services import MarkingStatsService
@@ -59,20 +58,18 @@ class ProgressMarkStatsView(MarkerOrManagerView):
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
         context = self.build_context()
-        pos = ProgressOverviewService()
         mss = MarkingStatsService()
 
-        tasks = MarkingTask.objects.filter(
-            question_index=question_idx, question_version=version
-        )
-
-        n_papers = tasks.values("paper").distinct().count()
-
-        marking_task_status_counts = pos.get_mark_task_status_counts_by_qv(
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
             question_idx,
             version,
-            n_papers=n_papers,
         )
+        # TODO: still WIP but the idea seems sound
+        triplets = ProgressOverviewService.missing_marking_tasks_by_qv()
+        status_counts["Missing"] = len(
+            [p for p, q, v in triplets if (q, v) == (question_idx, version)]
+        )
+        status_counts_total = sum([n for k, n in status_counts.items()])
 
         scores = mss.get_scores_for_question_version(question_idx, version)
         score_counts = Counter(scores)
@@ -116,8 +113,8 @@ class ProgressMarkStatsView(MarkerOrManagerView):
                     question_index=question_idx
                 ),
                 "version": version,
-                "n_papers": n_papers,
-                "marking_task_status_counts": marking_task_status_counts,
+                "task_status_counts": status_counts,
+                "task_status_counts_total": status_counts_total,
                 "histogram_data": histogram_data,
             }
         )
@@ -155,6 +152,17 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
         )
+
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+            question_idx, version
+        )
+        # TODO: still WIP but the idea seems sound
+        triplets = ProgressOverviewService.missing_marking_tasks_by_qv()
+        status_counts["Missing"] = len(
+            [p for p, q, v in triplets if (q, v) == (question_idx, version)]
+        )
+        status_counts_total = sum([n for k, n in status_counts.items()])
+
         context.update(
             {
                 "question_idx": question_idx,
@@ -166,9 +174,8 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "hist_values": list(hist_values),
                 "user_hists": user_hists_and_stats,
                 "remaining_tasks": remaining_tasks,
-                "status_counts": ProgressOverviewService.get_mark_task_status_counts_by_qv(
-                    question_idx, version
-                ),
+                "task_status_counts": status_counts,
+                "task_status_counts_total": status_counts_total,
             }
         )
 
