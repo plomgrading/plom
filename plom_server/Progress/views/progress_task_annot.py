@@ -175,7 +175,9 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
 
         # get the counts for each id and marking task by their status
         # we pass the number of papers so that we also get counts of **missing** tasks
-        id_task_status_counts = pos.get_id_task_status_counts(n_papers=n_papers)
+        id_task_status_counts = ProgressOverviewService.get_id_task_status_counts(
+            n_papers=n_papers
+        )
         marking_task_status_counts = pos.get_mark_task_status_counts(n_papers=n_papers)
 
         context.update(

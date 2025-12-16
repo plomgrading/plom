@@ -188,9 +188,13 @@ class ProgressOverviewService:
             "mk": self.get_completed_marking_task_counts(),
         }
 
+    @staticmethod
     @transaction.atomic
-    def get_id_task_status_counts(self, n_papers: int | None = None) -> dict[str, int]:
+    def get_id_task_status_counts(n_papers: int | None = None) -> dict[str, int]:
         """Return a dict of counts of ID tasks by their status.
+
+        Args:
+            n_papers: if included then compute how many tasks are "missing".
 
         Note that this excludes out-of-date tasks.
         """
@@ -203,7 +207,6 @@ class ProgressOverviewService:
                 .annotate(the_count=Count("status"))
             }
         )
-        # if n_papers is included then compute how many tasks as "missing"
         if n_papers:
             present = sum([v for x, v in dat.items()])
             dat.update({"Missing": n_papers - present})
