@@ -12,8 +12,8 @@
                 <h6 class="card-title d-inline-block mb-0">{{ question_label }}&nbsp;v{{ version }}</h6>
             </div>
             <div style="width: 12rem;">
-                {% with d=task_status_counts total=task_status_counts_total %}
-                    {% include "Progress/fragments/task_progress_bar.html" with n_complete=d.Complete n_todo=d|get_item:"To Do" n_out=d.Out n_missing=d.Missing %}
+                {% with d=task_status_counts %}
+                    {% include "Progress/fragments/task_progress_bar.html" with total=d.total n_complete=d.Complete n_todo=d|get_item:"To Do" n_out=d.Out n_missing=d.Missing %}
                 {% endwith %}
             </div>
         </div>

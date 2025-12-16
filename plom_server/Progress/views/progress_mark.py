@@ -63,7 +63,6 @@ class ProgressMarkStatsView(MarkerOrManagerView):
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
             question_idx, version, compute_missing=True
         )
-        status_counts_total = sum([n for k, n in status_counts.items()])
 
         scores = mss.get_scores_for_question_version(question_idx, version)
         score_counts = Counter(scores)
@@ -108,7 +107,6 @@ class ProgressMarkStatsView(MarkerOrManagerView):
                 ),
                 "version": version,
                 "task_status_counts": status_counts,
-                "task_status_counts_total": status_counts_total,
                 "histogram_data": histogram_data,
             }
         )
@@ -150,7 +148,6 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
             question_idx, version, compute_missing=True
         )
-        status_counts_total = sum([n for k, n in status_counts.items()])
 
         context.update(
             {
@@ -164,7 +161,6 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "user_hists": user_hists_and_stats,
                 "remaining_tasks": remaining_tasks,
                 "task_status_counts": status_counts,
-                "task_status_counts_total": status_counts_total,
             }
         )
 
@@ -199,7 +195,6 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
             question_idx, compute_missing=True
         )
-        status_counts_total = sum([n for k, n in status_counts.items()])
 
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
@@ -215,7 +210,6 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
                 "task_status_counts": status_counts,
-                "task_status_counts_total": status_counts_total,
             }
         )
 

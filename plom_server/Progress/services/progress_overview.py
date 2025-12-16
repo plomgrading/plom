@@ -299,6 +299,7 @@ class ProgressOverviewService:
             counts[status_label] = X["count"]
 
         if not compute_missing:
+            counts["total"] = sum([n for k, n in counts.items()])
             return counts
 
         triplets = cls._missing_task_pqv_triplets()
@@ -319,9 +320,7 @@ class ProgressOverviewService:
                     [p for p, q, v in triplets if (q, v) == (question_index, version)]
                 )
 
-        # TODO: add a "Total" key?
-        # status_counts_total = sum([n for k, n in status_counts.items()])
-
+        counts["total"] = sum([n for k, n in counts.items()])
         return counts
 
     @transaction.atomic
