@@ -137,8 +137,8 @@ class ProgressOverviewService:
         }
 
     @staticmethod
-    def _missing_task_pqv_triplets() -> list[tuple[int, int, int]]:
-        """Return which tasks are missing from each question, compared against the in-use papers."""
+    def _missing_task_pq_pairs() -> list[tuple[int, int]]:
+        """Return which tasks (p, q) are missing from each question, compared against the in-use papers."""
         tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         id_tasks = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
         question_indices = SpecificationService.get_question_indices()
@@ -157,8 +157,13 @@ class ProgressOverviewService:
         for qi in question_indices:
             inuse_q = set([pn for q, pn in pairs if q == qi])
             notfound[qi] = list(inuse_papers.difference(inuse_q))
-        # now further subdivide by version by checking the version-map
         missing_pairs = [(pn, qi) for qi, papers in notfound.items() for pn in papers]
+        return missing_pairs
+
+    @classmethod
+    def _missing_task_pqv_triplets(cls) -> list[tuple[int, int, int]]:
+        """Return which tasks (p, q, v) are missing from each question, compared against the in-use papers."""
+        missing_pairs = cls._missing_task_pq_pairs()
         # TODO: N more DB queries, expensive if many missing: need a bulk version getter?
         # TODO: for example, one could get the qvmap and query offline, or just get the QuestionPages
         # (which exist even if the paper isn't in-use!)
@@ -353,17 +358,14 @@ class ProgressOverviewService:
             counts["total"] = sum([n for k, n in counts.items()])
             return counts
 
-        triplets = cls._missing_task_pqv_triplets()
         if version is None:
-            # TODO: I think it can be computed easier when version is None
-            # cls.n_missing_marking_tasks_for_each_question()
+            pairs = cls._missing_task_pq_pairs()
             if question_index is None:
-                counts["Missing"] = len(triplets)
+                counts["Missing"] = len(pairs)
             else:
-                counts["Missing"] = len(
-                    [p for p, q, v in triplets if q == question_index]
-                )
+                counts["Missing"] = len([p for p, q in pairs if q == question_index])
         else:
+            triplets = cls._missing_task_pqv_triplets()
             if question_index is None:
                 counts["Missing"] = len([p for p, q, v in triplets if v == version])
             else:
