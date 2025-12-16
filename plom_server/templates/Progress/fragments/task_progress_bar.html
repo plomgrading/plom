@@ -1,80 +1,82 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later
      Copyright (C) 2023 Andrew Rechnitzer
      Copyright (C) 2025 Colin B. Macdonald -->
-<!-- show [n_complete, n_out, n_todo, n_missing] / total -->
-{% load mathfilters %}
-{% if total == 0 %}
-    <div class="d-flex justify-content-between align-top my-1">
-        <div class="progress flex-fill my-1"
-             role="progressbar"
-             aria-valuemin="0"
-             aria-valuemax="100">
-            <div class="progress-bar"
-                 style="width: 0%"
-                 data-bs-toggle="tooltip"
-                 data-bs-placement="bottom"
-                 data-bs-title="no tasks"></div>
+<!-- Input context needs a `dat` with fields "total", "Complete", "Out", "To Do", "Missing" -->
+{% with total=dat.total n_complete=dat.Complete n_out=dat.Out n_missing=dat.Missing n_todo=dat|get_item:"To Do" %}
+    {% load mathfilters %}
+    {% if total == 0 %}
+        <div class="d-flex justify-content-between align-top my-1">
+            <div class="progress flex-fill my-1"
+                 role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+                <div class="progress-bar"
+                     style="width: 0%"
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="bottom"
+                     data-bs-title="no tasks"></div>
+            </div>
+            <span class="px-2 fw-bold my-0">no tasks</span>
         </div>
-        <span class="px-2 fw-bold my-0">no tasks</span>
-    </div>
-{% elif n_complete == total %}
-    <div class="d-flex justify-content-between align-top my-1">
-        <div class="progress flex-fill my-1"
-             role="progressbar"
-             aria-valuemin="0"
-             aria-valuemax="100">
-            <div class="progress-bar bg-success bg-opacity-75"
-                 style="width: 100%"
-                 data-bs-toggle="tooltip"
-                 data-bs-placement="bottom"
-                 data-bs-title="all {{ n_complete }} complete"></div>
+    {% elif n_complete == total %}
+        <div class="d-flex justify-content-between align-top my-1">
+            <div class="progress flex-fill my-1"
+                 role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+                <div class="progress-bar bg-success bg-opacity-75"
+                     style="width: 100%"
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="bottom"
+                     data-bs-title="all {{ n_complete }} complete"></div>
+            </div>
+            <span class="px-2 fw-bold my-0">{{ n_complete }} / {{ total }}</span>
         </div>
-        <span class="px-2 fw-bold my-0">{{ n_complete }} / {{ total }}</span>
-    </div>
-{% else %}
-    {% with p_complete=n_complete|div:total|mul:100 %}
-        {% with p_todo=n_todo|div:total|mul:100 %}
-            {% with p_out=n_out|div:total|mul:100 %}
-                {% with p_missing=n_missing|div:total|mul:100 %}
-                    <div class="d-flex justify-content-between align-top my-1">
-                        <div class="progress-stacked flex-fill my-1"
-                             role="progressbar"
-                             aria-valuemin="0"
-                             aria-valuemax="100">
-                            {% if n_complete > 0 %}
-                                <div class="progress-bar bg-primary bg-opacity-75"
-                                     style="width: {{ p_complete }}%"
-                                     data-bs-toggle="tooltip"
-                                     data-bs-placement="bottom"
-                                     data-bs-title="complete {{ n_complete }}"></div>
-                            {% endif %}
-                            {% if n_out > 0 %}
-                                <div class="progress-bar bg-warning bg-opacity-75"
-                                     style="width: {{ p_out }}%"
-                                     data-bs-toggle="tooltip"
-                                     data-bs-placement="bottom"
-                                     data-bs-title="out {{ n_out }}"></div>
-                            {% endif %}
-                            {% if n_todo > 0 %}
-                                <!-- no need to render a bar, but we want the tooltip -->
-                                <div class="progress-bar bg-transparent"
-                                     style="width: {{ p_todo }}%"
-                                     data-bs-toggle="tooltip"
-                                     data-bs-placement="bottom"
-                                     data-bs-title="to do {{ n_todo }}"></div>
-                            {% endif %}
-                            {% if n_missing > 0 %}
-                                <div class="progress-bar bg-danger"
-                                     style="width: {{ p_missing }}%"
-                                     data-bs-toggle="tooltip"
-                                     data-bs-placement="bottom"
-                                     data-bs-title="missing {{ n_missing }}"></div>
-                            {% endif %}
+    {% else %}
+        {% with p_complete=n_complete|div:total|mul:100 %}
+            {% with p_todo=n_todo|div:total|mul:100 %}
+                {% with p_out=n_out|div:total|mul:100 %}
+                    {% with p_missing=n_missing|div:total|mul:100 %}
+                        <div class="d-flex justify-content-between align-top my-1">
+                            <div class="progress-stacked flex-fill my-1"
+                                 role="progressbar"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {% if n_complete > 0 %}
+                                    <div class="progress-bar bg-primary bg-opacity-75"
+                                         style="width: {{ p_complete }}%"
+                                         data-bs-toggle="tooltip"
+                                         data-bs-placement="bottom"
+                                         data-bs-title="complete {{ n_complete }}"></div>
+                                {% endif %}
+                                {% if n_out > 0 %}
+                                    <div class="progress-bar bg-warning bg-opacity-75"
+                                         style="width: {{ p_out }}%"
+                                         data-bs-toggle="tooltip"
+                                         data-bs-placement="bottom"
+                                         data-bs-title="out {{ n_out }}"></div>
+                                {% endif %}
+                                {% if n_todo > 0 %}
+                                    <!-- no need to render a bar, but we want the tooltip -->
+                                    <div class="progress-bar bg-transparent"
+                                         style="width: {{ p_todo }}%"
+                                         data-bs-toggle="tooltip"
+                                         data-bs-placement="bottom"
+                                         data-bs-title="to do {{ n_todo }}"></div>
+                                {% endif %}
+                                {% if n_missing > 0 %}
+                                    <div class="progress-bar bg-danger"
+                                         style="width: {{ p_missing }}%"
+                                         data-bs-toggle="tooltip"
+                                         data-bs-placement="bottom"
+                                         data-bs-title="missing {{ n_missing }}"></div>
+                                {% endif %}
+                            </div>
+                            <span class="px-2 fw-bold my-0">{{ n_complete }} / {{ total }}</span>
                         </div>
-                        <span class="px-2 fw-bold my-0">{{ n_complete }} / {{ total }}</span>
-                    </div>
+                    {% endwith %}
                 {% endwith %}
             {% endwith %}
         {% endwith %}
-    {% endwith %}
-{% endif %}
+    {% endif %}
+{% endwith %}
