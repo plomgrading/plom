@@ -17,15 +17,12 @@ class ProgressIdentifyHome(LeadMarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
-        # not quite semantically correct, what if a paper needs ID'd but has no marking tasks?
-        n_papers = ProgressOverviewService.n_papers_with_at_least_one_marking_task()
         id_task_status_counts = ProgressOverviewService.get_id_task_status_counts(
-            n_papers=n_papers
+            compute_missing=True
         )
         context.update(
             {
                 "id_task_info": IDProgressService.get_all_id_task_info(),
-                "n_papers": n_papers,
                 "id_task_status_counts": id_task_status_counts,
             }
         )

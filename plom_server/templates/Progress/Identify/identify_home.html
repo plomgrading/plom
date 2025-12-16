@@ -20,7 +20,7 @@
     </div>
     <div class="card mb-2 w-25">
         {% with d=id_task_status_counts %}
-            {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=d.Complete n_todo=d|get_item:"To Do" n_out=d.Out n_missing=d.Missing %}
+            {% include "Progress/fragments/task_progress_bar.html" with total=d.total n_complete=d.Complete n_todo=d|get_item:"To Do" n_out=d.Out n_missing=d.Missing %}
         {% endwith %}
     </div>
     <div class="row">
