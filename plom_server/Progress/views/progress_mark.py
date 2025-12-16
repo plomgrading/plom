@@ -61,7 +61,7 @@ class ProgressMarkStatsView(MarkerOrManagerView):
         mss = MarkingStatsService()
 
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
-            question_idx, version, compute_missing=True
+            question_idx, version
         )
 
         scores = mss.get_scores_for_question_version(question_idx, version)
@@ -146,7 +146,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         )
 
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
-            question_idx, version, compute_missing=True
+            question_idx, version
         )
 
         context.update(
@@ -193,7 +193,7 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
             ]
 
         status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
-            question_idx, compute_missing=True
+            question_idx
         )
 
         question_label, question_label_html = (

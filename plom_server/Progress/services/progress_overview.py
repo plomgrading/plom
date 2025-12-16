@@ -219,17 +219,13 @@ class ProgressOverviewService:
     def get_id_task_status_counts(
         cls,
         *,
-        compute_missing: bool = False,
         _n_papers: int | None = None,
     ) -> dict[str, int]:
         """Return a dict of counts of ID tasks by their status.
 
         Keyword Args:
-            compute_missing: default False, but if True, also determine
-                how many tasks are missing, compared to the list of in-use
-                papers.  Adds the "Missing" and "total" keys to the output.
-            _n_papers: when using with `compute_missing`, this speeds up
-                things b/c we avoid additional database queries.
+            _n_papers: this speeds up "Missing" calculations b/c we avoid
+                additional database queries.  If omitted, we compute it.
 
         Note that this excludes out-of-date tasks.
         """
@@ -244,38 +240,31 @@ class ProgressOverviewService:
             status_label = MarkingTask.StatusChoices(X["status"]).label
             counts[status_label] = X["count"]
 
-        if compute_missing:
-            if _n_papers is None:
-                # Note: wrong if papers with id task but no marking task
-                # n_papers = cls.n_papers_with_at_least_one_marking_task()
-                n_papers = cls.n_papers_with_at_least_one_task()
-            else:
-                n_papers = _n_papers
-            present = sum([v for x, v in counts.items()])
-            counts.update({"Missing": n_papers - present})
-            counts["total"] = n_papers
-
+        if _n_papers is None:
+            # Note: wrong if papers with id task but no marking task
+            # n_papers = cls.n_papers_with_at_least_one_marking_task()
+            n_papers = cls.n_papers_with_at_least_one_task()
+        else:
+            n_papers = _n_papers
+        present = sum([v for x, v in counts.items()])
+        counts.update({"Missing": n_papers - present, "total": n_papers})
         return counts
 
     @classmethod
     @transaction.atomic
     def get_mark_task_status_counts(
-        cls, *, compute_missing: bool = False, _n_papers: int | None = None
+        cls, *, _n_papers: int | None = None
     ) -> dict[int, dict[str, int]]:
         """Return a dict of counts of marking tasks by their status for each question.
 
         Keyword Args:
-            compute_missing: default False, but if True, also determine
-                how many tasks are missing, compared to the list of in-use
-                papers.  Adds the "Missing" and "total" keys to the output.
-            _n_papers: when using with `compute_missing`, this speeds up
-                things b/c we avoid additional database queries.
+            _n_papers: this speeds up "Missing" calculations b/c we avoid
+                additional database queries.  If omitted, we compute it.
 
         Returns:
             A dict of dict - one for each question-index (and int).
             For each index the dict is "{status: count}" for each of
-            "To Do", "Complete", "Out".  If `n_papers`` was specified
-            there is also "Missing" and "total".
+            "To Do", "Complete", "Out", "Missing" and "total".
         """
         qindices = SpecificationService.get_question_indices()
         assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
@@ -296,15 +285,14 @@ class ProgressOverviewService:
             status_label = MarkingTask.StatusChoices(X["status"]).label
             dict_of_counts[X["question_index"]][status_label] = X["count"]
 
-        if compute_missing:
-            if _n_papers is None:
-                n_papers = cls.n_papers_with_at_least_one_task()
-            else:
-                n_papers = _n_papers
-            for qi, d in dict_of_counts.items():
-                present = sum([c for k, c in d.items()])
-                # max 0 just in case of programming error
-                d.update({"Missing": max(0, n_papers - present), "total": n_papers})
+        if _n_papers is None:
+            n_papers = cls.n_papers_with_at_least_one_task()
+        else:
+            n_papers = _n_papers
+        for qi, d in dict_of_counts.items():
+            present = sum([c for k, c in d.items()])
+            # max 0 just in case of programming error
+            d.update({"Missing": max(0, n_papers - present), "total": n_papers})
 
         return dict_of_counts
 
@@ -314,8 +302,6 @@ class ProgressOverviewService:
         cls,
         question_index: int | None = None,
         version: int | None = None,
-        *,
-        compute_missing: bool = False,
     ) -> dict[str, int]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
 
@@ -325,14 +311,8 @@ class ProgressOverviewService:
             version: restrict to a particular version.  If omitted (or None)
                 then count without version restriction.
 
-        Keyword Args:
-            compute_missing: default False, but if True, also determine
-                how many tasks are missing, compared to the list of in-use
-                paper.
-
         Returns:
-            A dict with keys "To Do", "Complete", "Out", and---if `compute_missing`
-            was specified---"Missing".
+            A dict with keys "To Do", "Complete", "Out", "Missing" and "total".
 
         Note that this excludes out-of-date tasks.
         """
@@ -353,10 +333,6 @@ class ProgressOverviewService:
         for X in tasks_query.values("status").annotate(count=Count("status")):
             status_label = MarkingTask.StatusChoices(X["status"]).label
             counts[status_label] = X["count"]
-
-        if not compute_missing:
-            counts["total"] = sum([n for k, n in counts.items()])
-            return counts
 
         if version is None:
             pairs = cls._missing_task_pq_pairs()

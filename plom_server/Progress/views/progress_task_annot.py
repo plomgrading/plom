@@ -175,10 +175,10 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
 
         # get the counts for each id and marking task by their status
         id_task_status_counts = ProgressOverviewService.get_id_task_status_counts(
-            compute_missing=True, _n_papers=n_papers
+            _n_papers=n_papers
         )
         task_status_counts = ProgressOverviewService.get_mark_task_status_counts(
-            compute_missing=True, _n_papers=n_papers
+            _n_papers=n_papers
         )
 
         context.update(
