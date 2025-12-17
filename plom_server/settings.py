@@ -265,10 +265,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 
+SESSION_COOKIE_NAME = "sessionid"
 # Independent sessions when multiple servers on the same host
 if os.environ.get("PLOM_PUBLIC_FACING_PORT"):
-    SESSION_COOKIE_NAME = "sessionid" + os.environ.get("PLOM_PUBLIC_FACING_PORT")
-
+    SESSION_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PORT")
+if os.environ.get("PLOM_PUBLIC_FACING_PREFIX"):
+    SESSION_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
 
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
