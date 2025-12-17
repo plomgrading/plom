@@ -258,7 +258,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Web login sessions expire this many seconds after initial login (defaults: two weeks)
-# SESSION_COOKIE_AGE = 60 * 60 * 12  # 12 hours
+SESSION_COOKIE_AGE = 60 * 60 * 48  # 48 hours
 # If True, then every time user makes a request, the timeout will be reset (some performance cost)
 # SESSION_SAVE_EVERY_REQUEST = False
 # You can set the cookie to expire when they close their browser (for some browsers anyway)
