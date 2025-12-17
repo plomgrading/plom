@@ -266,11 +266,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 SESSION_COOKIE_NAME = "sessionid"
+CSRF_COOKIE_NAME = "csrftoken"
 # Independent sessions when multiple servers on the same host
 if os.environ.get("PLOM_PUBLIC_FACING_PORT"):
     SESSION_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PORT")
+    CSRF_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PORT")
 if os.environ.get("PLOM_PUBLIC_FACING_PREFIX"):
     SESSION_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
+    CSRF_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
 
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
