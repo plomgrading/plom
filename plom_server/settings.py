@@ -257,10 +257,12 @@ STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# If the user is logged in and there is no activity for 2 hours, the login status will expire
-SESSION_COOKIE_AGE = 60 * 60 * 2
-# Every time user makes request, the session cookie age will be rescheduled to 2 hours
-SESSION_SAVE_EVERY_REQUEST = True
+# Web login sessions expire this many seconds after initial login (defaults: two weeks)
+# SESSION_COOKIE_AGE = 60 * 60 * 12  # 12 hours
+# If True, then every time user makes a request, the timeout will be reset (some performance cost)
+# SESSION_SAVE_EVERY_REQUEST = False
+# You can set the cookie to expire when they close their browser (for some browsers anyway)
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 
 # Media and user-uploaded files
