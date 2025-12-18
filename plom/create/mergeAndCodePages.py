@@ -60,9 +60,10 @@ def create_QR_codes(
         # qr_code = pyqrcode.create(tpv, error="H")
         # qr_code.png(filename, scale=4)
 
-        qr_code = segno.make(tpv, error="H")
+        qr_code = segno.make_qr(tpv, error="H")
+        # border=4 (also the default) is the whitespace padding around the QR codes
         # MyPy complains about pathlib.Path here but it works
-        qr_code.save(filename, scale=4)  # type: ignore[arg-type]
+        qr_code.save(filename, scale=4, border=4)  # type: ignore[arg-type]
 
         qr_file.append(filename)
 
@@ -281,6 +282,7 @@ def pdf_page_add_labels_QRs(
     # Remember that we only add 3 of the 4 QR codes for each page since
     # we always have a corner section for staples and such
     # Note: draw png first so it doesn't occlude the outline
+    # Note: border around each code is in the image, see `create_QR_codes`
     if odd:
         page.insert_image(TR, pixmap=pymupdf.Pixmap(qr_code[0]), overlay=True)
         page.draw_rect(TR, color=[0, 0, 0], width=0.5)
