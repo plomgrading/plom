@@ -90,6 +90,7 @@ def _create_QRcoded_pdf(
     *,
     no_qr: bool = False,
     paperstr: str | None = None,
+    qr_code_size: float | int | None = None,
 ) -> pymupdf.Document:
     """Creates a PDF document from versioned sources, stamps QR codes on the corners.
 
@@ -110,6 +111,7 @@ def _create_QRcoded_pdf(
         no_qr (bool): whether to paste in QR-codes (default: False)
             Note backward logic: False means yes to QR-codes.
         paperstr: override the default string version of the paper number.
+        qr_code_size: width/height of the QR codes.
 
     Returns:
         PDF document, apparently open, which seems to me a scary
@@ -165,7 +167,14 @@ def _create_QRcoded_pdf(
             page_to_group_name[p],
             p,
         )
-        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], label, qr_files, odd=odd)
+        pdf_page_add_labels_QRs(
+            exam[p - 1],
+            spec["name"],
+            label,
+            qr_files,
+            odd=odd,
+            qr_code_size=qr_code_size,
+        )
 
     for ver, pdf in pdf_version.items():
         pdf.close()
@@ -210,7 +219,9 @@ def pdf_page_add_labels_QRs(
     shortname: str,
     stamp: str,
     qr_code: list[pathlib.Path],
+    *,
     odd: bool | None = True,
+    qr_code_size: float | int | None = None,
 ) -> None:
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
@@ -220,22 +231,29 @@ def pdf_page_add_labels_QRs(
             indicator.
         stamp: text for the top-middle
         qr_code: QR images, if empty, don't do corner work.
+
+    Keyword Args:
         odd: True for an odd page number (counting from 1),
             False for an even page, and None if you don't want to draw a
             staple corner.
+        qr_code_size: width/height of the QR codes in points, or a default
+            value of 70 if `None` or omitted.
 
     Returns:
         None: but modifies page as a side-effect.
     """
-    w = 70  # box width
+    if qr_code_size is None:
+        qr_code_size = 70
+    w = qr_code_size  # QR box width
+    w_tri = 70  # staple corner indicator box width
     mx, my = (15, 20)  # margins
 
     pg_width = page.bound().width
     pg_height = page.bound().height
 
-    # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
-    rDNW_TL = pymupdf.Rect(mx, my, mx + w, my + w)
-    rDNW_TR = pymupdf.Rect(pg_width - mx - w, my, pg_width - mx, my + w)
+    # create two "do not write" staple indicators TL (top left) and TR (top right)
+    rDNW_TL = pymupdf.Rect(mx, my, mx + w_tri, my + w_tri)
+    rDNW_TR = pymupdf.Rect(pg_width - mx - w_tri, my, pg_width - mx, my + w_tri)
 
     # page-corner boxes for the QR codes
     # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
@@ -420,6 +438,7 @@ def make_PDF(
     source_versions: dict[int, Path] | None = None,
     font_subsetting: bool | None = None,
     paperstr: str | None = None,
+    qr_code_size: float | int | None = None,
 ) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -475,6 +494,7 @@ def make_PDF(
             Non-ascii is a stronger requirement than needed,
         paperstr: override the default string version of the paper number.
             Probably you don't need to do this, although Mocker does.
+        qr_code_size: width/height of the QR codes.
 
     Returns:
         pathlib.Path: the file that was just written, or None in the slightly
@@ -523,6 +543,7 @@ def make_PDF(
             public_code,
             no_qr=no_qr,
             paperstr=paperstr,
+            qr_code_size=qr_code_size,
         )
 
     # If provided with student name and id, preprint on cover
