@@ -11,7 +11,7 @@
             <div>
                 <h6 class="card-title d-inline-block mb-0">{{ question_label }}&nbsp;v{{ version }}</h6>
             </div>
-            <div style="width: 150px;">
+            <div style="width: 12rem;">
                 {% with dat=marking_task_status_counts %}
                     {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat.Complete n_todo=dat|get_item:"To Do" n_out=dat.Out n_missing=dat.Missing %}
                 {% endwith %}
