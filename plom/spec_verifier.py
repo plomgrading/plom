@@ -165,24 +165,41 @@ def isContiguous(L: list[str | int]) -> bool:
     return True
 
 
-def build_page_to_group_name_dict(spec) -> dict[int, str]:
+def build_page_to_group_name_dict(
+    spec, *, include_question_labels: bool = True
+) -> dict[int, str]:
     """Given a valid spec return a dict that translates each page to its containing group.
 
     Args:
-        spec (dict): A validated test spec
+        spec: A validated test spec.
+
+    Keyword Args:
+        include_question_labels: by default, or if True, questions are
+            labels, including compound labels when there are shared pages.
+            Since you probably label questions yourself, this information
+            could be distracting or confusing, for example when shown to
+            exam writers.  Passing False will set the empty string for
+            any question pages (while still labelling ID and DNM pages).
 
     Returns:
-        dict: A mapping of page numbers to groups: 'ID', 'DNM', or 'Q7'
+        dict: A mapping of page numbers (1-based) to groups: 'ID', 'DNM',
+        'Q7' or maybe 'Q7, Q8' if there are shared pages.
     """
-    # start with the id page
-    page_to_group = {spec["idPage"]: "ID"}
-    # now any dnm
+    page_to_group = {p + 1: "" for p in range(spec["numberOfPages"])}
+    page_to_group[spec["idPage"]] = "ID"
     for pg in spec["doNotMarkPages"]:
         page_to_group[pg] = "DNM"
-    # now the questions
+
+    if not include_question_labels:
+        return page_to_group
+
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
-            page_to_group[pg] = get_question_label(spec, q)
+            label = get_question_label(spec, q)
+            already = page_to_group.get(pg)
+            if already:
+                label = already + ", " + label
+            page_to_group[pg] = label
 
     return page_to_group
 
