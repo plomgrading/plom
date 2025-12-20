@@ -16,11 +16,13 @@ import plom.create
 from plom.tpv_utils import encodeScrapPaperCode
 
 
-def build_scrap_paper_pdf(destination_dir=None) -> None:
+def build_scrap_paper_pdf(destination_dir=None, *, papersize: str = "") -> None:
     if destination_dir is None:
         destination_dir = Path.cwd()
 
     src_tex = (resources.files(plom.create) / "scrap_paper_src.tex").read_text()
+    if papersize:
+        src_tex = src_tex.replace("letterpaper", papersize)
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
         with open(tmp_path / "scrap_paper.tex", "w") as fh:

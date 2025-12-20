@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from pathlib import Path
 import shutil
@@ -19,10 +19,14 @@ else:
     import importlib_resources as resources
 
 
-def build_bundle_separator_paper_pdf(destination_dir=None) -> None:
+def build_bundle_separator_paper_pdf(
+    destination_dir=None, *, papersize: str = ""
+) -> None:
     if destination_dir is None:
         destination_dir = Path.cwd()
     src_tex = (resources.files(plom.create) / "bundle_separator_src.tex").read_text()
+    if papersize:
+        src_tex = src_tex.replace("letterpaper", papersize)
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
         with open(tmp_path / "bundle_separator_paper.tex", "w") as fh:

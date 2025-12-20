@@ -4,6 +4,8 @@
 from copy import deepcopy
 from typing import Any
 
+from django.conf import settings
+
 from plom.tpv_utils import new_magic_code, is_valid_public_code
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from ..models import SettingsModel
@@ -147,3 +149,17 @@ def get_or_create_new_public_code():
 def create_new_random_public_code():
     """Create a new random public code, independent of whether one already exists."""
     set_public_code(new_magic_code())
+
+
+def get_paper_size_in_pts() -> tuple[int, int]:
+    import pymupdf
+
+    return pymupdf.paper_size(settings.PAPERSIZE)
+
+
+def get_paper_size_word() -> str:
+    return settings.PAPERSIZE
+
+
+def get_paper_size_latex() -> str:
+    return settings.PAPERSIZE + "paper"

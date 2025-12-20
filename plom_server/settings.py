@@ -47,6 +47,16 @@ else:
     DEBUG = True
 
 
+# generally Plom takes it paper size from the input PDFs but occasionally it needs
+# create other sheets of paper.  You can Currently supports "letter" and "A4"  TODO: might be nice to
+# support the host OSes env var PAPERSIZE instead of hardcoding Letter/A4 paper here.
+_ = os.environ.get("PAPERSIZE")
+if not _:
+    PAPERSIZE = "letter"
+else:
+    PAPERSIZE = _
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("PLOM_SECRET_KEY")
 if not SECRET_KEY:

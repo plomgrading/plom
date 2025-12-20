@@ -11,6 +11,8 @@ from plom.create import (
     build_bundle_separator_paper_pdf,
 )
 
+from plom_server.Base.services import Settings
+
 
 class Command(BaseCommand):
     """Build the extra-page and scrap-paper PDFs and put them into static storage."""
@@ -19,6 +21,7 @@ class Command(BaseCommand):
         """Build and store the extra-page and scrap paper pdfs."""
         dest_dir = settings.MEDIA_ROOT / "non_db_files/"
         dest_dir.mkdir(exist_ok=True, parents=True)
-        build_extra_page_pdf(dest_dir)
-        build_scrap_paper_pdf(dest_dir)
-        build_bundle_separator_paper_pdf(dest_dir)
+        papersize = Settings.get_paper_size_latex()
+        build_extra_page_pdf(dest_dir, papersize=papersize)
+        build_scrap_paper_pdf(dest_dir, papersize=papersize)
+        build_bundle_separator_paper_pdf(dest_dir, papersize=papersize)

@@ -186,7 +186,7 @@ class DemoBundleCreationService:
             )
             pdf_doc.delete_page()  # this defaults to the last page.
 
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
 
             pdf_doc[-1].insert_text(
                 (120, 60),
@@ -338,7 +338,8 @@ class DemoBundleCreationService:
             qr_pngs = create_QR_codes(1, 1, 1, wrong_code, Path(td))
             # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
             # these are called "qr_0001_pg1_4.png" etc.
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
+
             pdf_doc[-1].insert_text(
                 (120, 60),
                 text="This is a page from a different assessment",
@@ -360,7 +361,7 @@ class DemoBundleCreationService:
             public_code = ""
         with tempfile.TemporaryDirectory() as td:
             qr_pngs = create_QR_codes(99999, 1, 1, public_code, Path(td))
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             pdf_doc[-1].insert_text(
                 (120, 200),
                 text="This is a page from a non-existent paper",
@@ -375,7 +376,7 @@ class DemoBundleCreationService:
             )
 
             qr_pngs = create_QR_codes(1, 999, 1, public_code, Path(td))
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             pdf_doc[-1].insert_text(
                 (120, 200),
                 text="This is a non-existent page from an existing test",
@@ -409,7 +410,7 @@ class DemoBundleCreationService:
             # valid for plom, and finally one valid scrap-paper code
             # for the top-left corner. The barcodes are 300-wide and 100-high
             # and the qr-codes are 70x70
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             pdf_doc[-1].insert_text(
                 (120, 60),
                 text="This is a page with invalid qr-code and bar-codes",
@@ -430,7 +431,7 @@ class DemoBundleCreationService:
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[2]), overlay=True
             )
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             w = pdf_doc[-1].rect.width
             pdf_doc[-1].insert_text(
                 (120, 60),
