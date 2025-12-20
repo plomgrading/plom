@@ -168,7 +168,9 @@ def set_marking_priority_paper_number() -> None:
 def set_marking_priority_custom(
     custom_order: dict[tuple[int, int], int | float],
 ) -> None:
-    """Set the priority to a custom ordering.
+    """Set the priority of marking tasks to a custom ordering.
+
+    Consider performance at scale when changing this function.
 
     Args:
         custom_order: dict with tuple keys representing (paper_number, question_index)
@@ -180,18 +182,21 @@ def set_marking_priority_custom(
         custom_order, dict
     ), "`custom_order` must be of type dict[tuple[int, int], int]."
 
-    tasks = _get_tasks_to_update_priority()
-    tasks_to_update = []
-    for k, v in custom_order.items():
-        paper_number, question_index = k
-        if tasks.filter(
-            paper__paper_number=paper_number,
-            question_index=question_index,
-        ).exists():
-            task_to_update = tasks.get(
-                paper__paper_number=paper_number, question_index=question_index
-            )
-            task_to_update.marking_priority = v
-            tasks_to_update.append(task_to_update)
-    MarkingTask.objects.bulk_update(tasks_to_update, ["marking_priority"])
+    tasks_to_update = _get_tasks_to_update_priority()
+
+    # Between the custom_order dict and the db rows, we must iterate over one,
+    # and use the other as a lookup table.
+    # Use the custom_order dict as the lookup table, **not** the db rows.
+    for task in tasks_to_update:
+        try:
+            task.marking_priority = custom_order[
+                (task.paper.paper_number, task.question_index)
+            ]
+        except KeyError:
+            # caller didn't specify a priority for this task, so do nothing
+            pass
+
+    MarkingTask.objects.bulk_update(
+        tasks_to_update, ["marking_priority"], batch_size=1000
+    )
     Settings.key_value_store_set("task_order_strategy", "custom")
