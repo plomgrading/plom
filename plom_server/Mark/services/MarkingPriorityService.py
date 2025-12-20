@@ -81,15 +81,7 @@ def update_priority_ordering(
 
 @transaction.atomic
 def set_marking_priority_shuffle() -> None:
-    """Set the priority to shuffle: every marking task gets a random priority value.
-
-    All work happens on the DB side. Take care when editing this function and
-    consider performance at scale.
-
-    Note: logic here is repeated in :function:`compute_priority` which
-    is used in `marking_task_service.py`.  Make sure you change both if
-    you make changes here.
-    """
+    """Set the priority to shuffle: every marking task gets a random priority value."""
     tasks = _get_tasks_to_update_priority()
     pq_pairs_queryset = tasks.values_list("paper__paper_number", "question_index")
     priority_dict = {}
@@ -98,7 +90,7 @@ def set_marking_priority_shuffle() -> None:
             {pq_pair: compute_priority(pq_pair[0], strategy="shuffle")}
         )
 
-    set_marking_priority_custom(priority_dict)
+    _bulk_set_marking_task_priorities(priority_dict)
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
 
@@ -117,9 +109,6 @@ def compute_priority(
             not provided, we will query the database but you may
             wish to provide it for efficiency if you're calling about
             multiple tasks.
-
-    Note: logic is repeated elsewhere in this file, be careful making
-    changes to ensure consistency.
     """
     if strategy is None:
         strategy = get_mark_priority_strategy()
@@ -140,16 +129,7 @@ def compute_priority(
 
 @transaction.atomic
 def set_marking_priority_paper_number() -> None:
-    """Set the priority inversely proportional to the paper number.
-
-    Some complex Django expressions to ensure most processing happens
-    on the db side. Take care when editing this and consider
-    performance at scale.
-
-    Note: logic here is repeated in :function:`compute_priority` which
-    is used in `marking_task_service.py`.  Make sure you change both if
-    you make changes here.
-    """
+    """Set the priority inversely proportional to the paper number."""
     # See issue #4096
     largest_paper_num = (
         Paper.objects.all().order_by("-paper_number").first().paper_number
@@ -165,7 +145,7 @@ def set_marking_priority_paper_number() -> None:
         )
         priority_dict.update({pq_pair: priority})
 
-    set_marking_priority_custom(priority_dict)
+    _bulk_set_marking_task_priorities(priority_dict)
     Settings.key_value_store_set("task_order_strategy", "paper_number")
 
 
@@ -175,26 +155,40 @@ def set_marking_priority_custom(
 ) -> None:
     """Set the priority of marking tasks to a custom ordering.
 
-    Consider performance at scale when changing this function.
-
     Args:
         custom_order: dict with tuple keys representing (paper_number, question_index)
-            and values representing the task's custom priority. If a task is not included
-            in custom_order, it remains the same. If the key is valid, but the corresponding
-            task doesn't exist, the entry is ignored.
+            and values representing the task's custom priority.
     """
     assert isinstance(
         custom_order, dict
     ), "`custom_order` must be of type dict[tuple[int, int], int]."
+    _bulk_set_marking_task_priorities(custom_order)
+    Settings.key_value_store_set("task_order_strategy", "custom")
 
+
+@transaction.atomic
+def _bulk_set_marking_task_priorities(
+    task_priorities: dict[tuple[int, int], int | float],
+) -> None:
+    """Set the priority of marking tasks to a specified ordering.
+
+    If a given task can't be found, or its priority can't be modified,
+    it will be ignored.
+
+    Args:
+        task_priorities: dict with tuple keys representing (paper_number, question_index)
+            and values representing the task's custom priority. If a task is not included
+            in custom_order, it remains the same. If the key is valid, but the corresponding
+            task doesn't exist, the entry is ignored.
+    """
     tasks_to_update = _get_tasks_to_update_priority()
 
-    # Between the custom_order dict and the db rows, we must iterate over one,
+    # Between the task_priorities dict and the db rows, we must iterate over one,
     # and use the other as a lookup table.
-    # Use the custom_order dict as the lookup table, **not** the db rows.
+    # Use the task_priorities dict as the lookup table, **not** the db rows.
     for task in tasks_to_update:
         try:
-            task.marking_priority = custom_order[
+            task.marking_priority = task_priorities[
                 (task.paper.paper_number, task.question_index)
             ]
         except KeyError:
@@ -204,4 +198,3 @@ def set_marking_priority_custom(
     MarkingTask.objects.bulk_update(
         tasks_to_update, ["marking_priority"], batch_size=1000
     )
-    Settings.key_value_store_set("task_order_strategy", "custom")
