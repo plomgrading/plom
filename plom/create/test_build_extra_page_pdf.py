@@ -27,8 +27,7 @@ def test_extra_page_pdf_with_dir(tmpdir) -> None:
 
 
 def test_extra_page_pdf_has_two_pages(tmpdir) -> None:
-    build_extra_page_pdf(destination_dir=tmpdir)
-    f = Path(tmpdir) / "extra_page.pdf"
+    f = build_extra_page_pdf(destination_dir=tmpdir)
     with pymupdf.open(f) as doc:
         assert len(doc) == 2
 
@@ -40,8 +39,7 @@ def test_extra_page_pdf_papersize(tmpdir) -> None:
 
     for papersize in ("a4", "letter", "legal"):
         latexpapersize = papersize + "paper"
-        build_extra_page_pdf(destination_dir=tmpdir, papersize=latexpapersize)
-        f = Path(tmpdir) / "extra_page.pdf"
+        f = build_extra_page_pdf(destination_dir=tmpdir, papersize=latexpapersize)
         w_pts, h_pts = pymupdf.paper_size(papersize)
         with pymupdf.open(f) as doc:
             for p in doc:

@@ -21,7 +21,11 @@ else:
 
 def build_bundle_separator_paper_pdf(
     destination_dir=None, *, papersize: str = ""
-) -> None:
+) -> Path:
+    """Build the bundle separator pdf file.
+
+    Similar to :func:`build_extra_page_pdf`.
+    """
     if destination_dir is None:
         destination_dir = Path.cwd()
     src_tex = (resources.files(plom.create) / "bundle_separator_src.tex").read_text()
@@ -49,6 +53,7 @@ def build_bundle_separator_paper_pdf(
             stdout=subprocess.DEVNULL,
         )
         shutil.copy(tmp_path / "bundle_separator_paper.pdf", destination_dir)
+    return Path(destination_dir) / "bundle_separator_paper.pdf"
 
 
 if __name__ == "__main__":

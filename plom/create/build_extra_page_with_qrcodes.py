@@ -16,7 +16,7 @@ import plom.create
 from plom.tpv_utils import encodeExtraPageCode
 
 
-def build_extra_page_pdf(destination_dir=None, *, papersize: str = "") -> None:
+def build_extra_page_pdf(destination_dir=None, *, papersize: str = "") -> Path:
     """Build the extra page pdf file.
 
     Args:
@@ -29,7 +29,7 @@ def build_extra_page_pdf(destination_dir=None, *, papersize: str = "") -> None:
             if omitted.
 
     Returns:
-        None, but places the file extra_pages.pdf in the specified directory.
+        The path to the file "extra_pages.pdf" that was built.
     """
     if destination_dir is None:
         destination_dir = Path.cwd()
@@ -59,6 +59,7 @@ def build_extra_page_pdf(destination_dir=None, *, papersize: str = "") -> None:
             stdout=subprocess.DEVNULL,
         )
         shutil.copy(tmp_path / "extra_page.pdf", destination_dir)
+    return Path(destination_dir) / "extra_page.pdf"
 
 
 if __name__ == "__main__":

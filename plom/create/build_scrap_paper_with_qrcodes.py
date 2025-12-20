@@ -16,7 +16,11 @@ import plom.create
 from plom.tpv_utils import encodeScrapPaperCode
 
 
-def build_scrap_paper_pdf(destination_dir=None, *, papersize: str = "") -> None:
+def build_scrap_paper_pdf(destination_dir=None, *, papersize: str = "") -> Path:
+    """Build the scrap paper pdf file.
+
+    Similar to :func:`build_extra_page_pdf`.
+    """
     if destination_dir is None:
         destination_dir = Path.cwd()
 
@@ -45,6 +49,7 @@ def build_scrap_paper_pdf(destination_dir=None, *, papersize: str = "") -> None:
             stdout=subprocess.DEVNULL,
         )
         shutil.copy(tmp_path / "scrap_paper.pdf", destination_dir)
+    return Path(destination_dir) / "scrap_paper.pdf"
 
 
 if __name__ == "__main__":
