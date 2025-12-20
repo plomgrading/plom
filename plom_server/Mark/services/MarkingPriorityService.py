@@ -16,7 +16,6 @@ import random
 
 from django.db import transaction
 from django.db.models import QuerySet, OuterRef, Subquery
-from django.db.models.functions import Random
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.models import Paper
@@ -92,8 +91,14 @@ def set_marking_priority_shuffle() -> None:
     you make changes here.
     """
     tasks = _get_tasks_to_update_priority()
-    # this bit constructs an SQL query. All work happens within the DB.
-    tasks.update(marking_priority=Random() * 1000)
+    pq_pairs_queryset = tasks.values_list("paper__paper_number", "question_index")
+    priority_dict = {}
+    for pq_pair in pq_pairs_queryset:
+        priority_dict.update(
+            {pq_pair: compute_priority(pq_pair[0], strategy="shuffle")}
+        )
+
+    set_marking_priority_custom(priority_dict)
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
 
