@@ -15,7 +15,7 @@ See also the closely-related
 import random
 
 from django.db import transaction
-from django.db.models import QuerySet, OuterRef, Subquery
+from django.db.models import QuerySet
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.models import Paper
@@ -155,17 +155,17 @@ def set_marking_priority_paper_number() -> None:
         Paper.objects.all().order_by("-paper_number").first().paper_number
     )
     tasks = _get_tasks_to_update_priority()
+    pq_pairs_queryset = tasks.values_list("paper__paper_number", "question_index")
 
-    # this subquery is a workaround for an UPDATE with a JOIN statement
-    # (not allowed in Django)
-    # it reads something like 'JOIN PAPER on OUTERTABLE.paper=PAPER.id'
-    # where OUTERTABLE isn't specified until the subquery is embedded
-    # in a different Django expression.
-    papernum_subquery = Paper.objects.filter(id=OuterRef("paper")).values(
-        "paper_number"
-    )
+    priority_dict = {}
+    for pq_pair in pq_pairs_queryset:
+        papernum = pq_pair[0]
+        priority = compute_priority(
+            papernum, strategy="paper_number", largest_paper_num=largest_paper_num
+        )
+        priority_dict.update({pq_pair: priority})
 
-    tasks.update(marking_priority=largest_paper_num - Subquery(papernum_subquery))
+    set_marking_priority_custom(priority_dict)
     Settings.key_value_store_set("task_order_strategy", "paper_number")
 
 
