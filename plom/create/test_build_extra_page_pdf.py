@@ -18,28 +18,28 @@ def test_extra_page_pdf_no_dir(tmpdir) -> None:
         assert Path("extra_page.pdf").exists()
 
 
-def test_extra_page_pdf_with_dir(tmpdir) -> None:
+def test_extra_page_pdf_with_dir(tmp_path) -> None:
     """Builds the extra_page pdf with a directory specified and confirms it works."""
-    path_foo = Path(tmpdir) / "Foo"
+    path_foo = tmp_path / "Foo"
     path_foo.mkdir()
     build_extra_page_pdf(destination_dir=path_foo)
     assert (path_foo / "extra_page.pdf").exists()
 
 
-def test_extra_page_pdf_has_two_pages(tmpdir) -> None:
-    f = build_extra_page_pdf(destination_dir=tmpdir)
+def test_extra_page_pdf_has_two_pages(tmp_path) -> None:
+    f = build_extra_page_pdf(destination_dir=tmp_path)
     with pymupdf.open(f) as doc:
         assert len(doc) == 2
 
 
-def test_extra_page_pdf_papersize(tmpdir) -> None:
+def test_extra_page_pdf_papersize(tmp_path) -> None:
 
     def relative_error(x, y):
         return math.fabs((x - y) / (1.0 * y))
 
     for papersize in ("a4", "letter", "legal"):
         latexsz = papersize + "paper"
-        f = build_extra_page_pdf(destination_dir=tmpdir, latex_papersize=latexsz)
+        f = build_extra_page_pdf(destination_dir=tmp_path, latex_papersize=latexsz)
         w_pts, h_pts = pymupdf.paper_size(papersize)
         with pymupdf.open(f) as doc:
             for p in doc:

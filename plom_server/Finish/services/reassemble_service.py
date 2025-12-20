@@ -28,6 +28,7 @@ import huey.api
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 from plom_server.Base.models import HueyTaskTracker
+from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
@@ -133,6 +134,7 @@ class ReassembleService:
             info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
+            papersize=Settings.get_paper_size_word(),
         )
         return cover_pdf_name
 

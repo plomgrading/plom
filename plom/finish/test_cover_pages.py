@@ -2,6 +2,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
+import math
 from pytest import raises
 
 import pymupdf
@@ -38,7 +39,7 @@ def test_cover_page_leading_zero_sid(tmp_path) -> None:
         assert "00123400" in doc[0].get_text()
 
 
-def test_cover_page_hardcoded_letter_paper(tmp_path) -> None:
+def test_cover_page_letter_paper_default(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["A", 1, 4], ["B", 1, 6]]
     makeCover(data, f, solution=True)
@@ -46,6 +47,22 @@ def test_cover_page_hardcoded_letter_paper(tmp_path) -> None:
         pg = doc[0]
         assert pg.rect.width == 612
         assert pg.rect.height == 792
+
+
+def test_cover_page_papersize(tmp_path) -> None:
+    def relative_error(x, y):
+        return math.fabs((x - y) / (1.0 * y))
+
+    for papersize in ("a4", "letter", "legal"):
+        f = tmp_path / "foo.pdf"
+        data = [["A", 1, 4], ["B", 1, 6]]
+        makeCover(data, f, solution=True, papersize=papersize)
+        w_pts, h_pts = pymupdf.paper_size(papersize)
+        with pymupdf.open(f) as doc:
+            for p in doc:
+                print((papersize, p.rect, w_pts, h_pts))
+                assert relative_error(p.rect.width, w_pts) < 0.01
+                assert relative_error(p.rect.height, h_pts) < 0.01
 
 
 def test_cover_page_solution(tmp_path) -> None:
