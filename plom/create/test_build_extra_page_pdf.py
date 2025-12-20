@@ -38,8 +38,8 @@ def test_extra_page_pdf_papersize(tmpdir) -> None:
         return math.fabs((x - y) / (1.0 * y))
 
     for papersize in ("a4", "letter", "legal"):
-        latexpapersize = papersize + "paper"
-        f = build_extra_page_pdf(destination_dir=tmpdir, papersize=latexpapersize)
+        latexsz = papersize + "paper"
+        f = build_extra_page_pdf(destination_dir=tmpdir, latex_papersize=latexsz)
         w_pts, h_pts = pymupdf.paper_size(papersize)
         with pymupdf.open(f) as doc:
             for p in doc:

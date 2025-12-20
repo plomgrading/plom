@@ -20,7 +20,7 @@ else:
 
 
 def build_bundle_separator_paper_pdf(
-    destination_dir=None, *, papersize: str = ""
+    destination_dir=None, *, latex_papersize: str = ""
 ) -> Path:
     """Build the bundle separator pdf file.
 
@@ -29,8 +29,8 @@ def build_bundle_separator_paper_pdf(
     if destination_dir is None:
         destination_dir = Path.cwd()
     src_tex = (resources.files(plom.create) / "bundle_separator_src.tex").read_text()
-    if papersize:
-        src_tex = src_tex.replace("letterpaper", papersize)
+    if latex_papersize:
+        src_tex = src_tex.replace("letterpaper", latex_papersize)
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
         with open(tmp_path / "bundle_separator_paper.tex", "w") as fh:

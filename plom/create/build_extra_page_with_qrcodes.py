@@ -16,7 +16,7 @@ import plom.create
 from plom.tpv_utils import encodeExtraPageCode
 
 
-def build_extra_page_pdf(destination_dir=None, *, papersize: str = "") -> Path:
+def build_extra_page_pdf(destination_dir=None, *, latex_papersize: str = "") -> Path:
     """Build the extra page pdf file.
 
     Args:
@@ -24,7 +24,7 @@ def build_extra_page_pdf(destination_dir=None, *, papersize: str = "") -> Path:
             working directory.
 
     Keyword Args:
-        papersize: the latex-compatible papersize, e.g., "letterpaper"
+        latex_papersize: the latex-compatible papersize, e.g., "letterpaper"
             or "a4paper".  Defaults to file contents, current "letterpaper"
             if omitted.
 
@@ -35,8 +35,8 @@ def build_extra_page_pdf(destination_dir=None, *, papersize: str = "") -> Path:
         destination_dir = Path.cwd()
 
     src_tex = (resources.files(plom.create) / "extra_pages_src.tex").read_text()
-    if papersize:
-        src_tex = src_tex.replace("letterpaper", papersize)
+    if latex_papersize:
+        src_tex = src_tex.replace("letterpaper", latex_papersize)
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
         with open(tmp_path / "extra_page.tex", "w") as fh:
