@@ -3,6 +3,7 @@
 # Copyright (C) 2025 Philip D. Loewen
 
 import math
+from copy import deepcopy
 from pytest import raises
 
 import pymupdf
@@ -21,6 +22,15 @@ def test_cover_page(tmp_path) -> None:
         assert "Agnesi" in text
         assert "Paper number 1234" in text
         assert "12345678" in text
+
+
+def test_cover_page_immutable_input(tmp_path) -> None:
+    """MakeCover used to modify the input lists, ensure it does not."""
+    f = tmp_path / "foo.pdf"
+    data = [["A", 1, 4], ["B", 1, 6]]
+    original_data = deepcopy(data)
+    makeCover(data, f, solution=True)
+    assert data == original_data
 
 
 def test_cover_page_test_num_leading_zero_pad(tmp_path) -> None:
@@ -53,9 +63,9 @@ def test_cover_page_papersize(tmp_path) -> None:
     def relative_error(x, y):
         return math.fabs((x - y) / (1.0 * y))
 
+    f = tmp_path / "foo.pdf"
+    data = [["A", 1, 4], ["B", 1, 6]]
     for papersize in ("a4", "letter", "legal"):
-        f = tmp_path / "foo.pdf"
-        data = [["A", 1, 4], ["B", 1, 6]]
         makeCover(data, f, solution=True, papersize=papersize)
         w_pts, h_pts = pymupdf.paper_size(papersize)
         with pymupdf.open(f) as doc:

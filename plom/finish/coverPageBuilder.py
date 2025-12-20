@@ -9,9 +9,8 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from __future__ import annotations
-
 import pathlib
+from copy import deepcopy
 from typing import Any
 
 import pymupdf
@@ -81,7 +80,8 @@ def makeCover(
             pprint_score(sum([row[2] for row in tab])),
             str(sum([row[3] for row in tab])),
         ]
-    # writer likes strings, cast table contents as str
+    # writer likes strings, cast table contents as str, but first make a copy
+    tab = deepcopy(tab)
     for row in tab:
         row[1] = str(row[1])  # version
         if not solution:
