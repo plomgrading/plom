@@ -18,7 +18,7 @@ import pymupdf
 from plom.misc_utils import local_now_to_simple_string, pprint_score
 
 
-def makeCover(
+def make_cover(
     tab: list[list[Any]],
     pdfname: pathlib.Path,
     *,

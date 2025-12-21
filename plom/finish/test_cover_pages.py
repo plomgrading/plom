@@ -8,13 +8,13 @@ from pytest import raises
 
 import pymupdf
 
-from plom.finish.coverPageBuilder import makeCover
+from plom.finish.coverPageBuilder import make_cover
 
 
 def test_cover_page(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
-    makeCover(data, f, paper_num=1234, info=("Agnesi", "12345678"))
+    make_cover(data, f, paper_num=1234, info=("Agnesi", "12345678"))
     with pymupdf.open(f) as doc:
         assert len(doc) == 1
         pg = doc[0]
@@ -29,14 +29,14 @@ def test_cover_page_immutable_input(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["A", 1, 4], ["B", 1, 6]]
     original_data = deepcopy(data)
-    makeCover(data, f, solution=True)
+    make_cover(data, f, solution=True)
     assert data == original_data
 
 
 def test_cover_page_test_num_leading_zero_pad(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
-    makeCover(data, f, paper_num=12, info=("Agnesi", "12345678"))
+    make_cover(data, f, paper_num=12, info=("Agnesi", "12345678"))
     with pymupdf.open(f) as doc:
         assert "Paper number 0012" in doc[0].get_text()
 
@@ -44,7 +44,7 @@ def test_cover_page_test_num_leading_zero_pad(tmp_path) -> None:
 def test_cover_page_leading_zero_sid(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
-    makeCover(data, f, paper_num=123, info=("Someone", "00123400"))
+    make_cover(data, f, paper_num=123, info=("Someone", "00123400"))
     with pymupdf.open(f) as doc:
         assert "00123400" in doc[0].get_text()
 
@@ -52,7 +52,7 @@ def test_cover_page_leading_zero_sid(tmp_path) -> None:
 def test_cover_page_letter_paper_default(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["A", 1, 4], ["B", 1, 6]]
-    makeCover(data, f, solution=True)
+    make_cover(data, f, solution=True)
     with pymupdf.open(f) as doc:
         pg = doc[0]
         assert pg.rect.width == 612
@@ -66,7 +66,7 @@ def test_cover_page_papersize(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["A", 1, 4], ["B", 1, 6]]
     for papersize in ("a4", "letter", "legal"):
-        makeCover(data, f, solution=True, papersize=papersize)
+        make_cover(data, f, solution=True, papersize=papersize)
         w_pts, h_pts = pymupdf.paper_size(papersize)
         with pymupdf.open(f) as doc:
             for p in doc:
@@ -78,7 +78,7 @@ def test_cover_page_papersize(tmp_path) -> None:
 def test_cover_page_solution(tmp_path) -> None:
     f = tmp_path / "soln.pdf"
     data = [["A", 1, 4], ["B", 1, 6]]
-    makeCover(data, f, solution=True)
+    make_cover(data, f, solution=True)
     with pymupdf.open(f) as doc:
         assert len(doc) == 1
         pg = doc[0]
@@ -90,7 +90,7 @@ def test_cover_page_solution(tmp_path) -> None:
 def test_cover_page_question_labels(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["Q1", 1, 3, 4], ["Ex2", 1, 4, 6], ["Exercise 3", 2, 0, 5]]
-    makeCover(data, f)
+    make_cover(data, f)
     with pymupdf.open(f) as doc:
         pg = doc[0]
         text = pg.get_text()
@@ -102,7 +102,7 @@ def test_cover_page_question_labels(tmp_path) -> None:
 def test_cover_page_non_ascii(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [["№1", 1, 3, 4], ["Q二", 1, 4, 6]]
-    makeCover(data, f, paper_num=123, info=("我爱你", "12345678"))
+    make_cover(data, f, paper_num=123, info=("我爱你", "12345678"))
     with pymupdf.open(f) as doc:
         pg = doc[0]
         text = pg.get_text()
@@ -115,12 +115,12 @@ def test_cover_page_at_least_20_questions_one_page_issue2519(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     N = 20
     data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
-    makeCover(data, f, paper_num=123, info=("A", "12345678"))
+    make_cover(data, f, paper_num=123, info=("A", "12345678"))
     with pymupdf.open(f) as doc:
         assert len(doc) == 1
 
     data = [[f"Q{n}", 1, 3] for n in range(1, N + 1)]
-    makeCover(data, f, paper_num=123, info=("A", "12345678"), solution=True)
+    make_cover(data, f, paper_num=123, info=("A", "12345678"), solution=True)
     with pymupdf.open(f) as doc:
         assert len(doc) == 1
 
@@ -129,13 +129,13 @@ def test_cover_page_a_great_many_questions_multipage_issue2519(tmp_path) -> None
     N = 100
     data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
     f = tmp_path / "foo.pdf"
-    makeCover(data, f)
+    make_cover(data, f)
     with pymupdf.open(f) as doc:
         assert len(doc) >= 3
 
     data = [[f"Q{n}", 1, 3] for n in range(1, N + 1)]
     f = tmp_path / "soln.pdf"
-    makeCover(data, f, solution=True)
+    make_cover(data, f, solution=True)
     with pymupdf.open(f) as doc:
         assert len(doc) >= 3
 
@@ -150,7 +150,7 @@ def test_cover_page_totalling(tmp_path) -> None:
     )
     for score, total, data in check:
         f = tmp_path / "foo.pdf"
-        makeCover(data, f, footer=False)
+        make_cover(data, f, footer=False)
         with pymupdf.open(f) as doc:
             pg = doc[0]
             stuff = pg.get_text("words")
@@ -169,14 +169,14 @@ def test_cover_page_label_cannot_be_None(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [[None, 1, 4]]
     with raises(AssertionError, match="string"):
-        makeCover(data, f, solution=True)
+        make_cover(data, f, solution=True)
 
 
 def test_cover_page_labels_must_be_strings(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     data = [[8675309, 1, 6]]
     with raises(AssertionError, match="string"):
-        makeCover(data, f, solution=True)
+        make_cover(data, f, solution=True)
 
 
 def test_cover_page_doesnt_like_negatives(tmp_path) -> None:
@@ -184,7 +184,7 @@ def test_cover_page_doesnt_like_negatives(tmp_path) -> None:
     for score, total, data in check:
         f = tmp_path / "foo.pdf"
         with raises(AssertionError, match="non-negative"):
-            makeCover(data, f)
+            make_cover(data, f)
 
 
 def test_cover_page_foolish_stuff_gives_errors(tmp_path) -> None:
@@ -197,21 +197,21 @@ def test_cover_page_foolish_stuff_gives_errors(tmp_path) -> None:
     for score, total, data in check:
         f = tmp_path / "foo.pdf"
         with raises(AssertionError, match="numeric"):
-            makeCover(data, f)
+            make_cover(data, f)
 
 
 def test_cover_page_title(tmp_path) -> None:
     f = tmp_path / "foo.pdf"
     s = "Math 947 Differential Sub-manifolds Quiz 7"
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6]]
-    makeCover(data, f, exam_name=s, paper_num=123, info=("A", "12345678"))
+    make_cover(data, f, exam_name=s, paper_num=123, info=("A", "12345678"))
     with pymupdf.open(f) as doc:
         pg = doc[0]
         text = pg.get_text()
     assert s in text
 
     data = [["Q1", 1, 4], ["Q2", 1, 6]]
-    makeCover(data, f, exam_name=s, solution=True)
+    make_cover(data, f, exam_name=s, solution=True)
     with pymupdf.open(f) as doc:
         pg = doc[0]
         text = pg.get_text()

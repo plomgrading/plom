@@ -25,8 +25,7 @@ from django_huey import db_task, get_queue
 import huey
 import huey.api
 
-from plom.finish.coverPageBuilder import makeCover
-from plom.finish.examReassembler import reassemble
+from plom.finish import make_cover, reassemble
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask
@@ -127,7 +126,7 @@ class ReassembleService:
 
         cover_page_table_data = cls._get_cover_page_info(paper, solution)
         cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
-        makeCover(
+        make_cover(
             cover_page_table_data,
             cover_pdf_name,
             paper_num=paper.paper_number,
