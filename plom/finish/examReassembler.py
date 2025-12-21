@@ -31,6 +31,7 @@ def reassemble(
     dnm_images,
     *,
     nonmarked_images: list[dict[str, Any]] | None = None,
+    papersize: str = "",
 ):
     """Reassemble a pdf from the cover and question images.
 
@@ -49,6 +50,8 @@ def reassemble(
     Keyword Args:
         nonmarked_images: optional list of images that were seen but not
             marked.
+        papersize: a string describing the paper size.  If omitted or
+            empty, use "letter" as the default.
 
     Returns:
         None
@@ -60,8 +63,11 @@ def reassemble(
     else:
         exam = pymupdf.open()
 
+    if not papersize:
+        papersize = "letter"
+
     for img in id_images:
-        w, h = papersize_portrait
+        w, h = pymupdf.paper_size(papersize)
         pg = exam.new_page(width=w, height=h)
         rect = pymupdf.Rect(margin, margin, w - margin, h - margin)
         # pymupdf insert_image does not respect exif
@@ -73,11 +79,13 @@ def reassemble(
     for img_name in marked_pages:
         im = PIL.Image.open(img_name)
 
+        w, h = pymupdf.paper_size(papersize)
+        # Note: this code maybe assumes Plom will always use portrait paper
+        assert h >= w, "code may need changes for landscape paper"
+
         # Rotate page not the image: we want landscape on screen
         if im.width > im.height:
-            w, h = papersize_landscape
-        else:
-            w, h = papersize_portrait
+            w, h = h, w
 
         # but if image has a exif metadata rotation, then swap
         angle = rot_angle_from_jpeg_exif_tag(img_name)
@@ -95,11 +103,15 @@ def reassemble(
         dnm_images,
         'flagged "Do No Mark" by the instructor.  '
         "In most cases nothing here was marked.",
+        papersize=papersize,
     )
 
     # process nonmarked pages one at a time, putting at most three per page
     _insert_img_list_at_3_per_page(
-        exam, nonmarked_images, "seen but deemed not relevant to any question."
+        exam,
+        nonmarked_images,
+        "seen but deemed not relevant to any question.",
+        papersize=papersize,
     )
 
     if sid_or_other_id_info is None:
@@ -118,10 +130,16 @@ def reassemble(
 
 
 def _insert_img_list_at_3_per_page(
-    doc: pymupdf.Document, imgs: list[dict[str, Any]] | None, explanation: str
+    doc: pymupdf.Document,
+    imgs: list[dict[str, Any]] | None,
+    explanation: str,
+    papersize: str,
 ) -> None:
     if not imgs:
         return
+    PortraitWidth, PortraitHeight = pymupdf.paper_size(papersize)
+    # Note: this code maybe assumes Plom will always use portrait paper
+    assert PortraitHeight >= PortraitWidth, "code may need changes for landscape paper"
     max_per_page = 3
     on_this_page = 0
     W = 0  # defined later, false positive from pylint
@@ -131,9 +149,9 @@ def _insert_img_list_at_3_per_page(
         if on_this_page == 0:
             if how_many_more > 1:
                 # two or more pages remain, do a landscape page
-                w, h = papersize_landscape
+                w, h = PortraitHeight, PortraitWidth
             else:
-                w, h = papersize_portrait
+                w, h = PortraitWidth, PortraitHeight
             pg = doc.new_page(width=w, height=h)
             # width of each image on the page
             W = (w - 2 * margin) // min(max_per_page, how_many_more)

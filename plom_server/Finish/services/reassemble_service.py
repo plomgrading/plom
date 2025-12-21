@@ -40,7 +40,7 @@ from .student_marks_service import StudentMarkService
 
 
 class ReassembleService:
-    """Class that contains helper functions for sending data to plom-finish."""
+    """Tools for reassembling papers after marking."""
 
     def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall marking completion progress."""
@@ -320,6 +320,7 @@ class ReassembleService:
                 marked_pages=[],
                 dnm_images=[],
                 nonmarked_images=[],
+                papersize=Settings.get_paper_size_word(),
             )
             with open(tf.name, "rb") as pdf_file:
                 pdf_bytestream = BytesIO(pdf_file.read())
@@ -387,6 +388,7 @@ class ReassembleService:
                 marked_pages=marked_pages,
                 dnm_images=dnm_pages,
                 nonmarked_images=nonmarked,
+                papersize=Settings.get_paper_size_word(),
             )
         return outname
 

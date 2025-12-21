@@ -38,7 +38,7 @@ from .reassemble_service import ReassembleService
 
 
 class BuildSolutionService:
-    """Class that contains helper functions for sending data to plom-finish."""
+    """Tools for building solutions."""
 
     def get_all_paper_status_for_solution_build(self) -> list[dict[str, Any]]:
         """Get the status information for all papers for solution build.
