@@ -148,6 +148,8 @@ def brief_report_pdf_builder(
     # print(f"DEBUG: getting CSS directly from {path}")
     css = CSS(path)
 
+    # TODO: the CSS includes a URL for the plomLogo.png: it should use a local copy instead
+
     pdf_data = HTML(string=rendered_html, base_url="").write_pdf(stylesheets=[css])
     shortname = SpecificationService.get_shortname()
     sid = paper_info["sid"]
