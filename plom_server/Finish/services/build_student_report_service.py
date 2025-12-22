@@ -139,7 +139,7 @@ def brief_report_pdf_builder(
             fh.write(src)
 
         css = CSS(css_tmpfile)
-        # TODO: the CSS includes a URL for the plomLogo.png: it should use a local copy instead
+        # TODO: the CSS includes a URL for the plomLogo.png: it should use a local copy in resources
         pdf_data = HTML(string=rendered_html, base_url="").write_pdf(stylesheets=[css])
 
     shortname = SpecificationService.get_shortname()
@@ -168,9 +168,6 @@ class BuildStudentReportService:
         question_score_lists: dict[int, list[float]],
     ) -> dict[str, Any]:
         """Build brief student report for the given paper number.
-
-        Note - in future will use this to replace the 'build_one_report'
-        function.
 
         Args:
             paper_number: the paper_number to be built a report.
