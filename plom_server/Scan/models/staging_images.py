@@ -94,26 +94,26 @@ class StagingImage(models.Model):
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.
-    bundle_order = models.PositiveIntegerField(null=True)
+    bundle_order = models.PositiveIntegerField(null=True, blank=True)
     # we do not protect the base image here, rather if the base image is
     # deleted (eg when user removes a bundle) then these staging images
     # should also be deleted via this cascade.
     baseimage = models.OneToOneField(BaseImage, on_delete=models.CASCADE)
-    parsed_qr = models.JSONField(default=dict, null=True)
-    rotation = models.IntegerField(null=True, default=None)
+    parsed_qr = models.JSONField(default=dict, null=True, blank=True)
+    rotation = models.IntegerField(null=True, default=None, blank=True)
     pushed = models.BooleanField(default=False)
     # used by KNOWN/EXTRA
-    paper_number = models.PositiveIntegerField(null=True, default=None)
+    paper_number = models.PositiveIntegerField(null=True, default=None, blank=True)
     # used by KNOWN
-    page_number = models.PositiveIntegerField(null=True, default=None)
-    version = models.PositiveIntegerField(null=True, default=None)
+    page_number = models.PositiveIntegerField(null=True, default=None, blank=True)
+    version = models.PositiveIntegerField(null=True, default=None, blank=True)
     # Used by EXTRA
     # https://docs.djangoproject.com/en/6.0/topics/db/queries/#storing-and-querying-for-none
     question_idx_list = models.JSONField(default=None, null=True, blank=True)
     # used for DISCARD
-    discard_reason = models.TextField(default="")
+    discard_reason = models.TextField(default="", blank=True)
     # used for ERROR
-    error_reason = models.TextField(default="")
+    error_reason = models.TextField(default="", blank=True)
     history = models.TextField(blank=True, null=False, default="")
 
     def save(self, *args, **kwargs) -> None:
