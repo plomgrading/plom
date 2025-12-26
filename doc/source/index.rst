@@ -28,8 +28,6 @@ Welcome to Plom's documentation!
 
    rubrics.rst
 
-   solutions.rst
-
    returning.rst
 
    cmdline.rst

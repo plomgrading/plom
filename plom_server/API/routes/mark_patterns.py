@@ -90,7 +90,7 @@ class MarkURLPatterns:
         ]
         mark_patterns += latex
 
-        # Get solution images
+        # GET: /MK/solution/{question}/{version}
         soln = [
             path(
                 "solution/<int:question>/<int:version>",

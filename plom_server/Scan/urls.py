@@ -19,6 +19,7 @@ from .views import (
     ScannerDiscardView,
     ScannerReassignView,
     ###
+    PushedBundleView,
     PushedImageView,
     WholePaperView,
     PushedImageRotatedView,
@@ -84,6 +85,11 @@ urlpatterns = [
         "whole_paper/<int:paper_number>",
         WholePaperView.as_view(),
         name="scan_whole_paper",
+    ),
+    path(
+        "whole_pushed_bundle/<int:bundle_id>",
+        PushedBundleView.as_view(),
+        name="pushed_bundle",
     ),
     path(
         "pushed_img_rot/<int:img_pk>",

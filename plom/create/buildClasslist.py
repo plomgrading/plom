@@ -4,14 +4,13 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
+# TODO: this is legacy stuff, but maybe useful for future classlist importing work
+
 import csv
-import tempfile
-from importlib import resources
 from pathlib import Path
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
-import plom
 from plom.create.classlistValidator import PlomClasslistValidator
 from plom.finish.return_tools import import_canvas_csv
 
@@ -77,7 +76,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # clean up the column - strip whitespace
     df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
 
-    find_paper_number_column(df)
+    _find_paper_number_column(df)
 
     # everything clean - now either return just the necessary columns or all cols.
     if minimalist:
@@ -85,7 +84,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     return df
 
 
-def find_paper_number_column(df, *, make=True):
+def _find_paper_number_column(df, *, make=True):
     """Find or make a paper_number column.
 
     Args:
@@ -135,13 +134,13 @@ def clean_canvas_csv(csv_file_name):
     STUDENT_NUM_COL = "Student Number"
     # STUDENT_NUM_COL = "SIS User ID"
     df = import_canvas_csv(csv_file_name)
-    find_paper_number_column(df)
+    _find_paper_number_column(df)
     df = df[[STUDENT_NUM_COL, "Student", "paper_number"]]
     df.columns = ["id", "name", "paper_number"]
     return df
 
 
-def process_classlist_backend(student_csv_file_name):
+def _process_classlist_backend(student_csv_file_name):
     """Process classlist, either from a canvas style csv or user-formatted.
 
     1. Check if the file is a csv exported from Canvas.  If so extract
@@ -185,36 +184,6 @@ def process_classlist_backend(student_csv_file_name):
         raise ValueError("Problems with the supplied classlist. See output above.")
 
     return student_info_df
-
-
-def get_demo_classlist(spec):
-    """Get the demo classlist."""
-    # Direct approach: but maybe I like exercising code-paths with below...
-    # with (resources.files(plom) / "demoClassList.csv").open("r") as f:
-    #     df = clean_non_canvas_csv(f)
-    # classlist = df.to_dict("records")
-
-    b = (resources.files(plom) / "demoClassList.csv").read_bytes()
-    # Context manager not appropriate here, Issue #1996
-    f = Path(tempfile.NamedTemporaryFile(delete=False, suffix=".csv").name)
-    with open(f, "wb") as fh:
-        fh.write(b)
-
-    success, clist = process_classlist_file(f, spec, ignore_warnings=True)
-
-    if success is False:
-        raise ValueError(
-            f"Something has gone seriously wrong with the demo classlist - {clist}."
-        )
-
-    f.unlink()
-
-    # The raw demo classlist does not have any pre-named students.
-    # So here we pre-name half of spec[numberToProduce] papers
-    for n in range(spec["numberToProduce"] // 2):
-        clist[n]["paper_number"] = n + 1
-    # now only return the classlist truncated to numberToProduce lines
-    return clist[: (spec["numberToProduce"] + 1)]
 
 
 def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False):
@@ -263,6 +232,6 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
                 return (False, warn_err)
             print("Continuing despite warnings")
 
-    df = process_classlist_backend(student_csv_file_name)
+    df = _process_classlist_backend(student_csv_file_name)
     # "records" makes it output a list-of-dicts, one per row
     return (True, df.to_dict("records"))

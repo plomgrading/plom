@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -21,6 +22,9 @@ class StagingBundle(models.Model):
     TODO: document other fields.
 
     Fields:
+        slug: an alternative to the filename that would otherwise not
+            be acceptable for various reasons.
+        user: a reference to the User that uploaded the bundle file.
         number_of_pages: how many pages this bundle has.  Older code
             initially allowed this to be unknown (None); currently
             we set it when creating a bundle, although a future change

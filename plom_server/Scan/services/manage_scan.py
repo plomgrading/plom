@@ -367,6 +367,13 @@ class ManageScanService:
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
+    @staticmethod
+    def get_pushed_bundles_w_staging_prefetch() -> QuerySet[Bundle]:
+        """Get all the pushed Bundles, with a prefetch on the related Staging Bundles."""
+        return Bundle.objects.filter(_is_system=False).prefetch_related(
+            "staging_bundle"
+        )
+
     def get_number_pushed_bundles(self) -> int:
         """Return the number of pushed bundles (excluding system bundles)."""
         return Bundle.objects.filter(_is_system=False).count()
@@ -486,6 +493,33 @@ class ManageScanService:
             "bundle_name": dp_obj.image.bundle.name,
             "bundle_order": dp_obj.image.bundle_order,
         }
+
+    @staticmethod
+    def get_n_images_in_pushed_bundle(bundle: Bundle | int) -> int:
+        """Get the number of page images in a Bundle from the number of Images.
+
+        This could be the same thing as :method:`ScanService.get_n_images` but
+        semantically it might be sometimes more correct to query the Bundle
+        not the StagingBundle.
+        """
+        if isinstance(bundle, int):
+            return Image.objects.filter(bundle_id=bundle).count()
+        return Image.objects.filter(bundle=bundle).count()
+
+    @staticmethod
+    def get_n_discards_in_pushed_bundle(bundle: Bundle | int) -> int:
+        """Count how many DiscardPage a pushed bundle has.
+
+        Args:
+            bundle: a pushed bundle, not a staging bundle.  You can pass
+                either the Django Bundle objects or an integer ID.
+
+        Raises:
+            ObjectDoesNotExist: if you pass an invalid bundle id.
+        """
+        if isinstance(bundle, int):
+            return DiscardPage.objects.filter(image__bundle_id=bundle).count()
+        return DiscardPage.objects.filter(image__bundle=bundle).count()
 
     @transaction.atomic
     def get_discarded_page_info(self) -> list[dict[str, Any]]:

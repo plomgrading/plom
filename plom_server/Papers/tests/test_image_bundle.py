@@ -10,7 +10,7 @@ from model_bakery import baker
 
 from django.contrib.auth.models import User
 
-from plom_server.Scan.models import StagingImage, StagingBundle, KnownStagingImage
+from plom_server.Scan.models import StagingImage, StagingBundle
 from plom_server.Preparation.services import PapersPrinted
 from plom_server.Preparation.models import StagingPQVMapping
 from ..services import ImageBundleService, SpecificationService
@@ -55,7 +55,9 @@ class ImageBundleTests(TestCase):
             BaseImage,
             image_hash="abcdef",
         )
-        self.staged_image = baker.make(
+        # supply p,p,v to this since we will need to cast it to a short-tpv code
+        # and we don't (yet) fix maximum size of p,p,v in our models
+        self.staged_known_image = baker.make(
             StagingImage,
             bundle=self.staged_bundle,
             bundle_order=1,
@@ -63,13 +65,6 @@ class ImageBundleTests(TestCase):
             rotation=90,
             image_type=StagingImage.KNOWN,
             _create_files=True,  # argument to tell baker to actually make the file
-        )
-
-        # supply p,p,v to this since we will need to cast it to a short-tpv code
-        # and we don't (yet) fix maximum size of p,p,v in our models
-        self.staged_known = baker.make(
-            KnownStagingImage,
-            staging_image=self.staged_image,
             paper_number=17,
             page_number=2,
             version=3,
@@ -112,18 +107,15 @@ class ImageBundleTests(TestCase):
         # make some known_pages
         for paper_num in range(2):
             for page_num in range(5):
-                X = baker.make(
+                baker.make(
                     StagingImage,
                     parsed_qr={"NW": "Not empty!"},
                     image_type=StagingImage.KNOWN,
                     bundle=self.staged_bundle,
                     _create_files=True,
-                )
-                baker.make(
-                    KnownStagingImage,
-                    staging_image=X,
                     paper_number=paper_num,
                     page_number=page_num,
+                    # version=  # TODO: missing, is that invariant violation?
                 )
         imgs = StagingImage.objects.all()
         self.assertTrue(ibs.all_staged_imgs_valid(imgs))
@@ -149,10 +141,6 @@ class ImageBundleTests(TestCase):
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img1,
             paper_number=1,
             page_number=1,
             version=1,
@@ -166,10 +154,6 @@ class ImageBundleTests(TestCase):
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img2,
             paper_number=1,
             page_number=1,
             version=1,
@@ -184,10 +168,6 @@ class ImageBundleTests(TestCase):
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img3,
             paper_number=1,
             page_number=1,
             version=1,
@@ -198,10 +178,6 @@ class ImageBundleTests(TestCase):
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img4,
             paper_number=2,
             page_number=1,
             version=1,
@@ -212,10 +188,6 @@ class ImageBundleTests(TestCase):
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img5,
             paper_number=2,
             page_number=1,
             version=1,
@@ -226,10 +198,6 @@ class ImageBundleTests(TestCase):
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img6,
             paper_number=2,
             page_number=1,
             version=1,
@@ -256,29 +224,33 @@ class ImageBundleTests(TestCase):
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        img1 = baker.make(
+        # TODO: making known StagingImage without version is invariant violation?
+        baker.make(
             StagingImage,
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
+            paper_number=2,
+            page_number=1,
         )
-        baker.make(KnownStagingImage, staging_image=img1, paper_number=2, page_number=1)
 
-        img2 = baker.make(
+        baker.make(
             StagingImage,
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
+            paper_number=2,
+            page_number=2,
         )
-        baker.make(KnownStagingImage, staging_image=img2, paper_number=2, page_number=2)
 
-        img3 = baker.make(
+        baker.make(
             StagingImage,
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
+            paper_number=2,
+            page_number=3,
         )
-        baker.make(KnownStagingImage, staging_image=img3, paper_number=2, page_number=3)
 
         img4 = baker.make(Image)
         img5 = baker.make(Image)
@@ -296,9 +268,8 @@ class ImageBundleTests(TestCase):
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
-        )
-        baker.make(
-            KnownStagingImage, staging_image=st_img6, paper_number=3, page_number=1
+            paper_number=3,
+            page_number=1,
         )
 
         res = ibs.find_external_collisions(StagingImage.objects.all())
@@ -315,31 +286,23 @@ class ImageBundleTests(TestCase):
         baker.make(DNMPage, paper=paper3, page_number=2)
 
         bimg1 = baker.make(BaseImage, image_hash="ghijk", _create_files=True)
-        img1 = baker.make(
+        baker.make(
             StagingImage,
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
             baseimage=bimg1,
             image_type=StagingImage.KNOWN,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img1,
             paper_number=2,
             page_number=1,
             version=1,
         )
         bimg2 = baker.make(BaseImage, image_hash="lmnop", _create_files=True)
-        img2 = baker.make(
+        baker.make(
             StagingImage,
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
             baseimage=bimg2,
             image_type=StagingImage.KNOWN,
-        )
-        baker.make(
-            KnownStagingImage,
-            staging_image=img2,
             paper_number=3,
             page_number=2,
             version=1,

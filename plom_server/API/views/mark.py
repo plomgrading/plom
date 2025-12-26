@@ -554,6 +554,7 @@ class GetAllTags(APIView):
         return Response(mts.get_all_tags(), status=status.HTTP_200_OK)
 
 
+# GET: /MK/solution/{question}/{version}
 class GetSolutionImage(APIView):
     """Get a solution image from the server."""
 

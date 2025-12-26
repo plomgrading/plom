@@ -32,10 +32,7 @@ from plom.finish import clear_manager_login
 from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
 from plom.finish import reassemble_paper, reassemble_all_papers
-from plom.finish import download_rubric_files
-from plom.finish import audit
 from plom.finish import make_coded_return_webpage
-import plom.finish.check_completed
 import plom.finish.reassemble_ID_only
 
 
@@ -51,21 +48,6 @@ def get_parser():
 
     sub = parser.add_subparsers(dest="command")
 
-    spCheck = sub.add_parser(
-        "status",
-        help="How's progress?",
-        description="List progress and which papers have been completed.",
-    )
-    spCheck.add_argument(
-        "--dangling-check",
-        action="store_true",
-        help="""
-            Check for "dangling pages" that are attached papers that are
-            not completely scanned.
-            This can be slow for 1000s of papers so is disabled by
-            default.
-        """,
-    )
     spCSV = sub.add_parser(
         "csv",
         help="CSV file with marks/progress info",
@@ -201,34 +183,17 @@ def get_parser():
             solutions for all identified and marked papers.
         """,
     )
-    spRubric = sub.add_parser(
-        "rubric",
-        help="Download rubric info",
-        description="""
-            Download list of rubrics as json and the test-rubric use matrix (indexed by test-number and rubric-key) also as json.
-        """,
-    )
-    spAudit = sub.add_parser(
-        "audit",
-        help="Construct an audit of all image files used",
-        description="""
-        Download an audit of all files + bundles used. Saved as 'audit.json'.
-        """,
-    )
     spClear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
         description='Clear "manager" login after a crash or other expected event.',
     )
     for x in (
-        spCheck,
         spCSV,
         spAssemble,
         spClear,
         spSolution,
         spCodedReturn,
-        spRubric,
-        spAudit,
     ):
         x.add_argument(
             "-s",
@@ -266,11 +231,7 @@ def main():
             args.password = getpass('Please enter the "manager" password: ')
 
     # Note: some of these commands use exit() directly
-    if args.command == "status":
-        plom.finish.check_completed.main(
-            args.server, args.password, args.dangling_check
-        )
-    elif args.command == "csv":
+    if args.command == "csv":
         pull_spreadsheet(msgr=(args.server, args.password))
     elif args.command == "reassemble":
         if args.ided_only:
@@ -305,11 +266,6 @@ def main():
             salt=args.salt,
             solutions=args.solutions,
         )
-    elif args.command == "rubric":
-        download_rubric_files(msgr=(args.server, args.password))
-    elif args.command == "audit":
-        audit(msgr=(args.server, args.password))
-
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

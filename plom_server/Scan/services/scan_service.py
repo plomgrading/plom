@@ -56,8 +56,6 @@ from ..models import (
     StagingBundle,
     StagingImage,
     StagingThumbnail,
-    KnownStagingImage,
-    ExtraStagingImage,
     PagesToImagesChore,
     ManageParseQRChore,
 )
@@ -509,7 +507,7 @@ class ScanService:
 
     @transaction.atomic
     def get_n_images(self, bundle: StagingBundle) -> int:
-        """Get the number of page images in a bundle from the number of its StagingImages."""
+        """Get the number of page images in a StagingBundle from the number of its StagingImages."""
         return bundle.stagingimage_set.count()
 
     @transaction.atomic
@@ -917,14 +915,14 @@ class ScanService:
     def get_n_extra_images_with_data(self, bundle: StagingBundle) -> int:
         return bundle.stagingimage_set.filter(
             image_type=StagingImage.EXTRA,
-            extrastagingimage__paper_number__isnull=False,
+            paper_number__isnull=False,
         ).count()
 
     @transaction.atomic
     def do_all_extra_images_have_data(self, bundle: StagingBundle) -> int:
-        # check whether all extra question pages have paper-numbers
+        # check whether all extra pages have paper-numbers
         epages = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-        return not epages.filter(extrastagingimage__paper_number__isnull=True).exists()
+        return not epages.filter(paper_number__isnull=True).exists()
         # if you can find an extra page with a null paper_number
 
     @transaction.atomic
@@ -1033,7 +1031,7 @@ class ScanService:
             return False
         # check for extra pages not assigned to paper numbers
         epages = bundle_obj.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-        if epages.filter(extrastagingimage__paper_number__isnull=True).exists():
+        if epages.filter(paper_number__isnull=True).exists():
             return False
         return True
 
@@ -1302,34 +1300,22 @@ class ScanService:
                 "page_label": "",  # filled-in below
             }
 
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.ERROR
-        ).prefetch_related("errorstagingimage"):
-            pages[img.bundle_order]["info"] = {
-                "reason": img.errorstagingimage.error_reason
-            }
+        for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.ERROR):
+            pages[img.bundle_order]["info"] = {"reason": img.error_reason}
 
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.DISCARD
-        ).prefetch_related("discardstagingimage"):
-            pages[img.bundle_order]["info"] = {
-                "reason": img.discardstagingimage.discard_reason
-            }
+        for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD):
+            pages[img.bundle_order]["info"] = {"reason": img.discard_reason}
 
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.KNOWN
-        ).prefetch_related("knownstagingimage"):
+        for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.KNOWN):
             pages[img.bundle_order]["info"] = {
-                "paper_number": img.knownstagingimage.paper_number,
-                "page_number": img.knownstagingimage.page_number,
-                "version": img.knownstagingimage.version,
+                "paper_number": img.paper_number,
+                "page_number": img.page_number,
+                "version": img.version,
             }
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.EXTRA
-        ).prefetch_related("extrastagingimage"):
+        for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.EXTRA):
             pages[img.bundle_order]["info"] = {
-                "paper_number": img.extrastagingimage.paper_number,
-                "question_idx_list": img.extrastagingimage.question_idx_list,
+                "paper_number": img.paper_number,
+                "question_idx_list": img.question_idx_list,
             }
 
         # now build an ordered list by running the keys (which are bundle-order) of the pages-dict in order.
@@ -1386,31 +1372,27 @@ class ScanService:
         # We build the ordered list in two steps. First build a dict of lists indexed by paper-number.
         papers: dict[int, list[dict[str, Any]]] = {}
         # Loop over the known-images first and then the extra-pages.
-        for known in (
-            KnownStagingImage.objects.filter(staging_image__bundle=bundle_obj)
-            .order_by("paper_number", "page_number")
-            .prefetch_related("staging_image")
-        ):
+        for known in StagingImage.objects.filter(
+            bundle=bundle_obj, image_type=StagingImage.KNOWN
+        ).order_by("paper_number", "page_number"):
             papers.setdefault(known.paper_number, []).append(
                 {
                     "type": "known",
                     "page": known.page_number,
-                    "order": known.staging_image.bundle_order,
+                    "order": known.bundle_order,
                 }
             )
         # Now loop over the extra pages
-        for extra in (
-            ExtraStagingImage.objects.filter(staging_image__bundle=bundle_obj)
-            .order_by("paper_number", "question_idx_list")
-            .prefetch_related("staging_image")
-        ):
+        for extra in StagingImage.objects.filter(
+            bundle=bundle_obj, image_type=StagingImage.EXTRA
+        ).order_by("paper_number", "question_idx_list"):
             # we can skip those without data
             if extra.paper_number:
                 papers.setdefault(extra.paper_number, []).append(
                     {
                         "type": "extra",
                         "question_idx_list": extra.question_idx_list,
-                        "order": extra.staging_image.bundle_order,
+                        "order": extra.bundle_order,
                     }
                 )
         # # recast paper_pages as an **ordered** list of tuples (paper, page-info)
@@ -1443,8 +1425,8 @@ class ScanService:
             pages[img.bundle_order] = {
                 "status": img.image_type,
                 "info": {
-                    "paper_number": img.extrastagingimage.paper_number,
-                    "question_idx_list": img.extrastagingimage.question_idx_list,
+                    "paper_number": img.paper_number,
+                    "question_idx_list": img.question_idx_list,
                 },
                 "order": f"{img.bundle_order}",
                 "zfill_order": f"{img.bundle_order}".zfill(n_digits),
@@ -1478,21 +1460,21 @@ class ScanService:
             "qr_codes": img.parsed_qr,
         }
         if img.image_type == StagingImage.ERROR:
-            info = {"reason": img.errorstagingimage.error_reason}
+            info = {"reason": img.error_reason}
         elif img.image_type == StagingImage.DISCARD:
-            info = {"reason": img.discardstagingimage.discard_reason}
+            info = {"reason": img.discard_reason}
         elif img.image_type == StagingImage.KNOWN:
             info = {
-                "paper_number": img.knownstagingimage.paper_number,
-                "page_number": img.knownstagingimage.page_number,
-                "version": img.knownstagingimage.version,
+                "paper_number": img.paper_number,
+                "page_number": img.page_number,
+                "version": img.version,
             }
         elif img.image_type == StagingImage.EXTRA:
             _render = SpecificationService.render_html_flat_question_label_list
             info = {
-                "paper_number": img.extrastagingimage.paper_number,
-                "question_idx_list": img.extrastagingimage.question_idx_list,
-                "question_list_html": _render(img.extrastagingimage.question_idx_list),
+                "paper_number": img.paper_number,
+                "question_idx_list": img.question_idx_list,
+                "question_list_html": _render(img.question_idx_list),
             }
         else:
             info = {}
@@ -1505,11 +1487,16 @@ class ScanService:
         """Return a sorted list of paper-numbers in the given bundle as determined by known and extra pages."""
         paper_list = []
 
-        for ksi in KnownStagingImage.objects.filter(staging_image__bundle=bundle_obj):
-            paper_list.append(ksi.paper_number)
-        for esi in ExtraStagingImage.objects.filter(staging_image__bundle=bundle_obj):
-            if esi.paper_number:
-                paper_list.append(esi.paper_number)
+        for img in StagingImage.objects.filter(
+            bundle=bundle_obj, image_type=StagingImage.KNOWN
+        ):
+            paper_list.append(img.paper_number)
+
+        for img in StagingImage.objects.filter(
+            bundle=bundle_obj, image_type=StagingImage.EXTRA
+        ):
+            if img.paper_number:
+                paper_list.append(img.paper_number)
 
         return sorted(list(set(paper_list)))
 
@@ -1539,11 +1526,9 @@ class ScanService:
         # put in dict as {paper_number: [list of known pages present] }
         for img in StagingImage.objects.filter(
             bundle=bundle_obj, image_type=StagingImage.KNOWN
-        ).prefetch_related("knownstagingimage"):
-            papers_pages.setdefault(img.knownstagingimage.paper_number, [])
-            papers_pages[img.knownstagingimage.paper_number].append(
-                img.knownstagingimage.page_number
-            )
+        ):
+            papers_pages.setdefault(img.paper_number, [])
+            papers_pages[img.paper_number].append(img.page_number)
 
         incomplete_papers = []
         for paper_number, page_list in sorted(papers_pages.items()):
@@ -1575,9 +1560,9 @@ class ScanService:
         # put in dict as {page_number: number of known pages present] }
         for img in StagingImage.objects.filter(
             bundle=bundle_obj, image_type=StagingImage.KNOWN
-        ).prefetch_related("knownstagingimage"):
-            papers_pages.setdefault(img.knownstagingimage.paper_number, 0)
-            papers_pages[img.knownstagingimage.paper_number] += 1
+        ):
+            papers_pages.setdefault(img.paper_number, 0)
+            papers_pages[img.paper_number] += 1
 
         number_incomplete = 0
         for paper_number, page_count in sorted(papers_pages.items()):
@@ -1638,7 +1623,6 @@ class ScanService:
         pages = []
         for img in (
             bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD)
-            .prefetch_related("discardstagingimage")
             .all()
             .order_by("bundle_order")
         ):
@@ -1648,7 +1632,7 @@ class ScanService:
                     "order": f"{img.bundle_order}",
                     "zfill_order": f"{img.bundle_order}".zfill(n_digits),
                     "rotation": img.rotation,
-                    "reason": img.discardstagingimage.discard_reason,
+                    "reason": img.discard_reason,
                 }
             )
         return pages
@@ -1670,9 +1654,9 @@ class ScanService:
         if bundle_obj.pushed:
             return []
         # get all the known paper/pages in the bundle
-        bundle_ppbo_list = KnownStagingImage.objects.filter(
-            staging_image__bundle=bundle_obj
-        ).values_list("paper_number", "page_number", "staging_image__bundle_order")
+        bundle_ppbo_list = StagingImage.objects.filter(
+            bundle=bundle_obj, image_type=StagingImage.KNOWN
+        ).values_list("paper_number", "page_number", "bundle_order")
         bundle_papers_list = list(set([X[0] for X in bundle_ppbo_list]))
         if not bundle_papers_list:
             return []
@@ -1813,7 +1797,10 @@ def huey_parent_split_bundle_chore(
                         image_hash=X["image_hash"],
                     )
                     img = StagingImage.objects.create(
-                        bundle=bundle_obj, bundle_order=X["order"], baseimage=bimg
+                        bundle=bundle_obj,
+                        bundle_order=X["order"],
+                        image_type=StagingImage.UNREAD,
+                        baseimage=bimg,
                     )
                 with open(X["thumb_path"], "rb") as fh:
                     StagingThumbnail.objects.create(

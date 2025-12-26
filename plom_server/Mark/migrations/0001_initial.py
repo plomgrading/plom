@@ -112,7 +112,7 @@ class Migration(migrations.Migration):
                 ("code", models.TextField(default="")),
                 ("question_index", models.PositiveIntegerField(default=0)),
                 ("question_version", models.PositiveIntegerField(default=0)),
-                ("marking_priority", models.PositiveIntegerField(default=0)),
+                ("marking_priority", models.FloatField(default=0.0)),
                 (
                     "assigned_user",
                     models.ForeignKey(

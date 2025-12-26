@@ -28,10 +28,6 @@ plom
 
    module-plom-create
 
-   module-plom-scan
-
-   module-plom-solutions
-
    module-plom-finish
 
    module-plom-other

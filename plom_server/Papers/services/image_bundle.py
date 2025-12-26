@@ -113,12 +113,7 @@ class ImageBundleService:
 
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
-        ).prefetch_related(
-            "baseimage",
-            "knownstagingimage",
-            "extrastagingimage",
-            "discardstagingimage",
-        )
+        ).prefetch_related("baseimage")
 
         # Staging has checked this - but we check again here to be very sure
         if not self.all_staged_imgs_valid(bundle_images):
@@ -155,15 +150,13 @@ class ImageBundleService:
 
         def image_save_name(staged) -> str:
             if staged.image_type == StagingImage.KNOWN:
-                known = staged.knownstagingimage
-                prefix = f"known_{known.paper_number}_{known.page_number}_"
+                prefix = f"known_{staged.paper_number}_{staged.page_number}_"
             elif staged.image_type == StagingImage.EXTRA:
-                extra = staged.extrastagingimage
-                prefix = f"extra_{extra.paper_number}_"
-                for q in extra.question_idx_list:
+                prefix = f"extra_{staged.paper_number}_"
+                for q in staged.question_idx_list:
                     prefix += f"{q}_"
                 # otherwise if no question index use dnm
-                if not extra.question_idx_list:
+                if not staged.question_idx_list:
                     prefix += "dnm_"
             elif staged.image_type == StagingImage.DISCARD:
                 prefix = "discard_"
@@ -182,7 +175,7 @@ class ImageBundleService:
         # to get that we find all the papers that are touched and
         # then get **all** the fixed pages from those papers.
         paper_numbers = set(
-            staged.knownstagingimage.paper_number
+            staged.paper_number
             for staged in bundle_images
             if staged.image_type == StagingImage.KNOWN
         )
@@ -217,13 +210,12 @@ class ImageBundleService:
             image.save()
 
             if staged.image_type == StagingImage.KNOWN:
-                known = staged.knownstagingimage
                 # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
-                fp_list = fixedpage_by_pn_pg[(known.paper_number, known.page_number)]
+                fp_list = fixedpage_by_pn_pg[(staged.paper_number, staged.page_number)]
                 if len(fp_list) == 0:
                     raise ObjectDoesNotExist(
-                        f"Paper {known.paper_number}"
-                        f" page {known.page_number} does not exist"
+                        f"Paper {staged.paper_number}"
+                        f" page {staged.page_number} does not exist"
                     )
                 for fp in fp_list:
                     fp.image = image
@@ -231,12 +223,11 @@ class ImageBundleService:
 
             elif staged.image_type == StagingImage.EXTRA:
                 # need to make one mobile page for each question in the question-list
-                extra = staged.extrastagingimage
-                paper = Paper.objects.get(paper_number=extra.paper_number)
-                for q in extra.question_idx_list:
+                paper = Paper.objects.get(paper_number=staged.paper_number)
+                for q in staged.question_idx_list:
                     # get the version from the paper/question info
                     v = pi_service.get_version_from_paper_question(
-                        extra.paper_number, q
+                        staged.paper_number, q
                     )
                     # defer actual DB creation to bulk operation later
                     new_mobile_pages.append(
@@ -245,7 +236,7 @@ class ImageBundleService:
                         )
                     )
                 # otherwise, if question index list empty, make a non-marked MobilePage
-                if not extra.question_idx_list:
+                if not staged.question_idx_list:
                     new_mobile_pages.append(
                         MobilePage(
                             paper=paper,
@@ -255,9 +246,8 @@ class ImageBundleService:
                         )
                     )
             elif staged.image_type == StagingImage.DISCARD:
-                disc = staged.discardstagingimage
                 new_discard_pages.append(
-                    DiscardPage(image=image, discard_reason=disc.discard_reason)
+                    DiscardPage(image=image, discard_reason=staged.discard_reason)
                 )
             else:
                 raise ValueError(
@@ -330,7 +320,7 @@ class ImageBundleService:
         ).exists():
             return False
         if staged_imgs.filter(
-            image_type=StagingImage.EXTRA, extrastagingimage__paper_number__isnull=True
+            image_type=StagingImage.EXTRA, paper_number__isnull=True
         ).exists():
             return False
         # to do the complement of this search we'd need to count
@@ -360,13 +350,10 @@ class ImageBundleService:
 
         # note - only known-images will create collisions.
         # extra pages and discards will never collide.
-        for image in staged_imgs.filter(image_type=StagingImage.KNOWN).prefetch_related(
-            "knownstagingimage"
-        ):
-            knw = image.knownstagingimage
-            tpv = encodePaperPageVersion(knw.paper_number, knw.page_number, knw.version)
+        for img in staged_imgs.filter(image_type=StagingImage.KNOWN):
+            tpv = encodePaperPageVersion(img.paper_number, img.page_number, img.version)
             # append this image.primary-key to the list of images with that tpv
-            known_imgs.setdefault(tpv, []).append(image.pk)
+            known_imgs.setdefault(tpv, []).append(img.pk)
         for tpv, image_list in known_imgs.items():
             if len(image_list) == 1:  # no collision at this tpv
                 continue
@@ -390,7 +377,7 @@ class ImageBundleService:
         # note that only known images can cause collisions
         # get all the known paper/pages in the bundle
         staged_pp_img_dict = {
-            (img.knownstagingimage.paper_number, img.knownstagingimage.page_number): img
+            (img.paper_number, img.page_number): img
             for img in staged_imgs.filter(image_type=StagingImage.KNOWN)
         }
         # get the list of papers in the bundle so that we can grab all
