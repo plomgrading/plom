@@ -125,7 +125,7 @@ class StagingImage(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-    def clean(self, f) -> None:
+    def clean(self) -> None:
         """Called by full_clean to check stuff about the class instance."""
         try:
             self._check_invariants()
