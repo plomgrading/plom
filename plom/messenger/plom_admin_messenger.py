@@ -53,10 +53,6 @@ class PlomAdminMessenger(Messenger):
             A dictionary, including the bundle_id and maybe other
             information in the future.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support staging bundle upload"
-            )
         if force and self.is_server_api_less_than(116):
             raise PlomNoServerSupportException(
                 "Server too old: does not support forcing upload"
@@ -94,11 +90,6 @@ class PlomAdminMessenger(Messenger):
             TODO: maybe a list of dicts would be a more general API; could
             format as a table client-side.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support staging bundle list"
-            )
-
         with self.SRmutex:
             try:
                 response = self.get_auth("/api/beta/scan/bundles")
@@ -148,11 +139,6 @@ class PlomAdminMessenger(Messenger):
         Returns:
             None
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support page mapping"
-            )
-
         query_args = []
         if papernum is not None:
             query_args.append(f"papernum={papernum}")
@@ -216,11 +202,6 @@ class PlomAdminMessenger(Messenger):
             A dictionary, with sole key "bundle_id" mapping to int,
             and maybe other information in the future.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support bundle push"
-            )
-
         with self.SRmutex:
             try:
                 response = self.patch_auth(f"/api/beta/scan/bundle/{bundle_id}")
@@ -378,11 +359,6 @@ class PlomAdminMessenger(Messenger):
             A dict including key `"filename"` for the file that was written
             and other information about the download.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: API does not support getting reassembled papers"
-            )
-
         verbose_print = print if verbose else (lambda content: None)
         verbose_tqdm = tqdm if verbose else (lambda iterable: iterable)
 
@@ -526,10 +502,6 @@ class PlomAdminMessenger(Messenger):
             PlomSeriousException: other errors.
             PlomNoServerSupportException: old server
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: API does not support direct IDing of papers."
-            )
         with self.SRmutex:
             try:
                 url = f"/ID/beta/{paper_number}"
@@ -554,10 +526,6 @@ class PlomAdminMessenger(Messenger):
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: API does not support direct IDing of papers."
-            )
         with self.SRmutex:
             try:
                 response = self.delete_auth(f"/ID/beta/{paper_number}")

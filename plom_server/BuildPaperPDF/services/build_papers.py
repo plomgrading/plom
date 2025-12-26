@@ -23,7 +23,7 @@ from django.db import transaction
 from django.db.models import Q
 from django_huey import db_task, get_queue
 
-from plom.create.mergeAndCodePages import make_PDF
+from plom.create import make_PDF
 
 # TODO: why "staging"? We should talk to the "real" student service
 from plom_server.Preparation.services import (
