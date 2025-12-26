@@ -196,6 +196,7 @@ def build_page_to_group_name_dict(
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
             label = get_question_label(spec, q)
+            # If questions share a page, we might already have a label; concatenate
             already = page_to_group.get(pg)
             if already:
                 label = already + ", " + label
