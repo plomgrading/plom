@@ -184,9 +184,9 @@ class StagingImage(models.Model):
             # but this could change in the future.
             assert self.paper_number is not None
         if self.discard_reason:
-            assert self.image_Type == DISCARD
+            assert self.image_type == DISCARD
         if self.error_reason:
-            assert self.image_Type == ERROR
+            assert self.image_type == ERROR
 
 
 class StagingThumbnail(models.Model):
