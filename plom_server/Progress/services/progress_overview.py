@@ -123,7 +123,10 @@ class ProgressOverviewService:
 
     @staticmethod
     def n_marking_tasks_for_each_question() -> dict[int, int]:
-        """Return the number of marking tasks for each question, as a dict keyed by question index."""
+        """Return the number of marking tasks for each question, as a dict keyed by question index.
+
+        Currently unused?
+        """
         tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         question_indices = SpecificationService.get_question_indices()
         # Perhaps fewer queries to work with pairs (qi, papernum):
@@ -138,20 +141,24 @@ class ProgressOverviewService:
 
     @staticmethod
     def _missing_task_pq_pairs() -> list[tuple[int, int]]:
-        """Return which tasks (p, q) are missing from each question, compared against the in-use papers."""
+        """Return which tasks (p, q) are missing, compared against the in-use papers.
+
+        Tries to be database efficient, using only three database queries
+        and some postprocessing.
+        """
+        question_indices = SpecificationService.get_question_indices()
         tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         id_tasks = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
-        question_indices = SpecificationService.get_question_indices()
         # extract (qi, papernum) pairs from the database, for offline processing
         pairs = list(
             tasks.values_list("question_index", "paper__paper_number").distinct()
         )
-
-        inuse_papers = set([pn for q, pn in pairs])
-        # augment with ID tasks in case there are papers with no marking tasks
-        inuse_papers = inuse_papers.union(
+        id_tasks_papers = list(
             id_tasks.values_list("paper__paper_number", flat=True).distinct()
         )
+
+        # augment the marking tasks with ID tasks in case of papers with no marking tasks
+        inuse_papers = set([pn for q, pn in pairs]).union(id_tasks_papers)
 
         notfound = {}
         for qi in question_indices:
@@ -173,25 +180,10 @@ class ProgressOverviewService:
         ]
         return missing_triplets
 
-    @staticmethod
-    def n_missing_marking_tasks_for_each_question() -> dict[int, int]:
-        """Return the number of missing marking tasks for each question, as a dict keyed by question index.
-
-        Note: its harder to find this at the level of versions.  I think
-        this would have to involve looking at the incomplete papers, to check
-        which specific versions are missing.
-        """
-        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-        question_indices = SpecificationService.get_question_indices()
-        N = tasks.values_list("paper__paper_number", flat=True).distinct().count()
-        return {
-            qi: N
-            - tasks.filter(question_index=qi)
-            .values_list("paper__paper_number", flat=True)
-            .distinct()
-            .count()
-            for qi in question_indices
-        }
+    @classmethod
+    def n_missing_marking_tasks(cls) -> int:
+        """Return the number of missing marking tasks, compared to "in-use" papers."""
+        return len(cls._missing_task_pq_pairs())
 
     @transaction.atomic
     def get_completed_id_task_count(self) -> int:

@@ -26,10 +26,7 @@ class ProgressMarkHome(MarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
-        missing_per_question = (
-            ProgressOverviewService.n_missing_marking_tasks_for_each_question()
-        )
-        missing_task_count = sum(n for k, n in missing_per_question.items())
+        missing_task_count = ProgressOverviewService.n_missing_marking_tasks()
         context.update(
             {
                 "versions": SpecificationService.get_list_of_versions(),
