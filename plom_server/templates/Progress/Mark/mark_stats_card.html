@@ -19,7 +19,8 @@
             </summary>
             <div class="mt-1">
                 <p class="mb-1">
-                    Of the {{ n_papers }} papers, {{ task_status_counts.Complete }} are marked,
+                    Of the {{ task_status_counts.total }} papers,
+                    {{ task_status_counts.Complete }} are marked,
                     {{ task_status_counts.Out }} are out with markers,
                     and {{ task_status_counts|get_item:"To Do" }} are ready to be marked.
                     {% if task_status_counts.Missing %}
