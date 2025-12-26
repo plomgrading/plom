@@ -102,14 +102,23 @@ class ProgressOverviewService:
 
     @staticmethod
     def n_papers_with_at_least_one_marking_task() -> int:
-        """The number of papers that are currently being marked."""
+        """The number of papers that are currently being marked.
+
+        Caution: papers with ID tasks but no marking tasks are *not* counted:
+        you likely want :method:`n_papers_with_at_least_one_task`.
+
+        Currently unused?
+        """
         # Note prefetch("papers") is unnecessary with values_list
         tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         return tasks.values_list("paper__paper_number", flat=True).distinct().count()
 
     @staticmethod
     def n_papers_with_at_least_one_task() -> int:
-        """The number of papers that are currently being marked and IDed."""
+        """The number of papers that are currently being marked and IDed.
+
+        Tries to be database efficient, using only two database queries.
+        """
         # Note prefetch("papers") is unnecessary with values_list
         tasks1 = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         tasks2 = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
@@ -169,7 +178,12 @@ class ProgressOverviewService:
 
     @classmethod
     def _missing_task_pqv_triplets(cls) -> list[tuple[int, int, int]]:
-        """Return which tasks (p, q, v) are missing from each question, compared against the in-use papers."""
+        """Return which tasks (p, q, v) are missing, compared against the in-use papers.
+
+        TODO: this may be inefficient in the case of large numbers of missing tasks.
+        This is because we make one query for eaching missing (p, q) to find its
+        version.  TODO: this can likely be improved.
+        """
         missing_pairs = cls._missing_task_pq_pairs()
         # TODO: N more DB queries, expensive if many missing: need a bulk version getter?
         # TODO: for example, one could get the qvmap and query offline, or just get the QuestionPages
@@ -185,7 +199,6 @@ class ProgressOverviewService:
         """Return the number of missing marking tasks, compared to "in-use" papers."""
         return len(cls._missing_task_pq_pairs())
 
-    @transaction.atomic
     def get_completed_id_task_count(self) -> int:
         """Return number of completed ID tasks."""
         return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
