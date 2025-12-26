@@ -245,6 +245,7 @@ class ScanService:
 
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
+            # TODO: not sure why this separation is important?  costs two DB ops...
             bundle_obj = StagingBundle.objects.create(
                 slug=slug,
                 user=user,
