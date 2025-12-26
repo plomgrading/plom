@@ -507,7 +507,7 @@ class ScanService:
 
     @transaction.atomic
     def get_n_images(self, bundle: StagingBundle) -> int:
-        """Get the number of page images in a bundle from the number of its StagingImages."""
+        """Get the number of page images in a StagingBundle from the number of its StagingImages."""
         return bundle.stagingimage_set.count()
 
     @transaction.atomic
