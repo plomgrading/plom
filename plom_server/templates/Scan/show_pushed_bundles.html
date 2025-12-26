@@ -80,7 +80,7 @@
                                         <summary>More actions</summary>
                                         <span hx-target="this" hx-target-error="this">
                                             <a class="btn btn-danger"
-                                               hx-confirm="Caution: this will invalidate any marking tasks that use the pages in this bundle.  Are you sure you wish to discard all contents?"
+                                               hx-confirm="Caution: this will invalidate any marking tasks that use the pages in this bundle.  Are you sure you wish to discard all the contents of bundle {{ bundle.slug }}?"
                                                hx-delete="{% url 'pushed_bundle' bundle.staging_bundle_id %}"><i class="bi bi-exclamation-diamond-fill"></i> Discard all contents</a>
                                         </span>
                                     </details>
