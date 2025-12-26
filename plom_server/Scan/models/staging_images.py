@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from ..models import StagingBundle
@@ -114,6 +115,78 @@ class StagingImage(models.Model):
     # used for ERROR
     error_reason = models.TextField(default="")
     history = models.TextField(blank=True, null=False, default="")
+
+    def save(self, *args, **kwargs) -> None:
+        """Override the built-in save to call our validation code.
+
+        See for example:
+        https://stackoverflow.com/questions/4441539/why-doesnt-djangos-model-save-call-full-clean
+        """
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self, f) -> None:
+        """Called by full_clean to check stuff about the class instance."""
+        try:
+            self._check_invariants()
+        except (AssertionError, ValueError) as e:
+            # passing a string adds to the NON_FIELD_ERRORS key
+            raise ValidationError(str(e))
+
+    def _check_invariants(self) -> None:
+        """Check for various illegal combinations of fields in the StagingImage table.
+
+        Raises:
+            AssertionError:
+            ValueError:
+        """
+        UNREAD = self.ImageTypeChoices.UNREAD
+        KNOWN = self.ImageTypeChoices.KNOWN
+        UNKNOWN = self.ImageTypeChoices.UNKNOWN
+        EXTRA = self.ImageTypeChoices.EXTRA
+        DISCARD = self.ImageTypeChoices.DISCARD
+        ERROR = self.ImageTypeChoices.ERROR
+
+        if self.image_type == UNREAD:
+            # TODO: learn how unread pages work: almost everything blank?
+            pass
+        elif self.image_type == KNOWN:
+            assert self.paper_number is not None
+        elif self.image_type == UNKNOWN:
+            assert self.paper_number is None
+            assert self.page_number is None
+            assert self.version is None
+        elif self.image_type == EXTRA:
+            assert self.page_number is None
+            assert self.version is None  # ?
+        elif self.image_type == DISCARD:
+            assert self.discard_reason
+        elif self.image_type == ERROR:
+            assert self.error_reason
+        else:
+            raise ValueError("Unexpected value for enum")
+
+        # And a pass over the fields
+
+        # parsed_qr
+        # rotation
+        # pushed
+
+        if self.paper_number is not None:
+            assert self.image_type in (KNOWN, EXTRA)
+        if self.page_number is not None:
+            assert self.image_type == KNOWN
+        if self.version is not None:
+            assert self.image_type == KNOWN
+        if self.question_idx_list is not None:
+            assert self.image_type == EXTRA
+            # for now you must know both question_idx_list and paper_number
+            # but this could change in the future.
+            assert self.paper_number is not None
+        if self.discard_reason:
+            assert self.image_Type == DISCARD
+        if self.error_reason:
+            assert self.image_Type == ERROR
 
 
 class StagingThumbnail(models.Model):
