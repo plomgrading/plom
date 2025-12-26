@@ -27,10 +27,6 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("bundle_order", models.PositiveIntegerField(null=True)),
-                ("parsed_qr", models.JSONField(default=dict, null=True)),
-                ("rotation", models.IntegerField(default=None, null=True)),
-                ("pushed", models.BooleanField(default=False)),
                 (
                     "image_type",
                     models.TextField(
@@ -41,10 +37,19 @@ class Migration(migrations.Migration):
                             ("EXTRA", "Extra"),
                             ("DISCARD", "Discard"),
                             ("ERROR", "Error"),
-                        ],
-                        default="UNREAD",
+                        ]
                     ),
                 ),
+                ("bundle_order", models.PositiveIntegerField(null=True)),
+                ("parsed_qr", models.JSONField(default=dict, null=True)),
+                ("rotation", models.IntegerField(default=None, null=True)),
+                ("pushed", models.BooleanField(default=False)),
+                ("paper_number", models.PositiveIntegerField(default=None, null=True)),
+                ("page_number", models.PositiveIntegerField(default=None, null=True)),
+                ("version", models.PositiveIntegerField(default=None, null=True)),
+                ("question_idx_list", models.JSONField(default=None, null=True)),
+                ("discard_reason", models.TextField(default="")),
+                ("error_reason", models.TextField(default="")),
                 (
                     "baseimage",
                     models.OneToOneField(
@@ -92,111 +97,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-        ),
-        migrations.CreateModel(
-            name="DiscardStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                ("discard_reason", models.TextField()),
-            ],
-        ),
-        migrations.CreateModel(
-            name="ErrorStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                ("error_reason", models.TextField()),
-            ],
-        ),
-        migrations.CreateModel(
-            name="ExtraStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                ("paper_number", models.PositiveIntegerField(default=None, null=True)),
-                ("question_idx_list", models.JSONField(default=None, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name="KnownStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                ("paper_number", models.PositiveIntegerField()),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-            ],
-        ),
-        migrations.CreateModel(
-            name="StagingThumbnail",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-                (
-                    "image_file",
-                    models.ImageField(
-                        upload_to=plom_server.Scan.models.staging_images.StagingThumbnail._staging_thumbnail_upload_path
-                    ),
-                ),
-                ("time_of_last_update", models.DateTimeField(auto_now=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name="UnknownStagingImage",
-            fields=[
-                (
-                    "staging_image",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        primary_key=True,
-                        serialize=False,
-                        to="Scan.stagingimage",
-                    ),
-                ),
-            ],
-        ),
-        migrations.AddField(
-            model_name="stagingimage",
-            name="bundle",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="Scan.stagingbundle"
-            ),
         ),
         migrations.CreateModel(
             name="PagesToImagesChore",
@@ -249,5 +149,33 @@ class Migration(migrations.Migration):
                 ),
             ],
             bases=("Base.hueytasktracker",),
+        ),
+        migrations.CreateModel(
+            name="StagingThumbnail",
+            fields=[
+                (
+                    "staging_image",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        primary_key=True,
+                        serialize=False,
+                        to="Scan.stagingimage",
+                    ),
+                ),
+                (
+                    "image_file",
+                    models.ImageField(
+                        upload_to=plom_server.Scan.models.staging_images.StagingThumbnail._staging_thumbnail_upload_path
+                    ),
+                ),
+                ("time_of_last_update", models.DateTimeField(auto_now=True)),
+            ],
+        ),
+        migrations.AddField(
+            model_name="stagingimage",
+            name="bundle",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="Scan.stagingbundle"
+            ),
         ),
     ]
