@@ -12,6 +12,7 @@ from django.core.exceptions import (
 )
 from django.db import transaction, IntegrityError
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Papers.models import IDPage, Paper, Image
 from plom_server.Papers.services import ImageBundleService
 from ..models import PaperIDTask, PaperIDAction, IDPrediction
@@ -160,22 +161,28 @@ class IdentifyTaskService:
         else:
             return None
 
+    @staticmethod
     @transaction.atomic
-    def claim_task(self, user: User, paper_number: int) -> None:
-        """Claim an ID task for a user."""
+    def claim_task(user: User, paper_number: int) -> None:
+        """Claim an ID task for a user.
+
+        Raises:
+            ObjectDoesNotExist: no such ID task.
+            PlomConflict: someone has claimed it or its already done.
+        """
         try:
             task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
                 paper__paper_number=paper_number
             )
         except PaperIDTask.DoesNotExist:
-            raise RuntimeError(
+            raise ObjectDoesNotExist(
                 f"ID Task with paper number {paper_number} does not exist."
             )
 
         if task.status == PaperIDTask.OUT:
-            raise RuntimeError(f"ID task {paper_number} is currently assigned.")
+            raise PlomConflict(f"ID task {paper_number} is currently assigned.")
         elif task.status == PaperIDTask.COMPLETE:
-            raise RuntimeError(
+            raise PlomConflict(
                 f"ID task {paper_number} is complete, already identified."
             )
 

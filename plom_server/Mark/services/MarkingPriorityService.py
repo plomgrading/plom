@@ -15,7 +15,7 @@ See also the closely-related
 import random
 
 from django.db import transaction
-from django.db.models import QuerySet, Func, OuterRef, Subquery
+from django.db.models import QuerySet, OuterRef, Subquery
 from django.db.models.functions import Random
 
 from plom_server.Base.services import Settings
@@ -49,6 +49,37 @@ def get_tasks_to_update_priority_by_q_v(
     return tasks.select_related("paper")
 
 
+def modify_task_priority(task: MarkingTask, new_priority: int | float) -> None:
+    """Modify the priority of a single marking task."""
+    task.marking_priority = new_priority
+    task.save()
+
+
+def update_priority_ordering(
+    order: str,
+    *,
+    custom_order: None | dict[tuple[int, int], int | float] = None,
+) -> None:
+    """Update the priority ordering of tasks.
+
+    Args:
+        order: one of "shuffle", "paper_number", or "custom".
+
+    Keyword Args:
+        custom_order: a dictionary specifying a custom task ordering
+            (for existing tasks).
+    """
+    if order == "shuffle":
+        set_marking_priority_shuffle()
+    elif order == "custom":
+        assert custom_order is not None, "must provide custom_order kwarg"
+        set_marking_priority_custom(custom_order=custom_order)
+    elif order == "paper_number":
+        set_marking_priority_paper_number()
+    else:
+        raise RuntimeError(f"'{order}' is not a valid option for 'order'")
+
+
 @transaction.atomic
 def set_marking_priority_shuffle() -> None:
     """Set the priority to shuffle: every marking task gets a random priority value.
@@ -61,12 +92,8 @@ def set_marking_priority_shuffle() -> None:
     you make changes here.
     """
     tasks = _get_tasks_to_update_priority()
-    tasks.update(
-        # this bit constructs an SQL query. All work happens within the DB.
-        # we want a positive int, but RANDOM implementation is different from DB to DB
-        # so we use Django's Random()
-        marking_priority=Func(Random() * 1000, function="FLOOR")
-    )
+    # this bit constructs an SQL query. All work happens within the DB.
+    tasks.update(marking_priority=Random() * 1000)
     Settings.key_value_store_set("task_order_strategy", "shuffle")
 
 
@@ -99,7 +126,7 @@ def compute_priority(
         priority = largest_paper_num - papernum
     else:
         # TODO: careful this 1000 is also repeated elsewherre.
-        priority = random.randint(0, 1000)
+        priority = random.random() * 1000
     # in case of bugs, priority should always be positive, for some unknonn
     # reason that would be revisited.
     priority = max(0, priority)
@@ -138,7 +165,9 @@ def set_marking_priority_paper_number() -> None:
 
 
 @transaction.atomic
-def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> None:
+def set_marking_priority_custom(
+    custom_order: dict[tuple[int, int], int | float],
+) -> None:
     """Set the priority to a custom ordering.
 
     Args:
@@ -166,9 +195,3 @@ def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]) -> Non
             tasks_to_update.append(task_to_update)
     MarkingTask.objects.bulk_update(tasks_to_update, ["marking_priority"])
     Settings.key_value_store_set("task_order_strategy", "custom")
-
-
-def modify_task_priority(task: MarkingTask, new_priority: int) -> None:
-    """Modify the priority of a single marking task."""
-    task.marking_priority = new_priority
-    task.save()

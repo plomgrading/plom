@@ -65,27 +65,6 @@ def status(*, msgr) -> None:
         print(sv)
         print(f"  Old-style public code in spec: {spec.get('publicCode')}")
 
-    print("\nUser information")
-    print("----------------\n")
-    users = msgr.getUserDetails()
-    if users.pop("manager", None):
-        print(check_mark + " manager account")
-    else:
-        print(cross + " no manager account: how can you even see this!?")
-    if users.pop("scanner", None):
-        print(check_mark + " scanner account")
-    else:
-        print(warn_mark + " no scanner account: you will not be able to upload")
-    if users.pop("reviewer", None):
-        print(check_mark + " reviewer account")
-    else:
-        print(warn_mark + " no reviewer: likely harmless as this is a beta feature")
-    if len(users) > 0:
-        print(check_mark + f" {len(users)} user accounts: ")
-        print("    " + ", ".join(users.keys()))
-    else:
-        print(warn_mark + " No user accounts yet")
-
     print("\nClasslist")
     print("---------\n")
 
@@ -98,7 +77,9 @@ def status(*, msgr) -> None:
     if classlist and classlist[0].get("paper_number", None):
         # classlist has papernum column
         papernums = [
-            int(r["paper_number"]) for r in classlist if int(r["paper_number"]) > 0
+            int(r["paper_number"])
+            for r in classlist
+            if (r["paper_number"] is not None and int(r["paper_number"]) > 0)
         ]
         if len(set(papernums)) != len(papernums):
             print(cross + ' "paper_number" fields are not unique!')
@@ -126,9 +107,9 @@ def status(*, msgr) -> None:
 
     print("\nDatabase")
     print("--------\n")
-    vmap = msgr.getGlobalQuestionVersionMap()
+    vmap = msgr.get_pqvmap()
     if len(vmap) > 0:
-        print(check_mark + f" There are {len(vmap)} rows in the papers table")
+        print(check_mark + f" There are {len(vmap)} rows in the PQV map")
     elif spec is None:
         print(cross + " No rows have been inserted in the papers table")
         print("    (you will not be able to add any until you add a spec)")

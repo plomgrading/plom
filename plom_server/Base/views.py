@@ -17,7 +17,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from django_huey import get_queue
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 
@@ -97,7 +97,7 @@ class ServerStatusView(ManagerRequiredView):
         # Caution: nginx might be in the way
         # server_url = f"{request.scheme}://{request.get_host()}"
         # Helper code also checks some env vars etc
-        server_url = AuthenticationServices.get_base_link(
+        server_url = AuthService.get_base_link(
             default_host=get_current_site(request).domain
         )
 

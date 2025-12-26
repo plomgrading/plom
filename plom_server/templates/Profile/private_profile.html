@@ -28,7 +28,9 @@
                         <h3 class="mb-2">{{ request.user.first_name }}</h3>
                         <p class="mb-2">{{ request.user.username }}</p>
                         <p class="text-muted mb-4">
-                            Groups: {{ user_groups }}<span class="mx-2">|</span> <a href="mailto:{{ email }}">{{ email }}</a>
+                            Groups: {{ user_groups }}
+                            <span class="mx-2">|</span>
+                            <a href="mailto:{{ request.user.email }}">{{ request.user.email }}</a>
                         </p>
                     </div>
                 </div>
@@ -43,8 +45,9 @@
                     <p class="text-muted lh-1">
                         <small>
                             (Note: your username may appear to other
-                            users, in URLs and other places: we're
-                            working on fixing this, patience please)
+                            users, in URLs and other places: patches
+                            to show preferred names instead are most
+                            welcome!)
                         </small>
                     </p>
                     <p id="email-label">Email: {{ form.email }}</p>

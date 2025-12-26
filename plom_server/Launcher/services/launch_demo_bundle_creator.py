@@ -18,10 +18,7 @@ import pymupdf
 from django.core.management import call_command
 from django.conf import settings
 
-from plom.create.mergeAndCodePages import (
-    create_QR_codes,
-    create_invalid_QR_and_bar_codes,
-)
+from plom.create import create_QR_codes, create_invalid_QR_and_bar_codes
 from plom.create.scribble_utils import (
     scribble_name_and_id,
     scribble_pages,

@@ -14,6 +14,7 @@ import django
 import pytest
 from rest_framework.test import APIClient
 
+from plom_server.Authentication.services import AuthService
 from plom_server.Base.models import User
 from plom_server.Papers.models import Paper
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
@@ -35,7 +36,7 @@ def api_client() -> APIClient:
 
 @pytest.fixture
 def user(db):
-    """Creates and returns a fresh Django user.
+    """Creates and returns a fresh Django user that is a "marker".
 
     Args:
         db: pytest-django fixture that provides database access.
@@ -43,7 +44,9 @@ def user(db):
     Returns:
         A new User instance saved to the test database.
     """
-    return User.objects.create_user(username="alice", password="pass")
+    AuthService.create_groups()
+    username, __ = AuthService.create_user_and_add_to_group("alice", "marker")
+    return User.objects.get(username=username)
 
 
 @pytest.fixture

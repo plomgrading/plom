@@ -11,15 +11,7 @@ from plom.plom_exceptions import PlomConflict
 from plom_server.Papers.models import Paper, QuestionPage, MobilePage
 from plom_server.Papers.services import PaperInfoService, SpecificationService
 
-from ..models import (
-    StagingBundle,
-    StagingImage,
-    DiscardStagingImage,
-    ExtraStagingImage,
-    UnknownStagingImage,
-    KnownStagingImage,
-)
-
+from ..models import StagingBundle, StagingImage
 from ..services.util import check_bundle_object_is_neither_locked_nor_pushed
 
 
@@ -47,7 +39,8 @@ class ScanCastService:
     # Page casting helper function
     # ----------------------------------------
 
-    def string_to_staging_image_type(self, img_str: str) -> models.TextChoices:
+    @staticmethod
+    def string_to_staging_image_type(img_str: str) -> models.TextChoices:
         """A helper function to translate from string to the staging image enum type."""
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
@@ -165,21 +158,23 @@ class ScanCastService:
         # Hence we have this branching for time being.
 
         if image_type == StagingImage.UNKNOWN:
-            img.unknownstagingimage.delete()
             reason = f"Unknown page discarded by {user_obj.username}"
         elif image_type == StagingImage.KNOWN:
-            img.knownstagingimage.delete()
+            # TODO: or leave this info for easier undo?
+            img.paper_number = None
+            img.page_number = None
+            img.version = None
             reason = f"Known page discarded by {user_obj.username}"
         elif image_type == StagingImage.EXTRA:
-            img.extrastagingimage.delete()
+            img.paper_number = None
+            img.question_idx_list = None
             reason = f"Extra page discarded by {user_obj.username}"
         elif image_type == StagingImage.ERROR:
-            img.errorstagingimage.delete()
+            img.error_reason = ""
             reason = f"Error page discarded by {user_obj.username}"
         else:
             raise RuntimeError(f"Should not be here! {image_type}")
-
-        DiscardStagingImage.objects.create(staging_image=img, discard_reason=reason)
+        img.discard_reason = reason
         img.save()
 
     @classmethod
@@ -217,21 +212,10 @@ class ScanCastService:
 
         unknown_images = bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.UNKNOWN
-        ).select_related("unknownstagingimage")
-        # see 'select_for_update' docs - you have to be careful with nullable relations.
-        unknown_images_locked = unknown_images.select_for_update().exclude(
-            unknownstagingimage=None
-        )
-
-        # now that we have the unknowns, remove associated data and create associated discard info.
-        for img in unknown_images_locked:
-            # Be very careful to update the image type when doing this sort of operation.
-            img.unknownstagingimage.delete()
+        ).select_for_update()
+        for img in unknown_images:
             img.image_type = StagingImage.DISCARD
-            DiscardStagingImage.objects.create(
-                staging_image=img,
-                discard_reason=f"Unknown page discarded by {user_obj.username}",
-            )
+            img.discard_reason = f"Unknown page discarded by {user_obj.username}"
             img.save()
 
     @transaction.atomic
@@ -325,19 +309,22 @@ class ScanCastService:
         # TODO - keep more detailed history so easier to undo.
         # Hence we have this branching for time being.
         if image_type == StagingImage.DISCARD:
-            img.discardstagingimage.delete()
+            # TODO: img.discard_reason = ""?
+            pass
         elif image_type == StagingImage.KNOWN:
-            img.knownstagingimage.delete()
+            # TODO: or leave this info for easier undo?
+            img.paper_number = None
+            img.page_number = None
+            img.version = None
+            pass
         elif image_type == StagingImage.EXTRA:
-            img.extrastagingimage.delete()
+            img.paper_number = None
+            img.question_idx_list = None
         elif image_type == StagingImage.ERROR:
-            img.errorstagingimage.delete()
+            img.error_reason = ""
         else:
             raise RuntimeError("Cannot recognise image type")
 
-        UnknownStagingImage.objects.create(
-            staging_image=img,
-        )
         img.save()
 
     @transaction.atomic
@@ -373,20 +360,12 @@ class ScanCastService:
 
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
-        discard_images = bundle_obj.stagingimage_set.select_related(
-            "discardstagingimage"
-        ).filter(image_type=StagingImage.DISCARD)
-        # be careful locking with nullable relations - see select_for_update docs.
-        discard_images_locked = discard_images.select_for_update().exclude(
-            discardstagingimage=None
-        )
-
-        # now that we have the discards, remove associated data and create associated unknown info.
-        for img in discard_images_locked:
-            # Be very careful to update the image type when doing this sort of operation.
-            img.discardstagingimage.delete()
+        discard_images = bundle_obj.stagingimage_set.filter(
+            image_type=StagingImage.DISCARD
+        ).select_for_update()
+        for img in discard_images:
+            # TODO: img.discard_reason = ""?
             img.image_type = StagingImage.UNKNOWN
-            UnknownStagingImage.objects.create(staging_image=img)
             img.save()
 
     @staticmethod
@@ -398,7 +377,7 @@ class ScanCastService:
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
-        """Fill in the missing information in a ExtraStagingImage.
+        """Fill in the missing information in a Extra StagingImage.
 
         The command assigns the paper-number and question list to the
         given extra page.
@@ -445,19 +424,15 @@ class ScanCastService:
 
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
-            img_locked = (
+            eximg = (
                 bundle_obj.stagingimage_set.filter(
                     bundle_order=bundle_order, image_type=StagingImage.EXTRA
                 )
-                .select_related("extrastagingimage")
                 .select_for_update()
-                .exclude(extrastagingimage=None)
                 .get()
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
-
-        eximg = img_locked.extrastagingimage
 
         # Throw value error if data has already been set.
         if eximg.paper_number is not None:
@@ -479,7 +454,7 @@ class ScanCastService:
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
-        """Fill in the missing information in a ExtraStagingImage from bundle id.
+        """Fill in the missing information in a Extra StagingImage from bundle id.
 
         This is a wrapper around the actual service command
         :method:`_assign_extra_page` that does the work.
@@ -510,7 +485,7 @@ class ScanCastService:
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
-        """Fill in the missing information in a ExtraStagingImage.
+        """Fill in the missing information in a Extra StagingImage.
 
         The command assigns the paper-number and question list to the
         given extra page.
@@ -580,19 +555,15 @@ class ScanCastService:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = (
-                bundle_obj.stagingimage_set.select_related("extrastagingimage")
-                .exclude(extrastagingimage=None)
-                .select_for_update()
-                .get(bundle_order=bundle_order, image_type=StagingImage.EXTRA)
+            img = bundle_obj.stagingimage_set.select_for_update().get(
+                bundle_order=bundle_order, image_type=StagingImage.EXTRA
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
 
-        eximg = img.extrastagingimage
-        eximg.paper_number = None
-        eximg.question_idx_list = None
-        eximg.save()
+        img.paper_number = None
+        img.question_idx_list = None
+        img.save()
 
     @classmethod
     @transaction.atomic
@@ -690,25 +661,28 @@ class ScanCastService:
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
             )
 
-        # Be very careful to update the image type when doing this sort of operation.
-        img.image_type = StagingImage.EXTRA
         # delete the old type information
         # TODO - keep more detailed history so easier to undo.
         # Hence we have this branching for time being.
         if image_type == StagingImage.DISCARD:
-            img.discardstagingimage.delete()
+            # TODO: img.discard_reason = ""?
+            pass
         elif image_type == StagingImage.KNOWN:
-            img.knownstagingimage.delete()
+            # TODO: maybe we can leave the paper_number in place as EXTRA can use it
+            img.paper_number = None
+            img.page_number = None
+            img.version = None
         elif image_type == StagingImage.UNKNOWN:
-            img.unknownstagingimage.delete()
+            pass
         elif image_type == StagingImage.ERROR:
-            img.errorstagingimage.delete()
+            img.error_reason = ""
         else:
             raise RuntimeError("Cannot recognise image type")
 
-        ExtraStagingImage.objects.create(
-            staging_image=img,
-        )
+        img.image_type = StagingImage.EXTRA
+        # TODO: if it had a paper_number already should we keep it?
+        img.paper_number = None
+        img.question_idx_list = None
         img.save()
 
     @classmethod
@@ -803,38 +777,32 @@ class ScanCastService:
         # now check if this paper/page in the current bundle
         bundle_known_img = bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.KNOWN
-        ).prefetch_related("knownstagingimage")
+        )
         if bundle_known_img.filter(
-            knownstagingimage__paper_number=paper_number,
-            knownstagingimage__page_number=page_number,
+            paper_number=paper_number, page_number=page_number
         ).exists():
             raise ValueError(
                 f"There is already an image in this bundle with paper = {paper_number}, page = {page_number}"
             )
         # okay - now it is safe to cast the current image to a known page
         if img.image_type == StagingImage.DISCARD:
-            img.discardstagingimage.delete()
+            # TODO: img.discard_reason = ""?
+            pass
         elif img.image_type == StagingImage.UNKNOWN:
-            img.unknownstagingimage.delete()
+            pass
         elif img.image_type == StagingImage.ERROR:
-            img.errorstagingimage.delete()
+            img.error_reason = ""
         else:
             raise ValueError(
                 f"Cannot knowify an image of type {img.image_type}. Permitted types are 'DISCARD', 'UNKNOWN', and 'ERROR'"
             )
-        # before we create the known-page we need the version of this paper/page
 
         version_in_db = PaperInfoService().get_version_from_paper_page(
             paper_number, page_number
         )
-
-        KnownStagingImage.objects.create(
-            staging_image=img,
-            paper_number=paper_number,
-            page_number=page_number,
-            version=version_in_db,
-        )
-        # finally - do not forget to set the image type correctly **and** save it!
+        img.paper_number = paper_number
+        img.page_number = page_number
+        img.version = version_in_db
         img.image_type = StagingImage.KNOWN
         img.save()
 

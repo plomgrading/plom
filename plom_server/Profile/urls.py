@@ -9,11 +9,11 @@ from django.urls import path
 from .views import ProfileView, PrivateProfileView, password_change_redirect
 
 urlpatterns = [
-    path("profile/<str:username>", ProfileView.as_view(), name="profile"),
-    path("profile/", PrivateProfileView.as_view(), name="private_profile"),
     path(
         "profile/password",
         password_change_redirect,
         name="self-password-reset",
     ),
+    path("profile/<str:username>", ProfileView.as_view(), name="profile"),
+    path("profile/", PrivateProfileView.as_view(), name="private_profile"),
 ]

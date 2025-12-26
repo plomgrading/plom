@@ -4,8 +4,6 @@
 """Backend bits 'n bobs to talk to a Plom server."""
 
 from .messenger import Messenger
-from .scanMessenger import ScanMessenger
-from .managerMessenger import ManagerMessenger
 from .base_messenger import Plom_API_Version
 from .plom_admin_messenger import PlomAdminMessenger
 
@@ -15,6 +13,4 @@ from .base_messenger import BaseMessenger
 
 __all__ = [
     "Messenger",
-    "ManagerMessenger",
-    "ScanMessenger",
 ]

@@ -24,9 +24,9 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from plom.misc_utils import humanize_seconds
-from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthService
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.Progress.services.userinfo_service import UserInfoServices
+from plom_server.Progress.services import UserInfoService
 from .services import PermissionChanger
 from .services import QuotaService
 from .services.UsersService import get_user_info, delete_user
@@ -62,17 +62,18 @@ class UserPage(ManagerRequiredView):
             "markers": users["markers"],
             "lead_markers": users["lead_markers"],
             "managers": users["managers"],
+            "identifiers": users["identifiers"],
             "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)
 
-    def post(self, request: HttpRequest, username: str) -> HttpResponse:
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Set user to active or inactive."""
         PermissionChanger.toggle_user_active(username)
 
         return HttpResponseClientRefresh()
 
-    def delete(self, request: HttpRequest, username: str) -> HttpResponse:
+    def delete(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Delete user."""
         try:
             delete_user(username, request.user.id)
@@ -100,8 +101,16 @@ class UserPage(ManagerRequiredView):
         PermissionChanger.set_all_markers_active(False)
         return redirect("/users")
 
-    @login_required
-    def toggleLeadMarker(self, username):
+
+class UserToggleLeadMarker(ManagerRequiredView):
+    """Class that handles the views in UserInfo Page."""
+
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
+        """Post a username to toggle them between lead_marker and not.
+
+        For *backwards compatbiility*, using this view to make someone a
+        lead marker also makes them an identifier.  But not conversely.
+        """
         PermissionChanger.toggle_lead_marker_group_membership(username)
         return HttpResponseClientRefresh()
 
@@ -113,7 +122,7 @@ class PasswordResetPage(ManagerRequiredView):
         """Get the password reset page for a particular user."""
         user_obj = User.objects.get(username=username)
         request_domain = get_current_site(request).domain
-        link = AuthenticationServices().generate_link(user_obj, request_domain)
+        link = AuthService.generate_link(user_obj, request_domain)
         context = {
             "username": username,
             "link": link,
@@ -154,7 +163,7 @@ class SetQuotaView(ManagerRequiredView):
         # Special flag received when user confirms to force setting, ignoring limit restriction.
         if "force_set_quota" in request.POST:
             complete, claimed = (
-                UserInfoServices.get_total_annotated_and_claimed_count_by_user(username)
+                UserInfoService.get_total_annotated_and_claimed_count_by_user(username)
             )
             quota, created = Quota.objects.get_or_create(user=user, limit=complete)
 
