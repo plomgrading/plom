@@ -27,11 +27,11 @@ BASE_DIR = Path(__file__).resolve().parent
 # working directory.  In many cases, other variables can override this
 # choice (e.g., PLOM_MEDIA_ROOT) but this allows single place for all
 # non-database "state"
-_ = os.environ.get("PLOM_BASE_DIR")
-if not _:
+__ = os.environ.get("PLOM_BASE_DIR")
+if not __:
     PLOM_BASE_DIR = Path(".")
 else:
-    PLOM_BASE_DIR = Path(_)
+    PLOM_BASE_DIR = Path(__)
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -268,20 +268,22 @@ SESSION_COOKIE_AGE = 60 * 60 * 48  # 48 hours
 SESSION_COOKIE_NAME = "sessionid"
 CSRF_COOKIE_NAME = "csrftoken"
 # Independent sessions when multiple servers on the same host
-if os.environ.get("PLOM_PUBLIC_FACING_PORT"):
-    SESSION_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PORT")
-    CSRF_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PORT")
-if os.environ.get("PLOM_PUBLIC_FACING_PREFIX"):
-    SESSION_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
-    CSRF_COOKIE_NAME += os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
+__ = os.environ.get("PLOM_PUBLIC_FACING_PORT")
+if __:
+    SESSION_COOKIE_NAME += __
+    CSRF_COOKIE_NAME += __
+__ = os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
+if __:
+    SESSION_COOKIE_NAME += __
+    CSRF_COOKIE_NAME += __
 
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
-_ = os.environ.get("PLOM_MEDIA_ROOT")
-if not _:
+__ = os.environ.get("PLOM_MEDIA_ROOT")
+if not __:
     MEDIA_ROOT = PLOM_BASE_DIR / "media"
 else:
-    MEDIA_ROOT = Path(_)
+    MEDIA_ROOT = Path(__)
 
 
 # Django Huey configuration
