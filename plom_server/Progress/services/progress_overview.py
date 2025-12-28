@@ -301,9 +301,10 @@ class ProgressOverviewService:
             For each index the dict is "{status: count}" for each of
             "To Do", "Complete", "Out", "Missing" and "total".
         """
-        qindices = SpecificationService.get_question_indices()
         assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
-        dict_of_counts = {
+        qindices = SpecificationService.get_question_indices()
+
+        counts = {
             qi: {
                 MarkingTask.TO_DO.label: 0,
                 MarkingTask.COMPLETE.label: 0,
@@ -312,37 +313,30 @@ class ProgressOverviewService:
             for qi in qindices
         }
 
-        tasks_query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-
-        for X in tasks_query.values("status", "question_index").annotate(
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        for X in tasks.values("status", "question_index").annotate(
             count=Count("status")
         ):
             status_label = MarkingTask.StatusChoices(X["status"]).label
-            dict_of_counts[X["question_index"]][status_label] = X["count"]
+            counts[X["question_index"]][status_label] = X["count"]
 
         if _n_papers is None:
             n_papers = cls.n_papers_with_at_least_one_task()
         else:
             n_papers = _n_papers
-        for qi, d in dict_of_counts.items():
+        for qi, d in counts.items():
             present = sum([c for k, c in d.items()])
             # max 0 just in case of programming error
             d.update({"Missing": max(0, n_papers - present), "total": n_papers})
 
-        return dict_of_counts
+        return counts
 
     @classmethod
     @transaction.atomic
     def _get_mark_task_status_counts_qv(
         cls,
-        _breakdown_by_version: bool = True,
     ) -> dict[int, dict[int, dict[str, int]]] | dict[int, dict[str, int]]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
-
-        Keyword Args:
-            _breakdown_by_version: if True, default, include a 2nd level of dicts
-                by version.  False might be more efficient: TODO: not really implemented.
-                TODO: In theory, False replaces :method:`get_mark_Task_status_counts()`.
 
         Returns:
             Nested dicts.  Indexing like ``[qidx][v]``.
@@ -351,10 +345,7 @@ class ProgressOverviewService:
         """
         assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
         question_indices = SpecificationService.get_question_indices()
-        if _breakdown_by_version:
-            versions = SpecificationService.get_list_of_versions()
-        else:
-            versions = [1]  # dummy
+        versions = SpecificationService.get_list_of_versions()
 
         counts = {}
         for qidx in question_indices:
@@ -366,8 +357,8 @@ class ProgressOverviewService:
                     MarkingTask.OUT.label: 0,
                 }
 
-        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         # extract (papernum, qidx, ver, status) tuples from database, for offline processing
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         task_tuples = list(
             tasks.values_list(
                 "paper__paper_number", "question_index", "question_version", "status"
@@ -378,8 +369,6 @@ class ProgressOverviewService:
 
         for pn, qi, v, status in task_tuples:
             status_label = MarkingTask.StatusChoices(status).label
-            if not _breakdown_by_version:
-                v = 1
             counts[qi][v][status_label] += 1
 
         triplets = cls._missing_task_pqv_triplets()
