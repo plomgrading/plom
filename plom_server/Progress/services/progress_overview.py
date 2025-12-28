@@ -180,18 +180,13 @@ class ProgressOverviewService:
     def _missing_task_pqv_triplets(cls) -> list[tuple[int, int, int]]:
         """Return which tasks (p, q, v) are missing, compared against the in-use papers.
 
-        TODO: this may be inefficient in the case of large numbers of missing tasks.
-        This is because we make one query for eaching missing (p, q) to find its
-        version.  TODO: this can likely be improved.
+        There is an extra cost associated with determining the versions: if you
+        only need the paper number and qidx, call :method:`_missing_task_pq_pairs`
+        instead.
         """
         missing_pairs = cls._missing_task_pq_pairs()
-        # TODO: N more DB queries, expensive if many missing: need a bulk version getter?
-        # TODO: for example, one could get the qvmap and query offline, or just get the QuestionPages
-        # (which exist even if the paper isn't in-use!)
-        missing_triplets = [
-            (pn, qi, PaperInfoService.get_version_from_paper_question(pn, qi))
-            for pn, qi in missing_pairs
-        ]
+        pqvmap = PaperInfoService.get_pqv_map_dict()
+        missing_triplets = [(pn, qi, pqvmap[pn][qi]) for pn, qi in missing_pairs]
         return missing_triplets
 
     @classmethod
