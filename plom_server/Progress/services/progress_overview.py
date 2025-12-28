@@ -330,7 +330,7 @@ class ProgressOverviewService:
     @transaction.atomic
     def _get_mark_task_status_counts_qv(
         cls,
-    ) -> dict[int, dict[int, dict[str, int]]] | dict[int, dict[str, int]]:
+    ) -> dict[int, dict[int, dict[str, int]]]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
 
         Returns:
@@ -342,7 +342,7 @@ class ProgressOverviewService:
         question_indices = SpecificationService.get_question_indices()
         versions = SpecificationService.get_list_of_versions()
 
-        counts = {}
+        counts: dict[int, dict[int, dict[str, int]]] = {}
         for qidx in question_indices:
             counts[qidx] = {}
             for ver in versions:

@@ -37,11 +37,11 @@ class ProgressMarkHome(MarkerOrManagerView):
         all_max_marks = SpecificationService.get_questions_max_marks()
         data_for_histograms = {}
         for qidx, __, __ in question_labels_html:
-            _data = {}
+            _data: dict[int, list] = {}
             data_for_histograms[qidx] = _data
             for ver in SpecificationService.get_list_of_versions():
                 max_mark = all_max_marks[qidx]
-                _data[ver] = should_be_in_a_service(qidx, ver, max_mark)
+                _data[ver] = _should_be_in_a_service(qidx, ver, max_mark)
 
         context.update(
             {
@@ -71,7 +71,9 @@ class ProgressMarkStartMarking(MarkerOrManagerView):
 
 
 # TODO: move this to MarkingStatsService?
-def should_be_in_a_service(question_idx, version, max_mark):
+def _should_be_in_a_service(
+    question_idx: int, version: int, max_mark: int
+) -> list[dict[str, int | float]]:
     scores = MarkingStatsService.get_scores_for_question_version(question_idx, version)
     score_counts = Counter(scores)
 
@@ -114,7 +116,7 @@ class ProgressMarkStatsView(MarkerOrManagerView):
 
         all_max_marks = SpecificationService.get_questions_max_marks()
         max_mark = all_max_marks.get(question_idx, 0)
-        histogram_data = should_be_in_a_service(question_idx, version, max_mark)
+        histogram_data = _should_be_in_a_service(question_idx, version, max_mark)
         qlabel, qlabel_html = SpecificationService.get_question_label_str_and_html(
             question_idx
         )
