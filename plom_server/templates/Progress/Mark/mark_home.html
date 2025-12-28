@@ -33,12 +33,12 @@
         </div>
     {% endif %}
     <div class="container w-100">
-        {% for qn in questions %}
+        {% for qidx, qlabel, qlabel_html in question_labels_html %}
             <div class="row">
                 {% for vn in versions %}
                     <div class="col p-1"
                          hx-trigger="load"
-                         hx-get="{% url 'progress_mark_stats' qn vn %}"></div>
+                         hx-get="{% url 'progress_mark_stats' qidx vn %}"></div>
                 {% endfor %}
             </div>
         {% endfor %}

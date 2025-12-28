@@ -34,20 +34,19 @@ class ProgressMarkHome(MarkerOrManagerView):
         )
 
         question_labels_html = SpecificationService.get_question_html_label_triples()
+        versions = SpecificationService.get_list_of_versions()
         all_max_marks = SpecificationService.get_questions_max_marks()
         data_for_histograms = {}
         for qidx, __, __ in question_labels_html:
             _data: dict[int, list] = {}
             data_for_histograms[qidx] = _data
-            for ver in SpecificationService.get_list_of_versions():
+            for ver in versions:
                 max_mark = all_max_marks[qidx]
                 _data[ver] = _should_be_in_a_service(qidx, ver, max_mark)
 
         context.update(
             {
-                "versions": SpecificationService.get_list_of_versions(),
-                "questions": SpecificationService.get_question_indices(),
-                "question_labels": SpecificationService.get_question_indices(),
+                "versions": versions,
                 "question_labels_html": question_labels_html,
                 "missing_task_count": missing_task_count,
                 "task_counts": task_counts,
