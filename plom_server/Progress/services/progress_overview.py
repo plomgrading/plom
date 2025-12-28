@@ -367,36 +367,20 @@ class ProgressOverviewService:
                 }
 
         tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-        # id_tasks = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
-        # extract (qi, papernum, status) tuples from database, for offline processing
+        # extract (papernum, qidx, ver, status) tuples from database, for offline processing
         task_tuples = list(
-            tasks.values_list("paper__paper_number", "question_index", "status")
+            tasks.values_list(
+                "paper__paper_number", "question_index", "question_version", "status"
+            )
             # TODO: maybe later we have multiple tasks per (p, q)
             # .distinct()
         )
-        # TODO: slow **** do not commit! ****
-        task_tuples_w_versions = [
-            (pn, qi, PaperInfoService.get_version_from_paper_question(pn, qi), status)
-            for pn, qi, status in task_tuples
-        ]
-        # print(task_tuples_w_versions)
-        # id_tasks_papers = list(
-        #     id_tasks.values_list("paper__paper_number", flat=True).distinct()
-        # )
-        # augment the marking tasks with ID tasks in case of papers with no marking tasks
-        # inuse_papers = set([x[0] for x in task_tuples]).union(id_tasks_papers)
 
-        for pn, qi, v, status in task_tuples_w_versions:
+        for pn, qi, v, status in task_tuples:
             status_label = MarkingTask.StatusChoices(status).label
             if not _breakdown_by_version:
                 v = 1
             counts[qi][v][status_label] += 1
-
-        # notfound = {}
-        # for qi in question_indices:
-        #     inuse_q = set([x[0] for x in task_tuples if q == qi])
-        #     notfound[qi] = list(inuse_papers.difference(inuse_q))
-        # missing_pairs = [(pn, qi) for qi, papers in notfound.items() for pn in papers]
 
         triplets = cls._missing_task_pqv_triplets()
         for qidx in question_indices:
