@@ -256,8 +256,38 @@ class ProgressOverviewService:
         return counts
 
     @classmethod
-    @transaction.atomic
     def get_mark_task_status_counts(
+        cls,
+        *,
+        breakdown_by_version: bool,
+        _n_papers: int | None = None,
+    ) -> dict[int, dict[int, dict[str, int]]] | dict[int, dict[str, int]]:
+        """Return a dict of counts of marking tasks by their status for each question, version.
+
+        Note that this excludes out-of-date tasks.
+
+        Keyword Args:
+            breakdown_by_version: whether to break things down further to
+                the level of version.
+                Passing False is currently considerably more efficient.
+            _n_papers: this speeds up "Missing" calculations b/c we avoid
+                additional database queries.  If omitted, we compute it.
+                Only used when `breakdown_by_version` is False.
+
+        Returns:
+            Dicts inside dicts.  The inner-most dicts are counts for each
+            status of the form ``{status: count}`` for each of
+            "To Do", "Complete", "Out", "Missing" and "total".
+            Outer keys are `qidx`.  If `breakdown_by_version`
+            there is another level of `ver` keys: i.e., ``[qidx][v]`` indexing.
+        """
+        if not breakdown_by_version:
+            return cls._get_mark_task_status_counts_q(_n_papers=_n_papers)
+        return cls._get_mark_task_status_counts_qv()
+
+    @classmethod
+    @transaction.atomic
+    def _get_mark_task_status_counts_q(
         cls, *, _n_papers: int | None = None
     ) -> dict[int, dict[str, int]]:
         """Return a dict of counts of marking tasks by their status for each question.
@@ -267,7 +297,7 @@ class ProgressOverviewService:
                 additional database queries.  If omitted, we compute it.
 
         Returns:
-            A dict of dict - one for each question-index (and int).
+            A dict of dict - one for each question-index (an int).
             For each index the dict is "{status: count}" for each of
             "To Do", "Complete", "Out", "Missing" and "total".
         """
@@ -303,12 +333,91 @@ class ProgressOverviewService:
 
     @classmethod
     @transaction.atomic
-    def get_mark_task_status_counts_by_qv(
+    def _get_mark_task_status_counts_qv(
+        cls,
+        _breakdown_by_version: bool = True,
+    ) -> dict[int, dict[int, dict[str, int]]] | dict[int, dict[str, int]]:
+        """Return a dict of counts of marking tasks by their status for the given question/version.
+
+        Keyword Args:
+            _breakdown_by_version: if True, default, include a 2nd level of dicts
+                by version.  False might be more efficient: TODO: not really implemented.
+                TODO: In theory, False replaces :method:`get_mark_Task_status_counts()`.
+
+        Returns:
+            Nested dicts.  Indexing like ``[qidx][v]``.
+            The inner dicts have keys "To Do", "Complete", "Out", "Missing"
+            and "total".
+        """
+        assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
+        question_indices = SpecificationService.get_question_indices()
+        if _breakdown_by_version:
+            versions = SpecificationService.get_list_of_versions()
+        else:
+            versions = [1]  # dummy
+
+        counts = {}
+        for qidx in question_indices:
+            counts[qidx] = {}
+            for ver in versions:
+                counts[qidx][ver] = {
+                    MarkingTask.TO_DO.label: 0,
+                    MarkingTask.COMPLETE.label: 0,
+                    MarkingTask.OUT.label: 0,
+                }
+
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        # id_tasks = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
+        # extract (qi, papernum, status) tuples from database, for offline processing
+        task_tuples = list(
+            tasks.values_list("paper__paper_number", "question_index", "status")
+            # TODO: maybe later we have multiple tasks per (p, q)
+            # .distinct()
+        )
+        # TODO: slow **** do not commit! ****
+        task_tuples_w_versions = [
+            (pn, qi, PaperInfoService.get_version_from_paper_question(pn, qi), status)
+            for pn, qi, status in task_tuples
+        ]
+        # print(task_tuples_w_versions)
+        # id_tasks_papers = list(
+        #     id_tasks.values_list("paper__paper_number", flat=True).distinct()
+        # )
+        # augment the marking tasks with ID tasks in case of papers with no marking tasks
+        # inuse_papers = set([x[0] for x in task_tuples]).union(id_tasks_papers)
+
+        for pn, qi, v, status in task_tuples_w_versions:
+            status_label = MarkingTask.StatusChoices(status).label
+            if not _breakdown_by_version:
+                v = 1
+            counts[qi][v][status_label] += 1
+
+        # notfound = {}
+        # for qi in question_indices:
+        #     inuse_q = set([x[0] for x in task_tuples if q == qi])
+        #     notfound[qi] = list(inuse_papers.difference(inuse_q))
+        # missing_pairs = [(pn, qi) for qi, papers in notfound.items() for pn in papers]
+
+        triplets = cls._missing_task_pqv_triplets()
+        for qidx in question_indices:
+            for ver in versions:
+                counts[qidx][ver]["Missing"] = len(
+                    [p for p, q, v in triplets if (q, v) == (qidx, ver)]
+                )
+                counts[qidx][ver]["total"] = sum(
+                    [n for k, n in counts[qidx][ver].items()]
+                )
+
+        return counts
+
+    @classmethod
+    @transaction.atomic
+    def get_mark_task_status_counts_restricted(
         cls,
         question_index: int | None = None,
         version: int | None = None,
     ) -> dict[str, int]:
-        """Return a dict of counts of marking tasks by their status for the given question/version.
+        """Return a dict of counts of marking tasks by their status, restricted by question/version.
 
         Args:
             question_index: restrict to a particular question.  If omitted

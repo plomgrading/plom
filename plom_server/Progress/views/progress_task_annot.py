@@ -178,7 +178,7 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
             _n_papers=n_papers
         )
         task_status_counts = ProgressOverviewService.get_mark_task_status_counts(
-            _n_papers=n_papers
+            breakdown_by_version=False, _n_papers=n_papers
         )
 
         context.update(

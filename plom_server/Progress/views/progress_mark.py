@@ -26,12 +26,32 @@ class ProgressMarkHome(MarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
+        # TODO: could extract this from the "task_counts", same a little bit of DB
         missing_task_count = ProgressOverviewService.n_missing_marking_tasks()
+
+        task_counts = ProgressOverviewService.get_mark_task_status_counts(
+            breakdown_by_version=True
+        )
+
+        question_labels_html = SpecificationService.get_question_html_label_triples()
+        all_max_marks = SpecificationService.get_questions_max_marks()
+        data_for_histograms = {}
+        for qidx, __, __ in question_labels_html:
+            _data = {}
+            data_for_histograms[qidx] = _data
+            for ver in SpecificationService.get_list_of_versions():
+                max_mark = all_max_marks[qidx]
+                _data[ver] = should_be_in_a_service(qidx, ver, max_mark)
+
         context.update(
             {
                 "versions": SpecificationService.get_list_of_versions(),
                 "questions": SpecificationService.get_question_indices(),
+                "question_labels": SpecificationService.get_question_indices(),
+                "question_labels_html": question_labels_html,
                 "missing_task_count": missing_task_count,
+                "task_counts": task_counts,
+                "data_for_histograms": data_for_histograms,
             }
         )
         return render(request, "Progress/Mark/mark_home.html", context)
@@ -50,58 +70,58 @@ class ProgressMarkStartMarking(MarkerOrManagerView):
         return render(request, "Progress/Mark/mark_papers.html", context)
 
 
+# TODO: move this to MarkingStatsService?
+def should_be_in_a_service(question_idx, version, max_mark):
+    scores = MarkingStatsService.get_scores_for_question_version(question_idx, version)
+    score_counts = Counter(scores)
+
+    histogram_data = []
+
+    max_count = max(score_counts.values()) if score_counts else 1
+
+    svg_height = 35
+    svg_bar_max_height = 25
+
+    bar_width_percentage = 100 / (max_mark + 1)
+
+    for mark in range(max_mark + 1):
+        count = score_counts.get(mark, 0)
+        bar_height = (count / max_count) * svg_bar_max_height if count > 0 else 0
+
+        histogram_data.append(
+            {
+                "score": mark,
+                "count": count,
+                "height": bar_height,
+                "x": mark * bar_width_percentage,
+                "y": svg_height - bar_height - 10,
+                "width": bar_width_percentage,
+                "text_x": (mark * bar_width_percentage) + (bar_width_percentage / 2),
+            }
+        )
+    return histogram_data
+
+
 class ProgressMarkStatsView(MarkerOrManagerView):
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
         context = self.build_context()
-        mss = MarkingStatsService()
 
-        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_restricted(
             question_idx, version
         )
 
-        scores = mss.get_scores_for_question_version(question_idx, version)
-        score_counts = Counter(scores)
-
         all_max_marks = SpecificationService.get_questions_max_marks()
         max_mark = all_max_marks.get(question_idx, 0)
-
-        histogram_data = []
-
-        if max_mark > 0:
-            max_count = max(score_counts.values()) if score_counts else 1
-
-            svg_height = 35
-            svg_bar_max_height = 25
-
-            bar_width_percentage = 100 / (max_mark + 1)
-
-            for mark in range(max_mark + 1):
-                count = score_counts.get(mark, 0)
-                bar_height = (
-                    (count / max_count) * svg_bar_max_height if count > 0 else 0
-                )
-
-                histogram_data.append(
-                    {
-                        "score": mark,
-                        "count": count,
-                        "height": bar_height,
-                        "x": mark * bar_width_percentage,
-                        "y": svg_height - bar_height - 10,
-                        "width": bar_width_percentage,
-                        "text_x": (mark * bar_width_percentage)
-                        + (bar_width_percentage / 2),
-                    }
-                )
-
+        histogram_data = should_be_in_a_service(question_idx, version, max_mark)
+        qlabel, qlabel_html = SpecificationService.get_question_label_str_and_html(
+            question_idx
+        )
         context.update(
             {
                 "question_idx": question_idx,
-                "question_label": SpecificationService.get_question_label(
-                    question_index=question_idx
-                ),
+                "question_label_html": qlabel_html,
                 "version": version,
                 "task_status_counts": status_counts,
                 "histogram_data": histogram_data,
@@ -142,7 +162,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
             SpecificationService.get_question_label_str_and_html(question_idx)
         )
 
-        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_restricted(
             question_idx, version
         )
 
@@ -189,7 +209,7 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 v * scale for v in hist_values
             ]
 
-        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_restricted(
             question_idx
         )
 
