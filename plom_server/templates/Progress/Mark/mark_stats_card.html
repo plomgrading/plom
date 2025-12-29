@@ -22,9 +22,9 @@
                     {{ task_status_counts.total }}&nbsp;task{{ task_status_counts.total|pluralize }}:
                     {{ task_status_counts.Complete }}&nbsp;marked,
                     {{ task_status_counts.Out }}&nbsp;out with markers,
-                    {{ task_status_counts|get_item:"To Do" }}&nbsp;ready to be marked.
+                    {{ task_status_counts|get_item:"To Do" }}&nbsp;ready.
                     {% if task_status_counts.Missing %}
-                        <span class="text-danger">{{ task_status_counts.Missing }}&nbsp;task{{ task_status_counts.Missing|pluralize }} missing.</span>
+                        <span class="text-danger">{{ task_status_counts.Missing }}&nbsp;missing.</span>
                     {% endif %}
                 </p>
                 <h6>Marks:</h6>

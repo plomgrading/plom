@@ -29,7 +29,7 @@ class ProgressMarkHome(MarkerOrManagerView):
         """Render the page with all the marking stats cards for all questions and versions."""
         context = self.build_context()
 
-        # TODO: could extract this from the "task_counts", same a little bit of DB
+        # TODO: could extract this from the "task_counts", save a little bit of DB
         missing_task_count = ProgressOverviewService.n_missing_marking_tasks()
 
         task_counts = ProgressOverviewService.get_mark_task_status_counts(
