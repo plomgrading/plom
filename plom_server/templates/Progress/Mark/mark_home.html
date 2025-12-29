@@ -43,4 +43,10 @@
             </div>
         {% endfor %}
     </div>
+    <!-- include this for tool-tips on the progress bar -->
+    <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
+    <script>
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    </script>
 {% endblock main_content %}
