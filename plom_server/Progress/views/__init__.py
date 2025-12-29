@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
-from .overview_landing import OverviewLandingView, ToolsLandingView
+from .progress_landing import ProgressLandingView, ToolsLandingView
 
 from .progress_identify import (
     ProgressIdentifyHome,

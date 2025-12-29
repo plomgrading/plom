@@ -193,7 +193,7 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
                 "marking_task_status_counts": task_status_counts,
             }
         )
-        return render(request, "Progress/all_task_overview.html", context=context)
+        return render(request, "Progress/all_tasks.html", context=context)
 
 
 class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
