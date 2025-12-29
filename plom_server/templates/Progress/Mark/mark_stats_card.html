@@ -52,7 +52,7 @@
                             {{ user }}
                             <span class="text-muted">
                                 <!-- formatter wants to split over two lines which introduces space before comma -->
-                                <!-- djlint:off -->({{ how_many }}){% if not forloop.last %},{% endif %}<!-- djlint:on -->
+                                <!-- djlint:off -->(<a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}&username={{ user }}" class="link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">{{ how_many }}</a>){% if not forloop.last %},{% endif %}<!-- djlint:on -->
                             </span>
                         {% endfor %}
                     {% endif %}
