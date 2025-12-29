@@ -35,19 +35,6 @@
     <div class="container w-100">
         {% for qidx, qlabel, qlabel_html in question_labels_html %}
             <div class="row">
-                {% for vn in versions %}
-                    <div class="col p-1"
-                         hx-trigger="load"
-                         hx-get="{% url 'progress_mark_stats' qidx vn %}"></div>
-                {% endfor %}
-            </div>
-        {% endfor %}
-    </div>
-    <div class="container w-100">
-        <hr />
-        <h4>Testing: same data, all-in-one-view-context</h4>
-        {% for qidx, qlabel, qlabel_html in question_labels_html %}
-            <div class="row">
                 {% for ver in versions %}
                     <div class="col p-1">
                         {% include "Progress/Mark/mark_stats_card.html" with question_idx=qidx question_label_html=qlabel_html version=ver task_status_counts=task_counts|get_item:qidx|get_item:ver histogram_data=data_for_histograms|get_item:qidx|get_item:ver %}

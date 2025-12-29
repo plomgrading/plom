@@ -23,7 +23,10 @@ from ..services import ProgressOverviewService
 
 
 class ProgressMarkHome(MarkerOrManagerView):
+    """The Marking Progress page showing progress and stats for all question/version pairs in a grid of small cards."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the page with all the marking stats cards for all questions and versions."""
         context = self.build_context()
 
         # TODO: could extract this from the "task_counts", same a little bit of DB
@@ -104,9 +107,18 @@ def _should_be_in_a_service(
 
 
 class ProgressMarkStatsView(MarkerOrManagerView):
+    """Currently unused but can be used to render just one of the marking stats cards.
+
+    Currently the cards all all rendered from a single view-context, namely
+    :class:`ProgressMarkHome`.  Previously this view was used to render each
+    card in separate HTMX on-loads.  It could be resurrected for per-card
+    refresh if desired, or just deleted, especially if it starts to bitrot.
+    """
+
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
+        """Render a single marking stats card for one question version pair."""
         context = self.build_context()
 
         status_counts = ProgressOverviewService.get_mark_task_status_counts_restricted(
