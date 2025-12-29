@@ -230,7 +230,7 @@ class MarkingStatsService:
 
         questions = SpecificationService.get_question_indices()
         versions = SpecificationService.get_list_of_versions()
-        d = {}
+        d: dict[int, dict[int, list]] = {}
         for qidx in questions:
             d[qidx] = {}
             for ver in versions:
