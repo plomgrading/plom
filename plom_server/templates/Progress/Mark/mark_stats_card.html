@@ -27,7 +27,6 @@
                         <span class="text-danger">{{ task_status_counts.Missing }}&nbsp;missing.</span>
                     {% endif %}
                 </p>
-                <h6>Marks:</h6>
                 {% if histogram_data %}
                     <div class="text-body text-opacity-50">
                         <svg width="100%" height="45" aria-label="Score distribution histogram">
@@ -42,8 +41,7 @@
                         </svg>
                     </div>
                 {% else %}
-                    <!-- TODO: whut? -->
-                    <p>This question has a maximum mark of 0.</p>
+                    <p>No histogram data available.</p>
                 {% endif %}
                 <p class="mb-1 small">
                     {% if not counts_and_markers %}
