@@ -45,6 +45,20 @@
                     <!-- TODO: whut? -->
                     <p>This question has a maximum mark of 0.</p>
                 {% endif %}
+                <p class="mb-1 small">
+                    {% if not counts_and_markers %}
+                        <span class="text-muted">No marked tasks</span>
+                    {% else %}
+                        <span class="text-muted">who:</span>
+                        {% for how_many, user in counts_and_markers %}
+                            {{ user }}
+                            <span class="text-muted">
+                                <!-- formatter wants to split over two lines which introduces space before comma -->
+                                <!-- djlint:off -->({{ how_many }}){% if not forloop.last %},{% endif %}<!-- djlint:on -->
+                            </span>
+                        {% endfor %}
+                    {% endif %}
+                </p>
                 <div class="mt-0">
                     <a href="{% url 'progress_mark_details' question_idx version %}"
                        class="btn btn-primary btn-sm">Details</a>

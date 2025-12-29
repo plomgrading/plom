@@ -9,12 +9,11 @@ import statistics
 from typing import Any
 
 import arrow
+from django.db import transaction
+from django.db.models import Count
 from numpy import histogram
 
-from django.db import transaction
-
 from plom.misc_utils import pprint_score
-
 from plom_server.Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
 
@@ -192,11 +191,13 @@ class MarkingStatsService:
         hist = score_histogram(scores, max_question_mark)
         return hist
 
-    @transaction.atomic
-    def get_list_of_users_who_marked(
-        self, question: int, *, version: int | None = None
+    @staticmethod
+    def get_list_of_users_who_marked_question(
+        question: int, *, version: int | None = None
     ) -> list[str]:
         """Return a list of the usernames that marked the given question/version.
+
+        Currently unused.
 
         Args:
             question: the question to compute for.
@@ -213,11 +214,42 @@ class MarkingStatsService:
         )
         if version:
             tasks = tasks.filter(question_version=version)
+        # values_list does not need prefetch
+        return list(tasks.values_list("assigned_user__username", flat=True).distinct())
 
-        return [
-            X.assigned_user.username
-            for X in tasks.prefetch_related("assigned_user").distinct("assigned_user")
-        ]
+    @staticmethod
+    def get_lists_of_users_who_marked() -> dict[int, dict[int, list[tuple[int, str]]]]:
+        """Who marked each question/version, and how many tasks did they mark."""
+        tasks = MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
+        # values_list does not need prefetch
+        foo = tasks.values(
+            "assigned_user__username", "question_index", "question_version"
+        ).annotate(num_marked=Count("question_version"))
+        # TODO: it doesn't seem to matter which field we Count...
+        # print(foo.query)
+
+        questions = SpecificationService.get_question_indices()
+        versions = SpecificationService.get_list_of_versions()
+        d = {}
+        for qidx in questions:
+            d[qidx] = {}
+            for ver in versions:
+                d[qidx][ver] = []
+
+        for r in foo:
+            d[r["question_index"]][r["question_version"]].append(
+                (
+                    r["num_marked"],
+                    r["assigned_user__username"],
+                )
+                # Note: we sort by first key; don't change order here
+            )
+
+        for qidx in questions:
+            for ver in versions:
+                d[qidx][ver] = sorted(d[qidx][ver], reverse=True)
+
+        return d
 
     @transaction.atomic
     def get_mark_histogram_and_stats_by_users(

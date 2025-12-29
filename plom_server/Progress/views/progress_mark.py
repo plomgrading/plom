@@ -47,6 +47,7 @@ class ProgressMarkHome(MarkerOrManagerView):
                 max_mark = all_max_marks[qidx]
                 _data[ver] = _should_be_in_a_service(qidx, ver, max_mark)
 
+        who_marked = MarkingStatsService.get_lists_of_users_who_marked()
         context.update(
             {
                 "versions": versions,
@@ -54,6 +55,7 @@ class ProgressMarkHome(MarkerOrManagerView):
                 "missing_task_count": missing_task_count,
                 "task_counts": task_counts,
                 "data_for_histograms": data_for_histograms,
+                "who_marked_how_many": who_marked,
             }
         )
         return render(request, "Progress/Mark/mark_home.html", context)
