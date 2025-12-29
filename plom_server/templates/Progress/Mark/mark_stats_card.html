@@ -19,12 +19,12 @@
             </summary>
             <div class="mt-1">
                 <p class="mb-1">
-                    Of the {{ task_status_counts.total }} papers,
-                    {{ task_status_counts.Complete }} are marked,
-                    {{ task_status_counts.Out }} are out with markers,
-                    and {{ task_status_counts|get_item:"To Do" }} are ready to be marked.
+                    {{ task_status_counts.total }} task{{ task_status_counts.total|pluralize }}:
+                    {{ task_status_counts.Complete }} marked,
+                    {{ task_status_counts.Out }} out with markers,
+                    {{ task_status_counts|get_item:"To Do" }} ready to be marked.
                     {% if task_status_counts.Missing %}
-                        <span class="text-danger">{{ task_status_counts.Missing }} tasks are missing.</span>
+                        <span class="text-danger">{{ task_status_counts.Missing }} task{{ task_status_counts.Missing|pluralize }} missing.</span>
                     {% endif %}
                 </p>
                 <h6>Score distribution:</h6>
