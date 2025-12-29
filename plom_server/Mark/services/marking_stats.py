@@ -236,6 +236,7 @@ class MarkingStatsService:
             'mark_median', 'mark_median_str', 'mark_mean', 'mark_mean_str',
             'mark_mode', 'mark_mode_str', 'mark_stdev', 'mark_stdev_str'.
         """
+        max_question_mark = SpecificationService.get_question_mark(question)
         data: dict[int, dict[str, Any]] = {}
         try:
             completed_tasks = MarkingTask.objects.filter(
@@ -257,9 +258,8 @@ class MarkingStatsService:
                 }
             data[X.assigned_user.pk]["scores"].append(X.latest_annotation.score)
 
-        for upk in data:
+        for upk in data.keys():
             mark_list = data[upk]["scores"]
-            max_question_mark = SpecificationService.get_question_mark(question)
             data[upk]["histogram"] = score_histogram(mark_list, max_question_mark)
             data[upk]["number"] = len(mark_list)
             data[upk].update(_generic_stats_dict_from_list(mark_list))
