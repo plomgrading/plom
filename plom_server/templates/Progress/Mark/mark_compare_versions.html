@@ -13,7 +13,7 @@
     Detailed view of {{ question_label_html|safe }} all versions
 {% endblock page_heading %}
 {% block main_content %}
-    <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress overview</a>
+    <a class="btn btn-primary" href="{% url 'progress_marking' %}">Marking progress overview</a>
     <a class="btn btn-info"
        href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}">tasks & annotations</a>
     <div class="container my-4">

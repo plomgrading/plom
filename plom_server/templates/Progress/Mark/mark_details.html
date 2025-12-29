@@ -13,7 +13,7 @@
     Detailed view of {{ question_label_html|safe }} version {{ version }}
 {% endblock page_heading %}
 {% block main_content %}
-    <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress overview</a>
+    <a class="btn btn-primary" href="{% url 'progress_marking' %}">Marking progress overview</a>
     <a href="{% url 'progress_mark_version_compare' question_idx %}"
        class="btn btn-success">compare all {{ question_label }} versions</a>
     <a class="btn btn-info"

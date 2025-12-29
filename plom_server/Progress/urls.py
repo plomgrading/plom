@@ -41,9 +41,9 @@ from plom_server.UserManagement.views import (
 
 urlpatterns = [
     path(
-        "mark/overview/",
+        "mark/",
         ProgressMarkHome.as_view(),
-        name="progress_mark_home",
+        name="progress_marking",
     ),
     path(
         "mark/start/",
@@ -126,7 +126,7 @@ urlpatterns = [
         name="all_tasks",
     ),
     path(
-        "progress_landing/",
+        "",
         ProgressLandingView.as_view(),
         name="progress_landing",
     ),
