@@ -15,7 +15,7 @@
                     {{ question_label_html|safe }}&nbsp;v{{ version }}</a>
                 </h5>
             </div>
-            <div style="width: 20vw;">{% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}</div>
+            <div style="width: 12rem;">{% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}</div>
         </div>
         <div class="mt-0">
             <!--
@@ -39,8 +39,8 @@
                     <div class="mb-0 text-body text-end">
                         <a href="{% url 'progress_mark_details' question_idx version %}">
                             <svg class="m-1 p-1 align-middle rounded-1 border"
-                                 width="20vw"
-                                 height="8vh"
+                                 width="12rem"
+                                 height="3rem"
                                  aria-label="Score distribution histogram">
                                 {% for bar in histogram_data %}
                                     <g>
