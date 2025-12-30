@@ -56,6 +56,7 @@
                 {% endif %}
                 <details>
                     <summary>
+                        <span class="me-3">{{ counts_and_markers|length }} marker{{ counts_and_markers|length|pluralize }}</span>
                         <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
                            class="me-2 link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">Annotations</a>
                     </summary>
