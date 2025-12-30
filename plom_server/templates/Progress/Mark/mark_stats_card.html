@@ -37,8 +37,7 @@
             <div>
                 <p class="lh-sm mb-2">
                     <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
-                       class="link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">Annotations</a>
-                    {% if counts_and_markers %}<span class="mx-1 text-muted"></span>{% endif %}
+                       class="me-2 link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">Annotations</a>
                     {% for how_many, user in counts_and_markers %}
                         {{ user }}
                         <span class="text-muted">
