@@ -121,6 +121,8 @@ class StagingImage(models.Model):
 
         See for example:
         https://stackoverflow.com/questions/4441539/why-doesnt-djangos-model-save-call-full-clean
+
+        Note that invariants are NOT enforced if you make bulk operations.
         """
         self.full_clean()
         super().save(*args, **kwargs)
@@ -137,8 +139,8 @@ class StagingImage(models.Model):
         """Check for various illegal combinations of fields in the StagingImage table.
 
         Raises:
-            AssertionError:
-            ValueError:
+            AssertionError: something illegal.
+            ValueError: something unexpected (and illegal).
         """
         UNREAD = self.ImageTypeChoices.UNREAD
         KNOWN = self.ImageTypeChoices.KNOWN
@@ -166,12 +168,12 @@ class StagingImage(models.Model):
         else:
             raise ValueError("Unexpected value for enum")
 
-        # And a pass over the fields
-
+        # TODO: what about these fields?
         # parsed_qr
         # rotation
         # pushed
 
+        # And a pass over the fields
         if self.paper_number is not None:
             assert self.image_type in (KNOWN, EXTRA)
         if self.page_number is not None:
