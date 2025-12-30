@@ -35,38 +35,40 @@
             </details>
             -->
             <div>
-            {% if histogram_data %}
-                <div class="mb-0 text-body text-end">
-                  <a href="{% url 'progress_mark_details' question_idx version %}">
-                    <svg class="m-1 p-1 align-middle rounded-1 border" width="20vw" height="8vh" aria-label="Score distribution histogram" >
-                        {% for bar in histogram_data %}
-                            <g>
-                            <rect x="{{ bar.x }}%" y="{{ bar.y }}%" width="{{ bar.width }}%" height="{{ bar.height }}%" fill="currentColor" opacity="0.4">
-                            <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
-                            </rect>
-                            <text x="{{ bar.text_x }}%" y="98%" text-anchor="middle" dominant-baseline="auto" font-size="50%" fill="currentColor" opacity="0.9">{{ bar.score }}</text>
-                            </g>
-                        {% endfor %}
-                    </svg>
+                {% if histogram_data %}
+                    <div class="mb-0 text-body text-end">
+                        <a href="{% url 'progress_mark_details' question_idx version %}">
+                            <svg class="m-1 p-1 align-middle rounded-1 border"
+                                 width="20vw"
+                                 height="8vh"
+                                 aria-label="Score distribution histogram">
+                                {% for bar in histogram_data %}
+                                    <g>
+                                    <rect x="{{ bar.x }}%" y="{{ bar.y }}%" width="{{ bar.width }}%" height="{{ bar.height }}%" fill="currentColor" opacity="0.4">
+                                    <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
+                                    </rect>
+                                    <text x="{{ bar.text_x }}%" y="98%" text-anchor="middle" dominant-baseline="auto" font-size="50%" fill="currentColor" opacity="0.9">{{ bar.score }}</text>
+                                    </g>
+                                {% endfor %}
+                            </svg>
                         </a>
-                </div>
-            {% endif %}
-              <details>
-                <summary>
-                    <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
-                       class="me-2 link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">Annotations</a>
-                </summary>
-                <p class="lh-sm mb-2">
-                    {% for how_many, user in counts_and_markers %}
-                        {{ user }}
-                        <span class="text-muted">
-                            <!-- formatter wants to split over two lines which introduces space before comma -->
-                            <!-- djlint:off -->(<a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}&username={{ user }}"
-                            class="link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">{{ how_many }}</a>){% if not forloop.last %},{% endif %}<!-- djlint:on -->
-                        </span>
-                    {% endfor %}
-                </p>
-
+                    </div>
+                {% endif %}
+                <details>
+                    <summary>
+                        <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
+                           class="me-2 link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">Annotations</a>
+                    </summary>
+                    <p class="lh-sm mb-2">
+                        {% for how_many, user in counts_and_markers %}
+                            {{ user }}
+                            <span class="text-muted">
+                                <!-- formatter wants to split over two lines which introduces space before comma -->
+                                <!-- djlint:off -->(<a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}&username={{ user }}"
+                                class="link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">{{ how_many }}</a>){% if not forloop.last %},{% endif %}<!-- djlint:on -->
+                            </span>
+                        {% endfor %}
+                    </p>
                 </details>
             </div>
         </div>
