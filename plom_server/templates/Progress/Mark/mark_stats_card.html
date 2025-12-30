@@ -50,14 +50,14 @@
                 </p>
             </div>
             {% if histogram_data %}
-                <div class="mb-0 text-body text-opacity-25 text-center">
+                <div class="mb-0 text-body text-center">
                     <svg width="12rem" height="44" aria-label="Score distribution histogram">
                         {% for bar in histogram_data %}
                             <g>
-                            <rect x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" fill="currentColor">
+                            <rect x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" fill="currentColor" opacity="0.4">
                             <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
                             </rect>
-                            <text x="{{ bar.text_x }}%" y="28" text-anchor="middle" dominant-baseline="hanging" font-size="60%" fill="currentColor">{{ bar.score }}</text>
+                            <text x="{{ bar.text_x }}%" y="28" text-anchor="middle" dominant-baseline="hanging" font-size="67%" fill="currentColor" opacity="0.9">{{ bar.score }}</text>
                             </g>
                         {% endfor %}
                         <a xmlns="http://www.w3.org/2000/svg"
