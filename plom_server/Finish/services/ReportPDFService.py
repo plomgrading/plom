@@ -6,17 +6,21 @@
 # Copyright (C) 2025 Bryan Tanady
 
 from datetime import datetime
+from importlib import resources
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 from typing import Any
 
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
 
+from plom_server.Base.services import Settings
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService
 from plom_server.Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
+from .. import services as _finish_services
 
 
 def _identity_in_first_input(x, *args, **kwargs):
@@ -381,15 +385,17 @@ def pdf_builder(
                 <img src="data:image/png;base64,{graphs["graph8"][0]}" />
                 """
 
-    # We want this, but done "properly":
-    # # css = CSS("./static/css/generate_report.css")
-    # see also discussion in build_student_report_service.py
-    import plom_server
+    with TemporaryDirectory() as tmpdirname:
+        tmp_path = Path(tmpdirname)
+        src = (resources.files(_finish_services) / "generate_report.css").read_text()
+        papersize = Settings.get_paper_size_word()
+        src = src.replace("size: letter;", f"size: {papersize};")
+        css_tmpfile = tmp_path / "generate_report.css"
+        with open(css_tmpfile, "w") as fh:
+            fh.write(src)
+        css = CSS(css_tmpfile)
+        pdf_data = HTML(string=html, base_url="").write_pdf(stylesheets=[css])
 
-    path = Path(plom_server.__path__[0]) / "static/css/generate_report.css"
-    css = CSS(path)
-
-    pdf_data = HTML(string=html, base_url="").write_pdf(stylesheets=[css])
     timestamp_file = timestamp.strftime("%Y-%m-%d--%H-%M-%S+00-00")
     filename = f"Report-{shortname}--{timestamp_file}.pdf"
     return {

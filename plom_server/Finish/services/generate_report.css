@@ -1,27 +1,29 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Copyright (C) 2023 Julian Lapenna */
 /* Copyright (C) 2024 Andrew Rechnitzer */
+/* Copyright (C) 2025 Colin B. Macdonald */
 
 body {
-font-family: Arial, Helvetica, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 @page {
+    size: letter;
     font-family: Arial, Helvetica, sans-serif;
     margin-left: 4em;
-    @top-left {
-        content     : "Made with";
-        margin-left : 140mm;
-        margin-top  : 10mm;
-    }
+
+    /* TODO: the graphic was too large when trying this:
+    /* content: "Made with" url('https://plomgrading.org/images/plomLogo.png') / "Plom"; */
+    /* So instead we hardcode lots of fiddly numbers... */
     @top-right {
-        content         : "";
-        width           : 60px;
-        height          : 20px;
-        margin-right    : -5mm;
-        margin-bottom   : 3mm;
+        content         : "Made with";
+        width           : 150px;
+        height          : 25px;
+        padding-right   : 77px;
         background      : url('https://plomgrading.org/images/plomLogo.png');
-        background-size : 100%;
+        background-size : contain;
+        background-repeat: no-repeat;
+        background-position: right 0px bottom 1px;
     }
     @bottom-right {
         content         : "Page " counter(page) " of " counter(pages);
