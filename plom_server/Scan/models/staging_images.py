@@ -151,18 +151,18 @@ class StagingImage(models.Model):
             # TODO: learn how unread pages work: almost everything blank?
             pass
         elif self.image_type == KNOWN:
-            assert self.paper_number is not None
+            assert self.paper_number is not None, "KNOWN must have paper_number"
         elif self.image_type == UNKNOWN:
-            assert self.paper_number is None
-            assert self.page_number is None
-            assert self.version is None
+            assert self.paper_number is None, "UNKNOWN must not have paper_number"
+            assert self.page_number is None, "UNKNOWN must not have page_number"
+            assert self.version is None, "UNKNOWN must not have version"
         elif self.image_type == EXTRA:
-            assert self.page_number is None
+            assert self.page_number is None, "EXTRA must not have page_number"
             assert self.version is None  # ?
         elif self.image_type == DISCARD:
-            assert self.discard_reason
+            assert self.discard_reason, "DISCARD must have discard_reason"
         elif self.image_type == ERROR:
-            assert self.error_reason
+            assert self.error_reason, "ERROR must have error_reason"
         else:
             raise ValueError("Unexpected value for enum")
 
