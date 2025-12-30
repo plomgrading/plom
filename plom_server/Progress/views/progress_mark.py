@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
@@ -85,8 +85,8 @@ def _should_be_in_a_service(
 
     max_count = max(score_counts.values()) if score_counts else 1
 
-    svg_height = 35
-    svg_bar_max_height = 25
+    svg_height = 100
+    svg_bar_max_height = 80
 
     bar_width_percentage = 100 / (max_mark + 1)
 
@@ -99,9 +99,9 @@ def _should_be_in_a_service(
                 "score": mark,
                 "count": count,
                 "height": bar_height,
-                "x": mark * bar_width_percentage,
-                "y": svg_height - bar_height - 10,
-                "width": bar_width_percentage,
+                "x": mark * bar_width_percentage + 1,
+                "y": svg_height - bar_height - 20,
+                "width": bar_width_percentage - 1,
                 "text_x": (mark * bar_width_percentage) + (bar_width_percentage / 2),
             }
         )
