@@ -200,11 +200,10 @@ class StagingImage(models.Model):
             assert (
                 self.image_type == EXTRA
             ), "Only EXTRA can optionally have question_idx_list"
-            # for now you must know both question_idx_list and paper_number
-            # but this could change in the future.
+        if self.question_idx_list is None or self.paper_number is None:
             assert (
-                self.paper_number is not None
-            ), "For now, must know both question_idx_list AND paper_number"
+                self.question_idx_list is None and self.paper_number is None
+            ), "EXTRA must know both question_idx_list AND paper_number (or neither)"
         if self.discard_reason:
             assert self.image_type == DISCARD, "Only DISCARD should have discard_reason"
         if self.error_reason:

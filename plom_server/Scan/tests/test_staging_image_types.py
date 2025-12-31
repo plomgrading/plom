@@ -134,3 +134,33 @@ class ScanStagingImageTypesTests(TestCase):
             image_type=StagingImage.UNREAD,
             parsed_qr=None,
         )
+
+    def test_extra_stagingimage_flexibility_about_unknown_or_not(self) -> None:
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=1,
+            image_type=StagingImage.EXTRA,
+            question_idx_list=[1, 3],
+            paper_number=42,
+        )
+        # This test could change in the future: both of these should not be errors
+        # if we want to allow knowing either/or.
+        with self.assertRaisesRegex(ValidationError, "EXTRA .* both"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.EXTRA,
+                # question_idx_list=[1, 3],
+                paper_number=42,
+            )
+        with self.assertRaisesRegex(ValidationError, "EXTRA .* both"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.EXTRA,
+                question_idx_list=[1, 3],
+                # paper_number=42,
+            )
