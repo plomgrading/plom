@@ -186,7 +186,7 @@ class StagingImage(models.Model):
             assert self.image_type not in (
                 UNREAD,
                 UNKNOWN,
-            ), "UNREAD or UNKNOWN StagingImages should never be pushed"
+            ), "UNREAD or UNKNOWN StagingImages should not be pushed"
         if self.paper_number is not None:
             assert self.image_type in (
                 KNOWN,

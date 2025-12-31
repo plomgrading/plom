@@ -135,6 +135,24 @@ class ScanStagingImageTypesTests(TestCase):
             parsed_qr=None,
         )
 
+    def test_illegal_pushed_stagingimage_errors(self) -> None:
+        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* pushed"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNREAD,
+                pushed=True,
+            )
+        with self.assertRaisesRegex(ValidationError, "UNKNOWN .* not .* pushed"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNKNOWN,
+                pushed=True,
+            )
+
     def test_extra_stagingimage_flexibility_about_unknown_or_not(self) -> None:
         baker.make(
             StagingImage,
