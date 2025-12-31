@@ -174,27 +174,38 @@ class StagingImage(models.Model):
         else:
             raise ValueError("Unexpected value for enum")
 
-        # TODO: what about these fields?
-        # parsed_qr
-        # rotation
-        # pushed
-
         # And a pass over the fields
+        if self.parsed_qr:
+            assert self.image_type != UNREAD
+        if self.rotation:
+            assert self.image_type != UNREAD
+        if self.pushed:
+            assert self.image_type not in (
+                UNREAD,
+                UNKNOWN,
+            ), "UNREAD or UNKNOWN StagingImages should never be pushed"
         if self.paper_number is not None:
-            assert self.image_type in (KNOWN, EXTRA)
+            assert self.image_type in (
+                KNOWN,
+                EXTRA,
+            ), "Only KNOWN, EXTRA should have paper_number"
         if self.page_number is not None:
-            assert self.image_type == KNOWN
+            assert self.image_type == KNOWN, "Only KNOWN should have page_number"
         if self.version is not None:
-            assert self.image_type == KNOWN
+            assert self.image_type == KNOWN, "Only KNOWN should have version"
         if self.question_idx_list is not None:
-            assert self.image_type == EXTRA
+            assert (
+                self.image_type == EXTRA
+            ), "Only EXTRA can optionally have question_idx_list"
             # for now you must know both question_idx_list and paper_number
             # but this could change in the future.
-            assert self.paper_number is not None
+            assert (
+                self.paper_number is not None
+            ), "For now, must know both question_idx_list AND paper_number"
         if self.discard_reason:
-            assert self.image_type == DISCARD
+            assert self.image_type == DISCARD, "Only DISCARD should have discard_reason"
         if self.error_reason:
-            assert self.image_type == ERROR
+            assert self.image_type == ERROR, "Only ERROR should have error_reason"
 
 
 class StagingThumbnail(models.Model):
