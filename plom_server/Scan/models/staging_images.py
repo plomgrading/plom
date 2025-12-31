@@ -150,8 +150,12 @@ class StagingImage(models.Model):
         ERROR = self.ImageTypeChoices.ERROR
 
         if self.image_type == UNREAD:
-            # TODO: learn how unread pages work: almost everything blank?
-            pass
+            assert self.paper_number is None, "UNREAD must not have paper_number"
+            assert self.page_number is None, "UNREAD must not have page_number"
+            assert self.version is None, "UNREAD must not have version"
+            assert (
+                self.parsed_qr is None or not self.parsed_qr
+            ), "UNREAD must not have parsed_qr"
         elif self.image_type == KNOWN:
             assert self.paper_number is not None, "KNOWN must have paper_number"
             assert self.page_number is not None, "KNOWN must have page_number"

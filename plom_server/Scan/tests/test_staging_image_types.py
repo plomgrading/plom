@@ -89,3 +89,53 @@ class ScanStagingImageTypesTests(TestCase):
                 bundle_order=1,
                 image_type=StagingImage.ERROR,
             )
+
+    def test_illegal_unread_stagingimage_errors(self) -> None:
+        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* paper_number"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNREAD,
+                paper_number=42,
+            )
+        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* page_number"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNREAD,
+                page_number=42,
+            )
+        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* version"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNREAD,
+                version=1,
+            )
+
+    def test_illegal_unread_stagingimage_qrcode_errors(self) -> None:
+        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* parsed_qr"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNREAD,
+                parsed_qr={"some": "dict"},
+            )
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=2,
+            image_type=StagingImage.UNREAD,
+            parsed_qr={},
+        )
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=3,
+            image_type=StagingImage.UNREAD,
+            parsed_qr=None,
+        )
