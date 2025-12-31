@@ -6,18 +6,23 @@
      Copyright (C) 2025 Deep Shah
 -->
 <div class="card">
-    <div class="card-body p-2">
+    <div class="card-body p-2 pb-1">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h6 class="card-title d-inline-block mb-0">{{ question_label_html|safe }}&nbsp;v{{ version }}</h6>
+                <h5 class="d-inline-block">
+                    <a href="{% url 'progress_mark_details' question_idx version %}"
+                       class="link-body-emphasis link-underline-opacity-25 link-underline-opacity-100-hover">
+                    {{ question_label_html|safe }}&nbsp;v{{ version }}</a>
+                </h5>
             </div>
             <div style="width: 12rem;">{% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}</div>
         </div>
-        <details>
+        <div class="mt-0">
+            <!--
+            <details open>
             <summary>
                 <span class="text-muted small">Details</span>
             </summary>
-            <div class="mt-1">
                 <p class="mb-1 lh-sm">
                     {{ task_status_counts.total }}&nbsp;task{{ task_status_counts.total|pluralize }}:
                     {{ task_status_counts.Complete }}&nbsp;marked,
@@ -27,43 +32,43 @@
                         <span class="text-danger">{{ task_status_counts.Missing }}&nbsp;missing.</span>
                     {% endif %}
                 </p>
-                {% if histogram_data %}
-                    <div class="text-body text-opacity-50">
-                        <svg width="100%" height="45" aria-label="Score distribution histogram">
-                            {% for bar in histogram_data %}
-                                <g>
-                                <rect x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" fill="currentColor">
-                                <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
-                                </rect>
-                                <text x="{{ bar.text_x }}%" y="28" text-anchor="middle" dominant-baseline="hanging" font-size="60%" fill="currentColor">{{ bar.score }}</text>
-                                </g>
-                            {% endfor %}
-                        </svg>
-                    </div>
-                {% else %}
-                    <p>No histogram data available.</p>
-                {% endif %}
-                <p class="mb-1 small lh-sm">
-                    {% if not counts_and_markers %}
-                        <span class="text-muted">No marked tasks</span>
-                    {% else %}
-                        <span class="text-muted">who:</span>
-                        {% for how_many, user in counts_and_markers %}
-                            {{ user }}
-                            <span class="text-muted">
-                                <!-- formatter wants to split over two lines which introduces space before comma -->
-                                <!-- djlint:off -->(<a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}&username={{ user }}" class="link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">{{ how_many }}</a>){% if not forloop.last %},{% endif %}<!-- djlint:on -->
-                            </span>
-                        {% endfor %}
-                    {% endif %}
-                </p>
-                <div class="mt-0">
-                    <a href="{% url 'progress_mark_details' question_idx version %}"
-                       class="btn btn-primary btn-sm">Details</a>
+            </details>
+            -->
+            <div>
+                <p class="lh-sm mb-2">
                     <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
-                       class="btn btn-secondary btn-sm">Annotations</a>
-                </div>
+                       class="me-2 link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">Annotations</a>
+                    {% for how_many, user in counts_and_markers %}
+                        {{ user }}
+                        <span class="text-muted">
+                            <!-- formatter wants to split over two lines which introduces space before comma -->
+                            <!-- djlint:off -->(<a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}&username={{ user }}"
+                            class="link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">{{ how_many }}</a>){% if not forloop.last %},{% endif %}<!-- djlint:on -->
+                        </span>
+                    {% endfor %}
+                </p>
             </div>
-        </details>
+            {% if histogram_data %}
+                <div class="mb-0 text-body text-center">
+                    <svg width="12rem" height="44" aria-label="Score distribution histogram">
+                        {% for bar in histogram_data %}
+                            <g>
+                            <rect x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" fill="currentColor" opacity="0.4">
+                            <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
+                            </rect>
+                            <text x="{{ bar.text_x }}%" y="28" text-anchor="middle" dominant-baseline="hanging" font-size="67%" fill="currentColor" opacity="0.9">{{ bar.score }}</text>
+                            </g>
+                        {% endfor %}
+                        <a xmlns="http://www.w3.org/2000/svg"
+                           id="anchor"
+                           xlink:href="{% url 'progress_mark_details' question_idx version %}"
+                           xmlns:xlink="http://www.w3.org/1999/xlink"
+                           target="_top">
+                            <rect x="0" y="0" width="100%" height="100%" fill-opacity="0" />
+                        </a>
+                    </svg>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
