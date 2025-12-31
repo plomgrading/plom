@@ -24,6 +24,8 @@ class ScanCastServiceTests(TestCase):
                 bundle_order=number_of_pages,
                 image_type=image_type,
                 paper_number=42,
+                page_number=1,
+                version=2,
             )
         elif image_type == StagingImage.DISCARD:
             baker.make(

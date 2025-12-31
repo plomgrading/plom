@@ -416,6 +416,8 @@ class MoreScanServiceTests(TestCase):
             bundle=bundle,
             image_type=StagingImage.KNOWN,
             paper_number=42,
+            page_number=1,
+            version=2,
         )
         imgs = scanner.get_all_known_images(bundle)
         self.assertEqual(imgs, [with_data])

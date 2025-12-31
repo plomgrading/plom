@@ -25,6 +25,23 @@ class ScanStagingImageTypesTests(TestCase):
                 bundle_order=1,
                 image_type=StagingImage.KNOWN,
             )
+        with self.assertRaisesRegex(ValidationError, "KNOWN .* page_number"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.KNOWN,
+                paper_number=42,
+            )
+        with self.assertRaisesRegex(ValidationError, "KNOWN .* version"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.KNOWN,
+                paper_number=42,
+                page_number=42,
+            )
 
         with self.assertRaisesRegex(ValidationError, "UNKNOWN .* not .* paper_number"):
             baker.make(

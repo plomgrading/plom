@@ -98,7 +98,7 @@ class ImageBundleTests(TestCase):
                     _create_files=True,
                     paper_number=paper_num,
                     page_number=page_num,
-                    # version=  # TODO: missing, is that invariant violation?
+                    version=1,
                 )
         imgs = StagingImage.objects.all()
         self.assertTrue(ibs.all_staged_imgs_valid(imgs))
@@ -207,7 +207,6 @@ class ImageBundleTests(TestCase):
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        # TODO: making known StagingImage without version is invariant violation?
         baker.make(
             StagingImage,
             image_type=StagingImage.KNOWN,
@@ -215,6 +214,7 @@ class ImageBundleTests(TestCase):
             _create_files=True,
             paper_number=2,
             page_number=1,
+            version=1,
         )
 
         baker.make(
@@ -224,6 +224,7 @@ class ImageBundleTests(TestCase):
             _create_files=True,
             paper_number=2,
             page_number=2,
+            version=1,
         )
 
         baker.make(
@@ -233,6 +234,7 @@ class ImageBundleTests(TestCase):
             _create_files=True,
             paper_number=2,
             page_number=3,
+            version=1,
         )
 
         img4 = baker.make(Image)
@@ -253,6 +255,7 @@ class ImageBundleTests(TestCase):
             _create_files=True,
             paper_number=3,
             page_number=1,
+            version=1,
         )
 
         res = ibs.find_external_collisions(StagingImage.objects.all())

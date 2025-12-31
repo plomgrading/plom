@@ -154,6 +154,8 @@ class StagingImage(models.Model):
             pass
         elif self.image_type == KNOWN:
             assert self.paper_number is not None, "KNOWN must have paper_number"
+            assert self.page_number is not None, "KNOWN must have page_number"
+            assert self.version is not None, "KNOWN must have version"
         elif self.image_type == UNKNOWN:
             assert self.paper_number is None, "UNKNOWN must not have paper_number"
             assert self.page_number is None, "UNKNOWN must not have page_number"
