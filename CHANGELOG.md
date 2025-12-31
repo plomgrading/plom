@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * more fine-grained access control for users.  For example, you can make an account that is both a "manager" and a "marker".
 * ability for "force" upload of duplicate scan bundles.
+* ability to discard an entire pushed bundle.
 
 ### Removed
 
