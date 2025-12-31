@@ -3,17 +3,17 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Deep Shah
 
 import statistics
 from typing import Any
 
 import arrow
+from django.db import transaction
+from django.db.models import Count
 from numpy import histogram
 
-from django.db import transaction
-
 from plom.misc_utils import pprint_score
-
 from plom_server.Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
 
@@ -56,6 +56,26 @@ def score_histogram(score_list, max_score, min_score=0, bin_width=1):
 
 class MarkingStatsService:
     """Functions for getting marking stats."""
+
+    @staticmethod
+    def get_scores_for_question_version(question_idx: int, version: int) -> list[int]:
+        """Retrieves a list of all scores for a specific question and version.
+
+        From the latest annotations of completed tasks.
+        """
+        scores: list[int] = []
+
+        completed_tasks = MarkingTask.objects.filter(
+            question_index=question_idx,
+            question_version=version,
+            status=MarkingTask.StatusChoices.COMPLETE,
+        ).select_related("latest_annotation")
+
+        for task in completed_tasks:
+            if task.latest_annotation is not None:
+                scores.append(task.latest_annotation.score)
+
+        return scores
 
     @transaction.atomic
     def get_basic_marking_stats(
@@ -171,11 +191,13 @@ class MarkingStatsService:
         hist = score_histogram(scores, max_question_mark)
         return hist
 
-    @transaction.atomic
-    def get_list_of_users_who_marked(
-        self, question: int, *, version: int | None = None
+    @staticmethod
+    def get_list_of_users_who_marked_question(
+        question: int, *, version: int | None = None
     ) -> list[str]:
         """Return a list of the usernames that marked the given question/version.
+
+        Currently unused.
 
         Args:
             question: the question to compute for.
@@ -192,11 +214,42 @@ class MarkingStatsService:
         )
         if version:
             tasks = tasks.filter(question_version=version)
+        # values_list does not need prefetch
+        return list(tasks.values_list("assigned_user__username", flat=True).distinct())
 
-        return [
-            X.assigned_user.username
-            for X in tasks.prefetch_related("assigned_user").distinct("assigned_user")
-        ]
+    @staticmethod
+    def get_lists_of_users_who_marked() -> dict[int, dict[int, list[tuple[int, str]]]]:
+        """Who marked each question/version, and how many tasks did they mark."""
+        tasks = MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
+        # values_list does not need prefetch
+        foo = tasks.values(
+            "assigned_user__username", "question_index", "question_version"
+        ).annotate(num_marked=Count("question_version"))
+        # TODO: it doesn't seem to matter which field we Count...
+        # print(foo.query)
+
+        questions = SpecificationService.get_question_indices()
+        versions = SpecificationService.get_list_of_versions()
+        d: dict[int, dict[int, list]] = {}
+        for qidx in questions:
+            d[qidx] = {}
+            for ver in versions:
+                d[qidx][ver] = []
+
+        for r in foo:
+            d[r["question_index"]][r["question_version"]].append(
+                (
+                    r["num_marked"],
+                    r["assigned_user__username"],
+                )
+                # Note: we sort by first key; don't change order here
+            )
+
+        for qidx in questions:
+            for ver in versions:
+                d[qidx][ver] = sorted(d[qidx][ver], reverse=True)
+
+        return d
 
     @transaction.atomic
     def get_mark_histogram_and_stats_by_users(
@@ -215,6 +268,7 @@ class MarkingStatsService:
             'mark_median', 'mark_median_str', 'mark_mean', 'mark_mean_str',
             'mark_mode', 'mark_mode_str', 'mark_stdev', 'mark_stdev_str'.
         """
+        max_question_mark = SpecificationService.get_question_mark(question)
         data: dict[int, dict[str, Any]] = {}
         try:
             completed_tasks = MarkingTask.objects.filter(
@@ -236,9 +290,8 @@ class MarkingStatsService:
                 }
             data[X.assigned_user.pk]["scores"].append(X.latest_annotation.score)
 
-        for upk in data:
+        for upk in data.keys():
             mark_list = data[upk]["scores"]
-            max_question_mark = SpecificationService.get_question_mark(question)
             data[upk]["histogram"] = score_histogram(mark_list, max_question_mark)
             data[upk]["number"] = len(mark_list)
             data[upk].update(_generic_stats_dict_from_list(mark_list))

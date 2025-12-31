@@ -17,14 +17,10 @@ class ProgressIdentifyHome(LeadMarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
-        ids = IDProgressService()
-
-        id_task_status_counts = ProgressOverviewService().get_id_task_status_counts()
-        n_all_id_task = sum(id_task_status_counts.values())
+        id_task_status_counts = ProgressOverviewService.get_id_task_status_counts()
         context.update(
             {
-                "id_task_info": ids.get_all_id_task_info(),
-                "all_task_count": n_all_id_task,
+                "id_task_info": IDProgressService.get_all_id_task_info(),
                 "id_task_status_counts": id_task_status_counts,
             }
         )

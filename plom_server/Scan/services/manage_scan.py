@@ -232,9 +232,9 @@ class ManageScanService:
                 )
         return complete
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
-    def get_all_incomplete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
+    def get_all_incomplete_papers(cls) -> dict[int, dict[str, list[dict[str, Any]]]]:
         """Dicts of info about papers that are partially but not completely scanned.
 
         see :func: `_get_complete_incomplete_paper_querysets` for definitions
@@ -247,9 +247,7 @@ class ManageScanService:
             "fixed" and "mobile" case is different, for example "mobile"
             have page labels and "fixed" do not.
         """
-        _, incomplete_papers_queryset = (
-            ManageScanService()._get_complete_incomplete_paper_querysets()
-        )
+        _, incomplete_papers_queryset = cls._get_complete_incomplete_paper_querysets()
 
         incomplete_papers_queryset = incomplete_papers_queryset.prefetch_related(
             Prefetch(

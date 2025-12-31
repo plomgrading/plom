@@ -146,8 +146,6 @@ class ImageBundleService:
         )
         uploaded_bundle.save()
 
-        pi_service = PaperInfoService()
-
         def image_save_name(staged) -> str:
             if staged.image_type == StagingImage.KNOWN:
                 prefix = f"known_{staged.paper_number}_{staged.page_number}_"
@@ -226,7 +224,7 @@ class ImageBundleService:
                 paper = Paper.objects.get(paper_number=staged.paper_number)
                 for q in staged.question_idx_list:
                     # get the version from the paper/question info
-                    v = pi_service.get_version_from_paper_question(
+                    v = PaperInfoService.get_version_from_paper_question(
                         staged.paper_number, q
                     )
                     # defer actual DB creation to bulk operation later

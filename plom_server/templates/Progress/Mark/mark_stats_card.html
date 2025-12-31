@@ -1,73 +1,77 @@
 <!--
      SPDX-License-Identifier: AGPL-3.0-or-later
-     Copyright (C) 2023-2024 Andrew Rechnitzer
+     Copyright (C) 2023-2025 Andrew Rechnitzer
      Copyright (C) 2024 Aidan Murphy
-     Copyright (C) 2024 Colin B. Macdonald
+     Copyright (C) 2024-2025 Colin B. Macdonald
+     Copyright (C) 2025 Deep Shah
 -->
-<div class="card m-2" id="stats_{{ question_idx }}_{{ version }}">
-    {% if stats.all_task_count == 0 %}
-        <div class="card-header">{{ question_label_html|safe }} version {{ version }}: no tasks</div>
-    {% else %}
-        <div class="card-header">
-            {{ question_label_html|safe }} version {{ version }}
-            {% if stats.all_task_count == stats.number_of_completed_tasks %}
-                <i class="bi bi-check-circle text-success"></i>
-            {% endif %}
+<div class="card">
+    <div class="card-body p-2 pb-1">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="d-inline-block">
+                    <a href="{% url 'progress_mark_details' question_idx version %}"
+                       class="link-body-emphasis link-underline-opacity-25 link-underline-opacity-100-hover">
+                    {{ question_label_html|safe }}&nbsp;v{{ version }}</a>
+                </h5>
+            </div>
+            <div style="width: 12rem;">{% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}</div>
         </div>
-        <div class="card-body">
-            <div class="card-text">
-                {% include "Progress/fragments/task_progress_bar.html" with total=stats.all_task_count n_complete=status_counts.Complete n_todo=status_counts|get_item:"To Do" n_out=status_counts.Out %}
-                <table class="table table-sm table-bordered text-center">
-                    <thead>
-                        <tr>
-                            <th>avg time</th>
-                            <th>estimated remaining time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{ stats.avg_marking_time }} s</td>
-                            <td>{{ stats.approx_remaining_hours }} h</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <!-- These statistics only viewable by lead markers and managers -->
-                {% if user_is_lead_marker or user_is_manager %}
-                    <table class="table table-sm table-bordered text-center">
-                        <thead>
-                            <tr>
-                                <th>mean</th>
-                                <th>median</th>
-                                <th>mode</th>
-                                <th>stdev</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>{{ stats.mark_mean_str }}</td>
-                                <td>{{ stats.mark_median_str }}</td>
-                                <td>{{ stats.mark_mode_str }}</td>
-                                <td>{{ stats.mark_stdev_str }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <div class="mt-0">
+            <!--
+            <details open>
+            <summary>
+                <span class="text-muted small">Details</span>
+            </summary>
+                <p class="mb-1 lh-sm">
+                    {{ task_status_counts.total }}&nbsp;task{{ task_status_counts.total|pluralize }}:
+                    {{ task_status_counts.Complete }}&nbsp;marked,
+                    {{ task_status_counts.Out }}&nbsp;out with markers,
+                    {{ task_status_counts|get_item:"To Do" }}&nbsp;ready.
+                    {% if task_status_counts.Missing %}
+                        <span class="text-danger">{{ task_status_counts.Missing }}&nbsp;missing.</span>
+                    {% endif %}
+                </p>
+            </details>
+            -->
+            <div>
+                {% if histogram_data %}
+                    <div class="mb-0 text-body text-end">
+                        <a href="{% url 'progress_mark_details' question_idx version %}">
+                            <svg class="m-1 p-1 align-middle rounded-1 border"
+                                 width="12rem"
+                                 height="3rem"
+                                 aria-label="Score distribution histogram">
+                                {% for bar in histogram_data %}
+                                    <g>
+                                    <rect x="{{ bar.x }}%" y="{{ bar.y }}%" width="{{ bar.width }}%" height="{{ bar.height }}%" fill="currentColor" opacity="0.4">
+                                    <title>Score {{ bar.score }}: {{ bar.count }} papers</title>
+                                    </rect>
+                                    <text x="{{ bar.text_x }}%" y="98%" text-anchor="middle" dominant-baseline="auto" font-size="50%" fill="currentColor" opacity="0.9">{{ bar.score }}</text>
+                                    </g>
+                                {% endfor %}
+                            </svg>
+                        </a>
+                    </div>
                 {% endif %}
+                <details>
+                    <summary>
+                        <span class="me-3">{{ counts_and_markers|length }} marker{{ counts_and_markers|length|pluralize }}</span>
+                        <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
+                           class="me-2 link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">Annotations</a>
+                    </summary>
+                    <p class="lh-sm mb-2">
+                        {% for how_many, user in counts_and_markers %}
+                            {{ user }}
+                            <span class="text-muted">
+                                <!-- formatter wants to split over two lines which introduces space before comma -->
+                                <!-- djlint:off -->(<a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}&username={{ user }}"
+                                class="link-secondary link-underline-opacity-25 link-underline-opacity-100-hover">{{ how_many }}</a>){% if not forloop.last %},{% endif %}<!-- djlint:on -->
+                            </span>
+                        {% endfor %}
+                    </p>
+                </details>
             </div>
         </div>
-    {% endif %}
-    <!-- These buttons only viewable by lead markers and managers -->
-    {% if user_is_lead_marker or user_is_manager %}
-        <div class="card-footer">
-            <button class="btn btn-info"
-                    hx-swap="outerHTML"
-                    hx-target="#stats_{{ question_idx }}_{{ version }}"
-                    hx-get="{% url 'progress_mark_stats' question_idx version %}">refresh</button>
-            {% if stats.all_task_count %}
-                <a href="{% url 'progress_mark_details' question_idx version %}"
-                   class="btn btn-success">Details by marker</a>
-            {% endif %}
-            <a href="{% url 'progress_mark_version_compare' question_idx %}"
-               class="btn btn-success">Details of all versions</a>
-        </div>
-    {% endif %}
+    </div>
 </div>
