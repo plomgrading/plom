@@ -923,18 +923,16 @@ class ScanService:
     @classmethod
     def do_all_extra_images_in_bundle_have_data(cls, bundle: StagingBundle) -> bool:
         """Check whether all extra pages in a bundle have paper-numbers and questions."""
-        with transaction.atomic():
-            extras = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-            return cls.do_all_these_extra_images_have_data(extras)
+        extras = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
+        return cls.do_all_these_extra_images_have_data(extras)
 
     @staticmethod
     def do_all_these_extra_images_have_data(extras: QuerySet[StagingImage]) -> bool:
         """Check whether a given collection of extra pages have paper-numbers and questions."""
-        with transaction.atomic():
-            extras_with_complete_data = extras.filter(
-                paper_number__isnull=False, question_idx_list__isnull=False
-            )
-            return not extras.difference(extras_with_complete_data).exists()
+        extras_with_complete_data = extras.filter(
+            paper_number__isnull=False, question_idx_list__isnull=False
+        )
+        return not extras.difference(extras_with_complete_data).exists()
 
     @transaction.atomic
     def get_n_error_images(self, bundle: StagingBundle) -> int:
