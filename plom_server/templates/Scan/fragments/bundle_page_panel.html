@@ -30,7 +30,7 @@
                             {% if index == 1 %}disabled{% endif %}>
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
+                    <h6 class="card-title text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
                     <button type="button"
                             class="btn btn-secondary mx-2"
                             onclick="clickThumbnail({{ index|add:1 }})"
@@ -40,18 +40,19 @@
                 </div>
                 <div class="card-body p-2 py-0">
                     {% if current_page.status == 'known' %}
-                        <div class="alert alert-success my-2">
-                            <h6 class="alert-heading">Known</h6>
-                            <ul>
+                        <div class="alert alert-success my-2 p-2">
+                            <h5 class="alert-heading">Known</h5>
+                            <ul class="mb-0">
                                 <li>paper: {{ current_page.info.paper_number }}</li>
                                 <li>page: {{ current_page.info.page_number }}</li>
                                 <li>version: {{ current_page.info.version }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
-                                    {{ current_page.qr_codes|length }} qr-codes read:
                                     <button type="button"
-                                            class="btn btn-outline-dark dropdown-toggle"
-                                            data-bs-toggle="dropdown">info</button>
+                                            class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                            data-bs-toggle="dropdown">
+                                        {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                    </button>
                                     <ul class="dropdown-menu">
                                         {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                     </ul>
@@ -59,18 +60,19 @@
                             </ul>
                         </div>
                     {% elif current_page.status == 'extra' %}
-                        <div class="alert alert-info my-2">
-                            <h6 class="alert-heading">Extra</h6>
-                            <ul>
+                        <div class="alert alert-info my-2 p-2">
+                            <h5 class="alert-heading">Extra</h5>
+                            <ul class="mb-0">
                                 <li>paper: {{ current_page.info.paper_number }}</li>
                                 <li>questions: {{ current_page.info.question_list_html | safe }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 {% if current_page.qr_codes %}
                                     <li>
-                                        {{ current_page.qr_codes|length }} qr-codes read:
                                         <button type="button"
-                                                class="btn btn-outline-dark dropdown-toggle"
-                                                data-bs-toggle="dropdown">info</button>
+                                                class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                                data-bs-toggle="dropdown">
+                                            {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                        </button>
                                         <ul class="dropdown-menu">
                                             {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
@@ -81,24 +83,25 @@
                             </ul>
                         </div>
                     {% elif current_page.status == 'unknown' %}
-                        <div class="alert alert-warning my-2">
-                            <h6 class="alert-heading">Unknown</h6>
-                            <ul>
+                        <div class="alert alert-warning my-2 p-2">
+                            <h5 class="alert-heading">Unknown</h5>
+                            <ul class="mb-0">
                                 <li>No qr-codes could be read</li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'discard' %}
-                        <div class="alert alert-dark my-2">
-                            <h6 class="alert-heading">Discard</h6>
-                            <ul>
+                        <div class="alert alert-dark my-2 p-2">
+                            <h5 class="alert-heading">Discard</h5>
+                            <ul class="mb-0">
                                 <li>{{ current_page.info.reason }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 {% if current_page.qr_codes %}
                                     <li>
-                                        {{ current_page.qr_codes|length }} qr-codes read:
                                         <button type="button"
-                                                class="btn btn-outline-dark dropdown-toggle"
-                                                data-bs-toggle="dropdown">info</button>
+                                                class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                                data-bs-toggle="dropdown">
+                                            {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                        </button>
                                         <ul class="dropdown-menu">
                                             {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
@@ -109,16 +112,17 @@
                             </ul>
                         </div>
                     {% elif current_page.status == 'error' %}
-                        <div class="alert alert-danger my-2">
-                            <h6 class="alert-heading">Error</h6>
-                            <ul>
+                        <div class="alert alert-danger my-2 p-2">
+                            <h5 class="alert-heading">Error</h5>
+                            <ul class="mb-0">
                                 <li>{{ current_page.info.reason }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
-                                    {{ current_page.qr_codes|length }} qr-codes read:
                                     <button type="button"
-                                            class="btn btn-outline-dark dropdown-toggle"
-                                            data-bs-toggle="dropdown">info</button>
+                                            class="btn btn-outline-secondary dropdown-toggle align-baseline"
+                                            data-bs-toggle="dropdown">
+                                        {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
+                                    </button>
                                     <ul class="dropdown-menu">
                                         {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code }}</li>{% endfor %}
                                     </ul>
@@ -127,7 +131,7 @@
                         </div>
                     {% elif current_page.status == 'unread' %}
                         <div class="alert alert-dark my-2">
-                            <h6 class="alert-heading">Unread</h6>
+                            <h5 class="alert-heading">Unread</h5>
                             <ul>
                                 <li>Have not read qr-codes yet</li>
                             </ul>
@@ -405,8 +409,7 @@
                                         <div class="mt-1 mb-1">
                                             <!-- this is the target for any htmx error messages -->
                                             <!-- p-0 border-0 here tries to hide the div when its empty -->
-                                            <div id="error_msg_for_set_extra"
-                                                 class="p-0 border-0 alert alert-danger hide"></div>
+                                            <div id="error_msg_for_set_extra" class="p-0 border-0 alert alert-danger"></div>
                                         </div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>
                                     </form>

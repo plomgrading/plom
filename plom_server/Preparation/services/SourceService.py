@@ -120,12 +120,17 @@ def get_source(version: int) -> dict[str, Any]:
         version: which version, indexed from one.
 
     Returns:
-        A dictionary with the version, uploaded status, and file hash
-        if uploaded.
+        A dictionary with the version, uploaded status, and---if
+        uploaded---the file hash and original filename.
     """
     try:
         pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
-        return {"version": pdf_obj.version, "uploaded": True, "hash": pdf_obj.hash}
+        return {
+            "version": pdf_obj.version,
+            "uploaded": True,
+            "hash": pdf_obj.pdf_hash,
+            "original_filename": pdf_obj.original_filename,
+        }
     except PaperSourcePDF.DoesNotExist:
         return {"version": version, "uploaded": False}
 
@@ -140,8 +145,11 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     return [get_source(v) for v in vers]
 
 
-@transaction.atomic
-def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
+# TODO: mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+# source_pdf: pathlib.Path | resources.abc.Traversable,
+def store_source_pdf(
+    version: int, source_pdf: pathlib.Path, *, original_filename: str = ""
+) -> None:
     """Store one of the source PDF files into the database.
 
     This does very little error checking; its perhaps intended for internal use.
@@ -149,6 +157,9 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
     Args:
         version: which version, indexed from one.
         source_pdf: a path to an actual file.
+
+    Keyword Args:
+        original_filename: optionally, the the original filename of this data.
 
     Returns:
         None
@@ -168,11 +179,16 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     with open(source_pdf, "rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
-    hashed = hashlib.sha256(the_bytes).hexdigest()
+    hash_value = hashlib.sha256(the_bytes).hexdigest()
 
     with open(source_pdf, "rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")
-        PaperSourcePDF.objects.create(version=version, source_pdf=dj_file, hash=hashed)
+        PaperSourcePDF.objects.create(
+            version=version,
+            source_pdf=dj_file,
+            pdf_hash=hash_value,
+            original_filename=original_filename,
+        )
 
 
 def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, str]:
@@ -216,9 +232,13 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
                     False,
                     f"Uploaded pdf has {doc.page_count} pages, but spec requires {required_pages}",
                 )
+        if hasattr(in_memory_file, "name"):
+            original_filename = in_memory_file.name
+        else:
+            original_filename = ""
         # now try to store it
         try:
-            store_source_pdf(version, tmp_pdf)
+            store_source_pdf(version, tmp_pdf, original_filename=original_filename)
         except ValueError as err:
             return (False, str(err))
 
@@ -231,11 +251,11 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
 def check_pdf_duplication() -> dict[str, list[int]]:
     hashes = defaultdict(list)
     for pdf_obj in PaperSourcePDF.objects.all():
-        hashes[pdf_obj.hash].append(pdf_obj.version)
+        hashes[pdf_obj.pdf_hash].append(pdf_obj.version)
     duplicates = {}
-    for hash, versions in hashes.items():
+    for pdf_hash, versions in hashes.items():
         if len(versions) > 1:
-            duplicates[hash] = versions
+            duplicates[pdf_hash] = versions
     return duplicates
 
 

@@ -124,8 +124,10 @@ class Classlist(APIView):
             )
 
         classlist_csv = request.FILES["classlist_csv"]
-        success, werr = StagingStudentService.validate_and_use_classlist_csv(
-            classlist_csv
+        success, werr = (
+            StagingStudentService._validate_and_use_classlist_from_open_file_handle(
+                classlist_csv
+            )
         )
         if not success:
             return Response(werr, status=status.HTTP_406_NOT_ACCEPTABLE)

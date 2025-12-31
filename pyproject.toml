@@ -92,8 +92,8 @@ dependencies = [
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=2.2.1",
-    "onnxruntime>=1.22.1",
-    "huggingface_hub>=0.34.3",
+    "onnxruntime>=1.20.1",
+    "huggingface-hub>=0.30.2",
     # "nplusone>=1.0.0",
     # "django-silk>=5.2.0",
     # plom_ml stuff
@@ -136,7 +136,6 @@ packages = [
     "plom.scan",
     "plom.finish",
     "plom.idreader",
-    "plom.solutions",
     "plom.canvas",
     "plom.scripts",
     "plom_server",
@@ -195,7 +194,6 @@ packages = [
     "plom_server.TestingSupport.services",
     "plom_server.UserManagement",
     "plom_server.UserManagement.services",
-    "plom_server.Visualization",
     "plom_ml",
     "plom_ml.clustering",
     "plom_ml.clustering.embedding",
@@ -213,7 +211,6 @@ packages = [
     "plom/templateTestSpec.toml",
     "plom/templateSolutionSpec.toml",
     "plom/templateUserList.csv",
-    "plom/demoClassList.csv",
     "plom/demo_rubrics.toml",
     "plom/create/extra_pages_src.tex",
     "plom/create/scrap_paper_src.tex",
@@ -225,7 +222,6 @@ packages = [
             "contrib/README.txt",
             "contrib/plom-return_codes_to_canvas_csv.py",
             "contrib/plom-write_grades_to_canvas_csv.py",
-            "contrib/upload_hw_from_zip_of_jpegs.py",
             "contrib/plom-push-to-canvas.py",
             "contrib/plom-push-to-canvas-uncached.py"
 ]
@@ -235,10 +231,7 @@ version = {attr = 'plom.common.__version__'}
 
 [project.scripts]
 plom-create = "plom.create.__main__:main"
-plom-scan = "plom.scan.__main__:main"
 plom-finish = "plom.finish.__main__:main"
-plom-hwscan = "plom.scripts.hwscan:main"
-plom-solutions = "plom.solutions.__main__:main"
 plom-new-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-demo = "plom_server.scripts.launch_plom_demo_server:main"
 plom-cli = "plom.cli.__main__:main"

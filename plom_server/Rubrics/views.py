@@ -80,11 +80,10 @@ class RubricCreateHalfMarksView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         any_manager = User.objects.filter(groups__name="manager").first()
-        if not RubricService().build_half_mark_delta_rubrics(any_manager.username):
-            messages.error(
-                request,
-                "\N{VULGAR FRACTION ONE HALF} mark rubrics could not be created.",
-            )
+        try:
+            RubricService.build_half_mark_delta_rubrics(any_manager.username)
+        except ValueError as e:
+            messages.error(request, e)
         return redirect("rubrics_admin")
 
 

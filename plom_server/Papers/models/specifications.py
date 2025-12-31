@@ -52,7 +52,6 @@ class Specification(SingletonABCModel):
     numberOfQuestions = models.PositiveIntegerField(null=False)
     totalMarks = models.PositiveIntegerField(null=False)
     privateSeed = models.TextField()
-    publicCode = models.TextField()
     idPage = models.PositiveIntegerField()
     doNotMarkPages = models.JSONField()
     allowSharedPages = models.BooleanField(default=False)

@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -15,7 +16,8 @@
             <div class="card-body">
                 <h5 class="card-title">Pages from version {{ v }}</h5>
                 {% for pg in page_list %}
-                    <a class="btn btn-info" href="{% url 'select_rectangle' v pg %}">page {{ pg }}</a>
+                    <a class="btn btn-outline-primary"
+                       href="{% url 'select_rectangle' v pg %}">page {{ pg }}</a>
                 {% endfor %}
             </div>
         </div>

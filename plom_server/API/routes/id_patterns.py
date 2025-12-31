@@ -37,6 +37,10 @@ class IdURLPatterns:
         id_patterns += progress
 
         # ID task management
+        # GET: /ID/tasks/complete
+        # GET: /ID/tasks/available
+        # PATCH: /ID/tasks/{papernum}
+        # PUT: /ID/tasks/{papernum}
         tasks = [
             path(
                 "tasks/complete", IDgetDoneTasks.as_view(), name="api_ID_get_done_tasks"
@@ -45,7 +49,7 @@ class IdURLPatterns:
                 "tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_tasks"
             ),
             path(
-                "tasks/<paper_id>", IDclaimThisTask.as_view(), name="api_ID_claim_task"
+                "tasks/<paper_num>", IDclaimThisTask.as_view(), name="api_ID_claim_task"
             ),
         ]
         id_patterns += tasks

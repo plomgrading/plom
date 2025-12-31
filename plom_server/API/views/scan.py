@@ -3,11 +3,8 @@
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from pathlib import Path
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import ValidationError
-from django.utils.text import slugify
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -48,7 +45,8 @@ class ScanListBundles(APIView):
         will result in a 400.
 
         The bundle must have a distinct sha256 hash from existing
-        bundles, or you'll get a 409.
+        bundles, or you'll get a 409.  Passing the "force" query
+        parameter makes this a warning rather than an error.
         """
         user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -58,26 +56,23 @@ class ScanListBundles(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         pdf = request.FILES.get("pdf_file")
-        filename_stem = Path(pdf.name).stem
-        if filename_stem.startswith("_"):
-            s = "Bundle filenames cannot start with an underscore - we reserve those for internal use."
-            return _error_response(s, status.HTTP_400_BAD_REQUEST)
-
-        # TODO: BundleUploadForm is not used in this API endpoint and that's
-        # unfortunate b/c it does some checks including a maximum upload size.
-        # For now do some checks in the service, see :func:`upload_bundle`.
 
         # TODO: consider exposing force_render and read_after via query params
+        if "force" in request.query_params:
+            force = True
+        else:
+            force = False
 
-        slug = slugify(filename_stem)
         try:
-            bundle_id = ScanService.upload_bundle(pdf, slug, user, read_after=True)
+            info_dict = ScanService.upload_bundle(
+                pdf, user, read_after=True, force=force
+            )
         except ValidationError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
-        return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
+        return Response(info_dict, status=status.HTTP_200_OK)
 
 
 class ScanBundleActions(APIView):
@@ -100,7 +95,7 @@ class ScanBundleActions(APIView):
             )
 
         try:
-            ScanService().push_bundle_to_server(bundle_id, request.user)
+            ScanService.push_bundle_to_server(bundle_id, request.user)
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         except ValueError as err:
@@ -109,6 +104,10 @@ class ScanBundleActions(APIView):
             return _error_response(err, status=status.HTTP_409_CONFLICT)
         except PlomBundleLockedException as err:
             return _error_response(err, status=status.HTTP_406_NOT_ACCEPTABLE)
+        except RuntimeError as err:
+            return _error_response(
+                f"Unexpected error: {err}", status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
 

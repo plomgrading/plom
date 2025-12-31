@@ -7,8 +7,9 @@
 from django.urls import path
 
 from .views import (
-    MarkingInformationView,
-    MarkingInformationPaperView,
+    MarksDownloadView,
+    TAInfoDownloadView,
+    AnnotationsInfoDownloadView,
     ReassemblePapersView,
     StudentReportView,
     StartOneReassembly,
@@ -27,25 +28,19 @@ from .views import (
 
 
 urlpatterns = [
-    path("marking_info", MarkingInformationView.as_view(), name="marking_info"),
-    path(
-        "marking_info/<int:paper_num>/paper/",
-        MarkingInformationPaperView.as_view(),
-        name="paper_num",
-    ),
     path(
         "marking_info/marks_download/",
-        MarkingInformationView.marks_download,
+        MarksDownloadView.as_view(),
         name="marks_download",
     ),
     path(
         "marking_info/ta_info_download/",
-        MarkingInformationView.ta_info_download,
+        TAInfoDownloadView.as_view(),
         name="ta_info_download",
     ),
     path(
         "marking_info/annotation_info_download/",
-        MarkingInformationView.annotation_info_download,
+        AnnotationsInfoDownloadView.as_view(),
         name="annotation_info_download",
     ),
     path("reassemble/", ReassemblePapersView.as_view(), name="reassemble_pdfs"),

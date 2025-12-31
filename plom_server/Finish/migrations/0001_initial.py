@@ -95,6 +95,7 @@ class Migration(migrations.Migration):
                 ("version", models.PositiveIntegerField(unique=True)),
                 ("source_pdf", models.FileField(upload_to="sourceVersions")),
                 ("pdf_hash", models.CharField(max_length=64)),
+                ("original_filename", models.TextField()),
             ],
         ),
     ]

@@ -19,6 +19,7 @@ from .views import (
     ScannerDiscardView,
     ScannerReassignView,
     ###
+    PushedBundleView,
     PushedImageView,
     WholePaperView,
     PushedImageRotatedView,
@@ -43,8 +44,6 @@ from .views import (
     UnknowifyAllDiscardsHTMXView,
     RotateImageView,
     BundleLockView,
-    BundlePushCollisionView,
-    BundlePushBadErrorView,
     RecentStagedBundleRedirectView,
     HandwritingComparisonView,
     GeneratePaperPDFView,
@@ -86,6 +85,11 @@ urlpatterns = [
         "whole_paper/<int:paper_number>",
         WholePaperView.as_view(),
         name="scan_whole_paper",
+    ),
+    path(
+        "whole_pushed_bundle/<int:bundle_id>",
+        PushedBundleView.as_view(),
+        name="pushed_bundle",
     ),
     path(
         "pushed_img_rot/<int:img_pk>",
@@ -192,16 +196,6 @@ urlpatterns = [
         "bundle_lock/<int:bundle_id>/",
         BundleLockView.as_view(),
         name="scan_bundle_lock",
-    ),
-    path(
-        "bundle_push_collision/<int:bundle_id>/",
-        BundlePushCollisionView.as_view(),
-        name="scan_bundle_push_collision",
-    ),
-    path(
-        "bundle_push_error/<int:bundle_id>/",
-        BundlePushBadErrorView.as_view(),
-        name="scan_bundle_push_error",
     ),
     path(
         "compare-handwriting/<int:bundle_id>/<int:index>/",

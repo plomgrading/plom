@@ -9,7 +9,10 @@ from django.http import FileResponse, HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.contrib import messages
 
-from plom_server.Base.base_group_views import ScannerLeadMarkerOrManagerView
+from plom_server.Base.base_group_views import (
+    ScannerLeadMarkerOrManagerView,
+    ManagerRequiredView,
+)
 from plom_server.Finish.services import ReassembleService
 from ..services import (
     hard_rotate_image_from_file_by_exif_and_angle,
@@ -143,3 +146,18 @@ class SubstituteImageView(ScannerLeadMarkerOrManagerView):
         if img_obj is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
         return FileResponse(img_obj.baseimage.image_file)
+
+
+class PushedBundleView(ManagerRequiredView):
+    """Operations related to pushed bundles."""
+
+    def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
+        """Discard all images pushed in a given bundle."""
+        try:
+            ManageDiscardService().discard_pushed_staging_bundle_contents(
+                request.user, bundle_id, dry_run=False
+            )
+        except ValueError as e:
+            return HttpResponse(f"Error: {e}", status=404)
+
+        return HttpResponse("Success: discarded bundle")

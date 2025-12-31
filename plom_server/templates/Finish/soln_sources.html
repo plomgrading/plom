@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -13,65 +14,74 @@
 {% block main_content %}
     <div class="d-grid gap-2">
         <div>
-            <a class="btn btn-primary mb-3" href="{% url 'soln_home' %}">Return to solutions page</a>
+            <a class="btn btn-primary" href="{% url 'soln_home' %}">Return to solutions page</a>
         </div>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Solution source pdfs</h5>
-            <p>
-                You have uploaded {{ number_of_soln_pdfs }} of {{ versions }} source pdfs
-                {% if number_of_soln_pdfs == versions %}<i class="bi bi-check-circle text-success fs-4"></i>{% endif %}
-            </p>
-            <p>Note that deleting a solution source pdf will invalidate any built solution pdfs.</p>
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    You have uploaded {{ number_of_soln_pdfs }} of {{ versions }} source pdfs
+                    {% if number_of_soln_pdfs == versions %}<i class="bi bi-check-circle text-success fs-4"></i>{% endif %}
+                </h4>
+                {% if dupes_warning %}
+                    <p class="card-text alert alert-danger">
+                        <strong>Warning:</strong> duplicate files detected.
+                        Please double-checked whether you have uploaded the
+                        correct solution files: perhaps you uploaded the same
+                        file twice?
+                    </p>
+                {% endif %}
+                <p class="card-text mb-0">
+                    Note that deleting a solution source pdf will
+                    invalidate any built solution pdfs.
+                </p>
+            </div>
         </div>
-    </div>
-    {% for version,soln_source in uploaded_soln_sources.items %}
-        <div>
-            <div class="card">
-                <div class="card-body">
-                    {% if soln_source %}
-                        <h5 class="card-title">
-                            PDF for version {{ version }} uploaded
-                            <i class="bi bi-check-circle text-success"></i>
-                        </h5>
-                        <p class="card-text">
-                            sha256: <span class="badge bg-info">{{ soln_source.1 }}</span>
-                        </p>
-                        <div class="row row-cols-auto">
-                            <div class="p-1 col">
+        {% for soln in soln_sources %}
+            <div>
+                <div class="card">
+                    <div class="card-body">
+                        {% if soln.uploaded %}
+                            <h5 class="card-title">
+                                PDF for version {{ soln.version }} uploaded
+                                <i class="bi bi-check-circle text-success"></i>
+                            </h5>
+                            <p class="card-text">
+                                sha256: <small class="text-muted"><tt>{{ soln.hash }}</tt></small>
+                                <br />
+                                original filename: <small class="text-muted"><tt>{{ soln.original_filename }}</tt></small>
+                            </p>
+                            <div>
                                 <a class="btn btn-success"
                                    target="_blank"
-                                   href="{% url 'soln_source_upload' version %}">View</a>
-                            </div>
-                            <div class="p-1 col">
+                                   href="{% url 'soln_source_upload' soln.version %}">View</a>
+                                &nbsp;
                                 <button class="btn btn-danger"
-                                        hx-delete="{% url 'soln_source_upload' version %}"
+                                        hx-delete="{% url 'soln_source_upload' soln.version %}"
                                         hx-confirm="Are you sure?"
                                         hx-target="body"
                                         hx-swap="outerHTML">Delete</button>
                             </div>
-                        </div>
-                    {% else %}
-                        <h5 class="card-title">
-                            Upload solution PDF for version {{ version }}
-                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                        </h5>
-                        <div class="card-text">
-                            <form enctype="multipart/form-data"
-                                  id="form"
-                                  method="post"
-                                  action="{% url 'soln_source_upload' version %}">
-                                {% csrf_token %}
-                                <div>
-                                    <input type="file" accepts=".pdf" name="soln_pdf" required />
-                                    <button class="btn btn-primary" type="submit">upload</button>
-                                </div>
-                            </form>
-                        </div>
-                    {% endif %}
+                        {% else %}
+                            <h5 class="card-title">
+                                Upload solution PDF for version {{ soln.version }}
+                                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                            </h5>
+                            <div class="card-text">
+                                <form enctype="multipart/form-data"
+                                      id="form"
+                                      method="post"
+                                      action="{% url 'soln_source_upload' soln.version %}">
+                                    {% csrf_token %}
+                                    <div>
+                                        <input type="file" accepts=".pdf" name="soln_pdf" required />
+                                        <button class="btn btn-primary" type="submit">upload</button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
 {% endblock main_content %}

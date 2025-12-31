@@ -13,7 +13,7 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.UserManagement.models import Quota
 from plom_server.UserManagement.services import QuotaService
 from ..forms import AnnotationFilterForm
-from ..services import UserInfoServices
+from ..services import UserInfoService
 
 
 class ProgressUserInfoHome(ManagerRequiredView):
@@ -21,7 +21,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
         context = self.build_context()
         filter_form = AnnotationFilterForm(request.GET)
 
-        uis = UserInfoServices()
+        uis = UserInfoService()
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
 
@@ -65,7 +65,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "default_quota_limit": default_quota_limit,
                 "users_with_quota_as_objects": users_with_quota_as_objects,
                 "users_with_quota_count": users_with_quota_count,
-                "users_progress": UserInfoServices.get_all_user_progress(),
+                "users_progress": UserInfoService.get_all_user_progress(),
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)

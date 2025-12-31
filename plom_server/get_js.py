@@ -69,8 +69,8 @@ table = [
         "license": "0BSD",
         "files": [
             {
-                "url": "https://unpkg.com/htmx.org@2.0.7/dist/htmx.js",
-                "hash": "sha256-OkbJL4z95vvR20hS8JSzBBiOUsgGmk8vejf0kQirF3U=",
+                "url": "https://unpkg.com/htmx.org@2.0.8/dist/htmx.js",
+                "hash": "sha256-upUwYnay6R+DA68rROTAP+EdfO3NvOqtE513PgDyAYM=",
             },
         ],
     },
@@ -79,8 +79,8 @@ table = [
         "license": "0BSD",  # ?? probably same as htmx
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.3/dist/response-targets.js",
-                "hash": "sha384-NtTh9TBZ2X/pFpfsVvQOjSsYWmjmqG6h5ioQWVAe2/j3AuTHRmfqvoqp+iOed+I0",
+                "url": "https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.4/dist/response-targets.js",
+                "hash": "sha256-gR2ZLtrUUj8S+Zlohmi3nLKQDlekPEHrDCauf2ZpxBg=",
             },
         ],
     },
@@ -89,9 +89,9 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://unpkg.com/alpinejs@3.15.0/dist/cdn.min.js",
+                "url": "https://unpkg.com/alpinejs@3.15.2/dist/cdn.min.js",
                 "filename": "alpine.js",
-                "hash": "sha256-4EHxtjnR5rL8JzbY12OKQJr81ESm7JBEb49ORPo29AY=",
+                "hash": "sha256-oFLBYODUMOG38dWCUK2/P9BUo88RGAHSu182kD/+uZY=",
             },
         ],
     },
@@ -100,18 +100,8 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js",
-                "hash": "sha256-3jFXc0VLYHa2OZC/oFzlFVo39xmSyH17tfmi6mmGl+8=",
-            },
-        ],
-    },
-    {
-        "name": "d3.js",
-        "license": "BSD",
-        "files": [
-            {
-                "url": "https://d3js.org/d3.v6.min.js",
-                "hash": "sha256-+7jaYCp29O1JusNWHaYtgUn6EhuP0VaFuswhNV06MyI=",
+                "url": "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.js",
+                "hash": "sha256-7MPNHuuMNNIXjj9Z/WPsWj2ENYwRcwrwuZWNyIbXZSo=",
             },
         ],
     },

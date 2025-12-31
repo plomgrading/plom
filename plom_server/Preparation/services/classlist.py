@@ -135,17 +135,47 @@ class StagingStudentService:
         StagingStudent.objects.all().delete()
 
     @classmethod
-    def validate_and_use_classlist_csv(
-        cls, in_memory_csv_file: File, ignore_warnings: bool = False
+    def _validate_and_use_classlist_from_open_file_handle(
+        cls, in_memory_csv_file: File, *, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
-        """Validate and store the classlist from the in-memory file, if possible, appending to existing classlist.
+        """Validate and store the classlist from an open file, maybe a Django in-memory file, if possible, appending to existing classlist.
+
+        See :method:`validate_and_use_classlist_csv`.
+        """
+        assert_can_modify_classlist()
+
+        # Save the in-memory file to a tempfile and validate it.
+        # Note: we must be careful to unlink this file ourselves.
+        tmp_csv = Path(NamedTemporaryFile(delete=False).name)
+
+        with open(tmp_csv, "wb") as fh:
+            for chunk in in_memory_csv_file:
+                fh.write(chunk)
+        try:
+            r = cls.validate_and_use_classlist_csv(
+                tmp_csv, ignore_warnings=ignore_warnings
+            )
+        finally:
+            tmp_csv.unlink()
+        return r
+
+    @classmethod
+    def validate_and_use_classlist_csv(
+        cls, csv_file, *, ignore_warnings: bool = False
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate and store the classlist from a file, if possible, appending to existing classlist.
 
         If there are no conflicts, this appends to an existing classlist.
         The operation is atomic so either all new entries in the classlist
         are added or none are.
 
         Args:
-            in_memory_csv_file: some kind of Django file thing.
+            csv_file: a proper normal file thing, like a string or a Path,
+                but perhaps not an in-memory "Django file", at least we
+                seem to have problems with those; see
+                :method:`_validate_and_use_classlist_csv_from_open_file_handle`
+                where for reasons I don't fully understand, we make a temp
+                file.
 
         Keyword Args:
             ignore_warnings: try to proceed with opening the file even if
@@ -163,23 +193,53 @@ class StagingStudentService:
         """
         assert_can_modify_classlist()
 
-        # Save the in-memory file to a tempfile and validate it.
-        # Note: we must be careful to unlink this file ourselves.
-        tmp_csv = Path(NamedTemporaryFile(delete=False).name)
-
-        with open(tmp_csv, "wb") as fh:
-            for chunk in in_memory_csv_file:
-                fh.write(chunk)
-
         vlad = PlomClasslistValidator()
-        success, werr, cl_as_dicts = vlad.validate_csv(tmp_csv)
+        success, werr, cl_as_dicts = vlad.validate_csv(csv_file)
         # success = False means warnings+errors - listed in werr
         # success = True means no errors, but could be warnings in werr.
         # cl_as_dicts has canonical field names "id", "name", and "paper_number".
 
         if (not success) or (werr and not ignore_warnings):
             # errors, or non-ignorable warnings.
-            tmp_csv.unlink()
+            return (success, werr)
+
+        return cls.validate_and_use_classlist_data(
+            cl_as_dicts, ignore_warnings=ignore_warnings
+        )
+
+    @classmethod
+    def validate_and_use_classlist_data(
+        cls, cl_data: list[dict[str, Any]], *, ignore_warnings: bool = False
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate and store classlist data, if possible, appending to existing classlist.
+
+        If there are no conflicts, this appends to an existing classlist.
+        The operation is atomic so either all new entries in the classlist
+        are added or none are.
+
+        Args:
+            cl_data: classlist data, a list of dicts with field names
+                "id", "name", and "paper_number".
+
+        Keyword Args:
+            ignore_warnings: try to proceed with the data even if the
+                validator expressed warnings.
+
+        Returns:
+            a 2-tuple (s,l), where ...
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+            When s is True, the list l may be empty or contain ignored warnings.
+            When s is False, the classlist in the database remains unchanged.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        assert_can_modify_classlist()
+
+        vlad = PlomClasslistValidator()
+        success, werr = vlad.validate(cl_data)
+        if (not success) or (werr and not ignore_warnings):
             return (success, werr)
 
         # Enforce empty-intersection between sets of incoming and known papernums
@@ -191,7 +251,7 @@ class StagingStudentService:
         )
         new_paper_numbers = set()
 
-        for row in cl_as_dicts:
+        for row in cl_data:
             # Next line correctly turns '' into -1:
             new_paper_numbers.add(int(row.get("paper_number", "-1") or "-1"))
 
@@ -221,16 +281,16 @@ class StagingStudentService:
             werr.append({"warn_or_err": "Warning", "werr_text": errmsg})
             return success, werr
 
-        # Having developed some trust in the given CSV,
+        # Having developed some trust in the data
         # we transfer its contents into the server's classlist.
         try:
             with transaction.atomic():
                 # The 'atomic' wrapper gives the next loop an all-or-nothing property:
                 # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
-                for row in cl_as_dicts:
+                for row in cl_data:
                     cls._add_student(
-                        row["id"],
-                        row["name"],
+                        str(row["id"]),
+                        str(row["name"]),
                         paper_number=row.get("paper_number", None),
                     )
         except IntegrityError as e:

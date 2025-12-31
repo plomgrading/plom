@@ -186,10 +186,10 @@ class Command(BaseCommand):
         Note that only perfect bundles (no errors, and no missing data) are pushed.
         """
         scanner_user = "demoScanner1"
-        bundle_status = ScanService().are_bundles_perfect()
+        bundle_status = ScanService.are_bundles_perfect()
         perfect = [k for k, v in bundle_status.items() if v]
         cannot = [k for k, v in bundle_status.items() if not v]
-        pushed = [k for k, v in ScanService().are_bundles_pushed().items() if v]
+        pushed = [k for k, v in ScanService.are_bundles_pushed().items() if v]
         for bundle in perfect:
             if bundle not in pushed:
                 print(f"Pushing bundle {bundle}")
@@ -203,7 +203,7 @@ class Command(BaseCommand):
         manager_user = "demoManager1"
         if demo_config.hw_bundles is None:
             return
-        pushed = [k for k, v in ScanService().are_bundles_pushed().items() if v]
+        pushed = [k for k, v in ScanService.are_bundles_pushed().items() if v]
         for hw_bundle in demo_config.hw_bundles:
             paper_number = hw_bundle["paper_number"]
             bundle_name = f"fake_hw_bundle_{paper_number}"

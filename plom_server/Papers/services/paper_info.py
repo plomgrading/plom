@@ -123,9 +123,8 @@ class PaperInfoService:
                 f" for page {page_number} of paper {paper_number}"
             ) from None
 
-    def get_version_from_paper_question(
-        self, paper_number: int, question_idx: int
-    ) -> int:
+    @staticmethod
+    def get_version_from_paper_question(paper_number: int, question_idx: int) -> int:
         """Given a paper number and question index, return the version of that question.
 
         Raises:
@@ -204,6 +203,11 @@ class PaperInfoService:
         Note if there is no version map (no papers) then this returns
         an empty dict.  If you'd prefer an error message you have to
         check for the empty return yourself.
+
+        Returns:
+            A dict of dicts, keyed first by paper number (int) and then
+            by question index (int) and the string ``"id"``.  The values
+            are the int versions.
         """
         pqvmapping: dict[int, dict[int | str, int]] = {}
         with transaction.atomic():

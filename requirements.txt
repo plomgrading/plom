@@ -35,7 +35,7 @@ django-mathfilters==1.0.0
 django-polymorphic==4.1.0
 django-reset-migrations==0.4.0
 django-session-timeout==0.1.0
-django-tables2==2.7.5
+django-tables2==2.8.0
 djangorestframework==3.16.1
 exif==1.6.1
 file-magic==0.4.1
@@ -44,13 +44,13 @@ imutils==0.5.4
 matplotlib==3.10.7
 model-bakery==1.20.5
 numpy==2.2.6  # >= 2.3.0 needs Python 3.11
-onnxruntime==1.22.1
+onnxruntime==1.23.2
 opencv-python-headless==4.12.0.88
 packaging==25.0
 pandas==2.3.3
 passlib==1.7.4
 Pillow==12.0.0
-psycopg[binary]==3.2.12
+psycopg[binary]==3.2.13
 pydyf==0.11.0
 pymupdf==1.26.6
 PyMySQL==1.1.2

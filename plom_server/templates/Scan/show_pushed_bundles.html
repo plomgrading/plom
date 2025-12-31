@@ -17,7 +17,6 @@
 {% block main_content %}
     <div class="flex">
         <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
-        <a class="btn btn-primary" href="{% url 'scan_upload' %}">Upload bundle</a>
     </div>
     <div class="card my-2">
         <div class="card-body">
@@ -25,29 +24,38 @@
             <p>
                 <ul>
                     <li>These bundles have been pushed to the main server.</li>
-                    <li>These pages are available to markers.</li>
+                    <li>Markers may have already starting marking these pages.</li>
+                    <li>
+                        Bundles are generally meaningful during scanning;
+                        if you need to change anything after pushing,
+                        you may want to look at the global lists of
+                        <a class="btn btn-outline-secondary btn-sm align-baseline mx-1"
+                           href="{% url 'scan_list_complete' %}">complete papers</a>,
+                        <a class="btn btn-outline-secondary btn-sm align-baseline mx-1"
+                           href="{% url 'scan_list_incomplete' %}">incomplete papers</a>,
+                        or
+                        <a class="btn btn-outline-secondary btn-sm align-baseline mx-1"
+                           href="{% url 'scan_list_discard' %}">discarded page images</a>.
+                    </li>
                 </ul>
             </p>
             {% if pushed_bundles %}
                 <table class="table table-sm table-bordered text-center sortable">
                     <thead>
-                        <!-- make sure thumbnail not too wide -->
-                        <th style="width: 8vw;">Thumbnail</th>
                         <th>Bundle name</th>
-                        <th>Uploaded by</th>
-                        <th>Pages/Papers</th>
+                        <th>Users</th>
+                        <th>Contents</th>
                         <th>Actions</th>
                     </thead>
                     <tbody>
                         {% for bundle in pushed_bundles %}
                             <tr>
-                                <td>
-                                    <div class="bundle-thumb">
-                                        <img src="{% url 'scan_get_thumbnail' bundle.id 1 %}" />
-                                    </div>
-                                </td>
                                 <td>{{ bundle.slug }}.pdf</td>
-                                <td>{{ bundle.username }}</td>
+                                <td>
+                                    <tt>{{ bundle.staged_username }}</tt> scanned
+                                    <br />
+                                    <tt>{{ bundle.pushed_username }}</tt> pushed
+                                </td>
                                 <td class="text-start">
                                     <ul>
                                         <li>{{ bundle.n_pages }} pages</li>
@@ -55,14 +63,27 @@
                                             {{ bundle.n_papers }} paper{{ bundle.n_papers|pluralize }}:
                                             {{ bundle.pretty_print_paper_list }}
                                         </li>
+                                        {% if bundle.n_discards %}<li>{{ bundle.n_discards }} discarded images</li>{% endif %}
                                     </ul>
                                 </td>
                                 <td>
-                                    <a class="btn btn-success"
-                                       href="{% url 'scan_bundle_thumbnails' bundle.id %}">View</a>
-                                    <a class="btn btn-secondary"
-                                       target="_"
-                                       href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
+                                    <span>
+                                        <a class="btn btn-success"
+                                           href="{% url 'scan_bundle_thumbnails' bundle.staging_bundle_id %}">View staging bundle</a>
+                                    </span>
+                                    <span>
+                                        <a class="btn btn-secondary"
+                                           target="_"
+                                           href="{% url 'scan_get_bundle' bundle.staging_bundle_id %}">Download</a>
+                                    </span>
+                                    <details>
+                                        <summary>More actions</summary>
+                                        <span hx-target="this" hx-target-error="this">
+                                            <a class="btn btn-danger"
+                                               hx-confirm="Caution: this will invalidate any marking tasks that use the pages in this bundle.  Are you sure you wish to discard all the contents of bundle {{ bundle.slug }}?"
+                                               hx-delete="{% url 'pushed_bundle' bundle.staging_bundle_id %}"><i class="bi bi-exclamation-diamond-fill"></i> Discard all contents</a>
+                                        </span>
+                                    </details>
                                 </td>
                             </tr>
                         {% endfor %}

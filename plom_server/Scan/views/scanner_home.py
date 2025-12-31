@@ -11,23 +11,20 @@ from datetime import datetime
 from typing import Any
 
 import arrow
-
-from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest, HttpResponse, Http404, FileResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
-from django.conf import settings
 
+from plom.misc_utils import format_int_list_with_runs
+from plom.plom_exceptions import PlomBundleLockedException, PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService
-from ..forms import BundleUploadForm
-
-from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomBundleLockedException
 
 
 class ScannerOverview(ScannerRequiredView):
@@ -81,9 +78,6 @@ class ScannerStagedView(ScannerRequiredView):
                     "is_push_locked": bundle.is_push_locked,
                 }
             )
-            # flag if any bundle is push-locked
-            if bundle.is_push_locked:
-                context["is_any_bundle_push_locked"] = True
         context["staged_bundles"] = staged_bundles
         return render(request, "Scan/show_staged_bundles.html", context)
 
@@ -91,33 +85,26 @@ class ScannerStagedView(ScannerRequiredView):
 class ScannerPushedView(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        scanner = ScanService()
         pushed_bundles = []
 
-        for bundle in scanner.get_all_staging_bundles():
-            # only keep pushed bundles
-            if not bundle.pushed:
-                continue
-            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
-            if bundle.has_page_images:
-                cover_img_rotation = scanner.get_first_image(bundle).rotation
-            else:
-                cover_img_rotation = 0
-            n_pages = scanner.get_n_images(bundle)
-            _papers = scanner.get_bundle_paper_numbers(bundle)
+        for bundle in ManageScanService.get_pushed_bundles_w_staging_prefetch():
+            staging_bundle = bundle.staging_bundle
+            n_pages = ManageScanService.get_n_images_in_pushed_bundle(bundle)
+            _papers = ScanService.get_bundle_paper_numbers(staging_bundle)
             pretty_print_paper_list = format_int_list_with_runs(_papers)
             n_papers = len(_papers)
+            n_discards = ManageScanService.get_n_discards_in_pushed_bundle(bundle)
+
             pushed_bundles.append(
                 {
-                    "id": bundle.pk,
-                    "slug": bundle.slug,
-                    "timestamp": bundle.timestamp,
-                    "time_uploaded": arrow.get(date_time).humanize(),
-                    "username": bundle.user.username,
+                    "staging_bundle_id": staging_bundle.pk,
+                    "slug": staging_bundle.slug,
+                    "staged_username": staging_bundle.user.username,
+                    "pushed_username": bundle.user.username,
                     "n_pages": n_pages,
                     "n_papers": n_papers,
                     "pretty_print_paper_list": pretty_print_paper_list,
-                    "cover_angle": cover_img_rotation,
+                    "n_discards": n_discards,
                 }
             )
         context["pushed_bundles"] = pushed_bundles
@@ -130,8 +117,6 @@ class ScannerUploadView(ScannerRequiredView):
         scanner = ScanService()
         context.update(
             {
-                "form": BundleUploadForm(),
-                "is_any_bundle_push_locked": False,
                 "papers_have_been_printed": PapersPrinted.have_papers_been_printed(),
                 "bundle_size_limit": settings.MAX_BUNDLE_SIZE / 1024 / 1024,
                 "bundle_page_limit": settings.MAX_BUNDLE_PAGES,
@@ -160,45 +145,35 @@ class ScannerUploadView(ScannerRequiredView):
         return render(request, "Scan/bundle_upload.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        form = BundleUploadForm(request.POST, request.FILES)
-        if not form.is_valid():
-            # we can get the errors from the form and pass them into the context
-            # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
-            # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
-            error_list: list[str] = sum(form.errors.values(), [])
-            messages.add_message(request, messages.ERROR, error_list)
-            return HttpResponseClientRefresh()
+        """Posting a PDF file uploads it as a bundle.
 
-        data = form.cleaned_data  # this checks the file really is a valid PDF
+        Refreshes the page on success.  On errors, sends error messages
+        via the via the "messages" system and refreshes the page.
+        """
+        bundle_file = request.FILES.get("pdf")
         user = request.user
-        slug = data["slug"]
-        bundle_file = data["pdf"]
-        pdf_hash = data["sha256"]
-        number_of_pages = data["number_of_pages"]
-        timestamp = datetime.timestamp(data["time_uploaded"])
-        ScanService.upload_bundle(
-            bundle_file,
-            slug,
-            user,
-            timestamp=timestamp,
-            pdf_hash=pdf_hash,
-            number_of_pages=number_of_pages,
-            force_render=data["force_render"],
-            read_after=data["read_after"],
-        )
-        if len(pdf_hash) >= (12 + 12 + 3):
-            brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
-        else:
-            brief_hash = pdf_hash
-        messages.add_message(
-            request,
-            messages.INFO,
-            (
-                f"Uploaded {slug} with {number_of_pages} pages "
-                f"and hash {brief_hash}. "
-                "Background processing started."
-            ),
-        )
+        force_render = request.POST.get("force_render") == "on"
+        read_after = request.POST.get("read_after") == "on"
+        force = request.POST.get("accept_duplicates") == "on"
+        try:
+            info = ScanService.upload_bundle(
+                bundle_file,
+                user,
+                force_render=force_render,
+                read_after=read_after,
+                force=force,
+            )
+        except PlomConflict as e:
+            messages.add_message(request, messages.ERROR, e)
+            return HttpResponseClientRefresh()
+        except ValidationError as e:
+            messages.add_message(request, messages.ERROR, e.message)
+            return HttpResponseClientRefresh()
+        if info["warnings"]:
+            messages.add_message(
+                request, messages.WARNING, "Warning: " + info["warnings"]
+            )
+        messages.add_message(request, messages.INFO, "Success: " + info["msg"])
         return HttpResponseClientRefresh()
 
 
@@ -308,7 +283,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             context.update(
                 {
                     "number_of_split_pages": done,
-                    "percent_split": 0 if numpgs is None else (100 * done) // numpgs,
+                    "percent_split": 0 if not numpgs else (100 * done) // numpgs,
                 }
             )
         if context["is_mid_qr_read"]:
@@ -316,7 +291,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             context.update(
                 {
                     "number_of_read_pages": done,
-                    "percent_read": 0 if numpgs is None else (100 * done) // numpgs,
+                    "percent_read": 0 if not numpgs else (100 * done) // numpgs,
                 }
             )
 

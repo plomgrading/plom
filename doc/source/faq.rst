@@ -34,6 +34,17 @@ While preparing the test, we suggest writing something like *"Please start
 a new page NOW"* at the start of each question.
 
 
+How do I make a "UTF-8" csv file?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Plom requires a UTF-8 encoded classlist.  UTF-8 can handle almost all
+languages within a single character set.  Using Microsoft Excel, you
+can choose ``CVS UTF-8 (Comma delimited)`` after selecting *"Save As"*.
+Other software will have similar options while exporting to CSV.
+Both ``utf-8`` and the Microsoft ``utf-8-sig`` variant with
+byte-order-mark are acceptable.
+
+
 
 Marking
 -------
@@ -166,20 +177,19 @@ Ok, how do I setup SSL certificates?
 How can I clone a server so that it accepts scans intended for another server?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You need three things from the existing server: the server specification `.toml` file,
+You need four things from the existing server: the server specification `.toml` file,
+the "public code" (which is written into the QR codes),
 the question-version map `.csv`, and the classlist.
-Double-check that the `.toml` file contains the ``publicCode``,
-something like: ``publicCode = "123456"`` and write it down.
 
 .. caution::
     One should be very carefully doing this sort of thing: the
-    ``publicCode`` exists to make it difficult to accidentally upload
+    "public code" exists to make it difficult to accidentally upload
     papers to the wrong server.  This question shows you how to defeat
     that mechanism.
 
 Use the saved `.toml` and the saved version map `.csv` to provision
 the new server.
-You'll need to manually enter the publicCode you noted above.
+You'll need to manually enter the "public code" you noted above.
 If prenaming, ensure you use the same settings as before.
 Continue provisioning the server, creating the database etc.  No need
 to physically print the papers (as they should be identical!)  You
@@ -189,12 +199,12 @@ server) to this new server.
 .. note::
     If you do not have access to your old server, you can carefully
     manually reconstruct the specification.
-    You can extract the ``publicCode`` from the QR codes of the
+    You can extract the "public code" from the QR codes of the
     printed pages (e.g., using a QR app on your phone).
     See the source code ``plom/tpv_utils.py`` for hints on
     interpreting the results.
     If the server was multi-versioned, you're in trouble: in
-    principle as of 2024, you could write a script to
+    principle as of 2025, you could write a script to
     extract the version map from the scans themselves.
 
 
@@ -284,7 +294,7 @@ make a ``csv`` file with one row, using a completely new paper number:
 say 1020.  Next we
 need :ref:`command line access to the server <cmdline_in_container>`.
 
-Using the command line access, use ``django-command plom-qvmap`` and
+Using the command line access, use ``django-admin plom-qvmap`` and
 see the ``append`` option.  Now you should be able to assign the
 conflicting work to paper 1020.
 

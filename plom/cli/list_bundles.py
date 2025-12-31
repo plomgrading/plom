@@ -15,6 +15,6 @@ def list_bundles(*, msgr):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credentials.
     """
-    st = msgr.new_server_list_bundles()
+    st = msgr.list_bundles()
     # , tablefmt="simple_outline")
     print(tabulate(st, headers="firstrow"))

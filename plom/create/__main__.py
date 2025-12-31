@@ -27,24 +27,18 @@ import sys
 import argparse
 import os
 from pathlib import Path
-from textwrap import dedent
 
 from stdiomask import getpass
 
 import plom.create
 from plom.create import __version__, Default_Port
 from plom.spec_verifier import SpecVerifier
-from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
-from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
-from plom.create import build_database, build_papers, build_extra_page_pdf
+from plom.create import build_extra_page_pdf
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
-from plom.create import version_map_from_file
-from plom.create import save_version_map
-from plom.version_maps import check_version_map
 
 from plom.manage_user_files import write_csv_user_list
 from plom.manage_user_files import get_raw_user_dict_from_csv
@@ -181,10 +175,6 @@ def get_parser():
         help="How many fake exam papers for the demo (defaults to 20 if omitted)",
     )
 
-    # seems like this should hide it but it does not
-    # spP = sub.add_parser("parse", help=argparse.SUPPRESS)
-    spP = sub.add_parser("parse", help="Parse spec file (REMOVED)")
-
     spP = sub.add_parser(
         "validatespec",
         help="Check a spec file for validity.",
@@ -215,144 +205,6 @@ def get_parser():
         nargs="?",
         default="testSpec.toml",
         help="defaults to '%(default)s'.",
-    )
-
-    sp_class = sub.add_parser(
-        "class",
-        help="Read in a classlist",
-        description="Get student names/numbers from csv, process, and upload to server.",
-        epilog=dedent(
-            """
-            The classlist can be a .csv file exported from Canvas (specifically,
-            Canvas -> Grades -> Actions -> Export).  Plom will do a little bit of
-            checking such as dropping names like "Test Student".
-
-            Alternatively, the classlist can be a .csv file with column headers:
-              * id - student ID number
-              * name - student name in a single field
-              * paper_number - the test-number to assign to that student for
-                               prenaming papers. If unsure, include the column,
-                               but leave it blank. Each paper_number must be
-                               unique and on legacy servers they must be in the
-                               range [1, NumberToProduce] but they need not be
-                               contiguous nor ordered.
-
-            Plom will accept uppercase or lowercase column headers.
-            """
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    sp_class.add_argument(
-        "-i",
-        "--ignore-warnings",
-        action="store_true",
-        help="Ignore any classlist warnings and upload anyway.",
-    )
-
-    group = sp_class.add_mutually_exclusive_group(required=True)
-    group.add_argument("classlist", nargs="?", help="filename in csv format")
-    group.add_argument(
-        "--demo",
-        action="store_true",
-        help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
-    )
-    sp_class.add_argument(
-        "--force",
-        action="store_true",
-        help="""
-            By default, it is an error to upload a new classlist.
-            This overrides that check; for which you accept responsibility.
-            On a legacy server, if you are using "numberToProduce = -1"
-            then the first classlist will have chosen a value; you may
-            want to reupload your spec before pushing a second classlist.
-            This is a non-exaustive list of what could go wrong.
-            If you've already produced and printed papers, you should be
-            careful with this option, although we are not aware of any
-            specific problems it would cause.
-        """,
-    )
-
-    spDB = sub.add_parser(
-        "make-db",
-        help="Populate the database",
-        description="""
-            See "make" below, but here only the database is populated and
-            no papers will be built.  You can then call "make" later.""",
-    )
-    spDB.add_argument(
-        "--from-file",
-        metavar="FILE",
-        help="Read the version map from FILE.",
-    )
-
-    spQVM = sub.add_parser(
-        "get-ver-map",
-        help="Save question-version map from the database",
-        description="""
-            The question-version map shows which questions have which
-            version for each paper.
-            This map is created server-side by the 'make-db' command.
-            This .csv file can be used to reconstruct the database in
-            case of catastrophe: we recommend keeping a backup copy.
-        """,
-    )
-    spQVM.add_argument(
-        "file",
-        nargs="?",
-        help="""
-            Filename, csv or json format.  Default: 'question_version_map.csv'.
-        """,
-    )
-
-    spB = sub.add_parser(
-        "make",
-        help="Make the PDFs",
-        description="""
-            Build papers (and if necessary the database) from the test
-            specification.  Based on the classlist "paper_number" column,
-            some of the papers may have names printed on them from the
-            classlist ("pre-named") and the remainder will be blank.
-            As they are created, the prenamed papers will be inserted
-            into the prediction table with the predictor set to "prename".
-            If you want to change the prenames: (1) force upload a new
-            classlist, and (2) see the "predictions" command to erase
-            the "prename" predictor.
-        """,
-    )
-    spB.add_argument(
-        "--no-pdf",
-        action="store_true",
-        help="Do not generate real PDFs - instead generate empty files.",
-    )
-    spB.add_argument(
-        "--without-qr",
-        action="store_true",
-        help="Produce PDFs without QR codes and staple-corner indicators.",
-    )
-    spB.add_argument(
-        "-n", "--number", type=int, help="used for building a specific paper number"
-    )
-    spB.add_argument(
-        "-x",
-        "--namebox-xpos",
-        metavar="X",
-        type=float,
-        help="""
-            Specify horizontal centre of the name/ID box that will be printed
-            on named papers, a float from 0 (left) to 100 (right) of the page.
-            Defaults to 50.""",
-    )
-    spB.add_argument(
-        "-m",
-        "-y",
-        "--namebox-ypos",
-        metavar="Y",
-        type=float,
-        help="""
-            Specify vertical location of the name/ID that will be printed on
-            named papers, a float from 0 (top) to 100 (bottom) of the
-            page.
-            Defaults to 42.""",
     )
 
     sub.add_parser(
@@ -507,39 +359,6 @@ def get_parser():
         help="Upload an auto-generated rubric list for demos.",
     )
 
-    sp_tags = sub.add_parser(
-        "tags",
-        help="List tags",
-        description="""
-          List all the tags defined on the server.
-        """,
-    )
-    sp_tags.add_argument(
-        "--list",
-        action="store_true",
-        help="""List the tags on the server (default behaviour).""",
-    )
-
-    sp_tag = sub.add_parser(
-        "tag",
-        help="Add/remove tags from papers",
-        description="""
-          Add or remove tags from a paper and question.
-        """,
-    )
-    sp_tag.add_argument(
-        "--rm",
-        action="store_true",
-        help="""Remove tag(s) from paper (if omitted we add tags).""",
-    )
-    sp_tag.add_argument(
-        "task",
-        help="""
-            Which task to tag, e.g., q0123g4 for paper 123 question 4.
-        """,
-    )
-    sp_tag.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
-
     sp_clear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
@@ -549,16 +368,10 @@ def get_parser():
     for sp in (
         sp_status,
         sp_uploadspec,
-        spDB,
-        spQVM,
-        spB,
-        sp_class,
         sp_user,
         sp_users,
         sp_pred,
         sp_rubric,
-        sp_tags,
-        sp_tag,
         sp_clear,
     ):
         sp.add_argument(
@@ -664,68 +477,6 @@ def main():
         print('Creating "sourceVersions/" directory for your test source PDFs.')
         Path("sourceVersions").mkdir(exist_ok=True)
 
-    elif args.command == "class":
-        msgr = start_messenger(args.server, args.password)
-        try:
-            try:
-                spec = msgr.get_spec()
-            except PlomServerNotReady:
-                print("Server does not yet have a test-spec. We cannot proceed.")
-                sys.exit(1)  # TODO = more graceful exit
-
-            if args.demo:
-                classlist = get_demo_classlist(spec)
-                upload_classlist(classlist, msgr=msgr, force=args.force)
-            else:
-                success, classlist = process_classlist_file(
-                    args.classlist, spec, ignore_warnings=args.ignore_warnings
-                )
-                if success:
-                    try:
-                        upload_classlist(classlist, msgr=msgr, force=args.force)
-                    except Exception as err:  # TODO - make a better error handler here
-                        print(
-                            "An error occurred when uploading the valid classlist: ",
-                            err,
-                        )
-                else:
-                    print("Could not process classlist - see messages above")
-        finally:
-            msgr.closeUser()
-            msgr.stop()
-
-    elif args.command == "make-db":
-        if args.from_file is None:
-            build_database(msgr=(args.server, args.password))
-        else:
-            qvmap = version_map_from_file(args.from_file)
-            msgr = start_messenger(args.server, args.password)
-            try:
-                spec = msgr.get_spec()
-                # TODO: hardcoded for legacy server restrictions
-                check_version_map(qvmap, spec, legacy=True)
-                build_database(vermap=qvmap, msgr=msgr)
-            finally:
-                msgr.closeUser()
-                msgr.stop()
-
-    elif args.command == "get-ver-map":
-        f = save_version_map(args.file, msgr=(args.server, args.password))
-        print(f"Question-version map saved to {f}")
-
-    elif args.command == "make":
-        try:
-            build_database(msgr=(args.server, args.password))
-        except PlomExistingDatabase:
-            print("Since we already have a database, move on to making papers")
-        build_papers(
-            indexToMake=args.number,
-            xcoord=args.namebox_xpos,
-            ycoord=args.namebox_ypos,
-            fakepdf=args.no_pdf,
-            no_qr=args.without_qr,
-            msgr=(args.server, args.password),
-        )
     elif args.command == "extra-pages":
         print("Building extra page in case students need more space...")
         build_extra_page_pdf(destination_dir=Path.cwd())
@@ -840,35 +591,6 @@ def main():
                 download_rubrics_to_file(Path(args.dump), msgr=msgr)
             else:
                 upload_rubrics_from_file(Path(args.rubric_file), msgr=msgr)
-        finally:
-            msgr.closeUser()
-            msgr.stop()
-
-    elif args.command == "tags":
-        msgr = start_messenger(args.server, args.password)
-        try:
-            # if not args.list:
-            #     print("default behaviour")
-            tags = msgr.get_all_tags()
-            print("Tags on server:\n    " + "\n    ".join(t for tid, t in tags))
-        finally:
-            msgr.closeUser()
-            msgr.stop()
-
-    elif args.command == "tag":
-        msgr = start_messenger(args.server, args.password)
-        try:
-            # TODO: probably we want something sane like --paper 123 --question 4
-            # task = f"{paper:04}g{question}"
-            task = args.task
-            if args.rm:
-                print(f"Task {task}, removing tags: {args.tags}")
-                for t in args.tags:
-                    msgr.remove_single_tag(task, t)
-            else:
-                print(f"Task {task}, adding tags: {args.tags}")
-                for t in args.tags:
-                    msgr.add_single_tag(task, t)
         finally:
             msgr.closeUser()
             msgr.stop()

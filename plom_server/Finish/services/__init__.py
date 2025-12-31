@@ -14,7 +14,6 @@ from .annotation_data_service import AnnotationDataService
 from .reassemble_service import ReassembleService
 from .data_extraction_service import DataExtractionService
 from .matplotlib_service import MatplotlibService, MinimalPlotService
-from .d3_service import D3Service
 
 from .build_soln_service import BuildSolutionService
 from .soln_images import SolnImageService

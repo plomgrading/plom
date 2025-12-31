@@ -38,23 +38,34 @@ log = logging.getLogger("messenger")
 class PlomAdminMessenger(Messenger):
     """Extend the Messenger to handle more advanced communication with a Plom Server."""
 
-    def new_server_upload_bundle(self, pdf: Path) -> dict[str, Any]:
+    def upload_bundle(self, pdf: Path, *, force: bool = False) -> dict[str, Any]:
         """Upload a PDF file to the server as a new bundle.
+
+        Args:
+            pdf: Path to a PDF file.
+
+        Keyword Args:
+            force: defaults False.  If true, some things that would be errors
+                become warnings instead.  For example, this allows uploading
+                a duplicate bundle.
 
         Returns:
             A dictionary, including the bundle_id and maybe other
             information in the future.
         """
-        if self.is_server_api_less_than(113):
+        if force and self.is_server_api_less_than(116):
             raise PlomNoServerSupportException(
-                "Server too old: does not support staging bundle upload"
+                "Server too old: does not support forcing upload"
             )
 
         with self.SRmutex:
             try:
                 with pdf.open("rb") as f:
                     files = {"pdf_file": f}
-                    response = self.post_auth("/api/beta/scan/bundles", files=files)
+                    url = "/api/beta/scan/bundles"
+                    if force:
+                        url += "?force"
+                    response = self.post_auth(url, files=files)
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
@@ -68,7 +79,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_list_bundles(self) -> list[list[Any]]:
+    def list_bundles(self) -> list[list[Any]]:
         """Get a list of information about bundles on the server.
 
         TODO: beta: rename to something reasonable in due time.
@@ -79,11 +90,6 @@ class PlomAdminMessenger(Messenger):
             TODO: maybe a list of dicts would be a more general API; could
             format as a table client-side.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support staging bundle list"
-            )
-
         with self.SRmutex:
             try:
                 response = self.get_auth("/api/beta/scan/bundles")
@@ -94,7 +100,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_bundle_map_page(
+    def bundle_map_page(
         self,
         bundle_id: int,
         page: int,
@@ -133,11 +139,6 @@ class PlomAdminMessenger(Messenger):
         Returns:
             None
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support page mapping"
-            )
-
         query_args = []
         if papernum is not None:
             query_args.append(f"papernum={papernum}")
@@ -192,7 +193,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_push_bundle(self, bundle_id: int) -> dict[str, Any]:
+    def push_bundle(self, bundle_id: int) -> dict[str, Any]:
         """Push a bundle from the staging area.
 
         TODO: beta: rename to something reasonable in due time.
@@ -201,11 +202,6 @@ class PlomAdminMessenger(Messenger):
             A dictionary, with sole key "bundle_id" mapping to int,
             and maybe other information in the future.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: does not support bundle push"
-            )
-
         with self.SRmutex:
             try:
                 response = self.patch_auth(f"/api/beta/scan/bundle/{bundle_id}")
@@ -226,7 +222,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_delete_bundle(self, bundle_id: int):
+    def delete_bundle(self, bundle_id: int):
         """Delete a bundle from the staging area.
 
         TODO: beta: rename to something reasonable in due time.
@@ -257,7 +253,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_paper_marks(self) -> dict[int, dict]:
+    def get_paper_marks(self) -> dict[int, dict]:
         """Get a list of information about exam papers on the server.
 
         More specifically this contains info about student marks and IDs.
@@ -281,7 +277,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_pqvmap(self) -> dict[Any, dict]:
+    def get_pqvmap(self) -> dict[Any, dict]:
         """Request the pqvmap (if any) held by the server.
 
         Returns:
@@ -307,9 +303,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_unmarked(
-        self, papernum: int, *, verbose: bool = False
-    ) -> dict[str, Any]:
+    def get_unmarked(self, papernum: int, *, verbose: bool = False) -> dict[str, Any]:
         """Download an unmarked PDF file from the server.
 
         Returns:
@@ -356,7 +350,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_reassembled(
+    def get_reassembled(
         self, papernum: int, *, verbose: bool = False
     ) -> dict[str, Any]:
         """Download a reassembled PDF file from the server.
@@ -365,9 +359,51 @@ class PlomAdminMessenger(Messenger):
             A dict including key `"filename"` for the file that was written
             and other information about the download.
         """
-        if self.is_server_api_less_than(113):
+        verbose_print = print if verbose else (lambda content: None)
+        verbose_tqdm = tqdm if verbose else (lambda iterable: iterable)
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/api/beta/finish/reassembled/{papernum}", stream=True
+                )
+                response.raise_for_status()
+                # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+                msg = EmailMessage()
+                msg["Content-Disposition"] = response.headers.get("Content-Disposition")
+                filename = msg.get_filename()
+                assert filename is not None
+                num_bytes = 0
+                # defaults to CWD: TODO: kwarg to change that?
+                with open(filename, "wb") as f:
+                    for chunk in verbose_tqdm(response.iter_content(chunk_size=8192)):
+                        verbose_print((type(chunk), len(chunk)))
+                        f.write(chunk)
+                        num_bytes += len(chunk)
+                r = {
+                    "filename": filename,
+                    "content-length": num_bytes,
+                }
+                return r
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_report(self, papernum: int, *, verbose: bool = False) -> dict[str, Any]:
+        """Download a student report file from the server.
+
+        Returns:
+            A dict including key `"filename"` for the file that was written
+            and other information about the download.
+        """
+        if self.is_server_api_less_than(116):
             raise PlomNoServerSupportException(
-                "Server too old: API does not support getting reassembled papers"
+                "Server too old: API does not support getting student reports"
             )
 
         verbose_print = print if verbose else (lambda content: None)
@@ -376,7 +412,57 @@ class PlomAdminMessenger(Messenger):
         with self.SRmutex:
             try:
                 response = self.get_auth(
-                    f"/api/beta/finish/reassembled/{papernum}", stream=True
+                    f"/api/beta/finish/report/{papernum}", stream=True
+                )
+                response.raise_for_status()
+                # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+                msg = EmailMessage()
+                msg["Content-Disposition"] = response.headers.get("Content-Disposition")
+                filename = msg.get_filename()
+                assert filename is not None
+                num_bytes = 0
+                # defaults to CWD: TODO: kwarg to change that?
+                with open(filename, "wb") as f:
+                    for chunk in verbose_tqdm(response.iter_content(chunk_size=8192)):
+                        verbose_print((type(chunk), len(chunk)))
+                        f.write(chunk)
+                        num_bytes += len(chunk)
+                r = {
+                    "filename": filename,
+                    "content-length": num_bytes,
+                }
+                return r
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_solution(self, papernum: int, *, verbose: bool = False) -> dict[str, Any]:
+        """Download a solution PDF file from the server.
+
+        The solutions for each paper may not be the same, asking for
+        papernum isn't frivolous.
+
+        Returns:
+            A dict including key `"filename"` for the file that was written
+            and other information about the download.
+        """
+        if self.is_server_api_less_than(116):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support getting reassembled solutions"
+            )
+
+        verbose_print = print if verbose else (lambda content: None)
+        verbose_tqdm = tqdm if verbose else (lambda iterable: iterable)
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/api/beta/finish/solution/{papernum}", stream=True
                 )
                 response.raise_for_status()
                 # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
@@ -416,10 +502,6 @@ class PlomAdminMessenger(Messenger):
             PlomSeriousException: other errors.
             PlomNoServerSupportException: old server
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: API does not support direct IDing of papers."
-            )
         with self.SRmutex:
             try:
                 url = f"/ID/beta/{paper_number}"
@@ -444,10 +526,6 @@ class PlomAdminMessenger(Messenger):
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
-        if self.is_server_api_less_than(113):
-            raise PlomNoServerSupportException(
-                "Server too old: API does not support direct IDing of papers."
-            )
         with self.SRmutex:
             try:
                 response = self.delete_auth(f"/ID/beta/{paper_number}")
@@ -463,9 +541,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_upload_source(
-        self, version: int, source_pdf: Path
-    ) -> dict[str, Any]:
+    def upload_source(self, version: int, source_pdf: Path) -> dict[str, Any]:
         """Upload an assessment source to the server.
 
         Args:
@@ -504,7 +580,7 @@ class PlomAdminMessenger(Messenger):
 
         return response.json()
 
-    def new_server_delete_source(self, version: int) -> dict[str, Any]:
+    def delete_source(self, version: int) -> dict[str, Any]:
         """Delete the specified assessment source from the server.
 
         Args:
@@ -538,17 +614,11 @@ class PlomAdminMessenger(Messenger):
 
         return response.json()
 
-    def new_server_upload_spec(
-        self, spec_toml: Path, *, force_public_code: bool = False
-    ) -> dict[str, Any]:
+    def upload_spec(self, spec_toml: Path) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
             spec_toml: The standard Python Path of a valid spec.toml file
-
-        Keyword Args:
-            force_public_code: Usually you may not include "publicCode" in
-                the specification.  Pass True to allow overriding that default.
 
         Returns:
             The newly-uploaded spec, as a dict.
@@ -558,22 +628,17 @@ class PlomAdminMessenger(Messenger):
             PlomNoPermission: user is not in the group required to make
                 these changes.
             ValueError: invalid spec.
-            PlomSeriousException: other errors unexpected errors.
+            PlomSeriousException: other unexpected errors.
         """
         # Caution: don't use json= with post when files= is used: use data= instead
         # https://requests.readthedocs.io/en/latest/user/quickstart/#more-complicated-post-requests
-        if force_public_code:
-            data = {"force_public_code": "on"}
-        else:
-            data = {}
-
         with self.SRmutex:
             try:
                 with spec_toml.open("rb") as f:
                     response = self.post_auth(
                         "/api/v0/spec",
                         files={"spec_toml": f},
-                        data=data,
+                        data={},
                     )
                 response.raise_for_status()
             except requests.HTTPError as e:
@@ -587,7 +652,60 @@ class PlomAdminMessenger(Messenger):
 
         return response.json()
 
-    def new_server_delete_classlist(self) -> None:
+    def get_public_code(self) -> str:
+        """Get the server's public code, or an empty string if it doesn't have one yet.
+
+        Exceptions:
+            PlomSeriousException: other unexpected errors.
+        """
+        if self.is_server_api_less_than(116):
+            # workaround by grabbing it from the spec (where it was in older servers)
+            s = self.get_spec()
+            return s.get("publicCode") or ""
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/v0/public_code")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.json()
+
+    def set_public_code(self, public_code: str) -> None:
+        """Set the public code on the server.
+
+        Exceptions:
+            ValueError: invalid code.
+            PlomNoPermission: user is not in the group required to make
+                these changes.
+            PlomNoServerSupportException: server too old.
+            PlomConflict: server not accepting public code changes at this
+                time; placeholder for future change.
+            PlomSeriousException: other unexpected errors.
+        """
+        if self.is_server_api_less_than(116):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support directly setting public code"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.post_auth(
+                    "/api/v0/public_code",
+                    json={"new_public_code": public_code},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise ValueError(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def delete_classlist(self) -> None:
         """Delete the classlist (if any) held by the server."""
         with self.SRmutex:
             try:
@@ -602,7 +720,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_download_classlist(self) -> BytesIO:
+    def download_classlist(self) -> BytesIO:
         """Download the classlist (if any) held by the server.
 
         Returns:
@@ -627,9 +745,7 @@ class PlomAdminMessenger(Messenger):
 
         return csv_content
 
-    def new_server_upload_classlist(
-        self, csvpath: Path
-    ) -> tuple[bool, list[dict[str, Any]]]:
+    def upload_classlist(self, csvpath: Path) -> tuple[bool, list[dict[str, Any]]]:
         """Use the given CSV file to extend the classlist on the server.
 
         Typically the server classlist starts empty and this is used just once.

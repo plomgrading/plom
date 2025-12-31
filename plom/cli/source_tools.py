@@ -21,7 +21,7 @@ def upload_source(version: int, source_pdf: Path, *, msgr) -> bool:
     Returns:
         True if the server's source was updated, otherwise False.
     """
-    returndict = msgr.new_server_upload_source(version, source_pdf)
+    returndict = msgr.upload_source(version, source_pdf)
 
     returnversion = returndict["version"]
     if returnversion != version:
@@ -64,6 +64,6 @@ def delete_source(version: int, *, msgr) -> bool:
     Returns:
         True if the server's source was updated, otherwise False.
     """
-    msgr.new_server_delete_source(version)
+    msgr.delete_source(version)
     print(f"Source version {version} deleted.")
     return True

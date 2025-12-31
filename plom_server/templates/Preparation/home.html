@@ -137,7 +137,7 @@
         <div class="accordion mt-2" id="resetAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingOne">
-                    <button class="accordion-button bg-danger text-white collapsed"
+                    <button class="accordion-button text-bg-danger collapsed"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#collapseOne"
@@ -149,6 +149,9 @@
                      aria-labelledby="headingOne"
                      data-bs-parent="#resetAccordion">
                     <div class="accordion-body">
+                        <a type="button"
+                           class="btn btn-danger m-1"
+                           href="{% url 'public_code' %}">Change public code</a>
                         <a type="button" class="btn btn-danger m-1" href="{% url 'reset' %}">Reset Server</a>
                     </div>
                 </div>

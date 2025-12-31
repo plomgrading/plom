@@ -38,6 +38,8 @@ from .views import (
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
+    FinishReport,
+    FinishSolution,
     FinishUnmarked,
     REPspreadsheet,
     REPidentified,
@@ -45,7 +47,8 @@ from .views import (
     REPcoverPageInfo,
     SourceOverview,
     SourceDetail,
-    SpecificationHandler,
+    SpecificationAPIView,
+    PublicCodeAPIView,
     RectangleExtractorView,
     PQVmap,
 )
@@ -111,6 +114,16 @@ urlpatterns = [
         name="api_Finish_reassembled",
     ),
     path(
+        "api/beta/finish/solution/<int:papernum>",
+        FinishSolution.as_view(),
+        name="api_Finish_solution",
+    ),
+    path(
+        "api/beta/finish/report/<int:papernum>",
+        FinishReport.as_view(),
+        name="api_Finish_solution",
+    ),
+    path(
         "api/beta/finish/unmarked/<int:papernum>",
         FinishUnmarked.as_view(),
         name="api_Finish_unmarked",
@@ -137,7 +150,12 @@ urlpatterns = [
     ),
     path(
         "api/v0/spec",
-        SpecificationHandler.as_view(),
+        SpecificationAPIView.as_view(),
+        name="api_spec_handler",
+    ),
+    path(
+        "api/v0/public_code",
+        PublicCodeAPIView.as_view(),
         name="api_spec_handler",
     ),
     # Django inspects patterns in order, using the first match.

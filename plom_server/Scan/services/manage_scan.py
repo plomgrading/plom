@@ -232,9 +232,9 @@ class ManageScanService:
                 )
         return complete
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
-    def get_all_incomplete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
+    def get_all_incomplete_papers(cls) -> dict[int, dict[str, list[dict[str, Any]]]]:
         """Dicts of info about papers that are partially but not completely scanned.
 
         see :func: `_get_complete_incomplete_paper_querysets` for definitions
@@ -247,9 +247,7 @@ class ManageScanService:
             "fixed" and "mobile" case is different, for example "mobile"
             have page labels and "fixed" do not.
         """
-        _, incomplete_papers_queryset = (
-            ManageScanService()._get_complete_incomplete_paper_querysets()
-        )
+        _, incomplete_papers_queryset = cls._get_complete_incomplete_paper_querysets()
 
         incomplete_papers_queryset = incomplete_papers_queryset.prefetch_related(
             Prefetch(
@@ -366,6 +364,13 @@ class ManageScanService:
         paper = Paper.objects.get(paper_number=test_paper)
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
+
+    @staticmethod
+    def get_pushed_bundles_w_staging_prefetch() -> QuerySet[Bundle]:
+        """Get all the pushed Bundles, with a prefetch on the related Staging Bundles."""
+        return Bundle.objects.filter(_is_system=False).prefetch_related(
+            "staging_bundle"
+        )
 
     def get_number_pushed_bundles(self) -> int:
         """Return the number of pushed bundles (excluding system bundles)."""
@@ -486,6 +491,33 @@ class ManageScanService:
             "bundle_name": dp_obj.image.bundle.name,
             "bundle_order": dp_obj.image.bundle_order,
         }
+
+    @staticmethod
+    def get_n_images_in_pushed_bundle(bundle: Bundle | int) -> int:
+        """Get the number of page images in a Bundle from the number of Images.
+
+        This could be the same thing as :method:`ScanService.get_n_images` but
+        semantically it might be sometimes more correct to query the Bundle
+        not the StagingBundle.
+        """
+        if isinstance(bundle, int):
+            return Image.objects.filter(bundle_id=bundle).count()
+        return Image.objects.filter(bundle=bundle).count()
+
+    @staticmethod
+    def get_n_discards_in_pushed_bundle(bundle: Bundle | int) -> int:
+        """Count how many DiscardPage a pushed bundle has.
+
+        Args:
+            bundle: a pushed bundle, not a staging bundle.  You can pass
+                either the Django Bundle objects or an integer ID.
+
+        Raises:
+            ObjectDoesNotExist: if you pass an invalid bundle id.
+        """
+        if isinstance(bundle, int):
+            return DiscardPage.objects.filter(image__bundle_id=bundle).count()
+        return DiscardPage.objects.filter(image__bundle=bundle).count()
 
     @transaction.atomic
     def get_discarded_page_info(self) -> list[dict[str, Any]]:

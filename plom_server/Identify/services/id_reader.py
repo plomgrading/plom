@@ -157,8 +157,7 @@ class IDReaderService:
             existing_pred.certainty = certainty
             existing_pred.save()
 
-        id_task_service = IdentifyTaskService()
-        id_task_service.update_task_priority(paper)
+        IdentifyTaskService.update_task_priority(paper)
 
     def add_or_change_ID_prediction_cmd(
         self,

@@ -56,6 +56,8 @@ class PlomServerConfig:
     # classlist: str | Path | resources.abc.Traversable | None = None
     classlist: str | Path | None = None
     num_to_produce: Optional[int] = None
+    # the first paper number to produce; distinct from first_paper in ConfigBundle
+    first_paper_number: int | None = None
     qvmap: Optional[Path] = None
     bundles: Optional[List[DemoBundleConfig]] = None
     hw_bundles: Optional[List[DemoHWBundleConfig]] = None

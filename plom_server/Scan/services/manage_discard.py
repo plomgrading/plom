@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from plom_server.Papers.models import (
+    Bundle,
     Paper,
     FixedPage,
     MobilePage,
@@ -19,6 +20,8 @@ from plom_server.Papers.models import (
 )
 from plom_server.Identify.services import IdentifyTaskService
 from plom_server.Mark.services import MarkingTaskService
+
+from ..models import StagingBundle
 
 
 class ManageDiscardService:
@@ -138,6 +141,64 @@ class ManageDiscardService:
             )
 
         return None
+
+    def discard_pushed_staging_bundle_contents(
+        self, user_obj: User, staging_bundle_id: int, *, dry_run: bool = True
+    ) -> str:
+        """Discard all pages pushed in a given StagingBundle.
+
+        This function operates on pushed bundles, it doesn't do anything to
+        StagingBundles or their contents (see
+        :method:`ScanService.remove_bundle_by_pk` for deleting StagingBundles).
+
+        Args:
+            user_obj: the User who is discarding
+            staging_bundle_id: the id of the bundle being discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+
+        Raises:
+            ValueError: Attempting to discard the contents of an unpushed bundle.
+        """
+        staging_bundle_obj = StagingBundle.objects.filter(pk=staging_bundle_id).get()
+        if not staging_bundle_obj.pushed:
+            raise ValueError(
+                f"bundle '{staging_bundle_obj.slug}' hasn't been pushed, please modify it in staging."
+            )
+        bundle_obj = staging_bundle_obj.bundle_set.get()
+        return self._discard_whole_bundle(user_obj, bundle_obj, dry_run=dry_run)
+
+    def _discard_whole_bundle(
+        self, user_obj: User, bundle_obj: Bundle, *, dry_run: bool = True
+    ) -> str:
+        """Discard all pages pushed in a given bundle.
+
+        Args:
+            user_obj: the User who is discarding
+            bundle_obj: the bundle being discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+        """
+        msg = ""
+        with transaction.atomic():
+            for fp in FixedPage.objects.filter(image__bundle=bundle_obj):
+                if fp.image:
+                    msg += self.discard_pushed_fixed_page(
+                        user_obj, fp.pk, dry_run=dry_run
+                    )
+            for mp in MobilePage.objects.filter(image__bundle=bundle_obj):
+                msg += self.discard_pushed_mobile_page(user_obj, mp.pk, dry_run=dry_run)
+        return msg
 
     @transaction.atomic
     def discard_whole_paper_by_number(

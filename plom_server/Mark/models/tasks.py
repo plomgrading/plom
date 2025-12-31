@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -22,7 +23,7 @@ class MarkingTask(models.Model):
     question_index: int, the question to mark
     question_version: int, the version of the question
     latest_annotation: reference to Annotation, the latest annotation for this task
-    marking_priority: int, the priority of this task.
+    marking_priority: float, the priority of this task.
         Default is 0, but when MarkingTask instances are created with
         MarkingTaskService.create_task(), the default is replaced with
         a value determined by the current server settings.
@@ -84,13 +85,14 @@ class MarkingTask(models.Model):
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
     )
-    marking_priority = models.PositiveIntegerField(null=False, default=0)
+    marking_priority = models.FloatField(null=False, default=0.0)
 
     def __str__(self):
         """Return information about the paper and the question."""
         return (
-            f"MarkingTask (paper={self.paper.paper_number}, "
-            f"question_index={self.question_index})"
+            f"MarkingTask (paper {self.paper.paper_number}, "
+            f"qidx {self.question_index}, v{self.question_version}) "
+            f"{self.StatusChoices(self.status).label}"
         )
 
 

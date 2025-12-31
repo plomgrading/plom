@@ -218,7 +218,7 @@ class StudentMarkService:
             ObjectDoesNotExist: no such marking task, either b/c the paper
                 does not exist or the question does not exist for that paper.
         """
-        version = PaperInfoService().get_version_from_paper_question(
+        version = PaperInfoService.get_version_from_paper_question(
             paper.paper_number, question_idx
         )
         try:
@@ -272,58 +272,6 @@ class StudentMarkService:
                 student_id, student_name = paper_id_info
                 spreadsheet_data[paper.paper_number] = (student_id, student_name)
         return spreadsheet_data
-
-    def get_marks_from_paper(self, paper_num: int) -> dict:
-        """Get the marks for a paper.
-
-        Args:
-            paper_num: The paper number.
-
-        Returns:
-            Dict keyed by paper number whose values are a dictionary holding
-            the mark information for each question in the paper.
-        """
-        try:
-            paper_obj = Paper.objects.get(paper_number=paper_num)
-        except Paper.DoesNotExist:
-            return {}
-        marking_tasks = (
-            paper_obj.markingtask_set.all()
-            .select_related("latest_annotation")
-            .exclude(status=MarkingTask.OUT_OF_DATE)
-        )
-        questions: dict[int, str | dict] = {}
-        for marking_task in marking_tasks.order_by("question_index"):
-            current_annotation = marking_task.latest_annotation
-            if current_annotation:
-                questions[marking_task.question_index] = {
-                    "question": marking_task.question_index,
-                    "version": marking_task.question_version,
-                    "out_of": current_annotation.annotation_data["maxMark"],
-                    "student_mark": current_annotation.score,
-                }
-            else:
-                # String value so that it questions.get(i) doesn't return None
-                questions[marking_task.question_index] = "Not marked"
-
-        return {paper_num: questions}
-
-    def get_all_marks(self) -> dict:
-        """Get the marks for all papers, with potentially INEFFICIENT DB operations.
-
-        Returns:
-            Dict containing the mark information for each question in each paper. Keyed by
-            paper number whose values are a dictionary holding the mark information for each
-            question in the paper.
-        """
-        paper_nums = MarkingTask.objects.values_list(
-            "paper__paper_number", flat=True
-        ).distinct()
-        marks = {}
-        for paper_num in paper_nums:
-            marks.update(self.get_marks_from_paper(paper_num))
-        # Sort by paper number
-        return {k: marks[k] for k in sorted(marks)}
 
     @staticmethod
     def get_n_of_question_marked(question: int, *, version: int = 0) -> int:

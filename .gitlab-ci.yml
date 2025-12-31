@@ -28,10 +28,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:27.5.1
+image: docker:28.5.2
 
 services:
-  - docker:27.5.1-dind
+  - docker:28.5.2-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -40,9 +40,8 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
-  MACBIN_PY_MAJOR_MINOR_VER: "3.11"
-  MACBIN_PY_VER: 3.11.9
   QT_QPA_PLATFORM: offscreen
+  PLOMCLIENT_BRANCHNAME: main
 
 stages:
   - static_analysis
@@ -133,7 +132,7 @@ wet_css_js_3rd_party:
 # By default we assume the target is origin/main but if a MR is open,
 # we try to determine the target branch and use that instead.
 copyright_year:
-  image: fedora:42
+  image: fedora:43
   stage: static_analysis
   rules:
     # Tags don't have this defined and non-empty. This job doesn't run on releases
@@ -315,7 +314,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=25.9.0"
+    - pip3 install "black~=25.11.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -336,7 +335,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.11.0
+    - pip install pytest pytest-cov coverage[toml]~=7.12.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -392,9 +391,8 @@ pylint:
   needs: ["container-image"]
   image: $IM
   before_script:
-    # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=4.0.1  # codespell:ignore astroid
-    - pip install pylint~=4.0.2
+    - pip install astroid~=4.0.2  # codespell:ignore astroid
+    - pip install pylint~=4.0.4
   script:
     - pylint plom
     - pylint plom_server
@@ -412,7 +410,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.18.2
+    - pip install mypy~=1.19.0
   script:
     - mypy --version
     - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
@@ -451,7 +449,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.14.2
+    - pip install ruff~=0.14.8
   script:
     - ruff check .
     # ruff format .
@@ -462,7 +460,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.14.2
+    - pip install ruff~=0.14.8
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -472,7 +470,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 787 ]]"
+    - bash -c "[[ $HOWMANY -le 763 ]]"
   allow_failure: true
 
 
@@ -525,12 +523,20 @@ no-question-numbers:
   allow_failure: true
 
 
+eslint:
+  image: node:24.11.1
+  stage: static_analysis
+  script:
+    - npm install eslint globals @eslint/js @stylistic/eslint-plugin
+    - npx eslint plom_server/**/*.js
+
+
 webplom_test:
   stage: test
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.11.0
+    - pip install coverage~=7.12.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -554,7 +560,7 @@ webplom_api_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.11.0
+    - pip install coverage~=7.12.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -593,14 +599,14 @@ webplom_demo:
     - apt-get --no-install-recommends --yes install git
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after reports
 
 
-# ensure we can run the code some other than inside itself!
+# ensure we can run the code somewhere other than inside itself!
 out-of-tree:
   services:
     - postgres
@@ -627,7 +633,7 @@ out-of-tree:
   allow_failure: true
 
 
-# ensure we can run the code some other than inside itself!
+# ensure we can run the code somewhere other than inside itself!
 out-of-tree-scratch:
   services:
     - postgres
@@ -639,13 +645,14 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:42
+  image: fedora:43
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
+          python3-devel
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
@@ -657,8 +664,12 @@ out-of-tree-scratch:
           python3-zxing-cpp
           python3-psycopg3
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-PyMuPDF
+          python3-PyMySQL
+          python3-scikit-learn python3-scikit-image
+          python3-numpy python3-scipy
           python3-weasyprint python3-whitenoise
+          python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
     - pip --version
@@ -725,7 +736,7 @@ fedora-django-tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:42
+  image: fedora:43
   when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
@@ -743,8 +754,11 @@ fedora-django-tests:
           python3-zxing-cpp
           python3-psycopg3
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-PyMuPDF
+          python3-PyMySQL
+          python3-scikit-learn python3-scikit-image
           python3-weasyprint python3-whitenoise
+          python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
     - pip --version
@@ -791,7 +805,7 @@ newOS_newdeps_django_tests:
   script:
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     # we can run in-tree but we need pip for dependencies
     - pip install .
     - pip uninstall -y plom
@@ -829,7 +843,7 @@ minpy_mindeps_django_tests:
     - pip install .
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     # TODO: do we want full demo or just makemigrate?
     - PYTHONPATH="." python3 plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - python3 manage.py test

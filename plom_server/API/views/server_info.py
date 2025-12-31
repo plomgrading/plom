@@ -129,27 +129,16 @@ class UserRole(APIView):
     """Get the user's role.
 
     Returns:
-        either of ["lead_marker", "marker", "scanner", "manager"] if the user
-            is recognized. Otherwise returns None.
+        A list of strings of group names that the user belongs to such
+        as ``["lead_marker", "marker", "identifier"]``.  Other values
+        with known meanings include `"scanner"` and `"manager"`.  Callers
+        should probably ignore any group names they do not recognize.
     """
 
-    def get(self, request: Request, *, username: str) -> HttpResponse:
-        role = self._get_user_role(username)
-        return HttpResponse(role, content_type="text/plain")
-
-    def _get_user_role(self, username: str) -> str | None:
+    def get(self, request: Request, *, username: str) -> Response:
         user = User.objects.get(username__iexact=username)
-        group = user.groups.values_list("name", flat=True)
-        if "lead_marker" in group:
-            return "lead_marker"
-        elif "marker" in group:
-            return "marker"
-        elif "manager" in group:
-            return "manager"
-        elif "scanner" in group:
-            return "scanner"
-        else:
-            return None
+        groups = list(user.groups.values_list("name", flat=True))
+        return Response(groups)
 
 
 class ExamInfo(APIView):

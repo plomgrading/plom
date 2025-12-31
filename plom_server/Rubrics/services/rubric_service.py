@@ -910,33 +910,32 @@ class RubricService:
                     #     r["rid"],
                     # )
 
-    def build_half_mark_delta_rubrics(self, username: str) -> bool:
+    @classmethod
+    def build_half_mark_delta_rubrics(cls, username: str) -> None:
         """Create the plus and minus one-half delta rubrics that are optional.
 
         Args:
             username: which user to associate with the demo rubrics.
 
-        Returns:
-            True if initialized or False if already initialized.
-
         Exceptions:
-            ValueError: username does not exist or is not part of the manager group.
+            ValueError: username does not exist or is not part of the
+                manager group, or the half-point rubrics are disabled,
+                or these rubrics already exist.
         """
         try:
             _ = User.objects.get(username__iexact=username, groups__name="manager")
         except ObjectDoesNotExist as e:
             raise ValueError(
-                f"User '{username}' does not exist or has wrong permissions!"
+                f"User '{username}' does not exist or has wrong permissions"
             ) from e
-        existing_demo_rubrics = (
-            Rubric.objects.all().filter(value__exact=0.5).filter(text__exact=".")
-        )
-        if existing_demo_rubrics:
-            return False
-        self._build_half_mark_delta_rubrics(username)
-        return True
+        if Rubric.objects.filter(value__exact=0.5).filter(text__exact=".").exists():
+            raise ValueError(
+                "Could not create half-mark delta rubrics b/c they already exist"
+            )
+        cls._build_half_mark_delta_rubrics(username)
 
-    def _build_half_mark_delta_rubrics(self, username: str) -> None:
+    @classmethod
+    def _build_half_mark_delta_rubrics(cls, username: str) -> None:
         log.info("Building half-mark delta rubrics")
         for q in SpecificationService.get_question_indices():
             rubric = {
@@ -948,7 +947,7 @@ class RubricService:
                 "username": username,
                 "system_rubric": True,
             }
-            r = self.create_rubric(rubric)
+            r = cls.create_rubric(rubric)
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
@@ -965,7 +964,7 @@ class RubricService:
                 "username": username,
                 "system_rubric": True,
             }
-            r = self.create_rubric(rubric)
+            r = cls.create_rubric(rubric)
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
