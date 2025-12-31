@@ -128,7 +128,7 @@ class StagingImage(models.Model):
         super().save(*args, **kwargs)
 
     def clean(self) -> None:
-        """Called by full_clean to check stuff about the class instance."""
+        """Overridden method, called by `full_clean` to check stuff about the class instance."""
         try:
             self._check_invariants()
         except (AssertionError, ValueError) as e:
@@ -149,6 +149,9 @@ class StagingImage(models.Model):
         DISCARD = self.ImageTypeChoices.DISCARD
         ERROR = self.ImageTypeChoices.ERROR
 
+        # this code proceeds in two passes: in the first pass we check which
+        # fields must be present or absent based on the image_type.  Then
+        # later below we go field-by-field.
         if self.image_type == UNREAD:
             assert self.paper_number is None, "UNREAD must not have paper_number"
             assert self.page_number is None, "UNREAD must not have page_number"
