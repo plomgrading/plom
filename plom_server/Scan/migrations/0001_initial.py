@@ -40,19 +40,28 @@ class Migration(migrations.Migration):
                         ]
                     ),
                 ),
-                ("bundle_order", models.PositiveIntegerField(null=True)),
-                ("parsed_qr", models.JSONField(default=dict, null=True)),
-                ("rotation", models.IntegerField(default=None, null=True)),
+                ("bundle_order", models.PositiveIntegerField(blank=True, null=True)),
+                ("parsed_qr", models.JSONField(blank=True, default=dict, null=True)),
+                ("rotation", models.IntegerField(blank=True, default=None, null=True)),
                 ("pushed", models.BooleanField(default=False)),
-                ("paper_number", models.PositiveIntegerField(default=None, null=True)),
-                ("page_number", models.PositiveIntegerField(default=None, null=True)),
-                ("version", models.PositiveIntegerField(default=None, null=True)),
+                (
+                    "paper_number",
+                    models.PositiveIntegerField(blank=True, default=None, null=True),
+                ),
+                (
+                    "page_number",
+                    models.PositiveIntegerField(blank=True, default=None, null=True),
+                ),
+                (
+                    "version",
+                    models.PositiveIntegerField(blank=True, default=None, null=True),
+                ),
                 (
                     "question_idx_list",
                     models.JSONField(blank=True, default=None, null=True),
                 ),
-                ("discard_reason", models.TextField(default="")),
-                ("error_reason", models.TextField(default="")),
+                ("discard_reason", models.TextField(blank=True, default="")),
+                ("error_reason", models.TextField(blank=True, default="")),
                 ("history", models.TextField(blank=True, default="")),
                 (
                     "baseimage",
