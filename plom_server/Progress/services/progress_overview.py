@@ -180,18 +180,13 @@ class ProgressOverviewService:
     def _missing_task_pqv_triplets(cls) -> list[tuple[int, int, int]]:
         """Return which tasks (p, q, v) are missing, compared against the in-use papers.
 
-        TODO: this may be inefficient in the case of large numbers of missing tasks.
-        This is because we make one query for eaching missing (p, q) to find its
-        version.  TODO: this can likely be improved.
+        There is an extra cost associated with determining the versions: if you
+        only need the paper number and qidx, call :method:`_missing_task_pq_pairs`
+        instead.
         """
         missing_pairs = cls._missing_task_pq_pairs()
-        # TODO: N more DB queries, expensive if many missing: need a bulk version getter?
-        # TODO: for example, one could get the qvmap and query offline, or just get the QuestionPages
-        # (which exist even if the paper isn't in-use!)
-        missing_triplets = [
-            (pn, qi, PaperInfoService.get_version_from_paper_question(pn, qi))
-            for pn, qi in missing_pairs
-        ]
+        pqvmap = PaperInfoService.get_pqv_map_dict()
+        missing_triplets = [(pn, qi, pqvmap[pn][qi]) for pn, qi in missing_pairs]
         return missing_triplets
 
     @classmethod
@@ -256,8 +251,38 @@ class ProgressOverviewService:
         return counts
 
     @classmethod
-    @transaction.atomic
     def get_mark_task_status_counts(
+        cls,
+        *,
+        breakdown_by_version: bool,
+        _n_papers: int | None = None,
+    ) -> dict[int, dict[int, dict[str, int]]] | dict[int, dict[str, int]]:
+        """Return a dict of counts of marking tasks by their status for each question, version.
+
+        Note that this excludes out-of-date tasks.
+
+        Keyword Args:
+            breakdown_by_version: whether to break things down further to
+                the level of version.
+                Passing False is currently considerably more efficient.
+            _n_papers: this speeds up "Missing" calculations b/c we avoid
+                additional database queries.  If omitted, we compute it.
+                Only used when `breakdown_by_version` is False.
+
+        Returns:
+            Dicts inside dicts.  The inner-most dicts are counts for each
+            status of the form ``{status: count}`` for each of
+            "To Do", "Complete", "Out", "Missing" and "total".
+            Outer keys are `qidx`.  If `breakdown_by_version`
+            there is another level of `ver` keys: i.e., ``[qidx][v]`` indexing.
+        """
+        if not breakdown_by_version:
+            return cls._get_mark_task_status_counts_q(_n_papers=_n_papers)
+        return cls._get_mark_task_status_counts_qv()
+
+    @classmethod
+    @transaction.atomic
+    def _get_mark_task_status_counts_q(
         cls, *, _n_papers: int | None = None
     ) -> dict[int, dict[str, int]]:
         """Return a dict of counts of marking tasks by their status for each question.
@@ -267,13 +292,14 @@ class ProgressOverviewService:
                 additional database queries.  If omitted, we compute it.
 
         Returns:
-            A dict of dict - one for each question-index (and int).
+            A dict of dict - one for each question-index (an int).
             For each index the dict is "{status: count}" for each of
             "To Do", "Complete", "Out", "Missing" and "total".
         """
-        qindices = SpecificationService.get_question_indices()
         assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
-        dict_of_counts = {
+        qindices = SpecificationService.get_question_indices()
+
+        counts = {
             qi: {
                 MarkingTask.TO_DO.label: 0,
                 MarkingTask.COMPLETE.label: 0,
@@ -282,33 +308,84 @@ class ProgressOverviewService:
             for qi in qindices
         }
 
-        tasks_query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-
-        for X in tasks_query.values("status", "question_index").annotate(
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        for X in tasks.values("status", "question_index").annotate(
             count=Count("status")
         ):
             status_label = MarkingTask.StatusChoices(X["status"]).label
-            dict_of_counts[X["question_index"]][status_label] = X["count"]
+            counts[X["question_index"]][status_label] = X["count"]
 
         if _n_papers is None:
             n_papers = cls.n_papers_with_at_least_one_task()
         else:
             n_papers = _n_papers
-        for qi, d in dict_of_counts.items():
+        for qi, d in counts.items():
             present = sum([c for k, c in d.items()])
             # max 0 just in case of programming error
             d.update({"Missing": max(0, n_papers - present), "total": n_papers})
 
-        return dict_of_counts
+        return counts
 
     @classmethod
     @transaction.atomic
-    def get_mark_task_status_counts_by_qv(
+    def _get_mark_task_status_counts_qv(
+        cls,
+    ) -> dict[int, dict[int, dict[str, int]]]:
+        """Return a dict of counts of marking tasks by their status for the given question/version.
+
+        Returns:
+            Nested dicts.  Indexing like ``[qidx][v]``.
+            The inner dicts have keys "To Do", "Complete", "Out", "Missing"
+            and "total".
+        """
+        assert len(MarkingTask.StatusChoices) == 4, "Code assumes 4 choices in enum"
+        question_indices = SpecificationService.get_question_indices()
+        versions = SpecificationService.get_list_of_versions()
+
+        counts: dict[int, dict[int, dict[str, int]]] = {}
+        for qidx in question_indices:
+            counts[qidx] = {}
+            for ver in versions:
+                counts[qidx][ver] = {
+                    MarkingTask.TO_DO.label: 0,
+                    MarkingTask.COMPLETE.label: 0,
+                    MarkingTask.OUT.label: 0,
+                }
+
+        # extract (papernum, qidx, ver, status) tuples from database, for offline processing
+        tasks = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        task_tuples = list(
+            tasks.values_list(
+                "paper__paper_number", "question_index", "question_version", "status"
+            )
+            # TODO: maybe later we have multiple tasks per (p, q)
+            # .distinct()
+        )
+
+        for pn, qi, v, status in task_tuples:
+            status_label = MarkingTask.StatusChoices(status).label
+            counts[qi][v][status_label] += 1
+
+        triplets = cls._missing_task_pqv_triplets()
+        for qidx in question_indices:
+            for ver in versions:
+                counts[qidx][ver]["Missing"] = len(
+                    [p for p, q, v in triplets if (q, v) == (qidx, ver)]
+                )
+                counts[qidx][ver]["total"] = sum(
+                    [n for k, n in counts[qidx][ver].items()]
+                )
+
+        return counts
+
+    @classmethod
+    @transaction.atomic
+    def get_mark_task_status_counts_restricted(
         cls,
         question_index: int | None = None,
         version: int | None = None,
     ) -> dict[str, int]:
-        """Return a dict of counts of marking tasks by their status for the given question/version.
+        """Return a dict of counts of marking tasks by their status, restricted by question/version.
 
         Args:
             question_index: restrict to a particular question.  If omitted

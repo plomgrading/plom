@@ -90,8 +90,9 @@ class MarkingTask(models.Model):
     def __str__(self):
         """Return information about the paper and the question."""
         return (
-            f"MarkingTask (paper={self.paper.paper_number}, "
-            f"question_index={self.question_index})"
+            f"MarkingTask (paper {self.paper.paper_number}, "
+            f"qidx {self.question_index}, v{self.question_version}) "
+            f"{self.StatusChoices(self.status).label}"
         )
 
 

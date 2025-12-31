@@ -9,7 +9,7 @@
     <div class="card-body p-2">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h6 class="card-title d-inline-block mb-0">{{ question_label }}&nbsp;v{{ version }}</h6>
+                <h6 class="card-title d-inline-block mb-0">{{ question_label_html|safe }}&nbsp;v{{ version }}</h6>
             </div>
             <div style="width: 12rem;">{% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}</div>
         </div>
@@ -19,15 +19,15 @@
             </summary>
             <div class="mt-1">
                 <p class="mb-1">
-                    Of the {{ task_status_counts.total }} papers,
-                    {{ task_status_counts.Complete }} are marked,
-                    {{ task_status_counts.Out }} are out with markers,
-                    and {{ task_status_counts|get_item:"To Do" }} are ready to be marked.
+                    {{ task_status_counts.total }}&nbsp;task{{ task_status_counts.total|pluralize }}:
+                    {{ task_status_counts.Complete }}&nbsp;marked,
+                    {{ task_status_counts.Out }}&nbsp;out with markers,
+                    {{ task_status_counts|get_item:"To Do" }}&nbsp;ready.
                     {% if task_status_counts.Missing %}
-                        <span class="text-danger">{{ task_status_counts.Missing }} tasks are missing.</span>
+                        <span class="text-danger">{{ task_status_counts.Missing }}&nbsp;missing.</span>
                     {% endif %}
                 </p>
-                <h6>Score distribution:</h6>
+                <h6>Marks:</h6>
                 {% if histogram_data %}
                     <div class="text-body text-opacity-50">
                         <svg width="100%" height="45" aria-label="Score distribution histogram">
@@ -47,12 +47,11 @@
                 {% endif %}
                 <div class="mt-0">
                     <a href="{% url 'progress_mark_details' question_idx version %}"
-                       class="btn btn-primary btn-sm">View Details</a>
+                       class="btn btn-primary btn-sm">Details</a>
                     <a href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}"
-                       class="btn btn-secondary btn-sm">Filter Annotations</a>
+                       class="btn btn-secondary btn-sm">Annotations</a>
                 </div>
             </div>
         </details>
     </div>
 </div>
-<!-- TODO: the tooltips don't work on the progress bar: pasting the usual thing didn't help -->
