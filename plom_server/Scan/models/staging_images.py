@@ -170,6 +170,10 @@ class StagingImage(models.Model):
         elif self.image_type == EXTRA:
             assert self.page_number is None, "EXTRA must not have page_number"
             assert self.version is None  # ?
+            if self.question_idx_list is None or self.paper_number is None:
+                assert (
+                    self.question_idx_list is None and self.paper_number is None
+                ), "EXTRA must know both question_idx_list AND paper_number (or neither)"
         elif self.image_type == DISCARD:
             assert self.discard_reason, "DISCARD must have discard_reason"
         elif self.image_type == ERROR:
@@ -200,10 +204,6 @@ class StagingImage(models.Model):
             assert (
                 self.image_type == EXTRA
             ), "Only EXTRA can optionally have question_idx_list"
-        if self.question_idx_list is None or self.paper_number is None:
-            assert (
-                self.question_idx_list is None and self.paper_number is None
-            ), "EXTRA must know both question_idx_list AND paper_number (or neither)"
         if self.discard_reason:
             assert self.image_type == DISCARD, "Only DISCARD should have discard_reason"
         if self.error_reason:
