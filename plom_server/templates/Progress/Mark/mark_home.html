@@ -34,10 +34,16 @@
     {% endif %}
     <div class="container w-100">
         {% for qidx, qlabel, qlabel_html in question_labels_html %}
-            <div class="row">
+            <div class="row mb-2">
                 {% for ver in versions %}
                     <div class="col p-1">
-                        {% include "Progress/Mark/mark_stats_card.html" with question_idx=qidx question_label_html=qlabel_html version=ver task_status_counts=task_counts|get_item:qidx|get_item:ver histogram_data=data_for_histograms|get_item:qidx|get_item:ver %}
+                        {% if task_counts|get_item:qidx|get_item:ver|get_item:"total" > 0 %}
+                            {% include "Progress/Mark/mark_stats_card.html" with question_idx=qidx question_label_html=qlabel_html version=ver task_status_counts=task_counts|get_item:qidx|get_item:ver histogram_data=data_for_histograms|get_item:qidx|get_item:ver counts_and_markers=who_marked_how_many|get_item:qidx|get_item:ver %}
+                        {% else %}
+                            <div class="mt-4 text-body text-opacity-25 text-center">
+                                <h5>No tasks v{{ ver }}</h5>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
