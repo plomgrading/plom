@@ -931,28 +931,10 @@ class ScanService:
     def do_all_these_extra_images_have_data(extras: QuerySet[StagingImage]) -> bool:
         """Check whether a given collection of extra pages have paper-numbers and questions."""
         with transaction.atomic():
-            with_complete_data = extras.filter(
+            extras_with_complete_data = extras.filter(
                 paper_number__isnull=False, question_idx_list__isnull=False
             )
-            num_wo_complete_data = extras.count() - with_complete_data.count()
-            if num_wo_complete_data == 0:
-                return True
-            return False
-        # # An alternative approach: if we find any page where we know
-        # # paper-number **xor** questions then we don't have data for all
-        # if extras.filter(
-        #     paper_number__isnull=True, question_idx_list__isnull=True
-        # ).exists():
-        #     return False
-        # if extras.filter(
-        #     paper_number__isnull=True, question_idx_list__isnull=False
-        # ).exists():
-        #     return False
-        # if extras.filter(
-        #     paper_number__isnull=False, question_idx_list__isnull=True
-        # ).exists():
-        #     return False
-        # return True
+            return not extras.difference(extras_with_complete_data).exists()
 
     @transaction.atomic
     def get_n_error_images(self, bundle: StagingBundle) -> int:
