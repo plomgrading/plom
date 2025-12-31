@@ -218,7 +218,7 @@ class StudentMarkService:
             ObjectDoesNotExist: no such marking task, either b/c the paper
                 does not exist or the question does not exist for that paper.
         """
-        version = PaperInfoService().get_version_from_paper_question(
+        version = PaperInfoService.get_version_from_paper_question(
             paper.paper_number, question_idx
         )
         try:

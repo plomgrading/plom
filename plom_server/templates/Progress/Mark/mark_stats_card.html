@@ -11,11 +11,7 @@
             <div>
                 <h6 class="card-title d-inline-block mb-0">{{ question_label }}&nbsp;v{{ version }}</h6>
             </div>
-            <div style="width: 12rem;">
-                {% with dat=marking_task_status_counts %}
-                    {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat.Complete n_todo=dat|get_item:"To Do" n_out=dat.Out n_missing=dat.Missing %}
-                {% endwith %}
-            </div>
+            <div style="width: 12rem;">{% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}</div>
         </div>
         <details>
             <summary>
@@ -23,11 +19,12 @@
             </summary>
             <div class="mt-1">
                 <p class="mb-1">
-                    Of the {{ n_papers }} papers, {{ marking_task_status_counts.Complete }} are marked,
-                    {{ marking_task_status_counts.Out }} are out with markers,
-                    and {{ marking_task_status_counts|get_item:"To Do" }} are ready to be marked.
-                    {% if marking_task_status_counts.Missing %}
-                        <span class="text-danger">{{ marking_task_status_counts.Missing }} tasks are missing.</span>
+                    Of the {{ task_status_counts.total }} papers,
+                    {{ task_status_counts.Complete }} are marked,
+                    {{ task_status_counts.Out }} are out with markers,
+                    and {{ task_status_counts|get_item:"To Do" }} are ready to be marked.
+                    {% if task_status_counts.Missing %}
+                        <span class="text-danger">{{ task_status_counts.Missing }} tasks are missing.</span>
                     {% endif %}
                 </p>
                 <h6>Score distribution:</h6>

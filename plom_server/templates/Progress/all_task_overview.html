@@ -25,16 +25,12 @@
                     <th>paper</th>
                     <th>
                         identify
-                        {% with dat=id_task_status_counts %}
-                            {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" n_missing=dat|get_item:"Missing" %}
-                        {% endwith %}
+                        {% include "Progress/fragments/task_progress_bar.html" with dat=id_task_status_counts %}
                     </th>
                     {% for qi, qlabel in question_labels %}
                         <th>
                             {{ qlabel }}
-                            {% with dat=marking_task_status_counts|get_item:qi %}
-                                {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" n_missing=dat|get_item:"Missing" %}
-                            {% endwith %}
+                            {% include "Progress/fragments/task_progress_bar.html" with dat=marking_task_status_counts|get_item:qi %}
                         </th>
                     {% endfor %}
                 </tr>

@@ -16,7 +16,6 @@ from plom_server.Base.base_group_views import (
 
 from collections import Counter
 
-from plom_server.Mark.models import MarkingTask
 from plom_server.Authentication.services import AuthService
 from plom_server.Papers.services import SpecificationService
 from plom_server.Mark.services import MarkingStatsService
@@ -27,18 +26,7 @@ class ProgressMarkHome(MarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
-        pos = ProgressOverviewService()
-        id_task_overview, _ = pos.get_task_overview()
-        papers_with_a_task = list(id_task_overview.keys())
-        n_papers = len(papers_with_a_task)
-        mark_task_status_counts = pos.get_mark_task_status_counts(n_papers=n_papers)
-        missing_task_count = sum(
-            [
-                count_dict["Missing"]
-                for qi, count_dict in mark_task_status_counts.items()
-            ]
-        )
-
+        missing_task_count = ProgressOverviewService.n_missing_marking_tasks()
         context.update(
             {
                 "versions": SpecificationService.get_list_of_versions(),
@@ -67,19 +55,10 @@ class ProgressMarkStatsView(MarkerOrManagerView):
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
         context = self.build_context()
-        pos = ProgressOverviewService()
         mss = MarkingStatsService()
 
-        tasks = MarkingTask.objects.filter(
-            question_index=question_idx, question_version=version
-        )
-
-        n_papers = tasks.values("paper").distinct().count()
-
-        marking_task_status_counts = pos.get_mark_task_status_counts_by_qv(
-            question_idx,
-            version,
-            n_papers=n_papers,
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+            question_idx, version
         )
 
         scores = mss.get_scores_for_question_version(question_idx, version)
@@ -124,8 +103,7 @@ class ProgressMarkStatsView(MarkerOrManagerView):
                     question_index=question_idx
                 ),
                 "version": version,
-                "n_papers": n_papers,
-                "marking_task_status_counts": marking_task_status_counts,
+                "task_status_counts": status_counts,
                 "histogram_data": histogram_data,
             }
         )
@@ -163,6 +141,11 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
         )
+
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+            question_idx, version
+        )
+
         context.update(
             {
                 "question_idx": question_idx,
@@ -174,9 +157,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "hist_values": list(hist_values),
                 "user_hists": user_hists_and_stats,
                 "remaining_tasks": remaining_tasks,
-                "status_counts": ProgressOverviewService.get_mark_task_status_counts_by_qv(
-                    question_idx, version
-                ),
+                "task_status_counts": status_counts,
             }
         )
 
@@ -208,6 +189,10 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 v * scale for v in hist_values
             ]
 
+        status_counts = ProgressOverviewService.get_mark_task_status_counts_by_qv(
+            question_idx
+        )
+
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
         )
@@ -221,9 +206,7 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
-                "status_counts": ProgressOverviewService.get_mark_task_status_counts_by_qv(
-                    question_idx
-                ),
+                "task_status_counts": status_counts,
             }
         )
 

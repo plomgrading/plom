@@ -27,10 +27,10 @@ class MarkingTaskTestsWithConfig(TestCase):
         task1 = mts.create_task(paper1, 1)
         task2 = mts.create_task(paper2, 1)
 
-        question_version1 = PaperInfoService().get_version_from_paper_question(
+        question_version1 = PaperInfoService.get_version_from_paper_question(
             paper_number=1, question_idx=1
         )
-        question_version2 = PaperInfoService().get_version_from_paper_question(
+        question_version2 = PaperInfoService.get_version_from_paper_question(
             paper_number=2, question_idx=1
         )
 

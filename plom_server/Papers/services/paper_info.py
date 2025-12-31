@@ -123,9 +123,8 @@ class PaperInfoService:
                 f" for page {page_number} of paper {paper_number}"
             ) from None
 
-    def get_version_from_paper_question(
-        self, paper_number: int, question_idx: int
-    ) -> int:
+    @staticmethod
+    def get_version_from_paper_question(paper_number: int, question_idx: int) -> int:
         """Given a paper number and question index, return the version of that question.
 
         Raises:
