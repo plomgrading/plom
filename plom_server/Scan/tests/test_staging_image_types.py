@@ -3,7 +3,6 @@
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import User, Group
 from model_bakery import baker
 from ..models import StagingBundle, StagingImage
 
@@ -11,11 +10,7 @@ from ..models import StagingBundle, StagingImage
 class ScanStagingImageTypesTests(TestCase):
 
     def setUp(self) -> None:
-        scan_group: Group = baker.make(Group, name="scanner")
-        user0: User = baker.make(User, username="user0")
-        user0.groups.add(scan_group)
-        user0.save()
-        self.bundle = baker.make(StagingBundle, user=user0, slug="testbundle")
+        self.bundle = baker.make(StagingBundle, slug="testbundle")
 
     def test_illegal_stagingimage_errors(self) -> None:
         with self.assertRaisesRegex(ValidationError, "KNOWN .* paper_number"):
