@@ -19,10 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * for backwards compatibility, promoting a "marker" to a "lead marker" automatically adds them to the "identifier" group.
 * only users in the "marker" group can mark papers, this includes lead markers.
 * public code handling has changed to be more flexible.
+* marker progress overview is now faster hopefully more useful.
 * improvements to classlist handling for developers.
 
 ### Fixed
-
+* some ambiguities in when marking tasks were considered missing have been resolved.
 
 
 
