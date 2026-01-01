@@ -165,4 +165,4 @@ def get_paper_size() -> str:
 
 def get_paper_size_latex() -> str:
     """Return a one-word code for the current papersize, appropriate for latex, such as "a4paper"."""
-    return settings.PAPERSIZE + "paper"
+    return (settings.PAPERSIZE + "paper").lower()
