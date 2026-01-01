@@ -152,14 +152,17 @@ def create_new_random_public_code():
 
 
 def get_paper_size_in_pts() -> tuple[int, int]:
+    """Return the current paper size as a pair, in units of points."""
     import pymupdf
 
     return pymupdf.paper_size(settings.PAPERSIZE)
 
 
-def get_paper_size_word() -> str:
+def get_paper_size() -> str:
+    """Return a one-word code for the current papersize, such as "letter" or "A4"."""
     return settings.PAPERSIZE
 
 
 def get_paper_size_latex() -> str:
+    """Return a one-word code for the current papersize, appropriate for latex, such as "a4paper"."""
     return settings.PAPERSIZE + "paper"

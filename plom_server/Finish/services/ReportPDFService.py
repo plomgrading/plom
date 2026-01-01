@@ -388,7 +388,7 @@ def pdf_builder(
     with TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
         src = (resources.files(_finish_services) / "generate_report.css").read_text()
-        papersize = Settings.get_paper_size_word()
+        papersize = Settings.get_paper_size()
         src = src.replace("size: letter;", f"size: {papersize};")
         css_tmpfile = tmp_path / "generate_report.css"
         with open(css_tmpfile, "w") as fh:

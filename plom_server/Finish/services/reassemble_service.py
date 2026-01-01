@@ -133,7 +133,7 @@ class ReassembleService:
             info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
-            papersize=Settings.get_paper_size_word(),
+            papersize=Settings.get_paper_size(),
         )
         return cover_pdf_name
 
@@ -320,7 +320,7 @@ class ReassembleService:
                 marked_pages=[],
                 dnm_images=[],
                 nonmarked_images=[],
-                papersize=Settings.get_paper_size_word(),
+                papersize=Settings.get_paper_size(),
             )
             with open(tf.name, "rb") as pdf_file:
                 pdf_bytestream = BytesIO(pdf_file.read())
@@ -388,7 +388,7 @@ class ReassembleService:
                 marked_pages=marked_pages,
                 dnm_images=dnm_pages,
                 nonmarked_images=nonmarked,
-                papersize=Settings.get_paper_size_word(),
+                papersize=Settings.get_paper_size(),
             )
         return outname
 
