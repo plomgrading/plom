@@ -393,7 +393,7 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
-    def test_known_images(self) -> None:
+    def test_get_all_known_images(self) -> None:
         user: User = baker.make(User, username="user")
         scanner = ScanService()
         bundle = baker.make(
