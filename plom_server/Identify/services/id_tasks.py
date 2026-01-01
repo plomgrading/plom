@@ -299,7 +299,7 @@ class IdentifyTaskService:
             task_obj.save()
 
         # now all existing tasks are out of date, so if the id-page is ready then create a new id-task for it.
-        if ImageBundleService().is_given_paper_ready_for_id_ing(paper_obj):
+        if ImageBundleService.is_given_paper_ready_for_id_ing(paper_obj):
             self.create_task(paper_obj)
 
     @staticmethod

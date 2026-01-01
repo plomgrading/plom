@@ -17,8 +17,12 @@ class Bundle(models.Model):
     """Table to store information on the bundle (pdf) that a given uploaded image comes from.
 
     Notice that this does not include a ref to the bundle-file - since
-    we are not(?) intending to store the bundle itself after
-    processing.
+    we are not intending to store the bundle itself after processing.
+    Bundles contain links back to the StagingBundle they came from.
+    The images themselves are in the Images table: they share the underlying
+    file storage BaseImage with the StagingImages, but presumably in principle
+    we're not supposed to be using the StagingImages or StagingBundles for
+    anything after pushing, or at least not regularly.
 
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)

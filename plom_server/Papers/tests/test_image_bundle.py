@@ -10,9 +10,10 @@ from model_bakery import baker
 
 from django.contrib.auth.models import User
 
-from plom_server.Scan.models import StagingImage, StagingBundle
+from plom_server.Base.models import BaseImage
 from plom_server.Preparation.services import PapersPrinted
 from plom_server.Preparation.models import StagingPQVMapping
+from plom_server.Scan.models import StagingImage, StagingBundle
 from ..services import ImageBundleService, SpecificationService
 from ..models import (
     Bundle,
@@ -23,7 +24,6 @@ from ..models import (
     QuestionPage,
     MobilePage,
 )
-from plom_server.Base.models import BaseImage
 
 
 class ImageBundleTests(TestCase):
@@ -75,23 +75,6 @@ class ImageBundleTests(TestCase):
         PapersPrinted.set_papers_printed(True, ignore_dependencies=True)
 
         return super().setUp()
-
-    def test_create_bundle(self) -> None:
-        """Test ImageBundlseService.create_bundle()."""
-        n_bundles = Bundle.objects.all().count()
-        self.assertEqual(n_bundles, 0)
-
-        ibs = ImageBundleService()
-        ibs.create_bundle("bundle1", "abcde")
-
-        n_bundles = Bundle.objects.all().count()
-        self.assertEqual(n_bundles, 1)
-
-        with self.assertRaises(RuntimeError):
-            ibs.create_bundle("bundle2", "abcde")
-
-        n_bundles = Bundle.objects.all().count()
-        self.assertEqual(n_bundles, 1)
 
     def test_all_staged_imgs_valid(self) -> None:
         """Test ImageBundleService.all_staged_imgs_valid().
@@ -276,8 +259,8 @@ class ImageBundleTests(TestCase):
 
         self.assertEqual(res, [(st_img6, img4, 3, 1)])
 
-    def test_perfect_bundle(self) -> None:
-        """Test that upload_valid_bundle() works as intended with a valid staged bundle."""
+    def test_push_perfect_bundle(self) -> None:
+        """Test that push_valid_bundle() works as intended with a valid staged bundle."""
         bundle = baker.make(StagingBundle, pdf_hash="abcdef", user=self.user)
         baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
@@ -308,8 +291,7 @@ class ImageBundleTests(TestCase):
             version=1,
         )
 
-        ibs = ImageBundleService()
-        ibs.upload_valid_bundle(bundle, self.user)
+        ImageBundleService.push_valid_bundle(bundle, self.user)
 
         self.assertEqual(Bundle.objects.all()[0].pdf_hash, bundle.pdf_hash)
         self.assertEqual(

@@ -1192,7 +1192,7 @@ class ScanService:
                     .get()
                 )
                 # This call can be slow.
-                ImageBundleService().upload_valid_bundle(bundle_obj, user_obj)
+                ImageBundleService.push_valid_bundle(bundle_obj, user_obj)
                 # now update the bundle and its images to say "pushed"
                 bundle_obj.stagingimage_set.update(pushed=True)
                 bundle_obj.pushed = True
