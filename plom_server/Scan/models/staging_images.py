@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -43,7 +43,8 @@ class StagingImage(models.Model):
         rotation: currently this only deals with 0, 90, 180, 270, -90.
             fractional rotations are handled elsewhere,
         pushed: whether this bundle has been "pushed", making it ready for
-            marking and generally harder to change.
+            marking and generally harder to change.  Only certain image types
+            can be pushed, namely KNOWN, EXTRA and DISCARD.
         discard_reason: if the image is of type DISCARD, this will give
             human-readable explanation, such as who discarded it and what
             it was before.  Should generally be empty if this StagingImage
@@ -187,10 +188,11 @@ class StagingImage(models.Model):
         if self.rotation:
             assert self.image_type != UNREAD
         if self.pushed:
-            assert self.image_type not in (
-                UNREAD,
-                UNKNOWN,
-            ), "UNREAD or UNKNOWN StagingImages should not be pushed"
+            assert self.image_type in (
+                KNOWN,
+                EXTRA,
+                DISCARD,
+            ), f"Cannot push {self.get_image_type_display()}; only KNOWN, EXTRA, DISCARD should be pushed"
         if self.paper_number is not None:
             assert self.image_type in (
                 KNOWN,

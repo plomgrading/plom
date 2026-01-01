@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
@@ -136,7 +136,7 @@ class ScanStagingImageTypesTests(TestCase):
         )
 
     def test_illegal_pushed_stagingimage_errors(self) -> None:
-        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* pushed"):
+        with self.assertRaisesRegex(ValidationError, "Cannot push"):
             baker.make(
                 StagingImage,
                 bundle=self.bundle,
@@ -144,12 +144,21 @@ class ScanStagingImageTypesTests(TestCase):
                 image_type=StagingImage.UNREAD,
                 pushed=True,
             )
-        with self.assertRaisesRegex(ValidationError, "UNKNOWN .* not .* pushed"):
+        with self.assertRaisesRegex(ValidationError, "Cannot push"):
             baker.make(
                 StagingImage,
                 bundle=self.bundle,
                 bundle_order=1,
                 image_type=StagingImage.UNKNOWN,
+                pushed=True,
+            )
+        with self.assertRaisesRegex(ValidationError, "Cannot push"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.ERROR,
+                error_reason="error",
                 pushed=True,
             )
 
