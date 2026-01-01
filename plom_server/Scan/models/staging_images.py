@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from ..models import StagingBundle
@@ -93,27 +94,121 @@ class StagingImage(models.Model):
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.
-    bundle_order = models.PositiveIntegerField(null=True)
+    bundle_order = models.PositiveIntegerField(null=True, blank=True)
     # we do not protect the base image here, rather if the base image is
     # deleted (eg when user removes a bundle) then these staging images
     # should also be deleted via this cascade.
     baseimage = models.OneToOneField(BaseImage, on_delete=models.CASCADE)
-    parsed_qr = models.JSONField(default=dict, null=True)
-    rotation = models.IntegerField(null=True, default=None)
+    parsed_qr = models.JSONField(default=dict, null=True, blank=True)
+    rotation = models.IntegerField(null=True, default=None, blank=True)
     pushed = models.BooleanField(default=False)
     # used by KNOWN/EXTRA
-    paper_number = models.PositiveIntegerField(null=True, default=None)
+    paper_number = models.PositiveIntegerField(null=True, default=None, blank=True)
     # used by KNOWN
-    page_number = models.PositiveIntegerField(null=True, default=None)
-    version = models.PositiveIntegerField(null=True, default=None)
+    page_number = models.PositiveIntegerField(null=True, default=None, blank=True)
+    version = models.PositiveIntegerField(null=True, default=None, blank=True)
     # Used by EXTRA
     # https://docs.djangoproject.com/en/6.0/topics/db/queries/#storing-and-querying-for-none
     question_idx_list = models.JSONField(default=None, null=True, blank=True)
     # used for DISCARD
-    discard_reason = models.TextField(default="")
+    discard_reason = models.TextField(default="", blank=True)
     # used for ERROR
-    error_reason = models.TextField(default="")
+    error_reason = models.TextField(default="", blank=True)
     history = models.TextField(blank=True, null=False, default="")
+
+    def save(self, *args, **kwargs) -> None:
+        """Override the built-in save to call our validation code.
+
+        See for example:
+        https://stackoverflow.com/questions/4441539/why-doesnt-djangos-model-save-call-full-clean
+
+        Note that invariants are NOT enforced if you make bulk operations.
+        """
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        """Overridden method, called by `full_clean` to check stuff about the class instance."""
+        try:
+            self._check_invariants()
+        except (AssertionError, ValueError) as e:
+            # passing a string adds to the NON_FIELD_ERRORS key
+            raise ValidationError(str(e))
+
+    def _check_invariants(self) -> None:
+        """Check for various illegal combinations of fields in the StagingImage table.
+
+        Raises:
+            AssertionError: something illegal.
+            ValueError: something unexpected (and illegal).
+        """
+        UNREAD = self.ImageTypeChoices.UNREAD
+        KNOWN = self.ImageTypeChoices.KNOWN
+        UNKNOWN = self.ImageTypeChoices.UNKNOWN
+        EXTRA = self.ImageTypeChoices.EXTRA
+        DISCARD = self.ImageTypeChoices.DISCARD
+        ERROR = self.ImageTypeChoices.ERROR
+
+        # this code proceeds in two passes: in the first pass we check which
+        # fields must be present or absent based on the image_type.  Then
+        # later below we go field-by-field.
+        if self.image_type == UNREAD:
+            assert self.paper_number is None, "UNREAD must not have paper_number"
+            assert self.page_number is None, "UNREAD must not have page_number"
+            assert self.version is None, "UNREAD must not have version"
+            assert (
+                self.parsed_qr is None or not self.parsed_qr
+            ), "UNREAD must not have parsed_qr"
+        elif self.image_type == KNOWN:
+            assert self.paper_number is not None, "KNOWN must have paper_number"
+            assert self.page_number is not None, "KNOWN must have page_number"
+            assert self.version is not None, "KNOWN must have version"
+        elif self.image_type == UNKNOWN:
+            assert self.paper_number is None, "UNKNOWN must not have paper_number"
+            assert self.page_number is None, "UNKNOWN must not have page_number"
+            assert self.version is None, "UNKNOWN must not have version"
+        elif self.image_type == EXTRA:
+            assert self.page_number is None, "EXTRA must not have page_number"
+            assert self.version is None  # ?
+        elif self.image_type == DISCARD:
+            assert self.discard_reason, "DISCARD must have discard_reason"
+        elif self.image_type == ERROR:
+            assert self.error_reason, "ERROR must have error_reason"
+        else:
+            raise ValueError("Unexpected value for enum")
+
+        # And a pass over the fields
+        if self.parsed_qr:
+            assert self.image_type != UNREAD
+        if self.rotation:
+            assert self.image_type != UNREAD
+        if self.pushed:
+            assert self.image_type not in (
+                UNREAD,
+                UNKNOWN,
+            ), "UNREAD or UNKNOWN StagingImages should never be pushed"
+        if self.paper_number is not None:
+            assert self.image_type in (
+                KNOWN,
+                EXTRA,
+            ), "Only KNOWN, EXTRA should have paper_number"
+        if self.page_number is not None:
+            assert self.image_type == KNOWN, "Only KNOWN should have page_number"
+        if self.version is not None:
+            assert self.image_type == KNOWN, "Only KNOWN should have version"
+        if self.question_idx_list is not None:
+            assert (
+                self.image_type == EXTRA
+            ), "Only EXTRA can optionally have question_idx_list"
+            # for now you must know both question_idx_list and paper_number
+            # but this could change in the future.
+            assert (
+                self.paper_number is not None
+            ), "For now, must know both question_idx_list AND paper_number"
+        if self.discard_reason:
+            assert self.image_type == DISCARD, "Only DISCARD should have discard_reason"
+        if self.error_reason:
+            assert self.image_type == ERROR, "Only ERROR should have error_reason"
 
 
 class StagingThumbnail(models.Model):

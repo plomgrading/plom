@@ -17,12 +17,39 @@ class ScanCastServiceTests(TestCase):
     def make_image(self, image_type):
         # put images into first available order
         number_of_pages = self.bundle.stagingimage_set.count()
-        baker.make(
-            StagingImage,
-            bundle=self.bundle,
-            bundle_order=number_of_pages,
-            image_type=image_type,
-        )
+        if image_type == StagingImage.KNOWN:
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=number_of_pages,
+                image_type=image_type,
+                paper_number=42,
+                page_number=1,
+                version=2,
+            )
+        elif image_type == StagingImage.DISCARD:
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=number_of_pages,
+                image_type=image_type,
+                discard_reason="discarded",
+            )
+        elif image_type == StagingImage.ERROR:
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=number_of_pages,
+                image_type=image_type,
+                error_reason="error",
+            )
+        else:
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=number_of_pages,
+                image_type=image_type,
+            )
 
     def setUp(self) -> None:
         # make scan-group, two users, one with permissions and the other not.

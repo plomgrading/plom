@@ -393,8 +393,7 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
-    def test_known_images(self) -> None:
-        """Test ``ScanService.get_all_known_images()``."""
+    def test_get_all_known_images(self) -> None:
         user: User = baker.make(User, username="user")
         scanner = ScanService()
         bundle = baker.make(
@@ -416,6 +415,9 @@ class MoreScanServiceTests(TestCase):
             parsed_qr={"dummy": "dict"},
             bundle=bundle,
             image_type=StagingImage.KNOWN,
+            paper_number=42,
+            page_number=1,
+            version=2,
         )
         imgs = scanner.get_all_known_images(bundle)
         self.assertEqual(imgs, [with_data])
