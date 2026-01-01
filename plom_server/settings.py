@@ -47,9 +47,12 @@ else:
     DEBUG = True
 
 
-# generally Plom takes it paper size from the input PDFs but occasionally it needs
-# create other sheets of paper.  You can Currently supports "letter" and "A4"  TODO: might be nice to
-# support the host OSes env var PAPERSIZE instead of hardcoding Letter/A4 paper here.
+# Generally Plom takes it paper size from the source PDFs but it also needs to create
+# pages, for example, during reassembly.  In such cases, Plom defaults to "letter" but
+# you can override by defining the OS env var PAPERSIZE, for example to "letter", "A4",
+# "legal", etc.  There is some large set of possible values, but b/c they must be supported
+# by *all* of PyMuPDF, LaTeX and CSS's `@page` directive, it might be best to stick to
+# somewhat common paper sizes.
 _ = os.environ.get("PAPERSIZE")
 if not _:
     PAPERSIZE = "letter"
