@@ -6,11 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased Development
+## [Unreleased]
 
 ### Added
 * more fine-grained access control for users.  For example, you can make an account that is both a "manager" and a "marker".
 * ability for "force" upload of duplicate scan bundles.
+* ability to discard an entire pushed bundle.
 
 ### Removed
 
@@ -19,23 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * for backwards compatibility, promoting a "marker" to a "lead marker" automatically adds them to the "identifier" group.
 * only users in the "marker" group can mark papers, this includes lead markers.
 * public code handling has changed to be more flexible.
+* marker progress overview is now faster hopefully more useful.
 * improvements to classlist handling for developers.
 
 ### Fixed
-
-
-
-
-## [Unreleased]
-
-### Added
-
-### Removed
-
-### Changed
-
-### Fixed
-
+* some ambiguities in when marking tasks were considered missing have been resolved.
 
 
 

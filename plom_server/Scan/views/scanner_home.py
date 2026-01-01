@@ -85,33 +85,26 @@ class ScannerStagedView(ScannerRequiredView):
 class ScannerPushedView(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        scanner = ScanService()
         pushed_bundles = []
 
-        for bundle in scanner.get_all_staging_bundles():
-            # only keep pushed bundles
-            if not bundle.pushed:
-                continue
-            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
-            if bundle.has_page_images:
-                cover_img_rotation = scanner.get_first_image(bundle).rotation
-            else:
-                cover_img_rotation = 0
-            n_pages = scanner.get_n_images(bundle)
-            _papers = scanner.get_bundle_paper_numbers(bundle)
+        for bundle in ManageScanService.get_pushed_bundles_w_staging_prefetch():
+            staging_bundle = bundle.staging_bundle
+            n_pages = ManageScanService.get_n_images_in_pushed_bundle(bundle)
+            _papers = ScanService.get_bundle_paper_numbers(staging_bundle)
             pretty_print_paper_list = format_int_list_with_runs(_papers)
             n_papers = len(_papers)
+            n_discards = ManageScanService.get_n_discards_in_pushed_bundle(bundle)
+
             pushed_bundles.append(
                 {
-                    "id": bundle.pk,
-                    "slug": bundle.slug,
-                    "timestamp": bundle.timestamp,
-                    "time_uploaded": arrow.get(date_time).humanize(),
-                    "username": bundle.user.username,
+                    "staging_bundle_id": staging_bundle.pk,
+                    "slug": staging_bundle.slug,
+                    "staged_username": staging_bundle.user.username,
+                    "pushed_username": bundle.user.username,
                     "n_pages": n_pages,
                     "n_papers": n_papers,
                     "pretty_print_paper_list": pretty_print_paper_list,
-                    "cover_angle": cover_img_rotation,
+                    "n_discards": n_discards,
                 }
             )
         context["pushed_bundles"] = pushed_bundles

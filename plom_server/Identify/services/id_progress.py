@@ -38,8 +38,9 @@ class IDProgressService:
         except Image.DoesNotExist:
             return None
 
+    @staticmethod
     @transaction.atomic
-    def get_all_id_task_info(self) -> dict[int, dict[str, Any]]:
+    def get_all_id_task_info() -> dict[int, dict[str, Any]]:
         id_info = {}
         students_from_classlist = ClasslistService.get_students()
         registered_sid = {student["student_id"] for student in students_from_classlist}

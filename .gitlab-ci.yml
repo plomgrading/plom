@@ -41,7 +41,7 @@ variables:
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
   QT_QPA_PLATFORM: offscreen
-  PLOMCLIENT_BRANCHNAME: dev
+  PLOMCLIENT_BRANCHNAME: main
 
 stages:
   - static_analysis

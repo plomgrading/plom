@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
 from model_bakery import baker
@@ -25,7 +26,7 @@ class QuestionMarkingServiceTests(TestCase):
             status=MarkingTask.TO_DO,
             paper__paper_number=3,
             code="3",
-            marking_priority=2,
+            marking_priority=2.0,
         )
         baker.make(
             MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=4, code="4"
@@ -35,7 +36,7 @@ class QuestionMarkingServiceTests(TestCase):
             status=MarkingTask.TO_DO,
             paper__paper_number=5,
             code="5",
-            marking_priority=1,
+            marking_priority=1.0,
         )
 
         task = QuestionMarkingService.get_first_available_task()
