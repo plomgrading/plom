@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2020-2025 Colin B. Macdonald
+# Copyright (C) 2020-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
@@ -29,7 +29,7 @@ django_setup()
 # -- Project information -----------------------------------------------------
 
 project = "Plom"
-copyright = "2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
+copyright = "2018-2026 Andrew Rechnitzer, Colin B. Macdonald, et al"
 author = "Andrew Rechnitzer, Colin B. Macdonald, and others"
 
 from plom.common import __version__

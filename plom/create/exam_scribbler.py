@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2023, 2025 Colin B. Macdonald
+# Copyright (C) 2019-2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -10,7 +10,7 @@ After the exam PDF files have been generated, this can be used to
 scribble on them to simulate random student work.
 """
 
-__copyright__ = "Copyright (C) 2019-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2019-2026 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
