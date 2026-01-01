@@ -21,7 +21,7 @@ class Command(BaseCommand):
         """Build and store the extra-page and scrap paper pdfs."""
         dest_dir = settings.MEDIA_ROOT / "non_db_files/"
         dest_dir.mkdir(exist_ok=True, parents=True)
-        sz = Settings.get_paper_size_latex()
+        sz = Settings.get_paper_size_for_latex()
         build_extra_page_pdf(dest_dir, latex_papersize=sz)
         build_scrap_paper_pdf(dest_dir, latex_papersize=sz)
         build_bundle_separator_paper_pdf(dest_dir, latex_papersize=sz)

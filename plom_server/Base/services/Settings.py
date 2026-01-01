@@ -167,7 +167,7 @@ def get_paper_size() -> str:
     return settings.PAPERSIZE
 
 
-def get_paper_size_latex() -> str:
+def get_paper_size_for_latex() -> str:
     """Return a one-word code for the current papersize, appropriate for LaTeX, such as "a4paper".
 
     Note LaTeX expects lowercase: "a4paper" not "A4paper"; we do that conversion.
