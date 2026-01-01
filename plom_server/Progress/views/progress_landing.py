@@ -7,11 +7,11 @@ from django.shortcuts import render
 from plom_server.Base.base_group_views import LeadMarkerOrManagerView
 
 
-class OverviewLandingView(LeadMarkerOrManagerView):
+class ProgressLandingView(LeadMarkerOrManagerView):
     """Page displaying a menu of different progress views."""
 
     def get(self, request):
-        return render(request, "Progress/overview_landing.html")
+        return render(request, "Progress/progress_landing.html")
 
 
 class ToolsLandingView(LeadMarkerOrManagerView):

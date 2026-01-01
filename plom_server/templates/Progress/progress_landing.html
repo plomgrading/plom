@@ -6,15 +6,15 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Overview of current marking and identifying
+    Marking and identifying
 {% endblock title %}
 {% block page_heading %}
-    Overview of current marking and identifying
+    Marking and identifying
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card m-2">
         <div class="card-body pb-0">
-            <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress and statistics overview</a>
+            <a class="btn btn-primary" href="{% url 'progress_marking' %}">Marking progress and statistics</a>
             <ul>
                 <li>Shows current marking progress for each question / version</li>
                 <li>Gives summary statistics</li>
@@ -24,7 +24,7 @@
     </div>
     <div class="card m-2">
         <div class="card-body pb-0">
-            <a class="btn btn-primary" href="{% url 'all_task_overview' %}">Table of all tasks</a>
+            <a class="btn btn-primary" href="{% url 'all_tasks' %}">Table of all tasks</a>
             <ul>
                 <li>Shows current state of every single identification and marking task</li>
                 <li>Useful for focusing in on particular papers</li>

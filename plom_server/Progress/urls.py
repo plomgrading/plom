@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.urls import path
 
@@ -25,7 +25,7 @@ from .views import (
     OriginalImageWrapView,
     ProgressUserInfoHome,
     AllTaskOverviewView,
-    OverviewLandingView,
+    ProgressLandingView,
     ToolsLandingView,
     IDImageView,
     ClearID,
@@ -41,9 +41,9 @@ from plom_server.UserManagement.views import (
 
 urlpatterns = [
     path(
-        "mark/overview/",
+        "mark/",
         ProgressMarkHome.as_view(),
-        name="progress_mark_home",
+        name="progress_marking",
     ),
     path(
         "mark/start/",
@@ -121,14 +121,14 @@ urlpatterns = [
         name="progress_user_info_home",
     ),
     path(
-        "all_task_overview/",
+        "all_tasks/",
         AllTaskOverviewView.as_view(),
-        name="all_task_overview",
+        name="all_tasks",
     ),
     path(
-        "overview_landing/",
-        OverviewLandingView.as_view(),
-        name="overview_landing",
+        "",
+        ProgressLandingView.as_view(),
+        name="progress_landing",
     ),
     path(
         "tools_landing/",
