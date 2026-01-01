@@ -159,10 +159,17 @@ def get_paper_size_in_pts() -> tuple[int, int]:
 
 
 def get_paper_size() -> str:
-    """Return a one-word code for the current papersize, such as "letter" or "A4"."""
+    """Return a one-word code for the current papersize, such as "letter" or "A4".
+
+    Note the case is not converted: if you set (in the env var) "A4" then
+    this function will return "A4".
+    """
     return settings.PAPERSIZE
 
 
 def get_paper_size_latex() -> str:
-    """Return a one-word code for the current papersize, appropriate for latex, such as "a4paper"."""
+    """Return a one-word code for the current papersize, appropriate for LaTeX, such as "a4paper".
+
+    Note LaTeX expects lowercase: "a4paper" not "A4paper"; we do that conversion.
+    """
     return (settings.PAPERSIZE + "paper").lower()
