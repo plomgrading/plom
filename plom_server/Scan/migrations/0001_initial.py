@@ -50,6 +50,7 @@ class Migration(migrations.Migration):
                 ("question_idx_list", models.JSONField(default=None, null=True)),
                 ("discard_reason", models.TextField(default="")),
                 ("error_reason", models.TextField(default="")),
+                ("history", models.TextField(blank=True, default="")),
                 (
                     "baseimage",
                     models.OneToOneField(

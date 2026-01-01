@@ -58,6 +58,10 @@
                                     </ul>
                                 </li>
                             </ul>
+                            <details>
+                                <summary>Log</summary>
+                                <small class="text-muted">{{ current_page.history }}</small>
+                            </details>
                         </div>
                     {% elif current_page.status == 'extra' %}
                         <div class="alert alert-info my-2 p-2">
@@ -81,6 +85,10 @@
                                     <li>No qr-codes read</li>
                                 {% endif %}
                             </ul>
+                            <details>
+                                <summary>Log</summary>
+                                <small class="text-muted">{{ current_page.history }}</small>
+                            </details>
                         </div>
                     {% elif current_page.status == 'unknown' %}
                         <div class="alert alert-warning my-2 p-2">
@@ -88,6 +96,10 @@
                             <ul class="mb-0">
                                 <li>No qr-codes could be read</li>
                             </ul>
+                            <details>
+                                <summary>Log</summary>
+                                <small class="text-muted">{{ current_page.history }}</small>
+                            </details>
                         </div>
                     {% elif current_page.status == 'discard' %}
                         <div class="alert alert-dark my-2 p-2">
@@ -110,6 +122,10 @@
                                     <li>No qr-codes read</li>
                                 {% endif %}
                             </ul>
+                            <details>
+                                <summary>Log</summary>
+                                <small class="text-muted">{{ current_page.history }}</small>
+                            </details>
                         </div>
                     {% elif current_page.status == 'error' %}
                         <div class="alert alert-danger my-2 p-2">
@@ -128,6 +144,10 @@
                                     </ul>
                                 </li>
                             </ul>
+                            <details>
+                                <summary>Log</summary>
+                                <small class="text-muted">{{ current_page.history }}</small>
+                            </details>
                         </div>
                     {% elif current_page.status == 'unread' %}
                         <div class="alert alert-dark my-2">
@@ -135,6 +155,10 @@
                             <ul>
                                 <li>Have not read qr-codes yet</li>
                             </ul>
+                            <details>
+                                <summary>Log</summary>
+                                <small class="text-muted">{{ current_page.history }}</small>
+                            </details>
                         </div>
                     {% endif %}
                     {% if is_push_locked %}
