@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ("Base", "0001_initial"),
         ("Scan", "0001_initial"),
-        ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -29,21 +28,7 @@ class Migration(migrations.Migration):
                 ),
                 ("page_number", models.PositiveIntegerField()),
                 ("version", models.PositiveIntegerField()),
-                (
-                    "polymorphic_ctype",
-                    models.ForeignKey(
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="polymorphic_%(app_label)s.%(class)s_set+",
-                        to="contenttypes.contenttype",
-                    ),
-                ),
             ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
         ),
         migrations.CreateModel(
             name="Paper",
@@ -264,10 +249,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
             bases=("Papers.fixedpage",),
         ),
         migrations.CreateModel(
@@ -285,10 +266,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
             bases=("Papers.fixedpage",),
         ),
         migrations.CreateModel(
@@ -307,10 +284,6 @@ class Migration(migrations.Migration):
                 ),
                 ("question_index", models.PositiveIntegerField()),
             ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
             bases=("Papers.fixedpage",),
         ),
         migrations.CreateModel(

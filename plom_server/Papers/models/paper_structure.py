@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
-from polymorphic.models import PolymorphicModel
 
 from .image_bundle import Image
 
@@ -75,16 +74,15 @@ class MobilePage(models.Model):
     version = models.IntegerField(null=True, default=None)
 
 
-class FixedPage(PolymorphicModel):
+class FixedPage(models.Model):
     """Table to store information about the "fixed" pages within a given paper.
 
-    Since every "fixed" page has a definite page-number and version-number,
-    these appear here in the base class. However, only certain pages have
-    question indices, so we use polymorphism to put that information in
-    various derived classes.
+    Every "fixed" page has a definite page-number and version-number,
+    these appear here in the base class.  However, only QuestionPages have
+    question indices, so we put that information in various derived classes.
 
     IDPage, DNMPage = for the single IDpage and (zero or more) DNMPages, currently always v=1.
-    QuestionPage = has question index and a non-trivial version
+    QuestionPage = has question index and a non-trivial version.
 
     The base class should contain all info common to these
     classes. Searching on this base class allows us to search over all
