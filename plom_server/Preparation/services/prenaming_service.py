@@ -40,7 +40,9 @@ class PrenameSettingService:
         }
 
     @classmethod
-    def set_prenaming_coords(cls, xcoord: float | None, ycoord: float | None) -> None:
+    def set_prenaming_coords(
+        cls, xcoord: float | None, ycoord: float | None, *, _check: bool = True
+    ) -> None:
         """Set prenaming box position to the given vars.
 
         Args:
@@ -48,11 +50,17 @@ class PrenameSettingService:
                 to use a default.
             ycoord: similarly, the y-coordinate.
 
+        Keyword Args:
+            _check: usually we assert that we're allowed to do this.  Private
+                internal reset stuff can bypass this by passing False.  Don't
+                use this.
+
         Raises:
             PlomDependencyConflict: if the position cannot be modified.
         """
         with transaction.atomic():
-            assert_can_modify_prenaming_config()
+            if _check:
+                assert_can_modify_prenaming_config()
             if xcoord is None:
                 Settings.key_value_store_reset("prenaming_xcoord")
             else:
@@ -63,6 +71,6 @@ class PrenameSettingService:
                 Settings.key_value_store_set("prenaming_ycoord", ycoord)
 
     @classmethod
-    def reset_prenaming_coords(cls) -> None:
+    def reset_prenaming_coords(cls, *, force: bool = False) -> None:
         """Reset prenaming coords to their defaults."""
-        cls.set_prenaming_coords(None, None)
+        cls.set_prenaming_coords(None, None, _check=(not force))
