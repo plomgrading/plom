@@ -60,7 +60,7 @@
                             <td>{{ row.student_id }}</td>
                             <td>{{ row.student_name }}</td>
                             <td>
-                                {% if row.paper_number %}
+                                {% if row.paper_number is not None %}
                                     {{ row.paper_number }}
                                 {% else %}
                                     ●
