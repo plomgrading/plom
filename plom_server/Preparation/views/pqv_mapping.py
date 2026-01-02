@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 import tempfile
@@ -25,12 +25,7 @@ from plom_server.Papers.services import (
 from plom.misc_utils import format_int_list_with_runs
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
-from ..services import (
-    PQVMappingService,
-    PrenameSettingService,
-    StagingStudentService,
-    PapersPrinted,
-)
+from ..services import PQVMappingService, StagingStudentService, PapersPrinted
 
 from plom.version_maps import version_map_from_file
 
@@ -150,7 +145,6 @@ class PQVMappingView(ManagerRequiredView):
             "question_indices": question_indices,
             "question_labels_html": question_triples,
             "question_labels_selection_html": selection_dict,
-            "prenaming": PrenameSettingService().get_prenaming_setting(),
             "pqv_mapping_present": PaperInfoService.is_paper_database_fully_populated(),
             "number_of_students": num_students,
             "number_plus_twenty": num_students + 20,
@@ -187,7 +181,7 @@ class PQVMappingView(ManagerRequiredView):
 
         if context["pqv_mapping_present"]:
             context["pqv_table"] = PQVMappingService().get_pqv_map_as_table(
-                prenaming=context["prenaming"]
+                prenaming=True
             )
             context["pqv_number_rows"] = len(context["pqv_table"])
 

@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -18,18 +18,6 @@
         </div>
         {% if have_papers_been_printed %}
             <div class="alert alert-info">Papers have been printed, but you can still change the classlist.</div>
-        {% else %}
-            {% if prenaming %}
-                <div class="alert alert-warning">
-                    Prenaming is enabled, so a classlist is required
-                    <a class="btn btn-danger" hx-delete="{% url 'prep_prename' %}">Disable</a>
-                </div>
-            {% else %}
-                <div class="alert alert-primary">
-                    Prenaming is not enabled, so a classlist is not required
-                    <a class="btn btn-danger" hx-post="{% url 'prep_prename' %}">Enable</a>
-                </div>
-            {% endif %}
         {% endif %}
         {% if student_list_present %}
             <div class="alert alert-primary">
@@ -46,25 +34,14 @@
                     <thead>
                         <th>Student ID</th>
                         <th>Student Name</th>
-                        <th>
-                            Paper-number
-                            {% if prenaming %}
-                                (used if assigned &mdash; prenaming enabled)
-                            {% else %}
-                                (ignored &mdash; prenaming disabled)
-                            {% endif %}
-                        </th>
+                        <th>Prenaming Paper-number</th>
                     </thead>
                     {% for row in student_list %}
                         <tr>
                             <td>{{ row.student_id }}</td>
                             <td>{{ row.student_name }}</td>
                             <td>
-                                {% if row.paper_number is not None %}
-                                    {{ row.paper_number }}
-                                {% else %}
-                                    ●
-                                {% endif %}
+                                {% if row.paper_number is not None %}{{ row.paper_number }}{% endif %}
                             </td>
                         </tr>
                     {% endfor %}

@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
 import logging
@@ -17,7 +17,6 @@ from django.db import transaction, IntegrityError
 from plom.create import PlomClasslistValidator
 from .preparation_dependency_service import assert_can_modify_classlist
 from ..models import StagingStudent
-from ..services import PrenameSettingService
 
 
 log = logging.getLogger("ClasslistService")
@@ -64,18 +63,14 @@ class StagingStudentService:
         }
 
     @classmethod
-    def get_students_as_csv_string(cls, *, prename: bool = False) -> str:
+    def get_students_as_csv_string(cls) -> str:
         """Write the classlist headers and data into a string in CSV format.
 
         Quote all headers and student names, but not ids or paper numbers.
         """
         txt = '"id","name","paper_number"\n'
         for row in cls.get_students():
-            if (
-                not prename
-                or row["paper_number"] is None
-                or int(row["paper_number"]) < 0
-            ):
+            if row["paper_number"] is None or int(row["paper_number"]) < 0:
                 # Leave paper_number empty when any of our non-prename sentinels appear.
                 txt += f"{row['student_id']},\"{row['student_name']}\",\n"
             else:
@@ -325,17 +320,13 @@ class StagingStudentService:
         else:
             num_students = self.how_many_students()
         _, last_prename = self.get_first_last_prenamed_paper()
-        prenaming_enabled = PrenameSettingService().get_prenaming_setting()
 
-        return self._minimum_number_to_produce(
-            num_students, last_prename, prenaming_enabled
-        )
+        return self._minimum_number_to_produce(num_students, last_prename)
 
     def _minimum_number_to_produce(
         self,
         num_students: int,
         highest_prenamed_paper: int | None,
-        prenaming_enabled: bool,
     ) -> int:
         """Suggests a minimum number of papers to produce in various situations.
 
@@ -352,9 +343,7 @@ class StagingStudentService:
         # simple fiddle to get ceiling of 1.1*N using python floor-div //
         extra_10percent = -((-num_students * 11) // 10)
         prenamed_extra_10 = (highest_prenamed_paper or 0) + 10
-        if prenaming_enabled:
-            return max(extra_20, extra_10percent, prenamed_extra_10)
-        return max(extra_20, extra_10percent)
+        return max(extra_20, extra_10percent, prenamed_extra_10)
 
     def get_prename_for_paper(self, paper_number) -> str | None:
         """Return student ID for prenamed paper or None if paper is not prenamed."""

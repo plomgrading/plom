@@ -254,6 +254,7 @@ class Prenaming(APIView):
 
         enable = request.POST["newvalue"].casefold() == "true"
         try:
+            # TODO: deprecated!
             PrenameSettingService().set_prenaming_setting(enable)
         except PlomDependencyConflict as e:
             return _error_response(

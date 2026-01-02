@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 """Handle creating pre-bundle server state from a config file.
@@ -22,7 +22,6 @@ from plom_server.Preparation import useful_files_for_testing as useful_files
 from plom_server.Preparation.services import (
     PapersPrinted,
     PQVMappingService,
-    PrenameSettingService,
     SourceService,
     StagingStudentService,
 )
@@ -62,11 +61,6 @@ def upload_test_sources(config: PlomServerConfig) -> None:
             SourceService.store_source_pdf(i + 1, path)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
-
-
-def set_prenaming_setting(config: PlomServerConfig):
-    """Set prenaming according to a config."""
-    PrenameSettingService().set_prenaming_setting(config.prenaming_enabled)
 
 
 def upload_classlist(config: PlomServerConfig):
@@ -141,9 +135,7 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
         echo("Uploading test sources...")
         upload_test_sources(config)
 
-    echo("Setting prenaming and uploading classlist...")
-    if config.prenaming_enabled:
-        set_prenaming_setting(config)
+    echo("Uploading classlist...")
     if config.classlist:
         upload_classlist(config)
 

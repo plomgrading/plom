@@ -60,11 +60,7 @@
                     {% if student_list_present %}
                         <i class="bi bi-check-square text-success"></i>
                     {% else %}
-                        {% if prename_enabled %}
-                            <i class="bi bi-x-square text-danger"></i>
-                        {% else %}
-                            <i class="bi bi-dash-square-dotted"></i>
-                        {% endif %}
+                        <i class="bi bi-dash-square-dotted"></i>
                     {% endif %}
                     (Optional) manage classlist and prenaming
                     {% if have_papers_been_printed %}&mdash; can still modify{% endif %}

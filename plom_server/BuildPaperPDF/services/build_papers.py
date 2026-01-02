@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
@@ -264,7 +264,7 @@ class BuildPapersService:
         public_code = Settings.get_public_code()
         qvmap = PQVMappingService.get_pqv_map_dict()
         prenamed = StagingStudentService.get_prenamed_papers()
-        prename_config = PrenameSettingService().get_prenaming_config()
+        prename_config = PrenameSettingService.get_prenaming_config()
 
         the_papers = Paper.objects.filter(paper_number__in=paper_number_list)
         # Check paper-numbers all legal and store the corresponding paper-objects
@@ -284,7 +284,7 @@ class BuildPapersService:
             chore_list = []
             paper = None  # ensure there is something to delete
             for paper in the_papers:
-                if prename_config["enabled"] and paper.paper_number in prenamed:
+                if paper.paper_number in prenamed:
                     student_id, student_name = prenamed[paper.paper_number]
                 else:
                     student_id, student_name = None, None

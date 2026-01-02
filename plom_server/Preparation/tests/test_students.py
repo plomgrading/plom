@@ -5,7 +5,7 @@
 from django.test import TestCase
 from model_bakery import baker
 
-from ..services import StagingStudentService, PrenameSettingService
+from ..services import StagingStudentService
 from ..models import StagingStudent
 
 
@@ -21,25 +21,19 @@ class StagingStudentsTests(TestCase):
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 30)
 
-        pre = PrenameSettingService()
-        pre.set_prenaming_setting(True)
-
-        min_to_produce = sstu.get_minimum_number_to_produce()
-        self.assertEqual(min_to_produce, 35)
-
     def test__minimum_number_to_produce_typing(self) -> None:
         """Test type handling of _minimum_number_to_produce()."""
         # arg 1: num_students, arg 2: highest prenamed paper, arg 3: prenaming enabled?
         calc_minimum = StagingStudentService()._minimum_number_to_produce
 
         # check that None doesn't throw errors
-        calc_minimum(-20, None, False)
-        calc_minimum(-20, None, True)
+        calc_minimum(-20, None)
+        calc_minimum(-20, None)
 
         # check that return type is int
-        assert isinstance(calc_minimum(10, 5, False), int)
-        assert isinstance(calc_minimum(250, 5, False), int)
-        assert isinstance(calc_minimum(10, 25, True), int)
+        assert isinstance(calc_minimum(10, 5), int)
+        assert isinstance(calc_minimum(250, 5), int)
+        assert isinstance(calc_minimum(10, 25), int)
 
     def test__minimum_number_to_produce_logic(self) -> None:
         """Test internal logic of _minimum_number_to_produce()."""
@@ -47,10 +41,10 @@ class StagingStudentsTests(TestCase):
         calc_minimum = StagingStudentService()._minimum_number_to_produce
 
         # for small sittings, minimum should be 20 extra
-        self.assertEqual(calc_minimum(0, 5, False), 20)
-        self.assertEqual(calc_minimum(0, 15, False), 20)
-        self.assertEqual(calc_minimum(199, 5, False), 219)
-        self.assertEqual(calc_minimum(199, 215, False), 219)
+        self.assertEqual(calc_minimum(0, 5), 20)
+        self.assertEqual(calc_minimum(0, 15), 20)
+        self.assertEqual(calc_minimum(199, 5), 219)
+        self.assertEqual(calc_minimum(199, 215), 219)
 
         # for large sittings, minimum 10% extra (rounded up)
         self.assertEqual(calc_minimum(201, 5, False), 222)  # rounding up
