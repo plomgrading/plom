@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
@@ -18,6 +18,7 @@ from django_huey import get_queue
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom_server.Authentication.services import AuthService
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 
@@ -109,6 +110,8 @@ class ServerStatusView(ManagerRequiredView):
                 "pymupdf_version": pymupdf_version,
                 "zxingcpp_version": importlib.metadata.version("zxing-cpp"),
                 "queues": queues,
+                "papersize": Settings.get_paper_size(),
+                "papersize_pts": Settings.get_paper_size_in_pts(),
             }
         )
         return render(request, "base/server_status.html", context)
