@@ -35,7 +35,7 @@
     {% endif %}
     <div class="container w-100">
         {% for qidx, qlabel, qlabel_html in question_labels_html %}
-            <div class="row row-cols-auto justify-content-between mb-2">
+            <div class="row justify-content-between mb-2">
                 {% for ver in versions %}
                     <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 p-1">
                         {% if task_counts|get_item:qidx|get_item:ver|get_item:"total" > 0 %}
