@@ -14,7 +14,6 @@ from rest_framework import status
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Preparation.services import StagingStudentService
 from plom_server.Preparation.views import ClasslistDownloadView
-from plom_server.Preparation.services import PrenameSettingService
 
 # from .utils import debugnote
 from .utils import _error_response
@@ -201,65 +200,3 @@ class Classlist(APIView):
         """
         self.delete(request)
         return self._extend(request)
-
-
-class Prenaming(APIView):
-    """Read or write the prenaming flag."""
-
-    # GET /api/v0/classlist/prenaming
-    def get(self, request: Request) -> Response:
-        """Report the current value of the prenaming flag.
-
-        Args:
-            request: A Request object.
-
-        Returns:
-            A Response whose body text is the string "True"
-            if prenaming is enabled, and "False" otherwise.
-        """
-        flag = PrenameSettingService().get_prenaming_setting()
-        return Response(f"{flag}")
-
-    # POST /api/v0/classlist/prenaming
-    def post(self, request: Request) -> Response:
-        """Set the prenaming flag.
-
-        Args:
-            request: A Request object whose POST data carries the new
-                value for the prenaming setting.
-
-        POST Data:
-            newvalue: A string. If the casefold() value is "true",
-                enable prenaming; for anything else, disable prenaming.
-
-        Returns:
-            An empty response, with status 204, on success.
-            Callers outside the "manager" group get status 403
-            no matter what input they may provide. Status 400 indicates
-            that the POST data has no key "newvalue". Status 409 means
-            it's too late in the process to change prenaming.
-        """
-        group_list = list(request.user.groups.values_list("name", flat=True))
-        if "manager" not in group_list:
-            return _error_response(
-                'Only users in the "manager" group can manipulate the classlist.',
-                status.HTTP_403_FORBIDDEN,
-            )
-
-        if "newvalue" not in request.POST:
-            return _error_response(
-                "Expected key 'newvalue' not found",
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        enable = request.POST["newvalue"].casefold() == "true"
-        try:
-            # TODO: deprecated!
-            PrenameSettingService().set_prenaming_setting(enable)
-        except PlomDependencyConflict as e:
-            return _error_response(
-                e,
-                status.HTTP_409_CONFLICT,
-            )
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
