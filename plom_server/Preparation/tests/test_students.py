@@ -16,7 +16,7 @@ class StagingStudentsTests(TestCase):
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 20)
 
-        baker.make(StagingStudent, paper_number=25, _quantity=10)
+        baker.make(StagingStudent, paper_number=25)
 
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 35)
