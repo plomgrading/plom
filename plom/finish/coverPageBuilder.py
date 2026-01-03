@@ -9,18 +9,16 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from __future__ import annotations
-
 import pathlib
+from copy import deepcopy
 from typing import Any
 
 import pymupdf
 
 from plom.misc_utils import local_now_to_simple_string, pprint_score
-from .examReassembler import papersize_portrait
 
 
-def makeCover(
+def make_cover(
     tab: list[list[Any]],
     pdfname: pathlib.Path,
     *,
@@ -29,6 +27,7 @@ def makeCover(
     info: tuple[str | None, str | None] | None = None,
     solution: bool = False,
     footer: bool = True,
+    papersize: str = "",
 ) -> None:
     """Create html page of name ID etc and table of marks.
 
@@ -47,6 +46,8 @@ def makeCover(
             and student id (str).
         solution: whether or not this is a cover page for solutions.
         footer: whether to print a footer with timestamp.
+        papersize: a string describing the paper size.  If omitted or
+            empty, use "letter" as the default.
 
     Returns:
         None
@@ -79,7 +80,8 @@ def makeCover(
             pprint_score(sum([row[2] for row in tab])),
             str(sum([row[3] for row in tab])),
         ]
-    # writer likes strings, cast table contents as str
+    # writer likes strings, cast table contents as str, but first make a copy
+    tab = deepcopy(tab)
     for row in tab:
         row[1] = str(row[1])  # version
         if not solution:
@@ -106,7 +108,9 @@ def makeCover(
     headersize = 16
     xxlsize = 20
 
-    paper_width, paper_height = papersize_portrait
+    if not papersize:
+        papersize = "letter"
+    paper_width, paper_height = pymupdf.paper_size(papersize)
     page = cover.new_page(width=paper_width, height=paper_height)
 
     vpos = page_top

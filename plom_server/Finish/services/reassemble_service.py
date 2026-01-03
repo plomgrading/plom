@@ -25,9 +25,9 @@ from django_huey import db_task, get_queue
 import huey
 import huey.api
 
-from plom.finish.coverPageBuilder import makeCover
-from plom.finish.examReassembler import reassemble
+from plom.finish import make_cover, reassemble
 from plom_server.Base.models import HueyTaskTracker
+from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
@@ -40,7 +40,7 @@ from .student_marks_service import StudentMarkService
 
 
 class ReassembleService:
-    """Class that contains helper functions for sending data to plom-finish."""
+    """Tools for reassembling papers after marking."""
 
     def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall marking completion progress."""
@@ -126,13 +126,14 @@ class ReassembleService:
 
         cover_page_table_data = cls._get_cover_page_info(paper, solution)
         cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
-        makeCover(
+        make_cover(
             cover_page_table_data,
             cover_pdf_name,
             paper_num=paper.paper_number,
             info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
+            papersize=Settings.get_paper_size(),
         )
         return cover_pdf_name
 
@@ -319,6 +320,7 @@ class ReassembleService:
                 marked_pages=[],
                 dnm_images=[],
                 nonmarked_images=[],
+                papersize=Settings.get_paper_size(),
             )
             with open(tf.name, "rb") as pdf_file:
                 pdf_bytestream = BytesIO(pdf_file.read())
@@ -386,6 +388,7 @@ class ReassembleService:
                 marked_pages=marked_pages,
                 dnm_images=dnm_pages,
                 nonmarked_images=nonmarked,
+                papersize=Settings.get_paper_size(),
             )
         return outname
 

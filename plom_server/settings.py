@@ -47,6 +47,19 @@ else:
     DEBUG = True
 
 
+# Generally Plom takes it paper size from the source PDFs but it also needs to create
+# pages, for example, during reassembly.  In such cases, Plom defaults to "letter" but
+# you can override by defining the OS env var PAPERSIZE, for example to "letter", "A4",
+# "legal", etc.  There is some large set of possible values, but b/c they must be supported
+# by *all* of PyMuPDF, LaTeX and CSS's `@page` directive, it might be best to stick to
+# somewhat common paper sizes.
+_ = os.environ.get("PAPERSIZE")
+if not _:
+    PAPERSIZE = "letter"
+else:
+    PAPERSIZE = _
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("PLOM_SECRET_KEY")
 if not SECRET_KEY:
