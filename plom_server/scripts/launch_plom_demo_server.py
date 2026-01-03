@@ -120,13 +120,6 @@ def get_parser() -> argparse.ArgumentParser:
         help="Upload solutions to demo server",
     )
     parser.add_argument("--no-solutions", dest="solutions", action="store_false")
-    parser.add_argument(
-        "--prename",
-        default=True,
-        action="store_true",
-        help="Prename papers as determined by the demo classlist",
-    )
-    parser.add_argument("--no-prename", dest="prename", action="store_false")
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
     parser.add_argument("--half-marks", dest="half_marks", action="store_true")
     parser.add_argument(
@@ -341,7 +334,7 @@ def upload_demo_solution_files():
         run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
 
 
-def upload_demo_classlist(length="normal", prename=True):
+def upload_demo_classlist(length="normal"):
     """Upload a classlist for the demo."""
     if length == "long":
         cl_path = demo_files / "cl_for_long_demo.csv"
@@ -355,11 +348,6 @@ def upload_demo_classlist(length="normal", prename=True):
     run_plom_cli_command("delete-classlist")
     # run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
     run_plom_cli_command(f"upload-classlist {cl_path}")
-
-    if prename:
-        run_django_manage_command("plom_preparation_prenaming --enable")
-    else:
-        run_django_manage_command("plom_preparation_prenaming --disable")
 
 
 def populate_the_database(length="normal"):
@@ -443,7 +431,6 @@ def run_demo_preparation_commands(
     length="normal",
     stop_after=None,
     solutions=True,
-    prename=True,
     versioned_id=False,
 ) -> bool:
     """Run commands to prepare a demo assessment.
@@ -462,7 +449,6 @@ def run_demo_preparation_commands(
         length = the length of the demo: quick, normal, long, plaid.
         stop_after = after which step should the demo be stopped, see list above.
         solutions = whether or not to upload solutions as part of the demo.
-        prename = whether or not to prename some papers in the demo.
         versioned_id = whether or not to use multiple versions of the id pages.
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
@@ -492,7 +478,7 @@ def run_demo_preparation_commands(
     upload_demo_assessment_source_files()
     if solutions:
         upload_demo_solution_files()
-    upload_demo_classlist(length, prename)
+    upload_demo_classlist(length)
 
     saytime("Finished uploading assessment sources and classlist.")
 
@@ -901,7 +887,6 @@ def main():
                 length=args.length,
                 stop_after=stop_after,
                 solutions=args.solutions,
-                prename=args.prename,
                 versioned_id=args.versioned_id,
             ):
                 break
