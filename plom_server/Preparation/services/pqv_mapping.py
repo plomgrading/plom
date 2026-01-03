@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import Any
 
 from plom.spec_verifier import SpecVerifier
 from plom.version_maps import version_map_to_csv
-
 from plom_server.Papers.services import SpecificationService
 
 from ..services import StagingStudentService
