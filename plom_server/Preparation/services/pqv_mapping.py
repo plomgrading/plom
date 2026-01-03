@@ -122,8 +122,7 @@ class PQVMappingService:
         return _fix_shared_pages(pqvmap)
 
     def get_minimum_number_to_produce(self):
-        sss = StagingStudentService()
-        return sss.get_minimum_number_to_produce()
+        return StagingStudentService.get_minimum_number_to_produce()
 
 
 def _fix_shared_pages(vmap):

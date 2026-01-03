@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
 import html
@@ -52,7 +52,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         else:
             status_label = "*"
 
-        (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
+        (pl, pu) = ProgressOverviewService.get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
         question_index_label_pairs = [

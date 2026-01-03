@@ -40,8 +40,9 @@ class StagingStudentService:
             )
         )
 
+    @staticmethod
     @transaction.atomic()
-    def get_first_last_prenamed_paper(self) -> tuple[int, int] | tuple[None, None]:
+    def get_first_last_prenamed_paper() -> tuple[int, int] | tuple[None, None]:
         """Return the lowest and highest paper_number allocated to a prenamed paper.
 
         This appropriately returns (None, None) if there are no prenamed papers.
@@ -313,25 +314,26 @@ class StagingStudentService:
 
         return (success, werr)
 
+    @classmethod
     @transaction.atomic()
-    def get_minimum_number_to_produce(self) -> int:
+    def get_minimum_number_to_produce(cls) -> int:
         """Gets a suggestion for the minimum number of papers a server should produce.
 
         The return value depends on the current server state.
         """
         # how_many_students doesn't behave well if an empty classlist is uploaded
-        if not self.are_there_students():
+        if not cls.are_there_students():
             num_students = 0
         else:
-            num_students = self.how_many_students()
-        _, last_prename = self.get_first_last_prenamed_paper()
+            num_students = cls.how_many_students()
+        _, last_prename = cls.get_first_last_prenamed_paper()
 
-        return self._minimum_number_to_produce(num_students, last_prename)
+        return cls._minimum_number_to_produce(num_students, last_prename)
 
+    @staticmethod
     def _minimum_number_to_produce(
-        self,
         num_students: int,
-        highest_prenamed_paper: int | None,
+        highest_prenamed_paper: int | None = None,
     ) -> int:
         """Suggests a minimum number of papers to produce in various situations.
 
@@ -341,8 +343,6 @@ class StagingStudentService:
             highest_prenamed_paper: the highest paper number allocated
                 to a prenamed paper. Can be None, indicating no prenamed
                 papers.
-            prenaming_enabled: whether prenaming is currently enabled on
-                the server.
         """
         extra_20 = num_students + 20
         # simple fiddle to get ceiling of 1.1*N using python floor-div //
