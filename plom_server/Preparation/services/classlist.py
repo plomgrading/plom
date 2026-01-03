@@ -55,6 +55,11 @@ class StagingStudentService:
             return (None, None)
 
     @staticmethod
+    def are_there_any_prenamed_papers() -> bool:
+        """Return True if there are any students with paper numbers preset for prenaming."""
+        return StagingStudent.objects.filter(paper_number__isnull=False).exists()
+
+    @staticmethod
     def get_prenamed_papers() -> dict[int, tuple[str, str]]:
         """Return dict of prenamed papers {paper_number: (student_id, student_name)}."""
         return {
@@ -345,8 +350,12 @@ class StagingStudentService:
         prenamed_extra_10 = (highest_prenamed_paper or 0) + 10
         return max(extra_20, extra_10percent, prenamed_extra_10)
 
-    def get_prename_for_paper(self, paper_number) -> str | None:
-        """Return student ID for prenamed paper or None if paper is not prenamed."""
+    @staticmethod
+    def get_prename_for_paper(paper_number) -> str | None:
+        """Return student ID for prenamed paper or None if paper is not prenamed.
+
+        Currently unused.
+        """
         try:
             student_obj = StagingStudent.objects.get(paper_number=paper_number)
             return student_obj.student_id

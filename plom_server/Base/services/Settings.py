@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from copy import deepcopy
 from typing import Any
@@ -16,7 +16,6 @@ default_settings = {
     "who_can_create_rubrics": "permissive",
     "who_can_modify_rubrics": "per-user",
     "feedback_rules": deepcopy(static_feedback_rules),
-    "prenaming_enabled": False,
     "prenaming_xcoord": 50,
     "prenaming_ycoord": 42,
     # I recall being unhappy about this setting and its potential for abuse,

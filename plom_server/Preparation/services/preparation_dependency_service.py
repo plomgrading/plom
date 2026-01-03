@@ -68,7 +68,7 @@ def assert_can_modify_sources(*, deleting: bool = False) -> None:
 # 3 = classlist and prenaming.
 # 3a = classlist - does not depend on spec, but the database depends on prenaming and classlist.
 def assert_can_modify_classlist():
-    from . import PapersPrinted, PrenameSettingService
+    from . import PapersPrinted, StagingStudentService
     from plom_server.Papers.services import PaperInfoService
 
     # Issue = #3635
@@ -76,8 +76,8 @@ def assert_can_modify_classlist():
     # the classlist.
     if PapersPrinted.have_papers_been_printed():
         return
-    # if db populated (or being populated) and prenaming is set, then cannot modify classlist
-    if PrenameSettingService().get_prenaming_setting():
+    # if db populated (or being populated) and classlist includes prenames, then cannot modify classlist
+    if StagingStudentService.are_there_any_prenamed_papers():
         if PaperInfoService.is_paper_database_populated():
             raise PlomDependencyConflict(
                 "Database has been populated with some prenamed papers,"

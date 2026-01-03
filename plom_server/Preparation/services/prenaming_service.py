@@ -13,16 +13,10 @@ from .preparation_dependency_service import (
 
 
 class PrenameSettingService:
-    @staticmethod
-    def get_prenaming_setting() -> bool:
-        """Get prenaming setting."""
-        return Settings.key_value_store_get("prenaming_enabled")
-
     @classmethod
     def get_prenaming_config(cls) -> dict:
         """Get prenaming configuration as a dict."""
         return {
-            "enabled": Settings.key_value_store_get("prenaming_enabled"),
             "xcoord": Settings.key_value_store_get("prenaming_xcoord"),
             "ycoord": Settings.key_value_store_get("prenaming_ycoord"),
         }
