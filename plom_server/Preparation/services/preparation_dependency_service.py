@@ -90,34 +90,6 @@ def assert_can_modify_classlist():
             )
 
 
-# 3b - does not depend on spec, but qvmap/database depends on it (since prenamed papers have 'predictions' stored with those names)
-def assert_can_enable_disable_prenaming():
-    """Raises an error if the server state doesn't permit enabling/disabling prenaming.
-
-    Returns:
-        None
-
-    Raises:
-        PlomDependencyConflict
-    """
-    from . import PapersPrinted
-    from plom_server.Papers.services import PaperInfoService
-
-    # cannot modify prenaming if papers printed
-    if PapersPrinted.have_papers_been_printed():
-        raise PlomDependencyConflict("Papers have been printed.")
-
-    # if the qv-mapping/database is built then cannot modify prenaming.
-    if PaperInfoService.is_paper_database_populated():
-        raise PlomDependencyConflict(
-            "The database has been populated, so the prenaming setting cannot be changed."
-        )
-    if PaperInfoService.is_paper_database_being_updated_in_background():
-        raise PlomDependencyConflict(
-            "Database is being updated currently, so the prenaming setting cannot be changed."
-        )
-
-
 def assert_can_modify_prenaming_config():
     """Raises an error if the server state doesn't permit modifying prenaming config.
 
@@ -154,7 +126,7 @@ def assert_can_modify_prenaming_config():
 
 # 4 - qvmap depends on the spec, build papers depends on the qvmap
 def assert_can_modify_qv_mapping_database(*, deleting: bool = False) -> None:
-    from . import PapersPrinted, PrenameSettingService, StagingStudentService
+    from . import PapersPrinted
     from plom_server.Papers.services import SpecificationService
     from plom_server.BuildPaperPDF.services import BuildPapersService
 
@@ -165,18 +137,6 @@ def assert_can_modify_qv_mapping_database(*, deleting: bool = False) -> None:
     if not deleting:
         if not SpecificationService.is_there_a_spec():
             raise PlomDependencyConflict("There is no assessment spec.")
-
-    # if prenaming set, then we must have a classlist before can modify qv-map.
-    # else we can modify independent of the classlist.
-    if not deleting and PrenameSettingService().get_prenaming_setting():
-        if not StagingStudentService().are_there_students():
-            raise PlomDependencyConflict(
-                "Prenaming is enabled, but no classlist has been uploaded."
-            )
-        else:  # have classlist and prenaming set, so can modify qv-map
-            pass
-    else:  # prenaming not set, so can modify qv-map indep of classlist.
-        pass
 
     # cannot modify qv-mapping if papers have been produced
     if BuildPapersService().are_any_papers_built():
@@ -225,20 +185,6 @@ def can_modify_sources():
 def can_modify_classlist():
     try:
         assert_can_modify_classlist()
-        return True
-    except PlomDependencyConflict:
-        return False
-
-
-# assert_can_enable_disable_prenaming
-def can_enable_disable_prenaming():
-    """Checks if server state permits enabling/disabling of prenaming.
-
-    Returns:
-        bool: True if changes are permitted, False if not.
-    """
-    try:
-        assert_can_enable_disable_prenaming()
         return True
     except PlomDependencyConflict:
         return False

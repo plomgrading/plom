@@ -8,7 +8,6 @@ from django.db import transaction
 
 from plom_server.Base.services import Settings
 from .preparation_dependency_service import (
-    assert_can_enable_disable_prenaming,
     assert_can_modify_prenaming_config,
 )
 
@@ -18,17 +17,6 @@ class PrenameSettingService:
     def get_prenaming_setting() -> bool:
         """Get prenaming setting."""
         return Settings.key_value_store_get("prenaming_enabled")
-
-    @staticmethod
-    def set_prenaming_setting(enable: bool) -> None:
-        """Use the boolean value of the input parameter to set prenaming.
-
-        Raises:
-            PlomDependencyConflict: if modification is disallowed.
-        """
-        with transaction.atomic():
-            assert_can_enable_disable_prenaming()
-            Settings.key_value_store_set("prenaming_enabled", enable)
 
     @classmethod
     def get_prenaming_config(cls) -> dict:
