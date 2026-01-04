@@ -19,6 +19,7 @@ from django.contrib import messages
 
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 
 from ..services import SourceService
@@ -33,14 +34,27 @@ class SourceUploadForm(forms.Form):
 
 class SourceManageView(ManagerRequiredView):
     def build_context(self):
+        server_paper_size_name = Settings.get_paper_size()
+        sources = SourceService.get_list_of_sources()
+        paper_warnings = []
+        for src in sources:
+            sz = src.get("paper_size_name")
+            if sz and sz != server_paper_size_name:
+                paper_warnings.append(
+                    f'version {src["version"]} paper size "{sz}" '
+                    f'does not match server "{server_paper_size_name}"'
+                )
+
         return {
             "form": SourceUploadForm(),
             "num_versions": SpecificationService.get_n_versions(),
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
-            "sources": SourceService.get_list_of_sources(),
+            "sources": sources,
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": SourceService.check_pdf_duplication(),
+            "server_paper_size_name": server_paper_size_name,
+            "paper_warnings": paper_warnings,
         }
 
     def get(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:

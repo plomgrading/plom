@@ -18,7 +18,7 @@
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
         <div class="card">
-            <div class="card-body">
+            <div class="card-body pb-0">
                 <h4 class="card-title" id="source_status">
                     You have uploaded {{ num_uploaded_source_versions }} of {{ num_versions }} source pdfs
                     {% if all_sources_uploaded and not duplicates %}
@@ -28,9 +28,9 @@
                     {% endif %}
                 </h4>
                 <div class="card-text">
-                    {% if not all_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages</p>{% endif %}
+                    {% if not all_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages.</p>{% endif %}
                     {% if duplicates %}
-                        <div class="alert alert-danger mb-0" role="alert">
+                        <div class="alert alert-danger pb-0" role="alert">
                             There appear to be duplicate PDFs - please check
                             <ul>
                                 {% for hash,vers in duplicates.items %}
@@ -39,6 +39,18 @@
                                         <span class="badge bg-dark">{{ hash }}</span>
                                     </li>
                                 {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    <p>
+                        Note: the server is set to use
+                        &ldquo;{{ server_paper_size_name }}&rdquo; paper.
+                    </p>
+                    {% if paper_warnings %}
+                        <div class="alert alert-warning pb-0" role="alert">
+                            Warning:
+                            <ul>
+                                {% for warnings in paper_warnings %}<li>{{ warnings }}</li>{% endfor %}
                             </ul>
                         </div>
                     {% endif %}
