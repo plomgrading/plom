@@ -37,6 +37,7 @@ class SourceManageView(ManagerRequiredView):
         server_paper_size_name = Settings.get_paper_size()
         sources = SourceService.get_list_of_sources()
         paper_warnings = []
+        sizes = []
         for src in sources:
             sz = src.get("paper_size_name")
             if sz and sz != server_paper_size_name:
@@ -44,6 +45,11 @@ class SourceManageView(ManagerRequiredView):
                     f'version {src["version"]} paper size "{sz}" '
                     f'does not match server "{server_paper_size_name}"'
                 )
+                sizes.append(sz)
+        if len(set(sizes)) > 1:
+            paper_warnings.append(
+                f"Inconsistent paper sizes between versions: {set(sizes)}"
+            )
 
         return {
             "form": SourceUploadForm(),
