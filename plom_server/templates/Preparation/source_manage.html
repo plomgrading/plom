@@ -36,7 +36,7 @@
                                 {% for hash,vers in duplicates.items %}
                                     <li>
                                         versions {{ vers }} have sha256
-                                        <span class="badge bg-dark">{{ hash }}</span>
+                                        <small class="text-muted"><tt>{{ hash }}</tt></small>
                                     </li>
                                 {% endfor %}
                             </ul>
