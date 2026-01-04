@@ -30,6 +30,9 @@ class StagingImage(models.Model):
             call `get_image_type_display()`.  StagingImages typically start
             as UNREAD and then change their `image_type` as they are classified
             either by machine or by human.
+            UNREAD are really "Unclassified images": as the QR codes are read,
+            the images currently stay in the UNREAD state, until different code
+            classifies them according to the QR codes (and other available info).
         bundle: which StagingBundle does this image belong to?
         bundle_order: this is the "PDF page" of the image: the position within
             the bundle it came from.  One might say "page" but we don't b/c
@@ -157,9 +160,6 @@ class StagingImage(models.Model):
             assert self.paper_number is None, "UNREAD must not have paper_number"
             assert self.page_number is None, "UNREAD must not have page_number"
             assert self.version is None, "UNREAD must not have version"
-            assert (
-                self.parsed_qr is None or not self.parsed_qr
-            ), "UNREAD must not have parsed_qr"
         elif self.image_type == KNOWN:
             assert self.paper_number is not None, "KNOWN must have paper_number"
             assert self.page_number is not None, "KNOWN must have page_number"
@@ -183,10 +183,6 @@ class StagingImage(models.Model):
             raise ValueError("Unexpected value for enum")
 
         # And a pass over the fields
-        if self.parsed_qr:
-            assert self.image_type != UNREAD
-        if self.rotation:
-            assert self.image_type != UNREAD
         if self.pushed:
             assert self.image_type in (
                 KNOWN,

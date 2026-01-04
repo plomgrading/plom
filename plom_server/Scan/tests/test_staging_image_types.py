@@ -111,15 +111,22 @@ class ScanStagingImageTypesTests(TestCase):
                 version=1,
             )
 
-    def test_illegal_unread_stagingimage_qrcode_errors(self) -> None:
-        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* parsed_qr"):
-            baker.make(
-                StagingImage,
-                bundle=self.bundle,
-                bundle_order=1,
-                image_type=StagingImage.UNREAD,
-                parsed_qr={"some": "dict"},
-            )
+    def test_unread_stagingimage_parsed_qr_rotation_fields(self) -> None:
+        # not an error for an UNREAD to have parsed_qr and rotation fields
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=1,
+            image_type=StagingImage.UNREAD,
+            parsed_qr={"some": "dict"},
+        )
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=1,
+            image_type=StagingImage.UNREAD,
+            rotation=90,
+        )
         baker.make(
             StagingImage,
             bundle=self.bundle,
