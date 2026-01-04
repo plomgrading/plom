@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
@@ -43,7 +43,8 @@ class SourceManageView(ManagerRequiredView):
             "duplicates": SourceService.check_pdf_duplication(),
         }
 
-    def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
+    def get(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
+        """Get to render the sources management page or specify a version to download a PDF."""
         # if no spec then redirect to the dependency conflict page
         if not SpecificationService.is_there_a_spec():
             messages.add_message(
@@ -66,8 +67,8 @@ class SourceManageView(ManagerRequiredView):
         context = self.build_context()
         return render(request, "Preparation/source_manage.html", context)
 
-    def post(self, request, version=None):
-        # This function is HTMX only
+    def post(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
+        """HTMX posts here will add a new source PDF file to the server."""
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX POST requests are allowed")
 
@@ -111,8 +112,8 @@ class SourceManageView(ManagerRequiredView):
 
         return render(request, "Preparation/source_item_view.html", context)
 
-    def delete(self, request, version):
-        # This function is HTMX only
+    def delete(self, request: HttpRequest, *, version: int) -> HttpResponse:
+        """HTMX delete here will remove a source PDF file from the server."""
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
 

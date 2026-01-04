@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
@@ -9,10 +9,30 @@ from django.db import models
 
 
 class PaperSourcePDF(models.Model):
+    """Describes the structure of one of the source PDF files.
+
+    version: which version is this.
+    source_pdf: the file itself, one of those magic FileField things:
+        so be careful with this.
+    pdf_hash: a hash, currently sha256 of the bytes of this file.
+    original_filename: optional, the original file name.
+    page_count: optional, how many pages in this PDF.
+    paper_size_name: a string for the paper size such as "letter".  If
+        the pages don't agree it can be set to something alarming like
+        "various (!)".  Optional.
+    paper_size_width: optional, integer width in pts, generally only to
+        be set if all pages agree.
+    paper_size_height: optional, integer height in pts.
+    """
+
     version = models.PositiveIntegerField(unique=True)
     source_pdf = models.FileField(upload_to="sourceVersions/")
     pdf_hash = models.CharField(null=False, max_length=64)
     original_filename = models.TextField()
+    page_count = models.PositiveIntegerField(null=True, blank=True)
+    paper_size_name = models.TextField(null=True, blank=True)
+    paper_size_width = models.PositiveIntegerField(null=True, blank=True)
+    paper_size_height = models.PositiveIntegerField(null=True, blank=True)
 
 
 # ---------------------------------
