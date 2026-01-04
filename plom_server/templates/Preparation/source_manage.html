@@ -42,10 +42,21 @@
                             </ul>
                         </div>
                     {% endif %}
-                    <p>
-                        Note: the server is set to use
-                        &ldquo;{{ server_paper_size_name }}&rdquo; paper.
-                    </p>
+                    <details class="mb-3">
+                        <summary>
+                            Note: the server is set to use
+                            &ldquo;{{ server_paper_size_name }}&rdquo; paper.
+                        </summary>
+                        <p class="text-muted">
+                            Plom generally respects the paper size of the source PDFs
+                            you provide;
+                            this setting effects other pages that Plom creates itself,
+                            such as reassembled papers and reports.
+                            You can control this by setting the <tt>PAPERSIZE</tt>
+                            environment variable before starting the server:
+                            contact your server administrator if you need to change it.
+                        </p>
+                    </details>
                     {% if paper_warnings %}
                         <div class="alert alert-warning pb-0" role="alert">
                             Warning:
