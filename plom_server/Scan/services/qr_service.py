@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Forest Kobayashi
@@ -264,7 +264,7 @@ class QRService:
             )
 
         v_on_page = qr_info["page_info"]["version_num"]
-        v_in_db = PaperInfoService().get_version_from_paper_page(
+        v_in_db = PaperInfoService.get_version_from_paper_page(
             qr_info["page_info"]["paper_id"], qr_info["page_info"]["page_num"]
         )
         if v_on_page != v_in_db:

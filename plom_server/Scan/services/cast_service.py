@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
@@ -798,7 +798,7 @@ class ScanCastService:
                 f"Cannot knowify an image of type {img.image_type}. Permitted types are 'DISCARD', 'UNKNOWN', and 'ERROR'"
             )
 
-        version_in_db = PaperInfoService().get_version_from_paper_page(
+        version_in_db = PaperInfoService.get_version_from_paper_page(
             paper_number, page_number
         )
         img.paper_number = paper_number

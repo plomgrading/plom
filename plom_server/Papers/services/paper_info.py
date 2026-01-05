@@ -76,8 +76,9 @@ class PaperInfoService:
         """List which papers have been created in the database."""
         return list(Paper.objects.values_list("paper_number", flat=True))
 
+    @staticmethod
     @transaction.atomic
-    def get_version_from_paper_page(self, paper_number: int, page_number: int) -> int:
+    def get_version_from_paper_page(paper_number: int, page_number: int) -> int:
         """Given a paper_number and page_number, return the version of that page.
 
         .. warning::

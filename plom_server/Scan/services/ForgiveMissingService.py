@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 import hashlib
 from io import BytesIO
@@ -24,7 +24,7 @@ from plom_server.Papers.models import (
     IDPage,
     DNMPage,
 )
-from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Preparation.services import SourceService
 from ..services import ManageDiscardService, ManageScanService
 
@@ -274,6 +274,7 @@ def forgive_missing_fixed_page(
         ValueError: If the paper/page does exist (has actually been scanned)
             but the corresponding fixed-page object has an image.
     """
+    version = PaperInfoService.get_version_from_paper_page(paper_number, page_number)
     fixedpages = FixedPage.objects.filter(
         paper__paper_number=paper_number, page_number=page_number
     )
@@ -288,9 +289,7 @@ def forgive_missing_fixed_page(
                 f"Paper {paper_number} page {page_number} already has an image"
                 " - there is nothing to forgive!"
             )
-        # TODO: must be unique over all them!
-        version = fixedpage.version
-        # TODO: there might be some existing lookup code to the get the version
+
     image_obj = get_substitute_image(page_number, version)
     # create a discard page, move it into place via assign_discard_page_to_fixed_page
     discardpage_obj = DiscardPage.objects.create(
