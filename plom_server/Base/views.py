@@ -143,8 +143,9 @@ class ResetView(ManagerRequiredView):
         """Handles the POST request for the reset confirmation view.
 
         If the "reset_phrase_box" doesn't match, return a 400.  On success
-        redirect to home.  Some other errors (unexpected ones) will go
-        to a "preparation conflict" page.
+        redirect to home.  Some other errors (unexpected ones) will also
+        return a 400 and an error message that the htmx-based caller can
+        render.
 
         Called by htmx.
         """
