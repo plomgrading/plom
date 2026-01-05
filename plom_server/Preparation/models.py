@@ -17,15 +17,18 @@ class PaperSourcePDF(models.Model):
     pdf_hash: a hash, currently sha256 of the bytes of this file.
     original_filename: optional, the original file name.
     page_count: optional, how many pages in this PDF.
-    paper_size_name: a string for the paper size such as "letter".  If
-        the pages don't agree it can be set to something alarming like
-        "various (!)".  Optional.  Can also be set to something like
-        "custom".  Whatever it is, the next two fields might be more
-        specific / accurate.
+    paper_size_name: optional, a string for the paper size such as "letter".
+        If the pages don't agree it can be set to something alarming like
+        "various (!)".  This quantity is typically computed by rounding
+        and comparing various page sizes against PyMuPDF's list of well-known
+        page sizes; if its not recognized, it will be set to "custom".
+        In any case, the next two fields might be more specific / accurate.
     paper_size_width: optional, float width in pts, generally only to
-        be set if all pages agree.
+        be set if all pages agree.  This is the raw width of the first
+        page of the PDF file.
     paper_size_height: optional, float height in pts, generally only to
-        be set if all pages agree.
+        be set if all pages agree.  The is the raw height of the first
+        page of the PDF file.
     """
 
     version = models.PositiveIntegerField(unique=True)
