@@ -26,14 +26,8 @@ class Migration(migrations.Migration):
                 ("original_filename", models.TextField()),
                 ("page_count", models.PositiveIntegerField(blank=True, null=True)),
                 ("paper_size_name", models.TextField(blank=True, null=True)),
-                (
-                    "paper_size_width",
-                    models.PositiveIntegerField(blank=True, null=True),
-                ),
-                (
-                    "paper_size_height",
-                    models.PositiveIntegerField(blank=True, null=True),
-                ),
+                ("paper_size_width", models.FloatField(blank=True, null=True)),
+                ("paper_size_height", models.FloatField(blank=True, null=True)),
             ],
         ),
         migrations.CreateModel(

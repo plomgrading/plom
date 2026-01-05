@@ -19,10 +19,13 @@ class PaperSourcePDF(models.Model):
     page_count: optional, how many pages in this PDF.
     paper_size_name: a string for the paper size such as "letter".  If
         the pages don't agree it can be set to something alarming like
-        "various (!)".  Optional.
-    paper_size_width: optional, integer width in pts, generally only to
+        "various (!)".  Optional.  Can also be set to something like
+        "custom".  Whatever it is, the next two fields might be more
+        specific / accurate.
+    paper_size_width: optional, float width in pts, generally only to
         be set if all pages agree.
-    paper_size_height: optional, integer height in pts.
+    paper_size_height: optional, float height in pts, generally only to
+        be set if all pages agree.
     """
 
     version = models.PositiveIntegerField(unique=True)
@@ -31,8 +34,8 @@ class PaperSourcePDF(models.Model):
     original_filename = models.TextField()
     page_count = models.PositiveIntegerField(null=True, blank=True)
     paper_size_name = models.TextField(null=True, blank=True)
-    paper_size_width = models.PositiveIntegerField(null=True, blank=True)
-    paper_size_height = models.PositiveIntegerField(null=True, blank=True)
+    paper_size_width = models.FloatField(null=True, blank=True)
+    paper_size_height = models.FloatField(null=True, blank=True)
 
 
 # ---------------------------------

@@ -158,8 +158,8 @@ def store_source_pdf(
     original_filename: str = "",
     page_count: int | None = None,
     paper_size_name: str = "",
-    paper_size_width: int | None = None,
-    paper_size_height: int | None = None,
+    paper_size_width: float | None = None,
+    paper_size_height: float | None = None,
 ) -> None:
     """Store one of the source PDF files into the database.
 
@@ -254,20 +254,23 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
                     False,
                     f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}",
                 )
+            # keep the first page's size in full float precision
+            w_float, h_float = doc[0].rect.width, doc[0].rect.height
+            # collect all page sizes using "set" to combine any rounding to the same int
             sizes = set(
                 [(round(p.rect.width), round(p.rect.height)) for p in doc.pages()]
             )
-            try:
+            if len(sizes) == 1:
                 ((w, h),) = sizes
-            except ValueError:
+                paper_size_name = "<custom>"
+                # find a name for the size in pymupdf's dict (which uses ints):
+                for name, sz in pymupdf.paper_sizes().items():
+                    if sz == (w, h):
+                        paper_size_name = name
+            else:
                 paper_size_name = "<various (!)>"
-                w = None
-                h = None
-            paper_size_name = "<custom>"
-            # look up to see if that size has a name in pymupdf's dict:
-            for name, sz in pymupdf.paper_sizes().items():
-                if sz == (w, h):
-                    paper_size_name = name
+                w_float = None
+                h_float = None
 
         if hasattr(in_memory_file, "name"):
             original_filename = in_memory_file.name
@@ -281,8 +284,8 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
                 original_filename=original_filename,
                 page_count=page_count,
                 paper_size_name=paper_size_name,
-                paper_size_width=w,
-                paper_size_height=h,
+                paper_size_width=w_float,
+                paper_size_height=h_float,
             )
         except ValueError as err:
             return (False, str(err))
