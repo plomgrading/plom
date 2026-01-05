@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
@@ -406,9 +406,10 @@ class ManageDiscardService:
         else:
             raise ValueError("Command needs a pk for a fixedpage or mobilepage")
 
+    @staticmethod
     @transaction.atomic
     def _assign_discard_to_fixed_page(
-        self, user_obj: User, discard_pk: int, paper_number: int, page_number: int
+        user_obj: User, discard_pk: int, paper_number: int, page_number: int
     ) -> None:
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
@@ -511,8 +512,9 @@ class ManageDiscardService:
         for qi in assign_to_question_indices:
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qi)
 
+    @classmethod
     def assign_discard_page_to_fixed_page(
-        self, user_obj: User, page_pk: int, paper_number: int, page_number: int
+        cls, user_obj: User, page_pk: int, paper_number: int, page_number: int
     ) -> None:
         """Reassign the given discard page to a fixed page at the given paper/page.
 
@@ -527,7 +529,7 @@ class ManageDiscardService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
 
-        self._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
+        cls._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int

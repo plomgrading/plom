@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
@@ -316,7 +316,7 @@ class TestManageDiscard(TestCase):
         # test non-existent discardpage
         self.assertRaises(
             ValueError,
-            self.mds._assign_discard_to_fixed_page,
+            self.mds.assign_discard_page_to_fixed_page,
             self.user0,
             pk_not_there,
             1,
@@ -334,7 +334,7 @@ class TestManageDiscard(TestCase):
         paper_not_there = Paper.objects.latest("paper_number").paper_number + 1
         self.assertRaises(
             ValueError,
-            self.mds._assign_discard_to_fixed_page,
+            self.mds.assign_discard_page_to_fixed_page,
             self.user0,
             dp1.pk,
             paper_not_there,
@@ -351,7 +351,7 @@ class TestManageDiscard(TestCase):
         # there are no fixed pages, so can just pick 1
         self.assertRaises(
             ValueError,
-            self.mds._assign_discard_to_fixed_page,
+            self.mds.assign_discard_page_to_fixed_page,
             self.user0,
             dp1.pk,
             1,

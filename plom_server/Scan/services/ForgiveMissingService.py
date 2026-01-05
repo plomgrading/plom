@@ -296,7 +296,7 @@ def forgive_missing_fixed_page(
             f" paper {paper_number} page {page_number}"
         ),
     )
-    ManageDiscardService().assign_discard_page_to_fixed_page(
+    ManageDiscardService.assign_discard_page_to_fixed_page(
         user_obj, discardpage_obj.pk, paper_number, page_number
     )
 
