@@ -262,13 +262,13 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
             )
             if len(sizes) == 1:
                 ((w, h),) = sizes
-                paper_size_name = "<custom>"
+                paper_size_name = "custom"
                 # find a name for the size in pymupdf's dict (which uses ints):
                 for name, sz in pymupdf.paper_sizes().items():
                     if sz == (w, h):
                         paper_size_name = name
             else:
-                paper_size_name = "<various (!)>"
+                paper_size_name = "various (!)"
                 w_float = None
                 h_float = None
 
