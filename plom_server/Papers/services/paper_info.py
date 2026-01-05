@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 import logging
 
@@ -75,12 +75,6 @@ class PaperInfoService:
     def which_papers_in_database(self) -> list[int]:
         """List which papers have been created in the database."""
         return list(Paper.objects.values_list("paper_number", flat=True))
-
-    def page_has_image(self, paper_number, page_number) -> bool:
-        """Return True if a page has an Image associated with it."""
-        paper = Paper.objects.get(paper_number=paper_number)
-        page = FixedPage.objects.get(paper=paper, page_number=page_number)
-        return page.image is not None
 
     @transaction.atomic
     def get_version_from_paper_page(self, paper_number: int, page_number: int) -> int:
