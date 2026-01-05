@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
@@ -93,8 +93,15 @@ class FixedPage(PolymorphicModel):
 
     paper (ref to Paper): the test-paper to which this page image belongs
     image (ref to Image): the image (see note below)
-    page_number (int): the position of this page within the test-paper
-    version (int): the version of this paper/page as determined by
+    page_number: the integer position of this page within the paper,
+        starting from one.
+        Note that (paper, page_number) is NOT unique: there could be two
+        or more FixedPages sharing a page_number.  This happens when
+        "shared pages" are being used.  Thus be careful not to assume
+        this commonly-thought-but-incorrect invariant.  In particular,
+        one should generally NOT call
+        ``.get(paper__paper_number=..., page_number=)``.
+    version: the integer version of this paper/page as determined by
         the qvmap.
 
     Note that the image associated to a fixed page is allowed to be
