@@ -409,15 +409,8 @@ class ManageDiscardService:
     @staticmethod
     @transaction.atomic
     def _assign_discard_to_fixed_page(
-        user_obj: User, discard_pk: int, paper_number: int, page_number: int
+        user_obj: User, discard_obj: DiscardPage, paper_number: int, page_number: int
     ) -> None:
-        try:
-            discard_obj = DiscardPage.objects.get(pk=discard_pk)
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"Cannot find a discard page with pk = {discard_pk}"
-            ) from e
-
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except ObjectDoesNotExist as e:
@@ -514,22 +507,24 @@ class ManageDiscardService:
 
     @classmethod
     def assign_discard_page_to_fixed_page(
-        cls, user_obj: User, page_pk: int, paper_number: int, page_number: int
+        cls, user_obj: User, discard_pk: int, paper_number: int, page_number: int
     ) -> None:
         """Reassign the given discard page to a fixed page at the given paper/page.
 
         Args:
             user_obj: A django User who is doing the reassignment of the discard page.
-            page_pk: the pk of the discard page.
+            discard_pk: the pk of the discard page.
             paper_number: the number of the paper to which the discard is being reassigned.
             page_number: the number of the page in the given paper to which the discard is reassigned.
         """
         try:
-            _ = DiscardPage.objects.get(pk=page_pk)
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
         except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
+            raise ValueError(f"Cannot find discard page with id {discard_pk}") from e
 
-        cls._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
+        cls._assign_discard_to_fixed_page(
+            user_obj, discard_obj, paper_number, page_number
+        )
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
@@ -551,9 +546,13 @@ class ManageDiscardService:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions."
             ) from e
+        try:
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find discard page with id {discard_pk}") from e
 
         self._assign_discard_to_fixed_page(
-            user_obj, discard_pk, paper_number, page_number
+            user_obj, discard_obj, paper_number, page_number
         )
 
     def reassign_discard_page_to_mobile_page_cmd(
