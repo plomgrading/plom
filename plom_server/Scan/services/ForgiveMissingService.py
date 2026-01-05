@@ -211,7 +211,7 @@ def get_substitute_image(page_number: int, version: int) -> Image:
     Raises:
         ObjectDoesNotExist: Specifically ``Bundle.DoesNotExist`` if the
             the substitution bundle has not been built yet.
-        ObjectDoesNotExist: probably Image.DoesNotExist if the pgae number
+        ObjectDoesNotExist: probably Image.DoesNotExist if the page number
             or version are out of range, TODO: but this is not tested.
     """
     bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
