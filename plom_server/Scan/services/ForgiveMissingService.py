@@ -19,7 +19,6 @@ from plom_server.Base.models import BaseImage
 from plom_server.Papers.models import (
     Bundle,
     Image,
-    FixedPage,
     DiscardPage,
     IDPage,
     DNMPage,
@@ -320,28 +319,29 @@ def forgive_missing_fixed_page_cmd(
 def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, Any]:
     """Get information about the fixed page of the given paper/page.
 
+    Note: note very well-defined what happens if you call this for something
+    that does not have a substitute.
+
     Returns a dict with keys "paper_number", "page_number", "version" and then
-        "substitute_image_pk" and "kind". "Kind" is one of "IDPage", "QuestionPage", or "DNMPage"
+        "substitute_image_pk" and "kind". "Kind" is one of "IDPage", "QuestionPage",
+        or "DNMPage"
 
     Raises:
         ValueError: When no fixed page at the given paper/page exists.
     """
-    try:
-        fixedpage_obj = FixedPage.objects.get(
-            paper__paper_number=paper_number, page_number=page_number
-        )
-    except FixedPage.DoesNotExist as e:
-        raise ValueError(
-            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
-        ) from e
-    version = fixedpage_obj.version
+    version = PaperInfoService.get_version_from_paper_page(paper_number, page_number)
     substitute_image_pk = get_substitute_image(page_number, version).pk
 
-    if isinstance(fixedpage_obj, DNMPage):
+    if DNMPage.objects.filter(
+        paper__paper_number=paper_number, page_number=page_number
+    ).exists():
         kind = "DNMPage"
-    elif isinstance(fixedpage_obj, IDPage):
+    elif IDPage.objects.filter(
+        paper__paper_number=paper_number, page_number=page_number
+    ).exists():
         kind = "IDPage"
-    else:  # must be a question page
+    else:
+        # must be one or more question page(s)
         kind = "QuestionPage"
 
     return {
