@@ -262,11 +262,11 @@ def erase_all_substitute_images_and_their_bundle() -> None:
 def forgive_missing_fixed_page(
     user_obj: User, paper_number: int, page_number: int
 ) -> None:
-    """Replace the given fixed page with a substitute page image.
+    """Replace any FixedPages using this paper number page number with a substitute page image.
 
     Args:
         user_obj: the user-object who is doing the forgiving.
-        paper_number: the paper
+        paper_number: the paper.
         page_number: the page from the paper that is missing.
 
     Raises:
@@ -274,20 +274,24 @@ def forgive_missing_fixed_page(
         ValueError: If the paper/page does exist (has actually been scanned)
             but the corresponding fixed-page object has an image.
     """
-    try:
-        fixedpage_obj = FixedPage.objects.get(
-            paper__paper_number=paper_number, page_number=page_number
-        )
-    except FixedPage.DoesNotExist as e:
+    fixedpages = FixedPage.objects.filter(
+        paper__paper_number=paper_number, page_number=page_number
+    )
+    if not fixedpages:
         raise ValueError(
-            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
-        ) from e
-    if fixedpage_obj.image:
-        raise ValueError(
-            f"Paper {paper_number} page {page_number} already has an image"
-            " - there is nothing to forgive!"
+            f"Cannot find FixedPage of paper {paper_number} page {page_number}"
         )
-    image_obj = get_substitute_image(page_number, fixedpage_obj.version)
+    for fixedpage in fixedpages:
+        if fixedpage.image:
+            # TODO: what if 1 has but 2 hasn't?
+            raise ValueError(
+                f"Paper {paper_number} page {page_number} already has an image"
+                " - there is nothing to forgive!"
+            )
+        # TODO: must be unique over all them!
+        version = fixedpage.version
+        # TODO: there might be some existing lookup code to the get the version
+    image_obj = get_substitute_image(page_number, version)
     # create a discard page, move it into place via assign_discard_page_to_fixed_page
     discardpage_obj = DiscardPage.objects.create(
         image=image_obj,
@@ -296,8 +300,8 @@ def forgive_missing_fixed_page(
             f" paper {paper_number} page {page_number}"
         ),
     )
-    ManageDiscardService.assign_discard_page_to_fixed_page(
-        user_obj, discardpage_obj.pk, paper_number, page_number
+    ManageDiscardService._assign_discard_to_fixed_page(
+        user_obj, discardpage_obj, paper_number, page_number
     )
 
 

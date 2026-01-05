@@ -407,7 +407,6 @@ class ManageDiscardService:
             raise ValueError("Command needs a pk for a fixedpage or mobilepage")
 
     @staticmethod
-    @transaction.atomic
     def _assign_discard_to_fixed_page(
         user_obj: User, discard_obj: DiscardPage, paper_number: int, page_number: int
     ) -> None:
@@ -416,37 +415,38 @@ class ManageDiscardService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
-        try:
-            fpage_obj = FixedPage.objects.get(paper=paper_obj, page_number=page_number)
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"Paper {paper_number} does not have a fixed page with page number {page_number}"
-            ) from e
-
-        if fpage_obj.image:
-            raise ValueError(
-                f"Fixed page {page_number} of paper {paper_number} already has an image."
+        with transaction.atomic():
+            fixed_pages = FixedPage.objects.filter(
+                paper=paper_obj, page_number=page_number
             )
-
-        # assign the image to the fixed page
-        fpage_obj.image = discard_obj.image
-        fpage_obj.save()
-        # delete the discard page
-        discard_obj.delete()
-
-        if isinstance(fpage_obj, DNMPage):
-            pass
-        elif isinstance(fpage_obj, IDPage):
-            IdentifyTaskService().set_paper_idtask_outdated(paper_number)
-        elif isinstance(fpage_obj, QuestionPage):
-            MarkingTaskService().set_paper_marking_task_outdated(
-                paper_number, fpage_obj.question_index
-            )
-        else:
-            raise RuntimeError(
-                f"Cannot identify type of fixed page with pk = {fpage_obj.pk} "
-                "in paper {paper_number} page {page_number}."
-            )
+            if not fixed_pages:
+                raise ValueError(
+                    f"Paper {paper_number} does not have fixed pages with page number {page_number}"
+                )
+            for fpage_obj in fixed_pages:
+                if fpage_obj.image:
+                    # TODO: annoying corner case if 1 hasn't but 2 has?
+                    raise ValueError(
+                        f"Fixed page {page_number} of paper {paper_number} already has an image."
+                    )
+                # assign the image to the fixed page
+                fpage_obj.image = discard_obj.image
+                fpage_obj.save()
+                if isinstance(fpage_obj, DNMPage):
+                    pass
+                elif isinstance(fpage_obj, IDPage):
+                    IdentifyTaskService().set_paper_idtask_outdated(paper_number)
+                elif isinstance(fpage_obj, QuestionPage):
+                    MarkingTaskService().set_paper_marking_task_outdated(
+                        paper_number, fpage_obj.question_index
+                    )
+                else:
+                    raise RuntimeError(
+                        f"Cannot identify type of fixed page with pk = {fpage_obj.pk} "
+                        "in paper {paper_number} page {page_number}."
+                    )
+            # finally (and still inside the atomic) delete the discard page
+            discard_obj.delete()
 
     @transaction.atomic
     def _assign_discard_page_to_mobile_page(
