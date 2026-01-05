@@ -275,24 +275,9 @@ def forgive_missing_fixed_page(
             but the corresponding fixed-page object has an image.
     """
     version = PaperInfoService.get_version_from_paper_page(paper_number, page_number)
-    fixedpages = FixedPage.objects.filter(
-        paper__paper_number=paper_number, page_number=page_number
-    )
-    if not fixedpages:
-        raise ValueError(
-            f"Cannot find FixedPage of paper {paper_number} page {page_number}"
-        )
-    for fixedpage in fixedpages:
-        if fixedpage.image:
-            # TODO: what if 1 has but 2 hasn't?
-            raise ValueError(
-                f"Paper {paper_number} page {page_number} already has an image"
-                " - there is nothing to forgive!"
-            )
-
     image_obj = get_substitute_image(page_number, version)
     # create a discard page, move it into place via assign_discard_page_to_fixed_page
-    discardpage_obj = DiscardPage.objects.create(
+    tmp_discardpage_obj = DiscardPage.objects.create(
         image=image_obj,
         discard_reason=(
             "System-created page to substitute for"
@@ -300,8 +285,10 @@ def forgive_missing_fixed_page(
         ),
     )
     ManageDiscardService._assign_discard_to_fixed_page(
-        user_obj, discardpage_obj, paper_number, page_number
+        user_obj, tmp_discardpage_obj, paper_number, page_number
     )
+    # On success, ManageDiscardService will erase the temporary DiscardPage
+    # for us.  But perhaps not on ValueError :(
 
 
 def forgive_missing_fixed_page_cmd(
