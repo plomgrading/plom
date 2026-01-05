@@ -26,7 +26,8 @@
                 <br />
                 original filename: <small class="text-muted"><tt>{{ src.original_filename }}</tt></small>
                 <br />
-                {{ src.page_count }} pages of &ldquo;{{ src.paper_size_name }}&rdquo; paper.
+                {{ src.page_count }} pages of &ldquo;{{ src.paper_size_name }}&rdquo; paper
+                <span class="text-muted">({{ src.paper_size_width|stringformat:".6g" }} &times; {{ src.paper_size_height|stringformat:".6g" }} pts)</span>.
             </p>
             <div class="row row-cols-auto px-2">
                 <div class="px-1 col">
