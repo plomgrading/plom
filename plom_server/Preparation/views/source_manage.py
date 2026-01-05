@@ -40,12 +40,13 @@ class SourceManageView(ManagerRequiredView):
         sizes = []
         for src in sources:
             sz = src.get("paper_size_name")
-            if sz and sz != server_paper_size_name:
-                paper_warnings.append(
-                    f'version {src["version"]} paper size "{sz}" '
-                    f'does not match server "{server_paper_size_name}"'
-                )
+            if sz:
                 sizes.append(sz)
+                if sz != server_paper_size_name:
+                    paper_warnings.append(
+                        f'version {src["version"]} paper size "{sz}" '
+                        f'does not match server "{server_paper_size_name}"'
+                    )
         if len(set(sizes)) > 1:
             paper_warnings.append(
                 f"Inconsistent paper sizes between versions: {set(sizes)}"
