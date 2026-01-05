@@ -290,8 +290,10 @@ class ManageDiscardService:
                 "flagged the associated ID-task as 'out of date'"
             )
         elif isinstance(fp_obj, QuestionPage):
-            msg = f"QuestionPage for paper {fp_obj.paper.paper_number} "
-            f"page {fp_obj.page_number} question index {fp_obj.question_index}"
+            msg = (
+                f"QuestionPage for paper {fp_obj.paper.paper_number} "
+                f"page {fp_obj.page_number} question index {fp_obj.question_index}"
+            )
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
             self._discard_question_page(user_obj, fp_obj)
