@@ -127,7 +127,13 @@ def get_parser() -> argparse.ArgumentParser:
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
+    # versioned-id and highlander cannot both be set to true.
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
+    parser.add_argument(
+        "--highlander",
+        action="store_true",
+        help="Run the demo with only a single version of the assessment (there can be only one)",
+    )
     parser.add_argument("--half-marks", dest="half_marks", action="store_true")
     parser.add_argument(
         "--muck",
@@ -262,12 +268,16 @@ def launch_huey_processes() -> list[subprocess.Popen]:
     ]
 
 
-def upload_demo_assessment_spec_file() -> None:
+def upload_demo_assessment_spec_file(*, highlander=False) -> None:
     """Upload a demo assessment spec."""
     print("Uploading demo assessment spec")
-    spec_file = demo_files / "demo_assessment_spec.toml"
-    # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
-    run_plom_cli_command(f"upload-spec {spec_file}")
+    if highlander:
+        spec_file = demo_files / "demo_assessment_spec_single_version.toml"
+        run_plom_cli_command(f"upload-spec {spec_file}")
+    else:
+        spec_file = demo_files / "demo_assessment_spec.toml"
+        # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+        run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
@@ -314,31 +324,44 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - successfully built {yes_soln_pdf_filename}")
 
 
-def build_demo_assessment_source_pdfs() -> None:
+def build_demo_assessment_source_pdfs(*, highlander=False) -> None:
     """Build the demo source PDF files."""
     print("Building assessment / solution source pdfs from tex in temp dirs")
-    for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
-        _build_with_and_without_soln(demo_files / filename)
+    if highlander:
+        _build_with_and_without_soln(demo_files / "assessment_v1")
+    else:
+        for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
+            _build_with_and_without_soln(demo_files / filename)
 
 
-def upload_demo_assessment_source_files():
+def upload_demo_assessment_source_files(*, highlander=False):
     """Upload demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
-    for v in (1, 2, 3):
-        source_pdf = f"assessment_v{v}.pdf"
-        # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
-        run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
+    if highlander:
+        run_plom_cli_command(f"upload-source assessment_v1.pdf -v 1")
+    else:
+        for v in (1, 2, 3):
+            source_pdf = f"assessment_v{v}.pdf"
+            # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+            run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
 
 
-def upload_demo_solution_files():
+def upload_demo_solution_files(*, highlander=False):
     """Use 'plom_solution_spec' to upload demo solution spec and source pdfs."""
     print("Uploading demo solution spec")
     soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
-    for v in [1, 2, 3]:
-        soln_pdf_path = f"assessment_v{v}_solutions.pdf"
-        run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
+    if highlander:
+        run_django_manage_command(
+            f"plom_soln_sources upload -v 1 assessment_v1_solutions.pdf"
+        )
+    else:
+        for v in [1, 2, 3]:
+            soln_pdf_path = f"assessment_v{v}_solutions.pdf"
+            run_django_manage_command(
+                f"plom_soln_sources upload -v {v} {soln_pdf_path}"
+            )
 
 
 def upload_demo_classlist(length="normal", prename=True):
@@ -445,6 +468,7 @@ def run_demo_preparation_commands(
     solutions=True,
     prename=True,
     versioned_id=False,
+    highlander=False,
 ) -> bool:
     """Run commands to prepare a demo assessment.
 
@@ -464,6 +488,7 @@ def run_demo_preparation_commands(
         solutions = whether or not to upload solutions as part of the demo.
         prename = whether or not to prename some papers in the demo.
         versioned_id = whether or not to use multiple versions of the id pages.
+        highlander = if True, then run demo with only a single assessment version
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -480,7 +505,7 @@ def run_demo_preparation_commands(
         print("Stopping after users created.")
         return False
 
-    upload_demo_assessment_spec_file()
+    upload_demo_assessment_spec_file(highlander=highlander)
 
     saytime("Assessment specification is uploaded.")
 
@@ -488,10 +513,10 @@ def run_demo_preparation_commands(
         print("Stopping after assessment specification uploaded.")
         return False
 
-    build_demo_assessment_source_pdfs()
-    upload_demo_assessment_source_files()
+    build_demo_assessment_source_pdfs(highlander=highlander)
+    upload_demo_assessment_source_files(highlander=highlander)
     if solutions:
-        upload_demo_solution_files()
+        upload_demo_solution_files(highlander=highlander)
     upload_demo_classlist(length, prename)
 
     saytime("Finished uploading assessment sources and classlist.")
@@ -845,6 +870,13 @@ def main():
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
+    # make sure that versioned-id and highlander not both set
+    if args.versioned_id and args.highlander:
+        print(
+            "You cannot set both highlander and versioned-id. They are mutally exclusive."
+        )
+        return
+
     # we specify this directory relative to the plom_server
     global demo_files
     # TODO: better to just port all of this to importlib.resources
@@ -903,6 +935,7 @@ def main():
                 solutions=args.solutions,
                 prename=args.prename,
                 versioned_id=args.versioned_id,
+                highlander=args.highlander,
             ):
                 break
 
