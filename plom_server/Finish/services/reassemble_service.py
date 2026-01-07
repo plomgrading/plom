@@ -410,7 +410,7 @@ class ReassembleService:
                 "student_id": "",
                 "last_update": None,
                 "last_update_humanised": None,
-                "reassembled_status": "To Do",
+                "reassembled_status": HueyTaskTracker.TO_DO.label,
                 "reassembled_message": "",
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
