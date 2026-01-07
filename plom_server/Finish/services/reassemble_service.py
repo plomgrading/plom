@@ -5,17 +5,15 @@
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from datetime import datetime
-from io import BytesIO
-from pathlib import Path
 import random
 import tempfile
 import time
+from datetime import datetime
+from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 import arrow
-import zipfly
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
@@ -24,6 +22,7 @@ from django.utils.text import slugify
 from django_huey import db_task, get_queue
 import huey
 import huey.api
+import zipfly
 
 from plom.finish import make_cover, reassemble
 from plom_server.Base.models import HueyTaskTracker
