@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
@@ -392,7 +392,8 @@ class ReassembleService:
             )
         return outname
 
-    def get_all_paper_status_for_reassembly(self) -> list[dict[str, Any]]:
+    @staticmethod
+    def get_all_paper_status_for_reassembly() -> list[dict[str, Any]]:
         """Get the status information for all papers for reassembly.
 
         Returns:
@@ -411,6 +412,7 @@ class ReassembleService:
                 "last_update": None,
                 "last_update_humanised": None,
                 "reassembled_status": "To Do",
+                "reassembled_message": "",
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
                 "outdated": False,
@@ -456,6 +458,7 @@ class ReassembleService:
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
+            status[task.paper.paper_number]["reassembled_message"] = task.message
             # TODO: is always True
             status[task.paper.paper_number]["obsolete"] = task.obsolete
             if task.status == HueyTaskTracker.COMPLETE:
