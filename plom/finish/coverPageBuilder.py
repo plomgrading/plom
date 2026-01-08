@@ -93,8 +93,6 @@ def make_cover(
     # paper formatting
     m = 50  # margin
     page_top = 75
-    # leave some extra; we stretch to avoid single line on new page
-    page_bottom = 700
     extra_sep = 2  # some extra space for double hline near header
     w = 70  # box width
     w_label = 120  # label box width
@@ -113,6 +111,9 @@ def make_cover(
         papersize = "letter"
     paper_width, paper_height = pymupdf.paper_size(papersize)
     page = cover.new_page(width=paper_width, height=paper_height)
+
+    # leave some extra; we stretch to avoid single line on new page
+    page_bottom = paper_height - 2 * m
 
     vpos = page_top
 
