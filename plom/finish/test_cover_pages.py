@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
 from pytest import raises
@@ -189,3 +189,22 @@ def test_cover_page_title(tmp_path) -> None:
         pg = doc[0]
         text = pg.get_text()
     assert s in text
+
+
+def test_cover_page_very_long_label(tmp_path) -> None:
+    f = tmp_path / "foo.pdf"
+    data = [["long question label", 1, 3, 4], ["M" * 24, 1, 4, 6]]
+    makeCover(data, f, paper_num=123)
+    with pymupdf.open(f) as doc:
+        pg = doc[0]
+        text = pg.get_text()
+    assert "long question label" in text
+    # maybe not the entire "M" * 24 b/c it might be split in two lines
+    assert "MMMMMM" in text
+
+
+def test_cover_page_ridulously_long_is_error(tmp_path) -> None:
+    f = tmp_path / "foo.pdf"
+    data = [["M" * 999, 1, 4, 6]]
+    with raises(ValueError, match="too long"):
+        makeCover(data, f, paper_num=123)
