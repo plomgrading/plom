@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020, 2022-2024 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022-2024, 2026 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 # Copyright (C) 2023 Tam Nguyen
@@ -105,6 +105,7 @@ def makeCover(
     textsize = 12
     headersize = 16
     xxlsize = 20
+    minfontsize = 4
 
     paper_width, paper_height = papersize_portrait
     page = cover.new_page(width=paper_width, height=paper_height)
@@ -180,21 +181,30 @@ def makeCover(
             for j in range(len(headers) - 1)
         ]
 
+    def make_box_with_text(shape, rect, txt):
+        shape.draw_rect(r)
+        ts = 1.0 * textsize
+        while True:
+            excess = shape.insert_textbox(rect, txt, align=align, fontsize=ts)
+            if excess >= 0:
+                break
+            ts -= 0.5
+            if ts < minfontsize:
+                raise ValueError(
+                    f'Text "{txt}" too long for box even at minimum size {minfontsize}'
+                )
+
     page_row = 0
     for j, row in enumerate(tab):
         if page_row == 0:
             # Draw the header
             for header, r in zip(headers, make_boxes(vpos)):
-                shape.draw_rect(r)
-                excess = tw.fill_textbox(r, header, align=align, fontsize=textsize)
-                assert not excess, f'Table header "{header}" too long for box'
+                make_box_with_text(shape, r, header)
             vpos += deltav + extra_sep
             page_row += 1
 
         for txt, r in zip(row, make_boxes(vpos)):
-            shape.draw_rect(r)
-            excess = tw.fill_textbox(r, txt, align=align, fontsize=textsize)
-            assert not excess, f'Table entry "{txt}" too long for box'
+            make_box_with_text(shape, r, txt)
         vpos += deltav
         page_row += 1
 
@@ -215,9 +225,7 @@ def makeCover(
 
     # Draw the final totals row
     for txt, r in zip(totals, make_boxes(vpos + extra_sep)):
-        shape.draw_rect(r)
-        excess = tw.fill_textbox(r, txt, align=align, fontsize=textsize)
-        assert not excess, f'Table entry "{txt}" too long for box'
+        make_box_with_text(shape, r, txt)
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
 
