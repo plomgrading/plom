@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -430,7 +430,6 @@ def make_PDF(
     xcoord: float | None = None,
     ycoord: float | None = None,
     no_qr: bool = False,
-    fakepdf: bool = False,
     *,
     public_code: str | None = None,
     where: Path | None = None,
@@ -439,7 +438,7 @@ def make_PDF(
     font_subsetting: bool | None = None,
     paperstr: str | None = None,
     qr_code_size: float | int | None = None,
-) -> pathlib.Path | None:
+) -> pathlib.Path:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
     Take pages from each source (using `questions_versions`/`page_versions`) and
@@ -460,13 +459,6 @@ def make_PDF(
         ycoord: vertical positioning of the prename box, or a default
             if None or omitted.
         no_qr (bool): determine whether or not to paste in qr-codes.
-            Somewhat deprecated, definitely use it as kwarg if you're
-            writing new code.
-        fakepdf (bool): when true, the build empty "pdf" files by just
-            touching fhe files.  This is could be used in testing or to
-            save time when we have no use for the actual files.  Why?
-            Maybe later confirmation steps check these files exist or
-            something like that...
             Somewhat deprecated, definitely use it as kwarg if you're
             writing new code.
 
@@ -497,8 +489,7 @@ def make_PDF(
         qr_code_size: width/height of the QR codes.
 
     Returns:
-        pathlib.Path: the file that was just written, or None in the slightly
-        strange, perhaps deprecated ``fakepdf`` case.
+        pathlib.Path: the file that was just written.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
@@ -509,11 +500,6 @@ def make_PDF(
         save_name = where / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
         save_name = where / f"exam_{papernum:04}.pdf"
-
-    # make empty files instead of PDFs
-    if fakepdf:
-        save_name.touch()
-        return None
 
     if source_versions is not None:
         assert (
