@@ -199,6 +199,8 @@ def test_cover_page_very_long_label(tmp_path) -> None:
         pg = doc[0]
         text = pg.get_text()
     assert "long question label" in text
+    # maybe not the entire "M" * 24 b/c it might be split in two lines
+    assert "MMMMMM" in text
 
 
 def test_cover_page_ridulously_long_is_error(tmp_path) -> None:
