@@ -185,12 +185,16 @@ def make_cover(
             for j in range(len(headers) - 1)
         ]
 
-    def make_box_with_text(shape, rect, txt):
-        shape.draw_rect(r)
+    def make_box_with_text(tw, shape, rect, txt):
+        shape.draw_rect(rect)
+        rect += [1, 1, -1, -1]  # bit of padding
         ts = 1.0 * textsize
         while True:
-            excess = shape.insert_textbox(rect, txt, align=align, fontsize=ts)
-            if excess >= 0:
+            try:
+                tw.fill_textbox(rect, txt, align=align, fontsize=ts, warn=False)
+            except ValueError:
+                pass
+            else:
                 break
             ts -= 0.5
             if ts < minfontsize:
@@ -203,12 +207,12 @@ def make_cover(
         if page_row == 0:
             # Draw the header
             for header, r in zip(headers, make_boxes(vpos)):
-                make_box_with_text(shape, r, header)
+                make_box_with_text(tw, shape, r, header)
             vpos += deltav + extra_sep
             page_row += 1
 
         for txt, r in zip(row, make_boxes(vpos)):
-            make_box_with_text(shape, r, txt)
+            make_box_with_text(tw, shape, r, txt)
         vpos += deltav
         page_row += 1
 
@@ -229,7 +233,7 @@ def make_cover(
 
     # Draw the final totals row
     for txt, r in zip(totals, make_boxes(vpos + extra_sep)):
-        make_box_with_text(shape, r, txt)
+        make_box_with_text(tw, shape, r, txt)
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
 
