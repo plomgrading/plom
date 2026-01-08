@@ -819,13 +819,6 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
 
 def main():
     """The Plom demo script."""
-    # TODO: I guess?
-    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
-    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
-    os.environ["PLOM_SERVER"] = "http://localhost:8000"
-    os.environ["PLOM_USERNAME"] = "manager"
-    os.environ["PLOM_PASSWORD"] = "1234"
-
     saytime("")  # Launch the chatty timer.
 
     args = get_parser().parse_args()
@@ -844,6 +837,13 @@ def main():
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
+
+    # TODO: I guess?
+    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
+    os.environ["PLOM_SERVER"] = f"http://localhost:{args.port}"
+    os.environ["PLOM_USERNAME"] = "manager"
+    os.environ["PLOM_PASSWORD"] = "1234"
 
     # we specify this directory relative to the plom_server
     global demo_files
