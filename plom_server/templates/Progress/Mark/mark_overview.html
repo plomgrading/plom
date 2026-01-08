@@ -4,6 +4,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023, 2025 Colin B. Macdonald
     Copyright (C) 2025 Bryan Tanady
+    Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -34,9 +35,9 @@
     {% endif %}
     <div class="container w-100">
         {% for qidx, qlabel, qlabel_html in question_labels_html %}
-            <div class="row mb-2">
+            <div class="row justify-content-between mb-2">
                 {% for ver in versions %}
-                    <div class="col p-1">
+                    <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 p-1">
                         {% if task_counts|get_item:qidx|get_item:ver|get_item:"total" > 0 %}
                             {% include "Progress/Mark/mark_stats_card.html" with question_idx=qidx question_label_html=qlabel_html version=ver task_status_counts=task_counts|get_item:qidx|get_item:ver histogram_data=data_for_histograms|get_item:qidx|get_item:ver counts_and_markers=who_marked_how_many|get_item:qidx|get_item:ver %}
                         {% else %}
@@ -47,6 +48,8 @@
                     </div>
                 {% endfor %}
             </div>
+            <hr class="text-danger" />
+            <!-- DELETE ME -->
         {% endfor %}
     </div>
     <!-- include this for tool-tips on the progress bar -->
