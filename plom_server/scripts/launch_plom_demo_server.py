@@ -338,7 +338,7 @@ def upload_demo_assessment_source_files(*, highlander=False):
     """Upload demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     if highlander:
-        run_plom_cli_command(f"upload-source assessment_v1.pdf -v 1")
+        run_plom_cli_command("upload-source assessment_v1.pdf -v 1")
     else:
         for v in (1, 2, 3):
             source_pdf = f"assessment_v{v}.pdf"
@@ -354,7 +354,7 @@ def upload_demo_solution_files(*, highlander=False):
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
     if highlander:
         run_django_manage_command(
-            f"plom_soln_sources upload -v 1 assessment_v1_solutions.pdf"
+            "plom_soln_sources upload -v 1 assessment_v1_solutions.pdf"
         )
     else:
         for v in [1, 2, 3]:
@@ -873,7 +873,7 @@ def main():
     # make sure that versioned-id and highlander not both set
     if args.versioned_id and args.highlander:
         print(
-            "You cannot set both highlander and versioned-id. They are mutally exclusive."
+            "You cannot set both highlander and versioned-id. They are mutually exclusive."
         )
         return
 
