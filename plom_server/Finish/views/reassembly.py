@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.shortcuts import render
@@ -26,8 +26,7 @@ class ReassemblePapersView(ManagerRequiredView):
         context = self.build_context()
         if not SpecificationService.is_there_a_spec():
             return render(request, "Finish/finish_no_spec.html", context=context)
-        reas = ReassembleService()
-        all_paper_status = reas.get_all_paper_status_for_reassembly()
+        all_paper_status = ReassembleService.get_all_paper_status_for_reassembly()
         # Compute some counts required for the page
         n_papers = sum([1 for x in all_paper_status if x["used"]])
         n_not_ready = sum(
