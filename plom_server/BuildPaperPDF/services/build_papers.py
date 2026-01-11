@@ -58,7 +58,7 @@ def huey_build_single_paper(
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
-    """Build a single paper and prename it.
+    """Build a single paper and optionally prename it.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
