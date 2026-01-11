@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Andrew Rechnitzer
@@ -58,6 +58,14 @@ if not _:
     PAPERSIZE = "letter"
 else:
     PAPERSIZE = _
+
+
+# Size of the QR codes in the corners of papers.  The default is 70 points, or about 1 inch.
+__ = os.environ.get("PLOM_QR_CODE_SIZE")
+if not __:
+    PLOM_QR_CODE_SIZE = 70
+else:
+    PLOM_QR_CODE_SIZE = int(__)
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
