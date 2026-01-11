@@ -67,6 +67,8 @@ def _client_reject_list() -> list[dict[str, Any]]:
     #    "action": "warn",
     # },
 
+    min_recommended_version = "0.19.4"
+
     return [
         {
             "client-id": "org.plomgrading.PlomClient",
@@ -88,6 +90,17 @@ def _client_reject_list() -> list[dict[str, Any]]:
                 " Please upgrade your client to v0.19.2 or later."
             ),
             "action": "block",
+        },
+        {
+            "client-id": "org.plomgrading.PlomClient",
+            "version": min_recommended_version,
+            "operator": "<",
+            "reason": (
+                "Your Plom Client is older than this server's minimum "
+                f"recommended version of {min_recommended_version}."
+                " Please consider upgrading."
+            ),
+            "action": "warn",
         },
     ]
 
