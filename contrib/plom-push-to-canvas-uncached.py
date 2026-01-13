@@ -4,7 +4,8 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2023 Laurent Mackay
+# Copyright (C) 2025-2026 Aidan Murphy
 
 r"""Upload papers and grades to Canvas from Plom.
 
@@ -45,6 +46,12 @@ Solutions and Reports cannot be uploaded yet.
 
 Instructors and TAs can do this but in the past it would fail for
 the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
+
+Additional instructions for mastery/rubric-based grading:
+    Populate your Canvas assignment with the (LO) rubrics before running
+    the script.
+    Include the "--rubrics" option in the invocation and follow
+    the prompts.
 """
 
 import argparse
@@ -212,8 +219,20 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--reports",
         action="store_true",
+        default=False,
         help="""
             Upload individualized student reports, in addition to reassembled papers
+            (default: off).
+        """,
+    )
+
+    parser.add_argument(
+        "--rubrics",
+        action="store_true",
+        default=False,
+        help="""
+            Upload the student's score on each question to Canvas rubrics.
+            You will be prompted to select which Canvas rubric each Plom question
             (default: off).
         """,
     )
@@ -485,6 +504,83 @@ def get_canvas_id_dict(
     return canvas_ids
 
 
+def interactively_get_canvas_rubrics_dict(
+    canvas_assignment: canvasapi.assignment.Assignment,
+    plom_marks_list: list[dict[str, Any]],
+) -> dict[str, dict[int, dict]]:
+    """Get a dict of canvas rubric dicts to upload for each student.
+
+    The Canvas rubrics are specific to a given Canvas assignment.
+
+    Returns:
+        A dict of rubric dicts keyed by student ID, it looks like this:
+        {
+            student_id: {
+                rubric_id: {
+                    "rating_id": rating_id,
+                    "points": rubric_mark,
+                },
+                rubric_id: {
+                    "rating_id": rating_id,
+                    "points": rubric_mark,
+                },
+            },
+            student_id: {...},
+            student_id: {...},
+        }
+    """
+    plom_question_list = []
+
+    for key in plom_marks_list[0].keys():
+        # in the plom spreadsheet, columns ending in "_mark" denote
+        # scores per question
+        assert isinstance(key, str)
+        if key.endswith("_mark"):
+            plom_question_list.append(key)
+
+    # map plom questions to canvas rubrics
+    rubric_selection_dict = {
+        "None - this Plom question doesn't correspond to any rubrics": None
+    }
+    for rubric in canvas_assignment.rubric:
+        rubric_selection_dict.update(
+            {f"{rubric['description']} - {rubric['long_description']}": rubric}
+        )
+
+    plom_q_to_canvas_rubric = {}
+    for plom_question in plom_question_list:
+        prompt = f"Pick which Canvas rubric corresponds to the plom question '{plom_question.removesuffix('_mark')}'"
+        rubric = get_interactively_from_dict(rubric_selection_dict, prompt=prompt)
+        # we need the ID of each rubric score, so put in a conversion dict too
+        if rubric:
+            rubric["points_rating_conversion"] = {
+                rating["points"]: rating["id"] for rating in rubric["ratings"]
+            }
+        plom_q_to_canvas_rubric[plom_question] = rubric
+
+    # map student ID to canvas rubrics
+    student_id_to_rubrics = {}
+    for marks_dict in plom_marks_list:
+        student_id = marks_dict[PLOM_STUDENT_ID]
+
+        rubrics_dict = {}
+        for plom_q in plom_question_list:
+            canvas_rubric = plom_q_to_canvas_rubric[plom_q]
+            # None means user said plom_q to be ignored
+            if canvas_rubric is None:
+                continue
+            points = int(marks_dict[plom_q])
+            rating_id = canvas_rubric["points_rating_conversion"][points]
+            rubrics_dict[canvas_rubric["id"]] = {
+                "rating_id": rating_id,
+                "points": points,
+            }
+
+        student_id_to_rubrics[student_id] = rubrics_dict
+
+    return student_id_to_rubrics
+
+
 ###########################################################
 ###########################################################
 # functions to interact with a Plom server
@@ -614,10 +710,18 @@ def main():
 
     # put canvas submissions in a dict for fast recall
     # this dict is keyed by *canvas id* not student id
-    raw_submissions = canvas_assignment.get_submissions()
+    inclusions = []
+    if args.rubrics:
+        inclusions.append("rubric_assessment")  # magic string - see Canvas API
+    raw_submissions = canvas_assignment.get_submissions(include=inclusions)
     canvas_submissions = {}
     for submission in raw_submissions:
         canvas_submissions.update({submission.user_id: submission})
+
+    if args.rubrics:
+        student_rubrics = interactively_get_canvas_rubrics_dict(
+            canvas_assignment, student_marks
+        )
 
     # get canvas conversion dict - student id to canvas id
     if canvas_course_section:
@@ -638,7 +742,7 @@ def main():
         try:
             student_canvas_id = canvas_ids[student_id]
             # if the student has a Canvas id, this next line should never fail
-            # but it did in testing (note sure how to reproduce).
+            # but it did in testing (not sure how to reproduce).
             student_canvas_submission = canvas_submissions[student_canvas_id]
         except KeyError:
             print(
@@ -679,7 +783,7 @@ def main():
                 finally:
                     if os.path.exists(file_info["filename"]):
                         os.remove(file_info["filename"])
-            if args.post_grades:
+            if args.post_grades or args.rubrics:
                 successes.append(
                     {
                         "file/mark": score,
@@ -763,16 +867,26 @@ def main():
 
             time.sleep(random.uniform(0.1, 0.3))
 
-        if args.post_grades:
+        if args.post_grades or args.rubrics:
+            content_dict = {}
+            stuff = ""
+            if args.post_grades:
+                content_dict["submission"] = {}
+                content_dict["submission"]["posted_grade"] = score
+                stuff += f", mark {score}"
+            if args.rubrics:
+                content_dict["rubric_assessment"] = student_rubrics[student_id]
+                stuff += ", rubrics"
+
             try:
-                student_canvas_submission.edit(submission={"posted_grade": score})
+                student_canvas_submission.edit(**content_dict)
             except CanvasException as e:
                 print(e)
                 canvas_timeouts.append(
                     {
                         "paper_number": paper_number,
                         "student_id": student_id,
-                        "error": f"{e}\n mark {score} couldn't be uploaded.",
+                        "error": f"{e}\n {stuff} couldn't be uploaded.",
                     }
                 )
             time.sleep(random.uniform(0.1, 0.3))
