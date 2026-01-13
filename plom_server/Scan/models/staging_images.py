@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -30,6 +30,9 @@ class StagingImage(models.Model):
             call `get_image_type_display()`.  StagingImages typically start
             as UNREAD and then change their `image_type` as they are classified
             either by machine or by human.
+            UNREAD are really "Unclassified images": as the QR codes are read,
+            the images currently stay in the UNREAD state, until different code
+            classifies them according to the QR codes (and other available info).
         bundle: which StagingBundle does this image belong to?
         bundle_order: this is the "PDF page" of the image: the position within
             the bundle it came from.  One might say "page" but we don't b/c
@@ -43,7 +46,8 @@ class StagingImage(models.Model):
         rotation: currently this only deals with 0, 90, 180, 270, -90.
             fractional rotations are handled elsewhere,
         pushed: whether this bundle has been "pushed", making it ready for
-            marking and generally harder to change.
+            marking and generally harder to change.  Only certain image types
+            can be pushed, namely KNOWN, EXTRA and DISCARD.
         discard_reason: if the image is of type DISCARD, this will give
             human-readable explanation, such as who discarded it and what
             it was before.  Should generally be empty if this StagingImage
@@ -156,9 +160,6 @@ class StagingImage(models.Model):
             assert self.paper_number is None, "UNREAD must not have paper_number"
             assert self.page_number is None, "UNREAD must not have page_number"
             assert self.version is None, "UNREAD must not have version"
-            assert (
-                self.parsed_qr is None or not self.parsed_qr
-            ), "UNREAD must not have parsed_qr"
         elif self.image_type == KNOWN:
             assert self.paper_number is not None, "KNOWN must have paper_number"
             assert self.page_number is not None, "KNOWN must have page_number"
@@ -170,6 +171,10 @@ class StagingImage(models.Model):
         elif self.image_type == EXTRA:
             assert self.page_number is None, "EXTRA must not have page_number"
             assert self.version is None  # ?
+            if self.question_idx_list is None or self.paper_number is None:
+                assert (
+                    self.question_idx_list is None and self.paper_number is None
+                ), "EXTRA must know both question_idx_list AND paper_number (or neither)"
         elif self.image_type == DISCARD:
             assert self.discard_reason, "DISCARD must have discard_reason"
         elif self.image_type == ERROR:
@@ -178,15 +183,12 @@ class StagingImage(models.Model):
             raise ValueError("Unexpected value for enum")
 
         # And a pass over the fields
-        if self.parsed_qr:
-            assert self.image_type != UNREAD
-        if self.rotation:
-            assert self.image_type != UNREAD
         if self.pushed:
-            assert self.image_type not in (
-                UNREAD,
-                UNKNOWN,
-            ), "UNREAD or UNKNOWN StagingImages should never be pushed"
+            assert self.image_type in (
+                KNOWN,
+                EXTRA,
+                DISCARD,
+            ), f"Cannot push {self.get_image_type_display()}; only KNOWN, EXTRA, DISCARD should be pushed"
         if self.paper_number is not None:
             assert self.image_type in (
                 KNOWN,
@@ -200,11 +202,6 @@ class StagingImage(models.Model):
             assert (
                 self.image_type == EXTRA
             ), "Only EXTRA can optionally have question_idx_list"
-            # for now you must know both question_idx_list and paper_number
-            # but this could change in the future.
-            assert (
-                self.paper_number is not None
-            ), "For now, must know both question_idx_list AND paper_number"
         if self.discard_reason:
             assert self.image_type == DISCARD, "Only DISCARD should have discard_reason"
         if self.error_reason:

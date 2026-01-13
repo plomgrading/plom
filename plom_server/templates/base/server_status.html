@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024-2025 Colin B. Macdonald
+    Copyright (C) 2024-2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -25,6 +25,27 @@
                     ZXing-C++ v{{ zxingcpp_version }}
                 </p>
                 <!-- <p>TODO: load levels available?</p> -->
+            </div>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Server settings</h4>
+            <div class="card-text">
+                <p class="mb-1">
+                    Paper size: {{ papersize }}
+                    &nbsp;
+                    <span class="text-muted">({{ papersize_pts.0 }} &times; {{ papersize_pts.1 }} pts)</span>
+                </p>
+                <p class="text-muted small lh-2 ms-4">
+                    Plom generally respects the paper size of the
+                    source PDFs you provide; this setting effects
+                    <em>other</em> pages that Plom creates itself,
+                    such as reassembled papers and reports.  You can
+                    control this by setting the PAPERSIZE environment
+                    variable before starting the server: contact your
+                    server administrator if you need to change it.
+                </p>
             </div>
         </div>
     </div>

@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2026 Colin B. Macdonald
-# Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2024-2026 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
 
@@ -844,13 +844,6 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
 
 def main():
     """The Plom demo script."""
-    # TODO: I guess?
-    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
-    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
-    os.environ["PLOM_SERVER"] = "http://localhost:8000"
-    os.environ["PLOM_USERNAME"] = "manager"
-    os.environ["PLOM_PASSWORD"] = "1234"
-
     saytime("")  # Launch the chatty timer.
 
     args = get_parser().parse_args()
@@ -876,6 +869,13 @@ def main():
             "You cannot set both highlander and versioned-id. They are mutually exclusive."
         )
         return
+
+    # TODO: I guess?
+    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
+    os.environ["PLOM_SERVER"] = f"http://localhost:{args.port}"
+    os.environ["PLOM_USERNAME"] = "manager"
+    os.environ["PLOM_PASSWORD"] = "1234"
 
     # we specify this directory relative to the plom_server
     global demo_files

@@ -22,6 +22,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from plom.misc_utils import format_int_list_with_runs
 from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 
 from ..services import ScanService
@@ -324,7 +325,7 @@ class BundleLockView(ScannerRequiredView):
 
     def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         context = self.build_context()
-        bundle = ScanService().get_bundle_from_pk(bundle_id)
+        bundle = ScanService.get_bundle_from_pk(bundle_id)
         context.update({"slug": bundle.slug, "bundle_id": bundle_id})
         reasons = [f"{msg}" for msg in messages.get_messages(request)]
         context.update({"reasons": reasons})
@@ -483,16 +484,17 @@ class GeneratePaperPDFView(ScannerRequiredView):
 
         Args:
             request: The HTTP GET request.
+
+        Keyword Args:
             bundle_id: The ID of the bundle containing the scanned pages.
             paper_number: The paper number (within the bundle) to generate the PDF for.
 
         Returns:
             An HttpResponse containing the generated PDF, served with content type 'application/pdf'.
         """
-        scanner = ScanService()
-        bundle = scanner.get_bundle_from_pk(bundle_id)
+        bundle = ScanService.get_bundle_from_pk(bundle_id)
 
-        all_pages = scanner.get_bundle_pages_info_list(bundle)
+        all_pages = ScanService.get_bundle_pages_info_list(bundle)
         paper_pages_info = [
             p
             for p in all_pages
@@ -505,16 +507,16 @@ class GeneratePaperPDFView(ScannerRequiredView):
         output_pdf = pymupdf.Document()
         for page_info in sorted(paper_pages_info, key=lambda x: x["order"]):
             try:
-                img_file = scanner.get_original_image(
+                img_file = ScanService.get_original_image(
                     bundle_id, int(page_info["order"])
                 )
                 img_bytes = img_file.read()
 
-                page = output_pdf.new_page(width=612, height=792)
+                page = output_pdf.new_page(-1, *Settings.get_paper_size_in_pts())
                 page.insert_image(page.rect, stream=img_bytes)
 
             except (ObjectDoesNotExist, FileNotFoundError):
-                page = output_pdf.new_page()
+                page = output_pdf.new_page(-1, *Settings.get_paper_size_in_pts())
                 page.insert_text(
                     (72, 72),
                     f"Error: Image for page order {page_info['order']} not found.",

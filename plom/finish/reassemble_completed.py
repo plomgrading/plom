@@ -13,7 +13,7 @@ from typing import Any
 from tqdm import tqdm
 
 from plom.finish import with_finish_messenger
-from plom.finish.coverPageBuilder import makeCover
+from plom.finish.coverPageBuilder import make_cover
 from plom.finish.examReassembler import reassemble
 from plom.question_labels import get_question_label
 
@@ -52,7 +52,7 @@ def download_data_build_cover_page(
             arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
 
     covername = tmpdir / f"cover_{int(t):04}.pdf"
-    makeCover(
+    make_cover(
         arg,
         covername,
         paper_num=t,

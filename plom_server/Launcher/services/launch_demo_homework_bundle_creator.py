@@ -9,6 +9,8 @@ from time import sleep
 
 import pymupdf
 
+from plom_server.Base.services import Settings
+
 
 class DemoHWBundleCreationService:
     """Handle creating homework bundles in the demo."""
@@ -31,7 +33,7 @@ class DemoHWBundleCreationService:
         doc = pymupdf.Document()
         for i, ql in enumerate(question_idx_lists):
             pg = i + 1
-            doc.new_page(-1)
+            doc.new_page(-1, *Settings.get_paper_size_in_pts())
             if ql:
                 txt = f"Paper.page {paper_number}.{pg}: contains info for question(s) {ql}"
             else:

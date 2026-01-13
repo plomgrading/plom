@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
 import logging
@@ -13,6 +13,7 @@ from typing import Any
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction, IntegrityError
+from django.db.models import Min, Max
 
 from plom.create import PlomClasslistValidator
 from .preparation_dependency_service import assert_can_modify_classlist
@@ -47,13 +48,10 @@ class StagingStudentService:
 
         This appropriately returns (None, None) if there are no prenamed papers.
         """
-        query = StagingStudent.objects.filter(paper_number__isnull=False).order_by(
-            "paper_number"
+        x = StagingStudent.objects.filter(paper_number__isnull=False).aggregate(
+            Min("paper_number"), Max("paper_number")
         )
-        if query.exists():
-            return (query.first().paper_number, query.last().paper_number)
-        else:
-            return (None, None)
+        return x["paper_number__min"], x["paper_number__max"]
 
     @staticmethod
     def get_prenamed_papers() -> dict[int, tuple[str, str]]:

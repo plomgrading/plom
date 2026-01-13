@@ -454,9 +454,10 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
         self.remove_bundle_by_pk(bundle_obj.pk)
 
-    def get_original_image(self, bundle_id: int, index: int) -> File:
+    @classmethod
+    def get_original_image(cls, bundle_id: int, index: int) -> File:
         """Get the original, full-resolution image file from the database."""
-        return self.get_image(bundle_id, index).baseimage.image_file
+        return cls.get_image(bundle_id, index).baseimage.image_file
 
     @staticmethod
     def check_for_duplicate_hash(pdf_hash: str) -> bool:
@@ -474,18 +475,15 @@ class ScanService:
         except ObjectDoesNotExist:
             return None
 
-    def get_bundle_from_pk(self, pk: int) -> StagingBundle:
+    @staticmethod
+    def get_bundle_from_pk(pk: int) -> StagingBundle:
         """Return a StagingBundle object from its pk."""
         return StagingBundle.objects.get(pk=pk)
 
-    @transaction.atomic
-    def get_image(self, bundle_id: int, index: int) -> StagingImage:
+    @staticmethod
+    def get_image(bundle_id: int, index: int) -> StagingImage:
         """Get an image from the database from bundle-id, and index."""
-        bundle = self.get_bundle_from_pk(bundle_id)
-        return StagingImage.objects.get(
-            bundle=bundle,
-            bundle_order=index,
-        )
+        return StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=index)
 
     @transaction.atomic
     def get_first_image(self, bundle_obj: StagingBundle) -> StagingImage:
@@ -1258,10 +1256,9 @@ class ScanService:
 
         self.push_bundle_to_server(bundle_obj_pk, user_obj)
 
+    @staticmethod
     @transaction.atomic
-    def get_bundle_pages_info_list(
-        self, bundle_obj: StagingBundle
-    ) -> list[dict[str, Any]]:
+    def get_bundle_pages_info_list(bundle_obj: StagingBundle) -> list[dict[str, Any]]:
         """List of info about the pages in a bundle in bundle order.
 
         Args:

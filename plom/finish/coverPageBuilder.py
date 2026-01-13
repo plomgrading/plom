@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020, 2022-2024 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022-2024, 2026 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 # Copyright (C) 2023 Tam Nguyen
@@ -9,18 +9,16 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from __future__ import annotations
-
 import pathlib
+from copy import deepcopy
 from typing import Any
 
 import pymupdf
 
 from plom.misc_utils import local_now_to_simple_string, pprint_score
-from .examReassembler import papersize_portrait
 
 
-def makeCover(
+def make_cover(
     tab: list[list[Any]],
     pdfname: pathlib.Path,
     *,
@@ -29,6 +27,7 @@ def makeCover(
     info: tuple[str | None, str | None] | None = None,
     solution: bool = False,
     footer: bool = True,
+    papersize: str = "",
 ) -> None:
     """Create html page of name ID etc and table of marks.
 
@@ -47,6 +46,8 @@ def makeCover(
             and student id (str).
         solution: whether or not this is a cover page for solutions.
         footer: whether to print a footer with timestamp.
+        papersize: a string describing the paper size.  If omitted or
+            empty, use "letter" as the default.
 
     Returns:
         None
@@ -79,7 +80,8 @@ def makeCover(
             pprint_score(sum([row[2] for row in tab])),
             str(sum([row[3] for row in tab])),
         ]
-    # writer likes strings, cast table contents as str
+    # writer likes strings, cast table contents as str, but first make a copy
+    tab = deepcopy(tab)
     for row in tab:
         row[1] = str(row[1])  # version
         if not solution:
@@ -91,8 +93,6 @@ def makeCover(
     # paper formatting
     m = 50  # margin
     page_top = 75
-    # leave some extra; we stretch to avoid single line on new page
-    page_bottom = 700
     extra_sep = 2  # some extra space for double hline near header
     w = 70  # box width
     w_label = 120  # label box width
@@ -105,9 +105,15 @@ def makeCover(
     textsize = 12
     headersize = 16
     xxlsize = 20
+    minfontsize = 4
 
-    paper_width, paper_height = papersize_portrait
+    if not papersize:
+        papersize = "letter"
+    paper_width, paper_height = pymupdf.paper_size(papersize)
     page = cover.new_page(width=paper_width, height=paper_height)
+
+    # leave some extra; we stretch to avoid single line on new page
+    page_bottom = paper_height - 2 * m
 
     vpos = page_top
 
@@ -180,21 +186,34 @@ def makeCover(
             for j in range(len(headers) - 1)
         ]
 
+    def make_box_with_text(tw, shape, rect, txt):
+        shape.draw_rect(rect)
+        rect += [1, 1, -1, -1]  # bit of padding
+        ts = 1.0 * textsize
+        while True:
+            try:
+                tw.fill_textbox(rect, txt, align=align, fontsize=ts, warn=False)
+            except ValueError:
+                pass
+            else:
+                break
+            ts -= 0.5
+            if ts < minfontsize:
+                raise ValueError(
+                    f'Text "{txt}" too long for box even at minimum size {minfontsize}'
+                )
+
     page_row = 0
     for j, row in enumerate(tab):
         if page_row == 0:
             # Draw the header
             for header, r in zip(headers, make_boxes(vpos)):
-                shape.draw_rect(r)
-                excess = tw.fill_textbox(r, header, align=align, fontsize=textsize)
-                assert not excess, f'Table header "{header}" too long for box'
+                make_box_with_text(tw, shape, r, header)
             vpos += deltav + extra_sep
             page_row += 1
 
         for txt, r in zip(row, make_boxes(vpos)):
-            shape.draw_rect(r)
-            excess = tw.fill_textbox(r, txt, align=align, fontsize=textsize)
-            assert not excess, f'Table entry "{txt}" too long for box'
+            make_box_with_text(tw, shape, r, txt)
         vpos += deltav
         page_row += 1
 
@@ -215,9 +234,7 @@ def makeCover(
 
     # Draw the final totals row
     for txt, r in zip(totals, make_boxes(vpos + extra_sep)):
-        shape.draw_rect(r)
-        excess = tw.fill_textbox(r, txt, align=align, fontsize=textsize)
-        assert not excess, f'Table entry "{txt}" too long for box'
+        make_box_with_text(tw, shape, r, txt)
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
 

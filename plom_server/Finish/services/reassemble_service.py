@@ -1,21 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from datetime import datetime
-from io import BytesIO
-from pathlib import Path
 import random
 import tempfile
 import time
+from datetime import datetime
+from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 import arrow
-import zipfly
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
@@ -24,10 +22,11 @@ from django.utils.text import slugify
 from django_huey import db_task, get_queue
 import huey
 import huey.api
+import zipfly
 
-from plom.finish.coverPageBuilder import makeCover
-from plom.finish.examReassembler import reassemble
+from plom.finish import make_cover, reassemble
 from plom_server.Base.models import HueyTaskTracker
+from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
@@ -40,7 +39,7 @@ from .student_marks_service import StudentMarkService
 
 
 class ReassembleService:
-    """Class that contains helper functions for sending data to plom-finish."""
+    """Tools for reassembling papers after marking."""
 
     def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall marking completion progress."""
@@ -126,13 +125,14 @@ class ReassembleService:
 
         cover_page_table_data = cls._get_cover_page_info(paper, solution)
         cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
-        makeCover(
+        make_cover(
             cover_page_table_data,
             cover_pdf_name,
             paper_num=paper.paper_number,
             info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
+            papersize=Settings.get_paper_size(),
         )
         return cover_pdf_name
 
@@ -319,6 +319,7 @@ class ReassembleService:
                 marked_pages=[],
                 dnm_images=[],
                 nonmarked_images=[],
+                papersize=Settings.get_paper_size(),
             )
             with open(tf.name, "rb") as pdf_file:
                 pdf_bytestream = BytesIO(pdf_file.read())
@@ -386,10 +387,12 @@ class ReassembleService:
                 marked_pages=marked_pages,
                 dnm_images=dnm_pages,
                 nonmarked_images=nonmarked,
+                papersize=Settings.get_paper_size(),
             )
         return outname
 
-    def get_all_paper_status_for_reassembly(self) -> list[dict[str, Any]]:
+    @staticmethod
+    def get_all_paper_status_for_reassembly() -> list[dict[str, Any]]:
         """Get the status information for all papers for reassembly.
 
         Returns:
@@ -407,7 +410,8 @@ class ReassembleService:
                 "student_id": "",
                 "last_update": None,
                 "last_update_humanised": None,
-                "reassembled_status": "To Do",
+                "reassembled_status": HueyTaskTracker.TO_DO.label,
+                "reassembled_message": "",
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
                 "outdated": False,
@@ -453,6 +457,7 @@ class ReassembleService:
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
+            status[task.paper.paper_number]["reassembled_message"] = task.message
             # TODO: is always True
             status[task.paper.paper_number]["obsolete"] = task.obsolete
             if task.status == HueyTaskTracker.COMPLETE:

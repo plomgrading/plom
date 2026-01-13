@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
@@ -111,15 +111,22 @@ class ScanStagingImageTypesTests(TestCase):
                 version=1,
             )
 
-    def test_illegal_unread_stagingimage_qrcode_errors(self) -> None:
-        with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* parsed_qr"):
-            baker.make(
-                StagingImage,
-                bundle=self.bundle,
-                bundle_order=1,
-                image_type=StagingImage.UNREAD,
-                parsed_qr={"some": "dict"},
-            )
+    def test_unread_stagingimage_parsed_qr_rotation_fields(self) -> None:
+        # not an error for an UNREAD to have parsed_qr and rotation fields
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=1,
+            image_type=StagingImage.UNREAD,
+            parsed_qr={"some": "dict"},
+        )
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=1,
+            image_type=StagingImage.UNREAD,
+            rotation=90,
+        )
         baker.make(
             StagingImage,
             bundle=self.bundle,
@@ -134,3 +141,60 @@ class ScanStagingImageTypesTests(TestCase):
             image_type=StagingImage.UNREAD,
             parsed_qr=None,
         )
+
+    def test_illegal_pushed_stagingimage_errors(self) -> None:
+        with self.assertRaisesRegex(ValidationError, "Cannot push"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNREAD,
+                pushed=True,
+            )
+        with self.assertRaisesRegex(ValidationError, "Cannot push"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNKNOWN,
+                pushed=True,
+            )
+        with self.assertRaisesRegex(ValidationError, "Cannot push"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.ERROR,
+                error_reason="error",
+                pushed=True,
+            )
+
+    def test_extra_stagingimage_flexibility_about_unknown_or_not(self) -> None:
+        baker.make(
+            StagingImage,
+            bundle=self.bundle,
+            bundle_order=1,
+            image_type=StagingImage.EXTRA,
+            question_idx_list=[1, 3],
+            paper_number=42,
+        )
+        # This test could change in the future: both of these should not be errors
+        # if we want to allow knowing either/or.
+        with self.assertRaisesRegex(ValidationError, "EXTRA .* both"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.EXTRA,
+                # question_idx_list=[1, 3],
+                paper_number=42,
+            )
+        with self.assertRaisesRegex(ValidationError, "EXTRA .* both"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.EXTRA,
+                question_idx_list=[1, 3],
+                # paper_number=42,
+            )
