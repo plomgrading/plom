@@ -746,12 +746,18 @@ def run_the_randomarker(*, port, half_marks=False):
         subprocess.check_call(split(cmd))
 
 
-def push_demo_rubrics():
+def push_demo_rubrics(*, highlander=False):
     """Push demo rubrics from toml."""
-    # note - hard coded question range here.
-    for question_idx in (1, 2, 3, 4):
-        rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
+    if highlander:
+        rubric_toml = (
+            demo_files / "demo_assessment_rubrics_single_version_combined.toml"
+        )
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
+    else:
+        # note - hard coded question range here.
+        for question_idx in (1, 2, 3, 4):
+            rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
+            run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
 
 
 def create_and_link_question_tags():
@@ -773,7 +779,9 @@ def create_and_link_question_tags():
         )
 
 
-def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> bool:
+def run_marking_commands(
+    *, port: int, stop_after=None, half_marks=False, highlander=False
+) -> bool:
     """Run commands to step through the marking process in the demo.
 
     In order it runs:
@@ -787,6 +795,7 @@ def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> boo
         stop_after = after which step should the demo be stopped, see list above.
         port = the port on which the demo is running.
         half_marks = whether or not to use +/- half-mark rubrics
+        highlander = whether or not to run with only a single version of the assessment
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -795,7 +804,7 @@ def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> boo
     if half_marks:
         print("Using +/- 0.5 rubrics")
         run_django_manage_command("plom_rubrics half manager")
-    push_demo_rubrics()
+    push_demo_rubrics(highlander=highlander)
     if stop_after == "rubrics":
         return False
 
@@ -953,7 +962,10 @@ def main():
             saytime("Launching marking process ...")
             print(">> Ready for marking")
             if not run_marking_commands(
-                port=args.port, stop_after=stop_after, half_marks=args.half_marks
+                port=args.port,
+                stop_after=stop_after,
+                half_marks=args.half_marks,
+                highlander=args.highlander,
             ):
                 break
 
