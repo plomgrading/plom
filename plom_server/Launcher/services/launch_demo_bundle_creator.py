@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Andrew Rechnitzer
@@ -305,6 +305,8 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
+            # TODO: this function is never called, Issue #4127.
+            # TODO: when this is fixed, it will need updated to use PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
             rect = pymupdf.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
             pdf_doc[-1].insert_image(
