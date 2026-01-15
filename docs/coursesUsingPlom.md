@@ -367,7 +367,7 @@ Approx: 1100 students over 10 courses
 | Math319          | ?+Final                              | 62            |                                                                    |
 | Math317          | ?                                    | 137           |                                                                    |
 | Math320          | ?+Final                              | 72            |                                                                    |
-| Phys117          | Final                                | 360           |  440 students if vantage section included?                         |
+| Phys117          | Final                                | 370           |                                                                    |
 | Phys157          | Midterm(x2)+Final                    | 1000          |                                                                    |
 
 TODO: BIO + MICB + ENG (+others?)
