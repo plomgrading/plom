@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 import hashlib
 import pathlib
@@ -124,12 +124,16 @@ def get_source(version: int) -> dict[str, Any]:
         uploaded---the file hash and original filename.
     """
     try:
-        pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
+        src = PaperSourcePDF.objects.filter(version=version).get()
         return {
-            "version": pdf_obj.version,
+            "version": src.version,
             "uploaded": True,
-            "hash": pdf_obj.pdf_hash,
-            "original_filename": pdf_obj.original_filename,
+            "hash": src.pdf_hash,
+            "original_filename": src.original_filename,
+            "page_count": src.page_count,
+            "paper_size_name": src.paper_size_name,
+            "paper_size_width": src.paper_size_width,
+            "paper_size_height": src.paper_size_height,
         }
     except PaperSourcePDF.DoesNotExist:
         return {"version": version, "uploaded": False}
@@ -148,7 +152,14 @@ def get_list_of_sources() -> list[dict[str, Any]]:
 # TODO: mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
 # source_pdf: pathlib.Path | resources.abc.Traversable,
 def store_source_pdf(
-    version: int, source_pdf: pathlib.Path, *, original_filename: str = ""
+    version: int,
+    source_pdf: pathlib.Path,
+    *,
+    original_filename: str = "",
+    page_count: int | None = None,
+    paper_size_name: str = "",
+    paper_size_width: float | None = None,
+    paper_size_height: float | None = None,
 ) -> None:
     """Store one of the source PDF files into the database.
 
@@ -160,6 +171,12 @@ def store_source_pdf(
 
     Keyword Args:
         original_filename: optionally, the the original filename of this data.
+        page_count: optionally, the number of pages.
+        paper_size_name: optionally, a string describing the page sizes,
+            or something like "various" if the pages are of inhomogeneous
+            sizes (which sounds like a bad  idea).
+        paper_size_width: optionally, width of page in pts.
+        paper_size_height: optionally, height of page in pts.
 
     Returns:
         None
@@ -188,6 +205,10 @@ def store_source_pdf(
             source_pdf=dj_file,
             pdf_hash=hash_value,
             original_filename=original_filename,
+            page_count=page_count,
+            paper_size_name=paper_size_name,
+            paper_size_width=paper_size_width,
+            paper_size_height=paper_size_height,
         )
 
 
@@ -227,18 +248,45 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
                 fh.write(chunk)
         # now check it has correct number of pages
         with pymupdf.open(tmp_pdf) as doc:
-            if doc.page_count != int(required_pages):
+            page_count = doc.page_count
+            if page_count != int(required_pages):
                 return (
                     False,
-                    f"Uploaded pdf has {doc.page_count} pages, but spec requires {required_pages}",
+                    f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}",
                 )
+            # keep the first page's size in full float precision
+            w_float, h_float = doc[0].rect.width, doc[0].rect.height
+            # collect all page sizes using "set" to combine any rounding to the same int
+            sizes = set(
+                [(round(p.rect.width), round(p.rect.height)) for p in doc.pages()]
+            )
+            if len(sizes) == 1:
+                ((w, h),) = sizes
+                paper_size_name = "custom"
+                # find a name for the size in pymupdf's dict (which uses ints):
+                for name, sz in pymupdf.paper_sizes().items():
+                    if sz == (w, h):
+                        paper_size_name = name
+            else:
+                paper_size_name = "various (!)"
+                w_float = None
+                h_float = None
+
         if hasattr(in_memory_file, "name"):
             original_filename = in_memory_file.name
         else:
             original_filename = ""
         # now try to store it
         try:
-            store_source_pdf(version, tmp_pdf, original_filename=original_filename)
+            store_source_pdf(
+                version,
+                tmp_pdf,
+                original_filename=original_filename,
+                page_count=page_count,
+                paper_size_name=paper_size_name,
+                paper_size_width=w_float,
+                paper_size_height=h_float,
+            )
         except ValueError as err:
             return (False, str(err))
 

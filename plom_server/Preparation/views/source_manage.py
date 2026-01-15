@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
@@ -19,6 +19,7 @@ from django.contrib import messages
 
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 
 from ..services import SourceService
@@ -33,17 +34,38 @@ class SourceUploadForm(forms.Form):
 
 class SourceManageView(ManagerRequiredView):
     def build_context(self):
+        server_paper_size_name = Settings.get_paper_size()
+        sources = SourceService.get_list_of_sources()
+        paper_warnings = []
+        sizes = []
+        for src in sources:
+            sz = src.get("paper_size_name")
+            if sz:
+                sizes.append(sz)
+                if sz != server_paper_size_name:
+                    paper_warnings.append(
+                        f'version {src["version"]} paper size "{sz}" '
+                        f'does not match server "{server_paper_size_name}"'
+                    )
+        if len(set(sizes)) > 1:
+            paper_warnings.append(
+                f"Inconsistent paper sizes between versions: {set(sizes)}"
+            )
+
         return {
             "form": SourceUploadForm(),
             "num_versions": SpecificationService.get_n_versions(),
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
-            "sources": SourceService.get_list_of_sources(),
+            "sources": sources,
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": SourceService.check_pdf_duplication(),
+            "server_paper_size_name": server_paper_size_name,
+            "paper_warnings": paper_warnings,
         }
 
-    def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
+    def get(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
+        """Get to render the sources management page or specify a version to download a PDF."""
         # if no spec then redirect to the dependency conflict page
         if not SpecificationService.is_there_a_spec():
             messages.add_message(
@@ -66,8 +88,8 @@ class SourceManageView(ManagerRequiredView):
         context = self.build_context()
         return render(request, "Preparation/source_manage.html", context)
 
-    def post(self, request, version=None):
-        # This function is HTMX only
+    def post(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
+        """HTMX posts here will add a new source PDF file to the server."""
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX POST requests are allowed")
 
@@ -111,8 +133,8 @@ class SourceManageView(ManagerRequiredView):
 
         return render(request, "Preparation/source_item_view.html", context)
 
-    def delete(self, request, version):
-        # This function is HTMX only
+    def delete(self, request: HttpRequest, *, version: int) -> HttpResponse:
+        """HTMX delete here will remove a source PDF file from the server."""
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
 
