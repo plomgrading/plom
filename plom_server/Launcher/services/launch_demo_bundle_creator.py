@@ -308,6 +308,8 @@ class DemoBundleCreationService:
             # TODO: this function is never called, Issue #4127.
             # TODO: when this is fixed, it will need updated to use PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
+            print("*" * 80)
+            print("# TODO: this code never happens, why is 70*2 for?")
             rect = pymupdf.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
@@ -544,6 +546,9 @@ class DemoBundleCreationService:
         Returns:
             None.
         """
+        if duplicate_qr:
+            print(f"====: duplicate_qr={duplicate_qr}")
+            print(assigned_papers_ids)
         with pymupdf.open() as all_pdf_documents:
             for paper in assigned_papers_ids:
                 with pymupdf.open(paper["path"]) as pdf_document:
@@ -596,8 +601,12 @@ class DemoBundleCreationService:
                     scribble_answer_in_box(pdf_document, 3, 0.62, 0.455)
                     scribble_answer_in_box(pdf_document, 3, 0.62, 0.725)
 
+                    if duplicate_qr:
+                        print(f"DEBUG: {duplicate_qr}, paper_number={paper_number}")
                     # insert a qr-code from a previous page after scribbling
                     if paper_number in duplicate_qr:
+                        print("* - " * 80)
+                        print(paper_number)
                         self.insert_qr_from_previous_page(pdf_document, paper_number)
 
                     # append a garbage page after the scribbling
