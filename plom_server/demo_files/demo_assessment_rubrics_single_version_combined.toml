@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2026 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 [[rubric]]
 kind = "relative"
@@ -81,9 +82,6 @@ tags = "demo"
 meta = "Student handwriting is making marking hard"
 question_index = 1
 username = "manager"
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
 
 [[rubric]]
 kind = "relative"
@@ -201,9 +199,6 @@ tags = "demo"
 meta = "Student handwriting is making marking hard"
 question_index = 2
 username = "manager"
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
 
 [[rubric]]
 kind = "relative"
@@ -303,10 +298,6 @@ tags = "demo"
 meta = "Student needs to learn how to set out their work so someone else can follow."
 question_index = 3
 username = "manager"
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2025 Aidan Murphy
 
 [[rubric]]
 kind = "absolute"

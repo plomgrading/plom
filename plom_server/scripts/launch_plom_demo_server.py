@@ -127,7 +127,8 @@ def get_parser() -> argparse.ArgumentParser:
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
-    # versioned-id and highlander cannot both be set to true.
+    # Note that versioned-id and highlander cannot both be set to true.
+    # We enforce that with a test in main()
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
     parser.add_argument(
         "--highlander",
@@ -269,7 +270,11 @@ def launch_huey_processes() -> list[subprocess.Popen]:
 
 
 def upload_demo_assessment_spec_file(*, highlander=False) -> None:
-    """Upload a demo assessment spec."""
+    """Upload a demo assessment spec.
+
+    KWargs:
+        highlander = if True, then upload the demo spec for a single assessment version
+    """
     print("Uploading demo assessment spec")
     if highlander:
         spec_file = demo_files / "demo_assessment_spec_single_version.toml"
@@ -325,7 +330,11 @@ def _build_with_and_without_soln(source_path: Path) -> None:
 
 
 def build_demo_assessment_source_pdfs(*, highlander=False) -> None:
-    """Build the demo source PDF files."""
+    """Build the demo source PDF files.
+
+    KWargs:
+        highlander = if True, then only build the version-1 source pdf
+    """
     print("Building assessment / solution source pdfs from tex in temp dirs")
     if highlander:
         _build_with_and_without_soln(demo_files / "assessment_v1")
@@ -335,7 +344,11 @@ def build_demo_assessment_source_pdfs(*, highlander=False) -> None:
 
 
 def upload_demo_assessment_source_files(*, highlander=False):
-    """Upload demo assessment source pdfs."""
+    """Upload demo assessment source pdfs.
+
+    KWargs:
+        highlander = if True, then only upload the version-1 source pdf
+    """
     print("Uploading demo assessment source pdfs")
     if highlander:
         run_plom_cli_command("upload-source assessment_v1.pdf -v 1")
@@ -347,7 +360,12 @@ def upload_demo_assessment_source_files(*, highlander=False):
 
 
 def upload_demo_solution_files(*, highlander=False):
-    """Use 'plom_solution_spec' to upload demo solution spec and source pdfs."""
+    """Upload demo solution spec and solution pdfs.
+
+    KWargs:
+        highlander = if True, then only upload the version-1 solution pdf
+
+    """
     print("Uploading demo solution spec")
     soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
@@ -872,12 +890,11 @@ def main():
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
-    # make sure that versioned-id and highlander not both set
+    # make sure that versioned-id and highlander not both set True
     if args.versioned_id and args.highlander:
-        print(
+        raise ValueError(
             "You cannot set both highlander and versioned-id. They are mutually exclusive."
         )
-        return
 
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
