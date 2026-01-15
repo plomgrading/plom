@@ -259,11 +259,9 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # TODO: this function is never called, Issue #4127.
-            # TODO: when this is fixed, it will need updated to use PLOM_QR_CODE_SIZE
-            # hard-code one qr-code in top-left
-            print("*" * 80)
-            print("# TODO: this code never happens, why is 70*2 for?")
-            rect = pymupdf.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
+            qr_size = settings.PLOM_QR_CODE_SIZE
+            # hard-code additional qr-code next to the top-left one
+            rect = pymupdf.Rect(50, 50 + qr_size, 50 + qr_size, 50 + qr_size * 2)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
