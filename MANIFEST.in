@@ -56,6 +56,7 @@ include plom_server/**/tests/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.pdf
 include plom_server/Preparation/useful_files_for_testing/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.csv
+include plom_server/Finish/services/*.css
 include plom_server/Finish/templatetags/*.py
 include plom_server/Finish/useful_files_for_testing/*.toml
 include plom_server/TestingSupport/config_files/*.toml
