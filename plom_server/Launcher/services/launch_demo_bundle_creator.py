@@ -7,7 +7,6 @@
 
 from collections import defaultdict
 import csv
-from dataclasses import asdict
 from pathlib import Path
 import shutil
 import tempfile
@@ -52,52 +51,6 @@ class DemoBundleCreationService:
                         }
                     )
         return classlist
-
-    def split_into_bundle_files(self, out_file, config):
-        """Split the single scribble PDF file into the designated number of bundles.
-
-        Args:
-            out_file (path.Path): path to the monolithic scribble PDF
-            config (PlomServerConfig): server config
-        """
-        bundles = config.bundles
-        default_n_pages = SpecificationService.get_n_pages()
-
-        with pymupdf.open(out_file) as scribble_pdf:
-            from_page_idx = 0
-            to_page_idx = default_n_pages
-            curr_bundle_idx = 0
-            bundle_doc = None
-
-            for paper in range(1, config.num_to_produce + 1):
-                print("PAPER", paper)
-
-                curr_bundle = asdict(bundles[curr_bundle_idx])
-                for key in curr_bundle.keys():
-                    if key in [
-                        "garbage_page_papers",
-                        "duplicate_page_papers",
-                    ]:
-                        if paper in curr_bundle[key]:
-                            to_page_idx += 1
-                    elif key == "duplicates":
-                        for inst in curr_bundle["duplicates"]:
-                            if inst["paper"] == paper:
-                                to_page_idx += 1
-
-                if paper == curr_bundle["first_paper"]:
-                    bundle_doc = pymupdf.open()
-                bundle_doc.insert_pdf(
-                    scribble_pdf, from_page=from_page_idx, to_page=to_page_idx
-                )
-                if paper == curr_bundle["last_paper"]:
-                    bundle_filename = out_file.stem + f"{curr_bundle_idx + 1}.pdf"
-                    bundle_doc.save(out_file.with_name(bundle_filename))
-                    bundle_doc.close()
-                    curr_bundle_idx += 1
-
-                from_page_idx = to_page_idx + 1
-                to_page_idx = from_page_idx + default_n_pages - 1
 
     def _get_extra_page_copy(self, dest_dir: Path) -> Path:
         """Get a copy of the extra-page pdf to the specified directory."""
