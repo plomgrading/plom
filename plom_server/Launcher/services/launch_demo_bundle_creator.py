@@ -194,8 +194,9 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
+            qr_size = settings.PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
@@ -346,8 +347,9 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
+            qr_size = settings.PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             # the 2nd qr-code goes in NW corner.
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
@@ -368,8 +370,9 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
+            qr_size = settings.PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             # the 2nd qr-code goes in NW corner.
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
@@ -384,7 +387,7 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             # the 2nd qr-code goes in NW corner.
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
@@ -409,7 +412,6 @@ class DemoBundleCreationService:
             # now we have a qr-code and 2 bar-codes which are not
             # valid for plom, and finally one valid scrap-paper code
             # for the top-left corner. The barcodes are 300-wide and 100-high
-            # and the qr-codes are 70x70
             pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             pdf_doc[-1].insert_text(
                 (120, 60),
@@ -417,8 +419,9 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
-            # 0th item is the qr-code --- put it in standard place
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            qr_size = settings.PLOM_QR_CODE_SIZE
+            # 0th item is the qr-code --- put it in the top-left corner
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[0]), overlay=True
             )
@@ -439,11 +442,11 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[3]), overlay=True
             )
-            rect = pymupdf.Rect(w - 50 - 70, 50, w - 50, 50 + 70)
+            rect = pymupdf.Rect(w - 50 - qr_size, 50, w - 50, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[0]), overlay=True
             )
