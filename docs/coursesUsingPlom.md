@@ -349,6 +349,7 @@ Approx: 1100 students over 10 courses
 
 | Course           |  Tasks                               | # students    |  Notes                                                             |
 |----------        |----------------------------------    |:----------:   |-------------------------------                                     |
+| Apsc278          | Final                                | 230           |                                                                    |
 | Math100          | Midterm(x2)+Final                    | 3300          |                                                                    |
 | Math180          | Midterm(x2)+Final                    | 700           |                                                                    |
 | Math215/255      | Midterm(x3)+Final                    | 400           |                                                                    |
