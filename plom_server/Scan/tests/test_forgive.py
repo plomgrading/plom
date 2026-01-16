@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
@@ -12,11 +12,8 @@ from ..services import ForgiveMissingService
 
 
 class TestForgiveMissingService(TestCase):
-    """Test various facets which replace missing fixed pages."""
 
-    # A bit minimal: TODO: test properly
-
-    @config_test({"test_spec": "demo"})
+    @config_test({"test_spec": "demo", "num_to_produce": 5})
     def setUp(self) -> None:
         pass
 
@@ -28,11 +25,16 @@ class TestForgiveMissingService(TestCase):
             ForgiveMissingService.get_substitute_image(7, 4)
 
     def test_subs_bundle_get_non_existant_paper(self) -> None:
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Paper 7 does not exist"):
             ForgiveMissingService.get_substitute_page_info(7, 4)
         user: User = baker.make(User)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Paper 7 does not exist"):
             ForgiveMissingService.forgive_missing_fixed_page(user, 7, 4)
+
+    def test_subs_bundle_get_subs_bundle_not_made(self) -> None:
+        user: User = baker.make(User)
+        with self.assertRaisesRegex(Bundle.DoesNotExist, "not yet created"):
+            ForgiveMissingService.forgive_missing_fixed_page(user, 1, 4)
 
     def test_subs_bundle_no_bundle_erase(self) -> None:
         ForgiveMissingService.erase_all_substitute_images_and_their_bundle()

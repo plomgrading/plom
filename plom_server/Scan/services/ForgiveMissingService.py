@@ -213,7 +213,13 @@ def get_substitute_image(page_number: int, version: int) -> Image:
         ObjectDoesNotExist: probably Image.DoesNotExist if the page number
             or version are out of range, TODO: but this is not tested.
     """
-    bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+    try:
+        bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+    except Bundle.DoesNotExist as e:
+        # in Python 3.11:
+        # e.add_note()
+        # reraise
+        raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
     bundle_order = n_pages * version + page_number
