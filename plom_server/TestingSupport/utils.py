@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 from functools import wraps
 from inspect import getfile
@@ -21,6 +21,11 @@ def config_test(config_input: str | dict | None = None):
     You can apply it to individual methods or to the `setUp()` method of
     your Test class.
 
+    The papers will be made but this generally doesn't make bundles,
+    actual scanned images, etc.
+    If you pass `"auto_init_tasks": True` then the tasks will be created,
+    but still with no images.
+
     Args:
         config_input: the configuration is taken from this dict which
             can have various fields.  One important field is
@@ -32,8 +37,9 @@ def config_test(config_input: str | dict | None = None):
             and other things.
 
     Some lesser-used or perhaps deprecated features:
-      * The configuration can also be a single string.  TODO: Unused?
-      * I believe this is what the files TestingSupport/config_files/*.tom;
+      * The configuration can also be a single string.  Currently unused
+        in practice, but pulls from the `configfiles` directory.
+      * I believe this is what the files TestingSupport/config_files/*.toml
         are supposed to be for.  But nothing is using them right now...?
     """
 

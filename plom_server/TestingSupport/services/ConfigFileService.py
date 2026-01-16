@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 """Handle building a server database from a config file."""
 
 import sys
 from dataclasses import asdict, dataclass
+from importlib import resources
 from pathlib import Path
 from typing import List, Optional
 
@@ -88,19 +89,23 @@ class PlomServerConfig:
                 )
 
 
-def read_server_config(path: str | Path) -> PlomServerConfig:
+def read_server_config(toml_filename: str) -> PlomServerConfig:
     """Create a server config from a TOML file.
 
     Args:
-        path (string or Path-like): location of the config toml file
+        toml_filename: name of the config toml file.  This is relative
+            to the ``config_files`` directory.
 
     Returns:
         PlomServerConfig: a server config.
     """
-    with open(path, "rb") as config_file:
+    import plom_server.TestingSupport as _TestingSupportModule
+
+    parent = resources.files(_TestingSupportModule) / "config_files"
+    with (parent / toml_filename).open("rb") as config_file:
         try:
             config = tomllib.load(config_file)
-            config["parent_dir"] = Path(path).parent
+            config["parent_dir"] = parent
             return PlomServerConfig(**config)
         except tomllib.TOMLDecodeError as e:
             raise ValueError(e) from e
