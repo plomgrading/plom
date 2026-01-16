@@ -127,14 +127,16 @@ def get_parser() -> argparse.ArgumentParser:
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
-    # Note that versioned-id and highlander cannot both be set to true.
+    # Note that if versioned-id is true then multiversion must be false.
     # We enforce that with a test in main()
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
     parser.add_argument(
-        "--highlander",
+        "--multiversion",
         action="store_true",
-        help="Run the demo with only a single version of the assessment (there can be only one)",
+        default=True,
+        help="Run the demo with multiple-versions (ie 3) when true (which is default) or only a single version of the assessment when false.",
     )
+    parser.add_argument("--no-multiversion", dest="multiversion", action="store_false")
     parser.add_argument("--half-marks", dest="half_marks", action="store_true")
     parser.add_argument(
         "--muck",
@@ -269,19 +271,19 @@ def launch_huey_processes() -> list[subprocess.Popen]:
     ]
 
 
-def upload_demo_assessment_spec_file(*, highlander=False) -> None:
+def upload_demo_assessment_spec_file(*, multiversion=True) -> None:
     """Upload a demo assessment spec.
 
     KWargs:
-        highlander = if True, then upload the demo spec for a single assessment version
+        multiversion= if True upload demo soln spec for 3 version assessment, else upload spec for a single assessment version.
     """
     print("Uploading demo assessment spec")
-    if highlander:
-        spec_file = demo_files / "demo_assessment_spec_single_version.toml"
-        run_plom_cli_command(f"upload-spec {spec_file}")
-    else:
+    if multiversion:
         spec_file = demo_files / "demo_assessment_spec.toml"
         # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+        run_plom_cli_command(f"upload-spec {spec_file}")
+    else:
+        spec_file = demo_files / "demo_assessment_spec_single_version.toml"
         run_plom_cli_command(f"upload-spec {spec_file}")
 
 
@@ -329,57 +331,57 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - successfully built {yes_soln_pdf_filename}")
 
 
-def build_demo_assessment_source_pdfs(*, highlander=False) -> None:
+def build_demo_assessment_source_pdfs(*, multiversion=True) -> None:
     """Build the demo source PDF files.
 
     KWargs:
-        highlander = if True, then only build the version-1 source pdf
+        multiversion = if True build 3 versions, else only build the version-1 source pdf
     """
     print("Building assessment / solution source pdfs from tex in temp dirs")
-    if highlander:
-        _build_with_and_without_soln(demo_files / "assessment_v1")
-    else:
+    if multiversion:
         for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
             _build_with_and_without_soln(demo_files / filename)
+    else:
+        _build_with_and_without_soln(demo_files / "assessment_v1")
 
 
-def upload_demo_assessment_source_files(*, highlander=False):
+def upload_demo_assessment_source_files(*, multiversion=True):
     """Upload demo assessment source pdfs.
 
     KWargs:
-        highlander = if True, then only upload the version-1 source pdf
+        multiversion = if True upload 3 source pdfs, else only upload the version-1 source pdf
     """
     print("Uploading demo assessment source pdfs")
-    if highlander:
-        run_plom_cli_command("upload-source assessment_v1.pdf -v 1")
-    else:
+    if multiversion:
         for v in (1, 2, 3):
             source_pdf = f"assessment_v{v}.pdf"
             # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
             run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
+    else:
+        run_plom_cli_command("upload-source assessment_v1.pdf -v 1")
 
 
-def upload_demo_solution_files(*, highlander=False):
+def upload_demo_solution_files(*, multiversion=True):
     """Upload demo solution spec and solution pdfs.
 
     KWargs:
-        highlander = if True, then only upload the version-1 solution pdf
+        multiversion = if True upload 3 soln pdfs, else only upload the version-1 solution pdf
 
     """
     print("Uploading demo solution spec")
     soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
-    if highlander:
-        run_django_manage_command(
-            "plom_soln_sources upload -v 1 assessment_v1_solutions.pdf"
-        )
-    else:
+    if multiversion:
         for v in [1, 2, 3]:
             soln_pdf_path = f"assessment_v{v}_solutions.pdf"
             run_django_manage_command(
                 f"plom_soln_sources upload -v {v} {soln_pdf_path}"
             )
+    else:
+        run_django_manage_command(
+            "plom_soln_sources upload -v 1 assessment_v1_solutions.pdf"
+        )
 
 
 def upload_demo_classlist(length="normal", prename=True):
@@ -486,7 +488,7 @@ def run_demo_preparation_commands(
     solutions=True,
     prename=True,
     versioned_id=False,
-    highlander=False,
+    multiversion=True,
 ) -> bool:
     """Run commands to prepare a demo assessment.
 
@@ -506,7 +508,7 @@ def run_demo_preparation_commands(
         solutions = whether or not to upload solutions as part of the demo.
         prename = whether or not to prename some papers in the demo.
         versioned_id = whether or not to use multiple versions of the id pages.
-        highlander = if True, then run demo with only a single assessment version
+        multiversion= if True run with 3 versions of the assessment, else run demo with only a single assessment version
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -523,7 +525,7 @@ def run_demo_preparation_commands(
         print("Stopping after users created.")
         return False
 
-    upload_demo_assessment_spec_file(highlander=highlander)
+    upload_demo_assessment_spec_file(multiversion=multiversion)
 
     saytime("Assessment specification is uploaded.")
 
@@ -531,10 +533,10 @@ def run_demo_preparation_commands(
         print("Stopping after assessment specification uploaded.")
         return False
 
-    build_demo_assessment_source_pdfs(highlander=highlander)
-    upload_demo_assessment_source_files(highlander=highlander)
+    build_demo_assessment_source_pdfs(multiversion=multiversion)
+    upload_demo_assessment_source_files(multiversion=multiversion)
     if solutions:
-        upload_demo_solution_files(highlander=highlander)
+        upload_demo_solution_files(multiversion=multiversion)
     upload_demo_classlist(length, prename)
 
     saytime("Finished uploading assessment sources and classlist.")
@@ -764,18 +766,18 @@ def run_the_randomarker(*, port, half_marks=False):
         subprocess.check_call(split(cmd))
 
 
-def push_demo_rubrics(*, highlander=False):
+def push_demo_rubrics(*, multiversion=True):
     """Push demo rubrics from toml."""
-    if highlander:
-        rubric_toml = (
-            demo_files / "demo_assessment_rubrics_single_version_combined.toml"
-        )
-        run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
-    else:
+    if multiversion:
         # note - hard coded question range here.
         for question_idx in (1, 2, 3, 4):
             rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
             run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
+    else:
+        rubric_toml = (
+            demo_files / "demo_assessment_rubrics_single_version_combined.toml"
+        )
+        run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
 
 
 def create_and_link_question_tags():
@@ -798,7 +800,7 @@ def create_and_link_question_tags():
 
 
 def run_marking_commands(
-    *, port: int, stop_after=None, half_marks=False, highlander=False
+    *, port: int, stop_after=None, half_marks=False, multiversion=True
 ) -> bool:
     """Run commands to step through the marking process in the demo.
 
@@ -813,7 +815,7 @@ def run_marking_commands(
         stop_after = after which step should the demo be stopped, see list above.
         port = the port on which the demo is running.
         half_marks = whether or not to use +/- half-mark rubrics
-        highlander = whether or not to run with only a single version of the assessment
+        multiversion= whether or not to run with multiple versions of the assessment
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -822,7 +824,7 @@ def run_marking_commands(
     if half_marks:
         print("Using +/- 0.5 rubrics")
         run_django_manage_command("plom_rubrics half manager")
-    push_demo_rubrics(highlander=highlander)
+    push_demo_rubrics(multiversion=multiversion)
     if stop_after == "rubrics":
         return False
 
@@ -890,10 +892,10 @@ def main():
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
-    # make sure that versioned-id and highlander not both set True
-    if args.versioned_id and args.highlander:
+    # make sure that if versioned-id is true, then multiversion cannot be false.
+    if args.versioned_id and not args.multiversion:
         raise ValueError(
-            "You cannot set both highlander and versioned-id. They are mutually exclusive."
+            "When versioned-id is set to true, you cannot have multiversion set false."
         )
 
     # TODO: I guess?
@@ -961,7 +963,7 @@ def main():
                 solutions=args.solutions,
                 prename=args.prename,
                 versioned_id=args.versioned_id,
-                highlander=args.highlander,
+                multiversion=args.multiversion,
             ):
                 break
 
@@ -982,7 +984,7 @@ def main():
                 port=args.port,
                 stop_after=stop_after,
                 half_marks=args.half_marks,
-                highlander=args.highlander,
+                multiversion=args.multiversion,
             ):
                 break
 
