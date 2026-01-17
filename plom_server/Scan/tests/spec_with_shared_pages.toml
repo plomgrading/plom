@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022-2026 Colin B. Macdonald
+
+# modified an older version of the demo to experiment with shared pages
+
+name = "example_shared"
+longName = "Midterm example using shared pages"
+
+numberOfVersions = 2
+numberOfPages = 6
+totalMarks = 20
+numberOfQuestions = 6
+idPage = 1
+doNotMarkPages = [2]
+allowSharedPages = true
+
+[[question]]
+label = "Q1a"
+pages = [3]
+mark = 1
+
+[[question]]
+label = "Q1b"
+pages = [3]
+mark = 2
+
+[[question]]
+label = "Q1c"
+pages = [3]
+mark = 2
+
+[[question]]
+label = "Q2"
+pages = [4]
+mark = 5
+
+[[question]]
+label = "Q3"
+pages = [5, 6]
+mark = 9
+
+[[question]]
+label = "Q3ex"
+pages = [6]
+mark = 1

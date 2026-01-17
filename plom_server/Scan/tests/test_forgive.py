@@ -138,8 +138,7 @@ class TestForgiveServiceSharedPages(TestCase):
         with self.assertRaisesRegex(ValueError, "already has an image"):
             ForgiveMissingService.forgive_missing_fixed_page(user, pn, pg)
 
-        # discard their image
-        # TODO: can we just assert they are None initially?  Like never scanned?
+        # discard their common image
         for f in fps:
             ManageDiscardService().discard_pushed_fixed_page(user, f.pk)
 
