@@ -26,6 +26,9 @@ def config_test(config_input: str | dict | None = None):
     If you pass `"auto_init_tasks": True` then the tasks will be created,
     but still with no images.
 
+    The `"test_sources"` field is necessary if you want to have sources,
+    the PDF files used to build papers.
+
     Args:
         config_input: the configuration is taken from this dict which
             can have various fields.  One important field is

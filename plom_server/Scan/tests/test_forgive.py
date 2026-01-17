@@ -37,12 +37,7 @@ class TestForgiveMissingService(TestCase):
 
 class TestForgiveService(TestCase):
 
-    # TODO: some option I can pass here to make this work?  And if so
-    # TODO: document that in the utils.py thing
-    # @config_test({"test_spec": "demo", "num_to_produce": 5})
-
-    # this "string" form not used anywhere else but needed there?
-    @config_test("full_demo_config.toml")
+    @config_test({"test_spec": "demo", "num_to_produce": 5, "test_sources": "demo"})
     def setUp(self) -> None:
         pass
 
