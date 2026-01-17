@@ -306,7 +306,6 @@ out_of = 3
 text = "Newton's law of cooling mentioned but no diff eqn or general solution"
 username = "manager"
 question_index = 4
-versions = "1"
 
 [[rubric]]
 kind = "absolute"
