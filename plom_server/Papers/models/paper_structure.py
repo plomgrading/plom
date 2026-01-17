@@ -31,7 +31,7 @@ class Paper(models.Model):
 
 
 class MobilePage(models.Model):
-    """Mobile pages can represent pages in a paper that are "unexpected" in some way, say without QR codes.
+    """Mobile pages represent pages in a paper that not tied to a physical page, are "unexpected" in some way, such as without QR codes.
 
     The "fixed" or "expected" pages typically have QR codes on a hardcopy.
     But for example, any scrap work or extra pages might be attached to the paper.
@@ -75,19 +75,19 @@ class MobilePage(models.Model):
 
 
 class FixedPage(models.Model):
-    """Table to store information about the "fixed" pages within a given paper.
+    """Table to store information about the "fixed"/expected pages within a given paper.
 
     Every "fixed" page has a definite page-number and version-number,
-    these appear here in the base class.  However, only QuestionPages have
-    question indices, so we put that information in various derived classes.
+    related to the assessment specification.
 
-    IDPage, DNMPage = for the single IDpage and (zero or more) DNMPages, currently always v=1.
-    QuestionPage = has question index and a non-trivial version.
+    There are various sorts of pages.  Currently that information is stored in
+    other tables linking back to this one.  For example, two or more QuestionPage
+    can a single FixedPage.
+    IDPage and DNMPage also point to a particular FixedPage.  Currently DNMPages
+    always have version 1.
 
-    The base class should contain all info common to these
-    classes. Searching on this base class allows us to search over all
-    pages, while searching on a derived class only searches over those
-    page types.
+    If you're searching on FixedPage, you may want to search on one QuestionPage,
+    IDPage or DNMPage instead.  Long-term, maybe we don't need FixedPage at all.
 
     paper (ref to Paper): the test-paper to which this page image belongs
     image (ref to Image): the image (see note below)
@@ -118,35 +118,49 @@ class FixedPage(models.Model):
     """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+    # TODO: consider moving to the other tables
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     page_number = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
 
 
-class DNMPage(FixedPage):
+class DNMPage(models.Model):
     """Table to store information about the do-not-mark pages.
 
     At present all DNM pages have version 1. This may change in the
     future.
     """
 
-    pass
+    fixed_page = models.ForeignKey(FixedPage, null=True, on_delete=models.SET_NULL)
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+    page_number = models.PositiveIntegerField(null=False)
+    image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
+    version = models.PositiveIntegerField(null=False)
 
 
-class IDPage(FixedPage):
+class IDPage(models.Model):
     """Table to store information about the IDPage of the paper.
 
     At present the ID page always has version 1. This may change in the
     future.
     """
 
-    pass
+    fixed_page = models.ForeignKey(FixedPage, null=True, on_delete=models.SET_NULL)
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+    page_number = models.PositiveIntegerField(null=False)
+    image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
+    version = models.PositiveIntegerField(null=False)
 
 
-class QuestionPage(FixedPage):
+class QuestionPage(models.Model):
     """Table to store information about the pages in Question groups.
 
     question_index (int): the question that this page belongs to.
     """
 
+    fixed_page = models.ForeignKey(FixedPage, null=True, on_delete=models.SET_NULL)
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+    page_number = models.PositiveIntegerField(null=False)
+    image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
+    version = models.PositiveIntegerField(null=False)
     question_index = models.PositiveIntegerField(null=False)
