@@ -91,3 +91,8 @@ class TestForgiveService(TestCase):
         # some checks about the image name, ensure the substitution really happened
         assert "__forgive" in img.original_name
         assert f"p{pg}" in img.original_name
+
+        info = ForgiveMissingService.get_substitute_page_info(pn, pg)
+        assert info["kind"] == "QuestionPage"
+        assert info["paper_number"] == pn
+        assert info["page_number"] == pg
