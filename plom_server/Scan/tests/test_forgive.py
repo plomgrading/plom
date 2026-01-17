@@ -59,23 +59,28 @@ class TestForgiveService(TestCase):
         ForgiveMissingService.create_system_bundle_of_substitute_pages()
 
         pn = 2
-        pg = 3
-        f = FixedPage.objects.get(paper__paper_number=pn, page_number=pg)
+        # Note: FixedPage.objects.get only works when no shared pages but
+        # its ok here as used for testing.
+        f = FixedPage.objects.get(paper__paper_number=pn, page_number=3)
+        # Note: the test harness stuff currently does not populate the image
+        # field.  We baker it.  Could change in the future...
         img = baker.make(Image, bundle=bundle, bundle_order=0)
         f.image = img
         f.save()
 
-        with self.assertRaisesRegex(ValueError, "already has an image"):
-            ForgiveMissingService.forgive_missing_fixed_page(user, pn, pg)
-
-        pg += 1
+        pg = 4
         f = FixedPage.objects.get(paper__paper_number=pn, page_number=pg)
         img = baker.make(Image, bundle=bundle, bundle_order=1)
         f.image = img
         f.save()
 
+        # setup complete, now test
+
+        with self.assertRaisesRegex(ValueError, "already has an image"):
+            ForgiveMissingService.forgive_missing_fixed_page(user, pn, 3)
+
         # ensure f is missing a page, by discarding
-        ManageDiscardService().discard_pushed_fixed_page(user, f.pk, dry_run=False)
+        ManageDiscardService().discard_pushed_fixed_page(user, f.pk)
         f.refresh_from_db()
         self.assertIsNone(f.image)
 
@@ -88,6 +93,73 @@ class TestForgiveService(TestCase):
         assert f"p{pg}" in img.original_name
 
         info = ForgiveMissingService.get_substitute_page_info(pn, pg)
-        assert info["kind"] == "QuestionPage"
-        assert info["paper_number"] == pn
-        assert info["page_number"] == pg
+        self.assertEqual(info["kind"], "QuestionPage")
+        self.assertEqual(info["paper_number"], pn)
+        self.assertEqual(info["page_number"], pg)
+
+
+class TestForgiveServiceSharedPages(TestCase):
+
+    @config_test(
+        {
+            "test_spec": "spec_with_shared_pages.toml",
+            "num_to_produce": 5,
+            "test_sources": "demo",
+        }
+    )
+    def setUp(self) -> None:
+        pass
+
+    def test_discard_and_then_forgive_missing_shared_page(self) -> None:
+        bundle = baker.make(Bundle, pdf_hash="qwerty")
+        user: User = baker.make(User)
+
+        ForgiveMissingService.create_system_bundle_of_substitute_pages()
+
+        pn = 2
+        pg = 3
+        # page 3 is shared by 3 QuestionPages, as per the spec_with_shared_pages.toml
+        fps = FixedPage.objects.filter(paper__paper_number=pn, page_number=pg)
+        order = 0
+        img = baker.make(Image, bundle=bundle, bundle_order=order)
+        order += 1
+
+        assert len(fps) == 3
+        for f in fps:
+            # Note: the test harness stuff currently does not populate the image
+            # field.  We baker it.  Could change in the future...
+            self.assertIsNone(f.image)
+            f.image = img
+            f.save()
+        # note all three share the same image, as would be the case in practice
+
+        # setup complete, now test
+
+        with self.assertRaisesRegex(ValueError, "already has an image"):
+            ForgiveMissingService.forgive_missing_fixed_page(user, pn, pg)
+
+        # discard their image
+        # TODO: can we just assert they are None initially?  Like never scanned?
+        for f in fps:
+            ManageDiscardService().discard_pushed_fixed_page(user, f.pk)
+
+        ForgiveMissingService.forgive_missing_fixed_page(user, pn, pg)
+
+        fps = FixedPage.objects.filter(paper__paper_number=pn, page_number=pg)
+        for f in fps:
+            img = f.image
+            # some checks about the image name, ensure the substitution really happened
+            assert "__forgive" in img.original_name
+            assert f"p{pg}" in img.original_name
+
+        # they should (probably) all share a single image
+        image_ids = [f.image.id for f in fps]
+        self.assertEqual(len(set(image_ids)), 1)
+
+        info = ForgiveMissingService.get_substitute_page_info(pn, pg)
+        self.assertEqual(info["kind"], "QuestionPage")
+        self.assertEqual(info["paper_number"], pn)
+        self.assertEqual(info["page_number"], pg)
+
+        # the same subs image we saw three links to earlier
+        self.assertEqual(info["substitute_image_pk"], image_ids[0])

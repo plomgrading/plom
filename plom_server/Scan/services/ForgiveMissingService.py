@@ -269,6 +269,10 @@ def forgive_missing_fixed_page(
 ) -> None:
     """Replace any FixedPages using this paper number page number with a substitute page image.
 
+    Note: its really "forgive missing page": in the shared pages case,
+    there would be multiple QuestionPages ("FixedPages") pointing at this
+    page.  This routine will forgive *all* of them
+
     Args:
         user_obj: the user-object who is doing the forgiving.
         paper_number: the paper.
