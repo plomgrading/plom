@@ -127,8 +127,6 @@ def get_parser() -> argparse.ArgumentParser:
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
-    # Note that if versioned-id is true then multiversion must be false.
-    # We enforce that with a test in main()
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
     parser.add_argument(
         "--multiversion",
@@ -440,10 +438,10 @@ def read_hack_and_resave_qvmap(filepath: Path):
     with open(filepath) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
-    # even paper numbers should get id-version 3
+    # even paper numbers should get id-version 2
     for n, row in enumerate(qvmap_rows):
         if int(row["paper_number"]) % 2 == 0:
-            qvmap_rows[n]["id.version"] = 3
+            qvmap_rows[n]["id.version"] = 2
     headers = list(qvmap_rows[0].keys())
     with open(filepath, "w") as fh:
         writer = csv.DictWriter(fh, fieldnames=headers)
@@ -549,11 +547,12 @@ def run_demo_preparation_commands(
     # if using multiple versions of the id page, then
     # after populating, download the qvmap, clear the db,
     # hack the qvmap and then upload the new qvmap.
-    if versioned_id:
+    if versioned_id and multiversion:
         with TemporaryDirectory() as tdir:
             tmp_qv_path = Path(tdir) / "tmp_qv_filename.csv"
             download_the_qvmap(tmp_qv_path)
             depopulate_the_database()
+            # hard-coded to use 3 versions
             read_hack_and_resave_qvmap(tmp_qv_path)
             upload_the_qvmap(tmp_qv_path)
 
@@ -891,12 +890,6 @@ def main():
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
-
-    # make sure that if versioned-id is true, then multiversion cannot be false.
-    if args.versioned_id and not args.multiversion:
-        raise ValueError(
-            "When versioned-id is set to true, you cannot have multiversion set false."
-        )
 
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
