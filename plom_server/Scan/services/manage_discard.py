@@ -247,11 +247,12 @@ class ManageDiscardService:
         """Discard a fixed page, such an ID page, DNM page or Question page.
 
         Args:
-            user_obj (User): the User who is discarding
-            fixedpage_pk (int): the pk of the fixed page to be discarded
+            user_obj: the User who is discarding
+            fixedpage_pk: the id of the fixed page to be discarded
 
         Keyword Args:
-            dry_run: really do it or just pretend?
+            dry_run: really do it or just pretend?  Careful, defaults to True!
+                i.e., out of the box, this method is a no-op.
 
         Returns:
             A status message about what happened (or, if ``dry_run`` is True,
