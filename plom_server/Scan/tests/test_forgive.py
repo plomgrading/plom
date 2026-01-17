@@ -138,11 +138,18 @@ class TestForgiveServiceSharedPages(TestCase):
         with self.assertRaisesRegex(ValueError, "already has an image"):
             ForgiveMissingService.forgive_missing_fixed_page(user, pn, pg)
 
-        # discard their common image
-        for f in fps:
-            ManageDiscardService().discard_pushed_fixed_page(user, f.pk)
+        # First, say if we only discard 1 out of 3 of their common shared image...
+        ManageDiscardService().discard_pushed_fixed_page(user, fps[0].pk)
+        ManageDiscardService().discard_pushed_fixed_page(user, fps[1].pk)
+        # In this case, its still an error to try to forgive
+        with self.assertRaisesRegex(ValueError, "already has an image"):
+            ForgiveMissingService.forgive_missing_fixed_page(user, pn, pg)
 
+        # Now test that it works if we discard their shared common image over all
+        ManageDiscardService().discard_pushed_fixed_page(user, fps[2].pk)
         ForgiveMissingService.forgive_missing_fixed_page(user, pn, pg)
+
+        # Next we check the results are as expected
 
         fps = FixedPage.objects.filter(paper__paper_number=pn, page_number=pg)
         for f in fps:
