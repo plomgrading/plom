@@ -242,7 +242,7 @@ class ManageDiscardService:
         return msg
 
     def discard_pushed_fixed_page(
-        self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = True
+        self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = False
     ) -> str:
         """Discard a fixed page, such an ID page, DNM page or Question page.
 
@@ -251,8 +251,8 @@ class ManageDiscardService:
             fixedpage_pk: the id of the fixed page to be discarded
 
         Keyword Args:
-            dry_run: really do it or just pretend?  Careful, defaults to True!
-                i.e., out of the box, this method is a no-op.
+            dry_run: by default, we just do it.  Pass True if you want
+                to just pretend.
 
         Returns:
             A status message about what happened (or, if ``dry_run`` is True,
