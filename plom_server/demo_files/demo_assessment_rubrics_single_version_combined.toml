@@ -348,7 +348,6 @@ out_of = 0
 text = "Answer should include units\n(such as \"s\")"
 username = "manager"
 question_index = 4
-versions = ""
 
 
 [[rubric]]
