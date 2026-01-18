@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
@@ -19,13 +19,7 @@ from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
 from ..services import SpecificationService
-from ..models import (
-    Paper,
-    IDPage,
-    DNMPage,
-    QuestionPage,
-    PopulateEvacuateDBChore,
-)
+from ..models import Paper, FixedPage, PopulateEvacuateDBChore
 
 log = logging.getLogger("PaperCreatorService")
 
@@ -135,9 +129,7 @@ def huey_evacuate_whole_db(
     # TODO - decide if we should delete by table rather than by paper.
     # Table delete code follows below
     # with transaction.atomic():
-    #     DNMPage.objects.all().delete()
-    #     IDPage.objects.all().delete()
-    #     QuestionPage.objects.all().delete()
+    #     FixedPage.objects.all().delete()
     # with transaction.atomic():
     #     Paper.objects.all().delete()
 
@@ -215,7 +207,8 @@ class PaperCreatorService:
             question_page_numbers = SpecificationService.get_question_pages()
 
         paper_obj = Paper.objects.create(paper_number=paper_number)
-        IDPage.objects.create(
+        FixedPage.objects.create(
+            page_type=FixedPage.PageTypeChoices.IDPAGE,
             paper=paper_obj,
             image=None,
             page_number=id_page_number,
@@ -223,14 +216,19 @@ class PaperCreatorService:
         )
         # currently DNM pages are always taken from version 1
         for pg in dnm_page_numbers:
-            DNMPage.objects.create(
-                paper=paper_obj, image=None, page_number=pg, version=1
+            FixedPage.objects.create(
+                page_type=FixedPage.PageTypeChoices.DNMPAGE,
+                paper=paper_obj,
+                image=None,
+                page_number=pg,
+                version=1,
             )
         for index, q_pages in question_page_numbers.items():
             q_idx = int(index)
             version = int(qv_row[q_idx])
             for pg in q_pages:
-                QuestionPage.objects.create(
+                FixedPage.objects.create(
+                    page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
                     paper=paper_obj,
                     image=None,
                     page_number=int(pg),
@@ -473,9 +471,7 @@ class PaperCreatorService:
         else:
             # for testing purposes we delete in foreground
             with transaction.atomic():
-                DNMPage.objects.all().delete()
-                IDPage.objects.all().delete()
-                QuestionPage.objects.all().delete()
+                FixedPage.objects.all().delete()
             with transaction.atomic():
                 Paper.objects.all().delete()
 

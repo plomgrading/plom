@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Count
 
 from plom_server.Base.services import Settings
-from ..models import Paper, FixedPage, IDPage, QuestionPage
+from ..models import Paper, FixedPage
 from .paper_creator import PaperCreatorService
 
 log = logging.getLogger("PaperInfoService")
@@ -135,14 +135,16 @@ class PaperInfoService:
         try:
             # to find the version, find the first fixed question page of that paper/question
             # and extract the version from that. Note - use "filter" and not "get" here.
-            page = QuestionPage.objects.filter(
-                paper=paper, question_index=question_idx
+            page = FixedPage.objects.filter(
+                page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
+                paper=paper,
+                question_index=question_idx,
             )[0]
             # notice we use blah()[0] rather than blah.first() in order
             # to raise the exception. blah.first() will return None if
             # no such object exists. Hence this will either fail with
             # a does-not-exist or index-out-of-range
-        except (QuestionPage.DoesNotExist, IndexError):
+        except (FixedPage.DoesNotExist, IndexError):
             raise ValueError(
                 f"Question {question_idx} of paper {paper_number}"
                 " does not exist in the database."
@@ -208,7 +210,9 @@ class PaperInfoService:
         with transaction.atomic():
             # note that this gets all question pages, not just one for each question.
             for qp_obj in (
-                QuestionPage.objects.all()
+                FixedPage.objects.filter(
+                    page_type=FixedPage.PageTypeChoices.QUESTIONPAGE
+                )
                 .prefetch_related("paper")
                 .order_by("paper__paper_number")
             ):
@@ -221,7 +225,7 @@ class PaperInfoService:
                 else:
                     pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
             for idpage_obj in (
-                IDPage.objects.all()
+                FixedPage.objects.filter(page_type=FixedPage.PageTypeChoices.IDPAGE)
                 .prefetch_related("paper")
                 .order_by("paper__paper_number")
             ):

@@ -81,13 +81,12 @@ class FixedPage(models.Model):
     related to the assessment specification.
 
     There are various sorts of pages.  Currently that information is stored in
-    other tables linking back to this one.  For example, two or more QuestionPage
-    can a single FixedPage.
+    the "kind" field.  QuestionPage can share a physical page.
     IDPage and DNMPage also point to a particular FixedPage.  Currently DNMPages
     always have version 1.
 
     If you're searching on FixedPage, you may want to search on one QuestionPage,
-    IDPage or DNMPage instead.  Long-term, maybe we don't need FixedPage at all.
+    IDPage or DNMPage instead, via the kind field, depending on what you want to do.
 
     paper (ref to Paper): the test-paper to which this page image belongs
     image (ref to Image): the image (see note below)
@@ -117,11 +116,18 @@ class FixedPage(models.Model):
     is scanned and pushed.
     """
 
+    # TODO: can I change to QuestionPage caps later?  Or otherwise control
+    # the pretty printing.
+    PageTypeChoices = models.TextChoices("PageType", "QUESTIONPAGE IDPAGE DNMPAGE")
+
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
-    # TODO: consider moving to the other tables
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     page_number = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
+    page_type = models.CharField(choices=PageTypeChoices, null=False, blank=False)
+    # This must be NULL when type is not QUESTIONPAGE
+    # TODO: where are some invariants that are not enforced yet
+    question_index = models.PositiveIntegerField(null=True, blank=True)
 
 
 class DNMPage(models.Model):

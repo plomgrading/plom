@@ -263,6 +263,17 @@ class Migration(migrations.Migration):
                 ("page_number", models.PositiveIntegerField()),
                 ("version", models.PositiveIntegerField()),
                 (
+                    "page_type",
+                    models.CharField(
+                        choices=[
+                            ("QUESTIONPAGE", "Questionpage"),
+                            ("IDPAGE", "Idpage"),
+                            ("DNMPAGE", "Dnmpage"),
+                        ]
+                    ),
+                ),
+                ("question_index", models.PositiveIntegerField(blank=True, null=True)),
+                (
                     "image",
                     models.ForeignKey(
                         null=True,
