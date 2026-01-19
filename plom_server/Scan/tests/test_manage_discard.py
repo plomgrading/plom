@@ -72,11 +72,11 @@ class TestManageDiscard(TestCase):
         img1 = baker.make(Image)
         qp1 = baker.make(
             FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=3,
             image=img1,
             question_index=1,
-            page_type=FixedPage.QUESTIONPAGE,
         )
 
         self.mds.discard_pushed_fixed_page(self.user0, qp1.pk, dry_run=True)
@@ -206,10 +206,10 @@ class TestManageDiscard(TestCase):
         img3 = baker.make(Image)
         baker.make(
             FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=4,
             question_index=1,
-            page_type=FixedPage.QUESTIONPAGE,
         )
         baker.make(MobilePage, paper=self.paper1, question_index=1, image=img3)
         self.mds.discard_pushed_image_from_pk(self.user0, img3.pk)
@@ -288,7 +288,7 @@ class TestManageDiscard(TestCase):
 
         img0 = baker.make(Image)
         qp3 = FixedPage.objects.get(
-            paper=self.paper1, page_number=3, page_type=FixedPage.QUESTIONPAGE
+            page_type=FixedPage.QUESTIONPAGE, paper=self.paper1, page_number=3
         )
         qp3.image = img0
         qp3.save()
