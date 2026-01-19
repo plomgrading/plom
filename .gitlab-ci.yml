@@ -491,7 +491,7 @@ models-in-admin:
     - rg admin.site.register .
     - rg "admin.site.register\((.*)\)" . -r "\$1" --no-filename | sort > in_admin.txt
     - rg "class (.*)\(models.Model\):" . -r "\$1" --no-filename
-    - SUPERCLASSES="models.Model Tag HueyTaskTracker FixedPage SingletonABCModel"
+    - SUPERCLASSES="models.Model Tag HueyTaskTracker SingletonABCModel"
     - for SUPER in $SUPERCLASSES; do
         rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> models1.txt;
       done
