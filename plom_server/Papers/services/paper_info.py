@@ -136,7 +136,7 @@ class PaperInfoService:
             # to find the version, find the first fixed question page of that paper/question
             # and extract the version from that. Note - use "filter" and not "get" here.
             page = FixedPage.objects.filter(
-                page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
+                page_type=FixedPage.QUESTIONPAGE,
                 paper=paper,
                 question_index=question_idx,
             )[0]
@@ -210,9 +210,7 @@ class PaperInfoService:
         with transaction.atomic():
             # note that this gets all question pages, not just one for each question.
             for qp_obj in (
-                FixedPage.objects.filter(
-                    page_type=FixedPage.PageTypeChoices.QUESTIONPAGE
-                )
+                FixedPage.objects.filter(page_type=FixedPage.QUESTIONPAGE)
                 .prefetch_related("paper")
                 .order_by("paper__paper_number")
             ):
@@ -225,7 +223,7 @@ class PaperInfoService:
                 else:
                     pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
             for idpage_obj in (
-                FixedPage.objects.filter(page_type=FixedPage.PageTypeChoices.IDPAGE)
+                FixedPage.objects.filter(page_type=FixedPage.IDPAGE)
                 .prefetch_related("paper")
                 .order_by("paper__paper_number")
             ):

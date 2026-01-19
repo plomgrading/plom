@@ -266,10 +266,11 @@ class Migration(migrations.Migration):
                     "page_type",
                     models.CharField(
                         choices=[
-                            ("QUESTIONPAGE", "Questionpage"),
-                            ("IDPAGE", "Idpage"),
-                            ("DNMPAGE", "Dnmpage"),
-                        ]
+                            ("QP", "QuestionPage"),
+                            ("ID", "IDPage"),
+                            ("DNM", "DNMPage"),
+                        ],
+                        max_length=3,
                     ),
                 ),
                 ("question_index", models.PositiveIntegerField(blank=True, null=True)),

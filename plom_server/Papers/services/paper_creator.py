@@ -208,7 +208,7 @@ class PaperCreatorService:
 
         paper_obj = Paper.objects.create(paper_number=paper_number)
         FixedPage.objects.create(
-            page_type=FixedPage.PageTypeChoices.IDPAGE,
+            page_type=FixedPage.IDPAGE,
             paper=paper_obj,
             image=None,
             page_number=id_page_number,
@@ -217,7 +217,7 @@ class PaperCreatorService:
         # currently DNM pages are always taken from version 1
         for pg in dnm_page_numbers:
             FixedPage.objects.create(
-                page_type=FixedPage.PageTypeChoices.DNMPAGE,
+                page_type=FixedPage.DNMPAGE,
                 paper=paper_obj,
                 image=None,
                 page_number=pg,
@@ -228,7 +228,7 @@ class PaperCreatorService:
             version = int(qv_row[q_idx])
             for pg in q_pages:
                 FixedPage.objects.create(
-                    page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
+                    page_type=FixedPage.QUESTIONPAGE,
                     paper=paper_obj,
                     image=None,
                     page_number=int(pg),

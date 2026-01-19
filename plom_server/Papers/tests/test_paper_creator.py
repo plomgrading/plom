@@ -37,15 +37,9 @@ class PaperCreatorTests(TestCase):
         """Helper function for getting the current number of papers/pages."""
         n_papers = Paper.objects.all().count()
         n_pages = FixedPage.objects.all().count()
-        n_id = FixedPage.objects.filter(
-            page_type=FixedPage.PageTypeChoices.IDPAGE
-        ).count()
-        n_dnm = FixedPage.objects.filter(
-            page_type=FixedPage.PageTypeChoices.DNMPAGE
-        ).count()
-        n_question = FixedPage.objects.filter(
-            page_type=FixedPage.PageTypeChoices.QUESTIONPAGE
-        ).count()
+        n_id = FixedPage.objects.filter(page_type=FixedPage.IDPAGE).count()
+        n_dnm = FixedPage.objects.filter(page_type=FixedPage.DNMPAGE).count()
+        n_question = FixedPage.objects.filter(page_type=FixedPage.QUESTIONPAGE).count()
 
         return n_papers, n_pages, n_id, n_dnm, n_question
 
@@ -67,14 +61,14 @@ class PaperCreatorTests(TestCase):
         q_1 = FixedPage.objects.get(
             paper=paper,
             question_index=1,
-            page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
+            page_type=FixedPage.QUESTIONPAGE,
         )
         self.assertEqual(q_1.version, 2)
 
         q_2 = FixedPage.objects.get(
             paper=paper,
             question_index=2,
-            page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
+            page_type=FixedPage.QUESTIONPAGE,
         )
         self.assertEqual(q_2.version, 1)
 
@@ -91,11 +85,9 @@ class PaperCreatorTests(TestCase):
         baker.make(Specification)
 
         paper = baker.make(Paper)
-        baker.make(FixedPage, paper=paper, page_type=FixedPage.PageTypeChoices.IDPAGE)
-        baker.make(FixedPage, paper=paper, page_type=FixedPage.PageTypeChoices.DNMPAGE)
-        baker.make(
-            FixedPage, paper=paper, page_type=FixedPage.PageTypeChoices.QUESTIONPAGE
-        )
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.IDPAGE)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.DNMPAGE)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.QUESTIONPAGE)
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 

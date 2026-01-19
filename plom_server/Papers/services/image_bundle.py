@@ -380,7 +380,7 @@ class ImageBundleService:
             for each paper question pair that's 'ready'.
         """
         question_pages = FixedPage.objects.filter(
-            image__bundle=bundle, page_type=FixedPage.PageTypeChoices.QUESTIONPAGE
+            image__bundle=bundle, page_type=FixedPage.QUESTIONPAGE
         )
         extras = MobilePage.objects.filter(image__bundle=bundle)
         # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
@@ -425,7 +425,7 @@ class ImageBundleService:
             A query of only the ID pages in the input bundle
         """
         return FixedPage.objects.filter(
-            image__bundle=bundle, page_type=FixedPage.PageTypeChoices.IDPAGE
+            image__bundle=bundle, page_type=FixedPage.IDPAGE
         ).prefetch_related("paper")
 
     @staticmethod
@@ -440,7 +440,7 @@ class ImageBundleService:
         """
         return FixedPage.objects.filter(
             paper=paper_obj,
-            page_type=FixedPage.PageTypeChoices.IDPAGE,
+            page_type=FixedPage.IDPAGE,
             image__isnull=False,
         ).exists()
 
@@ -466,7 +466,7 @@ class ImageBundleService:
         """
         # get all scanned pages (relevant to questions)
         filled_qpages = FixedPage.objects.filter(
-            image__isnull=False, page_type=FixedPage.PageTypeChoices.QUESTIONPAGE
+            image__isnull=False, page_type=FixedPage.QUESTIONPAGE
         )
         mpages = MobilePage.objects.all()
         # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't

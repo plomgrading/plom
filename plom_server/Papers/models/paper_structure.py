@@ -116,15 +116,23 @@ class FixedPage(models.Model):
     is scanned and pushed.
     """
 
-    # TODO: can I change to QuestionPage caps later?  Or otherwise control
-    # the pretty printing.
-    PageTypeChoices = models.TextChoices("PageType", "QUESTIONPAGE IDPAGE DNMPAGE")
+    QUESTIONPAGE = "QP"
+    IDPAGE = "ID"
+    DNMPAGE = "DNM"
+    # PageTypeChoices = models.TextChoices("PageType", "QUESTIONPAGE IDPAGE DNMPAGE")
+    PageTypeChoices = (
+        (QUESTIONPAGE, "QuestionPage"),
+        (IDPAGE, "IDPage"),
+        (DNMPAGE, "DNMPage"),
+    )
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     page_number = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
-    page_type = models.CharField(choices=PageTypeChoices, null=False, blank=False)
+    page_type = models.CharField(
+        max_length=3, choices=PageTypeChoices, null=False, blank=False
+    )
     # This must be NULL when type is not QUESTIONPAGE
     # TODO: where are some invariants that are not enforced yet
     question_index = models.PositiveIntegerField(null=True, blank=True)

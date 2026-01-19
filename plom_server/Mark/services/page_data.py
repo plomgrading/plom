@@ -25,7 +25,7 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
     question_pages = FixedPage.objects.filter(
         paper=test_paper,
         question_index=question_index,
-        page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
+        page_type=FixedPage.QUESTIONPAGE,
     ).prefetch_related("image", "image__baseimage")
     # Papers/models/structure.py claims MobilePages have no order so sort by id
     mobile_pages = (
@@ -158,13 +158,9 @@ class PageDataService:
 
         # possibly filter out ID and DNM pages
         if not include_idpage:
-            fixed_pages = fixed_pages.exclude(
-                page_type=FixedPage.PageTypeChoices.IDPAGE
-            )
+            fixed_pages = fixed_pages.exclude(page_type=FixedPage.IDPAGE)
         if not include_dnmpages:
-            fixed_pages = fixed_pages.exclude(
-                page_type=FixedPage.PageTypeChoices.DNMPAGE
-            )
+            fixed_pages = fixed_pages.exclude(page_type=FixedPage.DNMPAGE)
 
         for page in fixed_pages.order_by("page_number"):
             if question is None:
@@ -172,15 +168,15 @@ class PageDataService:
                 # what the legacy server does...
                 included = True
             else:
-                if page.page_type == FixedPage.PageTypeChoices.QUESTIONPAGE:
+                if page.page_type == FixedPage.QUESTIONPAGE:
                     included = page.question_index == question
                 else:
                     included = False
-            if page.page_type == FixedPage.PageTypeChoices.QUESTIONPAGE:
+            if page.page_type == FixedPage.QUESTIONPAGE:
                 prefix = "t"
-            elif page.page_type == FixedPage.PageTypeChoices.IDPAGE:
+            elif page.page_type == FixedPage.IDPAGE:
                 prefix = "id"
-            elif page.page_type == FixedPage.PageTypeChoices.DNMPAGE:
+            elif page.page_type == FixedPage.DNMPAGE:
                 prefix = "dnm"
             else:
                 raise NotImplementedError(f"Page type {type(page)} not handled")

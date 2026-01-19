@@ -194,7 +194,7 @@ class IdentifyTaskService:
     def get_id_page(self, paper_number: int) -> Image:
         """Return the ID page image of a certain test-paper."""
         id_page = FixedPage.objects.get(
-            paper__paper_number=paper_number, page_type=FixedPage.PageTypeChoices.IDPAGE
+            paper__paper_number=paper_number, page_type=FixedPage.IDPAGE
         )
         id_img = id_page.image
         return id_img
