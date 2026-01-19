@@ -187,20 +187,21 @@ class TestManageDiscard(TestCase):
             FixedPage,
             page_type=FixedPage.DNMPAGE,
             paper=self.paper1,
-            page_number=3,  # TODO: page number 3, DNM, spec inconsistent
+            page_number=2,
             image=img2,
         )
         self.mds.discard_pushed_image_from_pk(self.user0, img2.pk)
         # test when mobile page (need an associate question page)
         img3 = baker.make(Image)
+        qidx = 2
         baker.make(
             FixedPage,
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=4,
-            question_index=1,  # TODO: 2 for consistency with spec?
+            question_index=qidx,
         )
-        baker.make(MobilePage, paper=self.paper1, question_index=1, image=img3)
+        baker.make(MobilePage, paper=self.paper1, question_index=qidx, image=img3)
         self.mds.discard_pushed_image_from_pk(self.user0, img3.pk)
         # test when discard page (no action required)
         img4 = baker.make(Image)
@@ -216,7 +217,7 @@ class TestManageDiscard(TestCase):
             FixedPage,
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
-            page_number=2,  # TODO: should be a DNM according to spec
+            page_number=3,
             question_index=1,
             image=None,
         )
@@ -224,24 +225,15 @@ class TestManageDiscard(TestCase):
             FixedPage,
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
-            page_number=3,
-            question_index=2,  # TODO: should be qidx 1 according to spec
+            page_number=4,
+            question_index=2,
             image=None,
         )
 
         pk_not_there = DiscardPage.objects.latest("pk").pk + 1
-        self.assertRaises(
-            ValueError,
-            self.mds._assign_discard_page_to_mobile_page,
-            pk_not_there,
-            1,
-            [1],
-        )
-        self.mds._assign_discard_page_to_mobile_page(
-            disc1.pk,
-            1,
-            [1, 2],
-        )
+        with self.assertRaisesRegex(ValueError, "Cannot find"):
+            self.mds._assign_discard_page_to_mobile_page(pk_not_there, 1, [1])
+        self.mds._assign_discard_page_to_mobile_page(disc1.pk, 1, [1, 2])
 
     def test_reassign_discard_page_to_mobile_dnm(self) -> None:
         img1 = baker.make(Image)
@@ -251,7 +243,7 @@ class TestManageDiscard(TestCase):
             FixedPage,
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
-            page_number=2,  # TODO: should be DNM according to spec
+            page_number=3,
             question_index=1,
             image=None,
         )
