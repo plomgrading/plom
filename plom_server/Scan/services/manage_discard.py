@@ -445,8 +445,8 @@ class ManageDiscardService:
                     )
                 else:
                     raise RuntimeError(
-                        f"Cannot identify type of fixed page with pk = {fpage_obj.pk} "
-                        "in paper {paper_number} page {page_number}."
+                        "Tertium non datur: all FixedPage must be DNM, ID, or QuestionPage"
+                        f" pk = {fpage_obj.pk} in paper {paper_number} page {page_number}."
                     )
             # finally (and still inside the atomic) delete the discard page
             discard_obj.delete()

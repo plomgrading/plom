@@ -91,7 +91,7 @@ class TestManageDiscard(TestCase):
             image=None,
         )
         img1 = baker.make(Image)
-        fp2 = baker.make(
+        baker.make(
             FixedPage,
             page_type=FixedPage.DNMPAGE,
             paper=self.paper1,
@@ -100,27 +100,10 @@ class TestManageDiscard(TestCase):
         )
         # find the largest pk and increase by 1 to get a PK that is not in the table
         pk_not_there = FixedPage.objects.latest("pk").pk + 1
-        self.assertRaises(
-            ValueError,
-            self.mds.discard_pushed_fixed_page,
-            self.user0,
-            pk_not_there,
-            dry_run=False,
-        )
-        self.assertRaises(
-            ValueError,
-            self.mds.discard_pushed_fixed_page,
-            self.user0,
-            fp1.pk,
-            dry_run=False,
-        )
-        self.assertRaises(
-            ValueError,
-            self.mds.discard_pushed_fixed_page,
-            self.user0,
-            fp2.pk,
-            dry_run=False,
-        )
+        with self.assertRaisesRegex(ValueError, "does not exist"):
+            self.mds.discard_pushed_fixed_page(self.user0, pk_not_there, dry_run=False)
+        with self.assertRaisesRegex(ValueError, "no image attached"):
+            self.mds.discard_pushed_fixed_page(self.user0, fp1.pk, dry_run=False)
 
     def test_discard_mobile_page(self) -> None:
         """Test discard_mobile_page."""
@@ -191,29 +174,11 @@ class TestManageDiscard(TestCase):
         assert DiscardPage.objects.filter(image=img1).exists()
 
     def test_discard_image_from_pk(self) -> None:
-        baker.make(
-            FixedPage,
-            page_type=FixedPage.IDPAGE,
-            paper=self.paper1,
-            page_number=1,
-            image=None,
-        )
-        img1 = baker.make(Image)
-        baker.make(
-            FixedPage,
-            page_type=FixedPage.DNMPAGE,
-            paper=self.paper1,
-            page_number=2,
-            image=img1,
-        )
+        baker.make(Image)
         pk_not_there = Image.objects.latest("pk").pk + 1
         # test when no such image
         self.assertRaises(
             ValueError, self.mds.discard_pushed_image_from_pk, self.user0, pk_not_there
-        )
-        # test when fixed page is not dnm, id or question page
-        self.assertRaises(
-            ValueError, self.mds.discard_pushed_image_from_pk, self.user0, img1.pk
         )
 
         # test when fixed page is an dnm page
@@ -304,11 +269,9 @@ class TestManageDiscard(TestCase):
         img1 = baker.make(Image)
         img2 = baker.make(Image)
         img3 = baker.make(Image)
-        img4 = baker.make(Image)
         disc1 = baker.make(DiscardPage, image=img1)
         disc2 = baker.make(DiscardPage, image=img2)
         disc3 = baker.make(DiscardPage, image=img3)
-        disc4 = baker.make(DiscardPage, image=img4)
 
         img0 = baker.make(Image)
         qp3 = FixedPage.objects.get(
@@ -358,15 +321,6 @@ class TestManageDiscard(TestCase):
         self.mds.assign_discard_page_to_fixed_page(self.user0, disc2.pk, 1, 1)
         # and a DNM-page
         self.mds.assign_discard_page_to_fixed_page(self.user0, disc3.pk, 1, 2)
-        # and this should raise an exception since the fixed page is not a Q,ID or DNM-page
-        self.assertRaises(
-            RuntimeError,
-            self.mds.assign_discard_page_to_fixed_page,
-            self.user0,
-            disc4.pk,
-            1,
-            7,
-        )
 
     def test_some_reassign_exceptions(self) -> None:
         # there are no discard pages, so can choose pk = 17 and it won't be there.
