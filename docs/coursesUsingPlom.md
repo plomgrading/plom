@@ -365,11 +365,22 @@ Approx: 1100 students over 10 courses
 | Math340     | Quiz(x4)+Final                    | 114         |                                                                 |
 | Math405     | Midterm+Final                     | 35          |                                                                 |
 | Math319     | ?+Final                           | 62          |                                                                 |
-| Math317     | ?                                 | 137         |                                                                 |
+| Math317     | Midterm(x2)+Final                 | 130         |                                                                 |
 | Math320     | Homework(x10)+Midterm+Final       | 72          |                                                                 |
 | Phys117     | Final                             | 370         |                                                                 |
 | Phys157     | Midterm(x2)+Final                 | 1000        |                                                                 |
+| Biol111     | Midterm(x2)+Final                 | 336         |                                                                 |
+| Biol112     | Midterm+Final                     | 1052        |                                                                 |
+| Biol155     | Midterm(x2)+Final                 | 416         |                                                                 |
+| Biol200     | Midterm+Final                     | 1141        |                                                                 |
+| Biol205     | Midterm+Final                     | 225         |                                                                 |
+| Biol300     | Midterm+Final                     | 229         |                                                                 |
+| Biol323     | Quiz(x5)+Final                    | 38          |                                                                 |
+| Biol325     | Midterm(x2)+Final                 | 170         |                                                                 |
+| Biol331     | Midterm+Final                     | 70          |                                                                 |
+| Biol363     | Final                             | 70          |                                                                 |
+| Biol370     | Midterm+Final                     | 100         |                                                                 |
+| Biol371     | Midterm+Final                     | 215         |                                                                 |
+| SCIE001     | Midterm+Final                     | 65          |                                                                 |
 
-TODO: BIO + MICB + ENG (+others?)
-
-Approx: 7560 students over 17 courses
+Approx: 11,700 students over 30 courses
