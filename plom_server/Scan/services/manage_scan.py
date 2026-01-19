@@ -277,7 +277,7 @@ class ManageScanService:
                             "status": "missing",
                             "page_number": fp.page_number,
                             "page_pk": fp.pk,
-                            "kind": fp.page_type.get_image_type_display(),
+                            "kind": fp.get_page_type_display(),
                         }
                     )
             # if no fixed pages, assume mobile page only paper
