@@ -10,16 +10,7 @@ from model_bakery import baker
 from plom_server.TestingSupport.utils import config_test
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
-from plom_server.Papers.models import (
-    Image,
-    FixedPage,
-    MobilePage,
-    Paper,
-    DNMPage,
-    IDPage,
-    QuestionPage,
-    DiscardPage,
-)
+from plom_server.Papers.models import DiscardPage, Image, FixedPage, MobilePage, Paper
 from ..services import ManageDiscardService
 
 
@@ -53,14 +44,26 @@ class TestManageDiscard(TestCase):
 
     def test_discard_idpage(self) -> None:
         img1 = baker.make(Image)
-        id1 = baker.make(IDPage, paper=self.paper1, page_number=1, image=img1)
+        id1 = baker.make(
+            FixedPage,
+            paper=self.paper1,
+            page_number=1,
+            image=img1,
+            page_type=FixedPage.IDPAGE,
+        )
 
         self.mds.discard_pushed_fixed_page(self.user0, id1.pk, dry_run=True)
         self.mds.discard_pushed_fixed_page(self.user0, id1.pk, dry_run=False)
 
     def test_discard_dnm(self) -> None:
         img1 = baker.make(Image)
-        dnm1 = baker.make(DNMPage, paper=self.paper1, page_number=2, image=img1)
+        dnm1 = baker.make(
+            FixedPage,
+            paper=self.paper1,
+            page_number=2,
+            image=img1,
+            page_type=FixedPage.DNMPAGE,
+        )
 
         self.mds.discard_pushed_fixed_page(self.user0, dnm1.pk, dry_run=True)
         self.mds.discard_pushed_fixed_page(self.user0, dnm1.pk, dry_run=False)
@@ -68,7 +71,12 @@ class TestManageDiscard(TestCase):
     def test_discard_questionpage(self) -> None:
         img1 = baker.make(Image)
         qp1 = baker.make(
-            QuestionPage, paper=self.paper1, page_number=3, image=img1, question_index=1
+            FixedPage,
+            paper=self.paper1,
+            page_number=3,
+            image=img1,
+            question_index=1,
+            page_type=FixedPage.QUESTIONPAGE,
         )
 
         self.mds.discard_pushed_fixed_page(self.user0, qp1.pk, dry_run=True)
@@ -186,11 +194,23 @@ class TestManageDiscard(TestCase):
 
         # test when fixed page is an dnm page
         img2 = baker.make(Image)
-        baker.make(DNMPage, paper=self.paper1, page_number=3, image=img2)
+        baker.make(
+            FixedPage,
+            paper=self.paper1,
+            page_number=3,
+            image=img2,
+            page_type=FixedPage.DNMPAGE,
+        )
         self.mds.discard_pushed_image_from_pk(self.user0, img2.pk)
         # test when mobile page (need an associate question page)
         img3 = baker.make(Image)
-        baker.make(QuestionPage, paper=self.paper1, page_number=4, question_index=1)
+        baker.make(
+            FixedPage,
+            paper=self.paper1,
+            page_number=4,
+            question_index=1,
+            page_type=FixedPage.QUESTIONPAGE,
+        )
         baker.make(MobilePage, paper=self.paper1, question_index=1, image=img3)
         self.mds.discard_pushed_image_from_pk(self.user0, img3.pk)
         # test when discard page (no action required)
@@ -204,14 +224,16 @@ class TestManageDiscard(TestCase):
         disc1 = baker.make(DiscardPage, image=img1)
 
         baker.make(
-            QuestionPage,
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=2,
             question_index=1,
             image=None,
         )
         baker.make(
-            QuestionPage,
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=3,
             question_index=2,
@@ -237,7 +259,8 @@ class TestManageDiscard(TestCase):
         disc1 = baker.make(DiscardPage, image=img1)
 
         baker.make(
-            QuestionPage,
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=2,
             question_index=1,
@@ -264,7 +287,9 @@ class TestManageDiscard(TestCase):
         disc4 = baker.make(DiscardPage, image=img4)
 
         img0 = baker.make(Image)
-        qp3 = QuestionPage.objects.get(paper=self.paper1, page_number=3)
+        qp3 = FixedPage.objects.get(
+            paper=self.paper1, page_number=3, page_type=FixedPage.QUESTIONPAGE
+        )
         qp3.image = img0
         qp3.save()
         baker.make(FixedPage, paper=self.paper1, page_number=7, image=None)
