@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
@@ -13,7 +13,7 @@ from django.core.exceptions import (
 from django.db import transaction, IntegrityError
 
 from plom.plom_exceptions import PlomConflict
-from plom_server.Papers.models import IDPage, Paper, Image
+from plom_server.Papers.models import FixedPage, Paper, Image
 from plom_server.Papers.services import ImageBundleService
 from ..models import PaperIDTask, PaperIDAction, IDPrediction
 
@@ -193,7 +193,9 @@ class IdentifyTaskService:
     @transaction.atomic
     def get_id_page(self, paper_number: int) -> Image:
         """Return the ID page image of a certain test-paper."""
-        id_page = IDPage.objects.get(paper__paper_number=paper_number)
+        id_page = FixedPage.objects.get(
+            paper__paper_number=paper_number, page_type=FixedPage.PageTypeChoices.IDPAGE
+        )
         id_img = id_page.image
         return id_img
 

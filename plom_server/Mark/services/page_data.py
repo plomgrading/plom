@@ -10,15 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 
 from plom_server.Papers.services import SpecificationService
-from plom_server.Papers.models import (
-    Paper,
-    FixedPage,
-    IDPage,
-    DNMPage,
-    QuestionPage,
-    Image,
-    MobilePage,
-)
+from plom_server.Papers.models import Paper, FixedPage, Image, MobilePage
 
 
 @transaction.atomic
@@ -30,8 +22,10 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
         question_index: which question.
     """
     test_paper = Paper.objects.get(paper_number=paper)
-    question_pages = QuestionPage.objects.filter(
-        paper=test_paper, question_index=question_index
+    question_pages = FixedPage.objects.filter(
+        paper=test_paper,
+        question_index=question_index,
+        page_type=FixedPage.PageTypeChoices.QUESTIONPAGE,
     ).prefetch_related("image", "image__baseimage")
     # Papers/models/structure.py claims MobilePages have no order so sort by id
     mobile_pages = (
@@ -164,9 +158,13 @@ class PageDataService:
 
         # possibly filter out ID and DNM pages
         if not include_idpage:
-            fixed_pages = fixed_pages.not_instance_of(IDPage)
+            fixed_pages = fixed_pages.exclude(
+                page_type=FixedPage.PageTypeChoices.IDPAGE
+            )
         if not include_dnmpages:
-            fixed_pages = fixed_pages.not_instance_of(DNMPage)
+            fixed_pages = fixed_pages.exclude(
+                page_type=FixedPage.PageTypeChoices.DNMPAGE
+            )
 
         for page in fixed_pages.order_by("page_number"):
             if question is None:
@@ -174,15 +172,15 @@ class PageDataService:
                 # what the legacy server does...
                 included = True
             else:
-                if isinstance(page, QuestionPage):
+                if page.page_type == FixedPage.PageTypeChoices.QUESTIONPAGE:
                     included = page.question_index == question
                 else:
                     included = False
-            if isinstance(page, QuestionPage):
+            if page.page_type == FixedPage.PageTypeChoices.QUESTIONPAGE:
                 prefix = "t"
-            elif isinstance(page, IDPage):
+            elif page.page_type == FixedPage.PageTypeChoices.IDPAGE:
                 prefix = "id"
-            elif isinstance(page, DNMPage):
+            elif page.page_type == FixedPage.PageTypeChoices.DNMPAGE:
                 prefix = "dnm"
             else:
                 raise NotImplementedError(f"Page type {type(page)} not handled")
