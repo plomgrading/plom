@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -18,7 +18,7 @@ from plom.plom_exceptions import (
 
 from plom_server.Papers.models import MobilePage
 from plom_server.Papers.services import SpecificationService
-from plom_server.Scan.services import ScanService
+from plom_server.Scan.services import ScanService, ManageScanService
 from .utils import _error_response
 
 
@@ -236,3 +236,23 @@ class ScanMapBundle(APIView):
                 status.HTTP_404_NOT_FOUND,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ScanListPapers(APIView):
+    """API related to papers."""
+
+    # GET: /api/beta/scan/papers
+    def get(self, request: Request) -> Response:
+        """API request for scanning status of papers."""
+        unused_papers_list = ManageScanService.get_all_unused_papers()
+
+        complete_papers_list = ManageScanService.get_all_complete_papers()
+        incomplete_papers_list = ManageScanService.get_all_incomplete_papers()
+
+        papers_catalogue = {
+            "unused": unused_papers_list,
+            "complete": complete_papers_list,
+            "incomplete": incomplete_papers_list,
+        }
+
+        return Response(papers_catalogue, status=status.HTTP_200_OK)

@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Bryan Tanady
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -35,6 +35,7 @@ from .views import (
     # TODO: these are possibly temporary
     papersToPrint,
     ScanListBundles,
+    ScanListPapers,
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
@@ -96,6 +97,11 @@ urlpatterns = [
         "api/beta/scan/bundles",
         ScanListBundles.as_view(),
         name="api_Scan_bundles",
+    ),
+    path(
+        "api/beta/scan/papers",
+        ScanListPapers.as_view(),
+        name="api_Scan_papers",
     ),
     path(
         "api/beta/scan/bundle/<int:bundle_id>",
