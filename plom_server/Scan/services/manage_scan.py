@@ -557,7 +557,7 @@ class ManageScanService:
             .select_related("image")
         ):
             if fp_obj.page_type == FixedPage.QUESTIONPAGE:
-                qidx_field = qidx_field = fp_obj.question_index
+                qidx_field = fp_obj.question_index
             else:
                 qidx_field = ""
             dat = {
