@@ -364,7 +364,7 @@ Approx: 1100 students over 10 courses
 | Math322     | Midterm                           | 42          |                                                                 |
 | Math340     | Quiz(x4)+Final                    | 114         |                                                                 |
 | Math405     | Midterm+Final                     | 35          |                                                                 |
-| Math319     | ?+Final                           | 62          |                                                                 |
+| Math319     | Midterm+Final                     | 62          |                                                                 |
 | Math317     | Midterm(x2)+Final                 | 130         |                                                                 |
 | Math320     | Homework(x10)+Midterm+Final       | 72          |                                                                 |
 | Phys117     | Final                             | 370         |                                                                 |
