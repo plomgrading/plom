@@ -249,48 +249,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="FixedPage",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-                (
-                    "page_type",
-                    models.CharField(
-                        choices=[
-                            ("QP", "QuestionPage"),
-                            ("ID", "IDPage"),
-                            ("DNM", "DNMPage"),
-                        ],
-                        max_length=3,
-                    ),
-                ),
-                ("question_index", models.PositiveIntegerField(blank=True, null=True)),
-                (
-                    "image",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="Papers.image",
-                    ),
-                ),
-                (
-                    "paper",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
-                    ),
-                ),
-            ],
-        ),
-        migrations.CreateModel(
             name="DiscardPage",
             fields=[
                 (
@@ -344,7 +302,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="IDPage",
+            name="FixedPage",
             fields=[
                 (
                     "id",
@@ -358,90 +316,17 @@ class Migration(migrations.Migration):
                 ("page_number", models.PositiveIntegerField()),
                 ("version", models.PositiveIntegerField()),
                 (
-                    "fixed_page",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="Papers.fixedpage",
+                    "page_type",
+                    models.CharField(
+                        choices=[
+                            ("QP", "QuestionPage"),
+                            ("ID", "IDPage"),
+                            ("DNM", "DNMPage"),
+                        ],
+                        max_length=3,
                     ),
                 ),
-                (
-                    "image",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="Papers.image",
-                    ),
-                ),
-                (
-                    "paper",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
-                    ),
-                ),
-            ],
-        ),
-        migrations.CreateModel(
-            name="DNMPage",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-                (
-                    "fixed_page",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="Papers.fixedpage",
-                    ),
-                ),
-                (
-                    "image",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="Papers.image",
-                    ),
-                ),
-                (
-                    "paper",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
-                    ),
-                ),
-            ],
-        ),
-        migrations.CreateModel(
-            name="QuestionPage",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-                ("question_index", models.PositiveIntegerField()),
-                (
-                    "fixed_page",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="Papers.fixedpage",
-                    ),
-                ),
+                ("question_index", models.PositiveIntegerField(blank=True, null=True)),
                 (
                     "image",
                     models.ForeignKey(
