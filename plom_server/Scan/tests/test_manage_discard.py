@@ -46,10 +46,10 @@ class TestManageDiscard(TestCase):
         img1 = baker.make(Image)
         id1 = baker.make(
             FixedPage,
+            page_type=FixedPage.IDPAGE,
             paper=self.paper1,
             page_number=1,
             image=img1,
-            page_type=FixedPage.IDPAGE,
         )
 
         self.mds.discard_pushed_fixed_page(self.user0, id1.pk, dry_run=True)
@@ -59,10 +59,10 @@ class TestManageDiscard(TestCase):
         img1 = baker.make(Image)
         dnm1 = baker.make(
             FixedPage,
+            page_type=FixedPage.DNMPAGE,
             paper=self.paper1,
             page_number=2,
             image=img1,
-            page_type=FixedPage.DNMPAGE,
         )
 
         self.mds.discard_pushed_fixed_page(self.user0, dnm1.pk, dry_run=True)
@@ -83,9 +83,21 @@ class TestManageDiscard(TestCase):
         self.mds.discard_pushed_fixed_page(self.user0, qp1.pk, dry_run=False)
 
     def test_discard_fixedpage_exceptions(self) -> None:
-        fp1 = baker.make(FixedPage, paper=self.paper1, page_number=1, image=None)
+        fp1 = baker.make(
+            FixedPage,
+            page_type=FixedPage.IDPAGE,
+            paper=self.paper1,
+            page_number=1,
+            image=None,
+        )
         img1 = baker.make(Image)
-        fp2 = baker.make(FixedPage, paper=self.paper1, page_number=2, image=img1)
+        fp2 = baker.make(
+            FixedPage,
+            page_type=FixedPage.DNMPAGE,
+            paper=self.paper1,
+            page_number=2,
+            image=img1,
+        )
         # find the largest pk and increase by 1 to get a PK that is not in the table
         pk_not_there = FixedPage.objects.latest("pk").pk + 1
         self.assertRaises(
@@ -179,9 +191,21 @@ class TestManageDiscard(TestCase):
         assert DiscardPage.objects.filter(image=img1).exists()
 
     def test_discard_image_from_pk(self) -> None:
-        baker.make(FixedPage, paper=self.paper1, page_number=1, image=None)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.IDPAGE,
+            paper=self.paper1,
+            page_number=1,
+            image=None,
+        )
         img1 = baker.make(Image)
-        baker.make(FixedPage, paper=self.paper1, page_number=2, image=img1)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.DNMPAGE,
+            paper=self.paper1,
+            page_number=2,
+            image=img1,
+        )
         pk_not_there = Image.objects.latest("pk").pk + 1
         # test when no such image
         self.assertRaises(
@@ -196,10 +220,10 @@ class TestManageDiscard(TestCase):
         img2 = baker.make(Image)
         baker.make(
             FixedPage,
-            paper=self.paper1,
-            page_number=3,
-            image=img2,
             page_type=FixedPage.DNMPAGE,
+            paper=self.paper1,
+            page_number=3,  # TODO: page number 3, DNM, spec inconsistent
+            image=img2,
         )
         self.mds.discard_pushed_image_from_pk(self.user0, img2.pk)
         # test when mobile page (need an associate question page)
@@ -209,7 +233,7 @@ class TestManageDiscard(TestCase):
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=4,
-            question_index=1,
+            question_index=1,  # TODO: 2 for consistency with spec?
         )
         baker.make(MobilePage, paper=self.paper1, question_index=1, image=img3)
         self.mds.discard_pushed_image_from_pk(self.user0, img3.pk)
@@ -227,7 +251,7 @@ class TestManageDiscard(TestCase):
             FixedPage,
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
-            page_number=2,
+            page_number=2,  # TODO: should be a DNM according to spec
             question_index=1,
             image=None,
         )
@@ -236,7 +260,7 @@ class TestManageDiscard(TestCase):
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
             page_number=3,
-            question_index=2,
+            question_index=2,  # TODO: should be qidx 1 according to spec
             image=None,
         )
 
@@ -262,7 +286,7 @@ class TestManageDiscard(TestCase):
             FixedPage,
             page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper1,
-            page_number=2,
+            page_number=2,  # TODO: should be DNM according to spec
             question_index=1,
             image=None,
         )
@@ -288,11 +312,21 @@ class TestManageDiscard(TestCase):
 
         img0 = baker.make(Image)
         qp3 = FixedPage.objects.get(
-            page_type=FixedPage.QUESTIONPAGE, paper=self.paper1, page_number=3
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=self.paper1,
+            page_number=3,
+            question_index=1,
         )
         qp3.image = img0
         qp3.save()
-        baker.make(FixedPage, paper=self.paper1, page_number=7, image=None)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=self.paper1,
+            page_number=7,
+            question_index=3,
+            image=None,
+        )
 
         pk_not_there = DiscardPage.objects.latest("pk").pk + 1
         # try with non-existent image pk
