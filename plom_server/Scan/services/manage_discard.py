@@ -12,9 +12,6 @@ from plom_server.Papers.models import (
     Paper,
     FixedPage,
     MobilePage,
-    IDPage,
-    DNMPage,
-    QuestionPage,
     DiscardPage,
     Image,
 )
@@ -28,7 +25,8 @@ class ManageDiscardService:
     """Functions for overseeing discarding pushed images."""
 
     @transaction.atomic
-    def _discard_dnm_page(self, user_obj: User, dnm_obj: DNMPage) -> None:
+    def _discard_dnm_page(self, user_obj: User, dnm_obj: FixedPage) -> None:
+        assert dnm_obj.page_type == FixedPage.DNMPAGE
         DiscardPage.objects.create(
             image=dnm_obj.image,
             discard_reason=(
@@ -42,7 +40,8 @@ class ManageDiscardService:
         # Notice that no tasks need be invalidated since this is a DNM page.
 
     @transaction.atomic
-    def _discard_id_page(self, user_obj: User, idpage_obj: IDPage) -> None:
+    def _discard_id_page(self, user_obj: User, idpage_obj: FixedPage) -> None:
+        assert idpage_obj.page_type == FixedPage.IDPAGE
         DiscardPage.objects.create(
             image=idpage_obj.image,
             discard_reason=(
@@ -60,7 +59,8 @@ class ManageDiscardService:
         # automatically create a new id-task, we need a new page to be uploaded.
 
     @transaction.atomic
-    def _discard_question_page(self, user_obj: User, qpage_obj: QuestionPage) -> None:
+    def _discard_question_page(self, user_obj: User, qpage_obj: FixedPage) -> None:
+        assert qpage_obj.page_type == FixedPage.QUESTIONPAGE
         DiscardPage.objects.create(
             image=qpage_obj.image,
             discard_reason=(
@@ -275,13 +275,13 @@ class ManageDiscardService:
                 f"(which is paper {fp_obj.paper.paper_number} page {fp_obj.page_number})"
             )
 
-        if isinstance(fp_obj, DNMPage):
+        if fp_obj.page_type == FixedPage.DNMPAGE:
             msg = f"DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
                 return "DRY-RUN: would drop " + msg
             self._discard_dnm_page(user_obj, fp_obj)
             return "Have dropped " + msg
-        elif isinstance(fp_obj, IDPage):
+        elif fp_obj.page_type == FixedPage.IDPAGE:
             msg = f"IDPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
@@ -290,7 +290,7 @@ class ManageDiscardService:
                 f"Have dropped {msg} and "
                 "flagged the associated ID-task as 'out of date'"
             )
-        elif isinstance(fp_obj, QuestionPage):
+        elif fp_obj.page_type == FixedPage.QUESTIONPAGE:
             msg = (
                 f"QuestionPage for paper {fp_obj.paper.paper_number} "
                 f"page {fp_obj.page_number} question index {fp_obj.question_index}"
@@ -435,11 +435,11 @@ class ManageDiscardService:
                 # assign the image to the fixed page
                 fpage_obj.image = discard_obj.image
                 fpage_obj.save()
-                if isinstance(fpage_obj, DNMPage):
+                if fpage_obj.page_type == FixedPage.DNMPAGE:
                     pass
-                elif isinstance(fpage_obj, IDPage):
+                elif fpage_obj.page_type == FixedPage.IDPAGE:
                     IdentifyTaskService().set_paper_idtask_outdated(paper_number)
-                elif isinstance(fpage_obj, QuestionPage):
+                elif fpage_obj.page_type == FixedPage.QUESTIONPAGE:
                     MarkingTaskService().set_paper_marking_task_outdated(
                         paper_number, fpage_obj.question_index
                     )
@@ -481,9 +481,15 @@ class ManageDiscardService:
             raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
         for qi in assign_to_question_indices:
+            # TODO: what if there are no question pages?  Maybe this should query the version map instead?
             # get the version from an associated question-page
+            # (first() is used instead of get() b/c multiple QuestionPages can share a physical
+            # page; in Plom's tooling they would have a common version, although that restriction
+            # should be relaxed in the future, hence the TODO above about using qvmap here.)
             version = (
-                QuestionPage.objects.filter(paper=paper_obj, question_index=qi)
+                FixedPage.objects.filter(
+                    paper=paper_obj, question_index=qi, page_type=FixedPage.QUESTIONPAGE
+                )
                 .first()
                 .version
             )

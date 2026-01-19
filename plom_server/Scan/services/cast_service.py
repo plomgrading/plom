@@ -8,7 +8,7 @@ from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 from plom.plom_exceptions import PlomConflict
-from plom_server.Papers.models import Paper, QuestionPage, MobilePage
+from plom_server.Papers.models import Paper, FixedPage, MobilePage
 from plom_server.Papers.services import PaperInfoService, SpecificationService
 
 from ..models import StagingBundle, StagingImage
@@ -406,8 +406,8 @@ class ScanCastService:
         # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
         if False:
             for qi in assign_to_question_indices:
-                if not QuestionPage.objects.filter(
-                    paper=paper, question_index=qi
+                if not FixedPage.objects.filter(
+                    page_type=FixedPage.QUESTIONPAGE, paper=paper, question_index=qi
                 ).exists():
                     raise ValueError(f"No question index {qi} in database.")
         else:
