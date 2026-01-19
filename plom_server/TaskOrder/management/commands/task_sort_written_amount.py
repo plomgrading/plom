@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Andrew Rechnitzer
 
 import csv
@@ -12,7 +12,7 @@ from tqdm import tqdm
 from django.core.management.base import BaseCommand, CommandError
 
 # TODO: why model here?  Maybe there is some service to talk to instead?
-from plom_server.Papers.models import QuestionPage
+from plom_server.Papers.models import FixedPage
 from plom_server.Papers.services import SpecificationService
 
 from ...services import TaskOrderService
@@ -77,8 +77,8 @@ class Command(BaseCommand):
                 f"Version {question_version} out of valid range. Valid range: {list(v_range)}."
             )
 
-        pages = QuestionPage.objects.filter(
-            question_index=question_index
+        pages = FixedPage.objects.filter(
+            page_type=FixedPage.QUESTIONPAGE, question_index=question_index
         ).select_related("image", "paper")
         pages = pages.filter(image__isnull=False)
 
