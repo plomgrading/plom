@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from typing import Any
 
@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 
 from plom_server.Papers.services import SpecificationService
-from plom_server.Papers.models import Paper, FixedPage, Image, MobilePage
+from plom_server.Papers.models import FixedPage, Image, MobilePage, Paper
 
 
 @transaction.atomic
