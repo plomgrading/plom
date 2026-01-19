@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Aidan Murphy
@@ -10,7 +10,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from plom_server.Papers.models import Paper, QuestionPage
+from plom_server.Papers.models import FixedPage, Paper
 from plom_server.Rubrics.models import Rubric
 
 from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
@@ -180,7 +180,13 @@ class MiscIncomingAnnotationsTests(TestCase):
     def test_marking_submits_non_existent_rubrics(self) -> None:
         user0: User = baker.make(User)
         paper2 = baker.make(Paper, paper_number=2)
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=paper2,
+            page_number=3,
+            question_index=1,
+        )
         task = baker.make(
             MarkingTask,
             code="0002g1",
@@ -198,7 +204,13 @@ class MiscIncomingAnnotationsTests(TestCase):
     def test_marking_submits_outofdate_rubric(self) -> None:
         user0: User = baker.make(User)
         paper2 = baker.make(Paper, paper_number=2)
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=paper2,
+            page_number=3,
+            question_index=1,
+        )
         task = baker.make(
             MarkingTask,
             code="0002g1",
@@ -224,7 +236,13 @@ class MiscIncomingAnnotationsTests(TestCase):
     def test_marking_submits_unpublished_rubric(self) -> None:
         user0: User = baker.make(User)
         paper2 = baker.make(Paper, paper_number=2)
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=paper2,
+            page_number=3,
+            question_index=1,
+        )
         task = baker.make(
             MarkingTask,
             code="0002g1",
@@ -251,7 +269,13 @@ class MiscIncomingAnnotationsTests(TestCase):
         paper2 = baker.make(Paper, paper_number=2)
         # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
         # todo - this should likely be replaced with a spec check
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=paper2,
+            page_number=3,
+            question_index=1,
+        )
 
         task = baker.make(
             MarkingTask,
@@ -281,7 +305,13 @@ class MiscIncomingAnnotationsTests(TestCase):
         paper2 = baker.make(Paper, paper_number=2)
         # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
         # todo - this should likely be replaced with a spec check
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=paper2,
+            page_number=3,
+            question_index=1,
+        )
 
         task = baker.make(
             MarkingTask,
@@ -328,7 +358,13 @@ class MiscIncomingAnnotationsTests(TestCase):
         paper2 = baker.make(Paper, paper_number=2)
         # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
         # todo - this should likely be replaced with a spec check
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=paper2,
+            page_number=3,
+            question_index=1,
+        )
 
         task = baker.make(
             MarkingTask,
