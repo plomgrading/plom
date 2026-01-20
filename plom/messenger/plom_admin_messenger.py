@@ -259,12 +259,15 @@ class PlomAdminMessenger(Messenger):
         More specifically this dict contains info about the images attributed
         to each exam paper.
 
+        The content returned by this endpoint is a representation of the
+        plom server database structure; it is subject to change.
+
         Returns:
             A dict of information keyed by the paper number it corresponds to.
         """
         if self.is_server_api_less_than(116):
             raise PlomNoServerSupportException(
-                "Server too old: does not support getting plom marks"
+                "Server too old: does not support getting plom paper composition"
             )
 
         with self.SRmutex:

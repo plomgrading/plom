@@ -243,9 +243,11 @@ class ScanListPapers(APIView):
 
     # GET: /api/beta/scan/papers
     def get(self, request: Request) -> Response:
-        """API request for scanning status of papers."""
-        unused_papers_list = ManageScanService.get_all_unused_papers()
+        """API request for scanning status of papers.
 
+        The contents returned by this endpoint are subject to change!
+        """
+        unused_papers_list = ManageScanService.get_all_unused_papers()
         complete_papers_list = ManageScanService.get_all_complete_papers()
         incomplete_papers_list = ManageScanService.get_all_incomplete_papers()
 
