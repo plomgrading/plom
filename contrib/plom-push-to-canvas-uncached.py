@@ -50,7 +50,7 @@ the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 Additional instructions for mastery/rubric-based grading:
     Populate your Canvas assignment with the (LO) rubrics before running
     the script.
-    Include the "--rubrics" option in the invocation and follow
+    Include the "--map-plom-questions-to-canvas-rubrics" option in the invocation and follow
     the prompts.
 """
 
@@ -81,7 +81,7 @@ from plom.plom_exceptions import PlomException
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.6.2"
+__script_version__ = "0.6.3"
 __DEBUG__ = True
 
 # These are the keys for the json returned by the Plom 'get spreadsheet' API call
@@ -227,12 +227,13 @@ def get_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--rubrics",
+        "--map-plom-questions-to-canvas-rubrics",
         action="store_true",
         default=False,
         help="""
-            Upload the student's score on each question to Canvas rubrics.
-            You will be prompted to select which Canvas rubric each Plom question
+            Upload the student's score on each Plom question to Canvas rubrics.
+            You will be prompted to associate each Plom question with a Canvas
+            rubric.
             (default: off).
         """,
     )
@@ -711,15 +712,15 @@ def main():
     # put canvas submissions in a dict for fast recall
     # this dict is keyed by *canvas id* not student id
     inclusions = []
-    if args.rubrics:
+    if args.map_plom_questions_to_canvas_rubrics:
         inclusions.append("rubric_assessment")  # magic string - see Canvas API
     raw_submissions = canvas_assignment.get_submissions(include=inclusions)
     canvas_submissions = {}
     for submission in raw_submissions:
         canvas_submissions.update({submission.user_id: submission})
 
-    if args.rubrics:
-        student_rubrics = interactively_get_canvas_rubrics_dict(
+    if args.map_plom_questions_to_canvas_rubrics:
+        student_canvas_rubrics = interactively_get_canvas_rubrics_dict(
             canvas_assignment, student_marks
         )
 
@@ -783,7 +784,7 @@ def main():
                 finally:
                     if os.path.exists(file_info["filename"]):
                         os.remove(file_info["filename"])
-            if args.post_grades or args.rubrics:
+            if args.post_grades or args.map_plom_questions_to_canvas_rubrics:
                 successes.append(
                     {
                         "file/mark": score,
@@ -867,15 +868,15 @@ def main():
 
             time.sleep(random.uniform(0.1, 0.3))
 
-        if args.post_grades or args.rubrics:
+        if args.post_grades or args.map_plom_questions_to_canvas_rubrics:
             content_dict = {}
             stuff = ""
             if args.post_grades:
                 content_dict["submission"] = {}
                 content_dict["submission"]["posted_grade"] = score
                 stuff += f", mark {score}"
-            if args.rubrics:
-                content_dict["rubric_assessment"] = student_rubrics[student_id]
+            if args.map_plom_questions_to_canvas_rubrics:
+                content_dict["rubric_assessment"] = student_canvas_rubrics[student_id]
                 stuff += ", rubrics"
 
             try:
