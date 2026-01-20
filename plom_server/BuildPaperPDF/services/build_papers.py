@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 
 import pathlib
 import random
@@ -253,8 +253,6 @@ class BuildPapersService:
             ObjectDoesNotExist: non-existent paper number.
             PlomDependencyConflict: if dependencies not met
         """
-        assert_can_rebuild_test_pdfs()
-
         if not paper_number_list:
             # nothing to do for an empty list
             return
@@ -266,15 +264,30 @@ class BuildPapersService:
         prenamed = StagingStudentService.get_prenamed_papers()
         prename_config = PrenameSettingService().get_prenaming_config()
 
-        the_papers = Paper.objects.filter(paper_number__in=paper_number_list)
-        # Check paper-numbers all legal and store the corresponding paper-objects
-        check = the_papers.count()
-        if check != len(paper_number_list):
-            raise ObjectDoesNotExist(
-                "Could not find all papers from supplied list of paper_numbers."
-            )
+        # do these things, in this order, in a single transaction to avoid race conditions:
+        # (1) evaluate the_papers (must have select_for_update())
+        # (2) assert we are allowed to rebuild test pdfs
+        # (3) queue up huey chores
 
         with transaction.atomic(durable=True):
+            # we aren't updating the Paper rows, but this prevents duplicate
+            # "build all PDFs" requests from queueing multiple bild pdf chores
+            the_papers = Paper.objects.select_for_update().filter(
+                paper_number__in=paper_number_list
+            )
+
+            # (1)
+            # https://dba.stackexchange.com/questions/333659/why-does-select-for-update-not-support-aggregations-among-others
+            the_papers.exists()
+            # Check paper-numbers all legal and store the corresponding paper-objects
+            check = the_papers.count()
+            if check != len(paper_number_list):
+                raise ObjectDoesNotExist(
+                    "Could not find all papers from supplied list of paper_numbers."
+                )
+
+            # (2)
+            assert_can_rebuild_test_pdfs()
             # first set any existing non-obsolete chores to obsolete
             for chore in BuildPaperPDFChore.objects.filter(
                 obsolete=False, paper__paper_number__in=paper_number_list
@@ -288,6 +301,7 @@ class BuildPapersService:
                     student_id, student_name = prenamed[paper.paper_number]
                 else:
                     student_id, student_name = None, None
+                # (3)
                 chore_list.append(
                     BuildPaperPDFChore.objects.create(
                         paper=paper,
