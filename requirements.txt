@@ -52,7 +52,7 @@ passlib==1.7.4
 Pillow==12.1.0
 psycopg[binary]==3.2.13
 pydyf==0.12.1
-pymupdf==1.26.6
+pymupdf==1.26.7
 PyMySQL==1.1.2
 random-username==1.0.2
 requests==2.32.5
