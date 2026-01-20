@@ -7,15 +7,6 @@
 kind = "absolute"
 value = 1
 out_of = 3
-text = "Newton's law of cooling mentioned but no diff eqn or general solution"
-username = "manager"
-question_index = 4
-versions = "1"
-
-[[rubric]]
-kind = "absolute"
-value = 1
-out_of = 3
 text = "Incorrect differential equation stated"
 username = "manager"
 question_index = 4
@@ -44,18 +35,6 @@ out_of = 3
 text = "Differential equation formed and solved to find general solution"
 username = "manager"
 question_index = 4
-
-[[rubric]]
-kind = "relative"
-value = -1
-out_of = 0
-text = "Answer should include units\n(such as \"{param1}\")"
-meta = "Note this rubric differs between versions of the question."
-username = "manager"
-question_index = 4
-versions = ""
-parameters = [["{param1}", ["s", "year", "ms"]]]
-
 
 [[rubric]]
 kind = "relative"

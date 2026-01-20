@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2024-2026 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
+
+# this file contains rubrics that explicitly involve versions
+
+[[rubric]]
+kind = "absolute"
+value = 1
+out_of = 3
+text = "Newton's law of cooling mentioned but no diff eqn or general solution"
+username = "manager"
+question_index = 4
+versions = "1"
+
+[[rubric]]
+kind = "absolute"
+value = 1
+out_of = 3
+text = "Radioactive decay is mentioned but no differential equation stated"
+username = "manager"
+question_index = 4
+versions = "2,3"
+
+[[rubric]]
+kind = "relative"
+value = -1
+out_of = 0
+text = "Answer should include units\n(such as \"{param1}\")"
+meta = "Note this rubric differs between versions of the question."
+username = "manager"
+question_index = 4
+versions = ""
+parameters = [["{param1}", ["s", "year", "ms"]]]
