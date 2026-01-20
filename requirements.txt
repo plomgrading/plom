@@ -41,7 +41,7 @@ exif==1.6.1
 file-magic==0.4.1
 gunicorn==23.0.0
 imutils==0.5.4
-matplotlib==3.10.7
+matplotlib==3.10.8
 model-bakery==1.23.0
 numpy==2.2.6  # >= 2.3.0 needs Python 3.11
 onnxruntime==1.23.2
