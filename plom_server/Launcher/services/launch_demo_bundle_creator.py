@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2023-2026 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
 from collections import defaultdict
@@ -496,7 +496,30 @@ class DemoBundleCreationService:
 
         Returns:
             None.
+
+        Raises:
+            ValueError: When instructed to muck with a paper-number that is not in the assigned_papers_ids.
         """
+        # check that our mucking instructions pertain to the list of papers we actually have
+        # see #4127
+        first_paper_number = int(assigned_papers_ids[0]["paper_number"])
+        last_paper_number = int(assigned_papers_ids[-1]["paper_number"])
+
+        for L, M in [
+            (extra_page_papers, "extra-page-paper"),
+            (scrap_page_papers, "scrap-page-paper"),
+            (garbage_page_papers, "garbage-page-paper"),
+            (duplicate_pages, "duplicate-page-paper"),
+            (duplicate_qr, "duplicate-qr-paper"),
+            (out_of_range_papers, "out-of-range-paper"),
+            (obscure_qr_papers, "obscure-qr-paper"),
+            (invalid_qr_papers, "invalid-qr-paper"),
+            (wrong_version, "wrong-version-paper"),
+            (wrong_assessment, "wrong-assessment-paper"),
+        ]:
+            if not all(first_paper_number <= x <= last_paper_number for x in L):
+                raise ValueError(f"At least one {M} number is outside range.")
+
         if duplicate_qr:
             print(f"====: duplicate_qr={duplicate_qr}")
             print(assigned_papers_ids)
