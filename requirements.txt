@@ -45,13 +45,13 @@ matplotlib==3.10.7
 model-bakery==1.23.0
 numpy==2.2.6  # >= 2.3.0 needs Python 3.11
 onnxruntime==1.23.2
-opencv-python-headless==4.12.0.88
+opencv-python-headless==4.13.0.90
 packaging==25.0
 pandas==2.3.3
 passlib==1.7.4
-Pillow==12.0.0
+Pillow==12.1.0
 psycopg[binary]==3.2.13
-pydyf==0.11.0
+pydyf==0.12.1
 pymupdf==1.26.6
 PyMySQL==1.1.2
 random-username==1.0.2
