@@ -84,14 +84,16 @@ class FinishSolution(APIView):
             )
 
         try:
-            pdf_file = BuildSolutionService().get_single_solution_pdf_file(papernum)
+            pdf_file, filename = BuildSolutionService().get_single_solution_pdf_file(
+                papernum
+            )
         except ObjectDoesNotExist as err:
             return _error_response(
                 "Solution file does not exist: perhaps not yet assembled,"
                 f" assembly is in-progress: {err}",
                 status.HTTP_404_NOT_FOUND,
             )
-        return FileResponse(pdf_file, status=status.HTTP_200_OK)
+        return FileResponse(pdf_file, filename=filename, status=status.HTTP_200_OK)
 
 
 class FinishUnmarked(APIView):
