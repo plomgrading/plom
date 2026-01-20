@@ -57,14 +57,14 @@ class FinishReport(APIView):
             )
 
         try:
-            pdf_file = ReassembleService().get_single_student_report(papernum)
+            pdf_file, filename = ReassembleService().get_single_student_report(papernum)
         except ObjectDoesNotExist as err:
             return _error_response(
                 f"Report for paper {papernum} does not exist: perhaps the paper is"
                 f" not yet marked, identified or reassemble is in-progress: {err}",
                 status.HTTP_404_NOT_FOUND,
             )
-        return FileResponse(pdf_file, status=status.HTTP_200_OK)
+        return FileResponse(pdf_file, filename=filename, status=status.HTTP_200_OK)
 
 
 class FinishSolution(APIView):
