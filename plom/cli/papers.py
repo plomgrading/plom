@@ -8,13 +8,13 @@ from plom.misc_utils import format_int_list_with_runs
 
 
 @with_messenger
-def list_papers(*, msgr, verbose=False):
+def list_papers(*, msgr, verbose: bool = False) -> None:
     """Prints summary of uploads to each paper.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credentials.
-        verbose (bool): print more information.
+        verbose: print more information.
     """
     info_dict = msgr.get_paper_composition_info()
     # these strings are magic
