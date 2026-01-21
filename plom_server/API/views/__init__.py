@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from .paperstoprint import (
     papersToPrint,
@@ -62,6 +62,7 @@ from .mark import (
 
 from .scan import (
     ScanListBundles,
+    ScanListPapers,
     ScanBundleActions,
     ScanMapBundle,
 )

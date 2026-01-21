@@ -6,7 +6,7 @@
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2025 Philip D. Loewen
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2025 Bryan Tanady
 
 """Plom tools for pushing and manipulating bundles from the command line.
@@ -52,6 +52,7 @@ from plom.cli import (
     id_paper,
     un_id_paper,
     list_bundles,
+    list_papers,
     start_messenger,
     upload_bundle,
     upload_classlist,
@@ -263,6 +264,18 @@ def get_parser() -> argparse.ArgumentParser:
     s = sub.add_parser(
         "list-bundles",
         help="List the scanned bundles on the server",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "list-papers",
+        help="List the work associated with papers on the server",
+    )
+    s.add_argument(
+        "--verbose",
+        help="show more information for each paper",
+        default=False,
+        action="store_true",
     )
     _add_server_args(s)
 
@@ -591,6 +604,8 @@ def main():
             print(f"{k}: {v}")
     elif args.command == "list-bundles":
         list_bundles(msgr=m)
+    elif args.command == "list-papers":
+        list_papers(msgr=m, verbose=args.verbose)
     elif args.command == "push-bundle":
         msgr = start_messenger(args.server, args.username, args.password)
         try:
