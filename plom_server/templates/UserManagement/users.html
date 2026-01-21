@@ -6,7 +6,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
-    Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025-2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% load humanize %}
@@ -63,7 +63,7 @@
                                    class=" link-underline link-underline-opacity-25"
                                    style="font-size: 80%">change password</a>
                             </td>
-                            {% if user in online_now_ids %}
+                            {% if user.id in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>
@@ -154,7 +154,7 @@
                                    class=" link-underline link-underline-opacity-25"
                                    style="font-size: 80%">change password</a>
                             </td>
-                            {% if user in online_now_ids %}
+                            {% if user.id in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>
@@ -225,7 +225,7 @@
                                    style="font-size: 80%"
                                    onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">change password</a>
                             </td>
-                            {% if user in online_now_ids %}
+                            {% if user.id in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>

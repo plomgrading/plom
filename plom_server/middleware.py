@@ -13,11 +13,6 @@
 from django.core.cache import cache
 from django.conf import settings
 
-# Online Threshold: A user is considered 'inactive' after this many seconds idle
-# Online Max: Only track this many users at once, for performance reasons
-ONLINE_THRESHOLD = getattr(settings, "ONLINE_THRESHOLD", 60 * 30)
-ONLINE_MAX = getattr(settings, "ONLINE_MAX", 60)
-
 
 class OnlineNowMiddleware:
     """Maintains a list of users who have interacted with the website recently.
@@ -62,9 +57,11 @@ class OnlineNowMiddleware:
                 online_now_ids.remove(uid)
             online_now_ids.append(uid)
             # long lists cause performance issues
-            if len(online_now_ids) > ONLINE_MAX:
+            if len(online_now_ids) > settings.ONLINE_MAX:
                 del online_now_ids[0]
 
         # Set the new cache
-        cache.set("online-%s" % (request.user.pk,), True, ONLINE_THRESHOLD)
-        cache.set("online-now", online_now_ids, ONLINE_THRESHOLD)  # race condition
+        cache.set("online-%s" % (request.user.pk,), True, settings.ONLINE_THRESHOLD)
+        cache.set(
+            "online-now", online_now_ids, settings.ONLINE_THRESHOLD
+        )  # race condition
