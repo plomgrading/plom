@@ -4,7 +4,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 #
 # But this codes seems to have originally come from
 #    https://gist.github.com/un33k/2913897
@@ -12,7 +12,6 @@
 
 from django.core.cache import cache
 from django.conf import settings
-from django.utils.deprecation import MiddlewareMixin
 
 # Online Threshold: A user is considered 'inactive' after this many seconds idle
 # Online Max: Only track this many users at once, for performance reasons
@@ -20,13 +19,29 @@ ONLINE_THRESHOLD = getattr(settings, "ONLINE_THRESHOLD", 60 * 30)
 ONLINE_MAX = getattr(settings, "ONLINE_MAX", 60)
 
 
-class OnlineNowMiddleware(MiddlewareMixin):
+class OnlineNowMiddleware:
     """Maintains a list of users who have interacted with the website recently.
 
     Rather than posting to the db every time a user makes a request,
     it is cached for fast recall.
     Using the cache means the list isn't reliable if the server is multithreaded.
     """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # One-time configuration and initialization.
+
+    def __call__(self, request):
+        # Code to be executed for each request before
+        # the view (and later middleware) are called.
+        self.process_request(request)
+
+        response = self.get_response(request)
+
+        # Code to be executed for each request/response after
+        # the view is called.
+
+        return response
 
     def process_request(self, request):
         """Update the list of online users.
