@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2026 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2026 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
 # bundle 1
@@ -13,13 +13,13 @@ last_paper = 10
 [[bundles]]
 first_paper = 11
 last_paper = 20
-garbage_page_papers = [1, 2]
+garbage_page_papers = [11, 12]
 duplicate_qr_papers = [13, 14]
 wrong_version_papers = [15, 16]
-duplicate_page_papers = [7, 8]
-scrap_page_papers = [7, 8]
-wrong_assessment_papers = [1, 2]
-out_of_range_papers = [5]
+duplicate_page_papers = [17, 18]
+scrap_page_papers = [17, 18]
+wrong_assessment_papers = [11, 12]
+out_of_range_papers = [15]
 obscure_qr_papers = [11, 12, 13, 14, 15]
 invalid_qr_papers = [16, 17]
 operations = ["tear", "fold", "rotate", "compress", "lighten"]
@@ -29,9 +29,9 @@ operations = ["tear", "fold", "rotate", "compress", "lighten"]
 [[bundles]]
 first_paper = 21
 last_paper = 30
-extra_page_papers = [19, 20]
-scrap_page_papers = [19, 20]
-discard_pages = [51, 54, 60, 64]
+extra_page_papers = [29, 30]
+scrap_page_papers = [29, 30]
+discard_pages = [51, 54, 60, 64]  # TODO: does this get used by anything?
 obscure_qr_papers = [21, 22, 23, 24, 25, 26]
 operations = ["darken", "jam", "stretch", "hide", "corrupt", "obscure"]
 

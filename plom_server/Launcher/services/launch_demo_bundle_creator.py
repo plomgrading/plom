@@ -505,6 +505,7 @@ class DemoBundleCreationService:
         first_paper_number = int(assigned_papers_ids[0]["paper_number"])
         last_paper_number = int(assigned_papers_ids[-1]["paper_number"])
 
+        print("=" * 50)
         for L, M in [
             (extra_page_papers, "extra-page-paper"),
             (scrap_page_papers, "scrap-page-paper"),
@@ -520,9 +521,6 @@ class DemoBundleCreationService:
             if not all(first_paper_number <= x <= last_paper_number for x in L):
                 raise ValueError(f"At least one {M} number is outside range.")
 
-        if duplicate_qr:
-            print(f"====: duplicate_qr={duplicate_qr}")
-            print(assigned_papers_ids)
         with pymupdf.open() as all_pdf_documents:
             for paper in assigned_papers_ids:
                 with pymupdf.open(paper["path"]) as pdf_document:
@@ -575,12 +573,8 @@ class DemoBundleCreationService:
                     scribble_answer_in_box(pdf_document, 3, 0.62, 0.455)
                     scribble_answer_in_box(pdf_document, 3, 0.62, 0.725)
 
-                    if duplicate_qr:
-                        print(f"DEBUG: {duplicate_qr}, paper_number={paper_number}")
                     # insert a qr-code from a previous page after scribbling
                     if paper_number in duplicate_qr:
-                        print("* - " * 80)
-                        print(paper_number)
                         self.insert_qr_from_previous_page(pdf_document, paper_number)
 
                     # append a garbage page after the scribbling
