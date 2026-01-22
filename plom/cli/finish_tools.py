@@ -47,6 +47,7 @@ def get_unmarked(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any
     return msgr.get_unmarked(papernum, verbose=verbose)
 
 
+@with_messenger
 def get_report(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a student report for a given paper."""
     return msgr.get_report(papernum, verbose=verbose)
