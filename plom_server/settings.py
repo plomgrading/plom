@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Andrew Rechnitzer
@@ -27,11 +27,11 @@ BASE_DIR = Path(__file__).resolve().parent
 # working directory.  In many cases, other variables can override this
 # choice (e.g., PLOM_MEDIA_ROOT) but this allows single place for all
 # non-database "state"
-_ = os.environ.get("PLOM_BASE_DIR")
-if not _:
+__ = os.environ.get("PLOM_BASE_DIR")
+if not __:
     PLOM_BASE_DIR = Path(".")
 else:
-    PLOM_BASE_DIR = Path(_)
+    PLOM_BASE_DIR = Path(__)
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -45,6 +45,27 @@ elif debug_setting.isdigit() and int(debug_setting) == 0:
     DEBUG = False
 else:
     DEBUG = True
+
+
+# Generally Plom takes it paper size from the source PDFs but it also needs to create
+# pages, for example, during reassembly.  In such cases, Plom defaults to "letter" but
+# you can override by defining the OS env var PAPERSIZE, for example to "letter", "A4",
+# "legal", etc.  There is some large set of possible values, but b/c they must be supported
+# by *all* of PyMuPDF, LaTeX and CSS's `@page` directive, it might be best to stick to
+# somewhat common paper sizes.
+_ = os.environ.get("PAPERSIZE")
+if not _:
+    PAPERSIZE = "letter"
+else:
+    PAPERSIZE = _
+
+
+# Size of QR codes in paper corners (incl. white borders).  Default is 70 points, about 25mm
+__ = os.environ.get("PLOM_QR_CODE_SIZE")
+if not __:
+    PLOM_QR_CODE_SIZE = 70
+else:
+    PLOM_QR_CODE_SIZE = int(__)
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -257,19 +278,33 @@ STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# If the user is logged in and there is no activity for 2 hours, the login status will expire
-SESSION_COOKIE_AGE = 60 * 60 * 2
-# Every time user makes request, the session cookie age will be rescheduled to 2 hours
-SESSION_SAVE_EVERY_REQUEST = True
+# Web login sessions expire this many seconds after initial login (defaults: two weeks)
+SESSION_COOKIE_AGE = 60 * 60 * 48  # 48 hours
+# If True, then every time user makes a request, the timeout will be reset (some performance cost)
+# SESSION_SAVE_EVERY_REQUEST = False
+# You can set the cookie to expire when they close their browser (for some browsers anyway)
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
+
+SESSION_COOKIE_NAME = "sessionid"
+CSRF_COOKIE_NAME = "csrftoken"
+# Independent sessions when multiple servers on the same host
+__ = os.environ.get("PLOM_PUBLIC_FACING_PORT")
+if __:
+    SESSION_COOKIE_NAME += __
+    CSRF_COOKIE_NAME += __
+__ = os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
+if __:
+    SESSION_COOKIE_NAME += __
+    CSRF_COOKIE_NAME += __
 
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
-_ = os.environ.get("PLOM_MEDIA_ROOT")
-if not _:
+__ = os.environ.get("PLOM_MEDIA_ROOT")
+if not __:
     MEDIA_ROOT = PLOM_BASE_DIR / "media"
 else:
-    MEDIA_ROOT = Path(_)
+    MEDIA_ROOT = Path(__)
 
 
 # Django Huey configuration

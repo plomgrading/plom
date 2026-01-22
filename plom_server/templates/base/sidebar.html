@@ -41,7 +41,7 @@
             <a class="nav-link link-secondary" href="{% url 'rubrics_landing' %}">Rubrics</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'overview_landing' %}">Marking and IDing</a>
+            <a class="nav-link link-secondary" href="{% url 'progress_landing' %}">Marking and IDing</a>
         </li>
         <li class="nav-item">
             <a class="nav-link link-secondary"
@@ -85,11 +85,11 @@
         </li>
         {% if user_is_lead_marker %}
             <li class="nav-item">
-                <a class="nav-link link-secondary" href="{% url 'overview_landing' %}">Progress overview</a>
+                <a class="nav-link link-secondary" href="{% url 'progress_landing' %}">Marking and IDing</a>
             </li>
         {% else %}
             <li class="nav-item">
-                <a class="nav-link link-secondary" href="{% url 'progress_mark_home' %}">Marking progress</a>
+                <a class="nav-link link-secondary" href="{% url 'progress_marking' %}">Marking progress</a>
             </li>
         {% endif %}
     {% endif %}

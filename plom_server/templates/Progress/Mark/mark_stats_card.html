@@ -1,7 +1,7 @@
 <!--
      SPDX-License-Identifier: AGPL-3.0-or-later
      Copyright (C) 2023-2025 Andrew Rechnitzer
-     Copyright (C) 2024 Aidan Murphy
+     Copyright (C) 2024, 2026 Aidan Murphy
      Copyright (C) 2024-2025 Colin B. Macdonald
      Copyright (C) 2025 Deep Shah
 -->
@@ -15,7 +15,9 @@
                     {{ question_label_html|safe }}&nbsp;v{{ version }}</a>
                 </h5>
             </div>
-            <div style="width: 12rem;">{% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}</div>
+            <div class="ms-1" style="width: 12rem;">
+                {% include "Progress/fragments/task_progress_bar.html" with dat=task_status_counts %}
+            </div>
         </div>
         <div class="mt-0">
             <!--

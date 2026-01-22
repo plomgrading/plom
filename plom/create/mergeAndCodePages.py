@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -60,9 +60,10 @@ def create_QR_codes(
         # qr_code = pyqrcode.create(tpv, error="H")
         # qr_code.png(filename, scale=4)
 
-        qr_code = segno.make(tpv, error="H")
+        qr_code = segno.make_qr(tpv, error="H")
+        # border=4 (also the default) is the whitespace padding around the QR codes
         # MyPy complains about pathlib.Path here but it works
-        qr_code.save(filename, scale=4)  # type: ignore[arg-type]
+        qr_code.save(filename, scale=4, border=4)  # type: ignore[arg-type]
 
         qr_file.append(filename)
 
@@ -89,6 +90,7 @@ def _create_QRcoded_pdf(
     *,
     no_qr: bool = False,
     paperstr: str | None = None,
+    qr_code_size: float | int | None = None,
 ) -> pymupdf.Document:
     """Creates a PDF document from versioned sources, stamps QR codes on the corners.
 
@@ -109,6 +111,7 @@ def _create_QRcoded_pdf(
         no_qr (bool): whether to paste in QR-codes (default: False)
             Note backward logic: False means yes to QR-codes.
         paperstr: override the default string version of the paper number.
+        qr_code_size: width/height of the QR codes.
 
     Returns:
         PDF document, apparently open, which seems to me a scary
@@ -164,7 +167,14 @@ def _create_QRcoded_pdf(
             page_to_group_name[p],
             p,
         )
-        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], label, qr_files, odd=odd)
+        pdf_page_add_labels_QRs(
+            exam[p - 1],
+            spec["name"],
+            label,
+            qr_files,
+            odd=odd,
+            qr_code_size=qr_code_size,
+        )
 
     for ver, pdf in pdf_version.items():
         pdf.close()
@@ -209,7 +219,9 @@ def pdf_page_add_labels_QRs(
     shortname: str,
     stamp: str,
     qr_code: list[pathlib.Path],
+    *,
     odd: bool | None = True,
+    qr_code_size: float | int | None = None,
 ) -> None:
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
@@ -219,22 +231,29 @@ def pdf_page_add_labels_QRs(
             indicator.
         stamp: text for the top-middle
         qr_code: QR images, if empty, don't do corner work.
+
+    Keyword Args:
         odd: True for an odd page number (counting from 1),
             False for an even page, and None if you don't want to draw a
             staple corner.
+        qr_code_size: width/height of the QR codes in points, or a default
+            value of 70 if `None` or omitted.
 
     Returns:
         None: but modifies page as a side-effect.
     """
-    w = 70  # box width
+    if qr_code_size is None:
+        qr_code_size = 70
+    w = qr_code_size  # QR box width
+    w_tri = 70  # staple corner indicator box width
     mx, my = (15, 20)  # margins
 
     pg_width = page.bound().width
     pg_height = page.bound().height
 
-    # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
-    rDNW_TL = pymupdf.Rect(mx, my, mx + w, my + w)
-    rDNW_TR = pymupdf.Rect(pg_width - mx - w, my, pg_width - mx, my + w)
+    # create two "do not write" staple indicators TL (top left) and TR (top right)
+    rDNW_TL = pymupdf.Rect(mx, my, mx + w_tri, my + w_tri)
+    rDNW_TR = pymupdf.Rect(pg_width - mx - w_tri, my, pg_width - mx, my + w_tri)
 
     # page-corner boxes for the QR codes
     # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
@@ -281,6 +300,7 @@ def pdf_page_add_labels_QRs(
     # Remember that we only add 3 of the 4 QR codes for each page since
     # we always have a corner section for staples and such
     # Note: draw png first so it doesn't occlude the outline
+    # Note: border around each code is in the image, see `create_QR_codes`
     if odd:
         page.insert_image(TR, pixmap=pymupdf.Pixmap(qr_code[0]), overlay=True)
         page.draw_rect(TR, color=[0, 0, 0], width=0.5)
@@ -410,7 +430,6 @@ def make_PDF(
     xcoord: float | None = None,
     ycoord: float | None = None,
     no_qr: bool = False,
-    fakepdf: bool = False,
     *,
     public_code: str | None = None,
     where: Path | None = None,
@@ -418,7 +437,8 @@ def make_PDF(
     source_versions: dict[int, Path] | None = None,
     font_subsetting: bool | None = None,
     paperstr: str | None = None,
-) -> pathlib.Path | None:
+    qr_code_size: float | int | None = None,
+) -> pathlib.Path:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
     Take pages from each source (using `questions_versions`/`page_versions`) and
@@ -439,13 +459,6 @@ def make_PDF(
         ycoord: vertical positioning of the prename box, or a default
             if None or omitted.
         no_qr (bool): determine whether or not to paste in qr-codes.
-            Somewhat deprecated, definitely use it as kwarg if you're
-            writing new code.
-        fakepdf (bool): when true, the build empty "pdf" files by just
-            touching fhe files.  This is could be used in testing or to
-            save time when we have no use for the actual files.  Why?
-            Maybe later confirmation steps check these files exist or
-            something like that...
             Somewhat deprecated, definitely use it as kwarg if you're
             writing new code.
 
@@ -473,10 +486,10 @@ def make_PDF(
             Non-ascii is a stronger requirement than needed,
         paperstr: override the default string version of the paper number.
             Probably you don't need to do this, although Mocker does.
+        qr_code_size: width/height of the QR codes.
 
     Returns:
-        pathlib.Path: the file that was just written, or None in the slightly
-        strange, perhaps deprecated ``fakepdf`` case.
+        pathlib.Path: the file that was just written.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
@@ -487,11 +500,6 @@ def make_PDF(
         save_name = where / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
         save_name = where / f"exam_{papernum:04}.pdf"
-
-    # make empty files instead of PDFs
-    if fakepdf:
-        save_name.touch()
-        return None
 
     if source_versions is not None:
         assert (
@@ -521,6 +529,7 @@ def make_PDF(
             public_code,
             no_qr=no_qr,
             paperstr=paperstr,
+            qr_code_size=qr_code_size,
         )
 
     # If provided with student name and id, preprint on cover

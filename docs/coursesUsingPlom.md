@@ -1,13 +1,13 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2020 Andrew Rechnitzer
-    Copyright (C) 2020-2023, 2025 Colin B. Macdonald
+    Copyright (C) 2020-2023, 2025-2026 Colin B. Macdonald
     Copyright (C) 2020 Matthew Coles
     Copyright (C) 2022 Philip Loewen
     Copyright (C) 2022 Elizabeth Xiao
     Copyright (C) 2022 Tony Nguyen
     Copyright (C) 2022 Charlotte Dean
-    Copyright (C) 2024-2025 Aidan Murphy
+    Copyright (C) 2024-2026 Aidan Murphy
 -->
 
 # Courses that have used Plom
@@ -347,26 +347,40 @@ Approx: 1100 students over 10 courses
 
 ## 2025W1
 
-| Course           |  Tasks                                             | # students  |  Notes                                                                                       |
-|----------        |----------------------------------                  |:----------: |-------------------------------                                                               |
-| Math100          | Midterm(x2)+Final                                  | 3300        |                                                                                              |
-| Math180          | Midterm(x2)+Final                                  | 700         |                                                                                              |
-| Math215/255      | Midterm(x3)+Final                                  | 400         |                                                                                              |
-| Math217          | Midterm(x2)+Final                                  | 85          |                                                                                              |
-| Math220          | Midterm                                            | 418         | grading done on paper, but Plom used for digital return                                      |
-| Math329          | Midterm+Final                                      | 45          | Final graded on paper, Plom used for archiving/digital overview                              |
-| Math111/221      | Midterm(x2)+Final                                  | 660         |                                                                                              |
-| Math226          | Midterm(x2)                                        | 70          |                                                                                              |
-| Math253          | Final                                              | 800         |                                                                                              |
-| Math302          | Midterm+Final                                      | 320         |                                                                                              |
-| Math307          | Midterm+Final                                      | 300         |                                                                                              |
-| Math322          | Midterm                                            | 42          |                                                                                              |
-| Math340          | Quiz(x4)+Final                                     | 114         |                                                                                              |
-| Math405          | ?+Final                                            | 35          |                                                                                              |
-| Math319          | ?+Final                                            | 62          |                                                                                              |
-| Math317          | ?                                                  | 137         |                                                                                              |
-| Math320          | ?+Final                                            | 72          |                                                                                              |
+| Course      | Tasks                             | # students  | Notes                                                           |
+|----------   |---------------------------------- |:----------: |-------------------------------                                  |
+| Apsc278     | Final                             | 230         |                                                                 |
+| Math100     | Midterm(x2)+Final                 | 3300        |                                                                 |
+| Math180     | Midterm(x2)+Final                 | 700         |                                                                 |
+| Math215/255 | Midterm(x3)+Final                 | 400         |                                                                 |
+| Math217     | Midterm(x2)+Final                 | 85          |                                                                 |
+| Math220     | Midterm                           | 418         | grading done on paper, but Plom used for digital return         |
+| Math329     | Midterm+Final                     | 45          | Final graded on paper, Plom used for archiving/digital overview |
+| Math111/221 | Midterm(x2)+Final                 | 660         |                                                                 |
+| Math226     | Midterm(x2)                       | 70          |                                                                 |
+| Math253     | Final                             | 800         |                                                                 |
+| Math302     | Midterm+Final                     | 320         |                                                                 |
+| Math307     | Midterm+Final                     | 300         |                                                                 |
+| Math322     | Midterm                           | 42          |                                                                 |
+| Math340     | Quiz(x4)+Final                    | 114         |                                                                 |
+| Math405     | Midterm+Final                     | 35          |                                                                 |
+| Math319     | Midterm+Final                     | 62          |                                                                 |
+| Math317     | Midterm(x2)+Final                 | 130         |                                                                 |
+| Math320     | Homework(x10)+Midterm+Final       | 72          |                                                                 |
+| Phys117     | Final                             | 370         |                                                                 |
+| Phys157     | Midterm(x2)+Final                 | 1000        |                                                                 |
+| Biol111     | Midterm(x2)+Final                 | 336         |                                                                 |
+| Biol112     | Midterm+Final                     | 1052        |                                                                 |
+| Biol155     | Midterm(x2)+Final                 | 416         |                                                                 |
+| Biol200     | Midterm+Final                     | 1141        |                                                                 |
+| Biol205     | Midterm+Final                     | 225         |                                                                 |
+| Biol300     | Midterm+Final                     | 229         |                                                                 |
+| Biol323     | Quiz(x5)+Final                    | 38          |                                                                 |
+| Biol325     | Midterm(x2)+Final                 | 170         |                                                                 |
+| Biol331     | Midterm+Final                     | 70          |                                                                 |
+| Biol363     | Final                             | 70          |                                                                 |
+| Biol370     | Midterm+Final                     | 100         |                                                                 |
+| Biol371     | Midterm+Final                     | 215         |                                                                 |
+| SCIE001     | Midterm+Final                     | 65          |                                                                 |
 
-TODO: BIO + MICB + PHAS + ENG (+others?)
-
-Approx: 7560 students over 17 courses
+Approx: 11,700 students over 30 courses

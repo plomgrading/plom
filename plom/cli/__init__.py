@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Bryan Tanady
 
@@ -17,6 +17,7 @@ from plom.common import __version__
 
 from .start_messenger import with_messenger, start_messenger, clear_login
 from .list_bundles import list_bundles
+from .papers import list_papers
 from .bundle_tools import upload_bundle, bundle_map_page
 from .identify_tools import id_paper, un_id_paper
 from .finish_tools import (

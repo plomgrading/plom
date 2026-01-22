@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
-# Copyright (C) 2022-2025 Andrew Rechnitzer
+# Copyright (C) 2022-2026 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
@@ -56,6 +56,7 @@ include plom_server/**/tests/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.pdf
 include plom_server/Preparation/useful_files_for_testing/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.csv
+include plom_server/Finish/services/*.css
 include plom_server/Finish/templatetags/*.py
 include plom_server/Finish/useful_files_for_testing/*.toml
 include plom_server/TestingSupport/config_files/*.toml

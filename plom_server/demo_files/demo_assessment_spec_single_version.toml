@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022-2023, 2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Andrew Rechnitzer
+
+name = "plomdemo"
+longName = "Midterm Demo using Plom"
+
+numberOfVersions = 1
+numberOfPages = 8
+totalMarks = 25
+numberOfQuestions = 4
+idPage = 1
+doNotMarkPages = [2]
+
+[[question]]
+pages = [3]
+mark = 6
+
+[[question]]
+label = "Q(2)"
+pages = [4,5]
+mark = 8
+
+[[question]]
+label = "Ex.3"
+pages = [6]
+mark = 4
+
+[[question]]
+label = "LastQ"
+pages = [7,8]
+mark = 7

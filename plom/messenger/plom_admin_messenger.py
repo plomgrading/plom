@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 """Extended bits 'n bobs for advanced non-stable features of Plom server."""
 
@@ -253,10 +253,37 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def get_paper_composition_info(self) -> dict[str, dict | list]:
+        """Get a dict of information about exam papers on the server.
+
+        More specifically this dict contains info about the images attributed
+        to each exam paper.
+
+        The content returned by this endpoint is a representation of the
+        plom server database structure; it is subject to change.
+
+        Returns:
+            A dict of information keyed by the paper number it corresponds to.
+        """
+        if self.is_server_api_less_than(116):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support getting plom paper composition"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/beta/scan/papers")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def get_paper_marks(self) -> dict[int, dict]:
         """Get a list of information about exam papers on the server.
 
-        More specifically this contains info about student marks and IDs.
+        More specifically this list contains info about student marks and IDs.
 
         Returns:
             A dict of information keyed by the paper number it corresponds to.

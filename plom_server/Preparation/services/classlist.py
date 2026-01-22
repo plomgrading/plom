@@ -13,6 +13,7 @@ from typing import Any
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction, IntegrityError
+from django.db.models import Min, Max
 
 from plom.create import PlomClasslistValidator
 from .preparation_dependency_service import assert_can_modify_classlist
@@ -47,13 +48,10 @@ class StagingStudentService:
 
         This appropriately returns (None, None) if there are no prenamed papers.
         """
-        query = StagingStudent.objects.filter(paper_number__isnull=False).order_by(
-            "paper_number"
+        x = StagingStudent.objects.filter(paper_number__isnull=False).aggregate(
+            Min("paper_number"), Max("paper_number")
         )
-        if query.exists():
-            return (query.first().paper_number, query.last().paper_number)
-        else:
-            return (None, None)
+        return x["paper_number__min"], x["paper_number__max"]
 
     @staticmethod
     def are_there_any_prenamed_papers() -> bool:

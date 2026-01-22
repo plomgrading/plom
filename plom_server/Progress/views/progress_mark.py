@@ -58,7 +58,7 @@ class ProgressMarkHome(MarkerOrManagerView):
                 "who_marked_how_many": who_marked,
             }
         )
-        return render(request, "Progress/Mark/mark_home.html", context)
+        return render(request, "Progress/Mark/mark_overview.html", context)
 
 
 class ProgressMarkStartMarking(MarkerOrManagerView):

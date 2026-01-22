@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2026 Colin B. Macdonald
-# Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2024-2026 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
 
@@ -121,6 +121,13 @@ def get_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--no-solutions", dest="solutions", action="store_false")
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
+    parser.add_argument(
+        "--multiversion",
+        action="store_true",
+        default=True,
+        help="Run the demo with multiple-versions (ie 3) when true (which is default) or only a single version of the assessment when false.",
+    )
+    parser.add_argument("--no-multiversion", dest="multiversion", action="store_false")
     parser.add_argument("--half-marks", dest="half_marks", action="store_true")
     parser.add_argument(
         "--muck",
@@ -255,12 +262,20 @@ def launch_huey_processes() -> list[subprocess.Popen]:
     ]
 
 
-def upload_demo_assessment_spec_file() -> None:
-    """Upload a demo assessment spec."""
+def upload_demo_assessment_spec_file(*, multiversion=True) -> None:
+    """Upload a demo assessment spec.
+
+    KWargs:
+        multiversion= if True upload demo soln spec for 3 version assessment, else upload spec for a single assessment version.
+    """
     print("Uploading demo assessment spec")
-    spec_file = demo_files / "demo_assessment_spec.toml"
-    # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
-    run_plom_cli_command(f"upload-spec {spec_file}")
+    if multiversion:
+        spec_file = demo_files / "demo_assessment_spec.toml"
+        # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+        run_plom_cli_command(f"upload-spec {spec_file}")
+    else:
+        spec_file = demo_files / "demo_assessment_spec_single_version.toml"
+        run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
@@ -307,31 +322,57 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - successfully built {yes_soln_pdf_filename}")
 
 
-def build_demo_assessment_source_pdfs() -> None:
-    """Build the demo source PDF files."""
+def build_demo_assessment_source_pdfs(*, multiversion=True) -> None:
+    """Build the demo source PDF files.
+
+    KWargs:
+        multiversion = if True build 3 versions, else only build the version-1 source pdf
+    """
     print("Building assessment / solution source pdfs from tex in temp dirs")
-    for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
-        _build_with_and_without_soln(demo_files / filename)
+    if multiversion:
+        for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
+            _build_with_and_without_soln(demo_files / filename)
+    else:
+        _build_with_and_without_soln(demo_files / "assessment_v1")
 
 
-def upload_demo_assessment_source_files():
-    """Upload demo assessment source pdfs."""
+def upload_demo_assessment_source_files(*, multiversion=True):
+    """Upload demo assessment source pdfs.
+
+    KWargs:
+        multiversion = if True upload 3 source pdfs, else only upload the version-1 source pdf
+    """
     print("Uploading demo assessment source pdfs")
-    for v in (1, 2, 3):
-        source_pdf = f"assessment_v{v}.pdf"
-        # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
-        run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
+    if multiversion:
+        for v in (1, 2, 3):
+            source_pdf = f"assessment_v{v}.pdf"
+            # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+            run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
+    else:
+        run_plom_cli_command("upload-source assessment_v1.pdf -v 1")
 
 
-def upload_demo_solution_files():
-    """Use 'plom_solution_spec' to upload demo solution spec and source pdfs."""
+def upload_demo_solution_files(*, multiversion=True):
+    """Upload demo solution spec and solution pdfs.
+
+    KWargs:
+        multiversion = if True upload 3 soln pdfs, else only upload the version-1 solution pdf
+
+    """
     print("Uploading demo solution spec")
     soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
-    for v in [1, 2, 3]:
-        soln_pdf_path = f"assessment_v{v}_solutions.pdf"
-        run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
+    if multiversion:
+        for v in [1, 2, 3]:
+            soln_pdf_path = f"assessment_v{v}_solutions.pdf"
+            run_django_manage_command(
+                f"plom_soln_sources upload -v {v} {soln_pdf_path}"
+            )
+    else:
+        run_django_manage_command(
+            "plom_soln_sources upload -v 1 assessment_v1_solutions.pdf"
+        )
 
 
 def upload_demo_classlist(length="normal"):
@@ -385,10 +426,10 @@ def read_hack_and_resave_qvmap(filepath: Path):
     with open(filepath) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
-    # even paper numbers should get id-version 3
+    # even paper numbers should get id-version 2
     for n, row in enumerate(qvmap_rows):
         if int(row["paper_number"]) % 2 == 0:
-            qvmap_rows[n]["id.version"] = 3
+            qvmap_rows[n]["id.version"] = 2
     headers = list(qvmap_rows[0].keys())
     with open(filepath, "w") as fh:
         writer = csv.DictWriter(fh, fieldnames=headers)
@@ -432,6 +473,7 @@ def run_demo_preparation_commands(
     stop_after=None,
     solutions=True,
     versioned_id=False,
+    multiversion=True,
 ) -> bool:
     """Run commands to prepare a demo assessment.
 
@@ -450,6 +492,7 @@ def run_demo_preparation_commands(
         stop_after = after which step should the demo be stopped, see list above.
         solutions = whether or not to upload solutions as part of the demo.
         versioned_id = whether or not to use multiple versions of the id pages.
+        multiversion= if True run with 3 versions of the assessment, else run demo with only a single assessment version
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -466,7 +509,7 @@ def run_demo_preparation_commands(
         print("Stopping after users created.")
         return False
 
-    upload_demo_assessment_spec_file()
+    upload_demo_assessment_spec_file(multiversion=multiversion)
 
     saytime("Assessment specification is uploaded.")
 
@@ -474,10 +517,10 @@ def run_demo_preparation_commands(
         print("Stopping after assessment specification uploaded.")
         return False
 
-    build_demo_assessment_source_pdfs()
-    upload_demo_assessment_source_files()
+    build_demo_assessment_source_pdfs(multiversion=multiversion)
+    upload_demo_assessment_source_files(multiversion=multiversion)
     if solutions:
-        upload_demo_solution_files()
+        upload_demo_solution_files(multiversion=multiversion)
     upload_demo_classlist(length)
 
     saytime("Finished uploading assessment sources and classlist.")
@@ -490,11 +533,12 @@ def run_demo_preparation_commands(
     # if using multiple versions of the id page, then
     # after populating, download the qvmap, clear the db,
     # hack the qvmap and then upload the new qvmap.
-    if versioned_id:
+    if versioned_id and multiversion:
         with TemporaryDirectory() as tdir:
             tmp_qv_path = Path(tdir) / "tmp_qv_filename.csv"
             download_the_qvmap(tmp_qv_path)
             depopulate_the_database()
+            # hard-coded to use 3 versions
             read_hack_and_resave_qvmap(tmp_qv_path)
             upload_the_qvmap(tmp_qv_path)
 
@@ -707,11 +751,14 @@ def run_the_randomarker(*, port, half_marks=False):
         subprocess.check_call(split(cmd))
 
 
-def push_demo_rubrics():
+def push_demo_rubrics(*, multiversion=True):
     """Push demo rubrics from toml."""
     # note - hard coded question range here.
     for question_idx in (1, 2, 3, 4):
         rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
+        run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
+    if multiversion:
+        rubric_toml = demo_files / "demo_assessment_rubrics_q4_version_specific.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
 
 
@@ -734,7 +781,9 @@ def create_and_link_question_tags():
         )
 
 
-def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> bool:
+def run_marking_commands(
+    *, port: int, stop_after=None, half_marks=False, multiversion=True
+) -> bool:
     """Run commands to step through the marking process in the demo.
 
     In order it runs:
@@ -748,6 +797,7 @@ def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> boo
         stop_after = after which step should the demo be stopped, see list above.
         port = the port on which the demo is running.
         half_marks = whether or not to use +/- half-mark rubrics
+        multiversion= whether or not to run with multiple versions of the assessment
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -756,7 +806,7 @@ def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> boo
     if half_marks:
         print("Using +/- 0.5 rubrics")
         run_django_manage_command("plom_rubrics half manager")
-    push_demo_rubrics()
+    push_demo_rubrics(multiversion=multiversion)
     if stop_after == "rubrics":
         return False
 
@@ -805,13 +855,6 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
 
 def main():
     """The Plom demo script."""
-    # TODO: I guess?
-    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
-    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
-    os.environ["PLOM_SERVER"] = "http://localhost:8000"
-    os.environ["PLOM_USERNAME"] = "manager"
-    os.environ["PLOM_PASSWORD"] = "1234"
-
     saytime("")  # Launch the chatty timer.
 
     args = get_parser().parse_args()
@@ -830,6 +873,13 @@ def main():
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
+
+    # TODO: I guess?
+    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
+    os.environ["PLOM_SERVER"] = f"http://localhost:{args.port}"
+    os.environ["PLOM_USERNAME"] = "manager"
+    os.environ["PLOM_PASSWORD"] = "1234"
 
     # we specify this directory relative to the plom_server
     global demo_files
@@ -888,6 +938,7 @@ def main():
                 stop_after=stop_after,
                 solutions=args.solutions,
                 versioned_id=args.versioned_id,
+                multiversion=args.multiversion,
             ):
                 break
 
@@ -905,7 +956,10 @@ def main():
             saytime("Launching marking process ...")
             print(">> Ready for marking")
             if not run_marking_commands(
-                port=args.port, stop_after=stop_after, half_marks=args.half_marks
+                port=args.port,
+                stop_after=stop_after,
+                half_marks=args.half_marks,
+                multiversion=args.multiversion,
             ):
                 break
 

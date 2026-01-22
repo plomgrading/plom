@@ -24,23 +24,10 @@ class Migration(migrations.Migration):
                 ("source_pdf", models.FileField(upload_to="sourceVersions/")),
                 ("pdf_hash", models.CharField(max_length=64)),
                 ("original_filename", models.TextField()),
-            ],
-        ),
-        migrations.CreateModel(
-            name="StagingPQVMapping",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("paper_number", models.PositiveIntegerField()),
-                ("question", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
+                ("page_count", models.PositiveIntegerField(blank=True, null=True)),
+                ("paper_size_name", models.TextField(blank=True, null=True)),
+                ("paper_size_width", models.FloatField(blank=True, null=True)),
+                ("paper_size_height", models.FloatField(blank=True, null=True)),
             ],
         ),
         migrations.CreateModel(

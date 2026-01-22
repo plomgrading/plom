@@ -4,6 +4,8 @@
 from copy import deepcopy
 from typing import Any
 
+from django.conf import settings
+
 from plom.tpv_utils import new_magic_code, is_valid_public_code
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from ..models import SettingsModel
@@ -146,3 +148,27 @@ def get_or_create_new_public_code():
 def create_new_random_public_code():
     """Create a new random public code, independent of whether one already exists."""
     set_public_code(new_magic_code())
+
+
+def get_paper_size_in_pts() -> tuple[int, int]:
+    """Return the current paper size as a pair, in units of points."""
+    import pymupdf
+
+    return pymupdf.paper_size(settings.PAPERSIZE)
+
+
+def get_paper_size() -> str:
+    """Return a one-word code for the current papersize, such as "letter" or "A4".
+
+    Note the case is not converted: if you set (in the env var) "A4" then
+    this function will return "A4".
+    """
+    return settings.PAPERSIZE
+
+
+def get_paper_size_for_latex() -> str:
+    """Return a one-word code for the current papersize, appropriate for LaTeX, such as "a4paper".
+
+    Note LaTeX expects lowercase: "a4paper" not "A4paper"; we do that conversion.
+    """
+    return (settings.PAPERSIZE + "paper").lower()

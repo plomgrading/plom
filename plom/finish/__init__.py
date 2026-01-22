@@ -28,7 +28,7 @@ from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from .return_tools import make_canvas_gradefile
 
 # stuff plom_server uses
-from .coverPageBuilder import makeCover
+from .coverPageBuilder import make_cover
 from .examReassembler import reassemble
 
 

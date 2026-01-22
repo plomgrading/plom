@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2023-2026 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
 from collections import defaultdict
 import csv
-from dataclasses import asdict
 from pathlib import Path
 import shutil
 import tempfile
@@ -52,52 +51,6 @@ class DemoBundleCreationService:
                         }
                     )
         return classlist
-
-    def split_into_bundle_files(self, out_file, config):
-        """Split the single scribble PDF file into the designated number of bundles.
-
-        Args:
-            out_file (path.Path): path to the monolithic scribble PDF
-            config (PlomServerConfig): server config
-        """
-        bundles = config.bundles
-        default_n_pages = SpecificationService.get_n_pages()
-
-        with pymupdf.open(out_file) as scribble_pdf:
-            from_page_idx = 0
-            to_page_idx = default_n_pages
-            curr_bundle_idx = 0
-            bundle_doc = None
-
-            for paper in range(1, config.num_to_produce + 1):
-                print("PAPER", paper)
-
-                curr_bundle = asdict(bundles[curr_bundle_idx])
-                for key in curr_bundle.keys():
-                    if key in [
-                        "garbage_page_papers",
-                        "duplicate_page_papers",
-                    ]:
-                        if paper in curr_bundle[key]:
-                            to_page_idx += 1
-                    elif key == "duplicates":
-                        for inst in curr_bundle["duplicates"]:
-                            if inst["paper"] == paper:
-                                to_page_idx += 1
-
-                if paper == curr_bundle["first_paper"]:
-                    bundle_doc = pymupdf.open()
-                bundle_doc.insert_pdf(
-                    scribble_pdf, from_page=from_page_idx, to_page=to_page_idx
-                )
-                if paper == curr_bundle["last_paper"]:
-                    bundle_filename = out_file.stem + f"{curr_bundle_idx + 1}.pdf"
-                    bundle_doc.save(out_file.with_name(bundle_filename))
-                    bundle_doc.close()
-                    curr_bundle_idx += 1
-
-                from_page_idx = to_page_idx + 1
-                to_page_idx = from_page_idx + default_n_pages - 1
 
     def _get_extra_page_copy(self, dest_dir: Path) -> Path:
         """Get a copy of the extra-page pdf to the specified directory."""
@@ -186,7 +139,7 @@ class DemoBundleCreationService:
             )
             pdf_doc.delete_page()  # this defaults to the last page.
 
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
 
             pdf_doc[-1].insert_text(
                 (120, 60),
@@ -194,8 +147,9 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
+            qr_size = settings.PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
@@ -304,8 +258,10 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
-            # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
+            # TODO: this function is never called, Issue #4127.
+            qr_size = settings.PLOM_QR_CODE_SIZE
+            # hard-code additional qr-code next to the top-left one
+            rect = pymupdf.Rect(50, 50 + qr_size, 50 + qr_size, 50 + qr_size * 2)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
@@ -338,15 +294,17 @@ class DemoBundleCreationService:
             qr_pngs = create_QR_codes(1, 1, 1, wrong_code, Path(td))
             # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
             # these are called "qr_0001_pg1_4.png" etc.
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
+
             pdf_doc[-1].insert_text(
                 (120, 60),
                 text="This is a page from a different assessment",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
+            qr_size = settings.PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             # the 2nd qr-code goes in NW corner.
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
@@ -360,22 +318,23 @@ class DemoBundleCreationService:
             public_code = ""
         with tempfile.TemporaryDirectory() as td:
             qr_pngs = create_QR_codes(99999, 1, 1, public_code, Path(td))
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             pdf_doc[-1].insert_text(
                 (120, 200),
                 text="This is a page from a non-existent paper",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
+            qr_size = settings.PLOM_QR_CODE_SIZE
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             # the 2nd qr-code goes in NW corner.
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
 
             qr_pngs = create_QR_codes(1, 999, 1, public_code, Path(td))
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             pdf_doc[-1].insert_text(
                 (120, 200),
                 text="This is a non-existent page from an existing test",
@@ -383,7 +342,7 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # hard-code one qr-code in top-left
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             # the 2nd qr-code goes in NW corner.
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
@@ -408,16 +367,16 @@ class DemoBundleCreationService:
             # now we have a qr-code and 2 bar-codes which are not
             # valid for plom, and finally one valid scrap-paper code
             # for the top-left corner. The barcodes are 300-wide and 100-high
-            # and the qr-codes are 70x70
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             pdf_doc[-1].insert_text(
                 (120, 60),
                 text="This is a page with invalid qr-code and bar-codes",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
-            # 0th item is the qr-code --- put it in standard place
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            qr_size = settings.PLOM_QR_CODE_SIZE
+            # 0th item is the qr-code --- put it in the top-left corner
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[0]), overlay=True
             )
@@ -430,7 +389,7 @@ class DemoBundleCreationService:
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[2]), overlay=True
             )
-            pdf_doc.new_page(-1)
+            pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
             w = pdf_doc[-1].rect.width
             pdf_doc[-1].insert_text(
                 (120, 60),
@@ -438,11 +397,11 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
-            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + qr_size, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[3]), overlay=True
             )
-            rect = pymupdf.Rect(w - 50 - 70, 50, w - 50, 50 + 70)
+            rect = pymupdf.Rect(w - 50 - qr_size, 50, w - 50, 50 + qr_size)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[0]), overlay=True
             )
@@ -537,7 +496,31 @@ class DemoBundleCreationService:
 
         Returns:
             None.
+
+        Raises:
+            ValueError: When instructed to muck with a paper-number that is not in the assigned_papers_ids.
         """
+        # check that our mucking instructions pertain to the list of papers we actually have
+        # see #4127
+        first_paper_number = int(assigned_papers_ids[0]["paper_number"])
+        last_paper_number = int(assigned_papers_ids[-1]["paper_number"])
+
+        print("=" * 50)
+        for L, M in [
+            (extra_page_papers, "extra-page-paper"),
+            (scrap_page_papers, "scrap-page-paper"),
+            (garbage_page_papers, "garbage-page-paper"),
+            (duplicate_pages, "duplicate-page-paper"),
+            (duplicate_qr, "duplicate-qr-paper"),
+            (out_of_range_papers, "out-of-range-paper"),
+            (obscure_qr_papers, "obscure-qr-paper"),
+            (invalid_qr_papers, "invalid-qr-paper"),
+            (wrong_version, "wrong-version-paper"),
+            (wrong_assessment, "wrong-assessment-paper"),
+        ]:
+            if not all(first_paper_number <= x <= last_paper_number for x in L):
+                raise ValueError(f"At least one {M} number is outside range.")
+
         with pymupdf.open() as all_pdf_documents:
             for paper in assigned_papers_ids:
                 with pymupdf.open(paper["path"]) as pdf_document:
