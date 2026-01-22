@@ -767,15 +767,12 @@ def run_the_randomarker(*, port, half_marks=False):
 
 def push_demo_rubrics(*, multiversion=True):
     """Push demo rubrics from toml."""
+    # note - hard coded question range here.
+    for question_idx in (1, 2, 3, 4):
+        rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
+        run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
     if multiversion:
-        # note - hard coded question range here.
-        for question_idx in (1, 2, 3, 4):
-            rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
-            run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
-    else:
-        rubric_toml = (
-            demo_files / "demo_assessment_rubrics_single_version_combined.toml"
-        )
+        rubric_toml = demo_files / "demo_assessment_rubrics_q4_version_specific.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
 
 
