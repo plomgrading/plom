@@ -265,7 +265,7 @@ class BuildPapersService:
         public_code = Settings.get_public_code()
         qvmap = PQVMappingService.get_pqv_map_dict()
         prenamed = StagingStudentService.get_prenamed_papers()
-        prename_config = PrenameSettingService().get_prenaming_config()
+        prename_config = PrenameSettingService.get_prenaming_config()
 
         # do these things, in this order, in a single transaction to avoid race conditions:
         # (1) evaluate the_papers (must have select_for_update())
@@ -300,7 +300,7 @@ class BuildPapersService:
             chore_list = []
             paper = None  # ensure there is something to delete
             for paper in the_papers:
-                if prename_config["enabled"] and paper.paper_number in prenamed:
+                if paper.paper_number in prenamed:
                     student_id, student_name = prenamed[paper.paper_number]
                 else:
                     student_id, student_name = None, None

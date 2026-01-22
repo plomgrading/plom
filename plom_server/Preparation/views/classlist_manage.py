@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2023, 2025-2026 Colin B. Macdonald
 
 from io import BytesIO
 
@@ -12,7 +12,7 @@ from django.contrib import messages
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from ..services import StagingStudentService, PrenameSettingService, PapersPrinted
+from ..services import StagingStudentService, PapersPrinted
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom.plom_exceptions import PlomDependencyConflict
@@ -27,10 +27,7 @@ class ClasslistDownloadView(ManagerRequiredView):
         The file is utf-8 encoded.  Note: The internet has many comments
         about MS Excel and BOM.  Do we need to keep that software happy?
         """
-        pss = PrenameSettingService()
-        csv_txt = StagingStudentService.get_students_as_csv_string(
-            prename=pss.get_prenaming_setting()
-        )
+        csv_txt = StagingStudentService.get_students_as_csv_string()
         # Note: without BytesIO here it doesn't respect filename, get "download.csv"
         return FileResponse(
             BytesIO(csv_txt.encode("utf-8")),
@@ -42,14 +39,11 @@ class ClasslistDownloadView(ManagerRequiredView):
 
 class ClasslistView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        pss = PrenameSettingService()
-
         context = self.build_context()
         context.update(
             {
                 "student_list_present": StagingStudentService.are_there_students(),
                 "student_list": StagingStudentService.get_students(),
-                "prenaming": pss.get_prenaming_setting(),
                 "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             }
         )

@@ -2,13 +2,12 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 import base64
 
 from django.urls import reverse
-from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
@@ -18,24 +17,6 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from ..services import PrenameSettingService, ExamMockerService
 
 
-class PrenamingView(ManagerRequiredView):
-    def post(self, request: HttpRequest) -> HttpResponse:
-        try:
-            PrenameSettingService.set_prenaming_setting(True)
-            return HttpResponseClientRedirect(reverse("prep_classlist"))
-        except PlomDependencyConflict as err:
-            messages.add_message(request, messages.ERROR, f"{err}")
-            return HttpResponseClientRedirect(reverse("prep_conflict"))
-
-    def delete(self, request: HttpRequest) -> HttpResponse:
-        try:
-            PrenameSettingService.set_prenaming_setting(False)
-            return HttpResponseClientRedirect(reverse("prep_classlist"))
-        except PlomDependencyConflict as err:
-            messages.add_message(request, messages.ERROR, f"{err}")
-            return HttpResponseClientRedirect(reverse("prep_conflict"))
-
-
 class PrenamingConfigView(ManagerRequiredView):
     """Configure and mock prenaming settings."""
 
@@ -43,7 +24,7 @@ class PrenamingConfigView(ManagerRequiredView):
         context = self.build_context()
         version = 1
         try:
-            prenaming_config = PrenameSettingService().get_prenaming_config()
+            prenaming_config = PrenameSettingService.get_prenaming_config()
             png_bytes = ExamMockerService.mock_ID_page(
                 version, prenaming_config["xcoord"], prenaming_config["ycoord"]
             )
@@ -51,7 +32,7 @@ class PrenamingConfigView(ManagerRequiredView):
 
             context.update(
                 {
-                    "prename_config": PrenameSettingService().get_prenaming_config(),
+                    "prename_config": prenaming_config,
                     "mock_id_image": png_as_string,
                 }
             )

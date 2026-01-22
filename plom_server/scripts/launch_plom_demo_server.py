@@ -120,13 +120,6 @@ def get_parser() -> argparse.ArgumentParser:
         help="Upload solutions to demo server",
     )
     parser.add_argument("--no-solutions", dest="solutions", action="store_false")
-    parser.add_argument(
-        "--prename",
-        default=True,
-        action="store_true",
-        help="Prename papers as determined by the demo classlist",
-    )
-    parser.add_argument("--no-prename", dest="prename", action="store_false")
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
     parser.add_argument(
         "--multiversion",
@@ -382,7 +375,7 @@ def upload_demo_solution_files(*, multiversion=True):
         )
 
 
-def upload_demo_classlist(length="normal", prename=True):
+def upload_demo_classlist(length="normal"):
     """Upload a classlist for the demo."""
     if length == "long":
         cl_path = demo_files / "cl_for_long_demo.csv"
@@ -396,11 +389,6 @@ def upload_demo_classlist(length="normal", prename=True):
     run_plom_cli_command("delete-classlist")
     # run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
     run_plom_cli_command(f"upload-classlist {cl_path}")
-
-    if prename:
-        run_django_manage_command("plom_preparation_prenaming --enable")
-    else:
-        run_django_manage_command("plom_preparation_prenaming --disable")
 
 
 def populate_the_database(length="normal"):
@@ -484,7 +472,6 @@ def run_demo_preparation_commands(
     length="normal",
     stop_after=None,
     solutions=True,
-    prename=True,
     versioned_id=False,
     multiversion=True,
 ) -> bool:
@@ -504,7 +491,6 @@ def run_demo_preparation_commands(
         length = the length of the demo: quick, normal, long, plaid.
         stop_after = after which step should the demo be stopped, see list above.
         solutions = whether or not to upload solutions as part of the demo.
-        prename = whether or not to prename some papers in the demo.
         versioned_id = whether or not to use multiple versions of the id pages.
         multiversion= if True run with 3 versions of the assessment, else run demo with only a single assessment version
 
@@ -535,7 +521,7 @@ def run_demo_preparation_commands(
     upload_demo_assessment_source_files(multiversion=multiversion)
     if solutions:
         upload_demo_solution_files(multiversion=multiversion)
-    upload_demo_classlist(length, prename)
+    upload_demo_classlist(length)
 
     saytime("Finished uploading assessment sources and classlist.")
 
@@ -951,7 +937,6 @@ def main():
                 length=args.length,
                 stop_after=stop_after,
                 solutions=args.solutions,
-                prename=args.prename,
                 versioned_id=args.versioned_id,
                 multiversion=args.multiversion,
             ):

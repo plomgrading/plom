@@ -3,7 +3,7 @@
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
@@ -60,11 +60,7 @@
                     {% if student_list_present %}
                         <i class="bi bi-check-square text-success"></i>
                     {% else %}
-                        {% if prename_enabled %}
-                            <i class="bi bi-x-square text-danger"></i>
-                        {% else %}
-                            <i class="bi bi-dash-square-dotted"></i>
-                        {% endif %}
+                        <i class="bi bi-dash-square-dotted"></i>
                     {% endif %}
                     (Optional) manage classlist and prenaming
                     {% if have_papers_been_printed %}&mdash; can still modify{% endif %}

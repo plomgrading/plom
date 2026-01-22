@@ -1,18 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Natalie Balashov
-# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...services import (
-    StagingStudentService,
-    PrenameSettingService,
-    PapersPrinted,
-)
+from ...services import StagingStudentService, PapersPrinted
 
 
 DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_classlist (Issue #3981).
@@ -75,19 +71,10 @@ class Command(BaseCommand):
             return
 
     def download_classlist(self, dest_csv):
-        pss = PrenameSettingService()
-
         if not StagingStudentService.are_there_students():
             self.stderr.write("There is no classlist on the server.")
             return
         self.stdout.write(f"Downloading classlist to '{dest_csv}'")
-        prename = pss.get_prenaming_setting()
-        if prename:
-            self.stdout.write("\tPrenaming is enabled, so saving 'paper_number' column")
-        else:
-            self.stdout.write(
-                "\tPrenaming is disabled, so ignoring 'paper_number' column"
-            )
 
         save_path = Path(dest_csv)
         if save_path.exists():
@@ -98,7 +85,7 @@ class Command(BaseCommand):
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
-        csv_text = StagingStudentService.get_students_as_csv_string(prename=prename)
+        csv_text = StagingStudentService.get_students_as_csv_string()
         with open(save_path, "w") as fh:
             fh.write(csv_text)
 

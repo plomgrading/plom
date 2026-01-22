@@ -29,7 +29,6 @@ def reset_assessment_preparation_database():
 
     # Remove classlist and reset prename setting.
     StagingStudentService.remove_all_students()
-    PrenameSettingService().set_prenaming_setting(False)
     # reset the prename box position too.
     PrenameSettingService.reset_prenaming_coords(force=True)
 
