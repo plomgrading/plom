@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2026 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2026 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
 
 [[rubric]]
@@ -55,7 +55,7 @@ question_index = 4
 
 [[rubric]]
 kind = "relative"
-value = 1
+value = -1
 out_of = 0
 text = "small algebra error"
 meta = "The student has made minor algebra error"
@@ -64,7 +64,7 @@ question_index = 4
 
 [[rubric]]
 kind = "relative"
-value = 1
+value = -1
 out_of = 0
 text = "small arithmetic error"
 meta = "The student has made minor arithmetic error"
