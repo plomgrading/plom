@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024, 2026 Aidan Murphy
 
@@ -54,11 +54,12 @@ def huey_build_single_paper(
     *,
     student_info: dict[str, Any] | None = None,
     prename_config: dict[str, Any],
+    qr_code_size: float | int | None = None,
     tracker_pk: int,
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
-    """Build a single paper and prename it.
+    """Build a single paper and optionally prename it.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
@@ -80,6 +81,7 @@ def huey_build_single_paper(
             keys ``"id"`` and ``"name"`` for "prenaming" a paper.
         prename_config: A dict containing keys ``"xcoord"`` and
             ``"ycoord"``, used to position the prenaming box if student_info isn't None.
+        qr_code_size: size of the QR codes or ``None`` to use default.
         tracker_pk: a key into the database for anyone interested in
             our progress.
         _debug_be_flaky: for debugging, all take a while and some
@@ -105,6 +107,7 @@ def huey_build_single_paper(
             public_code=public_code,
             where=pathlib.Path(tempdir),
             source_versions=source_versions,
+            qr_code_size=qr_code_size,
         )
         assert save_path is not None
 
@@ -336,6 +339,7 @@ class BuildPapersService:
                 source_versions,
                 student_info=student_info,
                 prename_config=prename_config,
+                qr_code_size=settings.PLOM_QR_CODE_SIZE,
                 tracker_pk=chore.pk,
                 _debug_be_flaky=False,
             )
