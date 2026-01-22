@@ -69,15 +69,3 @@ class StagingStudent(models.Model):
     # optional paper-number for prenaming
     # Note: PositiveIntegerField means NonNegative
     paper_number = models.PositiveIntegerField(null=True)
-
-
-class StagingPQVMapping(models.Model):
-    """Table to store the test-question-version mapping for staging.
-
-    Store as triples of paper-question-version. This is very loose,
-    but avoids recreating the entire paper-structure.
-    """
-
-    paper_number = models.PositiveIntegerField(null=False)
-    question = models.PositiveIntegerField(null=False)
-    version = models.PositiveIntegerField(null=False)
