@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Deep Shah
 
 from typing import Any
@@ -434,8 +434,9 @@ class ProgressOverviewService:
         counts["total"] = sum([n for k, n in counts.items()])
         return counts
 
+    @staticmethod
     @transaction.atomic
-    def get_first_last_used_paper_number(self) -> tuple[int, int]:
+    def get_first_last_used_paper_number() -> tuple[int, int]:
         """Return the first/last paper that has some marking or iding task."""
         # include a default of 1 in case there are no valid id or marking tasks
         min_max_from_marking = MarkingTask.objects.exclude(

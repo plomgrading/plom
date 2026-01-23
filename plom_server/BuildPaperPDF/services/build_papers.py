@@ -3,9 +3,9 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 
 import pathlib
 import random
@@ -54,11 +54,12 @@ def huey_build_single_paper(
     *,
     student_info: dict[str, Any] | None = None,
     prename_config: dict[str, Any],
+    qr_code_size: float | int | None = None,
     tracker_pk: int,
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
-    """Build a single paper and prename it.
+    """Build a single paper and optionally prename it.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
@@ -80,6 +81,7 @@ def huey_build_single_paper(
             keys ``"id"`` and ``"name"`` for "prenaming" a paper.
         prename_config: A dict containing keys ``"xcoord"`` and
             ``"ycoord"``, used to position the prenaming box if student_info isn't None.
+        qr_code_size: size of the QR codes or ``None`` to use default.
         tracker_pk: a key into the database for anyone interested in
             our progress.
         _debug_be_flaky: for debugging, all take a while and some
@@ -105,6 +107,7 @@ def huey_build_single_paper(
             public_code=public_code,
             where=pathlib.Path(tempdir),
             source_versions=source_versions,
+            qr_code_size=qr_code_size,
         )
         assert save_path is not None
 
@@ -253,8 +256,6 @@ class BuildPapersService:
             ObjectDoesNotExist: non-existent paper number.
             PlomDependencyConflict: if dependencies not met
         """
-        assert_can_rebuild_test_pdfs()
-
         if not paper_number_list:
             # nothing to do for an empty list
             return
@@ -264,17 +265,32 @@ class BuildPapersService:
         public_code = Settings.get_public_code()
         qvmap = PQVMappingService.get_pqv_map_dict()
         prenamed = StagingStudentService.get_prenamed_papers()
-        prename_config = PrenameSettingService().get_prenaming_config()
+        prename_config = PrenameSettingService.get_prenaming_config()
 
-        the_papers = Paper.objects.filter(paper_number__in=paper_number_list)
-        # Check paper-numbers all legal and store the corresponding paper-objects
-        check = the_papers.count()
-        if check != len(paper_number_list):
-            raise ObjectDoesNotExist(
-                "Could not find all papers from supplied list of paper_numbers."
-            )
+        # do these things, in this order, in a single transaction to avoid race conditions:
+        # (1) evaluate the_papers (must have select_for_update())
+        # (2) assert we are allowed to rebuild test pdfs
+        # (3) queue up huey chores
 
         with transaction.atomic(durable=True):
+            # we aren't updating the Paper rows, but this prevents duplicate
+            # "build all PDFs" requests from queueing multiple bild pdf chores
+            the_papers = Paper.objects.select_for_update().filter(
+                paper_number__in=paper_number_list
+            )
+
+            # (1)
+            # https://dba.stackexchange.com/questions/333659/why-does-select-for-update-not-support-aggregations-among-others
+            the_papers.exists()
+            # Check paper-numbers all legal and store the corresponding paper-objects
+            check = the_papers.count()
+            if check != len(paper_number_list):
+                raise ObjectDoesNotExist(
+                    "Could not find all papers from supplied list of paper_numbers."
+                )
+
+            # (2)
+            assert_can_rebuild_test_pdfs()
             # first set any existing non-obsolete chores to obsolete
             for chore in BuildPaperPDFChore.objects.filter(
                 obsolete=False, paper__paper_number__in=paper_number_list
@@ -284,10 +300,11 @@ class BuildPapersService:
             chore_list = []
             paper = None  # ensure there is something to delete
             for paper in the_papers:
-                if prename_config["enabled"] and paper.paper_number in prenamed:
+                if paper.paper_number in prenamed:
                     student_id, student_name = prenamed[paper.paper_number]
                 else:
                     student_id, student_name = None, None
+                # (3)
                 chore_list.append(
                     BuildPaperPDFChore.objects.create(
                         paper=paper,
@@ -322,6 +339,7 @@ class BuildPapersService:
                 source_versions,
                 student_info=student_info,
                 prename_config=prename_config,
+                qr_code_size=settings.PLOM_QR_CODE_SIZE,
                 tracker_pk=chore.pk,
                 _debug_be_flaky=False,
             )

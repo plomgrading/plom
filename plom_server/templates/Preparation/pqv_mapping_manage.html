@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2025 Philip D. Loewen
     Copyright (C) 2025 Aidan Murphy
 -->
@@ -31,7 +31,7 @@
             {% if student_list_present %}
                 <p>
                     A list of students is present. It contains {{ number_of_students }} entries.
-                    {% if prenaming %}
+                    {% if prenamed_papers_list %}
                         Papers {{ prenamed_papers_list }} will be prenamed.
                     {% else %}
                         No papers will be prenamed.
@@ -102,7 +102,7 @@
                     <table class="table table-striped border">
                         <thead>
                             <th>Paper number</th>
-                            {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
+                            <th>Prename ID (if assigned)</th>
                             <th>id page ver</th>
                             {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }} ver</th>{% endfor %}
                         </thead>
@@ -110,15 +110,9 @@
                             {% for paper_number, info in pqv_table.items %}
                                 <tr>
                                     <td>{{ paper_number }}</td>
-                                    {% if prenaming %}
-                                        <td>
-                                            {% if info.prename %}
-                                                {{ info.prename.0 }}: {{ info.prename.1 }}
-                                            {% else %}
-                                                &bull;
-                                            {% endif %}
-                                        </td>
-                                    {% endif %}
+                                    <td>
+                                        {% if info.prename %}{{ info.prename.0 }}: {{ info.prename.1 }}{% endif %}
+                                    </td>
                                     <td>{{ info.id_ver }}</td>
                                     {% for x in info.qvlist %}<td>{{ x }}</td>{% endfor %}
                                 </tr>
@@ -133,12 +127,12 @@
                         <div class="card-text">
                             {% if student_list_present %}
                                 <details>
-                                    <summary>Suggested minimum number of papers to produce = {{ min_number_to_produce }}</summary>
+                                    <summary>Suggested minimum number of papers to produce: {{ min_number_to_produce }}.</summary>
                                     <p>
                                         <ul>
                                             <li>
                                                 Student list present, contains {{ number_of_students }} entries
-                                                {% if prenaming %}
+                                                {% if prenamed_papers_list %}
                                                     of which papers {{ prenamed_papers_list }} will be prenamed
                                                 {% else %}
                                                     without any prenamed papers
@@ -149,13 +143,15 @@
                                                 <ul>
                                                     <li>110% of the number of students in your classlist = {{ number_times_1dot1 }}</li>
                                                     <li>the number of students in your classlist plus 20 = {{ number_plus_twenty }}</li>
-                                                    {% if prenaming %}<li>the paper-number of the last prenamed paper plus 10 = {{ last_plus_ten }}</li>{% endif %}
+                                                    {% if prenamed_papers_list %}
+                                                        <li>the paper-number of the last prenamed paper plus 10 = {{ last_plus_ten }}</li>
+                                                    {% endif %}
                                                 </ul>
                                             </li>
                                             <li>
                                                 You do not have to print all of the resulting
                                                 papers. Rather, this ensures that you will have plenty
-                                                of spare papers <em>if you need them</em>
+                                                of spare papers <em>if you need them.</em>
                                             </li>
                                         </ul>
                                     </p>
@@ -221,7 +217,7 @@
                                     <br />
                                     <input type="radio" id="startn" name="first_paper_num" value="n" />
                                     <label for="startn">Start at number</label>
-                                    {% if prenaming %}
+                                    {% if prenamed_papers_list %}
                                         <input id="startn_value"
                                                type="number"
                                                name="startn_value"
@@ -272,7 +268,7 @@
                                                     Your version map should be compatible with your uploaded classlist. It should contain at least one row for each student, namely {{ number_of_students }} rows. We recommend that it contain at least  {{ min_number_to_produce }} rows.
                                                 </li>
                                             {% endif %}
-                                            {% if prenaming %}
+                                            {% if prenamed_papers_list %}
                                                 <li>
                                                     You have enabled prenaming; your version map must contain entries for each <em>paper_number</em> given in your classlist. The following papers are prenamed: {{ prenamed_papers_list }}.
                                                 </li>

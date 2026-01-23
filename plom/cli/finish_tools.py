@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from csv import DictWriter
 from io import StringIO
@@ -47,6 +47,7 @@ def get_unmarked(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any
     return msgr.get_unmarked(papernum, verbose=verbose)
 
 
+@with_messenger
 def get_report(papernum: int, *, msgr, verbose: bool = False) -> dict[str, Any]:
     """Get a student report for a given paper."""
     return msgr.get_report(papernum, verbose=verbose)
@@ -57,8 +58,9 @@ def get_all_reports(
     *, dirname: str = "reports", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get student reports for all papers."""
-    pqvmap_dict = msgr.get_pqvmap()
-    papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
+    paper_comp_info = msgr.get_paper_composition_info()
+    used_papers_dict = paper_comp_info["complete"] | paper_comp_info["incomplete"]
+    papernum_list = [int(papernum) for papernum in used_papers_dict.keys()]
 
     return _get_all_helper(
         papernum_list,
@@ -79,8 +81,9 @@ def get_all_solutions(
     *, dirname: str = "solutions", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get solution files for all papers."""
-    pqvmap_dict = msgr.get_pqvmap()
-    papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
+    paper_comp_info = msgr.get_paper_composition_info()
+    used_papers_dict = paper_comp_info["complete"] | paper_comp_info["incomplete"]
+    papernum_list = [int(papernum) for papernum in used_papers_dict.keys()]
 
     return _get_all_helper(
         papernum_list,
@@ -95,8 +98,9 @@ def get_all_reassembled(
     *, dirname: str = "reassembled", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get all papers in their marked states."""
-    pqvmap_dict = msgr.get_pqvmap()
-    papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
+    paper_comp_info = msgr.get_paper_composition_info()
+    used_papers_dict = paper_comp_info["complete"] | paper_comp_info["incomplete"]
+    papernum_list = [int(papernum) for papernum in used_papers_dict.keys()]
 
     return _get_all_helper(
         papernum_list,
@@ -111,8 +115,9 @@ def get_all_unmarked(
     *, dirname: str = "unmarked", msgr, verbose: bool = False
 ) -> dict[str, Any]:
     """Get all papers in their unmarked states."""
-    pqvmap_dict = msgr.get_pqvmap()
-    papernum_list = [int(papernum) for papernum in pqvmap_dict.keys()]
+    paper_comp_info = msgr.get_paper_composition_info()
+    used_papers_dict = paper_comp_info["complete"] | paper_comp_info["incomplete"]
+    papernum_list = [int(papernum) for papernum in used_papers_dict.keys()]
 
     return _get_all_helper(
         papernum_list,

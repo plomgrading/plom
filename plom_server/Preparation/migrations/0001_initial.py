@@ -31,23 +31,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="StagingPQVMapping",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("paper_number", models.PositiveIntegerField()),
-                ("question", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-            ],
-        ),
-        migrations.CreateModel(
             name="StagingStudent",
             fields=[
                 (

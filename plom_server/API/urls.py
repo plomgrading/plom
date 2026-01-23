@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Bryan Tanady
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -29,12 +29,12 @@ from .views import (
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,
-    Prenaming,
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
     papersToPrint,
     ScanListBundles,
+    ScanListPapers,
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
@@ -96,6 +96,11 @@ urlpatterns = [
         "api/beta/scan/bundles",
         ScanListBundles.as_view(),
         name="api_Scan_bundles",
+    ),
+    path(
+        "api/beta/scan/papers",
+        ScanListPapers.as_view(),
+        name="api_Scan_papers",
     ),
     path(
         "api/beta/scan/bundle/<int:bundle_id>",
@@ -206,11 +211,6 @@ urlpatterns += [
         "api/v0/classlist",
         Classlist.as_view(),
         name="api_classlist",
-    ),
-    path(
-        "api/v0/classlist/prenaming",
-        Prenaming.as_view(),
-        name="api_classlist_prenaming",
     ),
     path(
         "rubrics/<int:rid>/tasks",

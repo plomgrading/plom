@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 import tempfile
 from pathlib import Path
 
+from django.conf import settings
 import pymupdf
 
 from plom.create import make_PDF
@@ -63,6 +64,7 @@ class ExamMockerService:
                 where=tmpdir,
                 source_versions={version: source_path},
                 paperstr="<Mock>",
+                qr_code_size=settings.PLOM_QR_CODE_SIZE,
             )
             with pymupdf.open(f) as pdf_doc:
                 return pdf_doc.tobytes()
@@ -108,6 +110,7 @@ class ExamMockerService:
                 where=tmpdir,
                 source_versions={version: source_path},
                 paperstr="<Mock>",
+                qr_code_size=settings.PLOM_QR_CODE_SIZE,
             )
             with pymupdf.open(f) as pdf_doc:
                 # id_page_number is indexed from 1

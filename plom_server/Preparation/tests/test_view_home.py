@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from importlib import resources
@@ -49,8 +49,6 @@ class PreparationLandingTests(TestCase):
 
         self.assertFalse(context["can_upload_source_tests"])
         self.assertEqual(context["num_uploaded_source_versions"], 0)
-
-        self.assertFalse(context["prename_enabled"])
 
         self.assertFalse(context["student_list_present"])
 

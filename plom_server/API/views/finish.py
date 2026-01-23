@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
@@ -57,14 +57,14 @@ class FinishReport(APIView):
             )
 
         try:
-            pdf_file = ReassembleService().get_single_student_report(papernum)
+            pdf_file, filename = ReassembleService().get_single_student_report(papernum)
         except ObjectDoesNotExist as err:
             return _error_response(
                 f"Report for paper {papernum} does not exist: perhaps the paper is"
                 f" not yet marked, identified or reassemble is in-progress: {err}",
                 status.HTTP_404_NOT_FOUND,
             )
-        return FileResponse(pdf_file, status=status.HTTP_200_OK)
+        return FileResponse(pdf_file, filename=filename, status=status.HTTP_200_OK)
 
 
 class FinishSolution(APIView):
@@ -84,14 +84,16 @@ class FinishSolution(APIView):
             )
 
         try:
-            pdf_file = BuildSolutionService().get_single_solution_pdf_file(papernum)
+            pdf_file, filename = BuildSolutionService().get_single_solution_pdf_file(
+                papernum
+            )
         except ObjectDoesNotExist as err:
             return _error_response(
                 "Solution file does not exist: perhaps not yet assembled,"
                 f" assembly is in-progress: {err}",
                 status.HTTP_404_NOT_FOUND,
             )
-        return FileResponse(pdf_file, status=status.HTTP_200_OK)
+        return FileResponse(pdf_file, filename=filename, status=status.HTTP_200_OK)
 
 
 class FinishUnmarked(APIView):

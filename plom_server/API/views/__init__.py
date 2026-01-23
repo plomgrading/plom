@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from .paperstoprint import (
     papersToPrint,
@@ -29,10 +29,7 @@ from .source_handler import (
 
 from .spec_handler import SpecificationAPIView
 from .public_code import PublicCodeAPIView
-from .classlist import (
-    Classlist,
-    Prenaming,
-)
+from .classlist import Classlist
 from .pqvmap import PQVmap
 
 from .identify import (
@@ -62,6 +59,7 @@ from .mark import (
 
 from .scan import (
     ScanListBundles,
+    ScanListPapers,
     ScanBundleActions,
     ScanMapBundle,
 )

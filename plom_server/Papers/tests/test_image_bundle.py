@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2026 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from django.test import TestCase
 from model_bakery import baker
@@ -12,7 +12,6 @@ from django.contrib.auth.models import User
 
 from plom_server.Base.models import BaseImage
 from plom_server.Preparation.services import PapersPrinted
-from plom_server.Preparation.models import StagingPQVMapping
 from plom_server.Scan.models import StagingImage, StagingBundle
 from ..services import ImageBundleService, SpecificationService
 from ..models import Bundle, Image, FixedPage, MobilePage, Paper
@@ -259,7 +258,6 @@ class ImageBundleTests(TestCase):
     def test_push_perfect_bundle(self) -> None:
         """Test that push_valid_bundle() works as intended with a valid staged bundle."""
         bundle = baker.make(StagingBundle, pdf_hash="abcdef", user=self.user)
-        baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
         baker.make(
