@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ("Papers", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -28,25 +29,6 @@ class Migration(migrations.Migration):
                 ("image", models.FileField(upload_to="annotation_images/")),
                 ("hash", models.TextField(default="")),
             ],
-        ),
-        migrations.CreateModel(
-            name="MarkingTaskTag",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("time", models.DateField(default=django.utils.timezone.now)),
-                ("text", models.TextField()),
-            ],
-            options={
-                "abstract": False,
-            },
         ),
         migrations.CreateModel(
             name="Annotation",
@@ -129,6 +111,49 @@ class Migration(migrations.Migration):
                         to="Mark.annotation",
                     ),
                 ),
+                (
+                    "paper",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
+                    ),
+                ),
             ],
+        ),
+        migrations.AddField(
+            model_name="annotation",
+            name="task",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="Mark.markingtask",
+            ),
+        ),
+        migrations.CreateModel(
+            name="MarkingTaskTag",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("time", models.DateField(default=django.utils.timezone.now)),
+                ("text", models.TextField()),
+                ("task", models.ManyToManyField(to="Mark.markingtask")),
+                (
+                    "user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            options={
+                "abstract": False,
+            },
         ),
     ]

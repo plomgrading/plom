@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 import hashlib
 from io import BytesIO
@@ -16,15 +16,8 @@ from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
 from plom_server.Base.models import BaseImage
-from plom_server.Papers.models import (
-    Bundle,
-    Image,
-    FixedPage,
-    DiscardPage,
-    IDPage,
-    DNMPage,
-)
-from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models import Bundle, DiscardPage, Image, FixedPage
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Preparation.services import SourceService
 from ..services import ManageDiscardService, ManageScanService
 
@@ -211,10 +204,16 @@ def get_substitute_image(page_number: int, version: int) -> Image:
     Raises:
         ObjectDoesNotExist: Specifically ``Bundle.DoesNotExist`` if the
             the substitution bundle has not been built yet.
-        ObjectDoesNotExist: probably Image.DoesNotExist if the pgae number
+        ObjectDoesNotExist: probably Image.DoesNotExist if the page number
             or version are out of range, TODO: but this is not tested.
     """
-    bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+    try:
+        bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+    except Bundle.DoesNotExist as e:
+        # in Python 3.11:
+        # e.add_note()
+        # reraise
+        raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
     bundle_order = n_pages * version + page_number
@@ -262,11 +261,15 @@ def erase_all_substitute_images_and_their_bundle() -> None:
 def forgive_missing_fixed_page(
     user_obj: User, paper_number: int, page_number: int
 ) -> None:
-    """Replace the given fixed page with a substitute page image.
+    """Replace any FixedPages using this paper number page number with a substitute page image.
+
+    Note: its really "forgive missing page": in the shared pages case,
+    there would be multiple QuestionPages ("FixedPages") pointing at this
+    page.  This routine will forgive *all* of them
 
     Args:
         user_obj: the user-object who is doing the forgiving.
-        paper_number: the paper
+        paper_number: the paper.
         page_number: the page from the paper that is missing.
 
     Raises:
@@ -274,31 +277,28 @@ def forgive_missing_fixed_page(
         ValueError: If the paper/page does exist (has actually been scanned)
             but the corresponding fixed-page object has an image.
     """
-    try:
-        fixedpage_obj = FixedPage.objects.get(
-            paper__paper_number=paper_number, page_number=page_number
-        )
-    except FixedPage.DoesNotExist as e:
-        raise ValueError(
-            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
-        ) from e
-    if fixedpage_obj.image:
-        raise ValueError(
-            f"Paper {paper_number} page {page_number} already has an image"
-            " - there is nothing to forgive!"
-        )
-    image_obj = get_substitute_image(page_number, fixedpage_obj.version)
-    # create a discard page, move it into place via assign_discard_page_to_fixed_page
-    discardpage_obj = DiscardPage.objects.create(
+    version = PaperInfoService.get_version_from_paper_page(paper_number, page_number)
+    image_obj = get_substitute_image(page_number, version)
+    # create temporary discard page, move into place with the ManageDiscardService
+    tmp_discardpage_obj = DiscardPage.objects.create(
         image=image_obj,
         discard_reason=(
             "System-created page to substitute for"
             f" paper {paper_number} page {page_number}"
         ),
     )
-    ManageDiscardService().assign_discard_page_to_fixed_page(
-        user_obj, discardpage_obj.pk, paper_number, page_number
-    )
+    tmp_pk = tmp_discardpage_obj.pk
+    try:
+        ManageDiscardService._assign_discard_to_fixed_page(
+            user_obj, tmp_discardpage_obj, paper_number, page_number
+        )
+    finally:
+        # On success, ManageDiscardService should erase the temporary DiscardPage
+        # for us.  But perhaps not on ValueError :-(  To be sure, we do it:
+        try:
+            DiscardPage.objects.get(pk=tmp_pk).delete()
+        except DiscardPage.DoesNotExist:
+            pass
 
 
 def forgive_missing_fixed_page_cmd(
@@ -323,29 +323,31 @@ def forgive_missing_fixed_page_cmd(
 def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, Any]:
     """Get information about the fixed page of the given paper/page.
 
+    Note: note very well-defined what happens if you call this for something
+    that does not have a substitute.
+
     Returns a dict with keys "paper_number", "page_number", "version" and then
-        "substitute_image_pk" and "kind". "Kind" is one of "IDPage", "QuestionPage", or "DNMPage"
+        "substitute_image_pk" and "kind". "Kind" is one of "IDPage", "QuestionPage",
+        or "DNMPage"
 
     Raises:
         ValueError: When no fixed page at the given paper/page exists.
     """
-    try:
-        fixedpage_obj = FixedPage.objects.get(
-            paper__paper_number=paper_number, page_number=page_number
-        )
-    except FixedPage.DoesNotExist as e:
-        raise ValueError(
-            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
-        ) from e
-    version = fixedpage_obj.version
+    version = PaperInfoService.get_version_from_paper_page(paper_number, page_number)
     substitute_image_pk = get_substitute_image(page_number, version).pk
 
-    if isinstance(fixedpage_obj, DNMPage):
-        kind = "DNMPage"
-    elif isinstance(fixedpage_obj, IDPage):
-        kind = "IDPage"
-    else:  # must be a question page
-        kind = "QuestionPage"
+    kinds = set(
+        [
+            f.get_page_type_display()
+            for f in FixedPage.objects.filter(
+                paper__paper_number=paper_number, page_number=page_number
+            )
+        ]
+    )
+
+    if len(kinds) != 1:
+        raise RuntimeError("IDPage or DNMPage shared?  This is currently not allowed")
+    kind = kinds.pop()
 
     return {
         "paper_number": paper_number,

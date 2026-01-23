@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 
 import io
@@ -25,11 +25,7 @@ import huey.api
 from plom_server.Scan.services import ManageScanService
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Identify.models import PaperIDTask
-from plom_server.Papers.models import (
-    SolnSpecQuestion,
-    Paper,
-    QuestionPage,
-)
+from plom_server.Papers.models import FixedPage, Paper, SolnSpecQuestion
 from plom_server.Papers.services import SpecificationService
 from ..models import SolutionSourcePDF, BuildSolutionPDFChore
 from .student_marks_service import StudentMarkService
@@ -147,8 +143,11 @@ class BuildSolutionService:
                 "Cannot assemble solutions until all source solution pdfs uploaded"
             )
         # get the version of each question
+        # TODO: careful, not well-defined what happens if shared pages differ in versions
         qv_map = {}
-        for qp_obj in QuestionPage.objects.filter(paper=paper_obj):
+        for qp_obj in FixedPage.objects.filter(
+            paper=paper_obj, page_type=FixedPage.QUESTIONPAGE
+        ):
             qv_map[qp_obj.question_index] = qp_obj.version
         # get the solution pdfs
         soln_doc = {}

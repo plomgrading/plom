@@ -2,14 +2,14 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django.test import TestCase
 from django.db import IntegrityError
 from model_bakery import baker
 
 from ..services import PaperCreatorService, SpecificationService
-from ..models import Paper, IDPage, DNMPage, QuestionPage, FixedPage, Specification
+from ..models import Paper, FixedPage, Specification
 
 
 class PaperCreatorTests(TestCase):
@@ -37,9 +37,9 @@ class PaperCreatorTests(TestCase):
         """Helper function for getting the current number of papers/pages."""
         n_papers = Paper.objects.all().count()
         n_pages = FixedPage.objects.all().count()
-        n_id = IDPage.objects.all().count()
-        n_dnm = DNMPage.objects.all().count()
-        n_question = QuestionPage.objects.all().count()
+        n_id = FixedPage.objects.filter(page_type=FixedPage.IDPAGE).count()
+        n_dnm = FixedPage.objects.filter(page_type=FixedPage.DNMPAGE).count()
+        n_question = FixedPage.objects.filter(page_type=FixedPage.QUESTIONPAGE).count()
 
         return n_papers, n_pages, n_id, n_dnm, n_question
 
@@ -58,10 +58,18 @@ class PaperCreatorTests(TestCase):
 
         paper = Paper.objects.get(paper_number=1)
 
-        q_1 = QuestionPage.objects.get(paper=paper, question_index=1)
+        q_1 = FixedPage.objects.get(
+            paper=paper,
+            question_index=1,
+            page_type=FixedPage.QUESTIONPAGE,
+        )
         self.assertEqual(q_1.version, 2)
 
-        q_2 = QuestionPage.objects.get(paper=paper, question_index=2)
+        q_2 = FixedPage.objects.get(
+            paper=paper,
+            question_index=2,
+            page_type=FixedPage.QUESTIONPAGE,
+        )
         self.assertEqual(q_2.version, 1)
 
     def test_remake_paper_raises(self) -> None:
@@ -77,9 +85,9 @@ class PaperCreatorTests(TestCase):
         baker.make(Specification)
 
         paper = baker.make(Paper)
-        baker.make(IDPage, paper=paper)
-        baker.make(DNMPage, paper=paper)
-        baker.make(QuestionPage, paper=paper)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.IDPAGE)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.DNMPAGE)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.QUESTIONPAGE)
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 

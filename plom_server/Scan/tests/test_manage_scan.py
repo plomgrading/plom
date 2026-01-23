@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
@@ -36,7 +36,14 @@ class ManageScanServiceTests(TestCase):
             for pg in range(1, 7):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(FixedPage, paper=paper, image=img, version=1, page_number=pg)
+                baker.make(
+                    FixedPage,
+                    paper=paper,
+                    image=img,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
+                )
             for qn in [1]:
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
@@ -47,7 +54,14 @@ class ManageScanServiceTests(TestCase):
             for pg in range(1, 7):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(FixedPage, paper=paper, image=img, version=1, page_number=pg)
+                baker.make(
+                    FixedPage,
+                    paper=paper,
+                    image=img,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
+                )
 
         # make 2 papers with 2 pages with images and 4 without (ie an incomplete paper)
         for paper_number in [6, 7]:
@@ -55,10 +69,22 @@ class ManageScanServiceTests(TestCase):
             for pg in range(1, 3):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(FixedPage, paper=paper, image=img, version=1, page_number=pg)
+                baker.make(
+                    FixedPage,
+                    paper=paper,
+                    image=img,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
+                )
             for pg in range(3, 7):
                 baker.make(
-                    FixedPage, paper=paper, image=None, version=1, page_number=pg
+                    FixedPage,
+                    paper=paper,
+                    image=None,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
                 )
 
         # make another 2 unused papers - no images at all
@@ -66,7 +92,12 @@ class ManageScanServiceTests(TestCase):
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 7):
                 baker.make(
-                    FixedPage, paper=paper, image=None, version=1, page_number=pg
+                    FixedPage,
+                    paper=paper,
+                    image=None,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
                 )
 
         # make another 2 papers with 2 pages with images and 4 without (ie an incomplete paper), but 2 mobile pages (for q 1,2)
@@ -75,10 +106,22 @@ class ManageScanServiceTests(TestCase):
             for pg in range(1, 3):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(FixedPage, paper=paper, image=img, version=1, page_number=pg)
+                baker.make(
+                    FixedPage,
+                    paper=paper,
+                    image=img,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
+                )
             for pg in range(3, 7):
                 baker.make(
-                    FixedPage, paper=paper, image=None, version=1, page_number=pg
+                    FixedPage,
+                    paper=paper,
+                    image=None,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
                 )
             for qn in range(1, 3):
                 ord += 1
@@ -90,7 +133,12 @@ class ManageScanServiceTests(TestCase):
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 7):
                 baker.make(
-                    FixedPage, paper=paper, image=None, version=1, page_number=pg
+                    FixedPage,
+                    paper=paper,
+                    image=None,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
                 )
             for qn in range(1, 4):
                 ord += 1
@@ -101,7 +149,14 @@ class ManageScanServiceTests(TestCase):
         paper_number = 15
         paper = baker.make(Paper, paper_number=paper_number)
         for pg in range(1, 7):
-            baker.make(FixedPage, paper=paper, image=None, version=1, page_number=pg)
+            baker.make(
+                FixedPage,
+                paper=paper,
+                image=None,
+                version=1,
+                page_number=pg,
+                page_type=FixedPage.QUESTIONPAGE,
+            )
         for qn in range(1, 4):
             ord += 1
             img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
@@ -117,7 +172,12 @@ class ManageScanServiceTests(TestCase):
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 7):
                 baker.make(
-                    FixedPage, paper=paper, image=None, version=1, page_number=pg
+                    FixedPage,
+                    paper=paper,
+                    image=None,
+                    version=1,
+                    page_number=pg,
+                    page_type=FixedPage.QUESTIONPAGE,
                 )
             for qn in range(1, 3):
                 ord += 1
@@ -128,7 +188,14 @@ class ManageScanServiceTests(TestCase):
         paper_number = 18
         paper = baker.make(Paper, paper_number=paper_number)
         for pg in range(1, 7):
-            baker.make(FixedPage, paper=paper, image=None, version=1, page_number=pg)
+            baker.make(
+                FixedPage,
+                paper=paper,
+                image=None,
+                version=1,
+                page_number=pg,
+                page_type=FixedPage.QUESTIONPAGE,
+            )
         for qn in range(1, 3):
             ord += 1
             img = baker.make(Image, bundle=self.bundle, bundle_order=ord)

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 import logging
 
@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Count
 
 from plom_server.Base.services import Settings
-from ..models import Paper, FixedPage, IDPage, QuestionPage
+from ..models import Paper, FixedPage
 from .paper_creator import PaperCreatorService
 
 log = logging.getLogger("PaperInfoService")
@@ -76,14 +76,9 @@ class PaperInfoService:
         """List which papers have been created in the database."""
         return list(Paper.objects.values_list("paper_number", flat=True))
 
-    def page_has_image(self, paper_number, page_number) -> bool:
-        """Return True if a page has an Image associated with it."""
-        paper = Paper.objects.get(paper_number=paper_number)
-        page = FixedPage.objects.get(paper=paper, page_number=page_number)
-        return page.image is not None
-
+    @staticmethod
     @transaction.atomic
-    def get_version_from_paper_page(self, paper_number: int, page_number: int) -> int:
+    def get_version_from_paper_page(paper_number: int, page_number: int) -> int:
         """Given a paper_number and page_number, return the version of that page.
 
         .. warning::
@@ -140,14 +135,16 @@ class PaperInfoService:
         try:
             # to find the version, find the first fixed question page of that paper/question
             # and extract the version from that. Note - use "filter" and not "get" here.
-            page = QuestionPage.objects.filter(
-                paper=paper, question_index=question_idx
+            page = FixedPage.objects.filter(
+                page_type=FixedPage.QUESTIONPAGE,
+                paper=paper,
+                question_index=question_idx,
             )[0]
             # notice we use blah()[0] rather than blah.first() in order
             # to raise the exception. blah.first() will return None if
             # no such object exists. Hence this will either fail with
             # a does-not-exist or index-out-of-range
-        except (QuestionPage.DoesNotExist, IndexError):
+        except (FixedPage.DoesNotExist, IndexError):
             raise ValueError(
                 f"Question {question_idx} of paper {paper_number}"
                 " does not exist in the database."
@@ -213,7 +210,7 @@ class PaperInfoService:
         with transaction.atomic():
             # note that this gets all question pages, not just one for each question.
             for qp_obj in (
-                QuestionPage.objects.all()
+                FixedPage.objects.filter(page_type=FixedPage.QUESTIONPAGE)
                 .prefetch_related("paper")
                 .order_by("paper__paper_number")
             ):
@@ -226,7 +223,7 @@ class PaperInfoService:
                 else:
                     pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
             for idpage_obj in (
-                IDPage.objects.all()
+                FixedPage.objects.filter(page_type=FixedPage.IDPAGE)
                 .prefetch_related("paper")
                 .order_by("paper__paper_number")
             ):

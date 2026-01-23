@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2023, 2025-2026 Colin B. Macdonald
 
 """Models of the Plom Server Paper app."""
 
@@ -14,9 +14,6 @@ from .image_bundle import (
 from .paper_structure import (
     Paper,
     FixedPage,
-    DNMPage,
-    IDPage,
-    QuestionPage,
     MobilePage,
 )
 from .specifications import (

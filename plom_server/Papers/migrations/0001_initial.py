@@ -10,41 +10,10 @@ class Migration(migrations.Migration):
     dependencies = [
         ("Base", "0001_initial"),
         ("Scan", "0001_initial"),
-        ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name="FixedPage",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-                (
-                    "polymorphic_ctype",
-                    models.ForeignKey(
-                        editable=False,
-                        null=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="polymorphic_%(app_label)s.%(class)s_set+",
-                        to="contenttypes.contenttype",
-                    ),
-                ),
-            ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
-        ),
         migrations.CreateModel(
             name="Paper",
             fields=[
@@ -250,70 +219,6 @@ class Migration(migrations.Migration):
             bases=("Base.hueytasktracker",),
         ),
         migrations.CreateModel(
-            name="DNMPage",
-            fields=[
-                (
-                    "fixedpage_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="Papers.fixedpage",
-                    ),
-                ),
-            ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
-            bases=("Papers.fixedpage",),
-        ),
-        migrations.CreateModel(
-            name="IDPage",
-            fields=[
-                (
-                    "fixedpage_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="Papers.fixedpage",
-                    ),
-                ),
-            ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
-            bases=("Papers.fixedpage",),
-        ),
-        migrations.CreateModel(
-            name="QuestionPage",
-            fields=[
-                (
-                    "fixedpage_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="Papers.fixedpage",
-                    ),
-                ),
-                ("question_index", models.PositiveIntegerField()),
-            ],
-            options={
-                "abstract": False,
-                "base_manager_name": "objects",
-            },
-            bases=("Papers.fixedpage",),
-        ),
-        migrations.CreateModel(
             name="Image",
             fields=[
                 (
@@ -342,15 +247,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-        ),
-        migrations.AddField(
-            model_name="fixedpage",
-            name="image",
-            field=models.ForeignKey(
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="Papers.image",
-            ),
         ),
         migrations.CreateModel(
             name="DiscardPage",
@@ -405,12 +301,47 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.AddField(
-            model_name="fixedpage",
-            name="paper",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
-            ),
+        migrations.CreateModel(
+            name="FixedPage",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("page_number", models.PositiveIntegerField()),
+                ("version", models.PositiveIntegerField()),
+                (
+                    "page_type",
+                    models.CharField(
+                        choices=[
+                            ("QP", "QuestionPage"),
+                            ("ID", "IDPage"),
+                            ("DNM", "DNMPage"),
+                        ],
+                        max_length=3,
+                    ),
+                ),
+                ("question_index", models.PositiveIntegerField(blank=True, null=True)),
+                (
+                    "image",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="Papers.image",
+                    ),
+                ),
+                (
+                    "paper",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
+                    ),
+                ),
+            ],
         ),
         migrations.AddConstraint(
             model_name="bundle",

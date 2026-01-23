@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
-from polymorphic.models import PolymorphicModel
 
 from .image_bundle import Image
 
@@ -32,7 +31,7 @@ class Paper(models.Model):
 
 
 class MobilePage(models.Model):
-    """Mobile pages can represent pages in a paper that are "unexpected" in some way, say without QR codes.
+    """Mobile pages represent pages in a paper that not tied to a physical page, are "unexpected" in some way, such as without QR codes.
 
     The "fixed" or "expected" pages typically have QR codes on a hardcopy.
     But for example, any scrap work or extra pages might be attached to the paper.
@@ -75,26 +74,31 @@ class MobilePage(models.Model):
     version = models.IntegerField(null=True, default=None)
 
 
-class FixedPage(PolymorphicModel):
-    """Table to store information about the "fixed" pages within a given paper.
+class FixedPage(models.Model):
+    """Table to store information about the "fixed"/expected pages within a given paper.
 
-    Since every "fixed" page has a definite page-number and version-number,
-    these appear here in the base class. However, only certain pages have
-    question indices, so we use polymorphism to put that information in
-    various derived classes.
+    Every "fixed" page has a definite page-number and version-number,
+    related to the assessment specification.
 
-    IDPage, DNMPage = for the single IDpage and (zero or more) DNMPages, currently always v=1.
-    QuestionPage = has question index and a non-trivial version
+    There are various sorts of pages.  Currently that information is stored in
+    the "kind" field.  QuestionPage can share a physical page.
+    IDPage and DNMPage also point to a particular FixedPage.  Currently DNMPages
+    always have version 1.
 
-    The base class should contain all info common to these
-    classes. Searching on this base class allows us to search over all
-    pages, while searching on a derived class only searches over those
-    page types.
+    If you're searching on FixedPage, you may want to search on one QuestionPage,
+    IDPage or DNMPage instead, via the kind field, depending on what you want to do.
 
     paper (ref to Paper): the test-paper to which this page image belongs
     image (ref to Image): the image (see note below)
-    page_number (int): the position of this page within the test-paper
-    version (int): the version of this paper/page as determined by
+    page_number: the integer position of this page within the paper,
+        starting from one.
+        Note that (paper, page_number) is NOT unique: there could be two
+        or more FixedPages sharing a page_number.  This happens when
+        "shared pages" are being used.  Thus be careful not to assume
+        this commonly-thought-but-incorrect invariant.  In particular,
+        one should generally NOT call
+        ``.get(paper__paper_number=..., page_number=)``.
+    version: the integer version of this paper/page as determined by
         the qvmap.
 
     Note that the image associated to a fixed page is allowed to be
@@ -112,36 +116,23 @@ class FixedPage(PolymorphicModel):
     is scanned and pushed.
     """
 
+    QUESTIONPAGE = "QP"
+    IDPAGE = "ID"
+    DNMPAGE = "DNM"
+    # PageTypeChoices = models.TextChoices("PageType", "QUESTIONPAGE IDPAGE DNMPAGE")
+    PageTypeChoices = (
+        (QUESTIONPAGE, "QuestionPage"),
+        (IDPAGE, "IDPage"),
+        (DNMPAGE, "DNMPage"),
+    )
+
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     page_number = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
-
-
-class DNMPage(FixedPage):
-    """Table to store information about the do-not-mark pages.
-
-    At present all DNM pages have version 1. This may change in the
-    future.
-    """
-
-    pass
-
-
-class IDPage(FixedPage):
-    """Table to store information about the IDPage of the paper.
-
-    At present the ID page always has version 1. This may change in the
-    future.
-    """
-
-    pass
-
-
-class QuestionPage(FixedPage):
-    """Table to store information about the pages in Question groups.
-
-    question_index (int): the question that this page belongs to.
-    """
-
-    question_index = models.PositiveIntegerField(null=False)
+    page_type = models.CharField(
+        max_length=3, choices=PageTypeChoices, null=False, blank=False
+    )
+    # This must be NULL when type is not QUESTIONPAGE
+    # TODO: where are some invariants that are not enforced yet
+    question_index = models.PositiveIntegerField(null=True, blank=True)

@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from typing import Any
@@ -20,9 +20,6 @@ from plom_server.Papers.models import (
     Paper,
     Image,
     Bundle,
-    IDPage,
-    DNMPage,
-    QuestionPage,
 )
 from plom_server.Papers.services import SpecificationService
 from ..models import StagingBundle
@@ -275,21 +272,14 @@ class ManageScanService:
                         }
                     )
                 else:
-                    if isinstance(fp, DNMPage):
-                        kind = "DNMPage"
-                    elif isinstance(fp, IDPage):
-                        kind = "IDPage"
-                    else:  # must be a question-page
-                        kind = "QuestionPage"
                     incomplete[paper.paper_number]["fixed"].append(
                         {
                             "status": "missing",
                             "page_number": fp.page_number,
                             "page_pk": fp.pk,
-                            "kind": kind,
+                            "kind": fp.get_page_type_display(),
                         }
                     )
-                    del kind
             # if no fixed pages, assume mobile page only paper
             paper_checks = [
                 p["status"] == "missing"
@@ -352,18 +342,6 @@ class ManageScanService:
         """
         used_papers_queryset, _ = cls._get_used_unused_paper_querysets()
         return sorted([paper.paper_number for paper in used_papers_queryset])
-
-    @transaction.atomic
-    def get_page_image(self, test_paper: int, index: int) -> Image:
-        """Return a page-image.
-
-        Args:
-            test_paper (int): paper ID
-            index (int): page number
-        """
-        paper = Paper.objects.get(paper_number=test_paper)
-        page = FixedPage.objects.get(paper=paper, page_number=index)
-        return page.image
 
     @staticmethod
     def get_pushed_bundles_w_staging_prefetch() -> QuerySet[Bundle]:
@@ -578,8 +556,8 @@ class ManageScanService:
             .order_by("page_number")
             .select_related("image")
         ):
-            if isinstance(fp_obj, QuestionPage):
-                qidx_field = qidx_field = fp_obj.question_index
+            if fp_obj.page_type == FixedPage.QUESTIONPAGE:
+                qidx_field = fp_obj.question_index
             else:
                 qidx_field = ""
             dat = {

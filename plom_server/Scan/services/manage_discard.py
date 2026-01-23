@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
@@ -12,9 +12,6 @@ from plom_server.Papers.models import (
     Paper,
     FixedPage,
     MobilePage,
-    IDPage,
-    DNMPage,
-    QuestionPage,
     DiscardPage,
     Image,
 )
@@ -28,7 +25,8 @@ class ManageDiscardService:
     """Functions for overseeing discarding pushed images."""
 
     @transaction.atomic
-    def _discard_dnm_page(self, user_obj: User, dnm_obj: DNMPage) -> None:
+    def _discard_dnm_page(self, user_obj: User, dnm_obj: FixedPage) -> None:
+        assert dnm_obj.page_type == FixedPage.DNMPAGE
         DiscardPage.objects.create(
             image=dnm_obj.image,
             discard_reason=(
@@ -42,7 +40,8 @@ class ManageDiscardService:
         # Notice that no tasks need be invalidated since this is a DNM page.
 
     @transaction.atomic
-    def _discard_id_page(self, user_obj: User, idpage_obj: IDPage) -> None:
+    def _discard_id_page(self, user_obj: User, idpage_obj: FixedPage) -> None:
+        assert idpage_obj.page_type == FixedPage.IDPAGE
         DiscardPage.objects.create(
             image=idpage_obj.image,
             discard_reason=(
@@ -60,7 +59,8 @@ class ManageDiscardService:
         # automatically create a new id-task, we need a new page to be uploaded.
 
     @transaction.atomic
-    def _discard_question_page(self, user_obj: User, qpage_obj: QuestionPage) -> None:
+    def _discard_question_page(self, user_obj: User, qpage_obj: FixedPage) -> None:
+        assert qpage_obj.page_type == FixedPage.QUESTIONPAGE
         DiscardPage.objects.create(
             image=qpage_obj.image,
             discard_reason=(
@@ -242,16 +242,17 @@ class ManageDiscardService:
         return msg
 
     def discard_pushed_fixed_page(
-        self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = True
+        self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = False
     ) -> str:
         """Discard a fixed page, such an ID page, DNM page or Question page.
 
         Args:
-            user_obj (User): the User who is discarding
-            fixedpage_pk (int): the pk of the fixed page to be discarded
+            user_obj: the User who is discarding
+            fixedpage_pk: the id of the fixed page to be discarded
 
         Keyword Args:
-            dry_run: really do it or just pretend?
+            dry_run: by default, we just do it.  Pass True if you want
+                to just pretend.
 
         Returns:
             A status message about what happened (or, if ``dry_run`` is True,
@@ -274,13 +275,13 @@ class ManageDiscardService:
                 f"(which is paper {fp_obj.paper.paper_number} page {fp_obj.page_number})"
             )
 
-        if isinstance(fp_obj, DNMPage):
+        if fp_obj.page_type == FixedPage.DNMPAGE:
             msg = f"DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
                 return "DRY-RUN: would drop " + msg
             self._discard_dnm_page(user_obj, fp_obj)
             return "Have dropped " + msg
-        elif isinstance(fp_obj, IDPage):
+        elif fp_obj.page_type == FixedPage.IDPAGE:
             msg = f"IDPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
@@ -289,9 +290,11 @@ class ManageDiscardService:
                 f"Have dropped {msg} and "
                 "flagged the associated ID-task as 'out of date'"
             )
-        elif isinstance(fp_obj, QuestionPage):
-            msg = f"QuestionPage for paper {fp_obj.paper.paper_number} "
-            f"page {fp_obj.page_number} question index {fp_obj.question_index}"
+        elif fp_obj.page_type == FixedPage.QUESTIONPAGE:
+            msg = (
+                f"QuestionPage for paper {fp_obj.paper.paper_number} "
+                f"page {fp_obj.page_number} question index {fp_obj.question_index}"
+            )
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
             self._discard_question_page(user_obj, fp_obj)
@@ -406,53 +409,48 @@ class ManageDiscardService:
         else:
             raise ValueError("Command needs a pk for a fixedpage or mobilepage")
 
-    @transaction.atomic
+    @staticmethod
     def _assign_discard_to_fixed_page(
-        self, user_obj: User, discard_pk: int, paper_number: int, page_number: int
+        user_obj: User, discard_obj: DiscardPage, paper_number: int, page_number: int
     ) -> None:
-        try:
-            discard_obj = DiscardPage.objects.get(pk=discard_pk)
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"Cannot find a discard page with pk = {discard_pk}"
-            ) from e
-
+        # we don't need the Paper, but on failure we get a more specific error
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except ObjectDoesNotExist as e:
             raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
-        try:
-            fpage_obj = FixedPage.objects.get(paper=paper_obj, page_number=page_number)
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"Paper {paper_number} does not have a fixed page with page number {page_number}"
-            ) from e
-
-        if fpage_obj.image:
-            raise ValueError(
-                f"Fixed page {page_number} of paper {paper_number} already has an image."
+        with transaction.atomic():
+            fixed_pages = FixedPage.objects.filter(
+                paper=paper_obj, page_number=page_number
             )
-
-        # assign the image to the fixed page
-        fpage_obj.image = discard_obj.image
-        fpage_obj.save()
-        # delete the discard page
-        discard_obj.delete()
-
-        if isinstance(fpage_obj, DNMPage):
-            pass
-        elif isinstance(fpage_obj, IDPage):
-            IdentifyTaskService().set_paper_idtask_outdated(paper_number)
-        elif isinstance(fpage_obj, QuestionPage):
-            MarkingTaskService().set_paper_marking_task_outdated(
-                paper_number, fpage_obj.question_index
-            )
-        else:
-            raise RuntimeError(
-                f"Cannot identify type of fixed page with pk = {fpage_obj.pk} "
-                "in paper {paper_number} page {page_number}."
-            )
+            if not fixed_pages:
+                raise ValueError(
+                    f"Paper {paper_number} does not have fixed pages with page number {page_number}"
+                )
+            for fpage_obj in fixed_pages:
+                if fpage_obj.image:
+                    # TODO: annoying corner case if 1 hasn't but 2 has?
+                    raise ValueError(
+                        f"Fixed page {page_number} of paper {paper_number} already has an image."
+                    )
+                # assign the image to the fixed page
+                fpage_obj.image = discard_obj.image
+                fpage_obj.save()
+                if fpage_obj.page_type == FixedPage.DNMPAGE:
+                    pass
+                elif fpage_obj.page_type == FixedPage.IDPAGE:
+                    IdentifyTaskService().set_paper_idtask_outdated(paper_number)
+                elif fpage_obj.page_type == FixedPage.QUESTIONPAGE:
+                    MarkingTaskService().set_paper_marking_task_outdated(
+                        paper_number, fpage_obj.question_index
+                    )
+                else:
+                    raise RuntimeError(
+                        "Tertium non datur: all FixedPage must be DNM, ID, or QuestionPage"
+                        f" pk = {fpage_obj.pk} in paper {paper_number} page {page_number}."
+                    )
+            # finally (and still inside the atomic) delete the discard page
+            discard_obj.delete()
 
     @transaction.atomic
     def _assign_discard_page_to_mobile_page(
@@ -484,9 +482,15 @@ class ManageDiscardService:
             raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
         for qi in assign_to_question_indices:
+            # TODO: what if there are no question pages?  Maybe this should query the version map instead?
             # get the version from an associated question-page
+            # (first() is used instead of get() b/c multiple QuestionPages can share a physical
+            # page; in Plom's tooling they would have a common version, although that restriction
+            # should be relaxed in the future, hence the TODO above about using qvmap here.)
             version = (
-                QuestionPage.objects.filter(paper=paper_obj, question_index=qi)
+                FixedPage.objects.filter(
+                    paper=paper_obj, question_index=qi, page_type=FixedPage.QUESTIONPAGE
+                )
                 .first()
                 .version
             )
@@ -511,23 +515,31 @@ class ManageDiscardService:
         for qi in assign_to_question_indices:
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qi)
 
+    @classmethod
     def assign_discard_page_to_fixed_page(
-        self, user_obj: User, page_pk: int, paper_number: int, page_number: int
+        cls, user_obj: User, discard_pk: int, paper_number: int, page_number: int
     ) -> None:
         """Reassign the given discard page to a fixed page at the given paper/page.
 
+        If there is more than one QuestionPage attached to that page,
+        the image from the discard will be assigned to all of them.
+
+        The discard page will be deleted.
+
         Args:
             user_obj: A django User who is doing the reassignment of the discard page.
-            page_pk: the pk of the discard page.
+            discard_pk: the pk of the discard page.
             paper_number: the number of the paper to which the discard is being reassigned.
             page_number: the number of the page in the given paper to which the discard is reassigned.
         """
         try:
-            _ = DiscardPage.objects.get(pk=page_pk)
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
         except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
+            raise ValueError(f"Cannot find discard page with id {discard_pk}") from e
 
-        self._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
+        cls._assign_discard_to_fixed_page(
+            user_obj, discard_obj, paper_number, page_number
+        )
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
@@ -549,9 +561,13 @@ class ManageDiscardService:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions."
             ) from e
+        try:
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find discard page with id {discard_pk}") from e
 
         self._assign_discard_to_fixed_page(
-            user_obj, discard_pk, paper_number, page_number
+            user_obj, discard_obj, paper_number, page_number
         )
 
     def reassign_discard_page_to_mobile_page_cmd(

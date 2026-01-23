@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025-2026 Aidan Murphy
 
 from django.test import TestCase
@@ -14,15 +14,7 @@ from plom_server.Base.models import BaseImage
 from plom_server.Preparation.services import PapersPrinted
 from plom_server.Scan.models import StagingImage, StagingBundle
 from ..services import ImageBundleService, SpecificationService
-from ..models import (
-    Bundle,
-    Image,
-    Paper,
-    DNMPage,
-    FixedPage,
-    QuestionPage,
-    MobilePage,
-)
+from ..models import Bundle, Image, FixedPage, MobilePage, Paper
 
 
 class ImageBundleTests(TestCase):
@@ -47,7 +39,9 @@ class ImageBundleTests(TestCase):
         SpecificationService.install_spec_from_dict(spec_dict)
         self.user: User = baker.make(User, username="testScanner")
         self.paper = baker.make(Paper, paper_number=1)
-        self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
+        self.page1 = baker.make(
+            FixedPage, page_type=FixedPage.DNMPAGE, paper=self.paper, page_number=2
+        )
         # make a staged bundle with one known image.
         self.staged_bundle = baker.make(StagingBundle, pdf_hash="abcde", user=self.user)
         self.staged_baseimage = baker.make(
@@ -266,8 +260,14 @@ class ImageBundleTests(TestCase):
         bundle = baker.make(StagingBundle, pdf_hash="abcdef", user=self.user)
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
-        baker.make(QuestionPage, paper=paper2, page_number=1, question_index=1)
-        baker.make(DNMPage, paper=paper3, page_number=2)
+        baker.make(
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=paper2,
+            page_number=1,
+            question_index=1,
+        )
+        baker.make(FixedPage, page_type=FixedPage.DNMPAGE, paper=paper3, page_number=2)
 
         bimg1 = baker.make(BaseImage, image_hash="ghijk", _create_files=True)
         baker.make(
@@ -328,47 +328,67 @@ class ImageBundleReadyTests(TestCase):
         image_obj = baker.make(Image)
         SpecificationService.install_spec_from_dict(spec_dict)
         self.paper = baker.make(Paper, paper_number=1)
-        self.page2 = baker.make(DNMPage, paper=self.paper, page_number=2)
-        self.page3 = baker.make(DNMPage, paper=self.paper, page_number=3)
+        self.page2 = baker.make(
+            FixedPage, page_type=FixedPage.DNMPAGE, paper=self.paper, page_number=2
+        )
+        self.page3 = baker.make(
+            FixedPage, page_type=FixedPage.DNMPAGE, paper=self.paper, page_number=3
+        )
         self.page4 = baker.make(
-            QuestionPage,
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper,
             page_number=4,
             question_index=1,
             image=image_obj,
         )
         self.page5 = baker.make(
-            QuestionPage,
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper,
             page_number=5,
             question_index=2,
             image=image_obj,
         )
         self.page6 = baker.make(
-            QuestionPage,
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper,
             page_number=6,
             question_index=2,
             image=image_obj,
         )
         self.page7 = baker.make(
-            QuestionPage,
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
             paper=self.paper,
             page_number=7,
             question_index=3,
             image=image_obj,
         )
         self.page8 = baker.make(
-            QuestionPage, paper=self.paper, page_number=8, question_index=3
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=self.paper,
+            page_number=8,
+            question_index=3,
         )
         self.page9 = baker.make(
-            QuestionPage, paper=self.paper, page_number=9, question_index=4
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=self.paper,
+            page_number=9,
+            question_index=4,
         )
         self.extrapage1 = baker.make(
             MobilePage, paper=self.paper, question_index=4, image=image_obj
         )
         self.page10 = baker.make(
-            QuestionPage, paper=self.paper, page_number=10, question_index=5
+            FixedPage,
+            page_type=FixedPage.QUESTIONPAGE,
+            paper=self.paper,
+            page_number=10,
+            question_index=5,
         )
         # questions that are ready: 1,2,4
         # questions that are not ready: 3,5

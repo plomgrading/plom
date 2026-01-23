@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
@@ -8,7 +8,7 @@ from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 from plom.plom_exceptions import PlomConflict
-from plom_server.Papers.models import Paper, QuestionPage, MobilePage
+from plom_server.Papers.models import Paper, FixedPage, MobilePage
 from plom_server.Papers.services import PaperInfoService, SpecificationService
 
 from ..models import StagingBundle, StagingImage
@@ -406,8 +406,8 @@ class ScanCastService:
         # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
         if False:
             for qi in assign_to_question_indices:
-                if not QuestionPage.objects.filter(
-                    paper=paper, question_index=qi
+                if not FixedPage.objects.filter(
+                    page_type=FixedPage.QUESTIONPAGE, paper=paper, question_index=qi
                 ).exists():
                     raise ValueError(f"No question index {qi} in database.")
         else:
@@ -798,7 +798,7 @@ class ScanCastService:
                 f"Cannot knowify an image of type {img.image_type}. Permitted types are 'DISCARD', 'UNKNOWN', and 'ERROR'"
             )
 
-        version_in_db = PaperInfoService().get_version_from_paper_page(
+        version_in_db = PaperInfoService.get_version_from_paper_page(
             paper_number, page_number
         )
         img.paper_number = paper_number

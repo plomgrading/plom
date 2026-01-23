@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Aidan Murphy
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
 from plom_server.TestingSupport.utils import config_test
-from plom_server.Papers.models import Paper, Image, MobilePage, Bundle, QuestionPage
+from plom_server.Papers.models import Bundle, FixedPage, Image, MobilePage, Paper
 from plom_server.Mark.models import MarkingTask
 from plom_server.Scan.services import ManageDiscardService
 from ..services import StudentMarkService
@@ -67,7 +67,8 @@ class TestStudentMarkService(TestCase):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(
-                    QuestionPage,
+                    FixedPage,
+                    page_type=FixedPage.QUESTIONPAGE,
                     paper=paper,
                     image=img,
                     version=1,
@@ -147,7 +148,8 @@ class TestStudentMarkService(TestCase):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(
-                    QuestionPage,
+                    FixedPage,
+                    page_type=FixedPage.QUESTIONPAGE,
                     paper=paper,
                     image=img,
                     version=1,

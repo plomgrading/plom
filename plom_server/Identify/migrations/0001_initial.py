@@ -1,5 +1,6 @@
 import django.db.models.deletion
 import django.utils.timezone
+from django.conf import settings
 from django.db import migrations, models
 
 
@@ -9,26 +10,11 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("Base", "0001_initial"),
+        ("Papers", "0001_initial"),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name="IDPrediction",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("student_id", models.CharField(max_length=255, null=True)),
-                ("predictor", models.CharField(max_length=255)),
-                ("certainty", models.FloatField(default=0.0)),
-            ],
-        ),
         migrations.CreateModel(
             name="IDReadingHueyTaskTracker",
             fields=[
@@ -66,6 +52,37 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name="IDPrediction",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("student_id", models.CharField(max_length=255, null=True)),
+                ("predictor", models.CharField(max_length=255)),
+                ("certainty", models.FloatField(default=0.0)),
+                (
+                    "paper",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+        ),
+        migrations.CreateModel(
             name="PaperIDAction",
             fields=[
                 (
@@ -81,6 +98,13 @@ class Migration(migrations.Migration):
                 ("is_valid", models.BooleanField(default=True)),
                 ("student_name", models.TextField(default="", null=True)),
                 ("student_id", models.TextField(default="", null=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
@@ -110,6 +134,37 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("last_update", models.DateTimeField(auto_now=True)),
+                (
+                    "assigned_user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "latest_action",
+                    models.OneToOneField(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="Identify.paperidaction",
+                    ),
+                ),
+                (
+                    "paper",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
+                    ),
+                ),
             ],
+        ),
+        migrations.AddField(
+            model_name="paperidaction",
+            name="task",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="Identify.paperidtask",
+            ),
         ),
     ]

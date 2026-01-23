@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
 from datetime import timedelta
@@ -20,7 +20,7 @@ from django.utils import timezone
 from model_bakery import baker
 
 from plom.plom_exceptions import PlomConflict
-from plom_server.Papers.models import Paper, Image, IDPage
+from plom_server.Papers.models import FixedPage, Image, Paper
 from .services import IdentifyTaskService, IDProgressService, IDDirectService
 from .models import PaperIDTask, PaperIDAction
 
@@ -276,7 +276,9 @@ class IdentifyTaskTests(TestCase):
         paper1 = baker.make(Paper, paper_number=1)
         baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
         img1 = baker.make(Image)
-        idp1 = baker.make(IDPage, paper=paper1, image=img1)
+        idp1 = baker.make(
+            FixedPage, page_type=FixedPage.IDPAGE, paper=paper1, image=img1
+        )
         # make a new task for it, claim it, and id it.
         its.create_task(paper1)
         IdentifyTaskService.claim_task(self.user0, 1)

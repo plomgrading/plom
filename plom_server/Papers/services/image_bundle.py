@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from collections import defaultdict
@@ -26,8 +26,6 @@ from ..models import (
     CreateImageHueyTask,
     FixedPage,
     MobilePage,
-    QuestionPage,
-    IDPage,
     Paper,
 )
 from .paper_info import PaperInfoService
@@ -171,7 +169,7 @@ class ImageBundleService:
             image.save()
 
             if staged.image_type == StagingImage.KNOWN:
-                # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
+                # This handles all types of FixedPages: Question, ID and DNM
                 fp_list = fixedpage_by_pn_pg[(staged.paper_number, staged.page_number)]
                 if len(fp_list) == 0:
                     raise ObjectDoesNotExist(
@@ -381,7 +379,9 @@ class ImageBundleService:
             A list containing tuples of paper_number, question_index, version,
             for each paper question pair that's 'ready'.
         """
-        question_pages = QuestionPage.objects.filter(image__bundle=bundle)
+        question_pages = FixedPage.objects.filter(
+            image__bundle=bundle, page_type=FixedPage.QUESTIONPAGE
+        )
         extras = MobilePage.objects.filter(image__bundle=bundle)
         # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
         # count (including them will lead to bugs, Issue #3925); we filter them out.
@@ -415,7 +415,7 @@ class ImageBundleService:
         return pqv_updated_and_ready
 
     @staticmethod
-    def _get_id_pages_in_bundle(bundle: Bundle) -> QuerySet[IDPage]:
+    def _get_id_pages_in_bundle(bundle: Bundle) -> QuerySet[FixedPage]:
         """Get all of the ID pages in an uploaded bundle, in order to initialize ID tasks.
 
         Args:
@@ -424,7 +424,9 @@ class ImageBundleService:
         Returns:
             A query of only the ID pages in the input bundle
         """
-        return IDPage.objects.filter(image__bundle=bundle).prefetch_related("paper")
+        return FixedPage.objects.filter(
+            image__bundle=bundle, page_type=FixedPage.IDPAGE
+        ).prefetch_related("paper")
 
     @staticmethod
     def is_given_paper_ready_for_id_ing(paper_obj: Paper) -> bool:
@@ -434,9 +436,13 @@ class ImageBundleService:
             paper_obj (Paper): the database paper to check
 
         Returns:
-            bool: true when paper is ready for id-ing (ie the IDpage has an image)
+            bool: true when paper is ready for id-ing (ie the ID page has an image)
         """
-        return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
+        return FixedPage.objects.filter(
+            paper=paper_obj,
+            page_type=FixedPage.IDPAGE,
+            image__isnull=False,
+        ).exists()
 
     @staticmethod
     @transaction.atomic
@@ -459,7 +465,9 @@ class ImageBundleService:
             a common relation for mobile and question pages (#2871)
         """
         # get all scanned pages (relevant to questions)
-        filled_qpages = QuestionPage.objects.filter(image__isnull=False)
+        filled_qpages = FixedPage.objects.filter(
+            image__isnull=False, page_type=FixedPage.QUESTIONPAGE
+        )
         mpages = MobilePage.objects.all()
         # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
         # count (including them will lead to bugs, Issue #3925); we filter them out.

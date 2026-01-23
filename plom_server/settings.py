@@ -122,10 +122,7 @@ INSTALLED_APPS = [
     "mathfilters",
     # for 'fun' with migrations - see #77
     "reset_migrations",
-    # Huey + polymorphism
     "django_huey",
-    "polymorphic",
-    # HTMX
     "django_htmx",
     # REST framework
     "rest_framework",
