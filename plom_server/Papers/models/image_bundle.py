@@ -90,12 +90,12 @@ class Image(models.Model):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    baseimage = models.OneToOneField(BaseImage, on_delete=models.PROTECT)
     # if we attempt to delete this base image (eg by deleting a staging image
     # that contains it) then this will throw a `django.db.ProtectedError`, a
     # subclass of `IntegrityError`. we can delete substitution images (when
     # source pdfs change) and so we have to delete things in a careful order.
     baseimage = models.ForeignKey(BaseImage, on_delete=models.PROTECT)
+    # see #4128 - consider making the above a one-to-one field.
     rotation = models.IntegerField(null=False, default=0)
     parsed_qr = models.JSONField(default=dict, null=True)
 
