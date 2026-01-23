@@ -14,17 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ability to discard an entire pushed bundle.
 
 ### Removed
+* the `plom` module is now a namespace.  An IMPORTANT consequence is users must explicitly `pip uninstall plom` before upgrading to 0.20.0.
 
 ### Changed
 * only users in the new "identifier" group can identify papers.  Managers are always in the "identifier" group.
 * for backwards compatibility, promoting a "marker" to a "lead marker" automatically adds them to the "identifier" group.
 * only users in the "marker" group can mark papers, this includes lead markers.
 * public code handling has changed to be more flexible.
-* marker progress overview is now faster hopefully more useful.
+* marker progress overview is now faster and hopefully more useful.
+* the QR code sizes can be controlled with the `PLOM_QR_CODE_SIZE` environment variable.
+* Plom generally respects the `PAPERSIZE` environment variable.
 * improvements to classlist handling for developers.
+* database changes in the backend, hopefully improving maintenance.
 
 ### Fixed
 * some ambiguities in when marking tasks were considered missing have been resolved.
+* races conditions around building papers have been improved.
+* error messages during reassembly are now shown explicitly in the reassembled papers table.
 
 
 
