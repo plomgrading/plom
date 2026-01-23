@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Philip D. Loewen
 
@@ -452,3 +452,9 @@ DJANGO_TABLES2_TABLE_ATTRS = {
         "class": "table-light",
     },
 }
+
+# Variables for Plom's middleware tracking online users
+# the maximum number of users to track at once (for performance reasons)
+ONLINE_MAX = 60
+# a user is "online" for this many seconds after making a request to the server
+ONLINE_THRESHOLD = 60 * 30
