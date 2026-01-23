@@ -413,6 +413,7 @@ class ManageDiscardService:
     def _assign_discard_to_fixed_page(
         user_obj: User, discard_obj: DiscardPage, paper_number: int, page_number: int
     ) -> None:
+        # we don't need the Paper, but on failure we get a more specific error
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except ObjectDoesNotExist as e:
@@ -519,6 +520,11 @@ class ManageDiscardService:
         cls, user_obj: User, discard_pk: int, paper_number: int, page_number: int
     ) -> None:
         """Reassign the given discard page to a fixed page at the given paper/page.
+
+        If there is more than one QuestionPage attached to that page,
+        the image from the discard will be assigned to all of them.
+
+        The discard page will be deleted.
 
         Args:
             user_obj: A django User who is doing the reassignment of the discard page.
