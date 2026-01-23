@@ -8,52 +8,10 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("Base", "0001_initial"),
+        ("Papers", "0001_initial"),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name="BuildSolutionPDFChore",
-            fields=[
-                (
-                    "hueytasktracker_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="Base.hueytasktracker",
-                    ),
-                ),
-                ("pdf_file", models.FileField(null=True, upload_to="solutions/")),
-                ("display_filename", models.TextField(null=True)),
-            ],
-            bases=("Base.hueytasktracker",),
-        ),
-        migrations.CreateModel(
-            name="ReassemblePaperChore",
-            fields=[
-                (
-                    "hueytasktracker_ptr",
-                    models.OneToOneField(
-                        auto_created=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        parent_link=True,
-                        primary_key=True,
-                        serialize=False,
-                        to="Base.hueytasktracker",
-                    ),
-                ),
-                ("pdf_file", models.FileField(null=True, upload_to="reassembled/")),
-                ("display_filename", models.TextField(null=True)),
-                (
-                    "report_pdf_file",
-                    models.FileField(null=True, upload_to="student_report/"),
-                ),
-                ("report_display_filename", models.TextField(null=True)),
-            ],
-            bases=("Base.hueytasktracker",),
-        ),
         migrations.CreateModel(
             name="SolutionImage",
             fields=[
@@ -97,5 +55,60 @@ class Migration(migrations.Migration):
                 ("pdf_hash", models.CharField(max_length=64)),
                 ("original_filename", models.TextField()),
             ],
+        ),
+        migrations.CreateModel(
+            name="BuildSolutionPDFChore",
+            fields=[
+                (
+                    "hueytasktracker_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        serialize=False,
+                        to="Base.hueytasktracker",
+                    ),
+                ),
+                ("pdf_file", models.FileField(null=True, upload_to="solutions/")),
+                ("display_filename", models.TextField(null=True)),
+                (
+                    "paper",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
+                    ),
+                ),
+            ],
+            bases=("Base.hueytasktracker",),
+        ),
+        migrations.CreateModel(
+            name="ReassemblePaperChore",
+            fields=[
+                (
+                    "hueytasktracker_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        serialize=False,
+                        to="Base.hueytasktracker",
+                    ),
+                ),
+                ("pdf_file", models.FileField(null=True, upload_to="reassembled/")),
+                ("display_filename", models.TextField(null=True)),
+                (
+                    "report_pdf_file",
+                    models.FileField(null=True, upload_to="student_report/"),
+                ),
+                ("report_display_filename", models.TextField(null=True)),
+                (
+                    "paper",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
+                    ),
+                ),
+            ],
+            bases=("Base.hueytasktracker",),
         ),
     ]

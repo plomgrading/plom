@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
@@ -491,7 +491,7 @@ models-in-admin:
     - rg admin.site.register .
     - rg "admin.site.register\((.*)\)" . -r "\$1" --no-filename | sort > in_admin.txt
     - rg "class (.*)\(models.Model\):" . -r "\$1" --no-filename
-    - SUPERCLASSES="models.Model Tag HueyTaskTracker PolymorphicModel FixedPage SingletonABCModel"
+    - SUPERCLASSES="models.Model Tag HueyTaskTracker SingletonABCModel"
     - for SUPER in $SUPERCLASSES; do
         rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> models1.txt;
       done

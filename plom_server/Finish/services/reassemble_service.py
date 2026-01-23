@@ -30,7 +30,7 @@ from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
-from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage, FixedPage
+from plom_server.Papers.models import Paper, MobilePage, FixedPage
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ManageScanService
 
@@ -147,8 +147,8 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.  If there is no ID page image we get an empty list.
         """
-        id_page_obj = IDPage.objects.select_related("image", "image__baseimage").get(
-            paper=paper
+        id_page_obj = FixedPage.objects.select_related("image", "image__baseimage").get(
+            page_type=FixedPage.IDPAGE, paper=paper
         )
         if id_page_obj.image:
             return [
@@ -171,9 +171,9 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.
         """
-        dnm_pages = DNMPage.objects.filter(paper=paper).prefetch_related(
-            "image", "image__baseimage"
-        )
+        dnm_pages = FixedPage.objects.filter(
+            page_type=FixedPage.DNMPAGE, paper=paper
+        ).prefetch_related("image", "image__baseimage")
         dnm_images = [dnmpage.image for dnmpage in dnm_pages if dnmpage.image]
         return [
             {"filename": img.baseimage.image_file.path, "rotation": img.rotation}

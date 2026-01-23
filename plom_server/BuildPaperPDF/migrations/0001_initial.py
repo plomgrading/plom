@@ -8,6 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("Base", "0001_initial"),
+        ("Papers", "0001_initial"),
     ]
 
     operations = [
@@ -29,6 +30,12 @@ class Migration(migrations.Migration):
                 ("display_filename", models.TextField(null=True)),
                 ("student_name", models.TextField(default=None, null=True)),
                 ("student_id", models.TextField(default=None, null=True)),
+                (
+                    "paper",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
+                    ),
+                ),
             ],
             bases=("Base.hueytasktracker",),
         ),

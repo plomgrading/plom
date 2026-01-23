@@ -16,13 +16,7 @@ from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
 from plom_server.Base.models import BaseImage
-from plom_server.Papers.models import (
-    Bundle,
-    Image,
-    DiscardPage,
-    IDPage,
-    DNMPage,
-)
+from plom_server.Papers.models import Bundle, DiscardPage, Image, FixedPage
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Preparation.services import SourceService
 from ..services import ManageDiscardService, ManageScanService
@@ -342,17 +336,18 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
     version = PaperInfoService.get_version_from_paper_page(paper_number, page_number)
     substitute_image_pk = get_substitute_image(page_number, version).pk
 
-    if DNMPage.objects.filter(
-        paper__paper_number=paper_number, page_number=page_number
-    ).exists():
-        kind = "DNMPage"
-    elif IDPage.objects.filter(
-        paper__paper_number=paper_number, page_number=page_number
-    ).exists():
-        kind = "IDPage"
-    else:
-        # must be one or more question page(s)
-        kind = "QuestionPage"
+    kinds = set(
+        [
+            f.get_page_type_display()
+            for f in FixedPage.objects.filter(
+                paper__paper_number=paper_number, page_number=page_number
+            )
+        ]
+    )
+
+    if len(kinds) != 1:
+        raise RuntimeError("IDPage or DNMPage shared?  This is currently not allowed")
+    kind = kinds.pop()
 
     return {
         "paper_number": paper_number,

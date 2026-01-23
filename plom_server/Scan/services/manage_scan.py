@@ -20,9 +20,6 @@ from plom_server.Papers.models import (
     Paper,
     Image,
     Bundle,
-    IDPage,
-    DNMPage,
-    QuestionPage,
 )
 from plom_server.Papers.services import SpecificationService
 from ..models import StagingBundle
@@ -275,21 +272,14 @@ class ManageScanService:
                         }
                     )
                 else:
-                    if isinstance(fp, DNMPage):
-                        kind = "DNMPage"
-                    elif isinstance(fp, IDPage):
-                        kind = "IDPage"
-                    else:  # must be a question-page
-                        kind = "QuestionPage"
                     incomplete[paper.paper_number]["fixed"].append(
                         {
                             "status": "missing",
                             "page_number": fp.page_number,
                             "page_pk": fp.pk,
-                            "kind": kind,
+                            "kind": fp.get_page_type_display(),
                         }
                     )
-                    del kind
             # if no fixed pages, assume mobile page only paper
             paper_checks = [
                 p["status"] == "missing"
@@ -566,8 +556,8 @@ class ManageScanService:
             .order_by("page_number")
             .select_related("image")
         ):
-            if isinstance(fp_obj, QuestionPage):
-                qidx_field = qidx_field = fp_obj.question_index
+            if fp_obj.page_type == FixedPage.QUESTIONPAGE:
+                qidx_field = fp_obj.question_index
             else:
                 qidx_field = ""
             dat = {

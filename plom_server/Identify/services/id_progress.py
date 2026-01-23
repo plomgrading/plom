@@ -4,13 +4,13 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from typing import Any
 
 from django.db import transaction
 
-from plom_server.Papers.models import IDPage, Image
+from plom_server.Papers.models import FixedPage, Image
 from ..services import IdentifyTaskService, ClasslistService
 from ..models import PaperIDTask, IDPrediction
 
@@ -73,7 +73,9 @@ class IDProgressService:
                 )
             id_info[task.paper.paper_number] = dat
         # now the id pages
-        for idp_obj in IDPage.objects.all().prefetch_related("paper", "image"):
+        for idp_obj in FixedPage.objects.filter(
+            page_type=FixedPage.IDPAGE
+        ).prefetch_related("paper", "image"):
             if idp_obj.image and idp_obj.paper.paper_number in id_info:
                 id_info[idp_obj.paper.paper_number]["idpageimage_pk"] = idp_obj.image.pk
         return id_info
