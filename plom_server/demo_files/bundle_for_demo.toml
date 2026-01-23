@@ -56,7 +56,7 @@ out_of_range_papers = [45]
 paper_number = 61
 student_id = 98989898
 student_name = "Kenson, Ken"
-pages = [[1], [2], [], [2, 3], [3]]
+pages = [[1], [2], [], [2, 3], [3], [4]]
 
 
 # HW bundle 2
@@ -64,7 +64,7 @@ pages = [[1], [2], [], [2, 3], [3]]
 paper_number = 62
 student_id = 97979797
 student_name = "Lawrence, Larry"
-pages = [[1], [1, 2], [2], [], [3]]
+pages = [[1], [1, 2], [2], [], [3], [3,4]]
 
 
 # HW bundle 3
@@ -72,4 +72,5 @@ pages = [[1], [1, 2], [2], [], [3]]
 paper_number = 63
 student_id = 94949494
 student_name = "Nowra, Nora"
-pages = [[1, 2], [3], []]
+pages = [[1, 2], [3], [], [4]]
+
