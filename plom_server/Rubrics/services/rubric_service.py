@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2019-2025 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
@@ -255,7 +255,9 @@ class RubricService:
             KeyError: if rubric_data contains missing username or user.
             serializers.ValidationError: if rubric kind is not a valid
                 option, or other errors.
-            ValueError: if username does not exist in the DB.
+            ValueError: if username does not exist in the DB.  Some validation
+                errors might end up here too, such as when fractional rubrics
+                are disallowed.
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
