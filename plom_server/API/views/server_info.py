@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
@@ -67,6 +67,12 @@ def _client_reject_list() -> list[dict[str, Any]]:
     #    "action": "warn",
     # },
 
+    # Optionally, bumped this just before a new point release (e.g., 0.20.7 to 0.20.8)
+    # of the server.  It should be set to the latest available version of the client
+    # at that moment in time.  But its no big deal if forgotten: generally 0.19.x clients
+    # will be blocked from 0.20.x servers.  Generally this will be useful later for later
+    # point releases where perhaps many important fixes but not quite show-stoppers have
+    # been released in the client.
     min_recommended_version = "0.19.4"
 
     return [
