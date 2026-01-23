@@ -268,7 +268,8 @@ ignore="H006,H013,H021,H023,H030,H031"
 # indent=2
 
 [tool.mypy]
-# pretty = true
+pretty = true
+explicit_package_bases = true
 exclude = [
     'digitHunter.py',
     '0001_initial.py',

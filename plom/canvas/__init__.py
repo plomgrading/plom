@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2022, 2025-2026 Colin B. Macdonald
 
 """Plom features supporting integration with Canvas"""
 
-__DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
-
+from .canvas_utils import __DEFAULT_CANVAS_API_URL__
 from .canvas_utils import get_student_list, download_classlist
 from .canvas_utils import (
     canvas_login,
