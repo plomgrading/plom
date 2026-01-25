@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2024 Andrew Rechnitzer
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
