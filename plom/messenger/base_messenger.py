@@ -51,7 +51,7 @@ Supported_Server_API_Versions = [
     113,  # 2025-01
     114,  # 2025-05
     115,  # 2025-09
-    116,  # 2025-??
+    116,  # 2026-01
 ]
 # Brief changelog
 #
