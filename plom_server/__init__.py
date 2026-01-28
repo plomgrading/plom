@@ -17,6 +17,8 @@ __license__ = "AGPL-3.0-or-later"
 __version__ = "0.20.1.dev0"
 
 Plom_API_Version = "116"
+# no need to match but seems reasonable for now
+Plom_DB_Version = 116
 
 # __all__ = [
 #     "Preparation",
