@@ -18,7 +18,7 @@ from django_huey import get_queue
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom_server.Authentication.services import AuthService
-from plom_server.Base.services import Settings
+from plom_server.Base.services import Settings, database_service
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 
@@ -112,6 +112,7 @@ class ServerStatusView(ManagerRequiredView):
                 "queues": queues,
                 "papersize": Settings.get_paper_size(),
                 "papersize_pts": Settings.get_paper_size_in_pts(),
+                "database_metadata": database_service.get_database_metadata(),
             }
         )
         return render(request, "base/server_status.html", context)

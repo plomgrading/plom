@@ -74,6 +74,12 @@ def get_database_metadata() -> dict[str, str]:
     }
     for k, v in d.items():
         d[k] = "" if v is None else v
+    d.update(
+        {
+            "database-engine": get_database_engine(),
+            "database-name": settings.DATABASES["default"]["NAME"],
+        }
+    )
     return d
 
 

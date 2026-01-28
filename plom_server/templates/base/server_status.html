@@ -93,8 +93,12 @@
         <div class="card-body">
             <h4 class="card-title">Database</h4>
             <div class="card-text">
-                <p>The database must be working or you couldn't be here.</p>
-                <p>Almost all data and settings are stored in the database.</p>
+                <p>
+                    {% for k, v in database_metadata.items %}
+                        {{ k }}: {{ v }}
+                        <br />
+                    {% endfor %}
+                </p>
             </div>
         </div>
     </div>
