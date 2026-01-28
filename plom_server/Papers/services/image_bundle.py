@@ -98,7 +98,7 @@ class ImageBundleService:
         if not cls.all_staged_imgs_valid(bundle_images):
             raise RuntimeError("Some pages in this bundle do not have QR data.")
 
-        # Staging has checked this - but we check again here to be very sure
+        # Staging has not checked this - we need to do it here
         collide = cls.find_internal_collisions(bundle_images)
         if len(collide) > 0:
             # just make a list of bundle-orders of the colliding images
