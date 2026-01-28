@@ -209,8 +209,9 @@ def main():
                 "There is an existing database: consider passing --hotstart or --wipe"
             )
         print("DOING A HOT START (we already have a database)")
-        print("Issue #3299: Please note this merely checks for the *existence* of")
-        print("a database; it does not yet check anything about the filesystem.")
+        print("Issue #3299: Please note this merely checks for the *existence* of ")
+        print("a database; it does not yet check anything about the filesystem, ")
+        print("nor does it check for version compatibility of that database.")
     else:
         # We either don't have a DB or we do and we want to wipe it.
         # clean out old db and misc files, then rebuild blank db
