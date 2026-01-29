@@ -891,8 +891,14 @@ def main():
 
     assert demo_files.exists(), "cannot continue w/o demo files"
 
-    # clean out old db and misc files, then rebuild blank db
-    run_django_manage_command("plom_clean_all_and_build_db")
+    run_django_manage_command("plom_clean_misc")
+    print("Dropping any existing database...")
+    run_django_manage_command("plom_database --drop-database --yes")
+    print("Rebuilding database and migrations...")
+    run_django_manage_command("plom_database --create-database")
+    run_django_manage_command("migrate")
+    run_django_manage_command("plom_database --create-database-metadata")
+    print("Database initial migrate complete")
 
     saytime("Finished refreshing the database.")
 

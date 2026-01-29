@@ -20,12 +20,34 @@ class Command(BaseCommand):
         parser.add_argument(
             "--create-database",
             action="store_true",
-            help="Create a new database.",
+            help="""
+                Create a new database.
+                Note you must "migrate" after calling this.  Then follow-up
+                with "--create-database-metadata".
+            """,
+        )
+        parser.add_argument(
+            "--create-database-metadata",
+            action="store_true",
+            help="""
+                Record the current Plom version as creating the database,
+                set the version, etc.  You should call this after (1) calling
+                "--create-database" and (2) running "migrate".  Why don't we
+                automate this little three-step dance?  Well "migrate" isn't
+                a Plom command...
+            """,
         )
         parser.add_argument(
             "--update-database-metadata",
             action="store_true",
-            help="Record the current Plom version as the last one to access this database.",
+            help="""
+                Record the current Plom version as the last one to access this
+                database.  This should be called before or after you use the
+                database with Plom.  It does not need to be set with every
+                single write (and should not be!).  Its enough to set this on
+                startup.  Its not a problem if you don't actually change the
+                database other than calling this.
+            """,
         )
         parser.add_argument(
             "--check-database",
@@ -55,6 +77,8 @@ class Command(BaseCommand):
             sys.exit(0)
         elif options["create_database"]:
             database_service.create_database()
+        elif options["create_database_metadata"]:
+            database_service.created_record_plom_version()
         elif options["update_database_metadata"]:
             database_service.update_last_used_plom_version()
         elif options["check_database"]:

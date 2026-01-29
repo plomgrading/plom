@@ -5,19 +5,11 @@
 import shutil
 
 from django.conf import settings
-from django.core.management import call_command
 from django.core.management.base import BaseCommand
-
-from ...services import database_service
 
 
 class Command(BaseCommand):
-    """Remove old files and database, then regenerate minimal needed.
-
-    Removes old user-generated files, migrations, the database,
-    huey-process database. Then instantiates a new database, rebuilds
-    the migrations, and runs them.
-    """
+    """Removes old user-generated files, huey-process database, and misc."""
 
     def remove_misc_user_files(self):
         """Remove any user-generated files from django's MEDIA directory."""
@@ -37,13 +29,5 @@ class Command(BaseCommand):
         self.stdout.write("Removing old files, database, huey-db.")
         self.remove_misc_user_files()
         self.huey_cleanup()
-        database_service.drop_database()
-
-        self.stdout.write("Rebuilding database and migrations.")
-        database_service.create_database()
-        self.stdout.write("Database created.")
-        call_command("migrate")
-        self.stdout.write("Database initial migrate done.")
-        database_service.created_record_plom_version()
         self.stdout.write("Note: neither server nor huey are running yet.")
         self.stdout.write("Note: no groups or users have been created yet.")
