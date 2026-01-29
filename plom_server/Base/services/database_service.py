@@ -94,6 +94,37 @@ def get_database_version() -> int:
     return int(ver)
 
 
+def check_database_version(*, verbose: bool = True) -> None:
+    """Raise a ValueError if the internal database version is not compatible.
+
+    Prints some diagnostic information to the stdout.
+    """
+    dbver = get_database_version()
+    if dbver == -1:
+        # TODO: in the future, this could be changed to be an error
+        if verbose:
+            print(
+                "Warning: older database w/o metadata: compatibility unknown, "
+                "optimistically continuing w/o further checks"
+            )
+        return
+    if dbver != Plom_DB_Version:
+        raise ValueError(
+            f"There is an existing database of version {dbver},"
+            f" but we support only {Plom_DB_Version}"
+        )
+    if verbose:
+        d = get_database_metadata()
+        dbname = d["database-name"]
+        created_ver = d["database-created-by-plom-version"]
+        print(
+            f'Plom {__version__}: compatible database "{dbname}"'
+            f" version {dbver}; created by Plom {created_ver}"
+        )
+    # Note: we check database versions but how can we be confident
+    # that the file system stuff is consistent?  (Issue #3299)
+
+
 def created_record_plom_version() -> None:
     # local import b/c other functions in this file don't need Django DB access
     from plom_server.Base.services import Settings

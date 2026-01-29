@@ -16,7 +16,7 @@ import subprocess
 import time
 from shlex import split
 
-from plom_server import __version__, Plom_DB_Version
+from plom_server import __version__
 from plom_server.Base.services import database_service
 
 
@@ -209,17 +209,10 @@ def main():
                 "There is an existing database: consider passing --hotstart or --wipe"
             )
         print("DOING A HOT START (we already have a database)")
-        print(database_service.get_database_metadata())
-        dbver = database_service.get_database_version()
-        if dbver != Plom_DB_Version:
-            raise ValueError(
-                f"There is an existing database of version {dbver},"
-                f" but we support only {Plom_DB_Version}"
-            )
-        print(database_service.get_database_metadata())
         # Note: we check database versions but how can we be confident
         # that the file system stuff is consistent?  (Issue #3299)
-        database_service.update_last_used_plom_version()
+        run_django_manage_command("plom_database --check-database")
+        run_django_manage_command("plom_database --update-database-metadata")
     else:
         # We either don't have a DB or we do and we want to wipe it.
         # clean out old db and misc files, then rebuild blank db
