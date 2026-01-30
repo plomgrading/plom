@@ -84,8 +84,7 @@ class ScanBundleActions(APIView):
 
         On success (200), the return will be TODO: still a WIP.
 
-        Only "scanner" users including managers can do this; others will
-        get a 403.
+        Only "scanner" users can do this; others will get a 403.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
