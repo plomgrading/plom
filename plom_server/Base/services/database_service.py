@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
 from pathlib import Path
 import sqlite3
 
 from django.conf import settings
+
+from plom_server import __version__, Plom_DB_Version
 
 
 def get_database_engine() -> str:
@@ -56,6 +58,87 @@ def _is_there_a_sqlite_database(*, verbose: bool = True) -> bool:
     if verbose and not r:
         print(f"Cannot find database {db_name}")
     return r
+
+
+def get_database_metadata() -> dict[str, str]:
+    # local import b/c other functions in this file don't need Django DB access
+    from plom_server.Base.services import Settings
+
+    d = {
+        key: Settings.key_value_store_get_or_none(key)
+        for key in (
+            "database-created-by-plom-version",
+            "database-last-used-by-plom-version",
+            "database-version-integer",
+        )
+    }
+    for k, v in d.items():
+        d[k] = "" if v is None else v
+    d.update(
+        {
+            "database-engine": get_database_engine(),
+            "database-name": settings.DATABASES["default"]["NAME"],
+        }
+    )
+    return d
+
+
+def get_database_version() -> int:
+    """An integer for the version of the database, or -1 if no such thing."""
+    # local import b/c other functions in this file don't need Django DB access
+    from plom_server.Base.services import Settings
+
+    ver = Settings.key_value_store_get_or_none("database-version-integer")
+    if ver is None:
+        return -1
+    return int(ver)
+
+
+def check_database_version(*, verbose: bool = True) -> None:
+    """Raise a ValueError if the internal database version is not compatible.
+
+    Prints some diagnostic information to the stdout.
+    """
+    dbver = get_database_version()
+    if dbver == -1:
+        # TODO: in the future, this could be changed to be an error
+        if verbose:
+            print(
+                "Warning: older database w/o metadata: compatibility unknown, "
+                "optimistically continuing w/o further checks"
+            )
+        return
+    if dbver != Plom_DB_Version:
+        raise ValueError(
+            f"There is an existing database of version {dbver},"
+            f" but we support only {Plom_DB_Version}"
+        )
+    if verbose:
+        d = get_database_metadata()
+        dbname = d["database-name"]
+        created_ver = d["database-created-by-plom-version"]
+        print(
+            f'Plom {__version__}: compatible database "{dbname}"'
+            f" version {dbver}; created by Plom {created_ver}"
+        )
+    # Note: we check database versions but how can we be confident
+    # that the file system stuff is consistent?  (Issue #3299)
+
+
+def created_record_plom_version() -> None:
+    # local import b/c other functions in this file don't need Django DB access
+    from plom_server.Base.services import Settings
+
+    Settings.key_value_store_set("database-created-by-plom-version", __version__)
+    Settings.key_value_store_set("database-last-used-by-plom-version", __version__)
+    Settings.key_value_store_set("database-version-integer", str(Plom_DB_Version))
+
+
+def update_last_used_plom_version() -> None:
+    # local import b/c other functions in this file don't need Django DB access
+    from plom_server.Base.services import Settings
+
+    Settings.key_value_store_set("database-last-used-by-plom-version", __version__)
 
 
 def drop_database(*, verbose: bool = True) -> None:

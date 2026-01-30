@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024, 2026 Colin B. Macdonald
 
 import sys
 
@@ -21,6 +21,16 @@ class Command(BaseCommand):
             "--create-database",
             action="store_true",
             help="Create a new database.",
+        )
+        parser.add_argument(
+            "--update-database-metadata",
+            action="store_true",
+            help="Record the current Plom version as the last one to access this database.",
+        )
+        parser.add_argument(
+            "--check-database",
+            action="store_true",
+            help="Check whether the current database is appropriate, based on its version.",
         )
         parser.add_argument(
             "--drop-database",
@@ -45,6 +55,10 @@ class Command(BaseCommand):
             sys.exit(0)
         elif options["create_database"]:
             database_service.create_database()
+        elif options["update_database_metadata"]:
+            database_service.update_last_used_plom_version()
+        elif options["check_database"]:
+            database_service.check_database_version()
         elif options["drop_database"]:
             if options["yes"]:
                 yes = True

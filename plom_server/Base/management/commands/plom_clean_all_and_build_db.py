@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 import shutil
 
@@ -44,5 +44,6 @@ class Command(BaseCommand):
         self.stdout.write("Database created.")
         call_command("migrate")
         self.stdout.write("Database initial migrate done.")
+        database_service.created_record_plom_version()
         self.stdout.write("Note: neither server nor huey are running yet.")
         self.stdout.write("Note: no groups or users have been created yet.")
