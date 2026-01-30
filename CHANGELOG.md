@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* version metadata to the database, checked at startup for safer restarting of Plom server between versions.
 
 ### Removed
 
