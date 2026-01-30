@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
@@ -190,18 +190,17 @@ def _validate_rubric_use_and_score(
     # check we are using latest rev of each rubric and they are published
     if require_latest_rubrics:
         for rid, rev in rid_rev_pairs:
-            # check revision against
+            if not rubric_data[rid]["published"]:
+                raise PlomConflict(
+                    f"rubric rid {rid} is not currently published.  "
+                    "Someone has taken it offline, possibly for editing.  "
+                    "Try again later, ask your marking team, "
+                    "or use a different rubric."
+                )
             if rubric_data[rid]["revision"] != rev:
                 raise PlomConflict(
                     f"rubric rid {rid} revision {rev} is not the latest revision: "
                     "refresh your rubrics and try again"
-                )
-            if not rubric_data[rid]["published"]:
-                raise PlomConflict(
-                    f"rubric rid {rid} revision {rev} is the latest but it is "
-                    "not currently published.  Someone has taken it offline, "
-                    "possibly for editing.  Try again later, ask your marking "
-                    "team, or use a different rubric."
                 )
     # Check client-computed score against server-computed score
     used_rubric_list = [rubric_data[rid] for rid, _ in rid_rev_pairs]
