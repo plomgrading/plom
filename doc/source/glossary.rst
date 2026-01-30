@@ -34,8 +34,8 @@ undoubtedly change.
 
       Plom has generic micro-qr-codes that allow Plom to automatically categorise
       an image of paper as an "Extra sheet", though a :term:`Scanner` must still
-      manually associate each extra sheet with one or more questions on a particular
-      paper.
+      manually associate each extra sheet a particular paper, and optionally
+      one or more questions.
    Identify
       Associate an examinee ID (a sequence of numbers) and name with a paper.
    Lead Marker
