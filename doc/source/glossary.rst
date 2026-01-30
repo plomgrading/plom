@@ -26,7 +26,7 @@ undoubtedly change.
       and it could be said that the staged image of page 3 from Paper 0054
       is a colliding image.
 
-      Note that :term:`Extra page` cannot cause collisions.
+      Note that an :term:`Extra page` cannot cause a collision.
    Extra page
       An image pushed to a Plom server in a :term:`Bundle` that is not part of
       a :term:`QR-coded Paper`, but has been associated with one or more
