@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2025 Aidan Murphy
+   Copyright (C) 2025-2026 Aidan Murphy
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Glossary
@@ -15,6 +15,27 @@ undoubtedly change.
    Bundle
       A .pdf file uploaded to Plom. It can contain work from one or more
       assessment submission[s].
+   Collision
+      The situation where an image in a staged :term:`Bundle` has been interpreted
+      (or intentionally assigned) as being an image of a page from a particular
+      :term:`QR-coded Paper` which already has an associated image.
+
+      For example, if page 3 from Paper 0054 has been pushed to a Plom server,
+      and you stage a bundle ``my_bundle.pdf`` that contains another image
+      (or the same image) of page 3 from Paper 0054, there exists a collision
+      and it could be said that the staged image of page 3 from Paper 0054
+      is a colliding image.
+
+      Note that :term:`Extra sheet` cannot cause collisions.
+   Extra sheet
+      An image pushed to a Plom server in a :term:`Bundle` that is not part of
+      a :term:`QR-coded Paper`, but has been associated with one or more
+      questions on a particular :term:`Paper`.
+
+      Plom has generic micro-qr-codes that allow Plom to automatically categorise
+      an image of paper as an "Extra sheet", though a :term:`Scanner` must still
+      manually associate each extra sheet with one or more questions on a particular
+      paper.
    Identify
       Associate an examinee ID (a sequence of numbers) and name with a paper.
    Lead Marker
