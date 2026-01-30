@@ -26,14 +26,14 @@ undoubtedly change.
       and it could be said that the staged image of page 3 from Paper 0054
       is a colliding image.
 
-      Note that :term:`Extra sheet` cannot cause collisions.
-   Extra sheet
+      Note that :term:`Extra page` cannot cause collisions.
+   Extra page
       An image pushed to a Plom server in a :term:`Bundle` that is not part of
       a :term:`QR-coded Paper`, but has been associated with one or more
       questions on a particular :term:`Paper`.
 
       Plom has generic micro-qr-codes that allow Plom to automatically categorise
-      an image of paper as an "Extra sheet", though a :term:`Scanner` must still
+      an image of paper as an "Extra page", though a :term:`Scanner` must still
       manually associate each extra sheet a particular paper, and optionally
       one or more questions.
    Identify
