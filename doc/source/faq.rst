@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2019-2025 Colin B. Macdonald
+   Copyright (C) 2019-2026 Colin B. Macdonald
    Copyright (C) 2025 Aidan Murphy
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -58,6 +58,17 @@ server under "Rubric management".  More complete support, for example
 including full clientside creating/editing of fractional rubrics could
 be added by future energetic co-developers.
 
+
+How do I delete a rubric?
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can "unpublish" the rubric will which hide it from clients (by
+default), and disallow its use when clients submit annotations.  You
+can subsequently "publish" it again if you want to re-enable it.  Note
+that clients to do not instantly update their rubric lists and there
+may be a delay between making rubric changes and client picking up
+those changes (for example, a client might get an error if they submit
+annotations using an recently-unpublished rubric).
 
 
 Why do you have "+0" and "-0" as possible delta-marks?
