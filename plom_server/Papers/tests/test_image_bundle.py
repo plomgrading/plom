@@ -229,6 +229,9 @@ class ImageBundleTests(TestCase):
             version=1,
         )
 
+        res = ImageBundleService._find_external_collisions(StagingImage.objects.all())
+        self.assertFalse(res.exists())
+
         img4 = baker.make(Image)
         img5 = baker.make(Image)
 
@@ -240,19 +243,27 @@ class ImageBundleTests(TestCase):
         res = ImageBundleService._find_external_collisions(StagingImage.objects.all())
         self.assertFalse(res.exists())
 
-        colliding_staging_image = baker.make(
+        # this isn't a collision, the FixedPage doesn't have a pushed image
+        fixed_page1 = baker.make(FixedPage, paper=paper3, page_number=3, image=None)
+        staging_image1 = baker.make(
             StagingImage,
             image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
             paper_number=3,
-            page_number=1,
+            page_number=3,
             version=1,
         )
 
         res = ImageBundleService._find_external_collisions(StagingImage.objects.all())
+        self.assertFalse(res.exists())
 
-        self.assertEqual(list(res), [colliding_staging_image])
+        # now there's a collision
+        fixed_page1.image = img5
+        fixed_page1.save()
+
+        res = ImageBundleService._find_external_collisions(StagingImage.objects.all())
+        self.assertEqual(list(res), [staging_image1])
 
     def test_push_perfect_bundle(self) -> None:
         """Test that push_valid_bundle() works as intended with a valid staged bundle."""
