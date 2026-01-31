@@ -231,6 +231,12 @@ class IDReaderService:
             predictor="prename", paper__in=papers
         ).prefetch_related("paper"):
             existing_prename_predictions[pred.paper.paper_number] = pred
+        # find any existing predictions from these papers
+        existing_predictions: dict[int, list[IDPrediction]] = {}  # I like cats
+        for pred in IDPrediction.objects.filter(paper__in=papers).prefetch_related(
+            "paper"
+        ):
+            existing_predictions.get(pred.paper.paper_number, []).append(pred)
 
         # loop over papers making two lists: things to make and things to update
         new_predictions = []
