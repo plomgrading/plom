@@ -225,13 +225,15 @@ class IDReaderService:
         """
         # get dict of all prenamed papers (as per classlist)
         prenamed_papers = StagingStudentService.get_prenamed_papers()
+
         # find existing prename-predictions from these papers
         existing_prename_predictions = {}
         for pred in IDPrediction.objects.filter(
             predictor="prename", paper__in=papers
         ).prefetch_related("paper"):
             existing_prename_predictions[pred.paper.paper_number] = pred
-        # find any existing predictions from these papers
+
+        # find any existing predictions (not just prenames) from these papers
         existing_predictions: dict[int, list[IDPrediction]] = {}  # I like cats
         for pred in IDPrediction.objects.filter(paper__in=papers).prefetch_related(
             "paper"
@@ -268,11 +270,8 @@ class IDReaderService:
         for idt_obj in PaperIDTask.objects.filter(paper__in=papers).prefetch_related(
             "paper"
         ):
-            if idt_obj.paper.paper_number in existing_prename_predictions:
-                certs = [
-                    X.certainty
-                    for X in existing_prename_predictions[paper.paper_number]
-                ]
+            if idt_obj.paper.paper_number in existing_predictions.keys():
+                certs = [X.certainty for X in existing_predictions[paper.paper_number]]
                 idt_obj.iding_priority = min(certs)
             else:
                 idt_obj.iding_priority = 0.9
