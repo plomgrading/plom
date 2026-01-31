@@ -282,7 +282,9 @@ class IDReaderService:
             if idt_obj.paper.paper_number in existing_all_predictions_for_paper.keys():
                 certs = [
                     X.certainty
-                    for X in existing_all_predictions_for_paper[paper.paper_number]
+                    for X in existing_all_predictions_for_paper[
+                        idt_obj.paper.paper_number
+                    ]
                 ]
                 idt_obj.iding_priority = min(certs)
             else:
