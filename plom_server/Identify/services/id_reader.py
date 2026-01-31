@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2020-2025 Colin B. Macdonald
+# Copyright (C) 2020-2026 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Deep Shah
 
@@ -41,8 +41,14 @@ from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
 
 
+# the default certainty of prenaming predictions
+_default_prenaming_prediction_confidence = 0.9
+
+
 class IDReaderService:
     """Functions for ID reading and related helper functions."""
+
+    default_prenaming_prediction_confidence = _default_prenaming_prediction_confidence
 
     def get_already_matched_sids(self) -> list:
         """Return the list of all student IDs that have been matched with a paper."""
@@ -260,7 +266,7 @@ class IDReaderService:
                         paper=paper,
                         predictor="prename",
                         student_id=prenamed_papers[paper.paper_number][0],
-                        certainty=0.9,
+                        certainty=_default_prenaming_prediction_confidence,
                     )
                 )
         # now update the priorities of the associated IDtasks
@@ -274,7 +280,7 @@ class IDReaderService:
                 certs = [X.certainty for X in existing_predictions[paper.paper_number]]
                 idt_obj.iding_priority = min(certs)
             else:
-                idt_obj.iding_priority = 0.9
+                idt_obj.iding_priority = _default_prenaming_prediction_confidence
             # no idt_obj.save() here b/c we are deferring these for a bulk change
             priority_updates.append(idt_obj)
         # Finally actually create + update all the predictions and tasks
