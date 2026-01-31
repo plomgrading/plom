@@ -233,18 +233,21 @@ class IDReaderService:
         prenamed_papers = StagingStudentService.get_prenamed_papers()
 
         # find existing prename-predictions from these papers
-        existing_prename_predictions = {}
+        existing_prename_prediction = {}
         for pred in IDPrediction.objects.filter(
             predictor="prename", paper__in=papers
         ).prefetch_related("paper"):
-            existing_prename_predictions[pred.paper.paper_number] = pred
+            existing_prename_prediction[pred.paper.paper_number] = pred
 
-        # find any existing predictions (not just prenames) from these papers
-        existing_predictions: dict[int, list[IDPrediction]] = {}  # I like cats
+        # mapping of any existing predictions (not just prenames) from these papers
+        existing_all_predictions_for_paper: dict[int, list[IDPrediction]] = {}
         for pred in IDPrediction.objects.filter(paper__in=papers).prefetch_related(
             "paper"
         ):
-            existing_predictions.get(pred.paper.paper_number, []).append(pred)
+            try:
+                existing_all_predictions_for_paper[pred.paper.paper_number].append(pred)
+            except KeyError:
+                existing_all_predictions_for_paper[pred.paper.paper_number] = [pred]
 
         # loop over papers making two lists: things to make and things to update
         new_predictions = []
@@ -253,8 +256,8 @@ class IDReaderService:
             # check if paper is actually prenamed.
             if paper.paper_number not in prenamed_papers:
                 continue
-            if paper.paper_number in existing_prename_predictions.keys():
-                pred = existing_prename_predictions[paper.paper_number]
+            if paper.paper_number in existing_prename_prediction.keys():
+                pred = existing_prename_prediction[paper.paper_number]
                 pred.student_id = prenamed_papers[paper.paper_number][0]
                 pred.user = user  # update the associated user too.
                 predictions_to_update.append(pred)
@@ -276,8 +279,11 @@ class IDReaderService:
         for idt_obj in PaperIDTask.objects.filter(paper__in=papers).prefetch_related(
             "paper"
         ):
-            if idt_obj.paper.paper_number in existing_predictions.keys():
-                certs = [X.certainty for X in existing_predictions[paper.paper_number]]
+            if idt_obj.paper.paper_number in existing_all_predictions_for_paper.keys():
+                certs = [
+                    X.certainty
+                    for X in existing_all_predictions_for_paper[paper.paper_number]
+                ]
                 idt_obj.iding_priority = min(certs)
             else:
                 idt_obj.iding_priority = _default_prenaming_prediction_confidence
