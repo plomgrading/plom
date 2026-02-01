@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from django.urls import path
@@ -46,7 +46,7 @@ class IdURLPatterns:
                 "tasks/complete", IDgetDoneTasks.as_view(), name="api_ID_get_done_tasks"
             ),
             path(
-                "tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_tasks"
+                "tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_task"
             ),
             path(
                 "tasks/<paper_num>", IDclaimThisTask.as_view(), name="api_ID_claim_task"
