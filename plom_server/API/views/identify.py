@@ -127,7 +127,9 @@ class IDprogressCount(APIView):
 
 # PATCH: /ID/tasks/{paper_num}
 # PUT: /ID/tasks/{paper_num}
-class IDclaimThisTask(APIView):
+class IDclaimOrSubmitTask(APIView):
+    """Claim or submit IDing tasks."""
+
     def patch(self, request: Request, *, paper_num: int) -> Response:
         """Claims this identifying task for the user.
 

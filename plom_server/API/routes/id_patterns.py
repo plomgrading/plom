@@ -10,7 +10,7 @@ from ..views import (
     IDprogressCount,
     IDgetDoneTasks,
     IDgetNextTask,
-    IDclaimThisTask,
+    IDclaimOrSubmitTask,
     IDdirect,
     GetIDPredictions,
     GetClasslist,
@@ -49,7 +49,9 @@ class IdURLPatterns:
                 "tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_task"
             ),
             path(
-                "tasks/<paper_num>", IDclaimThisTask.as_view(), name="api_ID_claim_task"
+                "tasks/<paper_num>",
+                IDclaimOrSubmitTask.as_view(),
+                name="api_ID_claim_task",
             ),
         ]
         id_patterns += tasks
