@@ -195,9 +195,9 @@ class IDdirect(APIView):
             409 if that student id is in-use for another paper.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
-        if "manager" not in group_list and "lead_marker" not in group_list:
+        if "identifier" not in group_list:
             return _error_response(
-                'Only "lead markers" and "managers" can ID papers',
+                'Only "identifier" users can ID papers',
                 status.HTTP_403_FORBIDDEN,
             )
 
@@ -238,9 +238,9 @@ class IDdirect(APIView):
             404: no paper.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
-        if "manager" not in group_list and "lead_marker" not in group_list:
+        if "identifier" not in group_list:
             return _error_response(
-                'Only "lead markers" and "managers" can ID papers',
+                'Only "identifier" users can ID papers',
                 status.HTTP_403_FORBIDDEN,
             )
         try:
