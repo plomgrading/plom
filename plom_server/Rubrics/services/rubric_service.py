@@ -217,6 +217,9 @@ def _modify_rubric_by_making_new_one(
         f"Modifying rubric {old.rid} rev {old.revision}.{old.subrevision} by"
         " making a new rubric with bumped revision"
     )
+    # if the old rubric was a system rubric, we should not allow that to change
+    if old.system_rubric:
+        serializer.validated_data["system_rubric"] = True
     old.latest = False
     old.save()
     serializer.validated_data["revision"] += 1
