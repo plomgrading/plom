@@ -218,7 +218,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "parameters": bad_params,
             }
             with self.assertRaises(serializers.ValidationError):
-                RubricService.create_rubric(rub, creating_user=self.user)
+                RubricService.create_rubric(rub, creating_user=self.user_liam)
 
 
 class RubricServiceTests(TestCase):
