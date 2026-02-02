@@ -29,8 +29,9 @@ class IdentifyTaskService:
         """
         return PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).exists()
 
+    @staticmethod
     @transaction.atomic
-    def create_task(self, paper: Paper) -> None:
+    def create_task(paper: Paper) -> None:
         """Create an identification task for a paper. Set any older id-tasks for same paper as out of date.
 
         Args:
@@ -110,8 +111,8 @@ class IdentifyTaskService:
 
         return None
 
-    @transaction.atomic
-    def get_done_tasks(self, user: User) -> list:
+    @staticmethod
+    def get_done_tasks(user: User) -> list:
         """Retrieve the results of previously completed (and valid) ID tasks for a user.
 
         Args:
@@ -135,8 +136,9 @@ class IdentifyTaskService:
                 )
         return id_list
 
+    @staticmethod
     @transaction.atomic
-    def get_id_progress(self) -> list:
+    def get_id_progress() -> list:
         """Send back current ID progress counts to the client.
 
         Returns:
@@ -148,8 +150,8 @@ class IdentifyTaskService:
 
         return [n_completed, n_total]
 
-    @transaction.atomic
-    def get_next_task(self) -> PaperIDTask | None:
+    @staticmethod
+    def get_next_task() -> PaperIDTask | None:
         """Return the next available identification task.
 
         Ordered by iding_priority then by paper number.
@@ -199,9 +201,10 @@ class IdentifyTaskService:
         id_img = id_page.image
         return id_img
 
+    @staticmethod
     @transaction.atomic
     def identify_paper(
-        self, user: User, paper_number: int, student_id: str, student_name: str
+        user: User, paper_number: int, student_id: str, student_name: str
     ) -> None:
         """Identify a test-paper and close its associated task.
 

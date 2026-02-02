@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -41,16 +41,17 @@ class IDDirectService:
         except Paper.DoesNotExist:
             raise ValueError(f"Cannot find paper with number {paper_number}")
 
-        its = IdentifyTaskService()
         with transaction.atomic():
             # set any previous id-ing as out of date and create a new task
-            its.create_task(paper_obj)
+            IdentifyTaskService.create_task(paper_obj)
             # then claim it for the user and id it with the provided data
             # (b/c we have the atomic transaction, I believe no one else can
             # claim the task we just created, so this "cannot" fail.  If it
             # does we'll get a RuntimeError).
-            its.claim_task(user_obj, paper_number)
-            its.identify_paper(user_obj, paper_number, student_id, student_name)
+            IdentifyTaskService.claim_task(user_obj, paper_number)
+            IdentifyTaskService.identify_paper(
+                user_obj, paper_number, student_id, student_name
+            )
 
     @classmethod
     def identify_direct_cmd(

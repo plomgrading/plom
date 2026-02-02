@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -86,33 +86,26 @@ class GetIDPredictions(APIView):
 
 # GET: /ID/tasks/complete
 class IDgetDoneTasks(APIView):
-    """When a id-client logs on they request a list of papers they have already IDd.
-
-    Send back the list.
-    """
+    """Send back a list of papers a user has already IDd."""
 
     def get(self, request):
-        its = IdentifyTaskService()
-        tasks = its.get_done_tasks(request.user)
-
+        """Get a list of papers a user has already IDd."""
+        tasks = IdentifyTaskService.get_done_tasks(request.user)
         return Response(tasks, status=status.HTTP_200_OK)
-
-    # TODO: how do we log?
 
 
 # GET: /ID/tasks/available
 class IDgetNextTask(APIView):
-    """Responds with a code for the the next available identify task.
-
-    Note: There is no guarantee that task will still be available later but at this moment in time,
-    no one else has claimed it
-
-    Responds with status 200/204.
-    """
 
     def get(self, request):
-        its = IdentifyTaskService()
-        next_task = its.get_next_task()
+        """Responds with a code for the the next available identify task.
+
+        Note: There is no guarantee that task will still be available later but at this moment in time,
+        no one else has claimed it
+
+        Responds with status 200/204.
+        """
+        next_task = IdentifyTaskService.get_next_task()
         if next_task:
             paper_id = next_task.paper.paper_number
             return Response(paper_id, status=status.HTTP_200_OK)
@@ -123,8 +116,7 @@ class IDgetNextTask(APIView):
 class IDprogressCount(APIView):
     def get(self, request):
         """Responds with a list of completed/total tasks."""
-        its = IdentifyTaskService()
-        progress = its.get_id_progress()
+        progress = IdentifyTaskService.get_id_progress()
         return Response(progress, status=status.HTTP_200_OK)
 
 
@@ -172,9 +164,10 @@ class IDclaimThisTask(APIView):
             )
         data = request.data
         user = request.user
-        its = IdentifyTaskService()
         try:
-            its.identify_paper(user, paper_num, data["sid"], data["sname"])
+            IdentifyTaskService.identify_paper(
+                user, paper_num, data["sid"], data["sname"]
+            )
         except PermissionDenied as err:  # task not assigned to that user
             return _error_response(err, status=status.HTTP_403_FORBIDDEN)
         except ObjectDoesNotExist as err:  # no valid task for that paper_num
