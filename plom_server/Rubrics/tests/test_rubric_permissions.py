@@ -36,19 +36,19 @@ class RubricServiceTests_permissions(TestCase):
 
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:
         Settings.set_who_can_modify_rubrics("locked")
-        rub = RubricService.create_rubric(_make_ex())
+        # this will succeed only b/c user is None
+        rub = RubricService.create_rubric(_make_ex(), creating_user=None)
         rid = rub["rid"]
         rub.update({"text": "new text"})
-        # succeeded b/c user is None
         RubricService.modify_rubric(rid, rub, modifying_user=None)
 
     def test_rubrics_cannot_modify_when_locked(self) -> None:
-        Settings.set_who_can_modify_rubrics("locked")
-        rub = RubricService.create_rubric(_make_ex())
-        rid = rub["rid"]
-        rub.update({"text": "new text"})
         yvonne = User.objects.get(username="yvonne")
         xenia = User.objects.get(username="xenia")
+        Settings.set_who_can_modify_rubrics("locked")
+        rub = RubricService.create_rubric(_make_ex(), creating_user=xenia)
+        rid = rub["rid"]
+        rub.update({"text": "new text"})
         with self.assertRaises(PermissionDenied):
             RubricService.modify_rubric(rid, rub, modifying_user=yvonne)
         # even creator cannot modify
@@ -59,7 +59,7 @@ class RubricServiceTests_permissions(TestCase):
         Settings.set_who_can_modify_rubrics("permissive")
         rub = _make_ex()
         rub.update({"system_rubric": True})
-        rub = RubricService.create_rubric(rub)
+        rub = RubricService.create_rubric(rub, creating_user=None)
         rid = rub["rid"]
         rub.update({"text": "trying to change a system rubric"})
         xenia = User.objects.get(username="xenia")
@@ -69,7 +69,9 @@ class RubricServiceTests_permissions(TestCase):
     def test_rubrics_cannot_create_when_locked(self) -> None:
         Settings.set_who_can_create_rubrics("locked")
         r = _make_ex()
+        xenia = User.objects.get(username="xenia")
+        assert r["username"] == xenia.username
         with self.assertRaises(PermissionDenied):
-            RubricService.create_rubric(r, creating_user=r["username"])
+            RubricService.create_rubric(r, creating_user=xenia)
         # we can still make make them with None for internal use
         RubricService.create_rubric(r, creating_user=None)
