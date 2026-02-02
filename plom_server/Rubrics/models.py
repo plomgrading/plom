@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
@@ -92,7 +92,10 @@ class Rubric(models.Model):
         system_rubric: this Rubric was created by or is otherwise
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
-        published: for future use.
+        published: published rubrics can be used for marking.  Unpublished
+            rubrics should hidden or greyed-out in user interfaces.
+            This isn't necessarily a deletion: its possible to publish
+            a rubric again.
         user: generally who created the rubric, although at least in
             principle, users could "gift" a rubric to another user.
             No one is doing that as of mid 2024.
@@ -267,6 +270,10 @@ class RubricTable(django_tables2.Table):
 
     class Meta:
         model = Rubric
+
+        row_attrs = {
+            "class": lambda record: "opacity-25" if not record.published else ""
+        }
 
         # which fields to include in the table.  Or omit for all fields
         # and use sequence = (...) to control the order.
