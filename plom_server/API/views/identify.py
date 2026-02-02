@@ -96,12 +96,15 @@ class IDgetDoneTasks(APIView):
 
 # GET: /ID/tasks/available
 class IDgetNextTask(APIView):
+    """Used to ask for code of the next available task."""
 
     def get(self, request):
-        """Responds with a code for the the next available identify task.
+        """Responds with a code for the next available identify task.
 
-        Note: There is no guarantee that task will still be available later but at this moment in time,
-        no one else has claimed it
+        Note: There is no guarantee that task will still be available
+        later but at this moment in time, no one else has claimed it.
+        Its also possible you don't have permissions to actually ID
+        the task; this method just tells you the task is available.
 
         Responds with status 200/204.
         """
@@ -114,6 +117,8 @@ class IDgetNextTask(APIView):
 
 
 class IDprogressCount(APIView):
+    """Get lists of completed/total tasks."""
+
     def get(self, request):
         """Responds with a list of completed/total tasks."""
         progress = IdentifyTaskService.get_id_progress()
@@ -122,7 +127,9 @@ class IDprogressCount(APIView):
 
 # PATCH: /ID/tasks/{paper_num}
 # PUT: /ID/tasks/{paper_num}
-class IDclaimThisTask(APIView):
+class IDclaimOrSubmitTask(APIView):
+    """Claim or submit IDing tasks."""
+
     def patch(self, request: Request, *, paper_num: int) -> Response:
         """Claims this identifying task for the user.
 
@@ -179,7 +186,7 @@ class IDclaimThisTask(APIView):
 
 
 class IDdirect(APIView):
-    """TODO WIP, beta etc etc."""
+    """These are "beta" endpoints for "directly" identifying papers, bypassing "task" mechanisms."""
 
     # PUT: /ID/beta/{papernum}&student_id=...
     def put(self, request: Request, *, papernum: int) -> Response:
@@ -195,9 +202,9 @@ class IDdirect(APIView):
             409 if that student id is in-use for another paper.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
-        if "manager" not in group_list and "lead_marker" not in group_list:
+        if "identifier" not in group_list:
             return _error_response(
-                'Only "lead markers" and "managers" can ID papers',
+                'Only "identifier" users can ID papers',
                 status.HTTP_403_FORBIDDEN,
             )
 
@@ -238,9 +245,9 @@ class IDdirect(APIView):
             404: no paper.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
-        if "manager" not in group_list and "lead_marker" not in group_list:
+        if "identifier" not in group_list:
             return _error_response(
-                'Only "lead markers" and "managers" can ID papers',
+                'Only "identifier" users can ID papers',
                 status.HTTP_403_FORBIDDEN,
             )
         try:

@@ -38,7 +38,7 @@ from .identify import (
     IDgetDoneTasks,
     IDgetNextTask,
     IDprogressCount,
-    IDclaimThisTask,
+    IDclaimOrSubmitTask,
     IDdirect,
 )
 
