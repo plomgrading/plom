@@ -570,7 +570,7 @@ class RubricService:
             )
         elif (
             old_rubric.system_rubric
-            and not modifying_user.groups.filter("manager").exists()
+            and not modifying_user.groups.filter(name="manager").exists()
         ):
             raise PermissionDenied(
                 f'Only "manager" users can modify system rubrics (not "{modifying_user}")'
