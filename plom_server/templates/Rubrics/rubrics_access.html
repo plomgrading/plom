@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024, 2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -79,7 +79,8 @@
                                            {% if modify0_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="modify0">
                                         <strong>Permissive:</strong> any user can modify
-                                        non-system rubrics rubrics.
+                                        non-system rubrics rubrics;
+                                        &ldquo;<strong>manager</strong>&rdquo; users can modify system-rubrics.
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
@@ -90,9 +91,11 @@
                                            value="per-user"
                                            {% if modify1_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="modify1">
+                                        <strong>Default:</strong>
                                         Users can modify rubrics <strong>they created.</strong>
                                         Users in the &ldquo;<strong>lead markers</strong>&rdquo;
-                                        group may modify all non-system rubrics.
+                                        group may modify all non-system rubrics;
+                                        &ldquo;<strong>manager</strong>&rdquo; users can modify system-rubrics.
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
@@ -103,8 +106,8 @@
                                            value="locked"
                                            {% if modify2_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="modify2">
-                                        <strong>Locked-down:</strong> No users can modify rubrics, overriding any per-account settings.
-                                        <!-- TBD if manager-level users are effected. -->
+                                        <strong>Locked-down:</strong> No users can modify rubrics, overriding any per-account settings;
+                                        &ldquo;<strong>manager</strong>&rdquo; users cannot modify system-rubrics.
                                     </label>
                                 </div>
                             </fieldset>

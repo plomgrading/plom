@@ -556,23 +556,23 @@ class RubricService:
         if "question_index" not in data.keys():
             data["question_index"] = data.pop("question")
 
-        # Generally, omitting modifying_user bypasses checks
-        if modifying_user is None:
-            pass
-        elif old_rubric.system_rubric:
-            raise PermissionDenied(
-                f'User "{modifying_user}" is not allowed to modify system rubrics'
-            )
-
         who_can_modify_rubrics = Settings.get_who_can_modify_rubrics()
         if modifying_user is None:
-            pass
-        elif who_can_modify_rubrics == "permissive":
+            # Generally, omitting modifying_user bypasses checks (for internal use)
             pass
         elif who_can_modify_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to modify rubrics on this server"
             )
+        elif (
+            old_rubric.system_rubric
+            and not modifying_user.groups.filter("manager").exists()
+        ):
+            raise PermissionDenied(
+                f'Only "manager" users can modify system rubrics (not "{modifying_user}")'
+            )
+        elif who_can_modify_rubrics == "permissive":
+            pass
         else:
             # neither permissive nor locked so consult per-user permissions
             if user == modifying_user:
