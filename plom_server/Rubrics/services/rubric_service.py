@@ -932,7 +932,7 @@ class RubricService:
                 or these rubrics already exist.
         """
         try:
-            _ = User.objects.get(username__iexact=username, groups__name="manager")
+            user = User.objects.get(username__iexact=username, groups__name="manager")
         except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions"
@@ -941,10 +941,10 @@ class RubricService:
             raise ValueError(
                 "Could not create half-mark delta rubrics b/c they already exist"
             )
-        cls._build_half_mark_delta_rubrics(username)
+        cls._build_half_mark_delta_rubrics(user)
 
     @classmethod
-    def _build_half_mark_delta_rubrics(cls, username: str) -> None:
+    def _build_half_mark_delta_rubrics(cls, user: User) -> None:
         log.info("Building half-mark delta rubrics")
         for q in SpecificationService.get_question_indices():
             rubric = {
@@ -953,10 +953,10 @@ class RubricService:
                 "text": ".",
                 "kind": "relative",
                 "question_index": q,
-                "username": username,
+                "username": user.username,
                 "system_rubric": True,
             }
-            r = cls.create_rubric(rubric)
+            r = cls.create_rubric(rubric, creating_user=user)
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
@@ -970,10 +970,10 @@ class RubricService:
                 "text": ".",
                 "kind": "relative",
                 "question_index": q,
-                "username": username,
+                "username": user.username,
                 "system_rubric": True,
             }
-            r = cls.create_rubric(rubric)
+            r = cls.create_rubric(rubric, creating_user=user)
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
