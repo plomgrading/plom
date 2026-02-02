@@ -92,7 +92,10 @@ class Rubric(models.Model):
         system_rubric: this Rubric was created by or is otherwise
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
-        published: for future use.
+        published: published rubrics can be used for marking.  Unpublished
+            rubrics should hidden or greyed-out in user interfaces.
+            This isn't necessarily a deletion: its possible to publish
+            a rubric again.
         user: generally who created the rubric, although at least in
             principle, users could "gift" a rubric to another user.
             No one is doing that as of mid 2024.
