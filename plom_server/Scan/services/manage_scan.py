@@ -375,7 +375,8 @@ class ManageScanService:
         Returns: A dict with keys
             * page_type: always "fixed"
             * paper_number: the paper containing that fixed page.
-            * page_number: the page_number of  the fixed page.
+            * page_number: the page_number of the fixed page.
+            * version: the version of the fixed page.
             * image_pk: the pk of the image in the fixed page.
             * bundle_name: the name of the bundle containing the image.
             * bundle_order: the order of the image inside the bundle.
@@ -386,6 +387,7 @@ class ManageScanService:
                 "page_type": "fixed",
                 "paper_number": fp_obj.paper.paper_number,
                 "page_number": fp_obj.page_number,
+                "version": fp_obj.version,
                 "image_pk": None,
                 "bundle_name": None,
                 "bundle_order": None,
@@ -395,6 +397,7 @@ class ManageScanService:
                 "page_type": "fixed",
                 "paper_number": fp_obj.paper.paper_number,
                 "page_number": fp_obj.page_number,
+                "version": fp_obj.version,
                 "image_pk": fp_obj.image.pk,
                 "bundle_name": fp_obj.image.bundle.name,
                 "bundle_order": fp_obj.image.bundle_order,
