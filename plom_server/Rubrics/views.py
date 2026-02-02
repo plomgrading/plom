@@ -511,7 +511,7 @@ class RubricCreateView(ManagerRequiredView):
             "published": form.cleaned_data["published"],
         }
         try:
-            RubricService.create_rubric(rubric_data)
+            RubricService.create_rubric(rubric_data, creating_user=request.user)
         except (ValueError, PermissionDenied) as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:
