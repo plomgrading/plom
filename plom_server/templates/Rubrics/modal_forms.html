@@ -150,7 +150,7 @@
                                  class="accordion-collapse collapse"
                                  aria-labelledby="headingOne"
                                  data-bs-parent="#accordion">
-                                <div class="accordion-body">
+                                <div class="accordion-body p-2">
                                     <div class="row form-group">
                                         <div class="col">
                                             {{ edit_form.versions.errors }}
@@ -201,8 +201,7 @@
                         </div>
                     </div>
                     {% if rid %}
-                        <hr />
-                        <h5>Existing annotations</h5>
+                        <h5 class="mt-2">Existing annotations</h5>
                         <p class="mb-0">Should existing annotations be updated because of this change?</p>
                         <!-- TODO: would like some tooltips or popovers to help explain all this -->
                         <div class="form-check form-check-inline">
