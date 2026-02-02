@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
-    Copyright (C) 2024-2025 Colin B. Macdonald
+    Copyright (C) 2024-2026 Colin B. Macdonald
   -->
 {% load static %}
 <div class="col text-center">
@@ -37,8 +37,7 @@
                 </p>
             {% elif kind == "DNMPage" %}
                 <button class="btn btn-info"
-                        hx-post="{% url 'substitute_img_wrap' paper_number page_number %}"
-                        hx-confirm="Replacing a do-not-mark page is relatively safe - do you wish to proceed?">
+                        hx-post="{% url 'substitute_img_wrap' paper_number page_number %}">
                     Replace do-not-mark page with substitute
                 </button>
                 <p class="my-1 alert alert-info text-start">
