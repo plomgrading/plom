@@ -236,7 +236,7 @@ class RubricService:
         cls,
         rubric_data: dict[str, Any],
         *,
-        creating_user: User | None = None,
+        creating_user: User | None,
         by_system: bool = True,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
@@ -249,8 +249,8 @@ class RubricService:
             creating_user: who is trying to create the rubric.  ``None``
                 means you don't care who (probably for internal use only).
                 ``None`` also bypasses the rubric access settings.
-                TODO: maybe this should be mandatory: seems dangerous to
-                special internal behavior by default; e.g., Issue #4147.
+                Note: None is dangerous so is not the default: if you want
+                None, you must specify it explicitly (e.g., Issue #4147).
             by_system: true if the rubric creation is made by system.
 
         Returns:

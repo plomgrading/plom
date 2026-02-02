@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
@@ -36,7 +36,7 @@ class RubricServiceTests_exceptions(TestCase):
     def test_no_user_ValueError(self) -> None:
         """Test ValueError in RubricService.create_rubric().
 
-        This test case checks if the RubricService.create_rubric()
+        This test case checks if the low-level RubricService._create_rubric()
         method raises an ValueError exception when attempting
         to create a rubric with a non-existent user.
         """
@@ -49,12 +49,12 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(ValueError):
-            RubricService.create_rubric(rub)
+            RubricService._create_rubric(rub)
 
     def test_no_user_KeyError(self) -> None:
         """Test KeyError in RubricService.create_rubric().
 
-        This test case checks if the RubricService.create_rubric()
+        This test case checks if the low-level RubricService._create_rubric()
         method raises a KeyError when attempting to create a rubric
         without providing the 'username' key in the rubric dictionary.
         """
@@ -66,7 +66,7 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(KeyError):
-            RubricService.create_rubric(rub)
+            RubricService._create_rubric(rub)
 
     def test_no_kind_ValidationError(self) -> None:
         """Test for the RubricService.create_rubric() method when 'kind' is invalid.
@@ -86,7 +86,7 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(serializers.ValidationError):
-            RubricService.create_rubric(rub)
+            RubricService._create_rubric(rub)
 
     def test_no_kind_KeyValidationError(self) -> None:
         """Test ValidationError in RubricService.create_rubric().
@@ -103,7 +103,7 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(serializers.ValidationError):
-            RubricService.create_rubric(rub)
+            RubricService._create_rubric(rub)
 
     def test_rubric_absolute_out_of_range(self) -> None:
         rub = {
@@ -116,16 +116,16 @@ class RubricServiceTests_exceptions(TestCase):
         }
         # check error thrown when value > out_of
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService.create_rubric(rub)
+            RubricService._create_rubric(rub)
         # check if value < 0
         rub["value"] = -2
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService.create_rubric(rub)
+            RubricService._create_rubric(rub)
         # check if out_of > max_mark
         rub["value"] = 3
         rub["out_of"] = 99
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService.create_rubric(rub)
+            RubricService._create_rubric(rub)
 
     def test_create_rubric_should_not_have_existing_rid(self) -> None:
         rub = {
@@ -136,8 +136,8 @@ class RubricServiceTests_exceptions(TestCase):
             "question_index": 1,
             "rid": 42,
         }
-        with self.assertRaises(serializers.ValidationError):
-            RubricService.create_rubric(rub)
+        with self.assertRaisesRegex(serializers.ValidationError, 'not have a "rid"'):
+            RubricService._create_rubric(rub)
 
 
 class RubricServiceTests_extra_validation(TestCase):
@@ -145,7 +145,7 @@ class RubricServiceTests_extra_validation(TestCase):
 
     @config_test({"test_spec": "demo"})
     def setUp(self) -> None:
-        baker.make(User, username="Liam")
+        self.user_liam = baker.make(User, username="Liam")
 
     def test_create_rubric_invalid_value(self) -> None:
         rub = {
@@ -155,8 +155,8 @@ class RubricServiceTests_extra_validation(TestCase):
             "username": "Liam",
             "question_index": 1,
         }
-        with self.assertRaises(serializers.ValidationError):
-            RubricService.create_rubric(rub)
+        with self.assertRaisesRegex(serializers.ValidationError, "value"):
+            RubricService.create_rubric(rub, creating_user=self.user_liam)
 
     def test_create_rubric_versions_invalid(self) -> None:
         for bad_versions in ("[1, 2]", [1, 1.2], "1, 1.2", "1, sth", "abc"):
@@ -168,8 +168,8 @@ class RubricServiceTests_extra_validation(TestCase):
                 "question_index": 1,
                 "versions": bad_versions,
             }
-            with self.assertRaises(serializers.ValidationError):
-                RubricService.create_rubric(rub)
+            with self.assertRaisesRegex(serializers.ValidationError, "versions"):
+                RubricService.create_rubric(rub, creating_user=self.user_liam)
 
     def test_create_rubric_versions_out_of_range(self) -> None:
         for oor_versions in ("-1", "999", "-1, 1", "-1, 999"):
@@ -182,7 +182,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "versions": oor_versions,
             }
             with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-                RubricService.create_rubric(rub)
+                RubricService.create_rubric(rub, creating_user=self.user_liam)
 
     def test_create_rubric_valid_parameters(self) -> None:
         for good_params in (
@@ -198,7 +198,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "question_index": 1,
                 "parameters": good_params,
             }
-            RubricService.create_rubric(rub)
+            RubricService.create_rubric(rub, creating_user=self.user_liam)
 
     def test_create_rubric_invalid_parameters(self) -> None:
         for bad_params in (
@@ -218,7 +218,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "parameters": bad_params,
             }
             with self.assertRaises(serializers.ValidationError):
-                RubricService.create_rubric(rub)
+                RubricService.create_rubric(rub, creating_user=self.user)
 
 
 class RubricServiceTests(TestCase):
@@ -228,6 +228,8 @@ class RubricServiceTests(TestCase):
     def setUp(self) -> None:
         user1: User = baker.make(User, username="Liam")
         user2: User = baker.make(User, username="Olivia")
+        self.user_liam = user1
+        self.user_olivia = user2
 
         self.neutral_rubric = baker.make(
             Rubric,
@@ -394,7 +396,9 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
-        r = RubricService.create_rubric(simulated_client_data)
+        r = RubricService.create_rubric(
+            simulated_client_data, creating_user=self.user_olivia
+        )
         assert isinstance(r, dict)
 
     def test_modify_neutral_rubric(self) -> None:
@@ -639,7 +643,7 @@ class RubricServiceTests(TestCase):
             "question_index": 1,
             "revision": 10,
         }
-        r = RubricService.create_rubric(rub)
+        r = RubricService.create_rubric(rub, creating_user=self.user_liam)
         rid = r["rid"]
 
         # ok to change if revision matches
