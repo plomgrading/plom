@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 import logging
 
@@ -58,7 +58,7 @@ def set_all_users_in_group_active(group_name: str, active: bool):
     """Set the 'is_active' field of all users in the given group to the given boolean."""
     for user in Group.objects.get(name=group_name).user_set.all():
         # explicitly exclude managers here
-        if user.groups.filter(name="manager"):
+        if user.groups.filter(name="manager").exists():
             continue
         user.is_active = active
         user.save()
