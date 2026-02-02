@@ -31,7 +31,7 @@ class ManageDiscardService:
             image=dnm_obj.image,
             discard_reason=(
                 f"User {user_obj.username} discarded DNM page: "
-                f"page {dnm_obj.paper.paper_number} page {dnm_obj.page_number}"
+                f"paper {dnm_obj.paper.paper_number} page {dnm_obj.page_number}"
             ),
         )
         # Set the original dnm page to have no image, but **DO NOT** delete the DNM page
@@ -46,7 +46,7 @@ class ManageDiscardService:
             image=idpage_obj.image,
             discard_reason=(
                 f"User {user_obj.username} discarded ID page: "
-                f"page {idpage_obj.paper.paper_number} page {idpage_obj.page_number}"
+                f"paper {idpage_obj.paper.paper_number} page {idpage_obj.page_number}"
             ),
         )
         # Set the original id page to have no image, but **DO NOT** delete the idpage
