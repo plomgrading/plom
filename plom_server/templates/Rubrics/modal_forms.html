@@ -3,7 +3,7 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
     Copyright (C) 2025 Deep Shah
@@ -183,15 +183,17 @@
                                         <div class="col">
                                             {{ edit_form.published.errors }}
                                             <!-- TODO: why not edit_form[dot]published and have it do everything? -->
-                                            <div class="form-check form-check-inline">
+                                            <div class="form-check form-check-inline mt-1 mb-0">
                                                 <input class="form-check-input"
                                                        type="checkbox"
                                                        name="{{ edit_form.published.name }}"
                                                        id="{{ edit_form.published.id_for_label }}"
                                                        {% if edit_form.published.value %}checked{% endif %}>
-                                                <label class="form-check-label" for="{{ edit_form.published.id_for_label }}">Published</label>
+                                                <label class="form-check-label" for="{{ edit_form.published.id_for_label }}">
+                                                    Published
+                                                    <small class="d-block text-muted mb-0 mt-0">Publishing a rubric makes it usable by markers.</small>
+                                                </label>
                                             </div>
-                                            <small class="d-block text-muted mt-1 mb">Publishing a rubric makes it usable by markers.</small>
                                         </div>
                                     </div>
                                 </div>
