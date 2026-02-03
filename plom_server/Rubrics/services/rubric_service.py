@@ -239,7 +239,7 @@ class RubricService:
         rubric_data: dict[str, Any],
         *,
         creating_user: User | None | object = _sentinel_no_input,
-        _by_system: bool = True,
+        _by_system: bool | None = None,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -255,7 +255,8 @@ class RubricService:
                 (probably for internal use only).  ``None`` also bypasses
                 the rubric access settings, which is dangerous so is not
                 the default: you must specify it explicitly (e.g., Issue #4147).
-            _by_system: true if the rubric creation is made by system.
+            _by_system: true if the rubric creation is made by system,
+                which probably bypasses some checks or something like that.
                 TODO: for some reason, this is default True.  Expect that
                 to change.
 
@@ -296,7 +297,7 @@ class RubricService:
         incoming_data: dict[str, Any],
         *,
         creating_user: User | None = None,
-        by_system: bool = True,
+        by_system: bool | None = None,
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 

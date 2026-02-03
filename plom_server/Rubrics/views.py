@@ -433,7 +433,7 @@ class UploadRubricView(ManagerRequiredView):
 
         try:
             RubricService.create_rubrics_from_file_data(
-                data_string, suffix, _by_system=False, requesting_user=username
+                data_string, suffix, requesting_user=username
             )
         except ValueError as e:
             messages.error(request, f"Error: {e}")
