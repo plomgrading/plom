@@ -12,6 +12,7 @@ from model_bakery import baker
 
 from plom_server.Base.services import Settings
 from plom_server.TestingSupport.utils import config_test
+from plom_server.Authentication.services import AuthService
 from ..services import RubricService
 
 
@@ -74,4 +75,20 @@ class RubricServiceTests_permissions(TestCase):
         with self.assertRaises(PermissionDenied):
             RubricService.create_rubric(r)
         # we can still make make them using internal mechanisms
-        RubricService._create_rubric(r, creating_user=xenia, _bypass_permissions=True)
+        RubricService._create_rubric(r, _bypass_permissions=True)
+
+    def test_rubrics_cannot_create_when_per_user_but_manager_can(self) -> None:
+        Settings.set_who_can_create_rubrics("per-user")
+        r = _make_ex()
+        assert r["username"] == "xenia"
+        with self.assertRaisesRegex(PermissionDenied, "xenia.*not allowed"):
+            # TODO: capture that xenia is not allowed
+            RubricService.create_rubric(r)
+        # but another user with enough permissions can override "xenia" (in the rubric data)
+        AuthService.create_groups()
+        AuthService.create_manager_user("ManaJer")
+        manager = User.objects.get(username="ManaJer", groups__name="manager")
+        r = RubricService.create_rubric(r, creating_user=manager)
+        # the resulting rubric has the creator not xenia
+        self.assertNotEqual(r["username"], "xenia")
+        self.assertEqual(r["username"], "ManaJer")

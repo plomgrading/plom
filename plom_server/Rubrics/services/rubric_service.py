@@ -231,14 +231,12 @@ def _modify_rubric_by_making_new_one(
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
-    _sentinel_no_input = object()
-
     @classmethod
     def create_rubric(
         cls,
         rubric_data: dict[str, Any],
         *,
-        creating_user: User | None | object = _sentinel_no_input,
+        creating_user: User | None = None,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -248,12 +246,11 @@ class RubricService:
 
         Keyword Args:
             creating_user: who is trying to create the rubric.
-                If you omit this kwarg, it will be auto-detected from the
-                "username" field of the rubric data.
-                The special value of ``None`` means you don't care who
-                (probably for internal use only).  ``None`` also bypasses
-                the rubric access settings, which is dangerous so is not
-                the default: you must specify it explicitly (e.g., Issue #4147).
+                If you omit this kwarg or pass None, it will be
+                auto-detected from the "user"/"username" fields
+                of the rubric data, which incurs a database query.
+                Note that specifying this overrides any "user"/"username"
+                in the `rubric_data`.
 
         Returns:
             The new rubric data, in dict key-value format.
@@ -268,16 +265,6 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
-        if creating_user == cls._sentinel_no_input:
-            username = rubric_data.get("username")
-            if not username:
-                raise KeyError(
-                    '"creating_user" not specified and data has no "username" field'
-                )
-            try:
-                creating_user = User.objects.get(username=username)
-            except User.DoesNotExist as e:
-                raise ValueError(f'User "{username}" does not exist: {e}') from e
         rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
         return _Rubric_to_dict(rubric_obj)
 
@@ -307,9 +294,9 @@ class RubricService:
                         "user or username is required (for now, might change in future)"
                     )
                 try:
-                    user = User.objects.get(username=username)
-                    incoming_data["user"] = user.pk
-                    incoming_data["modified_by_user"] = user.pk
+                    creating_user = User.objects.get(username=username)
+                    incoming_data["user"] = creating_user.pk
+                    incoming_data["modified_by_user"] = creating_user.pk
                 except ObjectDoesNotExist as e:
                     raise ValueError(f"User {username} does not exist.") from e
 
