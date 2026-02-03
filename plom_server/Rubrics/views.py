@@ -432,6 +432,8 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
+            # TODO: note that this overrides whatever users are in the file
+            # with the calling user.  Is that intentional?
             RubricService.create_rubrics_from_file_data(
                 data_string, suffix, requesting_user=username
             )
