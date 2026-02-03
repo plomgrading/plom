@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -26,7 +26,7 @@ class RubricServiceTests_fractional_permissions(TestCase):
         }
         # TODO: do we really want ValueError?
         with self.assertRaises(ValueError):
-            RubricService._create_rubric(data_half)
+            RubricService.create_rubric(data_half)
 
     def test_rubrics_create_turn_on_fractions(self) -> None:
         data_quarter = {
@@ -44,13 +44,13 @@ class RubricServiceTests_fractional_permissions(TestCase):
             "question_index": 1,
         }
         with self.assertRaises(ValueError):
-            RubricService._create_rubric(data_quarter)
+            RubricService.create_rubric(data_quarter)
         RubricPermissionsService.change_fractional_settings(
             {"allow-quarter-point-rubrics": "on"}
         )
-        RubricService._create_rubric(data_quarter)
+        RubricService.create_rubric(data_quarter)
         with self.assertRaises(ValueError):
-            RubricService._create_rubric(data_eighth)
+            RubricService.create_rubric(data_eighth)
 
     def test_rubrics_modify_turn_on_fractions(self) -> None:
         data_int = {
@@ -60,8 +60,8 @@ class RubricServiceTests_fractional_permissions(TestCase):
             "username": "xenia",
             "question_index": 1,
         }
-        r = RubricService._create_rubric(data_int)
-        rid = r.rid
+        r = RubricService.create_rubric(data_int)
+        rid = r["rid"]
         data_eighth = {
             "kind": "relative",
             "value": 1.875,
@@ -108,11 +108,11 @@ class RubricServiceTests_fractional_permissions(TestCase):
         RubricPermissionsService.change_fractional_settings(
             {"allow-third-point-rubrics": "on"}
         )
-        obj = RubricService._create_rubric(data)
-        self.assertAlmostEqual(obj.value, accurate_value)
+        r = RubricService.create_rubric(data)
+        self.assertAlmostEqual(r["value"], accurate_value)
         # AlmostEqual doesn't expose the tolerance
-        self.assertTrue(abs(obj.value - accurate_value) < 1e-15)
-        self.assertTrue(abs(obj.value - approx_value) > 1e-11)
+        self.assertTrue(abs(r["value"] - accurate_value) < 1e-15)
+        self.assertTrue(abs(r["value"] - approx_value) > 1e-11)
 
     def test_rubric_modify_rounds_value_to_accurate_fraction(self) -> None:
         approx_value = 0.666_666_67
@@ -124,8 +124,8 @@ class RubricServiceTests_fractional_permissions(TestCase):
             "username": "xenia",
             "question_index": 1,
         }
-        obj = RubricService._create_rubric(data)
-        rid = obj.rid
+        r = RubricService.create_rubric(data)
+        rid = r["rid"]
         data = {
             "kind": "relative",
             "value": approx_value,
