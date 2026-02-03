@@ -269,7 +269,6 @@ class RubricService:
                 This could be "this user" or "all users".
         """
         if creating_user == cls._sentinel_no_input:
-            print("no creating_user specified, taking from data...")
             username = rubric_data.get("username")
             if not username:
                 raise KeyError(
@@ -279,7 +278,6 @@ class RubricService:
                 creating_user = User.objects.get(username=username)
             except User.DoesNotExist as e:
                 raise ValueError(f'User "{username}" does not exist: {e}') from e
-            print(f"no creating_user specified, using '{creating_user}' from data")
         rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
         return _Rubric_to_dict(rubric_obj)
 
