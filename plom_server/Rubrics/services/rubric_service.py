@@ -288,7 +288,7 @@ class RubricService:
             # TODO: not sure any code is using this path but it would allow fewer
             # DB queries compared to including a "username" string.
             creating_user = incoming_data["user"]
-            if not isinstance(creating_user, "User"):
+            if not isinstance(creating_user, User):
                 raise ValueError(
                     f'Passing "user" data requires a type "User" not "{type(creating_user)}"'
                 )
