@@ -236,8 +236,7 @@ class RubricService:
         cls,
         rubric_data: dict[str, Any],
         *,
-        creating_user: User | None,
-        by_system: bool = True,
+        creating_user: User | None = None,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -246,12 +245,12 @@ class RubricService:
                 This input will not be modified by this call.
 
         Keyword Args:
-            creating_user: who is trying to create the rubric.  ``None``
-                means you don't care who (probably for internal use only).
-                ``None`` also bypasses the rubric access settings.
-                Note: None is dangerous so is not the default: if you want
-                None, you must specify it explicitly (e.g., Issue #4147).
-            by_system: true if the rubric creation is made by system.
+            creating_user: who is trying to create the rubric.  If you
+                omit this or pass ``None``, it will be auto-detected
+                from the "user" or "username" fields of ``rubric_data``
+                (the latter incurs a database query).
+                Note that specifying this overrides any "user"/"username"
+                in the `rubric_data`.
 
         Returns:
             The new rubric data, in dict key-value format.
@@ -266,9 +265,7 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
-        rubric_obj = cls._create_rubric(
-            rubric_data, creating_user=creating_user, by_system=by_system
-        )
+        rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
         return _Rubric_to_dict(rubric_obj)
 
     # implementation detail of the above, independently testable
@@ -278,31 +275,37 @@ class RubricService:
         incoming_data: dict[str, Any],
         *,
         creating_user: User | None = None,
-        by_system: bool = True,
+        _bypass_permissions: bool = False,
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
-        if not by_system:
-            if not creating_user:
-                raise ValueError("Uploader of rubrics is unknown")
+        if creating_user:
+            # if the kwarg was passed, overwrite the rubric data itself
             incoming_data["user"] = creating_user.pk
             incoming_data["modified_by_user"] = creating_user.pk
-
+        elif "user" in incoming_data.keys():
+            # If we have a "user" it should be an actual "User" not a string: use that.
+            # TODO: not sure any code is using this path but it would allow fewer
+            # DB queries compared to including a "username" string.
+            creating_user = incoming_data["user"]
+            if not isinstance(creating_user, User):
+                raise ValueError(
+                    f'Passing "user" data requires a type "User" not "{type(creating_user)}"'
+                )
         else:
-            # some mangling around user/username here
-            if "user" not in incoming_data.keys():
-                username = incoming_data.pop("username", None)
-                if not username:
-                    # TODO: revisit this in the context of uploading rubrics from files
-                    raise KeyError(
-                        "user or username is required (for now, might change in future)"
-                    )
-                try:
-                    user = User.objects.get(username=username)
-                    incoming_data["user"] = user.pk
-                    incoming_data["modified_by_user"] = user.pk
-                except ObjectDoesNotExist as e:
-                    raise ValueError(f"User {username} does not exist.") from e
+            # we try to take from the string "username" field
+            username = incoming_data.pop("username", None)
+            if not username:
+                # TODO: revisit this in the context of uploading rubrics from files
+                raise KeyError(
+                    "user or username is required (for now, might change in future)"
+                )
+            try:
+                creating_user = User.objects.get(username=username)
+                incoming_data["user"] = creating_user.pk
+                incoming_data["modified_by_user"] = creating_user.pk
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"User {username} does not exist.") from e
 
         if "rid" in incoming_data.keys():
             # could potentially allow blank rid...
@@ -331,7 +334,7 @@ class RubricService:
 
         # Check permissions
         who_can_create_rubrics = Settings.get_who_can_create_rubrics()
-        if creating_user is None:
+        if _bypass_permissions:
             pass
         elif who_can_create_rubrics == "permissive":
             pass
@@ -1312,7 +1315,8 @@ class RubricService:
         cls,
         data: str,
         filetype: str,
-        by_system: bool,
+        *,
+        _bypass_permissions: bool = False,
         requesting_user: str | None = None,
     ) -> list[dict[str, Any]]:
         """Retrieves rubric data from a file and create rubric for each.
@@ -1320,7 +1324,11 @@ class RubricService:
         Args:
             data: The file object containing the rubrics.
             filetype: The type of the file (json, toml, csv).
-            by_system: true if the update is called by system and requesting_user is irrelevant.
+            _bypass_permissions: If True, we don't respect the server's rubric
+                permissions, for example, rubrics are still created if the
+                rubrics permissions are "locked" or if the username does not
+                have sufficient permissions.  Careful with this; probably
+                for demos only or something like that.
             requesting_user: the user who requested to update the rubric data.
             ``None`` means you don't care who (probably for internal use only).
 
@@ -1375,6 +1383,8 @@ class RubricService:
         # ensure either all rubrics succeed or all fail
         with transaction.atomic():
             return [
-                cls.create_rubric(r, creating_user=user, by_system=by_system)
+                cls._create_rubric(
+                    r, creating_user=user, _bypass_permissions=_bypass_permissions
+                )
                 for r in rubrics
             ]

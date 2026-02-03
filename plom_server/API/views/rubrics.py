@@ -75,6 +75,8 @@ class McreateRubric(APIView):
         Args:
             request: a request.  The data of the request should contain
                 appropriate key-value pairs to define a new rubric.
+                The rubric will always be created by the calling user,
+                no matter what it says in the proposed rubric data.
 
         Returns:
             On success, responds with the JSON key-value representation

@@ -12,6 +12,7 @@ from model_bakery import baker
 
 from plom_server.Base.services import Settings
 from plom_server.TestingSupport.utils import config_test
+from plom_server.Authentication.services import AuthService
 from ..services import RubricService
 
 
@@ -34,10 +35,16 @@ class RubricServiceTests_permissions(TestCase):
         baker.make(User, username="xenia")
         baker.make(User, username="yvonne")
 
+    def test_rubrics_creating_user_overrides_user_namedata(self) -> None:
+        r = RubricService.create_rubric(_make_ex())
+        self.assertEqual(r["username"], "xenia")
+        yvonne = User.objects.get(username="yvonne")
+        r = RubricService.create_rubric(_make_ex(), creating_user=yvonne)
+        self.assertEqual(r["username"], yvonne.username)
+
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:
         Settings.set_who_can_modify_rubrics("locked")
-        # this will succeed only b/c user is None
-        rub = RubricService.create_rubric(_make_ex(), creating_user=None)
+        rub = RubricService.create_rubric(_make_ex())
         rid = rub["rid"]
         rub.update({"text": "new text"})
         RubricService.modify_rubric(rid, rub, modifying_user=None)
@@ -45,8 +52,8 @@ class RubricServiceTests_permissions(TestCase):
     def test_rubrics_cannot_modify_when_locked(self) -> None:
         yvonne = User.objects.get(username="yvonne")
         xenia = User.objects.get(username="xenia")
+        rub = RubricService.create_rubric(_make_ex())
         Settings.set_who_can_modify_rubrics("locked")
-        rub = RubricService.create_rubric(_make_ex(), creating_user=xenia)
         rid = rub["rid"]
         rub.update({"text": "new text"})
         with self.assertRaises(PermissionDenied):
@@ -59,7 +66,7 @@ class RubricServiceTests_permissions(TestCase):
         Settings.set_who_can_modify_rubrics("permissive")
         rub = _make_ex()
         rub.update({"system_rubric": True})
-        rub = RubricService.create_rubric(rub, creating_user=None)
+        rub = RubricService.create_rubric(rub)
         rid = rub["rid"]
         rub.update({"text": "trying to change a system rubric"})
         xenia = User.objects.get(username="xenia")
@@ -72,6 +79,22 @@ class RubricServiceTests_permissions(TestCase):
         xenia = User.objects.get(username="xenia")
         assert r["username"] == xenia.username
         with self.assertRaises(PermissionDenied):
-            RubricService.create_rubric(r, creating_user=xenia)
-        # we can still make make them with None for internal use
-        RubricService.create_rubric(r, creating_user=None)
+            RubricService.create_rubric(r)
+        # we can still make make them using internal mechanisms
+        RubricService._create_rubric(r, _bypass_permissions=True)
+
+    def test_rubrics_cannot_create_when_per_user_but_manager_can(self) -> None:
+        Settings.set_who_can_create_rubrics("per-user")
+        r = _make_ex()
+        assert r["username"] == "xenia"
+        with self.assertRaisesRegex(PermissionDenied, "xenia.*not allowed"):
+            # TODO: capture that xenia is not allowed
+            RubricService.create_rubric(r)
+        # but another user with enough permissions can override "xenia" (in the rubric data)
+        AuthService.create_groups()
+        AuthService.create_manager_user("ManaJer")
+        manager = User.objects.get(username="ManaJer", groups__name="manager")
+        r = RubricService.create_rubric(r, creating_user=manager)
+        # the resulting rubric has the creator not xenia
+        self.assertNotEqual(r["username"], "xenia")
+        self.assertEqual(r["username"], "ManaJer")

@@ -186,7 +186,7 @@ class Command(BaseCommand):
             raise CommandError(f"Unsupported file type: {filename}")
 
         rubrics = RubricService.create_rubrics_from_file_data(
-            data, suffix[1:], by_system=True
+            data, suffix[1:], _bypass_permissions=True
         )
         return len(rubrics)
 

@@ -432,8 +432,10 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
+            # TODO: note that this overrides whatever users are in the file
+            # with the calling user.  Is that intentional?
             RubricService.create_rubrics_from_file_data(
-                data_string, suffix, by_system=False, requesting_user=username
+                data_string, suffix, requesting_user=username
             )
         except ValueError as e:
             messages.error(request, f"Error: {e}")
@@ -490,7 +492,11 @@ class RubricCreateView(ManagerRequiredView):
     """Handles the creation of new rubrices."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Posting from a form to the rubric creator makes a new rubric."""
+        """Posting from a form to the rubric creator makes a new rubric.
+
+        The rubric will always be created by the calling user,
+        no matter what it says in the proposed rubric data.
+        """
         form = RubricItemForm(request.POST)
         if not form.is_valid():
             messages.error(request, f"invalid form data: {form.errors}")
