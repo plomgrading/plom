@@ -283,22 +283,28 @@ class RubricService:
         if creating_user:
             incoming_data["user"] = creating_user.pk
             incoming_data["modified_by_user"] = creating_user.pk
-
+        elif "user" in incoming_data.keys():
+            # If we have a "user" its probably an actual "User" not a string: use that.
+            # TODO: not sure any code is using this path but it would allow fewer DB queries
+            creating_user = incoming_data["user"]
+            if not isinstance(creating_user, "User"):
+                raise ValueError(
+                    f'Passing "user" data requires a type "User" not "{type(creating_user)}"'
+                )
         else:
-            # some mangling around user/username here
-            if "user" not in incoming_data.keys():
-                username = incoming_data.pop("username", None)
-                if not username:
-                    # TODO: revisit this in the context of uploading rubrics from files
-                    raise KeyError(
-                        "user or username is required (for now, might change in future)"
-                    )
-                try:
-                    creating_user = User.objects.get(username=username)
-                    incoming_data["user"] = creating_user.pk
-                    incoming_data["modified_by_user"] = creating_user.pk
-                except ObjectDoesNotExist as e:
-                    raise ValueError(f"User {username} does not exist.") from e
+            # we need to take from the string "username" field
+            username = incoming_data.pop("username", None)
+            if not username:
+                # TODO: revisit this in the context of uploading rubrics from files
+                raise KeyError(
+                    "user or username is required (for now, might change in future)"
+                )
+            try:
+                creating_user = User.objects.get(username=username)
+                incoming_data["user"] = creating_user.pk
+                incoming_data["modified_by_user"] = creating_user.pk
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"User {username} does not exist.") from e
 
         if "rid" in incoming_data.keys():
             # could potentially allow blank rid...
