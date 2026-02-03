@@ -73,5 +73,5 @@ class RubricServiceTests_permissions(TestCase):
         assert r["username"] == xenia.username
         with self.assertRaises(PermissionDenied):
             RubricService.create_rubric(r, creating_user=xenia)
-        # we can still make make them with None for internal use
-        RubricService.create_rubric(r, creating_user=None)
+        # we can still make make them using internal mechanisms
+        RubricService._create_rubric(r, creating_user=None, _bypass_permissions=True)
