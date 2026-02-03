@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2020-2025 Colin B. Macdonald
+# Copyright (C) 2020-2026 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Deep Shah
 
@@ -41,8 +41,14 @@ from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
 
 
+# the default certainty of prenaming predictions
+_default_prenaming_prediction_confidence = 0.9
+
+
 class IDReaderService:
     """Functions for ID reading and related helper functions."""
+
+    default_prenaming_prediction_confidence = _default_prenaming_prediction_confidence
 
     def get_already_matched_sids(self) -> list:
         """Return the list of all student IDs that have been matched with a paper."""
@@ -225,18 +231,23 @@ class IDReaderService:
         """
         # get dict of all prenamed papers (as per classlist)
         prenamed_papers = StagingStudentService.get_prenamed_papers()
+
         # find existing prename-predictions from these papers
-        existing_prename_predictions = {}
+        existing_prename_prediction = {}
         for pred in IDPrediction.objects.filter(
             predictor="prename", paper__in=papers
         ).prefetch_related("paper"):
-            existing_prename_predictions[pred.paper.paper_number] = pred
-        # find any existing predictions from these papers
-        existing_predictions: dict[int, list[IDPrediction]] = {}  # I like cats
+            existing_prename_prediction[pred.paper.paper_number] = pred
+
+        # mapping of any existing predictions (not just prenames) from these papers
+        existing_all_predictions_for_paper: dict[int, list[IDPrediction]] = {}
         for pred in IDPrediction.objects.filter(paper__in=papers).prefetch_related(
             "paper"
         ):
-            existing_predictions.get(pred.paper.paper_number, []).append(pred)
+            try:
+                existing_all_predictions_for_paper[pred.paper.paper_number].append(pred)
+            except KeyError:
+                existing_all_predictions_for_paper[pred.paper.paper_number] = [pred]
 
         # loop over papers making two lists: things to make and things to update
         new_predictions = []
@@ -245,8 +256,8 @@ class IDReaderService:
             # check if paper is actually prenamed.
             if paper.paper_number not in prenamed_papers:
                 continue
-            if paper.paper_number in existing_prename_predictions:
-                pred = existing_prename_predictions[paper.paper_number]
+            if paper.paper_number in existing_prename_prediction.keys():
+                pred = existing_prename_prediction[paper.paper_number]
                 pred.student_id = prenamed_papers[paper.paper_number][0]
                 pred.user = user  # update the associated user too.
                 predictions_to_update.append(pred)
@@ -258,26 +269,25 @@ class IDReaderService:
                         paper=paper,
                         predictor="prename",
                         student_id=prenamed_papers[paper.paper_number][0],
-                        certainty=0.9,
+                        certainty=_default_prenaming_prediction_confidence,
                     )
                 )
         # now update the priorities of the associated IDtasks
         # note that the updated IDPredictions did not change certainties, so
         # they don't change the associated priorities
         priority_updates = []
-        for idt_obj in PaperIDTask.objects.filter(paper__in=papers).prefetch_related(
+        for task in PaperIDTask.objects.filter(paper__in=papers).prefetch_related(
             "paper"
         ):
-            if idt_obj.paper.paper_number in existing_prename_predictions:
-                certs = [
-                    X.certainty
-                    for X in existing_prename_predictions[paper.paper_number]
-                ]
-                idt_obj.iding_priority = min(certs)
-            else:
-                idt_obj.iding_priority = 0.9
+            n = task.paper.paper_number
+            try:
+                # the minimum of all predictions determines the overall confidence
+                c = min([X.certainty for X in existing_all_predictions_for_paper[n]])
+            except KeyError:
+                c = _default_prenaming_prediction_confidence
+            task.iding_priority = c
             # no idt_obj.save() here b/c we are deferring these for a bulk change
-            priority_updates.append(idt_obj)
+            priority_updates.append(task)
         # Finally actually create + update all the predictions and tasks
         with transaction.atomic():
             IDPrediction.objects.bulk_update(
