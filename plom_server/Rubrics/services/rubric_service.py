@@ -245,10 +245,10 @@ class RubricService:
                 This input will not be modified by this call.
 
         Keyword Args:
-            creating_user: who is trying to create the rubric.
-                If you omit this kwarg or pass None, it will be
-                auto-detected from the "user"/"username" fields
-                of the rubric data, which incurs a database query.
+            creating_user: who is trying to create the rubric.  If you
+                omit this or pass ``None``, it will be auto-detected
+                from the "user" or "username" fields of ``rubric_data``
+                (the latter incurs a database query).
                 Note that specifying this overrides any "user"/"username"
                 in the `rubric_data`.
 
@@ -279,20 +279,21 @@ class RubricService:
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
-        # if kwarg is passed, overwrite the rubric data itself
         if creating_user:
+            # if the kwarg was passed, overwrite the rubric data itself
             incoming_data["user"] = creating_user.pk
             incoming_data["modified_by_user"] = creating_user.pk
         elif "user" in incoming_data.keys():
-            # If we have a "user" its probably an actual "User" not a string: use that.
-            # TODO: not sure any code is using this path but it would allow fewer DB queries
+            # If we have a "user" it should be an actual "User" not a string: use that.
+            # TODO: not sure any code is using this path but it would allow fewer
+            # DB queries compared to including a "username" string.
             creating_user = incoming_data["user"]
             if not isinstance(creating_user, "User"):
                 raise ValueError(
                     f'Passing "user" data requires a type "User" not "{type(creating_user)}"'
                 )
         else:
-            # we need to take from the string "username" field
+            # we try to take from the string "username" field
             username = incoming_data.pop("username", None)
             if not username:
                 # TODO: revisit this in the context of uploading rubrics from files
