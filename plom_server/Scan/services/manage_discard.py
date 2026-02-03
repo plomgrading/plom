@@ -31,7 +31,7 @@ class ManageDiscardService:
             image=dnm_obj.image,
             discard_reason=(
                 f"User {user_obj.username} discarded DNM page: "
-                f"page {dnm_obj.paper.paper_number} page {dnm_obj.page_number}"
+                f"paper {dnm_obj.paper.paper_number} page {dnm_obj.page_number}"
             ),
         )
         # Set the original dnm page to have no image, but **DO NOT** delete the DNM page
@@ -46,7 +46,8 @@ class ManageDiscardService:
             image=idpage_obj.image,
             discard_reason=(
                 f"User {user_obj.username} discarded ID page: "
-                f"page {idpage_obj.paper.paper_number} page {idpage_obj.page_number}"
+                f"paper {idpage_obj.paper.paper_number} page {idpage_obj.page_number} "
+                f"version {idpage_obj.version}"
             ),
         )
         # Set the original id page to have no image, but **DO NOT** delete the idpage
@@ -66,7 +67,8 @@ class ManageDiscardService:
             discard_reason=(
                 f"User {user_obj.username} discarded paper "
                 f"{qpage_obj.paper.paper_number} page {qpage_obj.page_number} "
-                f"question index {qpage_obj.question_index}."
+                f"question index {qpage_obj.question_index} "
+                f"version {qpage_obj.version}"
             ),
         )
         # Set the original question page to have no image, but **DO NOT** delete the question page
