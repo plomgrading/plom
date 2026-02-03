@@ -239,7 +239,7 @@ class RubricService:
         rubric_data: dict[str, Any],
         *,
         creating_user: User | None | object = _sentinel_no_input,
-        by_system: bool = True,
+        _by_system: bool = True,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -255,7 +255,9 @@ class RubricService:
                 (probably for internal use only).  ``None`` also bypasses
                 the rubric access settings, which is dangerous so is not
                 the default: you must specify it explicitly (e.g., Issue #4147).
-            by_system: true if the rubric creation is made by system.
+            _by_system: true if the rubric creation is made by system.
+                TODO: for some reason, this is default True.  Expect that
+                to change.
 
         Returns:
             The new rubric data, in dict key-value format.
@@ -283,7 +285,7 @@ class RubricService:
                 raise ValueError(f'User "{username}" does not exist: {e}') from e
             print(f"no creating_user specified, using '{creating_user}' from data")
         rubric_obj = cls._create_rubric(
-            rubric_data, creating_user=creating_user, by_system=by_system
+            rubric_data, creating_user=creating_user, by_system=_by_system
         )
         return _Rubric_to_dict(rubric_obj)
 
@@ -1328,7 +1330,7 @@ class RubricService:
         cls,
         data: str,
         filetype: str,
-        by_system: bool,
+        _by_system: bool,
         requesting_user: str | None = None,
     ) -> list[dict[str, Any]]:
         """Retrieves rubric data from a file and create rubric for each.
@@ -1336,7 +1338,8 @@ class RubricService:
         Args:
             data: The file object containing the rubrics.
             filetype: The type of the file (json, toml, csv).
-            by_system: true if the update is called by system and requesting_user is irrelevant.
+            _by_system: true if the update is called by system and
+                requesting_user is irrelevant.
             requesting_user: the user who requested to update the rubric data.
             ``None`` means you don't care who (probably for internal use only).
 
@@ -1391,6 +1394,6 @@ class RubricService:
         # ensure either all rubrics succeed or all fail
         with transaction.atomic():
             return [
-                cls.create_rubric(r, creating_user=user, by_system=by_system)
+                cls.create_rubric(r, creating_user=user, _by_system=_by_system)
                 for r in rubrics
             ]
