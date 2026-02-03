@@ -37,8 +37,7 @@ class RubricServiceTests_permissions(TestCase):
 
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:
         Settings.set_who_can_modify_rubrics("locked")
-        # this will succeed only b/c user is None
-        rub = RubricService.create_rubric(_make_ex(), creating_user=None)
+        rub = RubricService.create_rubric(_make_ex())
         rid = rub["rid"]
         rub.update({"text": "new text"})
         RubricService.modify_rubric(rid, rub, modifying_user=None)
@@ -46,8 +45,8 @@ class RubricServiceTests_permissions(TestCase):
     def test_rubrics_cannot_modify_when_locked(self) -> None:
         yvonne = User.objects.get(username="yvonne")
         xenia = User.objects.get(username="xenia")
+        rub = RubricService.create_rubric(_make_ex())
         Settings.set_who_can_modify_rubrics("locked")
-        rub = RubricService.create_rubric(_make_ex(), creating_user=xenia)
         rid = rub["rid"]
         rub.update({"text": "new text"})
         with self.assertRaises(PermissionDenied):
@@ -60,7 +59,7 @@ class RubricServiceTests_permissions(TestCase):
         Settings.set_who_can_modify_rubrics("permissive")
         rub = _make_ex()
         rub.update({"system_rubric": True})
-        rub = RubricService.create_rubric(rub, creating_user=None)
+        rub = RubricService.create_rubric(rub)
         rid = rub["rid"]
         rub.update({"text": "trying to change a system rubric"})
         xenia = User.objects.get(username="xenia")
