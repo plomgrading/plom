@@ -35,6 +35,13 @@ class RubricServiceTests_permissions(TestCase):
         baker.make(User, username="xenia")
         baker.make(User, username="yvonne")
 
+    def test_rubrics_creating_user_overrides_user_namedata(self) -> None:
+        r = RubricService.create_rubric(_make_ex())
+        self.assertEqual(r["username"], "xenia")
+        yvonne = User.objects.get(username="yvonne")
+        r = RubricService.create_rubric(_make_ex(), creating_user=yvonne)
+        self.assertEqual(r["username"], yvonne.username)
+
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:
         Settings.set_who_can_modify_rubrics("locked")
         rub = RubricService.create_rubric(_make_ex())
