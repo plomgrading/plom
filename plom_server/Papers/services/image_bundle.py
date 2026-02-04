@@ -350,10 +350,12 @@ class ImageBundleService:
         # WHERE FixedPage.image IS NOT NULL
         # ON StagingImage.paper_number = FixedPage.paper.paper_number AND StagingImage.page_number = FixedPage.page_number;
 
-        # Django can't construct joins unless there is an explicit reference
-        # between each table (i.e., an FK connecting them)
+        # Django can't construct direct JOINs unless there is an
+        # explicit reference between each table (i.e., an FK connecting
+        # them), so we need to do something less direct.
 
-        # this is logically equivalent to the above query, but less efficient
+        # This is logically equivalent to the above query, but
+        # not quite as efficient (it's still very efficient)
         fixed_pages = FixedPage.objects.filter(
             image__isnull=False,
             paper__paper_number=OuterRef("paper_number"),
