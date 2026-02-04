@@ -827,7 +827,7 @@ minpy_mindeps_django_tests:
     # ideally we'd test with OOTB pip so hide pip upgrade msg
     PIP_DISABLE_PIP_VERSION_CHECK: 1
   stage: alt_build
-  image: python:3.10
+  image: python:3.11
   before_script:
     # Note: Python image based on Debian (can install deps)
     - apt-get update

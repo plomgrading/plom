@@ -33,14 +33,13 @@ classifiers=[
     "Development Status :: 3 - Alpha",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
 dynamic = ['version']
-requires-python = '>=3.10'
+requires-python = '>=3.11'
 # pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
     "arrow>=1.1.1",
@@ -242,7 +241,7 @@ plom-cli = "plom.cli.__main__:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py310"]
+target-version = ["py311"]
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
