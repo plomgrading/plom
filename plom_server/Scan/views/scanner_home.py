@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
@@ -219,6 +219,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         n_discard = scanner.get_n_discard_images(bundle)
         n_errors = scanner.get_n_error_images(bundle)
         n_incomplete = scanner.get_bundle_number_incomplete_papers(bundle)
+        n_collisions = len(scanner.get_bundle_colliding_images(bundle))
         if bundle.has_page_images:
             cover_img_rotation = scanner.get_first_image(bundle).rotation
         else:
@@ -275,6 +276,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_discard": n_discard,
             "n_errors": n_errors,
             "n_incomplete": n_incomplete,
+            "n_collisions": n_collisions,
             "cover_angle": cover_img_rotation,
         }
         numpgs = context["number_of_pages"]

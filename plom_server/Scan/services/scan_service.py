@@ -5,7 +5,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Forest Kobayashi
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Deep Shah
 
@@ -50,7 +50,7 @@ from plom.tpv_utils import (
 )
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
-from plom_server.Papers.models import FixedPage, MobilePage
+from plom_server.Papers.models import MobilePage
 from plom_server.Scan.services.cast_service import ScanCastService
 from plom_server.Base.models import HueyTaskTracker, BaseImage
 from ..models import (
@@ -1657,28 +1657,20 @@ class ScanService:
         return self.get_bundle_discard_pages_info(bundle_obj)
 
     def get_bundle_colliding_images(self, bundle_obj: StagingBundle) -> list[int]:
-        """Return a list of orders ("pages") in this bundle that collide with something that has been pushed."""
-        # if it has been pushed then no collisions
+        """Return a list of orders ("pages") in this bundle that collide with pushed images."""
+        # shortcut - assume a pushed bundle has no collisions
         if bundle_obj.pushed:
             return []
-        # get all the known paper/pages in the bundle
-        bundle_ppbo_list = StagingImage.objects.filter(
-            bundle=bundle_obj, image_type=StagingImage.KNOWN
-        ).values_list("paper_number", "page_number", "bundle_order")
-        bundle_papers_list = list(set([X[0] for X in bundle_ppbo_list]))
-        if not bundle_papers_list:
-            return []
-        # now get all paper/pages of any scanned fixed pages from these papers.
-        pushed_pp_list = FixedPage.objects.filter(
-            image__isnull=False, paper__paper_number__in=bundle_papers_list
-        ).values_list("paper__paper_number", "page_number")
-        # now compare the lists and return the bundle order of any
-        # colliding image (ie an image in this bundle that maps to a
-        # fixed page that already has been pushed)
-        colliding_images = [
-            X[2] for X in bundle_ppbo_list if (X[0], X[1]) in pushed_pp_list
-        ]
-        return sorted(colliding_images)
+
+        staging_images = StagingImage.objects.filter(bundle=bundle_obj)
+        colliding_staging_images = ImageBundleService._find_external_collisions(
+            staging_images
+        )
+
+        colliding_orders = list(
+            colliding_staging_images.values_list("bundle_order", flat=True)
+        )
+        return sorted(colliding_orders)
 
 
 # ----------------------------------------

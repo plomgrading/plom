@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2026 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from collections import defaultdict
 
@@ -98,7 +98,7 @@ class ImageBundleService:
         if not cls.all_staged_imgs_valid(bundle_images):
             raise RuntimeError("Some pages in this bundle do not have QR data.")
 
-        # Staging has checked this - but we check again here to be very sure
+        # Staging has not checked this - we need to do it here
         collide = cls.find_internal_collisions(bundle_images)
         if len(collide) > 0:
             # just make a list of bundle-orders of the colliding images
@@ -108,13 +108,13 @@ class ImageBundleService:
             )
 
         # Staging has not checked this - we need to do it here
-        collide = cls.find_external_collisions(bundle_images)
+        colliding_stagingimages = cls._find_external_collisions(bundle_images)
         if len(collide) > 0:
             # just make a list of bundle-orders of the colliding images
-            collide_error_list2 = sorted([X[0].bundle_order for X in collide])
-            nicer_list = format_int_list_with_runs(collide_error_list2)
+            colliding_orders = sorted([X.bundle_order for X in colliding_stagingimages])
+            collisions = format_int_list_with_runs(colliding_orders)
             raise PlomPushCollisionException(
-                f"Some images in the staged bundle collide with uploaded pages: {nicer_list}"
+                f"Some images in the staged bundle collide with uploaded pages: {collisions}"
             )
 
         uploaded_bundle = Bundle(
@@ -328,38 +328,45 @@ class ImageBundleService:
 
     @staticmethod
     @transaction.atomic
-    def find_external_collisions(
+    def _find_external_collisions(
         staged_imgs: QuerySet[StagingImage],
-    ) -> list[tuple[StagingImage, Image, int, int]]:
-        """Check for collisions between images in the input list and all the *currently uploaded* images.
+    ) -> QuerySet[StagingImage]:
+        """Check staged images for collisions with already pushed page images.
+
+        Note that this function can only check unpushed StagedImages.
+        If you ask about a pushed StagedImage, it will always be flagged
+        as "colliding".
 
         Args:
-            staged_imgs: QuerySet, a list of all staged images for a bundle
+            staged_imgs: A queryset of StagedImages.
 
         Returns:
-            An unordered collection of tuples of describing collisions.
+            A queryset of any input StagedImages which collide with
+            already pushed images. If there are no collisions, an
+            empty queryset is returned.
         """
-        # note that only known images can cause collisions
-        # get all the known paper/pages in the bundle
-        staged_pp_img_dict = {
-            (img.paper_number, img.page_number): img
-            for img in staged_imgs.filter(image_type=StagingImage.KNOWN)
-        }
-        # get the list of papers in the bundle so that we can grab all
-        # known pages from just those papers.
-        staged_paper_nums = [pp[0] for pp in staged_pp_img_dict.keys()]
-        pushed_img_pp_dict = {
-            (X.paper.paper_number, X.page_number): X.image
-            for X in FixedPage.objects.filter(
-                image__isnull=False, paper__paper_number__in=staged_paper_nums
-            ).prefetch_related("paper", "image")
-        }
-        # now compare image by image and store list of collisions
-        collisions = []
-        for pp, img in staged_pp_img_dict.items():
-            if pp in pushed_img_pp_dict:
-                collisions.append((img, pushed_img_pp_dict[pp], pp[0], pp[1]))
-        return collisions
+        # we want something like this:
+        # SELECT *
+        # FROM StagingImage INNER JOIN FixedPage
+        # WHERE FixedPage.image IS NOT NULL
+        # ON StagingImage.paper_number = FixedPage.paper.paper_number AND StagingImage.page_number = FixedPage.page_number;
+
+        # Django can't construct direct JOINs unless there is an
+        # explicit reference between each table (i.e., an FK connecting
+        # them), so we need to do something less direct.
+
+        # This is logically equivalent to the above query, but
+        # not quite as efficient (it's still very efficient)
+        fixed_pages = FixedPage.objects.filter(
+            image__isnull=False,
+            paper__paper_number=OuterRef("paper_number"),
+            page_number=OuterRef("page_number"),
+        )
+        colliding_staged_imgs = staged_imgs.annotate(
+            colliding=Exists(fixed_pages)
+        ).filter(colliding=True)
+
+        return colliding_staged_imgs
 
     @staticmethod
     @transaction.atomic

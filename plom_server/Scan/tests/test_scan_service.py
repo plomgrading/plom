@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 import pathlib
 import random
@@ -114,8 +114,7 @@ class ScanServiceTests(TestCase):
         bundle_path = pathlib.Path(bundle.pdf_file.path)
         self.assertTrue(bundle_path.exists())
         # now remove it using the scan services
-        scanner = ScanService()
-        scanner.remove_bundle_by_pk(bundle.pk)
+        ScanService().remove_bundle_by_pk(bundle.pk)
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())

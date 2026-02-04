@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024-2025 Colin B. Macdonald
+    Copyright (C) 2026 Aidan Murphy
 -->
 {% load static %}
 <td>
@@ -89,7 +90,11 @@
                         Incomplete papers: {{ n_incomplete }} <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                     </li>
                 {% endif %}
-                <!-- collisions too expensive to calculate?  Issue #4089 -->
+                {% if n_collisions %}
+                    <li>
+                        Colliding pages: {{ n_collisions }} <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                    </li>
+                {% endif %}
             {% else %}
                 {% if is_mid_qr_read %}
                     <li>
@@ -125,15 +130,22 @@
                 {% if has_qr_codes %}
                     <span>
                         {% if is_perfect %}
-                            {% if n_incomplete == 0 %}
-                                <button class="btn btn-success"
+                            {% if n_collisions %}
+                                <button class="btn btn-danger"
+                                        disabled
+                                        hx-post="{% url 'scan_push_all' bundle_id %}"
+                                        hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
+                                        hx-indicator="#busy_indicator_{{ bundle_id }}"
+                                        hx-disabled-elt="this">Push</button>
+                            {% elif n_incomplete %}
+                                <button class="btn btn-warning"
+                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
                                         hx-post="{% url 'scan_push_all' bundle_id %}"
                                         hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
                                         hx-indicator="#busy_indicator_{{ bundle_id }}"
                                         hx-disabled-elt="this">Push</button>
                             {% else %}
-                                <button class="btn btn-warning"
-                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
+                                <button class="btn btn-success"
                                         hx-post="{% url 'scan_push_all' bundle_id %}"
                                         hx-target-error="#error_msgs_bundle_{{ bundle_id }}"
                                         hx-indicator="#busy_indicator_{{ bundle_id }}"
