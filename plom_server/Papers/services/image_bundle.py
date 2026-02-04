@@ -334,7 +334,8 @@ class ImageBundleService:
         """Check staged images for collisions with already pushed page images.
 
         Note that this function can only check unpushed StagedImages.
-        Pushed StagedImages will always be flagged as "colliding".
+        If you ask about a pushed StagedImage, it will always be flagged
+        as "colliding".
 
         Args:
             staged_imgs: A queryset of StagedImages.
