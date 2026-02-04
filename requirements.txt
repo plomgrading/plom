@@ -25,7 +25,7 @@ pytest-qt==4.5.0
 arrow==1.4.0
 canvasapi==3.4.0
 cryptography==46.0.3
-django==5.2.10
+django==5.2.11
 django-braces==1.17.0
 django-filter==25.2
 django-htmx==1.27.0
