@@ -39,7 +39,6 @@ djangorestframework==3.16.1
 exif==1.6.1
 file-magic==0.4.1
 gunicorn==23.0.0
-huggingface-hub==1.4.0
 imutils==0.5.4
 matplotlib==3.10.8
 model-bakery==1.23.2
@@ -72,6 +71,7 @@ weasyprint==68.0
 whitenoise==6.11.0
 zipfly==6.0.5
 zxing-cpp==2.3.0
+huggingface_hub==0.34.4
 
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems
