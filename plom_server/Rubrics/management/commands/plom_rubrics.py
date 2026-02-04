@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024-2025 Andrew Rechnitzer
@@ -17,6 +17,7 @@ else:
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
 
+from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from rest_framework import serializers
 from tabulate import tabulate
@@ -50,7 +51,7 @@ class Command(BaseCommand):
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
 
-        TODO: this is someone deprecated and might be drifting away
+        TODO: this is somewhat deprecated and might be drifting away
         from the "other" demo rubric stuff in Launcher.
         """
         if _numquestions is None:
@@ -94,9 +95,10 @@ class Command(BaseCommand):
             else:
                 rubrics.append(rub)
 
+        user = User.objects.get(username=username)
         for rubric in rubrics:
             try:
-                RubricService.create_rubric(rubric)
+                RubricService.create_rubric(rubric, creating_user=user)
             except KeyError as e:
                 raise CommandError(f"{e} field(s) missing from rubrics file.")
             except serializers.ValidationError as e:
@@ -184,7 +186,7 @@ class Command(BaseCommand):
             raise CommandError(f"Unsupported file type: {filename}")
 
         rubrics = RubricService.create_rubrics_from_file_data(
-            data, suffix[1:], by_system=True
+            data, suffix[1:], _bypass_permissions=True
         )
         return len(rubrics)
 

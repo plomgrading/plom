@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
@@ -34,12 +34,6 @@ class RubricServiceTests_exceptions(TestCase):
         baker.make(User, username="Liam")
 
     def test_no_user_ValueError(self) -> None:
-        """Test ValueError in RubricService.create_rubric().
-
-        This test case checks if the RubricService.create_rubric()
-        method raises an ValueError exception when attempting
-        to create a rubric with a non-existent user.
-        """
         rub = {
             "kind": "neutral",
             "value": 0,
@@ -48,16 +42,21 @@ class RubricServiceTests_exceptions(TestCase):
             "question_index": 1,
         }
 
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "XXX"):
             RubricService.create_rubric(rub)
 
-    def test_no_user_KeyError(self) -> None:
-        """Test KeyError in RubricService.create_rubric().
+    def test_no_user_low_level_ValueError(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "username": "XXX_no_such_user_XXX",
+            "question_index": 1,
+        }
+        with self.assertRaises(ValueError):
+            RubricService._create_rubric(rub)
 
-        This test case checks if the RubricService.create_rubric()
-        method raises a KeyError when attempting to create a rubric
-        without providing the 'username' key in the rubric dictionary.
-        """
+    def test_no_username_key_KeyError(self) -> None:
         rub = {
             "kind": "neutral",
             "value": 0,
@@ -67,6 +66,16 @@ class RubricServiceTests_exceptions(TestCase):
 
         with self.assertRaises(KeyError):
             RubricService.create_rubric(rub)
+
+    def test_no_username_lowlevel_error(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "question_index": 1,
+        }
+        with self.assertRaises((KeyError, ValueError)):
+            RubricService._create_rubric(rub)
 
     def test_no_kind_ValidationError(self) -> None:
         """Test for the RubricService.create_rubric() method when 'kind' is invalid.
@@ -136,7 +145,7 @@ class RubricServiceTests_exceptions(TestCase):
             "question_index": 1,
             "rid": 42,
         }
-        with self.assertRaises(serializers.ValidationError):
+        with self.assertRaisesRegex(serializers.ValidationError, 'not have a "rid"'):
             RubricService.create_rubric(rub)
 
 
@@ -145,7 +154,7 @@ class RubricServiceTests_extra_validation(TestCase):
 
     @config_test({"test_spec": "demo"})
     def setUp(self) -> None:
-        baker.make(User, username="Liam")
+        self.user_liam = baker.make(User, username="Liam")
 
     def test_create_rubric_invalid_value(self) -> None:
         rub = {
@@ -155,7 +164,7 @@ class RubricServiceTests_extra_validation(TestCase):
             "username": "Liam",
             "question_index": 1,
         }
-        with self.assertRaises(serializers.ValidationError):
+        with self.assertRaisesRegex(serializers.ValidationError, "value"):
             RubricService.create_rubric(rub)
 
     def test_create_rubric_versions_invalid(self) -> None:
@@ -168,7 +177,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "question_index": 1,
                 "versions": bad_versions,
             }
-            with self.assertRaises(serializers.ValidationError):
+            with self.assertRaisesRegex(serializers.ValidationError, "versions"):
                 RubricService.create_rubric(rub)
 
     def test_create_rubric_versions_out_of_range(self) -> None:
@@ -228,6 +237,8 @@ class RubricServiceTests(TestCase):
     def setUp(self) -> None:
         user1: User = baker.make(User, username="Liam")
         user2: User = baker.make(User, username="Olivia")
+        self.user_liam = user1
+        self.user_olivia = user2
 
         self.neutral_rubric = baker.make(
             Rubric,
