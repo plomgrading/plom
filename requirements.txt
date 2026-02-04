@@ -78,4 +78,4 @@ zxing-cpp==2.3.0
 # django-silk==5.4.3  # for hunting down inefficient db queries
 
 # plom_ml
-transformers==4.53.2
+transformers==5.0.0
