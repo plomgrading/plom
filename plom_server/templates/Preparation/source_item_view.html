@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2025-2026 Colin B. Macdonald
+    Copyright (C) 2026 Aidan Murphy
 -->
 {% if request_is_htmx %}
     <h4 class="card-title" hx-swap-oob="innerHTML:#source_status">
@@ -18,35 +19,26 @@
         {% if error %}<div class="alert alert-danger" role="alert">{{ message }}</div>{% endif %}
         {% if src.uploaded %}
             <h5 class="card-title">
-                PDF for version {{ src.version }} uploaded
-                <i class="bi bi-check-circle text-success"></i>
+                PDF for version {{ src.version }}: <a target="_blank" href={{ src.version }}>{{ src.original_filename }}</a>
             </h5>
-            <p class="card-text">
+            <p class="card-text mb-2">
                 sha256: <small class="text-muted"><tt>{{ src.hash }}</tt></small>
-                <br />
-                original filename: <small class="text-muted"><tt>{{ src.original_filename }}</tt></small>
                 <br />
                 {{ src.page_count }} pages of &ldquo;{{ src.paper_size_name }}&rdquo; paper
                 <span class="text-muted">({{ src.paper_size_width|stringformat:".6g" }} &times; {{ src.paper_size_height|stringformat:".6g" }} pts)</span>.
             </p>
             <div class="row row-cols-auto px-2">
                 <div class="px-1 col">
-                    <a class="btn btn-success" target="_blank" href="{{ src.version }}">View</a>
+                    <a class="btn btn-primary"
+                       href="{% url 'prep_mock' src.version %}"
+                       target="_blank">Mock</a>
                 </div>
                 <div class="px-1 col">
-                    <form action="{% url 'prep_mock' src.version %}"
-                          target="_blank"
-                          method="post">
-                        {% csrf_token %}
-                        <input class="btn btn-primary" type="submit" value="Mock">
-                    </form>
-                </div>
-                <div class="px-1 col">
-                    <button class="btn btn-danger"
-                            hx-delete="{{ src.version }}"
-                            hx-confirm="Are you sure?"
-                            hx-target="#card-{{ src.version }}"
-                            hx-swap="outerHTML">Delete</button>
+                    <a class="btn btn-danger"
+                       hx-delete="{{ src.version }}"
+                       hx-confirm="Are you sure?"
+                       hx-target="#card-{{ src.version }}"
+                       hx-swap="outerHTML">Delete</a>
                 </div>
             </div>
         {% else %}
