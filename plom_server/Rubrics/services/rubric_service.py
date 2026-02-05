@@ -129,6 +129,8 @@ def _validate_parameters(parameters: None | list, num_versions: None | int = 1) 
 # TODO: this code belongs in model/serializer?
 def _validate_value(value: int | float | str | None, max_mark: int) -> None:
     # check that the "value" lies in [-max_mark, max_mark]
+    if value is None:
+        raise serializers.ValidationError({"value": "value cannot be None"})
     try:
         value = float(value)
     except (ValueError, TypeError) as e:
