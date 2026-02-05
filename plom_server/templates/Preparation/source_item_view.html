@@ -44,7 +44,7 @@
             </div>
         {% else %}
             <h5 class="card-title">
-                Upload PDF for version {{ src.version }}
+                PDF for version {{ src.version }}
                 <i class="bi bi-exclamation-diamond-fill text-warning"></i>
             </h5>
             <div class="card-text">
@@ -53,10 +53,15 @@
                       hx-post="{% url 'prep_source_upload' src.version %}"
                       hx-target="#card-{{ src.version }}">
                     {% csrf_token %}
-                    <div>
-                        <input type="file" accepts=".pdf" name="source_pdf" required />
-                        <button class="btn btn-primary" type="submit">upload</button>
+                    <div class="mb-2">
+                        <input class="form-control"
+                               type="file"
+                               name="source_pdf"
+                               accept="application/pdf"
+                               required
+                               id="pdf_file">
                     </div>
+                    <button class="btn btn-primary" type="submit">upload</button>
                 </form>
             </div>
         {% endif %}
