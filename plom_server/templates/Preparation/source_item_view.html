@@ -30,12 +30,9 @@
             </p>
             <div class="row row-cols-auto px-2">
                 <div class="px-1 col">
-                    <form action="{% url 'prep_mock' src.version %}"
-                          target="_blank"
-                          method="post">
-                        {% csrf_token %}
-                        <input class="btn btn-primary" type="submit" value="Mock">
-                    </form>
+                    <button class="btn btn-primary"
+                            href="{% url 'prep_mock' src.version %}"
+                            target="_blank">Mock</button>
                 </div>
                 <div class="px-1 col">
                     <button class="btn btn-danger"
