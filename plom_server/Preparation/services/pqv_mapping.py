@@ -72,7 +72,7 @@ class PQVMappingService:
             raise ValueError(
                 "No version map: cowardly refusing to create an empty CSV file."
             )
-        version_map_to_csv(pqvmap, f, _legacy=False)
+        version_map_to_csv(pqvmap, f)
 
     @classmethod
     def get_pqv_map_as_csv_string(cls) -> str:

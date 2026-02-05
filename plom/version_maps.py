@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2024 Andrew Rechnitzer
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 """Tools for manipulating version maps."""
@@ -369,18 +369,12 @@ def version_map_from_file(
         raise NotImplementedError(f'Don\'t know how to import from "{f}"')
 
 
-def version_map_to_csv(
-    qvmap: dict[int, dict[int | str, int]], filename: Path, *, _legacy: bool = True
-) -> None:
+def version_map_to_csv(qvmap: dict[int, dict[int | str, int]], filename: Path) -> None:
     """Output a csv of the question-version map.
 
     Arguments:
         qvmap: the question-version map, documented elsewhere.
         filename: where to save.
-
-    Keyword Args:
-        _legacy: if True, we call the column "test_number" else "paper_number".
-            Currently the default is True but this is expected to change.
 
     Raises:
         ValueError: some rows have differing numbers of questions.
@@ -388,10 +382,7 @@ def version_map_to_csv(
     # all rows should have same length: get than length or fail
     (N,) = {len(v) for v in qvmap.values()}
 
-    if _legacy:
-        header = ["test_number"]
-    else:
-        header = ["paper_number"]
+    header = ["paper_number"]
 
     has_id_versions = False
     # do rows generally have "id" is in the keys?
