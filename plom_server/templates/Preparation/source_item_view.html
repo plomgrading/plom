@@ -20,7 +20,6 @@
         {% if src.uploaded %}
             <h5 class="card-title">
                 PDF for version {{ src.version }}: <a target="_blank" href={{ src.version }}>{{ src.original_filename }}</a>
-                <i class="bi bi-check-circle text-success"></i>
             </h5>
             <p class="card-text">
                 sha256: <small class="text-muted"><tt>{{ src.hash }}</tt></small>
