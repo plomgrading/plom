@@ -30,16 +30,16 @@
             </p>
             <div class="row row-cols-auto px-2">
                 <div class="px-1 col">
-                    <button class="btn btn-primary"
-                            href="{% url 'prep_mock' src.version %}"
-                            target="_blank">Mock</button>
+                    <a class="btn btn-primary"
+                       href="{% url 'prep_mock' src.version %}"
+                       target="_blank">Mock</a>
                 </div>
                 <div class="px-1 col">
-                    <button class="btn btn-danger"
-                            hx-delete="{{ src.version }}"
-                            hx-confirm="Are you sure?"
-                            hx-target="#card-{{ src.version }}"
-                            hx-swap="outerHTML">Delete</button>
+                    <a class="btn btn-danger"
+                       hx-delete="{{ src.version }}"
+                       hx-confirm="Are you sure?"
+                       hx-target="#card-{{ src.version }}"
+                       hx-swap="outerHTML">Delete</a>
                 </div>
             </div>
         {% else %}
