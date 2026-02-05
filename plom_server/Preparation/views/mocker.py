@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2026 Aidan Murphy
 
 from io import BytesIO
 
@@ -17,7 +18,7 @@ from ..services import ExamMockerService
 class MockExamView(ManagerRequiredView):
     """Create a mock test PDF."""
 
-    def post(self, request: HttpRequest, *, version: int) -> HttpResponse:
+    def get(self, request: HttpRequest, *, version: int) -> HttpResponse:
         mock_exam_pdf_bytes = ExamMockerService.mock_exam(version)
         mock_exam_file = File(BytesIO(mock_exam_pdf_bytes), name=f"mock_v{version}.pdf")
         return FileResponse(mock_exam_file, content_type="application/pdf")
