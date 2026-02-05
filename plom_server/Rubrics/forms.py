@@ -101,6 +101,7 @@ class RubricItemForm(forms.ModelForm):
     )
 
     # Note: DecimalField seems to result in ugly "+3.0" rubrics
+    # Note: "value" is not required for Neutral rubrics
     value = forms.FloatField(required=False)
 
     kind = forms.ChoiceField(
