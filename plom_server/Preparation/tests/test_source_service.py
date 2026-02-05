@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 import pathlib
 from importlib import resources
@@ -109,7 +110,7 @@ class SourceServiceTests(TestCase):
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
-        f = SourceService._get_source_file(1)
+        __, f = SourceService._get_source_file(1)
         pdf_source_path = settings.MEDIA_ROOT / "sourceVersions"
         self.assertTrue(pdf_source_path.exists())
         location_on_disc = pathlib.Path(f.path).parent

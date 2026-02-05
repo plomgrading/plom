@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
@@ -62,22 +63,21 @@ class SourceDetail(APIView):
             A 404 response if that version isn't found.
         """
         try:
-            abstract_django_file = SourceService._get_source_file(version)
+            original_filename, abstract_django_file = SourceService._get_source_file(
+                version
+            )
         except PaperSourcePDF.DoesNotExist as e:
             return _error_response(
                 f"PDF for source {version} not found: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
 
-        slug = SpecificationService.get_short_name_slug()
         if version is not None:
             try:
                 return FileResponse(
                     abstract_django_file,
                     as_attachment=True,
-                    filename=f"{slug}_source{version}.pdf",
-                    # TODO: would this append junk if we cycle a few times?
-                    # filename=abstract_django_file.name,
+                    filename=original_filename,
                 )
             except ObjectDoesNotExist as e:
                 return _error_response(

@@ -24,19 +24,21 @@ from ..services.mocker import ExamMockerService
 from ..services.preparation_dependency_service import assert_can_modify_sources
 
 
-def _get_source_file(source_version: int) -> File:
+def _get_source_file(source_version: int) -> tuple[str, File]:
     """Return the Django-file for a specified source version.
 
     Args:
         source_version: which source version.
 
     Returns:
-        Some sort of file abstraction, not for use outside Django.
+        The filename and some sort of file abstraction, not for use
+        outside Django.
 
     Raises:
         ObjectDoesNotExist: not yet uploaded or out of range.
     """
-    return PaperSourcePDF.objects.get(version=source_version).source_pdf
+    source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
+    return source_pdf_obj.original_filename, source_pdf_obj.source_pdf
 
 
 def _get_source_files() -> list[File]:
