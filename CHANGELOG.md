@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * fixed a crash where pushing new scans of an existing prenamed paper.
+* uploading a csv file of the version map now works for byte-mark-encoded UTF-8 files.
 * misc bug fixes and UI tweaks.
 
 
