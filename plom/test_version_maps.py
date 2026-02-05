@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021, 2023-2025 Colin B. Macdonald
+# Copyright (C) 2021, 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
+import codecs
 import json
 
 from pytest import raises
@@ -11,6 +12,7 @@ from plom.version_maps import (
     check_version_map,
     make_random_version_map,
     undo_json_packing_of_version_map,
+    version_map_from_file,
 )
 
 
@@ -175,3 +177,34 @@ def test_ver_map_reproducible() -> None:
         6: {1: 3, 2: 1, 3: 1},
     }
     assert vm == saved_vm
+
+
+def test_version_map_from_csv(tmp_path) -> None:
+    tmp = tmp_path / "foo.csv"
+    # tmp = Path("/home/cbm") / "foo.csv"
+    with tmp.open("wb") as f:
+        f.write("paper_number,q1.version,q2.version\n".encode("utf8"))
+        f.write("7,2,1\n".encode("utf8"))
+        f.write("99,1,1\n".encode("utf8"))
+    d = version_map_from_file(tmp)
+    for n in d.keys():
+        assert isinstance(n, int)
+    row = d[7]
+    assert isinstance(row, dict)
+    for qi in row.keys():
+        assert isinstance(qi, int)
+    assert d[7][1] == 2
+    assert d[7][2] == 1
+    assert d[99][1] == 1
+    assert d[99][2] == 1
+
+
+def test_feffid_bom_version_map_from_csv_issue_4155(tmp_path) -> None:
+    tmp = tmp_path / "foo.csv"
+    # tmp = Path("/home/cbm") / "foo.csv"
+    with tmp.open("wb") as f:
+        f.write(codecs.BOM_UTF8)
+        f.write("paper_number,q1.version\n".encode("utf8"))
+        f.write("7,2\n".encode("utf8"))
+    d = version_map_from_file(tmp)
+    assert d[7][1] == 2

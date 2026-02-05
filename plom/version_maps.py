@@ -262,7 +262,10 @@ def _version_map_from_csv(
     """
     qvmap: dict[int, dict[int | str, int]] = {}
 
-    with open(f, "r") as csvfile:
+    # Note newline: https://docs.python.org/3/library/csv.html#id4
+    # Note: utf-8-sig Issue #4155, see also comments in classlist validator
+    with open(f, newline="", encoding="utf-8-sig") as csvfile:
+        # with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         if not reader.fieldnames:
             raise ValueError("csv must have column names")
