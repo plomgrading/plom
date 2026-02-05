@@ -24,6 +24,10 @@
             </h5>
             <p class="card-text">
                 sha256: <small class="text-muted"><tt>{{ src.hash }}</tt></small>
+                {% if src.duplicate_versions %}
+                    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    duplicate of version{{ src.duplicate_versions|pluralize }}: {{ src.duplicate_versions|join:", " }}
+                {% endif %}
                 <br />
                 {{ src.page_count }} pages of &ldquo;{{ src.paper_size_name }}&rdquo; paper
                 <span class="text-muted">({{ src.paper_size_width|stringformat:".6g" }} &times; {{ src.paper_size_height|stringformat:".6g" }} pts)</span>.

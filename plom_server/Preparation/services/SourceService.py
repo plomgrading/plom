@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 import hashlib
 import pathlib
@@ -125,6 +126,14 @@ def get_source(version: int) -> dict[str, Any]:
     """
     try:
         src = PaperSourcePDF.objects.filter(version=version).get()
+        duplicates_dict = check_pdf_duplication()
+        duplicate_versions = []
+        try:
+            duplicate_versions = duplicates_dict[src.pdf_hash]
+            duplicate_versions.remove(src.version)
+        except KeyError:
+            pass
+
         return {
             "version": src.version,
             "uploaded": True,
@@ -134,6 +143,7 @@ def get_source(version: int) -> dict[str, Any]:
             "paper_size_name": src.paper_size_name,
             "paper_size_width": src.paper_size_width,
             "paper_size_height": src.paper_size_height,
+            "duplicate_versions": duplicate_versions,
         }
     except PaperSourcePDF.DoesNotExist:
         return {"version": version, "uploaded": False}
