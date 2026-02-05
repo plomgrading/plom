@@ -274,12 +274,8 @@ def _version_map_from_csv(
         else:
             N = num_questions
         for line, row in enumerate(reader):
-            # It used to be called "test_number" on legacy and now "paper_number"
-            # raise a value error if you cannot find either.
             if "paper_number" in row:
                 papernum = int(row["paper_number"])
-            elif "test_number" in row:
-                papernum = int(row["test_number"])
             else:
                 raise ValueError("Cannot find paper_number column")
 
