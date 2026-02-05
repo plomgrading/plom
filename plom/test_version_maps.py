@@ -208,3 +208,22 @@ def test_feffid_bom_version_map_from_csv_issue_4155(tmp_path) -> None:
         f.write("7,2\n".encode("utf8"))
     d = version_map_from_file(tmp)
     assert d[7][1] == 2
+
+
+def test_version_map_from_csv_with_id_version(tmp_path) -> None:
+    tmp = tmp_path / "foo.csv"
+    with tmp.open("wb") as f:
+        f.write("paper_number,id.version,q1.version,q2.version\n".encode("utf8"))
+        f.write("7,1,2,1\n".encode("utf8"))
+        f.write("99,2,1,1\n".encode("utf8"))
+    d = version_map_from_file(tmp)
+    row = d[7]
+    assert isinstance(row, dict)
+    for x in row.keys():
+        assert isinstance(x, int) or isinstance(x, str)
+    assert d[7]["id"] == 1
+    assert d[7][1] == 2
+    assert d[7][2] == 1
+    assert d[99]["id"] == 2
+    assert d[99][1] == 1
+    assert d[99][2] == 1
