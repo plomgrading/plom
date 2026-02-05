@@ -286,10 +286,10 @@
                               method="post"
                               action="{% url 'prep_qvmapping_upload' %}">
                             {% csrf_token %}
-                            <div>
+                            <div class="mb-2">
                                 <input type="file" accept=".csv" name="pqvmap_csv" required />
-                                <button class="btn btn-primary" type="submit">upload</button>
                             </div>
+                            <button class="btn btn-primary" type="submit">upload</button>
                         </form>
                     </div>
                 </div>
