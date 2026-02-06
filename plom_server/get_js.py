@@ -89,9 +89,9 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://unpkg.com/alpinejs@3.15.2/dist/cdn.min.js",
+                "url": "https://unpkg.com/alpinejs@3.15.8/dist/cdn.min.js",
                 "filename": "alpine.js",
-                "hash": "sha256-oFLBYODUMOG38dWCUK2/P9BUo88RGAHSu182kD/+uZY=",
+                "hash": "sha256-iZhCeCp/0W/MLXp8h3/57BWTlARMh7FYsu8TJ4ZgaTI=",
             },
         ],
     },
@@ -132,12 +132,12 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/tablesort.min.js",
-                "hash": "sha256-exTAyB07iPiInEumh/fA2mMNK0dDmoTzRhVoITcKqTA=",
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.7.0/dist/tablesort.min.js",
+                "hash": "sha256-XxWSSIyNHg1iophaASFYOr+098oDUz6H4pGJJx+1erA=",
             },
             {
-                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.6.0/dist/sorts/tablesort.number.min.js",
-                "hash": "sha256-RrgkMionKOUBO+Hu+0puHGjKv/GK5FiMUKEIBBt9OzI=",
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.7.0/dist/sorts/tablesort.number.min.js",
+                "hash": "sha256-V/+IH7olnI916x/XSP0lobHmSrxhbUJMjJ5m1wVfRDs=",
             },
         ],
     },
@@ -176,8 +176,8 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://code.jquery.com/jquery-3.6.4.min.js",
-                "hash": "sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=",
+                "url": "https://code.jquery.com/jquery-3.7.1.min.js",
+                "hash": "sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=",
             },
         ],
     },
