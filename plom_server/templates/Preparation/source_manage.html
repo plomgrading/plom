@@ -4,6 +4,7 @@
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2026 Colin B. Macdonald
+    Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -21,7 +22,7 @@
             <div class="card-body pb-0">
                 <h4 class="card-title" id="source_status">
                     You have uploaded {{ num_uploaded_source_versions }} of {{ num_versions }} source pdfs
-                    {% if all_sources_uploaded and not duplicates %}
+                    {% if all_sources_uploaded %}
                         <i class="bi bi-check-circle text-success"></i>
                     {% else %}
                         <i class="bi bi-exclamation-diamond-fill text-warning"></i>
@@ -30,15 +31,10 @@
                 <div class="card-text">
                     {% if not all_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages.</p>{% endif %}
                     {% if duplicates %}
-                        <div class="alert alert-danger pb-0" role="alert">
-                            There appear to be duplicate PDFs - please check
+                        <div class="alert alert-warning pb-0" role="alert">
+                            Some of the source PDFs are duplicates:
                             <ul>
-                                {% for hash,vers in duplicates.items %}
-                                    <li>
-                                        versions {{ vers }} have sha256
-                                        <small class="text-muted"><tt>{{ hash }}</tt></small>
-                                    </li>
-                                {% endfor %}
+                                {% for hash,vers in duplicates.items %}<li>versions {{ vers }} are identical</li>{% endfor %}
                             </ul>
                         </div>
                     {% endif %}

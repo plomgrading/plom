@@ -23,6 +23,10 @@
             </h5>
             <p class="card-text mb-2">
                 sha256: <small class="text-muted"><tt>{{ src.hash }}</tt></small>
+                {% if src.duplicate_versions %}
+                    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    duplicate of version{{ src.duplicate_versions|pluralize }}: {{ src.duplicate_versions|join:", " }}
+                {% endif %}
                 <br />
                 {{ src.page_count }} pages of &ldquo;{{ src.paper_size_name }}&rdquo; paper
                 <span class="text-muted">({{ src.paper_size_width|stringformat:".6g" }} &times; {{ src.paper_size_height|stringformat:".6g" }} pts)</span>.
@@ -43,7 +47,7 @@
             </div>
         {% else %}
             <h5 class="card-title">
-                Upload PDF for version {{ src.version }}
+                PDF for version {{ src.version }}
                 <i class="bi bi-exclamation-diamond-fill text-warning"></i>
             </h5>
             <div class="card-text">
@@ -52,10 +56,15 @@
                       hx-post="{% url 'prep_source_upload' src.version %}"
                       hx-target="#card-{{ src.version }}">
                     {% csrf_token %}
-                    <div>
-                        <input type="file" accepts=".pdf" name="source_pdf" required />
-                        <button class="btn btn-primary" type="submit">upload</button>
+                    <div class="mb-2">
+                        <input class="form-control"
+                               type="file"
+                               name="source_pdf"
+                               accept="application/pdf"
+                               required
+                               id="pdf_file">
                     </div>
+                    <button class="btn btn-primary" type="submit">upload</button>
                 </form>
             </div>
         {% endif %}
