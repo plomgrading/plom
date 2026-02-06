@@ -4,7 +4,7 @@
 
 services:
   nginx:
-    image: nginx:1.29
+    image: nginx:stable
     ports:
       - 8443:443
       # or for non-SSL, and also change below
@@ -63,7 +63,7 @@ services:
       # - PLOM_QR_CODE_SIZE=70
 
   postgres:
-    image: postgres:18
+    image: postgres:17
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
