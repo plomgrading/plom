@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2024 Andrew Rechnitzer
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 """Tools for manipulating version maps."""
@@ -262,7 +262,10 @@ def _version_map_from_csv(
     """
     qvmap: dict[int, dict[int | str, int]] = {}
 
-    with open(f, "r") as csvfile:
+    # Note newline: https://docs.python.org/3/library/csv.html#id4
+    # Note: utf-8-sig Issue #4155, see also comments in classlist validator
+    with open(f, newline="", encoding="utf-8-sig") as csvfile:
+        # with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         if not reader.fieldnames:
             raise ValueError("csv must have column names")
@@ -274,12 +277,8 @@ def _version_map_from_csv(
         else:
             N = num_questions
         for line, row in enumerate(reader):
-            # It used to be called "test_number" on legacy and now "paper_number"
-            # raise a value error if you cannot find either.
             if "paper_number" in row:
                 papernum = int(row["paper_number"])
-            elif "test_number" in row:
-                papernum = int(row["test_number"])
             else:
                 raise ValueError("Cannot find paper_number column")
 
@@ -369,18 +368,12 @@ def version_map_from_file(
         raise NotImplementedError(f'Don\'t know how to import from "{f}"')
 
 
-def version_map_to_csv(
-    qvmap: dict[int, dict[int | str, int]], filename: Path, *, _legacy: bool = True
-) -> None:
+def version_map_to_csv(qvmap: dict[int, dict[int | str, int]], filename: Path) -> None:
     """Output a csv of the question-version map.
 
     Arguments:
         qvmap: the question-version map, documented elsewhere.
         filename: where to save.
-
-    Keyword Args:
-        _legacy: if True, we call the column "test_number" else "paper_number".
-            Currently the default is True but this is expected to change.
 
     Raises:
         ValueError: some rows have differing numbers of questions.
@@ -388,10 +381,7 @@ def version_map_to_csv(
     # all rows should have same length: get than length or fail
     (N,) = {len(v) for v in qvmap.values()}
 
-    if _legacy:
-        header = ["test_number"]
-    else:
-        header = ["paper_number"]
+    header = ["paper_number"]
 
     has_id_versions = False
     # do rows generally have "id" is in the keys?

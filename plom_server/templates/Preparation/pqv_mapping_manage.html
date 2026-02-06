@@ -278,6 +278,10 @@
                                             </li>
                                         </ul>
                                     </li>
+                                    <li>
+                                        The file must be ASCII or UTF-8 encoded.
+                                        <a href="https://plom.readthedocs.io/en/latest/faq.html#how-do-i-make-a-utf-8-csv-file">How do I make this?</a>
+                                    </li>
                                 </ul>
                             </details>
                         </p>
@@ -286,10 +290,10 @@
                               method="post"
                               action="{% url 'prep_qvmapping_upload' %}">
                             {% csrf_token %}
-                            <div>
+                            <div class="mb-2">
                                 <input type="file" accept=".csv" name="pqvmap_csv" required />
-                                <button class="btn btn-primary" type="submit">upload</button>
                             </div>
+                            <button class="btn btn-primary" type="submit">upload</button>
                         </form>
                     </div>
                 </div>
