@@ -14,7 +14,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 # Also in plom/common.py
-__version__ = "0.20.1.dev0"
+__version__ = "0.20.1"
 
 # The API and the database are versioned to give a quick way to address compatibility.
 # There is no reason that they must match, although we generally bump both for the first
