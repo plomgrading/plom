@@ -41,7 +41,6 @@ services:
       - postgres
 
     environment:
-      - PAPERSIZE=letter
       - PLOM_MEDIA_ROOT=/exam/media_root
       - PLOM_DATABASE_HOSTNAME=postgres
       # - PLOM_DATABASE_NAME=plom_db
@@ -59,6 +58,9 @@ services:
       # - WEB_CONCURRENCY=4  # how many gunicorn processes
       # - PLOM_HUEY_WORKERS=4
       # - PLOM_HUEY_PARENT_WORKERS=2
+      # Other settings
+      - PAPERSIZE=letter
+      # - PLOM_QR_CODE_SIZE=70
 
   postgres:
     image: postgres:18
