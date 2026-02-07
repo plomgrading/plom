@@ -229,9 +229,9 @@ class QRServiceTest(TestCase):
         # Invalid QR
         img = StagingImage.objects.get(pk=self.img_invalid_qr.pk)
         self.assertEqual(img.image_type, StagingImage.ERROR)
-        self.assertIn("Invalid QR-code", img.error_reason)
+        self.assertIn("Invalid QR code", img.error_reason)
 
         # Inconsistent page_types
         img = StagingImage.objects.get(pk=self.img_inconsistent_types.pk)
         self.assertEqual(img.image_type, StagingImage.ERROR)
-        self.assertIn("Inconsistent qr-codes", img.error_reason)
+        self.assertIn("Inconsistent QR codes", img.error_reason)
