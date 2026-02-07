@@ -93,11 +93,9 @@ class QRService:
             # other images it collides with, noting their bundle-order.
             for img_pk in colliding:
                 errmsg = "This image has at least some of the same QR codes as "
-                _c = [str(img_bundle_order[x]) for x in colliding if x != img_pk]
-                if len(_c) == 1:
-                    errmsg += f"page {_c}"
-                else:
-                    errmsg += f"pages {_c}"
+                c = [str(img_bundle_order[x]) for x in colliding if x != img_pk]
+                errmsg += "page " if len(c) == 1 else "pages "
+                errmsg += ", ".join(c)
                 # TODO: would be nice to show a clickable URL...
                 # [why are collisions a problem, and what are my options?]"
                 errmsg += (
