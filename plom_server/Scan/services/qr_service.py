@@ -103,7 +103,8 @@ class QRService:
                 errmsg += (
                     " - consult the Plom documentation at "
                     "https://plom.readthedocs.io/en/latest/scanning.html "
-                    "for why collisions are a problem, and to see your options."
+                    "for why collisions are a problem, what might be causing "
+                    "them, and to see your options."
                 )
                 error_imgs.append((img_pk, errmsg))
 
