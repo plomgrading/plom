@@ -215,7 +215,8 @@ class QRServiceTest(TestCase):
         for img in (self.img_col1, self.img_col2):
             img = StagingImage.objects.get(pk=img.pk)
             self.assertEqual(img.image_type, StagingImage.ERROR)
-            self.assertIn("collides", img.error_reason)
+            self.assertIn("same QR codes", img.error_reason)
+            self.assertIn("collision", img.error_reason)
 
     def test_bundle_no_qr(self):
         """Test exception is correctly raised when attempting to push unread QR bundle."""
