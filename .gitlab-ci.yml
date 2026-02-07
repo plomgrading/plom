@@ -524,10 +524,10 @@ no-question-numbers:
 
 
 eslint:
-  image: node:24.11.1
+  image: node:24
   stage: static_analysis
   script:
-    - npm install eslint globals @eslint/js @stylistic/eslint-plugin
+    - npm install eslint@9.39.1 globals @eslint/js@9.39.1 @stylistic/eslint-plugin
     - npx eslint plom_server/**/*.js
 
 
