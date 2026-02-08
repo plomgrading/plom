@@ -660,7 +660,7 @@ class DemoBundleCreationService:
                 extra_page_papers=bundle["extra_page_papers"],
                 scrap_page_papers=bundle["scrap_page_papers"],
                 garbage_page_papers=bundle["garbage_page_papers"],
-                duplicate_pages=bundle["duplicate_pages"],
+                duplicate_pages=bundle["duplicate_page_papers"],
                 duplicate_qr=bundle["duplicate_qr_papers"],
                 wrong_version=bundle["wrong_version_papers"],
                 wrong_assessment=bundle["wrong_assessment_papers"],
