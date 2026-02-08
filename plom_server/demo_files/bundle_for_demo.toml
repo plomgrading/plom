@@ -16,7 +16,7 @@ last_paper = 20
 garbage_page_papers = [11, 12]
 duplicate_qr_papers = [13, 14]
 wrong_version_papers = [15, 16]
-duplicate_page_papers = [17, 18]
+duplicate_page_papers = [19, 20]
 scrap_page_papers = [17, 18]
 wrong_assessment_papers = [11, 12]
 out_of_range_papers = [15]
@@ -73,4 +73,3 @@ paper_number = 63
 student_id = 94949494
 student_name = "Nowra, Nora"
 pages = [[1, 2], [3], [], [4]]
-
