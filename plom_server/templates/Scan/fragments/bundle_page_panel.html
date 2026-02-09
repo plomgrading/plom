@@ -87,7 +87,7 @@
                                 {% for crn, code in current_page.qr_codes.items %}
                                     <details class="ps-3">
                                         <summary>{{ crn }}: {{ code.tpv }}</summary>
-                                        <p class="ps-4">
+                                        <p class="ps-4 mb-0">
                                             {% for k, v in code.items %}
                                                 {{ k }}: {{ v }}
                                                 <br />
