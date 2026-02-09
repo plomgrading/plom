@@ -5,6 +5,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Forest Kobayashi
 
+import html
 from typing import Any
 
 from django.db import transaction
@@ -82,7 +83,7 @@ class QRService:
                         img_bundle_order[img.pk] = img.bundle_order
 
                 except ValueError as err:
-                    error_imgs.append((img.pk, str(err)))
+                    error_imgs.append((img.pk, str(err), html.escape(str(err))))
 
         # check for internal collisions: tpv with 2 or more images
         for tpv, colliding in known_imgs.items():
@@ -92,15 +93,18 @@ class QRService:
             # for all of them, with error messages that tell the user which
             # other images it collides with, noting their bundle-order.
             for img_pk in colliding:
-                errmsg = "This image has some of the same QR codes as "
+                short_err = "collision with"
+                err = "This image has some of the same QR codes as"
                 c = [str(img_bundle_order[x]) for x in colliding if x != img_pk]
-                errmsg += "page " if len(c) == 1 else "pages "
-                errmsg += ", ".join(c)
-                errmsg += (
+                pagestr = " page " if len(c) == 1 else " pages "
+                pagestr += ", ".join(c)
+                err += pagestr
+                short_err += pagestr
+                err += (
                     ' - <a href="https://plom.readthedocs.io/en/latest/scanning.html#collisions">'
                     "why are collisions a problem, and what are my options?</a>"
                 )
-                error_imgs.append((img_pk, errmsg))
+                error_imgs.append((img_pk, short_err, err))
 
         with transaction.atomic():
             # save all the known images that are not collisions.
@@ -149,11 +153,12 @@ class QRService:
                 img.history += "; Discarded based on special bundle separator QR codes"
                 img.save()
             # save all the error-pages with the error string
-            for k, err_str in error_imgs:
+            for k, short_err, long_err in error_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.ERROR
-                img.error_reason = err_str
-                img.history += f"; Made into error image: {err_str}"
+                img.error_reason = long_err
+                # TODO: short_err should be recorded too? see StagingImage model docs
+                img.history += f"; Made into error image: {short_err}"
                 img.save()
 
     @staticmethod
