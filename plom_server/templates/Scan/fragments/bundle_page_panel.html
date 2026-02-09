@@ -48,15 +48,6 @@
                                 <li>version: {{ current_page.info.version }}</li>
                             </ul>
                         </div>
-                        <p class="mb-0">rotation: {{ current_page.rotation }}</p>
-                        <details>
-                            <summary>{{ current_page.qr_codes|length }} QR code{{ current_page.qr_codes|length|pluralize }}</summary>
-                            <small class="text-muted">
-                                <ul class="mb-0">
-                                    {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                </ul>
-                            </small>
-                        </details>
                     {% elif current_page.status == 'extra' %}
                         <div class="alert alert-info my-2 p-2">
                             <h5 class="alert-heading">Extra</h5>
@@ -66,61 +57,47 @@
                             </ul>
                         </div>
                         <p class="mb-0">rotation: {{ current_page.rotation }}</p>
-                        {% if current_page.qr_codes %}
-                            <details>
-                                <summary>{{ current_page.qr_codes|length }} QR code{{ current_page.qr_codes|length|pluralize }}</summary>
-                                <small class="text-muted">
-                                    <ul class="mb-0">
-                                        {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                    </ul>
-                                </small>
-                            </details>
-                        {% else %}
-                            No qr-codes read
-                        {% endif %}
                     {% elif current_page.status == 'unknown' %}
                         <div class="alert alert-warning my-2 p-2">
                             <h5 class="alert-heading">Unknown</h5>
-                            <ul class="mb-0">
-                                <li>No qr-codes could be read</li>
-                            </ul>
                         </div>
                     {% elif current_page.status == 'discard' %}
-                        <div class="alert alert-dark my-2 p-2">
+                        <div class="alert alert-dark mt-2 mb-1 p-2">
                             <h5 class="alert-heading">Discard</h5>
                             {{ current_page.info.reason }}
                         </div>
-                        <p class="mb-0">rotation: {{ current_page.rotation }}</p>
-                        <details>
-                            <summary>{{ current_page.qr_codes|length }} QR code{{ current_page.qr_codes|length|pluralize }}</summary>
-                            <small class="text-muted">
-                                <ul class="mb-0">
-                                    {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                </ul>
-                            </small>
-                        </details>
                     {% elif current_page.status == 'error' %}
                         <div class="alert alert-danger my-2 p-2">
                             <h5 class="alert-heading">Error</h5>
                             {{ current_page.info.reason|safe }}
                         </div>
-                        <p class="mb-0">rotation: {{ current_page.rotation }}</p>
-                        <details>
-                            <summary>{{ current_page.qr_codes|length }} QR code{{ current_page.qr_codes|length|pluralize }}</summary>
-                            <small class="text-muted">
-                                <ul class="mb-0">
-                                    {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code }}</li>{% endfor %}
-                                </ul>
-                            </small>
-                        </details>
                     {% elif current_page.status == 'unread' %}
                         <div class="alert alert-dark my-2">
                             <h5 class="alert-heading">Unread</h5>
                             <ul>
+                                <!-- TODO? -->
                                 <li>Have not read qr-codes yet</li>
                             </ul>
                         </div>
                     {% endif %}
+                    {% if current_page.qr_codes %}
+                        <details>
+                            <summary>{{ current_page.qr_codes|length }} QR code{{ current_page.qr_codes|length|pluralize }}</summary>
+                            <small class="text-muted">
+                                <ul class="mb-0">
+                                    {% for crn, code in current_page.qr_codes.items %}
+                                        <details>
+                                            <summary>{{ crn }}: {{ code.tpv }}</summary>
+                                            {{ code }};
+                                        </details>
+                                    {% endfor %}
+                                </ul>
+                            </small>
+                        </details>
+                    {% else %}
+                        <p class="mb-0">No QR code information</p>
+                    {% endif %}
+                    <p class="mb-0">rotation: {{ current_page.rotation }}</p>
                     <details>
                         <summary>Log</summary>
                         <small class="text-muted">{{ current_page.history }}</small>
