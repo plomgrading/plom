@@ -98,8 +98,10 @@ class QRService:
                 c = [str(img_bundle_order[x]) for x in colliding if x != img_pk]
                 pagestr = " page " if len(c) == 1 else " pages "
                 pagestr += ", ".join(c)
-                err += pagestr
                 short_err += pagestr
+                short_err += " in this bundle"
+                err += pagestr
+                err += " (in this bundle)"
                 err += (
                     ' - <a href="https://plom.readthedocs.io/en/latest/scanning.html#collisions">'
                     "why are collisions a problem, and what are my options?</a>"
