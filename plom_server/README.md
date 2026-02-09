@@ -1,7 +1,14 @@
-# How to run the "new" Plom Server
+# How to run the Plom Server
+
+You need a PostgreSQL server, then type `plom-new-server`.  The rest of these instructions are
+perhaps out-of-date details that should be automated by the above.
+TODO: perhaps  they should be removed before bitrot further!
+
 
 ## Setting up PostgreSQL
-You need a running PostgreSQL server. Follow the installation instructions found (here)[https://www.postgresql.org/download/]. With PostgreSQL running, you need to complete two tasks:
+You need a running PostgreSQL server. Follow the installation instructions found (here)[https://www.postgresql.org/download/].  One approach is use a container.
+
+With PostgreSQL running, you need to complete two tasks:
 
 1. Create a user for Plom, either using environment variables or using the default "postgres:postgres"
 2. Create a table for Plom, either using environment variables or using the default "plom_db"
@@ -37,6 +44,12 @@ groups and add the super-user into the admin group.
 3. (Optional) Run `python3 manage.py plom_create_demo_users` to automatically create demo users such as manager, scanners, and markers. The default password for `manager` is `1234`. For the other demo users (`demoAdmin`, `demoScanner1`, etc.), the default password is identical to the username.
 
 Note that if you accidentally do (2) before (1) then you can just run (2) again and it will skip the create-groups bit and just add the superuser to the admin group.
+
+## Misc other setup
+
+`python3 manage.py plom_get_static_javascript` pre-downloads javascript and other static resources.
+
+TODO: also something about `collectstatic` if doing production run.
 
 
 ## Running the server
