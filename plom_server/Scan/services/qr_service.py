@@ -94,19 +94,19 @@ class QRService:
             # other images it collides with, noting their bundle-order.
             for img_pk in colliding:
                 short_err = "collision with"
-                err = "This image has some of the same QR codes as"
+                long_err = "This image has some of the same QR codes as"
                 c = [str(img_bundle_order[x]) for x in colliding if x != img_pk]
                 pagestr = " page " if len(c) == 1 else " pages "
                 pagestr += ", ".join(c)
                 short_err += pagestr
                 short_err += " in this bundle"
-                err += pagestr
-                err += " (in this bundle)"
-                err += (
+                long_err += pagestr
+                long_err += " (in this bundle)"
+                long_err += (
                     ' - <a href="https://plom.readthedocs.io/en/latest/scanning.html#collisions">'
                     "why are collisions a problem, and what are my options?</a>"
                 )
-                error_imgs.append((img_pk, short_err, err))
+                error_imgs.append((img_pk, short_err, long_err))
 
         with transaction.atomic():
             # save all the known images that are not collisions.
