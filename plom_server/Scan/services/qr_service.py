@@ -92,17 +92,13 @@ class QRService:
             # for all of them, with error messages that tell the user which
             # other images it collides with, noting their bundle-order.
             for img_pk in colliding:
-                errmsg = "This image has at least some of the same QR codes as "
+                errmsg = "This image has some of the same QR codes as "
                 c = [str(img_bundle_order[x]) for x in colliding if x != img_pk]
                 errmsg += "page " if len(c) == 1 else "pages "
                 errmsg += ", ".join(c)
-                # TODO: would be nice to show a clickable URL...
-                # [why are collisions a problem, and what are my options?]"
                 errmsg += (
-                    " - consult the Plom documentation at "
-                    "https://plom.readthedocs.io/en/latest/scanning.html "
-                    "for why collisions are a problem, what might be causing "
-                    "them, and to see your options."
+                    ' - <a href="https://plom.readthedocs.io/en/latest/scanning.html#collisions">'
+                    "why are collisions a problem, and what are my options?</a>"
                 )
                 error_imgs.append((img_pk, errmsg))
 

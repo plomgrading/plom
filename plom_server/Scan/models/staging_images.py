@@ -54,7 +54,11 @@ class StagingImage(models.Model):
             isn't discarded, or perhaps wasn't recently.
         error_reason: if the image is of type ERROR, this will give a
             human-readable error message.  Should generally be empty if this
-            StagingImage isn't in error.
+            StagingImage isn't in error.  This can contain HTML and should
+            be "html-safe", but the first sentence (say at least 42 chars)
+            should be plain text (this is b/c it is currently used to generate
+            tooltips).  TODO: consider adding a new "error_reason_explanation"
+            field that contains HTML, or an "error_reason_short"?
         paper_number: used by type KNOWN or EXTRA, undefined for other types.
             if KNOWN, then this *must* be non-None, and gives the paper number
             of the known image.
