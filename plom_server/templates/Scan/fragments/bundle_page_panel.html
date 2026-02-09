@@ -84,14 +84,17 @@
                         <details>
                             <summary>{{ current_page.qr_codes|length }} QR code{{ current_page.qr_codes|length|pluralize }}</summary>
                             <small class="text-muted">
-                                <ul class="mb-0">
-                                    {% for crn, code in current_page.qr_codes.items %}
-                                        <details>
-                                            <summary>{{ crn }}: {{ code.tpv }}</summary>
-                                            {{ code }};
-                                        </details>
-                                    {% endfor %}
-                                </ul>
+                                {% for crn, code in current_page.qr_codes.items %}
+                                    <details class="ps-3">
+                                        <summary>{{ crn }}: {{ code.tpv }}</summary>
+                                        <p class="ps-4">
+                                            {% for k, v in code.items %}
+                                                {{ k }}: {{ v }}
+                                                <br />
+                                            {% endfor %}
+                                        </p>
+                                    </details>
+                                {% endfor %}
                             </small>
                         </details>
                     {% else %}
