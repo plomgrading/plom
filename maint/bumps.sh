@@ -1,6 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Colin B. Macdonald
+
 #!/bin/sh
 
-# Here is the very manually process of keeping all our dependencies up-to-date
+# Here is the very manual process of keeping all our dependencies up-to-date
 # Circa 2026-January
 
 # `pip install bumper`
