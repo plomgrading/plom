@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024-2025 Andrew Rechnitze
     Copyright (C) 2024-2025 Bryan Tanady
-    Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2025-2026 Colin B. Macdonald
     Copyright (C) 2025 Aidan Murphy
 */
 
@@ -46,7 +46,9 @@ function setInitialIDBoxRectangle(id_box_rect) {
 }
 
 // these must be initialised in the template
+// eslint-disable-next-line no-unassigned-vars
 var top_left_coord;
+// eslint-disable-next-line no-unassigned-vars
 var bottom_right_coord;
 
 // some starting values

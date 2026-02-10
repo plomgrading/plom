@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Julian Lapenna
 #
@@ -14,7 +14,6 @@ RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
         cmake make g++ \
-        openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended texlive-pictures \
         libpango-1.0-0 libpangocairo-1.0-0 \
         file \
