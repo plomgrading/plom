@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2020-2025 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -70,7 +70,7 @@ possible_answers = [
     "Understand it well as I may, my comprehension can only be an"
     " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
     "Take chances, make mistakes, get messy. -- Ms Frizzle",
-    "If learning worked by watching, we’d all be World Cup champions.",
+    "If learning worked by watching, we'd all be World Cup champions.",
 ]
 
 possible_short_answers = [
