@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2020-2023, 2025 Colin B. Macdonald
+   Copyright (C) 2020-2023, 2025-2026 Colin B. Macdonald
    Copyright (C) 2020 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -43,7 +43,7 @@ You can use your own local directory with `-v`::
 
 You can override the default command, for example::
 
-    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-new-sever --version
+    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-server --version
 
 Alternatively you can get a shell and work inside the image::
 
@@ -82,7 +82,7 @@ but in practice, there are some caveats:
 
 
 After installing, you should be able to run the various Plom commands.
-Try running `plom-new-server` and you should see something like::
+Try running `plom-server` and you should see something like::
 
-    $ plom-new-server --version
-    plom-new-server 0.18.0
+    $ plom-server --version
+    plom-server 0.20.1
