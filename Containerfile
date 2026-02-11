@@ -50,4 +50,4 @@ EXPOSE 41984
 
 RUN mkdir /exam
 WORKDIR /exam
-CMD ["plom-new-server"]
+CMD ["plom-server"]

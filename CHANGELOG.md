@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* `plom-server` is the main command, although `plom-new-server` will continue to work for a while.
 
 ### Fixed
 

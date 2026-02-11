@@ -31,7 +31,7 @@ services:
     # expose:
     #   - 8000
 
-    command: plom-new-server
+    command: plom-server
 
     volumes:
       - plom_media:/exam/

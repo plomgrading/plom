@@ -1,6 +1,6 @@
 # How to run the Plom Server
 
-You need a PostgreSQL server, then type `plom-new-server`.  The rest of these instructions are
+You need a PostgreSQL server, then type `plom-server`.  The rest of these instructions are
 perhaps out-of-date details that should be automated by the above.
 TODO: perhaps  they should be removed before bitrot further!
 
