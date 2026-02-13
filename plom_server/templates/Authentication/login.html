@@ -22,11 +22,11 @@
               href="{% static '/css/loginPage.css' %}">
     </head>
     <body>
-        <section class="vh-100 gradient-custom login_box">
+        <section class="vh-100 gradient-custom bg-plom-light-purple">
             <div class="container py-5 h-100">
                 <div class="row d-flex justify-content-center align-items-center h-100">
                     <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-                        <div class="login_card" style="border-radius: 1rem;">
+                        <div class="bg-plom-off-white" style="border-radius: 1rem;">
                             <div class="card-body p-5 text-center">
                                 <div class="mb-md-5 mt-md-4 pb-3">
                                     <img src="{% static 'plomLogo.png' %}"
@@ -58,7 +58,7 @@
                                             <label class="form-label" for="check-password">Show Password</label>
                                         </div>
                                         {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
-                                        <button class="btn btn-outline-dark btn-lg fw-light text-centre w-50 border border-dark border-2"
+                                        <button class="btn btn-outline-dark btn-lg fw-light text-centre w-50 border border-dark border-2 bg-plom-purple"
                                                 type="submit">
                                             <span class="bi-box-arrow-in-right"></span>
                                             LOGIN

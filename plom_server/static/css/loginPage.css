@@ -1,11 +1,18 @@
-.login_box{
+/*
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    TODO: check logs for edit history, not sure about this
+    Copyright (C) 2022-2023 Brennen Chiu
+    Copyright (C) 2026 Aidan Murphy
+*/
+
+.bg-plom-light-purple{
     background-color: #AD9CFF;
 }
 
-.login_card{
+.bg-plom-off-white{
     background-color: #F5F6FA;
 }
 
-.btn{
+.bg-plom-purple{
     background-color: #7A7CFF;
 }
