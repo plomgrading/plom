@@ -1,0 +1,26 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2026 Aidan Murphy
+-->
+<!--
+Source - https://stackoverflow.com/a/74639288
+Posted by Ere Männistö, modified by community. See post 'Timeline' for change history
+Retrieved 2026-02-14, License - CC BY-SA 4.0
+-->
+{% load static %}
+<picture id="plomLogo">
+    <!-- User prefers light mode: -->
+    <source srcset="{% static 'plomLogo.png' %}"
+            media="(prefers-color-scheme: light)"
+            alt="Plom logo" />
+    <!-- User prefers dark mode: -->
+    <source srcset="{% static 'plomLogo_dark.png' %}"
+            media="(prefers-color-scheme: dark)"
+            alt="Plom logo" />
+    <!-- User has no color preference: -->
+    <img srcset="{% static 'plomLogo.png' %}"
+         alt="Plom logo"
+         style="width:{{ width }};
+                height:{{ height }};
+                max-width:{{ max_width }}" />
+</picture>
