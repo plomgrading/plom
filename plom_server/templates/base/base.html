@@ -6,7 +6,7 @@
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Aden Chan
-    Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025-2026 Aidan Murphy
 -->
 {% load static %}
 {% load django_htmx %}
@@ -48,18 +48,7 @@
                 opacity: 1;
             }
         </style>
-        <script>
-            // Modified from the color mode toggler for Bootstrap's docs (https://getbootstrap.com/)
-            // Copyright 2011-2024 The Bootstrap Authors
-            // Licensed under the Creative Commons Attribution 3.0 Unported License.
-            function setTheme() {
-              document.documentElement.setAttribute('data-bs-theme',
-                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-              )
-            }
-            setTheme()
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setTheme)
-        </script>
+        <script type="module" src="{% static '/js/bootstrap_lightdark_mode.js' %}"></script>
         <title>
             {% block full_title %}
                 {% block title_prefix %}
