@@ -20,12 +20,14 @@
         <link rel="stylesheet"
               type="text/css"
               href="{% static '/css/loginPage.css' %}">
+        <!-- Adjusts bootstrap styling to light-mode or dark-mode -->
+        <script type="module" src="{% static '/js/bootstrap_lightdark_mode.js' %}"></script>
     </head>
-    <body class="bg-plom-light-purple">
+    <body class="bg-plom-dark-teal">
         <div class="container py-5">
             <div class="row d-flex justify-content-center align-items-center h-100">
                 <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-                    <div class="card bg-plom-off-white rounded-4">
+                    <div class="card rounded-4">
                         <div class="card-body p-5 text-center mt-4 mb-5">
                             <img src="{% static 'plomLogo.png' %}"
                                  alt="Plom logo"
@@ -56,7 +58,7 @@
                                     <label class="form-label" for="check-password">Show Password</label>
                                 </div>
                                 {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
-                                <button class="btn btn-lg fw-light text-centre border border-dark border-2 bg-plom-purple"
+                                <button class="btn btn-lg fw-light text-centre border border-2 bg-plom-teal"
                                         type="submit">
                                     <span class="m-5"><span class="bi-box-arrow-in-right"></span>
                                 LOGIN</span>
