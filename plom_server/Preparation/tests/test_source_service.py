@@ -7,6 +7,8 @@ import pathlib
 from importlib import resources
 
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import SuspiciousFileOperation
 from django.conf import settings
 from model_bakery import baker
 
@@ -69,10 +71,29 @@ class SourceServiceTests(TestCase):
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(1, f)
+            # using f directly will fail - f.name includes path elements
+            django_file = SimpleUploadedFile(
+                name="test_version1.pdf",
+                content=f.read(),
+                content_type="application/pdf",
+            )
+            r, msg = SourceService.take_source_from_upload(1, django_file)
         assert r
         assert "uploaded" in msg
         assert "success" in msg
+        # TODO: does this make files or not?
+        # SourceService.delete_source_pdf(1)
+
+    @config_test({"test_spec": "demo"})
+    def test_store_source_pdfs_validate_filename(self) -> None:
+        """Check that files with suspicious names are caught."""
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
+        pdf = resources.files(useful_files) / "test_version1.pdf"
+        with pdf.open("rb") as f:
+            with self.assertRaises(SuspiciousFileOperation):
+                r, msg = SourceService.take_source_from_upload(1, f)
         # TODO: does this make files or not?
         # SourceService.delete_source_pdf(1)
 
