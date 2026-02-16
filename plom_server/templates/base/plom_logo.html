@@ -11,14 +11,13 @@ Retrieved 2026-02-14, License - CC BY-SA 4.0
 <picture id="plomLogo">
     <!-- User prefers light mode: -->
     <source srcset="{% static 'plomLogo.png' %}"
-            media="(prefers-color-scheme: light)"
-            alt="Plom logo" />
+            media="(prefers-color-scheme: light)" />
     <!-- User prefers dark mode: -->
     <source srcset="{% static 'plomLogo_dark.png' %}"
-            media="(prefers-color-scheme: dark)"
-            alt="Plom logo" />
+            media="(prefers-color-scheme: dark)" />
     <!-- User has no color preference: -->
     <img srcset="{% static 'plomLogo.png' %}"
+         class="img-fluid"
          alt="Plom logo"
          style="width:{{ width }};
                 height:{{ height }};
