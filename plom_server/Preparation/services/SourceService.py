@@ -13,6 +13,7 @@ from typing import Any
 
 import pymupdf
 from django.core.files import File
+from django.core.files.utils import validate_file_name
 from django.db import transaction
 
 from plom.scan import QRextract
@@ -287,7 +288,11 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         if hasattr(in_memory_file, "name"):
             original_filename = in_memory_file.name
         else:
-            original_filename = ""
+            original_filename = f"version{version}.pdf"
+
+        # the file could be re-served using original_filename
+        # https://github.com/django/django/blob/main/django/core/files/utils.py#L7
+        validate_file_name(original_filename)
         # now try to store it
         try:
             store_source_pdf(
