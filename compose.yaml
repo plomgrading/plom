@@ -41,6 +41,7 @@ services:
       - postgres
 
     environment:
+      - PLOM_BASE_DIR=/exam
       - PLOM_MEDIA_ROOT=/exam/media_root
       - PLOM_DATABASE_HOSTNAME=postgres
       # - PLOM_DATABASE_NAME=plom_db
