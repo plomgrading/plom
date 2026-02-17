@@ -77,17 +77,17 @@ class HueyTaskTracker(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     obsolete = models.BooleanField(default=False)
 
-    def transition_back_to_todo(self):
+    def transition_back_to_todo(self) -> None:
         # TODO: which states are allowed to transition here?
         self.huey_id = None
         self.status = self.TO_DO
         self.save()
 
-    def reset_to_do(self):
+    def reset_to_do(self) -> None:
         # subclasses might subclass to do more
         self.transition_back_to_todo()
 
-    def _transition_to_starting(self):
+    def _transition_to_starting(self) -> None:
         assert self.status == self.TO_DO, (
             f"Tracker cannot transition from {self.get_status_display()}"
             " to Starting (only from To_Do state)"
@@ -133,7 +133,7 @@ class HueyTaskTracker(models.Model):
             tr.save()
 
     @classmethod
-    def transition_to_queued_or_running(cls, pk, huey_id):
+    def transition_to_queued_or_running(cls, pk: int, huey_id: str) -> None:
         """Move to the Queued state using locking, or a no-op if we're already Running.
 
         We don't care if the tracker is obsolete or not; that is the
@@ -164,7 +164,9 @@ class HueyTaskTracker(models.Model):
             # tr.save()
 
     @classmethod
-    def bulk_transition_to_queued_or_running(cls, pk_huey_id_pair_list):
+    def bulk_transition_to_queued_or_running(
+        cls, pk_huey_id_pair_list: list[tuple[int, str]]
+    ) -> None:
         """Move to the Queued state using locking, or a no-op if we're already Running.
 
         A bulk version of method 'transition_to_queued_or_running'. Note that it
