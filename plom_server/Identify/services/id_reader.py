@@ -311,7 +311,7 @@ class IDReaderService:
         recompute_heatmap: bool = True,
     ):
         id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
-        IDBoxProcessorService().make_id_predictions(
+        IDBoxProcessorService.compute_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
 
@@ -428,7 +428,7 @@ def huey_id_reading_task(
     )
 
     try:
-        IDBoxProcessorService().make_id_predictions(
+        IDBoxProcessorService.compute_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
     except ValueError as e:
@@ -765,7 +765,7 @@ class IDBoxProcessorService:
         return heatmap
 
     @classmethod
-    def make_id_predictions(
+    def compute_id_predictions(
         cls,
         user: User,
         id_box_files: dict[int, Path],
