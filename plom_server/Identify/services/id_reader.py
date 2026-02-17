@@ -8,6 +8,7 @@
 # Copyright (C) 2024-2025 Deep Shah
 
 import json
+import time
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -449,6 +450,9 @@ def huey_id_reading_task(
             tracker_pk, f"Did you upload a classlist?  {e}"
         )
         return True
+
+    # short pause, unlikely to help w/ Issue #4165 (cannot reproduce)
+    time.sleep(0.1)
 
     IDReadingHueyTaskTracker.set_message_to_user(tracker_pk, "ID predictions complete.")
 
