@@ -45,6 +45,12 @@ from ..services import IdentifyTaskService, ClasslistService
 _default_prenaming_prediction_confidence = 0.9
 
 
+def _np_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
+    x = x - np.max(x, axis=axis, keepdims=True)
+    e = np.exp(x)
+    return e / np.sum(e, axis=axis, keepdims=True)
+
+
 class IDReaderService:
     """Functions for ID reading and related helper functions."""
 
@@ -514,7 +520,8 @@ class IDBoxProcessorService:
     # problem with cv2.typing - see MR 3050.
     # comment out the cv2.typing.MatLike hint here.
     # TODO - fix the cv2.typing issue in dev sometime.
-    def resize_ID_box_and_extract_digit_strip(self, id_box_file: Path):
+    @staticmethod
+    def resize_ID_box_and_extract_digit_strip(id_box_file: Path):
         # ) -> cv2.typing.MatLike | None:
         """Extract the strip of digits from the ID box from the given image file."""
         # WARNING: contains many magic numbers - must be updated if the IDBox
@@ -545,10 +552,10 @@ class IDBoxProcessorService:
     # problem with cv2.typing - see MR 3050.
     # comment out the cv2.typing.MatLike hint here.
     # TODO - fix the cv2.typing issue in dev sometime.
+    @staticmethod
     def get_digit_images(
-        # self, ID_box: cv.typing.MatLike, num_digits: int
+        # ID_box: cv.typing.MatLike, num_digits: int
         # ) -> list[cv.typing.MatLike]:
-        self,
         ID_box,
         num_digits: int,
     ):
@@ -637,13 +644,9 @@ class IDBoxProcessorService:
             processed_digits_images_list.append(bordered_image)
         return processed_digits_images_list
 
-    def _np_softmax(self, x: np.ndarray, axis: int = -1) -> np.ndarray:
-        x = x - np.max(x, axis=axis, keepdims=True)
-        e = np.exp(x)
-        return e / np.sum(e, axis=axis, keepdims=True)
-
+    @classmethod
     def get_digit_probabilities(
-        self,
+        cls,
         prediction_model: tuple["onnxruntime.InferenceSession", str],
         id_box_file: Path,
         num_digits: int,
@@ -671,10 +674,10 @@ class IDBoxProcessorService:
         debugdir = None
         id_page_file = Path(id_box_file)
         # TODO - sort out cv.typing
-        # ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
+        # ID_box: cv.typing.MatLike | None = cls.resize_ID_box_and_extract_digit_strip(
         #     id_page_file
         # )
-        ID_box = self.resize_ID_box_and_extract_digit_strip(id_page_file)
+        ID_box = cls.resize_ID_box_and_extract_digit_strip(id_page_file)
         if ID_box is None:
             return []
         if debug:
@@ -682,7 +685,7 @@ class IDBoxProcessorService:
             debugdir.mkdir(exist_ok=True)
             p = debugdir / f"idbox_{id_page_file.stem}.png"
             cv.imwrite(str(p), ID_box)
-        processed_digits_images = self.get_digit_images(ID_box, num_digits)
+        processed_digits_images = cls.get_digit_images(ID_box, num_digits)
         if len(processed_digits_images) == 0:
             # TODO - put in warning
             # self.stdout.write("Trouble finding digits inside the ID box")
@@ -698,13 +701,14 @@ class IDBoxProcessorService:
             # get it into format needed by model predictor
             x = (digit_image.astype(np.float32) / 255.0)[None, None, :, :]
             logits = model.run([output_name], {input_name: x})[0]
-            probs = self._np_softmax(logits, axis=1)[0].tolist()
+            probs = _np_softmax(logits, axis=1)[0].tolist()
             prob_lists.append(probs)
 
         return prob_lists
 
-    def compute_probability_heatmap_for_idbox_images(
-        self, image_file_paths: dict[int, Path], num_digits: int
+    @classmethod
+    def _compute_probability_heatmap_for_idbox_images(
+        cls, image_file_paths: dict[int, Path], num_digits: int
     ) -> dict[int, list[list[float]]]:
         """Return probabilities for digits for each paper in the given dictionary of images files.
 
@@ -718,7 +722,7 @@ class IDBoxProcessorService:
         prediction_model = load_model()
         probabilities = {}
         for paper_number, image_file in image_file_paths.items():
-            prob_lists = self.get_digit_probabilities(
+            prob_lists = cls.get_digit_probabilities(
                 prediction_model, image_file, num_digits
             )
             if len(prob_lists) == 0:
@@ -737,17 +741,21 @@ class IDBoxProcessorService:
                 probabilities[paper_number] = prob_lists
         return probabilities
 
-    def compute_and_save_probability_heatmap(self, id_box_files: dict[int, Path]):
+    @classmethod
+    def compute_and_save_probability_heatmap(cls, id_box_files: dict[int, Path]):
         """Use classifier to compute and save a probability heatmap for the ids.
 
         This downloads a pre-trained random forest classier to compute the probability
         that the given number in the ID on the given paper is a particular digit.
         The resulting heatmap is saved for use by predictor algorithms.
+
+        Note: no database stuff: this just dumps a file on disc, which may not be
+        ideal.  Lot of direct file access here.
         """
         if not is_model_present():
             ensure_model_available()
         student_id_length = 8
-        heatmap = self.compute_probability_heatmap_for_idbox_images(
+        heatmap = cls._compute_probability_heatmap_for_idbox_images(
             id_box_files, student_id_length
         )
 
@@ -756,8 +764,9 @@ class IDBoxProcessorService:
             json.dump(heatmap, fh, indent="  ")
         return heatmap
 
+    @classmethod
     def make_id_predictions(
-        self,
+        cls,
         user: User,
         id_box_files: dict[int, Path],
         *,
@@ -769,7 +778,7 @@ class IDBoxProcessorService:
             ValueError: no classlist.
         """
         if recompute_heatmap:
-            probabilities = self.compute_and_save_probability_heatmap(id_box_files)
+            probabilities = cls.compute_and_save_probability_heatmap(id_box_files)
         else:
             heatmaps_file = settings.MEDIA_ROOT / "id_prob_heatmaps.json"
             with open(heatmaps_file, "r") as fh:
@@ -785,20 +794,22 @@ class IDBoxProcessorService:
             for paper_num, all_probs in probabilities.items()
         }
 
-        self.run_greedy(user, student_ids, sliced_probabilities)
-        self.run_lap_solver(user, student_ids, sliced_probabilities)
-        self.run_best_guess_predictor(user, probabilities)
+        cls.run_greedy(user, student_ids, sliced_probabilities)
+        cls.run_lap_solver(user, student_ids, sliced_probabilities)
+        cls.run_best_guess_predictor(user, probabilities)
 
-    def run_best_guess_predictor(self, user: User, probabilities: dict) -> None:
+    @classmethod
+    def run_best_guess_predictor(cls, user: User, probabilities: dict) -> None:
         """Runs the best-guess predictor and saves its results."""
         id_reader_service = IDReaderService()
-        best_guess_predictions = self._best_guess_predictor(probabilities)
+        best_guess_predictions = cls._best_guess_predictor(probabilities)
         for prediction in best_guess_predictions:
             id_reader_service.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLBestGuess"
             )
 
-    def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
+    @classmethod
+    def run_greedy(cls, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used
         id_reader_service = IDReaderService()
         for ided_stu in id_reader_service.get_already_matched_sids():
@@ -815,13 +826,14 @@ class IDBoxProcessorService:
                 f"machine-read papers and {len(student_ids)} unused students."
             )
         # Different predictors go here.
-        greedy_predictions = self._greedy_predictor(student_ids, probabilities)
+        greedy_predictions = cls._greedy_predictor(student_ids, probabilities)
         for prediction in greedy_predictions:
             id_reader_service.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLGreedy"
             )
 
-    def run_lap_solver(self, user: User, student_ids: list[str], probabilities) -> None:
+    @classmethod
+    def run_lap_solver(cls, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used.
         id_reader_service = IDReaderService()
         for ided_stu in id_reader_service.get_already_matched_sids():
@@ -837,14 +849,15 @@ class IDBoxProcessorService:
                 f"Assignment problem is degenerate: {len(papers_to_id)} unidentified "
                 f"machine-read papers and {len(student_ids)} unused students."
             )
-        lap_predictions = self._lap_predictor(papers_to_id, student_ids, probabilities)
+        lap_predictions = cls._lap_predictor(papers_to_id, student_ids, probabilities)
         for prediction in lap_predictions:
             id_reader_service.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLLAP"
             )
 
+    @staticmethod
     def _best_guess_predictor(
-        self, probabilities: dict[int, list[list[float]]]
+        probabilities: dict[int, list[list[float]]],
     ) -> list[tuple[int, str, float]]:
         """Generates direct 'best guess' predictions from the full heatmap."""
         predictions = []
@@ -864,8 +877,9 @@ class IDBoxProcessorService:
             predictions.append((paper_num, best_guess_id, round(certainty, 2)))
         return predictions
 
+    @staticmethod
     def _greedy_predictor(
-        self, student_IDs: list[str], probabilities: dict[int, Any]
+        student_IDs: list[str], probabilities: dict[int, Any]
     ) -> list[tuple[int, str, float]]:
         """Generate greedy predictions for student ID numbers.
 
@@ -910,7 +924,8 @@ class IDBoxProcessorService:
 
         return predictions
 
-    def _assemble_cost_matrix(self, paper_numbers, student_IDs, probabilities):
+    @staticmethod
+    def _assemble_cost_matrix(paper_numbers, student_IDs, probabilities):
         """Compute the cost matrix between list of papers and list of student IDs.
 
         Args:
@@ -946,8 +961,9 @@ class IDBoxProcessorService:
             costs.append(row)
         return costs
 
+    @classmethod
     def _lap_predictor(
-        self, paper_numbers: list[int], student_IDs: list[str], probabilities
+        cls, paper_numbers: list[int], student_IDs: list[str], probabilities
     ) -> list[tuple[int, str, float]]:
         """Run SciPy's linear sum assignment problem solver, return prediction results.
 
@@ -963,7 +979,7 @@ class IDBoxProcessorService:
             where certainty is the mean of digit probabilities for the student_ID
             selected by LAP solver.
         """
-        cost_matrix = self._assemble_cost_matrix(
+        cost_matrix = cls._assemble_cost_matrix(
             paper_numbers, student_IDs, probabilities
         )
         row_IDs, column_IDs = linear_sum_assignment(cost_matrix)
