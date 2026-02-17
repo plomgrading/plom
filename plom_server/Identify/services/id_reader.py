@@ -423,9 +423,8 @@ def huey_id_reading_task(
         block or detect whether a task has finished".
     """
     assert task is not None
-    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-    IDReadingHueyTaskTracker.set_message_to_user(
-        tracker_pk, "ID Reading task has started. Getting ID boxes."
+    HueyTaskTracker.transition_to_running(
+        tracker_pk, task.id, msg="ID Reading task has started. Getting ID boxes."
     )
 
     id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)

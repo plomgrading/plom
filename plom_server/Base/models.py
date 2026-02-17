@@ -100,8 +100,19 @@ class HueyTaskTracker(models.Model):
         self.save()
 
     @classmethod
-    def transition_to_running(cls, pk, huey_id):
+    def transition_to_running(
+        cls, pk: int, huey_id: str, *, msg: str | None = None
+    ) -> None:
         """Move to the Running state in a safe way using locking.
+
+        Args:
+            pk: the ID of a tracker to transition.
+            huey_id: a uuid of the huey task that is now running.
+
+        Keyword Args:
+            msg: set the tracker's message.  If omitted (or ``None``),
+                we won't change it.  If you want it to be blank, set
+                it to the empty string.
 
         We don't care if the tracker is obsolete or not; that is the
         callers concern.
@@ -117,6 +128,8 @@ class HueyTaskTracker(models.Model):
             # Note: could use an inline update if we didn't have the assert
             tr.huey_id = huey_id
             tr.status = cls.RUNNING
+            if msg is not None:
+                tr.message = msg
             tr.save()
 
     @classmethod
