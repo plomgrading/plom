@@ -50,7 +50,7 @@ class Command(BaseCommand):
     def wait_for_reader(self) -> None:
         self.stdout.write("Waiting for any background ID reader processes to finish")
         while True:
-            status = IDReaderService.get_id_reader_background_chore__status()
+            status = IDReaderService.get_id_reader_background_chore_status()
             self.stdout.write(f"Status = {status['status']}: {status['message']}")
             if status["status"] in ("Starting", "Queued", "Running"):
                 self.stdout.write("Waiting....")

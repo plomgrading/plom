@@ -322,6 +322,7 @@ class IDReaderService:
         *,
         recompute_heatmap: bool = True,
     ):
+        """Some debugging code, currently uncalled.  Deprecated?"""
         id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
         IDBoxProcessorService.compute_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
