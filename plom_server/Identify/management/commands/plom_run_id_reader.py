@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from tabulate import tabulate
 from time import sleep
@@ -50,7 +50,7 @@ class Command(BaseCommand):
     def wait_for_reader(self) -> None:
         self.stdout.write("Waiting for any background ID reader processes to finish")
         while True:
-            status = IDReaderService().get_id_reader_background_task_status()
+            status = IDReaderService.get_id_reader_background_chore__status()
             self.stdout.write(f"Status = {status['status']}: {status['message']}")
             if status["status"] in ("Starting", "Queued", "Running"):
                 self.stdout.write("Waiting....")

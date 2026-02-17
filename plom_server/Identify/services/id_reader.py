@@ -309,7 +309,9 @@ class IDReaderService:
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
 
-    def get_id_reader_background_task_status(self):
+    @staticmethod
+    def get_id_reader_background_chore_status() -> dict[str, str]:
+        """Return the status and human-readable message about the background ID reader chore."""
         try:
             idht_obj = IDReadingHueyTaskTracker.objects.exclude(obsolete=True).get()
         except ObjectDoesNotExist:
