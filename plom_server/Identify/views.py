@@ -28,7 +28,7 @@ class IDPredictionView(ManagerRequiredView):
         context.update({"id_reader_task_status": id_reader_task_status})
 
         # get all predictions.
-        all_predictions = IDReaderService().get_ID_predictions()
+        all_predictions = IDReaderService.get_ID_predictions()
         id_task_info = IDProgressService().get_all_id_task_info()
         # massage it into a table
         prediction_table = {}
@@ -86,7 +86,7 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
             v: get_idbox_rectangle(v) for v in id_version_counts.keys()
         }
         try:
-            IDReaderService().run_the_id_reader_in_background_via_huey(
+            IDReaderService.run_id_reader_in_background_via_huey(
                 request.user,
                 id_version_rectangles,
                 recompute_heatmap=True,

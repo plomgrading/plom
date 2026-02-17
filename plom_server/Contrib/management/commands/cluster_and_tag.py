@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import json
@@ -74,7 +74,7 @@ class Command(BaseCommand):
             return
         # now that we have the IDbox rectangle, we can use existing services to
         # extract them
-        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(
+        id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(
             [
                 idbox_location_rectangle[X]
                 for X in ["left_f", "top_f", "right_f", "bottom_f"]
@@ -90,15 +90,15 @@ class Command(BaseCommand):
 
         for paper_num, id_box_file in id_box_image_dict.items():
             id_page_file = Path(id_box_file)
-            ID_box: (
-                cv.typing.MatLike | None
-            ) = IDBoxProcessorService().resize_ID_box_and_extract_digit_strip(
-                id_page_file
+            ID_box: cv.typing.MatLike | None = (
+                IDBoxProcessorService.resize_ID_box_and_extract_digit_strip(
+                    id_page_file
+                )
             )
             if ID_box is None:
                 self.stdout.write(f"Trouble finding the ID box on paper {paper_num}")
                 continue
-            digit_images = IDBoxProcessorService().get_digit_images(
+            digit_images = IDBoxProcessorService.get_digit_images(
                 ID_box, student_id_length
             )
             if len(digit_images) != student_id_length:

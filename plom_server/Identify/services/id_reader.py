@@ -56,7 +56,8 @@ class IDReaderService:
 
     default_prenaming_prediction_confidence = _default_prenaming_prediction_confidence
 
-    def get_already_matched_sids(self) -> list:
+    @staticmethod
+    def get_already_matched_sids() -> list:
         """Return the list of all student IDs that have been matched with a paper."""
         sid_list = []
         id_task_service = IdentifyTaskService()
@@ -67,7 +68,8 @@ class IDReaderService:
                 sid_list.append(latest.student_id)
         return sid_list
 
-    def get_unidentified_papers(self) -> list:
+    @staticmethod
+    def get_unidentified_papers() -> list:
         """Return a list of all unidentified papers."""
         paper_list = []
         not_IDed_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
@@ -75,16 +77,18 @@ class IDReaderService:
             paper_list.append(task.paper.paper_number)
         return paper_list
 
-    def get_prenamed_paper_numbers(self) -> list[int]:
+    @staticmethod
+    def get_prenamed_paper_numbers() -> list[int]:
         return list(
             IDPrediction.objects.filter(predictor="prename").values_list(
                 "paper__paper_number", flat=True
             )
         )
 
+    @staticmethod
     @transaction.atomic
     def get_ID_predictions(
-        self, predictor: str | None = None
+        predictor: str | None = None,
     ) -> dict[int, dict[str, Any]] | dict[int, list[dict[str, Any]]]:
         """Get ID predictions for a particular predictor, or all predictions if no predictor specified.
 
@@ -130,9 +134,9 @@ class IDReaderService:
             )
         return allpred
 
+    @staticmethod
     @transaction.atomic
     def add_or_change_ID_prediction(
-        self,
         user: User,
         paper_num: int,
         student_id: str,
@@ -171,8 +175,9 @@ class IDReaderService:
 
         IdentifyTaskService.update_task_priority(paper)
 
+    @classmethod
     def add_or_change_ID_prediction_cmd(
-        self,
+        cls,
         username: str,
         paper_num: int,
         student_id: str,
@@ -199,7 +204,7 @@ class IDReaderService:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
             ) from e
-        self.add_or_change_ID_prediction(
+        cls.add_or_change_ID_prediction(
             user, paper_num, student_id, certainty, predictor
         )
 
@@ -303,14 +308,14 @@ class IDReaderService:
             # Some existing ID tasks will need their priorities updated too.
             PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
-    def run_the_id_reader_in_foreground(
-        self,
+    @staticmethod
+    def run_id_reader_in_foreground(
         user: User,
         box_versions: dict[int, dict[str, float] | None],
         *,
         recompute_heatmap: bool = True,
     ):
-        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
+        id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
         IDBoxProcessorService.compute_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
@@ -325,8 +330,8 @@ class IDReaderService:
 
         return {"status": idht_obj.get_status_display(), "message": idht_obj.message}
 
-    def run_the_id_reader_in_background_via_huey(
-        self,
+    @staticmethod
+    def run_id_reader_in_background_via_huey(
         user: User,
         box_versions: dict[int, dict[str, float] | None],
         recompute_heatmap: bool | None = True,
@@ -414,7 +419,7 @@ def huey_id_reading_task(
         tracker_pk, "ID Reading task has started. Getting ID boxes."
     )
 
-    id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
+    id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
         IDReadingHueyTaskTracker.set_message_to_user(
@@ -446,9 +451,9 @@ def huey_id_reading_task(
 class IDBoxProcessorService:
     """Service for dealing with the ID box and processing it into ID predictions."""
 
+    @staticmethod
     @transaction.atomic
     def save_all_id_boxes(
-        self,
         box_versions: dict[int, dict[str, float] | None],
         *,
         exclude_prenamed_papers: bool = True,
@@ -481,7 +486,7 @@ class IDBoxProcessorService:
         id_page_number = SpecificationService.get_id_page_number()
         # but exclude any prenamed papers
         if exclude_prenamed_papers:
-            exclude_papers = IDReaderService().get_prenamed_paper_numbers()
+            exclude_papers = IDReaderService.get_prenamed_paper_numbers()
         else:
             exclude_papers = []
         # Note this gets all id pages regardless of version
@@ -801,24 +806,22 @@ class IDBoxProcessorService:
     @classmethod
     def run_best_guess_predictor(cls, user: User, probabilities: dict) -> None:
         """Runs the best-guess predictor and saves its results."""
-        id_reader_service = IDReaderService()
         best_guess_predictions = cls._best_guess_predictor(probabilities)
         for prediction in best_guess_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            IDReaderService.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLBestGuess"
             )
 
     @classmethod
     def run_greedy(cls, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used
-        id_reader_service = IDReaderService()
-        for ided_stu in id_reader_service.get_already_matched_sids():
+        for ided_stu in IDReaderService.get_already_matched_sids():
             try:
                 student_ids.remove(ided_stu)
             except ValueError:
                 pass
         # do not use papers that are already ID'd
-        unidentified_papers = id_reader_service.get_unidentified_papers()
+        unidentified_papers = IDReaderService.get_unidentified_papers()
         papers_to_id = [n for n in unidentified_papers if n in probabilities]
         if len(papers_to_id) == 0 or len(student_ids) == 0:
             raise IndexError(
@@ -828,21 +831,20 @@ class IDBoxProcessorService:
         # Different predictors go here.
         greedy_predictions = cls._greedy_predictor(student_ids, probabilities)
         for prediction in greedy_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            IDReaderService.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLGreedy"
             )
 
     @classmethod
     def run_lap_solver(cls, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used.
-        id_reader_service = IDReaderService()
-        for ided_stu in id_reader_service.get_already_matched_sids():
+        for ided_stu in IDReaderService.get_already_matched_sids():
             try:
                 student_ids.remove(ided_stu)
             except ValueError:
                 pass
         # do not use papers that are already ID'd
-        unidentified_papers = id_reader_service.get_unidentified_papers()
+        unidentified_papers = IDReaderService.get_unidentified_papers()
         papers_to_id = [n for n in unidentified_papers if n in probabilities]
         if len(papers_to_id) == 0 or len(student_ids) == 0:
             raise IndexError(
@@ -851,7 +853,7 @@ class IDBoxProcessorService:
             )
         lap_predictions = cls._lap_predictor(papers_to_id, student_ids, probabilities)
         for prediction in lap_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            IDReaderService.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLLAP"
             )
 

@@ -35,7 +35,7 @@ class Command(BaseCommand):
     def run_the_reader(self, user_obj, rectangle: dict[str, float]) -> None:
         try:
             self.stdout.write("Running the ID reader")
-            IDReaderService().run_the_id_reader_in_background_via_huey(
+            IDReaderService.run_id_reader_in_background_via_huey(
                 user_obj,
                 {1: rectangle},
                 recompute_heatmap=True,
@@ -61,7 +61,7 @@ class Command(BaseCommand):
                 break
 
     def list_predictions(self) -> None:
-        all_predictions = IDReaderService().get_ID_predictions()
+        all_predictions = IDReaderService.get_ID_predictions()
         if not all_predictions:
             self.stderr.write("No ID predictions")
             return
