@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2024-2025 Deep Shah
+# Copyright (C) 2026 Aidan Murphy
 
 """Utilities to load the digit-prediction model."""
 
@@ -24,8 +25,11 @@ CNN_MODEL_SOURCE_PATH = "../../mnist_emnist_blank_cnn_v1.onnx"
 # Set this to "HUGGINGFACE" to download from the Hub, or "LOCAL" to copy from a local path.
 MODEL_SOURCE_TYPE = "HUGGINGFACE"
 
+# models are cached locally - this is the default location
+DEFAULT_MODEL_CACHE = Path("model_cache")
 
-def load_model(where=Path("model_cache")):
+
+def load_model(where=DEFAULT_MODEL_CACHE):
     """Load the digit-predictor TorchScript model from the cache."""
     filename = where / CNN_MODEL_FILENAME
     if not filename.exists():
@@ -45,12 +49,12 @@ def load_model(where=Path("model_cache")):
         raise
 
 
-def is_model_present(where=Path("model_cache")):
+def is_model_present(where=DEFAULT_MODEL_CACHE):
     """Checks if the ML model is available in the cache."""
     return (where / CNN_MODEL_FILENAME).exists()
 
 
-def copy_model_to_cache(where=Path("model_cache")):
+def copy_model_to_cache(where=DEFAULT_MODEL_CACHE):
     """Copy the local model file to the model_cache directory."""
     where.mkdir(exist_ok=True)
     source_file_path = (
@@ -71,7 +75,7 @@ def copy_model_to_cache(where=Path("model_cache")):
     return True
 
 
-def download_model_from_hf(where=Path("model_cache")):
+def download_model_from_hf(where=DEFAULT_MODEL_CACHE):
     """Download the model from Hugging Face Hub and place it in our cache."""
     where.mkdir(exist_ok=True)
     destination_file_path = where / CNN_MODEL_FILENAME
@@ -90,7 +94,7 @@ def download_model_from_hf(where=Path("model_cache")):
     return True
 
 
-def ensure_model_available(where=Path("model_cache")):
+def ensure_model_available(where=DEFAULT_MODEL_CACHE):
     """Check if model is present in cache, and if not, get it based on MODEL_SOURCE_TYPE."""
     if is_model_present(where):
         print("Model is already present in cache; no action required.")
