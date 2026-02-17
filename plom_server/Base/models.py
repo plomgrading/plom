@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 import logging
@@ -166,8 +166,16 @@ class HueyTaskTracker(models.Model):
                 ).update(huey_id=huey_id, status=cls.QUEUED)
 
     @classmethod
-    def transition_to_complete(cls, pk):
+    def transition_to_complete(cls, pk: int, *, msg: str | None = None) -> None:
         """Move to the complete state.
+
+        Args:
+            pk: the ID of a tracker to transition.
+
+        Keyword Args:
+            msg: set the tracker's message.  If omitted (or ``None``),
+                we won't change it.  If you want it to be blank, set
+                it to the empty string.
 
         We don't care if the tracker is obsolete or not; that is the
         callers concern.
@@ -182,6 +190,8 @@ class HueyTaskTracker(models.Model):
             )
             tr.huey_id = None
             tr.status = cls.COMPLETE
+            if msg is not None:
+                tr.message = msg
             tr.save()
 
     def set_as_obsolete(self):

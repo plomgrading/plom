@@ -431,10 +431,9 @@ def huey_id_reading_task(
     id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
-        IDReadingHueyTaskTracker.set_message_to_user(
-            tracker_pk, "No ID-boxes found. Cannot make predictions."
+        HueyTaskTracker.transition_to_complete(
+            tracker_pk, msg="No ID-boxes found. Cannot make predictions."
         )
-        HueyTaskTracker.transition_to_complete(tracker_pk)
         return True
 
     IDReadingHueyTaskTracker.set_message_to_user(
@@ -454,9 +453,7 @@ def huey_id_reading_task(
     # short pause, unlikely to help w/ Issue #4165 (cannot reproduce)
     time.sleep(0.1)
 
-    IDReadingHueyTaskTracker.set_message_to_user(tracker_pk, "ID predictions complete.")
-
-    HueyTaskTracker.transition_to_complete(tracker_pk)
+    HueyTaskTracker.transition_to_complete(tracker_pk, msg="ID predictions complete.")
     return True
 
 
