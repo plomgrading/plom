@@ -270,6 +270,12 @@ STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)
 
 
+# Machine learning models (.onnx)
+# ------------------------------------------------------------
+#
+# Similar to the "dynamic" static stuff, these are downloaded at runtime and cached.
+PLOM_MODEL_CACHE = PLOM_BASE_DIR / "model_cache"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

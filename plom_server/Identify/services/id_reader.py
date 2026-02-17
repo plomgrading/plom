@@ -6,6 +6,7 @@
 # Copyright (C) 2020-2026 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Deep Shah
+# Copyright (C) 2026 Aidan Murphy
 
 import json
 from pathlib import Path
@@ -713,7 +714,7 @@ class IDBoxProcessorService:
         Returns:
             dict: A dictionary which gives the probability that the number in the ID on a given paper is a particular digit.
         """
-        prediction_model = load_model()
+        prediction_model = load_model(where=settings.PLOM_MODEL_CACHE)
         probabilities = {}
         for paper_number, image_file in image_file_paths.items():
             prob_lists = self.get_digit_probabilities(
@@ -742,8 +743,8 @@ class IDBoxProcessorService:
         that the given number in the ID on the given paper is a particular digit.
         The resulting heatmap is saved for use by predictor algorithms.
         """
-        if not is_model_present():
-            ensure_model_available()
+        if not is_model_present(where=settings.PLOM_MODEL_CACHE):
+            ensure_model_available(where=settings.PLOM_MODEL_CACHE)
         student_id_length = 8
         heatmap = self.compute_probability_heatmap_for_idbox_images(
             id_box_files, student_id_length
