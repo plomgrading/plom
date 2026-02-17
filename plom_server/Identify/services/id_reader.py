@@ -78,7 +78,14 @@ class IDReaderService:
         return paper_list
 
     @staticmethod
-    def get_prenamed_paper_numbers() -> list[int]:
+    def _get_prenamed_paper_numbers() -> list[int]:
+        """Get a list of paper numbers that are prenamed according to the IDPredictions table.
+
+        Careful with this versus `StagingStudentService.get_prenamed_papers`
+        which consults the raw classlist.  This code looks at the predictions
+        list.  Issue #4164.  I'm not entirely clear of the distinction but it
+        seems a multiple sources of truth problem.
+        """
         return list(
             IDPrediction.objects.filter(predictor="prename").values_list(
                 "paper__paper_number", flat=True
@@ -240,7 +247,7 @@ class IDReaderService:
                 (elsewhere in the system - eg ID page uploaded or changed)
                 and so need their prename-predictions updated.
         """
-        # get dict of all prenamed papers (as per classlist)
+        # get dict of prenamed papers (as per classlist, not IDPredictions)
         prenamed_papers = StagingStudentService.get_prenamed_papers()
 
         # find existing prename-predictions from these papers
@@ -486,7 +493,7 @@ class IDBoxProcessorService:
         id_page_number = SpecificationService.get_id_page_number()
         # but exclude any prenamed papers
         if exclude_prenamed_papers:
-            exclude_papers = IDReaderService.get_prenamed_paper_numbers()
+            exclude_papers = IDReaderService._get_prenamed_paper_numbers()
         else:
             exclude_papers = []
         # Note this gets all id pages regardless of version
