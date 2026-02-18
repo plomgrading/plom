@@ -31,8 +31,6 @@
                         <div class="card-body p-5 text-center mt-4 mb-5">
                             {% include "base/plom_logo.html" with width="276px" height="93px" %}
                             <p class="fw-light mb-5">v{{ plom_version }}</p>
-                            <h3 class="fw-bold mt-5 mb-2">LOGIN</h3>
-                            <p class="mb-5">Please enter your login and password!</p>
                             <form method="post" action="">
                                 {% csrf_token %}
                                 <div class="form-floating mb-4">
@@ -58,7 +56,7 @@
                                 <button class="btn btn-lg fw-light text-centre border border-2 bg-plom-teal"
                                         type="submit">
                                     <span class="m-5"><span class="bi-box-arrow-in-right"></span>
-                                LOGIN</span>
+                                Login</span>
                             </button>
                         </form>
                         <br />
