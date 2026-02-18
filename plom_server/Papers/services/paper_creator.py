@@ -49,8 +49,10 @@ def huey_populate_whole_db(
         block or detect whether a task has finished".
     """
     assert task is not None
-    PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     N = len(qv_map)
+    PopulateEvacuateDBChore.transition_to_running(
+        tracker_pk, task.id, msg=f"Populating {N} papers in database..."
+    )
 
     id_page_number = SpecificationService.get_id_page_number()
     dnm_page_numbers = SpecificationService.get_dnm_pages()
@@ -113,7 +115,9 @@ def huey_evacuate_whole_db(
         block or detect whether a task has finished".
     """
     assert task is not None
-    PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
+    PopulateEvacuateDBChore.transition_to_running(
+        tracker_pk, task.id, msg="Deleting all papers from database..."
+    )
     all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
     N = all_papers.count()
     for idx, paper_obj in enumerate(all_papers):
