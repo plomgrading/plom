@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2018-2022 Andrew Rechnitzer
-   Copyright (C) 2022-2025 Colin B. Macdonald
+   Copyright (C) 2022-2026 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -58,11 +58,19 @@ need to re-scan a page.
 Collisions
 ..........
 
-"Good collisions" are caused for example by re-scanning a page.
-These can be dealt with using the web interface, for example by discarding one of them.
-"Bad collisions" come from accidental reuse of papers e.g., from double-printing.
-This is a more serious problem, see :doc:`faq`.
+QR codes on papers are intended to be unique.
+A _collision_ occurs when Plom interprets two uploaded pages as having
+the same QR codes.
+Collisions can occur either within one bundle or between a page of
+bundle and pages that have already been pushed.
 
+"Good collisions" are caused for example by re-scanning a page.
+These can be dealt with using the web interface, for example by
+discarding one of them.
+
+"Bad collisions" come from accidental reuse of papers, most commonly
+because of double-printing.
+This is a more serious problem, see :doc:`faq`.
 
 
 Technical docs
