@@ -543,6 +543,9 @@ class DemoBundleCreationService:
                                 pdf_document, paper["id"], paper["name"]
                             )
 
+                    if paper_number in duplicate_pages:
+                        self.append_duplicate_page(pdf_document)
+
                     if paper_number in wrong_version:
                         self.make_last_page_with_wrong_version(
                             pdf_document, paper_number
@@ -562,8 +565,6 @@ class DemoBundleCreationService:
                             paper["id"],
                             scrap_paper_path,
                         )
-                    if paper_number in duplicate_pages:
-                        self.append_duplicate_page(pdf_document)
 
                     # scribble on the pages
                     scribble_pages(pdf_document)
@@ -660,7 +661,7 @@ class DemoBundleCreationService:
                 extra_page_papers=bundle["extra_page_papers"],
                 scrap_page_papers=bundle["scrap_page_papers"],
                 garbage_page_papers=bundle["garbage_page_papers"],
-                duplicate_pages=bundle["duplicate_pages"],
+                duplicate_pages=bundle["duplicate_page_papers"],
                 duplicate_qr=bundle["duplicate_qr_papers"],
                 wrong_version=bundle["wrong_version_papers"],
                 wrong_assessment=bundle["wrong_assessment_papers"],

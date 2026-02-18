@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from io import BytesIO
 
@@ -215,7 +215,8 @@ class QRServiceTest(TestCase):
         for img in (self.img_col1, self.img_col2):
             img = StagingImage.objects.get(pk=img.pk)
             self.assertEqual(img.image_type, StagingImage.ERROR)
-            self.assertIn("collides", img.error_reason)
+            self.assertIn("same QR codes", img.error_reason)
+            self.assertIn("collision", img.error_reason)
 
     def test_bundle_no_qr(self):
         """Test exception is correctly raised when attempting to push unread QR bundle."""
@@ -229,9 +230,9 @@ class QRServiceTest(TestCase):
         # Invalid QR
         img = StagingImage.objects.get(pk=self.img_invalid_qr.pk)
         self.assertEqual(img.image_type, StagingImage.ERROR)
-        self.assertIn("Invalid qr-code", img.error_reason)
+        self.assertIn("Invalid QR code", img.error_reason)
 
         # Inconsistent page_types
         img = StagingImage.objects.get(pk=self.img_inconsistent_types.pk)
         self.assertEqual(img.image_type, StagingImage.ERROR)
-        self.assertIn("Inconsistent qr-codes", img.error_reason)
+        self.assertIn("Inconsistent QR codes", img.error_reason)

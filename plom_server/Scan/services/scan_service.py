@@ -19,6 +19,7 @@ from datetime import datetime
 from io import BytesIO
 from math import ceil
 from pathlib import Path
+from textwrap import shorten
 from typing import Any
 
 from django.conf import settings
@@ -1353,11 +1354,15 @@ class ScanService:
                 else:
                     label += " - " + _("no data")
             elif status == "error":
-                label = f"error: {info['reason']}"
+                # "reason" might be long and have HTML, see StagingImage model docs
+                __ = shorten(info["reason"], 42, placeholder="\N{HORIZONTAL ELLIPSIS}")
+                label = f"error: {__}"
             elif status == "unread":
                 label = "qr-unread"
             elif status == "discard":
-                label = f"discard: {info['reason']}"
+                # "reason" might be quite long
+                __ = shorten(info["reason"], 42, placeholder="\N{HORIZONTAL ELLIPSIS}")
+                label = f"discard: {__}"
             else:
                 raise RuntimeError(f"Programming error: unexpected case pg={pg}")
                 # label = "unexpected error"
