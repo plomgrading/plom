@@ -435,7 +435,7 @@ def huey_id_reading_task(
         )
         return True
 
-    IDReadingHueyTaskTracker.set_message_to_user(
+    HueyTaskTracker.set_message(
         tracker_pk, "ID boxes from page images saved. Computing predictions."
     )
 

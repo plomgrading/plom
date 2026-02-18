@@ -239,6 +239,12 @@ class HueyTaskTracker(models.Model):
         with transaction.atomic():
             cls.objects.filter(status=cls.ERROR).update(obsolete=True)
 
+    @classmethod
+    def set_message(cls, pk: int, msg: str) -> None:
+        """Set the user-readible message string."""
+        with transaction.atomic(durable=True):
+            cls.objects.select_for_update().filter(pk=pk).update(message=msg)
+
 
 # ---------------------------------
 # Define a singleton model as per

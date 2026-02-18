@@ -73,7 +73,7 @@ def huey_populate_whole_db(
             ) from e
 
         if idx % 16 == 0:
-            PopulateEvacuateDBChore.set_message_to_user(
+            PopulateEvacuateDBChore.set_message(
                 tracker_pk, f"Populated {idx} of {N} papers in database"
             )
             print(f"Populated {idx} of {N} papers in database")
@@ -87,11 +87,10 @@ def huey_populate_whole_db(
     #     )
     #     return True
 
-    PopulateEvacuateDBChore.set_message_to_user(
-        tracker_pk, f"Populated all {N} papers in database"
+    PopulateEvacuateDBChore.transition_to_complete(
+        tracker_pk, msg=f"Populated all {N} papers in database"
     )
     print(f"Populated all {N} papers in database")
-    PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
     return True
 
 
@@ -122,7 +121,7 @@ def huey_evacuate_whole_db(
             fp.delete()
         paper_obj.delete()
         if idx % 16 == 0:
-            PopulateEvacuateDBChore.set_message_to_user(
+            PopulateEvacuateDBChore.set_message(
                 tracker_pk, f"Deleted {idx} of {N} papers from database"
             )
             print(f"Deleted {idx} of {N} papers from database")
@@ -133,11 +132,10 @@ def huey_evacuate_whole_db(
     # with transaction.atomic():
     #     Paper.objects.all().delete()
 
-    PopulateEvacuateDBChore.set_message_to_user(
-        tracker_pk, f"Deleted all {N} papers from database"
+    PopulateEvacuateDBChore.transition_to_complete(
+        tracker_pk, msg=f"Deleted all {N} papers from database"
     )
     print(f"Deleted all {N} papers from database")
-    PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
     return True
 
 
