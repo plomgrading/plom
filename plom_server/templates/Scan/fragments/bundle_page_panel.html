@@ -46,22 +46,7 @@
                                 <li>paper: {{ current_page.info.paper_number }}</li>
                                 <li>page: {{ current_page.info.page_number }}</li>
                                 <li>version: {{ current_page.info.version }}</li>
-                                <li>rotation: {{ current_page.rotation }}</li>
-                                <li>
-                                    <button type="button"
-                                            class="btn btn-outline-secondary dropdown-toggle align-baseline"
-                                            data-bs-toggle="dropdown">
-                                        {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                    </ul>
-                                </li>
                             </ul>
-                            <details>
-                                <summary>Log</summary>
-                                <small class="text-muted">{{ current_page.history }}</small>
-                            </details>
                         </div>
                     {% elif current_page.status == 'extra' %}
                         <div class="alert alert-info my-2 p-2">
@@ -69,98 +54,57 @@
                             <ul class="mb-0">
                                 <li>paper: {{ current_page.info.paper_number }}</li>
                                 <li>questions: {{ current_page.info.question_list_html | safe }}</li>
-                                <li>rotation: {{ current_page.rotation }}</li>
-                                {% if current_page.qr_codes %}
-                                    <li>
-                                        <button type="button"
-                                                class="btn btn-outline-secondary dropdown-toggle align-baseline"
-                                                data-bs-toggle="dropdown">
-                                            {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                        </ul>
-                                    </li>
-                                {% else %}
-                                    <li>No qr-codes read</li>
-                                {% endif %}
                             </ul>
-                            <details>
-                                <summary>Log</summary>
-                                <small class="text-muted">{{ current_page.history }}</small>
-                            </details>
                         </div>
+                        <p class="mb-0">rotation: {{ current_page.rotation }}</p>
                     {% elif current_page.status == 'unknown' %}
                         <div class="alert alert-warning my-2 p-2">
                             <h5 class="alert-heading">Unknown</h5>
-                            <ul class="mb-0">
-                                <li>No qr-codes could be read</li>
-                            </ul>
-                            <details>
-                                <summary>Log</summary>
-                                <small class="text-muted">{{ current_page.history }}</small>
-                            </details>
                         </div>
                     {% elif current_page.status == 'discard' %}
-                        <div class="alert alert-dark my-2 p-2">
+                        <div class="alert alert-dark mt-2 mb-1 p-2">
                             <h5 class="alert-heading">Discard</h5>
-                            <ul class="mb-0">
-                                <li>{{ current_page.info.reason }}</li>
-                                <li>rotation: {{ current_page.rotation }}</li>
-                                {% if current_page.qr_codes %}
-                                    <li>
-                                        <button type="button"
-                                                class="btn btn-outline-secondary dropdown-toggle align-baseline"
-                                                data-bs-toggle="dropdown">
-                                            {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                        </ul>
-                                    </li>
-                                {% else %}
-                                    <li>No qr-codes read</li>
-                                {% endif %}
-                            </ul>
-                            <details>
-                                <summary>Log</summary>
-                                <small class="text-muted">{{ current_page.history }}</small>
-                            </details>
+                            {{ current_page.info.reason }}
                         </div>
                     {% elif current_page.status == 'error' %}
                         <div class="alert alert-danger my-2 p-2">
                             <h5 class="alert-heading">Error</h5>
-                            <ul class="mb-0">
-                                <li>{{ current_page.info.reason|safe }}</li>
-                                <li>rotation: {{ current_page.rotation }}</li>
-                                <li>
-                                    <button type="button"
-                                            class="btn btn-outline-secondary dropdown-toggle align-baseline"
-                                            data-bs-toggle="dropdown">
-                                        {{ current_page.qr_codes|length }} qr-code{{ current_page.qr_codes|length|pluralize }}
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code }}</li>{% endfor %}
-                                    </ul>
-                                </li>
-                            </ul>
-                            <details>
-                                <summary>Log</summary>
-                                <small class="text-muted">{{ current_page.history }}</small>
-                            </details>
+                            {{ current_page.info.reason|safe }}
                         </div>
                     {% elif current_page.status == 'unread' %}
                         <div class="alert alert-dark my-2">
                             <h5 class="alert-heading">Unread</h5>
                             <ul>
+                                <!-- TODO? -->
                                 <li>Have not read qr-codes yet</li>
                             </ul>
-                            <details>
-                                <summary>Log</summary>
-                                <small class="text-muted">{{ current_page.history }}</small>
-                            </details>
                         </div>
                     {% endif %}
+                    {% if current_page.qr_codes %}
+                        <details>
+                            <summary>{{ current_page.qr_codes|length }} QR code{{ current_page.qr_codes|length|pluralize }}</summary>
+                            <small class="text-muted">
+                                {% for crn, code in current_page.qr_codes.items %}
+                                    <details class="ps-3">
+                                        <summary>{{ crn }}: {{ code.tpv }}</summary>
+                                        <p class="ps-4 mb-0">
+                                            {% for k, v in code.items %}
+                                                {{ k }}: {{ v }}
+                                                <br />
+                                            {% endfor %}
+                                        </p>
+                                    </details>
+                                {% endfor %}
+                            </small>
+                        </details>
+                    {% else %}
+                        <p class="mb-0">No QR code information</p>
+                    {% endif %}
+                    <p class="mb-0">rotation: {{ current_page.rotation }}</p>
+                    <details>
+                        <summary>Log</summary>
+                        <small class="text-muted">{{ current_page.history }}</small>
+                    </details>
                     {% if is_push_locked %}
                         <!-- loaded page after another tab pushed for example -->
                         <div class="alert alert-warning text-center my-2">Bundle is locked</div>
