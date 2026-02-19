@@ -2,10 +2,10 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
-from django.db import models, transaction
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils import timezone
 
 from plom_server.Base.models import HueyTaskTracker
@@ -113,13 +113,12 @@ class IDReadingHueyTaskTracker(HueyTaskTracker):
 
     Note that this inherits fields from the base class table.  Note that
     this has no additional fields.
+
+    This class seems to exist mainly to be unique.  Perhaps the code can
+    be refactored to use the vanilla HueyTaskTracker instead.
     """
 
-    @classmethod
-    def set_message_to_user(cls, pk, message: str):
-        """Set the user-readible message string."""
-        with transaction.atomic(durable=True):
-            cls.objects.select_for_update().filter(pk=pk).update(message=message)
+    pass
 
 
 class IDRectangle(models.Model):

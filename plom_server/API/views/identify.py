@@ -49,20 +49,18 @@ class GetIDPredictions(APIView):
             if returning all ID predictions, or a dict of dicts if returning
             only predictions for a single predictor.
         """
-        id_reader_service = IDReaderService()
         if not predictor:
-            predictions = id_reader_service.get_ID_predictions()
+            predictions = IDReaderService.get_ID_predictions()
         else:
-            predictions = id_reader_service.get_ID_predictions(predictor=predictor)
+            predictions = IDReaderService.get_ID_predictions(predictor=predictor)
         return Response(predictions)
 
     def put(self, request):
         """Add or change ID predictions."""
         data = request.data
         user = request.user
-        id_reader_service = IDReaderService()
         for paper_num in data:
-            id_reader_service.add_or_change_ID_prediction(
+            IDReaderService.add_or_change_ID_prediction(
                 user,
                 int(paper_num),
                 data[paper_num]["student_id"],

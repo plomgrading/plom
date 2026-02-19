@@ -60,7 +60,12 @@ class StagingStudentService:
 
     @staticmethod
     def get_prenamed_papers() -> dict[int, tuple[str, str]]:
-        """Return dict of prenamed papers {paper_number: (student_id, student_name)}."""
+        """Return dict of prenamed papers keyed by paper number.
+
+        Note this info is based on the current classlist.  Later in the Plom
+        workflow the prename info will likely be copied into ``IDPrediction``
+        objects.  Be careful which one you access.  See Issue #4164 for example.
+        """
         return {
             s_obj.paper_number: (s_obj.student_id, s_obj.student_name)
             for s_obj in StagingStudent.objects.filter(paper_number__isnull=False)

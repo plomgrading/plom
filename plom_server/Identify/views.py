@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.http import HttpRequest, HttpResponse, Http404
@@ -24,12 +24,11 @@ from .services import IDReaderService, IDProgressService
 class IDPredictionView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        # get the status of any running id reading task
-        id_reader_task_status = IDReaderService().get_id_reader_background_task_status()
+        id_reader_task_status = IDReaderService.get_id_reader_background_chore_status()
         context.update({"id_reader_task_status": id_reader_task_status})
 
         # get all predictions.
-        all_predictions = IDReaderService().get_ID_predictions()
+        all_predictions = IDReaderService.get_ID_predictions()
         id_task_info = IDProgressService().get_all_id_task_info()
         # massage it into a table
         prediction_table = {}
@@ -87,7 +86,7 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
             v: get_idbox_rectangle(v) for v in id_version_counts.keys()
         }
         try:
-            IDReaderService().run_the_id_reader_in_background_via_huey(
+            IDReaderService.run_id_reader_in_background_via_huey(
                 request.user,
                 id_version_rectangles,
                 recompute_heatmap=True,

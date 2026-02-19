@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 import logging
@@ -77,17 +77,17 @@ class HueyTaskTracker(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     obsolete = models.BooleanField(default=False)
 
-    def transition_back_to_todo(self):
+    def transition_back_to_todo(self) -> None:
         # TODO: which states are allowed to transition here?
         self.huey_id = None
         self.status = self.TO_DO
         self.save()
 
-    def reset_to_do(self):
+    def reset_to_do(self) -> None:
         # subclasses might subclass to do more
         self.transition_back_to_todo()
 
-    def _transition_to_starting(self):
+    def _transition_to_starting(self) -> None:
         assert self.status == self.TO_DO, (
             f"Tracker cannot transition from {self.get_status_display()}"
             " to Starting (only from To_Do state)"
@@ -100,8 +100,19 @@ class HueyTaskTracker(models.Model):
         self.save()
 
     @classmethod
-    def transition_to_running(cls, pk, huey_id):
+    def transition_to_running(
+        cls, pk: int, huey_id: str, *, msg: str | None = None
+    ) -> None:
         """Move to the Running state in a safe way using locking.
+
+        Args:
+            pk: the ID of a tracker to transition.
+            huey_id: a uuid of the huey task that is now running.
+
+        Keyword Args:
+            msg: set the tracker's message.  If omitted (or ``None``),
+                we won't change it.  If you want it to be blank, set
+                it to the empty string.
 
         We don't care if the tracker is obsolete or not; that is the
         callers concern.
@@ -117,10 +128,12 @@ class HueyTaskTracker(models.Model):
             # Note: could use an inline update if we didn't have the assert
             tr.huey_id = huey_id
             tr.status = cls.RUNNING
+            if msg is not None:
+                tr.message = msg
             tr.save()
 
     @classmethod
-    def transition_to_queued_or_running(cls, pk, huey_id):
+    def transition_to_queued_or_running(cls, pk: int, huey_id: str) -> None:
         """Move to the Queued state using locking, or a no-op if we're already Running.
 
         We don't care if the tracker is obsolete or not; that is the
@@ -151,7 +164,9 @@ class HueyTaskTracker(models.Model):
             # tr.save()
 
     @classmethod
-    def bulk_transition_to_queued_or_running(cls, pk_huey_id_pair_list):
+    def bulk_transition_to_queued_or_running(
+        cls, pk_huey_id_pair_list: list[tuple[int, str]]
+    ) -> None:
         """Move to the Queued state using locking, or a no-op if we're already Running.
 
         A bulk version of method 'transition_to_queued_or_running'. Note that it
@@ -166,8 +181,16 @@ class HueyTaskTracker(models.Model):
                 ).update(huey_id=huey_id, status=cls.QUEUED)
 
     @classmethod
-    def transition_to_complete(cls, pk):
+    def transition_to_complete(cls, pk: int, *, msg: str | None = None) -> None:
         """Move to the complete state.
+
+        Args:
+            pk: the ID of a tracker to transition.
+
+        Keyword Args:
+            msg: set the tracker's message.  If omitted (or ``None``),
+                we won't change it.  If you want it to be blank, set
+                it to the empty string.
 
         We don't care if the tracker is obsolete or not; that is the
         callers concern.
@@ -182,6 +205,8 @@ class HueyTaskTracker(models.Model):
             )
             tr.huey_id = None
             tr.status = cls.COMPLETE
+            if msg is not None:
+                tr.message = msg
             tr.save()
 
     def set_as_obsolete(self):
@@ -213,6 +238,12 @@ class HueyTaskTracker(models.Model):
         """Set every single task with status=error as obsolete."""
         with transaction.atomic():
             cls.objects.filter(status=cls.ERROR).update(obsolete=True)
+
+    @classmethod
+    def set_message(cls, pk: int, msg: str) -> None:
+        """Set the user-readible message string."""
+        with transaction.atomic(durable=True):
+            cls.objects.select_for_update().filter(pk=pk).update(message=msg)
 
 
 # ---------------------------------

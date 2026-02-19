@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from tabulate import tabulate
 from time import sleep
@@ -35,7 +35,7 @@ class Command(BaseCommand):
     def run_the_reader(self, user_obj, rectangle: dict[str, float]) -> None:
         try:
             self.stdout.write("Running the ID reader")
-            IDReaderService().run_the_id_reader_in_background_via_huey(
+            IDReaderService.run_id_reader_in_background_via_huey(
                 user_obj,
                 {1: rectangle},
                 recompute_heatmap=True,
@@ -50,7 +50,7 @@ class Command(BaseCommand):
     def wait_for_reader(self) -> None:
         self.stdout.write("Waiting for any background ID reader processes to finish")
         while True:
-            status = IDReaderService().get_id_reader_background_task_status()
+            status = IDReaderService.get_id_reader_background_chore_status()
             self.stdout.write(f"Status = {status['status']}: {status['message']}")
             if status["status"] in ("Starting", "Queued", "Running"):
                 self.stdout.write("Waiting....")
@@ -61,7 +61,7 @@ class Command(BaseCommand):
                 break
 
     def list_predictions(self) -> None:
-        all_predictions = IDReaderService().get_ID_predictions()
+        all_predictions = IDReaderService.get_ID_predictions()
         if not all_predictions:
             self.stderr.write("No ID predictions")
             return

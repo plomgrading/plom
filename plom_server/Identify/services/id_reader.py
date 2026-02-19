@@ -9,6 +9,7 @@
 # Copyright (C) 2026 Aidan Murphy
 
 import json
+import time
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -46,12 +47,19 @@ from ..services import IdentifyTaskService, ClasslistService
 _default_prenaming_prediction_confidence = 0.9
 
 
+def _np_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
+    x = x - np.max(x, axis=axis, keepdims=True)
+    e = np.exp(x)
+    return e / np.sum(e, axis=axis, keepdims=True)
+
+
 class IDReaderService:
     """Functions for ID reading and related helper functions."""
 
     default_prenaming_prediction_confidence = _default_prenaming_prediction_confidence
 
-    def get_already_matched_sids(self) -> list:
+    @staticmethod
+    def get_already_matched_sids() -> list:
         """Return the list of all student IDs that have been matched with a paper."""
         sid_list = []
         id_task_service = IdentifyTaskService()
@@ -62,7 +70,8 @@ class IDReaderService:
                 sid_list.append(latest.student_id)
         return sid_list
 
-    def get_unidentified_papers(self) -> list:
+    @staticmethod
+    def get_unidentified_papers() -> list:
         """Return a list of all unidentified papers."""
         paper_list = []
         not_IDed_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
@@ -70,16 +79,25 @@ class IDReaderService:
             paper_list.append(task.paper.paper_number)
         return paper_list
 
-    def get_prenamed_paper_numbers(self) -> list[int]:
+    @staticmethod
+    def _get_prenamed_paper_numbers() -> list[int]:
+        """Get a list of paper numbers that are prenamed according to the IDPredictions table.
+
+        Careful with this versus `StagingStudentService.get_prenamed_papers`
+        which consults the raw classlist.  This code looks at the predictions
+        list.  Issue #4164.  I'm not entirely clear of the distinction but it
+        seems a multiple sources of truth problem.
+        """
         return list(
             IDPrediction.objects.filter(predictor="prename").values_list(
                 "paper__paper_number", flat=True
             )
         )
 
+    @staticmethod
     @transaction.atomic
     def get_ID_predictions(
-        self, predictor: str | None = None
+        predictor: str | None = None,
     ) -> dict[int, dict[str, Any]] | dict[int, list[dict[str, Any]]]:
         """Get ID predictions for a particular predictor, or all predictions if no predictor specified.
 
@@ -125,9 +143,9 @@ class IDReaderService:
             )
         return allpred
 
+    @staticmethod
     @transaction.atomic
     def add_or_change_ID_prediction(
-        self,
         user: User,
         paper_num: int,
         student_id: str,
@@ -166,8 +184,9 @@ class IDReaderService:
 
         IdentifyTaskService.update_task_priority(paper)
 
+    @classmethod
     def add_or_change_ID_prediction_cmd(
-        self,
+        cls,
         username: str,
         paper_num: int,
         student_id: str,
@@ -194,7 +213,7 @@ class IDReaderService:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
             ) from e
-        self.add_or_change_ID_prediction(
+        cls.add_or_change_ID_prediction(
             user, paper_num, student_id, certainty, predictor
         )
 
@@ -230,7 +249,7 @@ class IDReaderService:
                 (elsewhere in the system - eg ID page uploaded or changed)
                 and so need their prename-predictions updated.
         """
-        # get dict of all prenamed papers (as per classlist)
+        # get dict of prenamed papers (as per classlist, not IDPredictions)
         prenamed_papers = StagingStudentService.get_prenamed_papers()
 
         # find existing prename-predictions from these papers
@@ -298,19 +317,22 @@ class IDReaderService:
             # Some existing ID tasks will need their priorities updated too.
             PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
-    def run_the_id_reader_in_foreground(
-        self,
+    @staticmethod
+    def run_id_reader_in_foreground(
         user: User,
         box_versions: dict[int, dict[str, float] | None],
         *,
         recompute_heatmap: bool = True,
     ):
-        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
-        IDBoxProcessorService().make_id_predictions(
+        """Some debugging code, currently uncalled.  Deprecated?"""
+        id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
+        IDBoxProcessorService.compute_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
 
-    def get_id_reader_background_task_status(self):
+    @staticmethod
+    def get_id_reader_background_chore_status() -> dict[str, str]:
+        """Return the status and human-readable message about the background ID reader chore."""
         try:
             idht_obj = IDReadingHueyTaskTracker.objects.exclude(obsolete=True).get()
         except ObjectDoesNotExist:
@@ -318,8 +340,8 @@ class IDReaderService:
 
         return {"status": idht_obj.get_status_display(), "message": idht_obj.message}
 
-    def run_the_id_reader_in_background_via_huey(
-        self,
+    @staticmethod
+    def run_id_reader_in_background_via_huey(
         user: User,
         box_versions: dict[int, dict[str, float] | None],
         recompute_heatmap: bool | None = True,
@@ -402,26 +424,24 @@ def huey_id_reading_task(
         block or detect whether a task has finished".
     """
     assert task is not None
-    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-    IDReadingHueyTaskTracker.set_message_to_user(
-        tracker_pk, "ID Reading task has started. Getting ID boxes."
+    HueyTaskTracker.transition_to_running(
+        tracker_pk, task.id, msg="ID Reading task has started. Getting ID boxes."
     )
 
-    id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
+    id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
-        IDReadingHueyTaskTracker.set_message_to_user(
-            tracker_pk, "No ID-boxes found. Cannot make predictions."
+        HueyTaskTracker.transition_to_complete(
+            tracker_pk, msg="No ID-boxes found. Cannot make predictions."
         )
-        HueyTaskTracker.transition_to_complete(tracker_pk)
         return True
 
-    IDReadingHueyTaskTracker.set_message_to_user(
+    HueyTaskTracker.set_message(
         tracker_pk, "ID boxes from page images saved. Computing predictions."
     )
 
     try:
-        IDBoxProcessorService().make_id_predictions(
+        IDBoxProcessorService.compute_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
     except ValueError as e:
@@ -430,18 +450,19 @@ def huey_id_reading_task(
         )
         return True
 
-    IDReadingHueyTaskTracker.set_message_to_user(tracker_pk, "ID predictions complete.")
+    # short pause, unlikely to help w/ Issue #4165 (cannot reproduce)
+    time.sleep(0.1)
 
-    HueyTaskTracker.transition_to_complete(tracker_pk)
+    HueyTaskTracker.transition_to_complete(tracker_pk, msg="ID predictions complete.")
     return True
 
 
 class IDBoxProcessorService:
     """Service for dealing with the ID box and processing it into ID predictions."""
 
+    @staticmethod
     @transaction.atomic
     def save_all_id_boxes(
-        self,
         box_versions: dict[int, dict[str, float] | None],
         *,
         exclude_prenamed_papers: bool = True,
@@ -474,7 +495,7 @@ class IDBoxProcessorService:
         id_page_number = SpecificationService.get_id_page_number()
         # but exclude any prenamed papers
         if exclude_prenamed_papers:
-            exclude_papers = IDReaderService().get_prenamed_paper_numbers()
+            exclude_papers = IDReaderService._get_prenamed_paper_numbers()
         else:
             exclude_papers = []
         # Note this gets all id pages regardless of version
@@ -513,7 +534,8 @@ class IDBoxProcessorService:
     # problem with cv2.typing - see MR 3050.
     # comment out the cv2.typing.MatLike hint here.
     # TODO - fix the cv2.typing issue in dev sometime.
-    def resize_ID_box_and_extract_digit_strip(self, id_box_file: Path):
+    @staticmethod
+    def resize_ID_box_and_extract_digit_strip(id_box_file: Path):
         # ) -> cv2.typing.MatLike | None:
         """Extract the strip of digits from the ID box from the given image file."""
         # WARNING: contains many magic numbers - must be updated if the IDBox
@@ -544,10 +566,10 @@ class IDBoxProcessorService:
     # problem with cv2.typing - see MR 3050.
     # comment out the cv2.typing.MatLike hint here.
     # TODO - fix the cv2.typing issue in dev sometime.
+    @staticmethod
     def get_digit_images(
-        # self, ID_box: cv.typing.MatLike, num_digits: int
+        # ID_box: cv.typing.MatLike, num_digits: int
         # ) -> list[cv.typing.MatLike]:
-        self,
         ID_box,
         num_digits: int,
     ):
@@ -636,13 +658,9 @@ class IDBoxProcessorService:
             processed_digits_images_list.append(bordered_image)
         return processed_digits_images_list
 
-    def _np_softmax(self, x: np.ndarray, axis: int = -1) -> np.ndarray:
-        x = x - np.max(x, axis=axis, keepdims=True)
-        e = np.exp(x)
-        return e / np.sum(e, axis=axis, keepdims=True)
-
+    @classmethod
     def get_digit_probabilities(
-        self,
+        cls,
         prediction_model: tuple["onnxruntime.InferenceSession", str],
         id_box_file: Path,
         num_digits: int,
@@ -670,10 +688,10 @@ class IDBoxProcessorService:
         debugdir = None
         id_page_file = Path(id_box_file)
         # TODO - sort out cv.typing
-        # ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
+        # ID_box: cv.typing.MatLike | None = cls.resize_ID_box_and_extract_digit_strip(
         #     id_page_file
         # )
-        ID_box = self.resize_ID_box_and_extract_digit_strip(id_page_file)
+        ID_box = cls.resize_ID_box_and_extract_digit_strip(id_page_file)
         if ID_box is None:
             return []
         if debug:
@@ -681,7 +699,7 @@ class IDBoxProcessorService:
             debugdir.mkdir(exist_ok=True)
             p = debugdir / f"idbox_{id_page_file.stem}.png"
             cv.imwrite(str(p), ID_box)
-        processed_digits_images = self.get_digit_images(ID_box, num_digits)
+        processed_digits_images = cls.get_digit_images(ID_box, num_digits)
         if len(processed_digits_images) == 0:
             # TODO - put in warning
             # self.stdout.write("Trouble finding digits inside the ID box")
@@ -697,13 +715,14 @@ class IDBoxProcessorService:
             # get it into format needed by model predictor
             x = (digit_image.astype(np.float32) / 255.0)[None, None, :, :]
             logits = model.run([output_name], {input_name: x})[0]
-            probs = self._np_softmax(logits, axis=1)[0].tolist()
+            probs = _np_softmax(logits, axis=1)[0].tolist()
             prob_lists.append(probs)
 
         return prob_lists
 
-    def compute_probability_heatmap_for_idbox_images(
-        self, image_file_paths: dict[int, Path], num_digits: int
+    @classmethod
+    def _compute_probability_heatmap_for_idbox_images(
+        cls, image_file_paths: dict[int, Path], num_digits: int
     ) -> dict[int, list[list[float]]]:
         """Return probabilities for digits for each paper in the given dictionary of images files.
 
@@ -717,7 +736,7 @@ class IDBoxProcessorService:
         prediction_model = load_model(where=settings.PLOM_MODEL_CACHE)
         probabilities = {}
         for paper_number, image_file in image_file_paths.items():
-            prob_lists = self.get_digit_probabilities(
+            prob_lists = cls.get_digit_probabilities(
                 prediction_model, image_file, num_digits
             )
             if len(prob_lists) == 0:
@@ -736,17 +755,21 @@ class IDBoxProcessorService:
                 probabilities[paper_number] = prob_lists
         return probabilities
 
-    def compute_and_save_probability_heatmap(self, id_box_files: dict[int, Path]):
+    @classmethod
+    def compute_and_save_probability_heatmap(cls, id_box_files: dict[int, Path]):
         """Use classifier to compute and save a probability heatmap for the ids.
 
         This downloads a pre-trained random forest classier to compute the probability
         that the given number in the ID on the given paper is a particular digit.
         The resulting heatmap is saved for use by predictor algorithms.
+
+        Note: no database stuff: this just dumps a file on disc, which may not be
+        ideal.  Lot of direct file access here.
         """
         if not is_model_present(where=settings.PLOM_MODEL_CACHE):
             ensure_model_available(where=settings.PLOM_MODEL_CACHE)
         student_id_length = 8
-        heatmap = self.compute_probability_heatmap_for_idbox_images(
+        heatmap = cls._compute_probability_heatmap_for_idbox_images(
             id_box_files, student_id_length
         )
 
@@ -755,8 +778,9 @@ class IDBoxProcessorService:
             json.dump(heatmap, fh, indent="  ")
         return heatmap
 
-    def make_id_predictions(
-        self,
+    @classmethod
+    def compute_id_predictions(
+        cls,
         user: User,
         id_box_files: dict[int, Path],
         *,
@@ -768,7 +792,7 @@ class IDBoxProcessorService:
             ValueError: no classlist.
         """
         if recompute_heatmap:
-            probabilities = self.compute_and_save_probability_heatmap(id_box_files)
+            probabilities = cls.compute_and_save_probability_heatmap(id_box_files)
         else:
             heatmaps_file = settings.MEDIA_ROOT / "id_prob_heatmaps.json"
             with open(heatmaps_file, "r") as fh:
@@ -784,29 +808,29 @@ class IDBoxProcessorService:
             for paper_num, all_probs in probabilities.items()
         }
 
-        self.run_greedy(user, student_ids, sliced_probabilities)
-        self.run_lap_solver(user, student_ids, sliced_probabilities)
-        self.run_best_guess_predictor(user, probabilities)
+        cls.run_greedy(user, student_ids, sliced_probabilities)
+        cls.run_lap_solver(user, student_ids, sliced_probabilities)
+        cls.run_best_guess_predictor(user, probabilities)
 
-    def run_best_guess_predictor(self, user: User, probabilities: dict) -> None:
+    @classmethod
+    def run_best_guess_predictor(cls, user: User, probabilities: dict) -> None:
         """Runs the best-guess predictor and saves its results."""
-        id_reader_service = IDReaderService()
-        best_guess_predictions = self._best_guess_predictor(probabilities)
+        best_guess_predictions = cls._best_guess_predictor(probabilities)
         for prediction in best_guess_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            IDReaderService.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLBestGuess"
             )
 
-    def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
+    @classmethod
+    def run_greedy(cls, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used
-        id_reader_service = IDReaderService()
-        for ided_stu in id_reader_service.get_already_matched_sids():
+        for ided_stu in IDReaderService.get_already_matched_sids():
             try:
                 student_ids.remove(ided_stu)
             except ValueError:
                 pass
         # do not use papers that are already ID'd
-        unidentified_papers = id_reader_service.get_unidentified_papers()
+        unidentified_papers = IDReaderService.get_unidentified_papers()
         papers_to_id = [n for n in unidentified_papers if n in probabilities]
         if len(papers_to_id) == 0 or len(student_ids) == 0:
             raise IndexError(
@@ -814,36 +838,37 @@ class IDBoxProcessorService:
                 f"machine-read papers and {len(student_ids)} unused students."
             )
         # Different predictors go here.
-        greedy_predictions = self._greedy_predictor(student_ids, probabilities)
+        greedy_predictions = cls._greedy_predictor(student_ids, probabilities)
         for prediction in greedy_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            IDReaderService.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLGreedy"
             )
 
-    def run_lap_solver(self, user: User, student_ids: list[str], probabilities) -> None:
+    @classmethod
+    def run_lap_solver(cls, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used.
-        id_reader_service = IDReaderService()
-        for ided_stu in id_reader_service.get_already_matched_sids():
+        for ided_stu in IDReaderService.get_already_matched_sids():
             try:
                 student_ids.remove(ided_stu)
             except ValueError:
                 pass
         # do not use papers that are already ID'd
-        unidentified_papers = id_reader_service.get_unidentified_papers()
+        unidentified_papers = IDReaderService.get_unidentified_papers()
         papers_to_id = [n for n in unidentified_papers if n in probabilities]
         if len(papers_to_id) == 0 or len(student_ids) == 0:
             raise IndexError(
                 f"Assignment problem is degenerate: {len(papers_to_id)} unidentified "
                 f"machine-read papers and {len(student_ids)} unused students."
             )
-        lap_predictions = self._lap_predictor(papers_to_id, student_ids, probabilities)
+        lap_predictions = cls._lap_predictor(papers_to_id, student_ids, probabilities)
         for prediction in lap_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            IDReaderService.add_or_change_ID_prediction(
                 user, prediction[0], prediction[1], prediction[2], "MLLAP"
             )
 
+    @staticmethod
     def _best_guess_predictor(
-        self, probabilities: dict[int, list[list[float]]]
+        probabilities: dict[int, list[list[float]]],
     ) -> list[tuple[int, str, float]]:
         """Generates direct 'best guess' predictions from the full heatmap."""
         predictions = []
@@ -863,8 +888,9 @@ class IDBoxProcessorService:
             predictions.append((paper_num, best_guess_id, round(certainty, 2)))
         return predictions
 
+    @staticmethod
     def _greedy_predictor(
-        self, student_IDs: list[str], probabilities: dict[int, Any]
+        student_IDs: list[str], probabilities: dict[int, Any]
     ) -> list[tuple[int, str, float]]:
         """Generate greedy predictions for student ID numbers.
 
@@ -909,7 +935,8 @@ class IDBoxProcessorService:
 
         return predictions
 
-    def _assemble_cost_matrix(self, paper_numbers, student_IDs, probabilities):
+    @staticmethod
+    def _assemble_cost_matrix(paper_numbers, student_IDs, probabilities):
         """Compute the cost matrix between list of papers and list of student IDs.
 
         Args:
@@ -945,8 +972,9 @@ class IDBoxProcessorService:
             costs.append(row)
         return costs
 
+    @classmethod
     def _lap_predictor(
-        self, paper_numbers: list[int], student_IDs: list[str], probabilities
+        cls, paper_numbers: list[int], student_IDs: list[str], probabilities
     ) -> list[tuple[int, str, float]]:
         """Run SciPy's linear sum assignment problem solver, return prediction results.
 
@@ -962,7 +990,7 @@ class IDBoxProcessorService:
             where certainty is the mean of digit probabilities for the student_ID
             selected by LAP solver.
         """
-        cost_matrix = self._assemble_cost_matrix(
+        cost_matrix = cls._assemble_cost_matrix(
             paper_numbers, student_IDs, probabilities
         )
         row_IDs, column_IDs = linear_sum_assignment(cost_matrix)
