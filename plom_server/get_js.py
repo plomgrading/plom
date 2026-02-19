@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 import hashlib
 import re
@@ -153,21 +154,6 @@ table = [
             {
                 "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
                 "hash": "sha256-zaSoHBhwFdle0scfGEFUCwggPN7F+ip9XRglo8IWb4w=",
-            },
-        ],
-    },
-    {
-        # Used only on the login page (?)
-        "name": "mdb-ui-kit",
-        "license": "MIT",
-        "files": [
-            {
-                "url": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.js",
-                "hash": "sha256-y+Pa+MbXsX6NG/fYpJV07UA0o5KW9YaP+YvNoZNTapI=",
-            },
-            {
-                "url": "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css",
-                "hash": "sha256-dqc3ralMj9oruQZRUoBCEJqXVmvrulSKRxBIzaJVwpY=",
             },
         ],
     },
