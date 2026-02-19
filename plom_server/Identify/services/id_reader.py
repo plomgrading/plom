@@ -8,6 +8,7 @@
 # Copyright (C) 2024-2025 Deep Shah
 
 import json
+import time
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -422,21 +423,19 @@ def huey_id_reading_task(
         block or detect whether a task has finished".
     """
     assert task is not None
-    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-    IDReadingHueyTaskTracker.set_message_to_user(
-        tracker_pk, "ID Reading task has started. Getting ID boxes."
+    HueyTaskTracker.transition_to_running(
+        tracker_pk, task.id, msg="ID Reading task has started. Getting ID boxes."
     )
 
     id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
-        IDReadingHueyTaskTracker.set_message_to_user(
-            tracker_pk, "No ID-boxes found. Cannot make predictions."
+        HueyTaskTracker.transition_to_complete(
+            tracker_pk, msg="No ID-boxes found. Cannot make predictions."
         )
-        HueyTaskTracker.transition_to_complete(tracker_pk)
         return True
 
-    IDReadingHueyTaskTracker.set_message_to_user(
+    HueyTaskTracker.set_message(
         tracker_pk, "ID boxes from page images saved. Computing predictions."
     )
 
@@ -450,9 +449,10 @@ def huey_id_reading_task(
         )
         return True
 
-    IDReadingHueyTaskTracker.set_message_to_user(tracker_pk, "ID predictions complete.")
+    # short pause, unlikely to help w/ Issue #4165 (cannot reproduce)
+    time.sleep(0.1)
 
-    HueyTaskTracker.transition_to_complete(tracker_pk)
+    HueyTaskTracker.transition_to_complete(tracker_pk, msg="ID predictions complete.")
     return True
 
 
