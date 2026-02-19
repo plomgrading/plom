@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -38,7 +39,8 @@
                 {% endif %}
                 {% if n_queued %}
                     <li>
-                        <i class="bi bi-clock-history text-info"></i>{{ n_queued }} papers queued for solution-build
+                        <i class="bi bi-clock-history text-info"></i>
+                        {{ n_queued }} papers queued for solution-build
                         <a href="{% url 'build_soln' %}"
                            class="btn btn-info m-4"
                            id="reload_button">reload page</a>
