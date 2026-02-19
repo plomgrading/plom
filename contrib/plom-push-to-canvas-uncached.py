@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 # Copyright (C) 2023 Laurent Mackay
 # Copyright (C) 2025-2026 Aidan Murphy
@@ -669,7 +669,7 @@ def main():
 
     if not args.assignment:
         args.assignment = interactively_get_canvas_assignment_id(canvas_course)
-    print("Getting Canvas assignment...", end="")
+    print("Getting Canvas assignment... ", end="")
     canvas_assignment = canvas_course.get_assignment(args.assignment)
     print(f"({canvas_assignment}) " + CHECKMARK)
 
@@ -699,7 +699,7 @@ def main():
     if hasattr(args, "plom_password") and not args.plom_password:
         args.plom_password = getpass("plom password: ")
 
-    print("Checking plom credentials...", end="")
+    print("Checking plom credentials... ", end="")
     plom_messenger = start_messenger(
         args.plom_server, args.plom_username, args.plom_password
     )
