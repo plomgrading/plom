@@ -13,6 +13,7 @@
 
 import logging
 import os
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -20,18 +21,6 @@ from typing import Any
 # Paths inside the source code can use BASE_DIR / 'subdir'
 # but we should assume this is READ-ONLY
 BASE_DIR = Path(__file__).resolve().parent
-
-
-# Since BASE_DIR refers to the source code, you can define a single
-# directory where all the state will go.  The default is the current
-# working directory.  In many cases, other variables can override this
-# choice (e.g., PLOM_MEDIA_ROOT) but this allows single place for all
-# non-database "state"
-__ = os.environ.get("PLOM_BASE_DIR")
-if not __:
-    PLOM_BASE_DIR = Path(".")
-else:
-    PLOM_BASE_DIR = Path(__)
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -45,6 +34,20 @@ elif debug_setting.isdigit() and int(debug_setting) == 0:
     DEBUG = False
 else:
     DEBUG = True
+
+
+# Since BASE_DIR refers to the source code, you can define a single
+# directory where all the state will go.  The default is the current
+# working directory.  In many cases, other variables can override this
+# choice (e.g., PLOM_MEDIA_ROOT) but this allows single place for all
+# non-database "state"
+__ = os.environ.get("PLOM_BASE_DIR")
+if not __:
+    if not DEBUG:
+        warnings.warn("PLOM_BASE_DIR is unset, using CWD for state", RuntimeWarning)
+    PLOM_BASE_DIR = Path(".")
+else:
+    PLOM_BASE_DIR = Path(__)
 
 
 # Generally Plom takes it paper size from the source PDFs but it also needs to create
@@ -264,7 +267,7 @@ STATIC_URL = "static/"
 # These are the "source" dirs for static files.  The first one might be readonly (Issue #2932)
 # Second one is a hack to get some oxymoronic "dynamic" static stuff: see extra pages, scrap
 # pages, javascript downloads, etc).
-STATICFILES_DIRS = [BASE_DIR / "static", "plom_extra_static"]
+STATICFILES_DIRS = [BASE_DIR / "static", PLOM_BASE_DIR / "plom_extra_static"]
 # Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 """Command line tool to start a Plom server."""
 
@@ -229,10 +230,10 @@ def main():
         # build extra-page and scrap-paper PDFs
         run_django_manage_command("plom_build_scrap_extra_pdfs")
 
-        run_django_manage_command("plom_get_static_javascript")
+    run_django_manage_command("plom_get_static_javascript")
 
-        if not args.development:
-            run_django_manage_command("collectstatic --clear --no-input")
+    if not args.development:
+        run_django_manage_command("collectstatic --clear --no-input")
 
     # now put main things inside a try/finally so that we
     # can clean up the Huey/server processes on exit.
