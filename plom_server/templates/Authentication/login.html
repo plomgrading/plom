@@ -20,59 +20,52 @@
         <link rel="stylesheet"
               type="text/css"
               href="{% static '/css/loginPage.css' %}">
+        <!-- Adjusts bootstrap styling to light-mode or dark-mode -->
+        <script type="module" src="{% static '/js/bootstrap_lightdark_mode.js' %}"></script>
     </head>
-    <body>
-        <section class="vh-100 gradient-custom login_box">
-            <div class="container py-5 h-100">
-                <div class="row d-flex justify-content-center align-items-center h-100">
-                    <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-                        <div class="login_card" style="border-radius: 1rem;">
-                            <div class="card-body p-5 text-center">
-                                <div class="mb-md-5 mt-md-4 pb-3">
-                                    <img src="{% static 'plomLogo.png' %}"
-                                         alt="Plom logo"
-                                         width="276px"
-                                         height="93px" />
-                                    <p class="fw-light mb-5">v{{ plom_version }}</p>
-                                    <h3 class="fw-bold mt-5 mb-2 text-uppercase">Login</h3>
-                                    <p class="mb-5">Please enter your login and password!</p>
-                                    <form method="post" action="">
-                                        {% csrf_token %}
-                                        <div class="form-floating mb-4">
-                                            <input type="text"
-                                                   class="form-control form-control-lg border border-secondary bg-transparent rounded-1"
-                                                   name="username"
-                                                   placeholder="Username" />
-                                            <label class="form-label">Username</label>
-                                        </div>
-                                        <div class="form-floating mb-4">
-                                            <input type="password"
-                                                   id="typePasswordX"
-                                                   class="form-control form-control-lg border border-secondary bg-transparent rounded-1"
-                                                   name="password"
-                                                   placeholder="Password" />
-                                            <label class="form-label" for="typePasswordX">Password</label>
-                                        </div>
-                                        <div class="medium mb-5 pb-lg-2">
-                                            <input id="check-password" class="text-black-100" type="checkbox">
-                                            <label class="form-label" for="check-password">Show Password</label>
-                                        </div>
-                                        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
-                                        <button class="btn btn-outline-dark btn-lg fw-light text-centre w-50 border border-dark border-2"
-                                                type="submit">
-                                            <span class="bi-box-arrow-in-right"></span>
-                                            LOGIN
-                                        </button>
-                                    </form>
-                                    <br>
-                                    {% include "../base/alert_messages.html" with messages=messages %}
+    <body class="bg-plom-dark-teal">
+        <div class="container py-5">
+            <div class="row d-flex justify-content-center align-items-center h-100">
+                <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                    <div class="card rounded-4">
+                        <div class="card-body p-5 text-center mt-4 mb-5">
+                            {% include "base/plom_logo.html" with width="276px" height="93px" %}
+                            <p class="fw-light mb-5">v{{ plom_version }}</p>
+                            <form method="post" action="">
+                                {% csrf_token %}
+                                <div class="form-floating mb-4">
+                                    <input type="text"
+                                           class="form-control form-control-lg border border-secondary bg-transparent rounded-1"
+                                           name="username"
+                                           placeholder="Username" />
+                                    <label class="form-label">Username</label>
                                 </div>
-                            </div>
-                        </div>
+                                <div class="form-floating mb-4">
+                                    <input type="password"
+                                           id="typePasswordX"
+                                           class="form-control form-control-lg border border-secondary bg-transparent rounded-1"
+                                           name="password"
+                                           placeholder="Password" />
+                                    <label class="form-label" for="typePasswordX">Password</label>
+                                </div>
+                                <div class="medium mb-5 pb-lg-2">
+                                    <input id="check-password" class="text-black-100" type="checkbox">
+                                    <label class="form-label" for="check-password">Show Password</label>
+                                </div>
+                                {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+                                <button class="btn btn-lg fw-light text-centre border border-2 bg-plom-teal"
+                                        type="submit">
+                                    <span class="m-5"><span class="bi-box-arrow-in-right"></span>
+                                Login</span>
+                            </button>
+                        </form>
+                        <br />
+                        {% include "../base/alert_messages.html" with messages=messages %}
                     </div>
                 </div>
             </div>
-        </section>
-    </body>
-    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+        </div>
+    </div>
+</body>
+<script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 </html>
