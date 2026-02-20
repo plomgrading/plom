@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pymupdf
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files import File
 from django.core.files.utils import validate_file_name
 from django.db import transaction
@@ -290,9 +291,16 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         else:
             original_filename = f"version{version}.pdf"
 
-        # the file could be re-served using original_filename
-        # https://github.com/django/django/blob/main/django/core/files/utils.py#L7
-        validate_file_name(original_filename)
+        # the file could be re-served, so validate original_filename
+        # https://docs.djangoproject.com/en/5.0/_modules/django/core/files/storage/base/
+        try:
+            original_filename = validate_file_name(original_filename)
+        except SuspiciousFileOperation as e:
+            return (
+                False,
+                f"File name is suspicious: {e}",
+            )
+
         # now try to store it
         try:
             store_source_pdf(

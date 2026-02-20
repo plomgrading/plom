@@ -8,7 +8,6 @@ from importlib import resources
 
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.exceptions import SuspiciousFileOperation
 from django.conf import settings
 from model_bakery import baker
 
@@ -92,8 +91,10 @@ class SourceServiceTests(TestCase):
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with pdf.open("rb") as f:
-            with self.assertRaises(SuspiciousFileOperation):
-                r, msg = SourceService.take_source_from_upload(1, f)
+            r, msg = SourceService.take_source_from_upload(1, f)
+        assert not r
+        assert "suspicious" in msg
+        assert "name" in msg
         # TODO: does this make files or not?
         # SourceService.delete_source_pdf(1)
 
