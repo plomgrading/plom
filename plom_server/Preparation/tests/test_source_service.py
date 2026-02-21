@@ -80,8 +80,6 @@ class SourceServiceTests(TestCase):
         assert r
         assert "uploaded" in msg
         assert "success" in msg
-        # TODO: does this make files or not?
-        # SourceService.delete_source_pdf(1)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_validate_filename(self) -> None:
@@ -95,8 +93,6 @@ class SourceServiceTests(TestCase):
         assert not r
         assert "suspicious" in msg
         assert "name" in msg
-        # TODO: does this make files or not?
-        # SourceService.delete_source_pdf(1)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_out_of_range(self) -> None:
