@@ -6,6 +6,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Deep Shah
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Aidan Murphy
 
 import base64
 from io import BytesIO
@@ -765,6 +766,9 @@ class MinimalPlotService:
             orient="h",
             medianprops={"linewidth": 4, "color": "blue"},
             boxprops={"alpha": 0.5},
+            # WET - this defines outliers, changes must be reflected in generated report
+            # docs: https://seaborn.pydata.org/generated/seaborn.boxplot.html#seaborn-boxplot
+            whis=1.5,
             capprops={"linewidth": 4, "color": "red"},
             widths=[0.25],
             zorder=2.0,
