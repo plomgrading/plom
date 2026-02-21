@@ -12,7 +12,9 @@ from pathlib import Path
 from typing import Any
 
 import pymupdf
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files import File
+from django.core.files.utils import validate_file_name
 from django.db import transaction
 
 from plom.scan import QRextract
@@ -24,19 +26,21 @@ from ..services.mocker import ExamMockerService
 from ..services.preparation_dependency_service import assert_can_modify_sources
 
 
-def _get_source_file(source_version: int) -> File:
+def _get_source_file(source_version: int) -> tuple[str, File]:
     """Return the Django-file for a specified source version.
 
     Args:
         source_version: which source version.
 
     Returns:
-        Some sort of file abstraction, not for use outside Django.
+        The filename and some sort of file abstraction, not for use
+        outside Django.
 
     Raises:
         ObjectDoesNotExist: not yet uploaded or out of range.
     """
-    return PaperSourcePDF.objects.get(version=source_version).source_pdf
+    source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
+    return source_pdf_obj.original_filename, source_pdf_obj.source_pdf
 
 
 def _get_source_files() -> list[File]:
@@ -285,7 +289,18 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         if hasattr(in_memory_file, "name"):
             original_filename = in_memory_file.name
         else:
-            original_filename = ""
+            original_filename = f"version{version}.pdf"
+
+        # the file could be re-served, so validate original_filename
+        # https://docs.djangoproject.com/en/5.0/_modules/django/core/files/storage/base/
+        try:
+            original_filename = validate_file_name(original_filename)
+        except SuspiciousFileOperation as e:
+            return (
+                False,
+                f"File name is suspicious: {e}",
+            )
+
         # now try to store it
         try:
             store_source_pdf(

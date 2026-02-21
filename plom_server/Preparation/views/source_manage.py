@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
@@ -77,10 +78,13 @@ class SourceManageView(ManagerRequiredView):
 
         if version is not None:
             try:
+                original_filename, abstract_django_file = (
+                    SourceService._get_source_file(version)
+                )
                 return FileResponse(
-                    SourceService._get_source_file(version),
+                    abstract_django_file,
                     as_attachment=True,
-                    filename=f"source{version}.pdf",
+                    filename=original_filename,
                 )
             except ObjectDoesNotExist as e:
                 raise Http404(e)

@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 import pathlib
 from importlib import resources
 
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from model_bakery import baker
 
@@ -68,12 +70,29 @@ class SourceServiceTests(TestCase):
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(1, f)
+            # using f directly will fail - f.name includes path elements
+            django_file = SimpleUploadedFile(
+                name="test_version1.pdf",
+                content=f.read(),
+                content_type="application/pdf",
+            )
+            r, msg = SourceService.take_source_from_upload(1, django_file)
         assert r
         assert "uploaded" in msg
         assert "success" in msg
-        # TODO: does this make files or not?
-        # SourceService.delete_source_pdf(1)
+
+    @config_test({"test_spec": "demo"})
+    def test_store_source_pdfs_validate_filename(self) -> None:
+        """Check that files with suspicious names are caught."""
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
+        pdf = resources.files(useful_files) / "test_version1.pdf"
+        with pdf.open("rb") as f:
+            r, msg = SourceService.take_source_from_upload(1, f)
+        assert not r
+        assert "suspicious" in msg
+        assert "name" in msg
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_out_of_range(self) -> None:
@@ -109,7 +128,7 @@ class SourceServiceTests(TestCase):
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
-        f = SourceService._get_source_file(1)
+        __, f = SourceService._get_source_file(1)
         pdf_source_path = settings.MEDIA_ROOT / "sourceVersions"
         self.assertTrue(pdf_source_path.exists())
         location_on_disc = pathlib.Path(f.path).parent

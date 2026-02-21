@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2024-2026 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 
 import tempfile
 from pathlib import Path
@@ -48,7 +48,8 @@ class ExamMockerService:
         from .SourceService import _get_source_file
 
         # TODO: Issue #3888 this does direct file access, fails for remote storage?
-        source_path = Path(_get_source_file(version).path)
+        __, abstract_django_file = _get_source_file(version)
+        source_path = Path(abstract_django_file.path)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)
@@ -90,7 +91,8 @@ class ExamMockerService:
         from .SourceService import _get_source_file
 
         # TODO: Issue #3888, local path access may fail on remote file storage
-        source_path = Path(_get_source_file(version).path)
+        __, abstract_django_file = _get_source_file(version)
+        source_path = Path(abstract_django_file.path)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)
