@@ -947,6 +947,8 @@ class RubricService:
 
     @classmethod
     def _build_fractional_delta_rubrics(cls, user: User) -> int:
+        from .utils import _frac_value_tolerance as tol
+
         log.info("Building delta rubrics for any enabled fractional rubrics...")
         num_added = 0
         qindices = SpecificationService.get_question_indices()
@@ -956,10 +958,12 @@ class RubricService:
                 if not row["checked"]:
                     continue
                 for value in (1.0 / row["denom"], -1.0 / row["denom"]):
-                    # Note: this uses a floating point equality check: e.g., what
-                    # if the database is on a system with different rounding?
+                    # Note: interval avoids a floating point equality check
                     if Rubric.objects.filter(
-                        text=".", value=value, question_index=qi
+                        text=".",
+                        question_index=qi,
+                        value__gte=(value - tol),
+                        value__lte=(value + tol),
                     ).exists():
                         continue
                     rubric = {
