@@ -246,16 +246,19 @@ class Command(BaseCommand):
             metavar="N",
             help="Get rubrics only for question (index) N, or all rubrics if omitted.",
         )
-        sp_half = sub.add_parser(
-            "half",
-            help="Add plus/minus half-mark rubrics",
+        s = sub.add_parser(
+            "fractional_delta",
+            help="Add plus/minus 1/N delta rubrics",
             description="""
-                Add plus/minus half-mark rubrics to the system for all questions.""",
+                Add \N{PLUS-MINUS SIGN}1/N delta rubrics for all questions,
+                for whichever fractions are currently enabled on the server.
+                Any existing rubrics will be skipped.
+            """,
         )
-        sp_half.add_argument(
+        s.add_argument(
             "username",
             type=str,
-            help="Name of user who is enabling the half-mark rubrics",
+            help="Name of user to associate with the fractional delta rubrics",
         )
 
     def handle(self, *args, **opt):
@@ -277,10 +280,12 @@ class Command(BaseCommand):
             N = self.upload_rubrics_from_file(f)
             self.stdout.write(self.style.SUCCESS(f"Added {N} rubrics from {f}"))
 
-        elif opt["command"] == "half":
+        elif opt["command"] == "fractional_delta":
             try:
-                RubricService.build_half_mark_delta_rubrics(opt["username"])
-                self.stdout.write(self.style.SUCCESS("Half-mark rubrics added."))
+                n = RubricService.build_fractional_delta_rubrics(opt["username"])
+                self.stdout.write(
+                    self.style.SUCCESS(f"Added {n} fractional delta rubrics")
+                )
             except ValueError as e:
                 raise CommandError(e)
         else:

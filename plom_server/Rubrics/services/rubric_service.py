@@ -920,11 +920,14 @@ class RubricService:
                     # )
 
     @classmethod
-    def build_fractional_delta_rubrics(cls, username: str) -> None:
+    def build_fractional_delta_rubrics(cls, username: str) -> int:
         """Create the plus and minus one-half delta rubrics that are optional.
 
         Args:
             username: which user to associate with the demo rubrics.
+
+        Returns:
+            The number of rubrics that were created.
 
         Exceptions:
             ValueError: username does not exist or is not part of the
@@ -940,7 +943,7 @@ class RubricService:
             ) from e
         # cls._build_half_mark_delta_rubrics(user)
         num = cls._build_fractional_delta_rubrics(user)
-        print(f"Build {num} new rubrics")
+        return num
 
     @classmethod
     def _build_fractional_delta_rubrics(cls, user: User) -> int:
