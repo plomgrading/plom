@@ -948,7 +948,6 @@ class RubricService:
         log.info("Building half-mark delta rubrics")
         for q in SpecificationService.get_question_indices():
             rubric = {
-                "display_delta": "+\N{VULGAR FRACTION ONE HALF}",
                 "value": 0.5,
                 "text": ".",
                 "kind": "relative",
@@ -965,7 +964,6 @@ class RubricService:
             )
 
             rubric = {
-                "display_delta": "-\N{VULGAR FRACTION ONE HALF}",
                 "value": -0.5,
                 "text": ".",
                 "kind": "relative",
