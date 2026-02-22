@@ -920,7 +920,7 @@ class RubricService:
                     # )
 
     @classmethod
-    def build_half_mark_delta_rubrics(cls, username: str) -> None:
+    def build_fractional_delta_rubrics(cls, username: str) -> None:
         """Create the plus and minus one-half delta rubrics that are optional.
 
         Args:
@@ -939,11 +939,11 @@ class RubricService:
                 f"User '{username}' does not exist or has wrong permissions"
             ) from e
         # cls._build_half_mark_delta_rubrics(user)
-        num = cls._build_fractional_mark_delta_rubrics(user)
+        num = cls._build_fractional_delta_rubrics(user)
         print(f"Build {num} new rubrics")
 
     @classmethod
-    def _build_fractional_mark_delta_rubrics(cls, user: User) -> int:
+    def _build_fractional_delta_rubrics(cls, user: User) -> int:
         log.info("Building delta rubrics for any enabled fractional rubrics...")
         num_added = 0
         qindices = SpecificationService.get_question_indices()

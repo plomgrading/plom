@@ -81,7 +81,7 @@ class RubricCreateHalfMarksView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         any_manager = User.objects.filter(groups__name="manager").first()
         try:
-            RubricService.build_half_mark_delta_rubrics(any_manager.username)
+            RubricService.build_fractional_delta_rubrics(any_manager.username)
         except ValueError as e:
             messages.error(request, e)
         return redirect("rubrics_admin")
