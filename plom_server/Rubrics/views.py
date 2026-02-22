@@ -59,13 +59,12 @@ class RubricAdminPageView(ManagerRequiredView):
         upload_form = RubricUploadForm()
         template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
-        # TODO: flaky?
-        half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
-        rubric_fractional_options = RubricPermissionsService.get_fractional_settings()
+        rubric_fractional_options = RubricPermissionsService.get_fractional_settings(
+            all_rows=False
+        )
         context.update(
             {
                 "rubrics": rubrics,
-                "half_point_rubrics": half_point_rubrics,
                 "rubric_fractional_options": rubric_fractional_options,
                 "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,

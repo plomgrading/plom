@@ -928,8 +928,9 @@ class RubricService:
 
         Exceptions:
             ValueError: username does not exist or is not part of the
-                manager group, or the half-point rubrics are disabled,
-                or these rubrics already exist.
+                manager group.
+
+        Note its not an error of some deltas already exist: we just skip those.
         """
         try:
             user = User.objects.get(username__iexact=username, groups__name="manager")
@@ -937,11 +938,43 @@ class RubricService:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions"
             ) from e
-        if Rubric.objects.filter(value__exact=0.5).filter(text__exact=".").exists():
-            raise ValueError(
-                "Could not create half-mark delta rubrics b/c they already exist"
-            )
-        cls._build_half_mark_delta_rubrics(user)
+        # cls._build_half_mark_delta_rubrics(user)
+        num = cls._build_fractional_mark_delta_rubrics(user)
+        print(f"Build {num} new rubrics")
+
+    @classmethod
+    def _build_fractional_mark_delta_rubrics(cls, user: User) -> int:
+        log.info("Building delta rubrics for any enabled fractional rubrics...")
+        num_added = 0
+        qindices = SpecificationService.get_question_indices()
+        frac_opts = RubricPermissionsService.get_fractional_settings(all_rows=True)
+        for qi in qindices:
+            for row in frac_opts:
+                if not row["checked"]:
+                    continue
+                for value in (1.0 / row["denom"], -1.0 / row["denom"]):
+                    if Rubric.objects.filter(
+                        text=".", value=value, question_index=qi
+                    ).exists():
+                        continue
+                    rubric = {
+                        "value": value,
+                        "text": ".",
+                        "kind": "relative",
+                        "question_index": qi,
+                        "username": user.username,
+                        "system_rubric": True,
+                    }
+                    r = cls.create_rubric(rubric, creating_user=user)
+                    num_added += 1
+                    log.info(
+                        "Built delta-rubric %s for Qidx %d: %s",
+                        r["display_delta"],
+                        r["question_index"],
+                        r["rid"],
+                    )
+
+        return num_added
 
     @classmethod
     def _build_half_mark_delta_rubrics(cls, user: User) -> None:

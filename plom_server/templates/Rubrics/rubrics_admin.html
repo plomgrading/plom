@@ -3,7 +3,7 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2025 Deep Shah
@@ -50,13 +50,14 @@
                 <button type="submit"
                         class="btn btn-outline-danger"
                         name="init_system_rubrics"
-                        {% if not rubrics %}disabled{% endif %}
-                        {% if half_point_rubrics %}disabled{% endif %}>Create &plusmn;half-mark delta rubrics</button>
+                        {% if not rubrics %}disabled{% endif %}>Create fractional delta rubrics</button>
             </form>
-            <p>
-                Introduce two additional rubrics to each question: +&#189; and -&#189;.
+            <p class="mb-0">
+                Create +&frac12;, -&frac12;, +&frac14;, etc, rubrics based on which
+                fractions are enabled above.
+                Any existing fractional rubrics will be ignored.
+                Hint: if you later want to remove these rubrics, you'll need to &ldquo;unpublish&rdquo; them one-at-a-time.
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
-                {% if half_point_rubrics %}These rubrics have already been created.{% endif %}
             </p>
         </div>
     </div>
