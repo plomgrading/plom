@@ -956,6 +956,8 @@ class RubricService:
                 if not row["checked"]:
                     continue
                 for value in (1.0 / row["denom"], -1.0 / row["denom"]):
+                    # Note: this uses a floating point equality check: e.g., what
+                    # if the database is on a system with different rounding?
                     if Rubric.objects.filter(
                         text=".", value=value, question_index=qi
                     ).exists():
