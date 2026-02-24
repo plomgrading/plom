@@ -16,7 +16,7 @@ from ..forms import AnnotationFilterForm
 from ..services import UserInfoService
 
 
-class ProgressUserInfoHome(ManagerRequiredView):
+class ProgressMarkerInfoHome(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         filter_form = AnnotationFilterForm(request.GET)

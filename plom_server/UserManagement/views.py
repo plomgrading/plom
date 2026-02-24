@@ -256,7 +256,7 @@ class ModifyQuotaView(ManagerRequiredView):
                 "All quota limits updated successfully.",
                 extra_tags="modify_quota",
             )
-        return redirect(reverse("progress_user_info_home"))
+        return redirect(reverse("progress_marker_info_home"))
 
 
 class ModifyDefaultLimitView(ManagerRequiredView):
@@ -325,7 +325,7 @@ class BulkSetQuotaView(ManagerRequiredView):
                 extra_tags="modify_quota",
             )
 
-        return redirect(reverse("progress_user_info_home"))
+        return redirect(reverse("progress_marker_info_home"))
 
 
 class BulkUnsetQuotaView(ManagerRequiredView):
@@ -336,4 +336,4 @@ class BulkUnsetQuotaView(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker")
         Quota.objects.filter(user__in=markers).delete()
         messages.success(request, "Quota removed from all markers.")
-        return redirect(reverse("progress_user_info_home"))
+        return redirect(reverse("progress_marker_info_home"))

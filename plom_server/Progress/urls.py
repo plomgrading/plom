@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.urls import path
 
@@ -23,7 +24,7 @@ from .views import (
     MarkingTaskResetView,
     MarkingTaskReassignView,
     OriginalImageWrapView,
-    ProgressUserInfoHome,
+    ProgressMarkerInfoHome,
     AllTaskOverviewView,
     ProgressLandingView,
     ToolsLandingView,
@@ -116,9 +117,9 @@ urlpatterns = [
         name="ID_img_wrap",
     ),
     path(
-        "userinfo/overview/",
-        ProgressUserInfoHome.as_view(),
-        name="progress_user_info_home",
+        "markerinfo/overview/",
+        ProgressMarkerInfoHome.as_view(),
+        name="progress_marker_info_home",
     ),
     path(
         "all_tasks/",
