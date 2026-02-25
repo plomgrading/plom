@@ -79,8 +79,11 @@ class RubricCreateHalfMarksView(ManagerRequiredView):
     """Create half-point rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        # TODO: why any manager instead of the current user who clicked the button?
         any_manager = User.objects.filter(groups__name="manager").first()
         try:
+            # TODO: this returns how many it actually made but we don't have
+            # TODO: a way to return this info to the user.  HTMX?
             RubricService.build_fractional_delta_rubrics(any_manager.username)
         except ValueError as e:
             messages.error(request, e)
