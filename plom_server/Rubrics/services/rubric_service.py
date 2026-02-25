@@ -475,6 +475,7 @@ class RubricService:
                 modified_by_user=_bypass_user,
                 latest=data.get("latest"),
                 versions=data.get("versions", ""),
+                parameters=data.get("parameters", []),
             )
             for tag in data.get("pedagogy_tags", []):
                 new_rubric.pedagogy_tags.add(tag)
