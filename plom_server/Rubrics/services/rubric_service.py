@@ -988,44 +988,7 @@ class RubricService:
                         r["question_index"],
                         r["rid"],
                     )
-
         return num_added
-
-    @classmethod
-    def _build_half_mark_delta_rubrics(cls, user: User) -> None:
-        log.info("Building half-mark delta rubrics")
-        for q in SpecificationService.get_question_indices():
-            rubric = {
-                "value": 0.5,
-                "text": ".",
-                "kind": "relative",
-                "question_index": q,
-                "username": user.username,
-                "system_rubric": True,
-            }
-            r = cls.create_rubric(rubric, creating_user=user)
-            log.info(
-                "Built delta-rubric %s for Qidx %d: %s",
-                r["display_delta"],
-                r["question_index"],
-                r["rid"],
-            )
-
-            rubric = {
-                "value": -0.5,
-                "text": ".",
-                "kind": "relative",
-                "question_index": q,
-                "username": user.username,
-                "system_rubric": True,
-            }
-            r = cls.create_rubric(rubric, creating_user=user)
-            log.info(
-                "Built delta-rubric %s for Qidx %d: %s",
-                r["display_delta"],
-                r["question_index"],
-                r["rid"],
-            )
 
     @staticmethod
     def _erase_all_rubrics() -> None:
