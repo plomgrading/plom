@@ -91,7 +91,12 @@ class McreateRubric(APIView):
                 request.data["rubric"], creating_user=request.user
             )
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
-        except (serializers.ValidationError, NotImplementedError, ValueError) as e:
+        except (
+            serializers.ValidationError,
+            NotImplementedError,
+            ValueError,
+            PlomConflict,
+        ) as e:
             return _error_response(
                 f"Invalid rubric: {e}", status.HTTP_406_NOT_ACCEPTABLE
             )

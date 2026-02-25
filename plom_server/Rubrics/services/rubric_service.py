@@ -225,6 +225,30 @@ def _modify_rubric_by_making_new_one(
     return serializer.save()
 
 
+def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
+    # TODO: this is asking for race conditions" consider refactoring into the model/serializer?
+    tol = 1e-14
+    # Note: interval avoids a floating point equality check
+    # TODO: is out_of mandatory or option?  Ditto for value?
+    if Rubric.objects.filter(
+        text=d["text"],
+        question_index=d["question_index"],
+        kind=d["kind"],
+        out_of=d["out_of"],
+        value__gte=(d["value"] - tol),
+        value__lte=(d["value"] + tol),
+        # would two identical rubrics except for versions/parameters be ok?
+        versions=d.get("versions", ""),
+        parameters=d.get("parameters", []),
+        latest=True,
+    ).exists():
+        # TODO: more info here, ideally the "rid" of the conflicting Rubric
+        raise PlomConflict(
+            f"A rubric already exists with text={d['text']}, "
+            f"value={d['value']}, question_index={d['question_index']}"
+        )
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
@@ -261,6 +285,7 @@ class RubricService:
                 are disallowed.
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
+            PlomConflict: a conflicting rubric already exists.
         """
         rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
         return _Rubric_to_dict(rubric_obj)
@@ -352,6 +377,8 @@ class RubricService:
                     " rubrics on this server"
                 )
             pass
+
+        _check_if_rubric_dupes_existing(incoming_data)
 
         return cls._create_rubric_lowlevel(incoming_data)
 
@@ -953,8 +980,6 @@ class RubricService:
 
     @classmethod
     def _build_fractional_delta_rubrics(cls, user: User) -> int:
-        from .utils import _frac_value_tolerance as tol
-
         log.info("Building delta rubrics for any enabled fractional rubrics...")
         num_added = 0
         qindices = SpecificationService.get_question_indices()
@@ -964,15 +989,6 @@ class RubricService:
                 if not row["checked"]:
                     continue
                 for value in (1.0 / row["denom"], -1.0 / row["denom"]):
-                    # Note: interval avoids a floating point equality check
-                    if Rubric.objects.filter(
-                        text=".",
-                        question_index=qi,
-                        value__gte=(value - tol),
-                        value__lte=(value + tol),
-                        latest=True,
-                    ).exists():
-                        continue
                     rubric = {
                         "value": value,
                         "text": ".",
@@ -981,7 +997,10 @@ class RubricService:
                         "username": user.username,
                         "system_rubric": True,
                     }
-                    r = cls.create_rubric(rubric, creating_user=user)
+                    try:
+                        r = cls.create_rubric(rubric, creating_user=user)
+                    except PlomConflict:
+                        continue
                     num_added += 1
                     log.info(
                         "Built delta-rubric %s for Qidx %d: %s",

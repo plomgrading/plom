@@ -19,6 +19,7 @@ from tabulate import tabulate
 
 import plom
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Papers.services import SpecificationService
 from ...services import RubricService
 
@@ -98,7 +99,7 @@ class Command(BaseCommand):
                 raise CommandError(f"{e} field(s) missing from rubrics file.")
             except serializers.ValidationError as e:
                 raise CommandError(e.args[0])
-            except (ValueError, tomllib.TOMLDecodeError) as e:
+            except (ValueError, tomllib.TOMLDecodeError, PlomConflict) as e:
                 raise CommandError(e)
         return len(rubrics)
 

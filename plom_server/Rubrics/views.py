@@ -518,7 +518,7 @@ class RubricCreateView(ManagerRequiredView):
         }
         try:
             RubricService.create_rubric(rubric_data, creating_user=request.user)
-        except (ValueError, PermissionDenied) as e:
+        except (ValueError, PermissionDenied, PlomConflict) as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:
             # see comments elsewhere about formatting serializer.ValidationError
