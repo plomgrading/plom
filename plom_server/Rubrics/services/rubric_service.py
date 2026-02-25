@@ -934,6 +934,12 @@ class RubricService:
                 manager group.
 
         Note its not an error of some deltas already exist: we just skip those.
+        This checking isn't done very efficiently: we just check before creating
+        each one, so we query the database N times when creating N rubrics, but
+        N is only ``2 * num_fractions * num_questions`` which shouldn't be too
+        large.
+        TODO: there may be (rare) race conditions here b/c we don't have a
+        `get_or_create` for rubrics.  For now, don't click the button too fast!
         """
         try:
             user = User.objects.get(username__iexact=username, groups__name="manager")
