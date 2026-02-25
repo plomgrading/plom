@@ -229,12 +229,12 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     # TODO: this is asking for race conditions" consider refactoring into the model/serializer?
     tol = 1e-14
     # Note: interval avoids a floating point equality check
-    # TODO: is out_of mandatory or option?  Ditto for value?
+    # TODO: is value optional for neutral rubrics?
     if Rubric.objects.filter(
         text=d["text"],
         question_index=d["question_index"],
         kind=d["kind"],
-        out_of=d["out_of"],
+        out_of=d.get("out_of", 0),
         value__gte=(d["value"] - tol),
         value__lte=(d["value"] + tol),
         # would two identical rubrics except for versions/parameters be ok?
