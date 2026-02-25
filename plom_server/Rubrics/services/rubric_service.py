@@ -226,7 +226,6 @@ def _modify_rubric_by_making_new_one(
 
 
 def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
-    # TODO: this is asking for race conditions" consider refactoring into the model/serializer?
     tol = 1e-14
     # Note: interval avoids a floating point equality check
     # TODO: is value optional for neutral rubrics?
@@ -378,6 +377,8 @@ class RubricService:
                 )
             pass
 
+        # TODO: likely has race conditionsl consider refactoring into model/serializer
+        # or use `get_or_create` later.
         _check_if_rubric_dupes_existing(incoming_data)
 
         return cls._create_rubric_lowlevel(incoming_data)
