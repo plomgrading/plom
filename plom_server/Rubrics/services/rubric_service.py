@@ -970,6 +970,7 @@ class RubricService:
                         question_index=qi,
                         value__gte=(value - tol),
                         value__lte=(value + tol),
+                        latest=True,
                     ).exists():
                         continue
                     rubric = {
