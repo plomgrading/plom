@@ -43,17 +43,25 @@
                 </fieldset>
                 <button type="submit" class="btn btn-secondary" name="todo_needed_or_not">Submit</button>
             </form>
-            <hr />
-            <form method="post" action="{% url 'rubric_half' %}">
-                {% csrf_token %}
-                <div class="form-group mr-2">{{ rubric_halfmark_form }}</div>
-                <button type="submit"
-                        class="btn btn-outline-danger"
-                        {% if not rubrics %}disabled{% endif %}>Create fractional delta rubrics</button>
-            </form>
+        </div>
+    </div>
+    <div class="card m-2 mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Delta rubrics</h5>
+        </div>
+        <div class="card-body">
+            <button type="action"
+                    hx-post="{% url 'rubric_half' %}"
+                    hx-target="#fraction_success_msg"
+                    hx-target-error="#fraction_error_msg"
+                    class="btn btn-outline-danger"
+                    {% if not rubrics %}disabled{% endif %}>Create fractional delta rubrics</button>
+            <span id="fraction_success_msg"
+                  class="p-0 border-0 alert alert-success ms-2"></span>
+            <span id="fraction_error_msg" class="p-0 border-0 alert alert-danger"></span>
             <p class="mb-0">
                 Create +&frac12;, -&frac12;, +&frac14;, etc, rubrics based on which
-                fractions are enabled above.
+                fractions are enabled above (make sure you click "Submit" first).
                 Any existing fractional rubrics will be ignored.
                 Hint: if you later want to remove these rubrics, you'll need to &ldquo;unpublish&rdquo; them one-at-a-time.
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}

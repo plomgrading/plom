@@ -79,15 +79,14 @@ class RubricCreateHalfMarksView(ManagerRequiredView):
     """Create fractional delta rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """An htmx endpoint to create the fractional delta rubrics."""
         # TODO: why any manager instead of the current user who clicked the button?
         any_manager = User.objects.filter(groups__name="manager").first()
         try:
-            # TODO: this returns how many it actually made but we don't have
-            # TODO: a way to return this info to the user.  HTMX?
-            RubricService.build_fractional_delta_rubrics(any_manager.username)
+            n = RubricService.build_fractional_delta_rubrics(any_manager.username)
         except ValueError as e:
-            messages.error(request, e)
-        return redirect("rubrics_admin")
+            return HttpResponse(f"Error: {e}", status=403)
+        return HttpResponse(f"Created {n} new rubrics")
 
 
 class RubricFractionalPreferencesView(ManagerRequiredView):
