@@ -228,14 +228,14 @@ def _modify_rubric_by_making_new_one(
 def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     tol = 1e-14
     # Note: interval avoids a floating point equality check
-    # TODO: is value optional for neutral rubrics?
+    value = d.get("value", 0)
     if Rubric.objects.filter(
         text=d["text"],
         question_index=d["question_index"],
         kind=d["kind"],
         out_of=d.get("out_of", 0),
-        value__gte=(d["value"] - tol),
-        value__lte=(d["value"] + tol),
+        value__gte=value - tol,
+        value__lte=value + tol,
         # would two identical rubrics except for versions/parameters be ok?
         versions=d.get("versions", ""),
         parameters=d.get("parameters", []),
@@ -244,7 +244,7 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
         # TODO: more info here, ideally the "rid" of the conflicting Rubric
         raise PlomConflict(
             f"A rubric already exists with text={d['text']}, "
-            f"value={d['value']}, question_index={d['question_index']}"
+            f"value={value}, question_index={d['question_index']}"
         )
 
 
