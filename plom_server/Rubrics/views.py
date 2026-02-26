@@ -76,7 +76,7 @@ class RubricAdminPageView(ManagerRequiredView):
 
 
 class RubricCreateHalfMarksView(ManagerRequiredView):
-    """Create half-point rubrics."""
+    """Create fractional delta rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
         # TODO: why any manager instead of the current user who clicked the button?
