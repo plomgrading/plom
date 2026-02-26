@@ -6,7 +6,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 import json
 
@@ -81,25 +81,29 @@ class UserPage(ManagerRequiredView):
             messages.error(request, e, extra_tags="danger")
         return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def enableScanners(self):
+    def enableScanners(request):
         PermissionChanger.set_all_scanners_active(True)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def disableScanners(self):
+    def disableScanners(request):
         PermissionChanger.set_all_scanners_active(False)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def enableMarkers(self):
+    def enableMarkers(request):
         PermissionChanger.set_all_markers_active(True)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def disableMarkers(self):
+    def disableMarkers(request):
         PermissionChanger.set_all_markers_active(False)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
 
 class UserToggleLeadMarker(ManagerRequiredView):

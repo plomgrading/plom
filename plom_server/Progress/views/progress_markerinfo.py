@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2025 Bryan Tanady
 
 from django.contrib.auth.models import User
@@ -12,6 +12,7 @@ from django.shortcuts import render
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.UserManagement.models import Quota
 from plom_server.UserManagement.services import QuotaService
+from plom_server.UserManagement.services import UsersService
 from ..forms import AnnotationFilterForm
 from ..services import UserInfoService
 
@@ -22,6 +23,9 @@ class ProgressMarkerInfoHome(ManagerRequiredView):
         filter_form = AnnotationFilterForm(request.GET)
 
         uis = UserInfoService()
+        user_groups = UsersService.get_user_info()
+        lead_marker_usernames = [user.username for user in user_groups["lead_markers"]]
+
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
 
@@ -66,6 +70,7 @@ class ProgressMarkerInfoHome(ManagerRequiredView):
                 "users_with_quota_as_objects": users_with_quota_as_objects,
                 "users_with_quota_count": users_with_quota_count,
                 "users_progress": UserInfoService.get_all_user_progress(),
+                "lead_marker_usernames": lead_marker_usernames,
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)

@@ -27,8 +27,9 @@
         <div class="card-body">
             <h4 class="card-title">Markers</h4>
             <p>
-                <a class="btn btn-outline-success" href="{% url 'enableMarkers' %}">Enable all markers</a>
-                <a class="btn btn-outline-secondary" href="{% url 'disableMarkers' %}">Disable all markers</a>
+                <button hx-post="{% url 'enableMarkers' %}" class="btn btn-outline-success">Enable all markers</button>
+                <button hx-post="{% url 'disableMarkers' %}"
+                        class="btn btn-outline-secondary">Disable all markers</button>
                 <a class="btn btn-link" href="{% url 'progress_marker_info_home' %}">Marker Quotas</a>
             </p>
             <div class="table-responsive">
@@ -125,8 +126,9 @@
         <div class="card-body">
             <h4 class="card-title">Scanners</h4>
             <p>
-                <a class="btn btn-outline-success" href="{% url 'enableScanners' %}">Enable all scanners</a>
-                <a class="btn btn-outline-secondary" href="{% url 'disableScanners' %}">Disable all scanners</a>
+                <button hx-post="{% url 'enableScanners' %}" class="btn btn-outline-success">Enable all scanners</button>
+                <button hx-post="{% url 'disableScanners' %}"
+                        class="btn btn-outline-secondary">Disable all scanners</button>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped sortable">
