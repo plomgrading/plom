@@ -1019,6 +1019,44 @@ class RubricService:
                     )
         return num_added
 
+    @classmethod
+    def publish_all_delta_rubrics(cls) -> tuple[int, int]:
+        """Publish any unpublished delta rubrics, effectively enabling delta rubrics.
+
+        Returns:
+            A pair of numbers, the total number of (latest) delta rubrics
+            and the number we published (which might be zero if they were
+            all already published.
+        """
+        with transaction.atomic():
+            rubric_queryset = Rubric.objects.filter(
+                latest=True, text="."
+            ).select_for_update()
+            n = rubric_queryset.count()
+            unpub = rubric_queryset.filter(published=False)
+            m = unpub.count()
+            unpub.update(published=True)
+            return n, m
+
+    @classmethod
+    def unpublish_all_delta_rubrics(cls) -> tuple[int, int]:
+        """Unpublish any published delta rubrics, effectively disabling delta rubrics.
+
+        Returns:
+            A pair of numbers, the total number of (latest) delta rubrics
+            and the number we unpublished (which might be zero if they were
+            all already unpublished.
+        """
+        with transaction.atomic():
+            rubric_queryset = Rubric.objects.filter(
+                latest=True, text="."
+            ).select_for_update()
+            n = rubric_queryset.count()
+            pub = rubric_queryset.filter(published=True)
+            m = pub.count()
+            pub.update(published=False)
+            return n, m
+
     @staticmethod
     def _erase_all_rubrics() -> None:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.

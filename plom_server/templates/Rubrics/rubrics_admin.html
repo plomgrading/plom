@@ -51,7 +51,7 @@
         </div>
         <div class="card-body">
             <button type="action"
-                    hx-post="{% url 'rubric_half' %}"
+                    hx-post="{% url 'rubric_delta_frac' %}"
                     hx-target="#fraction_success_msg"
                     hx-target-error="#fraction_error_msg"
                     class="btn btn-outline-danger"
@@ -65,6 +65,28 @@
                 Any existing fractional rubrics will be ignored.
                 Hint: if you later want to remove these rubrics, you'll need to &ldquo;unpublish&rdquo; them one-at-a-time.
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
+            </p>
+            <hr />
+            <button type="action"
+                    hx-delete="{% url 'rubric_delta_publish' %}"
+                    hx-target="#publish_delta_success_msg"
+                    hx-target-error="#publish_delta_error_msg"
+                    class="btn btn-outline-secondary">Unpublish all delta rubrics</button>
+            <button type="action"
+                    hx-post="{% url 'rubric_delta_publish' %}"
+                    hx-target="#publish_delta_success_msg"
+                    hx-target-error="#publish_delta_error_msg"
+                    class="btn btn-outline-secondary">Re-publish all delta rubrics</button>
+            <span id="publish_delta_success_msg"
+                  class="p-0 border-0 alert alert-success ms-2"></span>
+            <span id="publish_delta_error_msg" class="p-0 border-0 alert alert-danger"></span>
+            <p class="mb-0">
+                Unpublishing the +&delta; and -&delta; rubrics will hide them from
+                markers, effectively disabling their use.
+                This might be desirable if you always want your markers to leave more
+                detailed feedback (although note the &pmsign;&delta; rubrics <em>can</em>
+                be used to give detailed feedback with click-drag highlight rectangles).
+                <!-- TODO: add link to document discussing marking styles in Plom -->
             </p>
         </div>
     </div>

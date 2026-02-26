@@ -75,7 +75,7 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricCreateHalfMarksView(ManagerRequiredView):
+class RubricCreateFractionalDeltaView(ManagerRequiredView):
     """Create fractional delta rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
@@ -87,6 +87,20 @@ class RubricCreateHalfMarksView(ManagerRequiredView):
         except ValueError as e:
             return HttpResponse(f"Error: {e}", status=403)
         return HttpResponse(f"Created {n} new rubrics")
+
+
+class RubricDeltaPublishView(ManagerRequiredView):
+    """Publish/unpublish the delta rubrics."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """An htmx endpoint to publish any existing delta rubrics."""
+        n, m = RubricService.publish_all_delta_rubrics()
+        return HttpResponse(f"Published {m} of {n} delta rubrics")
+
+    def delete(self, request: HttpRequest) -> HttpResponse:
+        """An htmx endpoint to unpublish any existing delta rubrics."""
+        n, m = RubricService.unpublish_all_delta_rubrics()
+        return HttpResponse(f"Unpublished {m} of {n} delta rubrics")
 
 
 class RubricFractionalPreferencesView(ManagerRequiredView):
