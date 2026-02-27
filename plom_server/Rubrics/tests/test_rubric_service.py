@@ -30,9 +30,8 @@ from ..services.rubric_service import _Rubric_to_dict
 def make_example_neutral_rubric(username: str = "Liam") -> dict[str, Any]:
     d = {
         "kind": "neutral",
-        "display_delta": ".",
-        "value": 0.0,
-        "out_of": 0.0,
+        "value": 0,
+        "out_of": 0,
         "text": "neutral example",
         "tags": "",
         "meta": "asdfg",
@@ -55,9 +54,8 @@ def make_example_neutral_rubric(username: str = "Liam") -> dict[str, Any]:
 def make_example_relative_rubric(username: str = "Olivia") -> dict[str, Any]:
     d = {
         "kind": "relative",
-        "display_delta": "+2.0",
-        "value": 2.0,
-        "out_of": 0.0,
+        "value": 2,
+        "out_of": 0,
         "text": "relative example",
         "tags": "",
         "meta": "hjklz",
@@ -80,9 +78,8 @@ def make_example_relative_rubric(username: str = "Olivia") -> dict[str, Any]:
 def make_example_absolute_rubric(username: str = "Liam") -> dict[str, Any]:
     d = {
         "kind": "absolute",
-        "display_delta": "2.0 of 5.0",
-        "value": 2.0,
-        "out_of": 5.0,
+        "value": 2,
+        "out_of": 5,
         "text": "mnbvc",
         "tags": "",
         "meta": "lkjhg",
