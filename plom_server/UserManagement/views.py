@@ -29,7 +29,7 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Progress.services import UserInfoService
 from .services import PermissionChanger
 from .services import QuotaService
-from .services.UsersService import get_user_info, delete_user
+from .services.UsersService import get_user_info, delete_user, get_list_of_user_info
 from .models import Quota
 
 
@@ -63,7 +63,7 @@ class UserPage(ManagerRequiredView):
             "lead_markers": users["lead_markers"],
             "managers": users["managers"],
             "identifiers": users["identifiers"],
-            "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
+            "user_info_list": get_list_of_user_info(),
         }
         return render(request, "UserManagement/users.html", context)
 
@@ -106,13 +106,24 @@ class UserPage(ManagerRequiredView):
         return HttpResponseClientRefresh()
 
 
+class UserToggleGroup(ManagerRequiredView):
+    """Class to toggle group membership."""
+
+    def post(self, request: HttpRequest, *, username: str, group: str) -> HttpResponse:
+        """Post a username and group to toggle membership."""
+        PermissionChanger.toggle_group_membership(
+            username, group, whoami=request.user.username
+        )
+        return HttpResponseClientRefresh()
+
+
 class UserToggleLeadMarker(ManagerRequiredView):
     """Class that handles the views in UserInfo Page."""
 
     def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Post a username to toggle them between lead_marker and not.
 
-        For *backwards compatbiility*, using this view to make someone a
+        For *backwards compatibility*, using this view to make someone a
         lead marker also makes them an identifier.  But not conversely.
         """
         PermissionChanger.toggle_lead_marker_group_membership(username)

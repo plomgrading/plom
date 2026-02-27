@@ -31,6 +31,7 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
     return [
         {
             "username": user.username,
+            "user": model_to_dict(user),
             "groups": ", ".join(user.groups.values_list("name", flat=True)),
             "last_login": user.last_login,
         }

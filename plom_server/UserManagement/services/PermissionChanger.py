@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 import logging
 
@@ -146,6 +147,35 @@ def toggle_lead_marker_group_membership(username: str) -> None:
         _add_user_to_group(user_obj, "lead_marker")
         # for backwards compat, we enable identifier (but not in reverse)
         _add_user_to_group(user_obj, "identifier")
+
+
+def toggle_group_membership(
+    username: str, group: str, *, whoami: str | None = None
+) -> None:
+    """Toggle a user's membership in a specified group.
+
+    Essentially a wrapper for :func:`change_user_groups`.
+
+    Args:
+        username: the user to change.
+        group: the group to attempt to add/remove the user to.
+
+    Keyword Args:
+        whoami: optional username string of the calling user.
+            If you pass this, we'll prevent managers from
+            locking themselves out of the manager group.
+
+    Returns:
+        Nothing.
+    """
+    groups = get_users_groups(username)
+
+    if group in groups:
+        groups.remove(group)
+    else:
+        groups.append(group)
+
+    change_user_groups(username, groups, whoami=whoami)
 
 
 def change_user_groups(

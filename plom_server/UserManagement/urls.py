@@ -25,6 +25,11 @@ urlpatterns = [
     path("disableMarkers/", views.UserPage.disableMarkers, name="disableMarkers"),
     path("enableMarkers/", views.UserPage.enableMarkers, name="enableMarkers"),
     path(
+        "toggleGroup/<str:username>/<str:group>",
+        views.UserToggleGroup.as_view(),
+        name="toggleGroup",
+    ),
+    path(
         "toggleLeadMarker/<str:username>",
         views.UserToggleLeadMarker.as_view(),
         name="toggleLeadMarker",
