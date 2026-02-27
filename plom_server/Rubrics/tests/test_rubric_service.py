@@ -427,7 +427,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["display_delta"], "2.00 of 3.00")
 
     def test_modify_relative_rubric_change_value_no_autogen_display(self) -> None:
-        data = make_example_absolute_rubric()
+        data = make_example_relative_rubric()
         rid = data["rid"]
         data["value"] = -2
         data["display_delta"] = "minus 2.0"
