@@ -32,12 +32,12 @@
                         <th>Online (web)</th>
                         <th>Online (client)</th>
                         <th>Last login</th>
-                        {% for group_name in plom_user_groups %}<th>{{ group_name }}</th>{% endfor %}
+                        {% for group_name in plom_user_groups %}<th>{{ group_name|capfirst }}</th>{% endfor %}
                         <th>
                             <!-- enable/disable user -->enabled
                         </th>
                         <th>
-                            <!-- delete user -->delete
+                            <!-- delete user -->
                         </th>
                     </thead>
                     {% for user_dict in user_info_list %}
@@ -75,7 +75,7 @@
                                                hx-trigger="change"
                                                hx-target-error="closest div"
                                                hx-post="{% url 'toggleGroup' user_dict.user.username group_name %}"
-                                               aria-label="{{ group_name }}-{{ user_dict.user.id }}"
+                                               aria-label="{{ user_dict.user.username }} is {{ group_name }}"
                                                autocomplete="off"
                                                {% if group_name in user_dict.groups %}checked{% endif %}>
                                     </div>
