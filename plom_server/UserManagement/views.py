@@ -111,9 +111,12 @@ class UserToggleGroup(ManagerRequiredView):
 
     def post(self, request: HttpRequest, *, username: str, group: str) -> HttpResponse:
         """Post a username and group to toggle membership."""
-        PermissionChanger.toggle_group_membership(
-            username, group, whoami=request.user.username
-        )
+        try:
+            PermissionChanger.toggle_group_membership(
+                username, group, whoami=request.user.username
+            )
+        except (ValueError, RuntimeError) as e:
+            return HttpResponse(f"<b>Error:</b> {e}", status=400)
         return HttpResponseClientRefresh()
 
 
