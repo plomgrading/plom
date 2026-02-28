@@ -258,7 +258,6 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
-            # TODO: this function is never called, Issue #4127.
             qr_size = settings.PLOM_QR_CODE_SIZE
             # hard-code additional qr-code next to the top-left one
             rect = pymupdf.Rect(50, 50 + qr_size, 50 + qr_size, 50 + qr_size * 2)
