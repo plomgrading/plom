@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Colin B. Macdonald
 
 from typing import Optional
 from collections import defaultdict
@@ -212,7 +213,9 @@ class QuestionClusteringService:
                 base_cluster.paper.add(*papers)
                 user_facing_cluster.paper.add(*papers)
 
-    def cluster_mcq(self, question_idx: int, version: int, page_num: int, rect: dict):
+    def cluster_mcq(
+        self, question_idx: int, version: int, page_num: int, rect: dict
+    ) -> None:
         """Cluster mcq responses within the given rect for (q, v) context.
 
         Args:
@@ -224,6 +227,11 @@ class QuestionClusteringService:
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
         ref = rex.get_cropped_ref_img(rect)
+        if not ref:
+            raise ValueError(
+                "Problem with QR codes?  Cannot extract reference rectangle for "
+                f"question idx {question_idx} version {version} page number {page_num}"
+            )
 
         paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
             page_num, version=version, scanned=True
@@ -251,7 +259,9 @@ class QuestionClusteringService:
             paper_to_clusterId, question_idx, version, page_num, rect
         )
 
-    def cluster_hme(self, question_idx: int, version: int, page_num: int, rect: dict):
+    def cluster_hme(
+        self, question_idx: int, version: int, page_num: int, rect: dict
+    ) -> None:
         """Cluster handwritten math expression responses within the given rect for (q, v) context.
 
         Args:
@@ -263,6 +273,11 @@ class QuestionClusteringService:
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
         ref = rex.get_cropped_ref_img(rect)
+        if not ref:
+            raise ValueError(
+                "Problem with QR codes?  Cannot extract reference rectangle for "
+                f"question idx {question_idx} version {version} page number {page_num}"
+            )
 
         paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
             page_num, version=version, scanned=True
