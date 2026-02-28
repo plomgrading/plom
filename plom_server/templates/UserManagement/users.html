@@ -69,6 +69,7 @@
                                            hx-target-error="closest div"
                                            hx-post="{% url 'toggleGroup' user_dict.user.username 'marker' %}"
                                            aria-label="marker-{{ user_dict.user.id }}"
+                                           autocomplete="off"
                                            {% if "marker" in user_dict.groups %}checked{% endif %}>
                                 </div>
                             </td>
@@ -81,6 +82,7 @@
                                            hx-trigger="change"
                                            hx-target-error="closest div"
                                            hx-post="{% url 'toggleGroup' user_dict.user.username 'lead_marker' %}"
+                                           autocomplete="off"
                                            {% if "lead_marker" in user_dict.groups %}checked{% endif %}>
                                 </div>
                             </td>
@@ -93,6 +95,7 @@
                                            hx-trigger="change"
                                            hx-target-error="closest div"
                                            hx-post="{% url 'toggleGroup' user_dict.user.username 'scanner' %}"
+                                           autocomplete="off"
                                            {% if "scanner" in user_dict.groups %}checked{% endif %}>
                                 </div>
                             </td>
@@ -105,6 +108,7 @@
                                            hx-trigger="change"
                                            hx-target-error="closest div"
                                            hx-post="{% url 'toggleGroup' user_dict.user.username 'identifier' %}"
+                                           autocomplete="off"
                                            {% if "identifier" in user_dict.groups %}checked{% endif %}>
                                 </div>
                             </td>
@@ -117,6 +121,7 @@
                                            hx-trigger="change"
                                            hx-target-error="closest div"
                                            hx-post="{% url 'toggleGroup' user_dict.user.username 'manager' %}"
+                                           autocomplete="off"
                                            {% if "manager" in user_dict.groups %}checked{% endif %}>
                                 </div>
                             </td>
