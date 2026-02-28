@@ -32,11 +32,7 @@
                         <th>Online (web)</th>
                         <th>Online (client)</th>
                         <th>Last login</th>
-                        <th>Marker</th>
-                        <th>Lead-Marker</th>
-                        <th>Scanner</th>
-                        <th>Identifier</th>
-                        <th>Manager</th>
+                        {% for group_name in plom_user_groups %}<th>{{ group_name }}</th>{% endfor %}
                         <th>
                             <!-- enable/disable user -->enabled
                         </th>
@@ -60,71 +56,21 @@
                                 <td>Offline</td>
                             {% endif %}
                             <td>{{ user_dict.user.last_login|naturaltime }}</td>
-                            <td sorttable_customkey="{% if 'marker' in user_dict.groups %}1{% else %}0{% endif %}">
-                                <div>
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           value="marker-{{ user_dict.user.id }}"
-                                           hx-trigger="change"
-                                           hx-target-error="closest div"
-                                           hx-post="{% url 'toggleGroup' user_dict.user.username 'marker' %}"
-                                           aria-label="marker-{{ user_dict.user.id }}"
-                                           autocomplete="off"
-                                           {% if "marker" in user_dict.groups %}checked{% endif %}>
-                                </div>
-                            </td>
-                            <td sorttable_customkey="{% if 'lead_marker' in user_dict.groups %}1{% else %}0{% endif %}">
-                                <div>
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           value="lead_marker-{{ user_dict.user.id }}"
-                                           aria-label="lead_marker-{{ user_dict.user.id }}"
-                                           hx-trigger="change"
-                                           hx-target-error="closest div"
-                                           hx-post="{% url 'toggleGroup' user_dict.user.username 'lead_marker' %}"
-                                           autocomplete="off"
-                                           {% if "lead_marker" in user_dict.groups %}checked{% endif %}>
-                                </div>
-                            </td>
-                            <td sorttable_customkey="{% if 'scanner' in user_dict.groups %}1{% else %}0{% endif %}">
-                                <div>
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           value="scanner-{{ user_dict.user.id }}"
-                                           aria-label="scanner-{{ user_dict.user.id }}"
-                                           hx-trigger="change"
-                                           hx-target-error="closest div"
-                                           hx-post="{% url 'toggleGroup' user_dict.user.username 'scanner' %}"
-                                           autocomplete="off"
-                                           {% if "scanner" in user_dict.groups %}checked{% endif %}>
-                                </div>
-                            </td>
-                            <td sorttable_customkey="{% if 'identifier' in user_dict.groups %}1{% else %}0{% endif %}">
-                                <div>
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           value="identifier-{{ user_dict.user.id }}"
-                                           aria-label="identifier-{{ user_dict.user.id }}"
-                                           hx-trigger="change"
-                                           hx-target-error="closest div"
-                                           hx-post="{% url 'toggleGroup' user_dict.user.username 'identifier' %}"
-                                           autocomplete="off"
-                                           {% if "identifier" in user_dict.groups %}checked{% endif %}>
-                                </div>
-                            </td>
-                            <td sorttable_customkey="{% if 'manager' in user_dict.groups %}1{% else %}0{% endif %}">
-                                <div>
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           value="manager-{{ user_dict.user.id }}"
-                                           aria-label="manager-{{ user_dict.user.id }}"
-                                           hx-trigger="change"
-                                           hx-target-error="closest div"
-                                           hx-post="{% url 'toggleGroup' user_dict.user.username 'manager' %}"
-                                           autocomplete="off"
-                                           {% if "manager" in user_dict.groups %}checked{% endif %}>
-                                </div>
-                            </td>
+                            {% for group_name in plom_user_groups %}
+                                <td sorttable_customkey="{% if group_name in user_dict.groups %}1{% else %}0{% endif %}">
+                                    <div>
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               value="{{ group_name }}-{{ user_dict.user.id }}"
+                                               hx-trigger="change"
+                                               hx-target-error="closest div"
+                                               hx-post="{% url 'toggleGroup' user_dict.user.username group_name %}"
+                                               aria-label="{{ group_name }}-{{ user_dict.user.id }}"
+                                               autocomplete="off"
+                                               {% if group_name in user_dict.groups %}checked{% endif %}>
+                                    </div>
+                                </td>
+                            {% endfor %}
                             <td sorttable_customkey=0>
                                 <!-- autocomplete is Firefox-specific fix:
                                      https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->

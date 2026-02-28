@@ -29,7 +29,7 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Progress.services import UserInfoService
 from .services import PermissionChanger
 from .services import QuotaService
-from .services.UsersService import get_user_info, delete_user, get_list_of_user_info
+from .services.UsersService import delete_user, get_list_of_user_info
 from .models import Quota
 
 
@@ -47,7 +47,6 @@ class UserPage(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Fetch user management page."""
-        users = get_user_info()
         # fetch these so that we don't loop over this in the template
         # remove db hits in loops.
         uids = cache.get("online-now", [])
@@ -56,14 +55,12 @@ class UserPage(ManagerRequiredView):
         fresh = cache.get_many(online_keys).keys()
         online_now_ids = [int(k.replace("online-", "")) for k in fresh]
 
+        plom_user_groups = AuthService.get_editable_user_group_names()
+
         context = {
             "online_now_ids": online_now_ids,
-            "scanners": users["scanners"],
-            "markers": users["markers"],
-            "lead_markers": users["lead_markers"],
-            "managers": users["managers"],
-            "identifiers": users["identifiers"],
             "user_info_list": get_list_of_user_info(),
+            "plom_user_groups": plom_user_groups,
         }
         return render(request, "UserManagement/users.html", context)
 
