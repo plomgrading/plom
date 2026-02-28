@@ -147,6 +147,21 @@
                     {% endfor %}
                 </table>
             </div>
+            <p>
+                Notes:
+                <ul>
+                    <li>
+                        Some user groups imply others (e.g., Lead-Marker implies Marker),
+                        and must be revoked sequentially.
+                        Read more about this in <a href="https://plom.readthedocs.io/en/latest/marking.html#permissions-and-lead-markers">Plom's documentation</a>.
+                    </li>
+                    <li>
+                        If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
+                    </li>
+                    <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
+                    <li>Currently, you cannot delete a user who has ever logged in.</li>
+                </ul>
+            </p>
         </div>
     </div>
 {% endblock main_content %}
