@@ -41,17 +41,19 @@ def toggle_user_active(username: str) -> None:
 
     [1] https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#django.contrib.auth.models.User.is_active
     """
+    group_memberships = get_users_groups(username)
+    if "admin" in group_memberships:
+        return
+
     user = User.objects.get_by_natural_key(username)
     user.is_active = not user.is_active
     user.save()
     # if user is now inactive and a marker then make sure that they are logged
     # out of the API system by removing their API access token.
-    if not user.is_active:
-        marker_group_obj = Group.objects.get_by_natural_key("marker")
-        if marker_group_obj in user.groups.all():
-            MarkingTaskService.surrender_all_tasks(user)
-            IdentifyTaskService.surrender_all_tasks(user)
-            TokenService.drop_api_token(user)
+    if not user.is_active and "marker" in group_memberships:
+        MarkingTaskService.surrender_all_tasks(user)
+        IdentifyTaskService.surrender_all_tasks(user)
+        TokenService.drop_api_token(user)
 
 
 @transaction.atomic

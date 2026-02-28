@@ -44,10 +44,16 @@
                         <tr>
                             <td>
                                 <a href="{% url 'profile' user_dict.user.username %}" class>{{ user_dict.user.username }}</a>
-                                <a href="{% url 'reset_user_password' user_dict.user.username %}"
-                                   class=" link-underline link-underline-opacity-25">
+                                {% if "admin" in user_dict.groups %}
                                     <br />
-                                    <small>change password</small></a>
+                                    <small class="text-muted">change password</small>
+                                {% else %}
+                                    <a href="{% url 'reset_user_password' user_dict.user.username %}"
+                                       class=" link-underline link-underline-opacity-25"
+                                       disabled>
+                                        <br />
+                                        <small>change password</small></a>
+                                {% endif %}
                             </td>
                             {% if user_dict.user.id in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
