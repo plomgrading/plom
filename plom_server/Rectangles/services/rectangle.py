@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
@@ -212,7 +212,8 @@ def extract_rect_region_from_image(
         pre_rotation: TODO.
 
     Returns:
-        The bytes of the image in png format, or none if errors.
+        The bytes of the image in png format, or None if there were not
+        enough QR codes to accurately extract a region.
 
     Raises:
         TODO
@@ -346,7 +347,8 @@ class RectangleExtractor:
                 TODO: note underscore: used for internal hackery, may not last.
 
         Returns:
-            The bytes of the image in png format, or none if errors.
+            The bytes of the image in png format, or none if there were not
+            enough QR codes to accurately extract a region.
 
         Raises:
             ObjectDoesNotExist: if that paper number does not have our page
@@ -473,11 +475,15 @@ class RectangleExtractor:
         """Get numpy array of cropped reference image.
 
         Args:
-            rects: a dictionary defining the cropped region. Must have these keys:
-            [left, top, right, bottom]
+            rects: a dictionary defining the cropped region. Must have
+                the keys ``[left, top, right, bottom]``.
 
         Returns:
             A numpy array of the cropped reference image.
+
+        Raises:
+            KeyError: malformed arg.
+            ValueError: image has has no parsed_qr or not enough QR codes.
         """
         expected_keys = {"left", "top", "right", "bottom"}
         if not expected_keys.issubset(rects):
