@@ -1,4 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Colin B. Macdonald
 
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -51,13 +53,12 @@ class RectangleExtractorView(APIView):
             right_f=right,
             bottom_f=bottom,
         )
-
         # extract_rect_region returns None on error
+        # TODO: refactor to use an exception to get better error message!
         if not image_bytes:
             return _error_response(
-                "Error: Rectangle extractor returns none, implying there"
-                "is an error in extract_rect_region ",
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Error: Rectangle extractor did not find enough QR codes on page",
+                status.HTTP_406_NOT_ACCEPTABLE,
             )
 
         # serve back as PNG
