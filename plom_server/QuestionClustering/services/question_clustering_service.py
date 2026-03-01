@@ -227,11 +227,6 @@ class QuestionClusteringService:
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
         ref = rex.get_cropped_ref_img(rect)
-        if not ref:
-            raise ValueError(
-                "Problem with QR codes?  Cannot extract reference rectangle for "
-                f"question idx {question_idx} version {version} page number {page_num}"
-            )
 
         paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
             page_num, version=version, scanned=True
@@ -273,11 +268,6 @@ class QuestionClusteringService:
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
         ref = rex.get_cropped_ref_img(rect)
-        if not ref:
-            raise ValueError(
-                "Problem with QR codes?  Cannot extract reference rectangle for "
-                f"question idx {question_idx} version {version} page number {page_num}"
-            )
 
         paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
             page_num, version=version, scanned=True
