@@ -181,7 +181,7 @@ def _get_perspective_transform_scan_to_ref(
     return cv.getPerspectiveTransform(scan_rect_coords, dest_rect_coords)
 
 
-def extract_rect_region_from_image(
+def _extract_rect_region_from_image(
     img: Path,
     qr_dict: dict[str, dict[str, Any]],
     left_f: float,
@@ -377,7 +377,7 @@ class RectangleExtractor:
 
         # TODO: Issue #3888 this `.path` assumes storage is local and will fail
         # with a NotImplementedError when FileField uses remote storage.
-        return extract_rect_region_from_image(
+        return _extract_rect_region_from_image(
             img_obj.baseimage.image_file.path,
             img_obj.parsed_qr,
             left_f,
@@ -425,7 +425,7 @@ class RectangleExtractor:
             # DEBUG BRYAN (TEMP)
             # need reference
             if self.rimg_obj.parsed_qr is not None:
-                dat = extract_rect_region_from_image(
+                dat = _extract_rect_region_from_image(
                     Path(self.rimg_obj.image_file.path),
                     self.rimg_obj.parsed_qr,
                     left_f,
@@ -499,7 +499,7 @@ class RectangleExtractor:
         if self.rimg_obj.parsed_qr is None:
             raise ValueError("Reference image does not have parsed_qr data.")
 
-        cropped_ref_bytes = extract_rect_region_from_image(
+        cropped_ref_bytes = _extract_rect_region_from_image(
             Path(self.rimg_obj.image_file.path),
             self.rimg_obj.parsed_qr,
             left,
@@ -519,10 +519,10 @@ class RectangleExtractor:
 
         return cropped_ref
 
-    def get_cropped_scanned_img(
+    def get_cropped_scanned_img_or_none(
         self, paper_num: int, rects: dict[str, float]
-    ) -> np.ndarray:
-        """Get numpy array of a cropped scanned image.
+    ) -> np.ndarray | None:
+        """Get numpy array of a cropped scanned image or None.
 
         Args:
             paper_num: the paper number whose scanned page will be extracted
@@ -530,7 +530,12 @@ class RectangleExtractor:
                 [left, top, right, bottom].
 
         Returns:
-            A numpy array of the cropped scanned image.
+            A numpy array of the cropped scanned image or `None`
+            if we cannot read from that papernum (e.g., not
+            enough QR codes).
+
+        Raises:
+            KeyError: malformed arg.
         """
         expected_keys = {"left", "top", "right", "bottom"}
         if not expected_keys.issubset(rects):
@@ -547,9 +552,8 @@ class RectangleExtractor:
         cropped_scanned_bytes = self.extract_rect_region(
             paper_num, left, top, right, bottom
         )
-
         if cropped_scanned_bytes is None:
-            raise ValueError("Failed to extract rectangle region from scanned image.")
+            return None
 
         with BytesIO(cropped_scanned_bytes) as fh:
             pil_img = Image.open(fh)

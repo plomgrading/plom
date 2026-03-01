@@ -223,6 +223,9 @@ class QuestionClusteringService:
             version: version of the clustering context.
             page_num: the page_number used for the clustering.
             rect: the rectangular region used for clustering.
+
+        Raises:
+            ValueError: problem extracting from reference image.
         """
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
@@ -235,9 +238,15 @@ class QuestionClusteringService:
         # get paper_num to ref, scanned mapping used for clustering input
         # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
         paper_to_images = {
-            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img(pn, rect)}
+            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img_or_none(pn, rect)}
             for pn in paper_numbers
         }
+        # filter out any that failed
+        paper_to_images = {
+            pn: x for pn, x in paper_to_images.items() if x["scanned"] is not None
+        }
+        if not paper_to_images:
+            raise ValueError("Could not extract rectangles from ANY pages")
 
         # get mcq ClusteringStrategy (use @lru_cache)
         ClusteringStrategy = get_ClusteringStrategy(model_type=ClusteringModelType.MCQ)
@@ -264,6 +273,9 @@ class QuestionClusteringService:
             version: version of the clustering context.
             page_num: the page_number used for the clustering.
             rect: the rectangular region used for clustering.
+
+        Raises:
+            ValueError: extraction from problem reference image.
         """
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
@@ -276,9 +288,15 @@ class QuestionClusteringService:
         # get paper_num to ref, scanned mapping used for clustering input
         # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
         paper_to_images = {
-            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img(pn, rect)}
+            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img_or_none(pn, rect)}
             for pn in paper_numbers
         }
+        # filter out any that failed
+        paper_to_images = {
+            pn: x for pn, x in paper_to_images.items() if x["scanned"] is not None
+        }
+        if not paper_to_images:
+            raise ValueError("Could not extract rectangles from ANY pages")
 
         # load model
         ClusteringStrategy = get_ClusteringStrategy(model_type=ClusteringModelType.HME)
@@ -311,6 +329,9 @@ class QuestionClusteringService:
             page_num: the page num involved in the clustering.
             rect: the rectangular region used for clustering.
             clustering_model: the model used for clustering.
+
+        Raises:
+            ValueError: extraction from problem reference image.
         """
         if clustering_model == ClusteringModelType.MCQ:
             self.cluster_mcq(question_idx, version, page_num, rect)
