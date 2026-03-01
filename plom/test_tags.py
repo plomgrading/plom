@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2024, 2026 Colin B. Macdonald
 
 from plom.tagging import is_valid_tag_text as valid
 
@@ -13,6 +13,10 @@ def test_tag_basic_valid() -> None:
     assert valid(":colon:")
     assert valid("semicolon;")
     assert valid("@user1")
+
+
+def test_tag_a_user_with_email_address_as_username() -> None:
+    assert valid("@user@example.com")
 
 
 def test_tag_invalid_chars() -> None:
