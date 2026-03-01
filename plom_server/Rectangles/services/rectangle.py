@@ -326,7 +326,7 @@ class RectangleExtractor:
         bottom_f: float,
         *,
         _version_ignore: bool = False,
-    ) -> None | bytes:
+    ) -> bytes:
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
         Args:
@@ -353,6 +353,8 @@ class RectangleExtractor:
         Raises:
             ObjectDoesNotExist: if that paper number does not have our page
                 and our version.
+            ValueError: less than three QR codes so we cannot triangulate
+                accurately to extract regions.
         """
         # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -377,7 +379,7 @@ class RectangleExtractor:
 
         # TODO: Issue #3888 this `.path` assumes storage is local and will fail
         # with a NotImplementedError when FileField uses remote storage.
-        return _extract_rect_region_from_image(
+        bytes = _extract_rect_region_from_image(
             img_obj.baseimage.image_file.path,
             img_obj.parsed_qr,
             left_f,
@@ -387,6 +389,14 @@ class RectangleExtractor:
             (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
             pre_rotation=img_obj.rotation,
         )
+        if not bytes:
+            raise ValueError(
+                "Cannot accurately extract rectangle using "
+                f"{len(img_obj.parsed_qr)} QR codes; "
+                f"Paper number {paper_number} version {self.version} "
+                f"page {self.page_number}"
+            )
+        return bytes
 
     def build_zipfile(
         self,
@@ -549,10 +559,11 @@ class RectangleExtractor:
             rects["bottom"],
         )
 
-        cropped_scanned_bytes = self.extract_rect_region(
-            paper_num, left, top, right, bottom
-        )
-        if cropped_scanned_bytes is None:
+        try:
+            cropped_scanned_bytes = self.extract_rect_region(
+                paper_num, left, top, right, bottom
+            )
+        except ValueError:
             return None
 
         with BytesIO(cropped_scanned_bytes) as fh:

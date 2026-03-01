@@ -45,21 +45,16 @@ class RectangleExtractorView(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get the image bytes
-        image_bytes = rex.extract_rect_region(
-            paper_number=paper_num,
-            left_f=left,
-            top_f=top,
-            right_f=right,
-            bottom_f=bottom,
-        )
-        # extract_rect_region returns None on error
-        # TODO: refactor to use an exception to get better error message!
-        if not image_bytes:
-            return _error_response(
-                "Error: Rectangle extractor did not find enough QR codes on page",
-                status.HTTP_406_NOT_ACCEPTABLE,
+        try:
+            image_bytes = rex.extract_rect_region(
+                paper_number=paper_num,
+                left_f=left,
+                top_f=top,
+                right_f=right,
+                bottom_f=bottom,
             )
+        except ValueError as err:
+            return _error_response(f"Error: {err}", status.HTTP_406_NOT_ACCEPTABLE)
 
         # serve back as PNG
         buf = BytesIO(image_bytes)
