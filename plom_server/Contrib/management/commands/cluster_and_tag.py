@@ -28,7 +28,11 @@ class Command(BaseCommand):
     python3 manage.py cluster_tag_id_digits [digit_index] [username]
     """
 
-    help = """Cluster and tag questions based id digits."""
+    help = """
+        Cluster and tag questions based id digits.
+
+        This is just for experimenting: probably doesn't do anything useful yet.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -56,6 +60,8 @@ class Command(BaseCommand):
 
         Args:
             digit_index (int): Digit index to extract, range: [0-7]
+
+        Note this is hardcoded for version 1.
         """
         # instantiate the rectangle extractor for version 1 and the id-page.
         id_page_number = SpecificationService.get_id_page_number()
@@ -75,10 +81,12 @@ class Command(BaseCommand):
         # now that we have the IDbox rectangle, we can use existing services to
         # extract them
         id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(
-            [
-                idbox_location_rectangle[X]
-                for X in ["left_f", "top_f", "right_f", "bottom_f"]
-            ]
+            {
+                1: {
+                    X: idbox_location_rectangle[X]
+                    for X in ("left_f", "top_f", "right_f", "bottom_f")
+                }
+            }
         )
         # now extract the digits from those boxes.
 
