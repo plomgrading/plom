@@ -347,8 +347,7 @@ class RectangleExtractor:
                 TODO: note underscore: used for internal hackery, may not last.
 
         Returns:
-            The bytes of the image in png format, or none if there were not
-            enough QR codes to accurately extract a region.
+            The bytes of the image in png format.
 
         Raises:
             ObjectDoesNotExist: if that paper number does not have our page
