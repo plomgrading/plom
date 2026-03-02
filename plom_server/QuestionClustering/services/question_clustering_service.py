@@ -2,9 +2,8 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2026 Colin B. Macdonald
 
-from typing import Optional
 from collections import defaultdict
-from typing import Any
+from typing import Any, Mapping, Optional
 
 # django
 from django.forms.models import model_to_dict
@@ -237,7 +236,7 @@ class QuestionClusteringService:
 
         # get paper_num to ref, scanned mapping used for clustering input
         # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
-        paper_to_images = {
+        paper_to_images: Mapping[int, Mapping[str, Any]] = {
             pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img_or_none(pn, rect)}
             for pn in paper_numbers
         }
@@ -287,7 +286,8 @@ class QuestionClusteringService:
 
         # get paper_num to ref, scanned mapping used for clustering input
         # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
-        paper_to_images = {
+        # TODO: why do we need typing here?
+        paper_to_images: Mapping[int, Mapping[str, Any]] = {
             pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img_or_none(pn, rect)}
             for pn in paper_numbers
         }
