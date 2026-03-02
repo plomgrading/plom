@@ -434,7 +434,7 @@ class RectangleExtractor:
             # DEBUG BRYAN (TEMP)
             # need reference
             if self.rimg_obj.parsed_qr is not None:
-                dat = _extract_rect_region_from_image(
+                ref_dat = _extract_rect_region_from_image(
                     Path(self.rimg_obj.image_file.path),
                     self.rimg_obj.parsed_qr,
                     left_f,
@@ -443,8 +443,8 @@ class RectangleExtractor:
                     bottom_f,
                     (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
                 )
-                if dat:
-                    archive.writestr("ref.png", dat)
+                if ref_dat:
+                    archive.writestr("ref.png", ref_dat)
 
     def get_largest_rectangle_contour(
         self, region: None | dict[str, float] = None
