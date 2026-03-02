@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * improved error messages associated with error pages in scanning app.
 * improved user group management screen.
 * static resources are collected each time plom-server is run (not just when an empty database is detected).
+* clustering will skip pages that have fewer than 3 QR codes, rather than giving an error.
 
 ### Fixed
 * Fix tagging errors when usernames contain dots.
