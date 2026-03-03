@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024-2025 Aidan Murphy
+# Copyright (C) 2024-2026 Aidan Murphy
 
 import csv
 import os
@@ -173,7 +173,7 @@ class AuthService:
         groups_name_list = list(groups.values_list("name", flat=True))
         for x in group_names:
             if x not in groups_name_list:
-                raise ValueError(f'Cannot add user to non-existent Group "{x}"')
+                raise ObjectDoesNotExist(f'Cannot add user to non-existent Group "{x}"')
 
         user = User.objects.create_user(
             username=username, email=email, password=password
@@ -240,7 +240,7 @@ class AuthService:
             has keys `username`, `groups`, and `link`.
 
         Raises:
-            KeyError: .csv file is missing required fields: `username`, `usergroup`.
+            KeyError: .csv file is missing required fields: `username`, `usergroups`.
             IntegrityError: attempted to create a user that already exists.
             ObjectDoesNotExist: specified usergroup doesn't exist.
         """
@@ -252,7 +252,7 @@ class AuthService:
             with open(f) as csvfile:
                 user_list = list(csv.DictReader(csvfile))
 
-        required_fields = set(["username", "usergroup"])
+        required_fields = set(["username", "usergroups"])
         if not required_fields.issubset(user_list[0].keys()):
             raise KeyError(
                 f"{_filename} is missing required fields,"
@@ -263,15 +263,13 @@ class AuthService:
         # either all succeed or all fail
         with transaction.atomic():
             for idx, user_dict in enumerate(user_list):
-                group = user_dict["usergroup"]
+                groups = user_dict["usergroups"].split(",")
                 try:
-                    u, g = cls.create_user_and_add_to_group(
-                        user_dict["username"], group
+                    u, g = cls.create_user_and_add_to_groups(
+                        user_dict["username"], groups
                     )
-                except ValueError as e:
-                    raise ObjectDoesNotExist(
-                        f'Error near row {idx + 1}: Group "{group}" does not exist? {e}'
-                    ) from e
+                except (ValueError, ObjectDoesNotExist, IntegrityError) as e:
+                    raise type(e)(f"Error near row {idx + 1}: {e}")
                 user = User.objects.get(username=user_dict["username"])
                 users_added.append(
                     {

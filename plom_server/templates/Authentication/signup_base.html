@@ -3,7 +3,7 @@
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
-    Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2024, 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -53,17 +53,18 @@
                         <ul>
                             <!-- WET - see AuthService.create_users_from_csv -->
                             <li>'username'</li>
-                            <li>'usergroup'. This can be one of:</li>
+                            <li>'usergroups'. This can be one or more of:</li>
                             <ul>
                                 {% for group in valid_user_groups %}<li>{{ group }}</li>{% endfor %}
                             </ul>
+                            each separated by a comma.
                         </ul>
                         <p>
                             Here is a template:
                             <button class="btn btn-link"
                                     onclick="downloadCSV(this)"
                                     id="download-all"
-                                    data-downloadText="{{ example_input_csv|safe }}"
+                                    data-downloadText='{{ example_input_csv }}'
                                     data-filename="user_import_template.csv">
                                 user_import_template.csv<i class="bi bi-download"></i>
                             </button>
