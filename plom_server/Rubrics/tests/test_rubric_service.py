@@ -344,7 +344,7 @@ class RubricServiceTests(TestCase):
         """Test RubricService.modify_rubric() to modify a neural rubric."""
         data = make_example_neutral_rubric()
         rid = data["rid"]
-        data["text"] += " Killroy was here"
+        data["text"] += " Kilroy was here"
         data["question_index"] = 1
         data.pop("display_delta")
         r = RubricService.modify_rubric(rid, data)
