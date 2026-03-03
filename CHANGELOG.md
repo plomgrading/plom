@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * improved error messages associated with error pages in scanning app.
 
 ### Fixed
+* Fix tagging errors when usernames contain dots.
 * minor UI tweaks and fixes.
 
 
