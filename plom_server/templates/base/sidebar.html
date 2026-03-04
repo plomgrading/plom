@@ -10,7 +10,8 @@
 {% load static %}
 <ul class="nav flex-column mt-2">
     <li class="nav-item">
-        <a class="nav-link link-secondary" href="{% url 'private_profile' %}">
+        <a class="nav-link link-body-emphasis"
+           href="{% url 'private_profile' %}">
             {% if request.user.first_name %}
                 {{ request.user.first_name }}
             {% else %}
@@ -20,76 +21,82 @@
     </li>
     <ul style="list-style-type: none">
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'logout' %}">Log out</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'logout' %}">Log out</a>
         </li>
     </ul>
     {% if user_is_admin %}
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'users' %}">Manage Users</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'users' %}">Manage Users</a>
         </li>
     {% elif user_is_manager %}
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'users' %}">Manage Users</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'users' %}">Manage Users</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'prep_landing' %}">Prepare Assessment</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'prep_landing' %}">Prepare Assessment</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'scan_overview' %}">Scanning</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'scan_overview' %}">Scanning</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'rubrics_landing' %}">Rubrics</a>
+            <a class="nav-link link-body-emphasis"
+               href="{% url 'rubrics_landing' %}">Rubrics</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'progress_landing' %}">Marking</a>
+            <a class="nav-link link-body-emphasis"
+               href="{% url 'progress_landing' %}">Marking</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary"
+            <a class="nav-link link-body-emphasis"
                href="{% url 'progress_identify_home' %}">Identifying</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'tools_landing' %}">Tools</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'tools_landing' %}">Tools</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'soln_home' %}">Solutions</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'soln_home' %}">Solutions</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'reassemble_pdfs' %}">Reassemble</a>
+            <a class="nav-link link-body-emphasis"
+               href="{% url 'reassemble_pdfs' %}">Reassemble</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'reports_landing' %}">Spreadsheets & Reports</a>
+            <a class="nav-link link-body-emphasis"
+               href="{% url 'reports_landing' %}">Spreadsheets & Reports</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="#development">In development</a>
+            <a class="nav-link link-body-emphasis" href="#development">In development</a>
             <div id="development">
                 <ul style="list-style-type: none">
                     <li class="nav-item">
-                        <a class="nav-link link-secondary" href="{% url 'tags_landing' %}">Tags</a>
+                        <a class="nav-link link-body-emphasis" href="{% url 'tags_landing' %}">Tags</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link link-secondary" href="{% url 'qtags_landing' %}">Question Tags</a>
+                        <a class="nav-link link-body-emphasis" href="{% url 'qtags_landing' %}">Question Tags</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link link-secondary" href="{% url 'server_status' %}">Server status</a>
+                        <a class="nav-link link-body-emphasis" href="{% url 'server_status' %}">Server status</a>
                     </li>
                 </ul>
             </div>
         </li>
     {% elif user_is_scanner %}
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'scan_overview' %}">Scanning</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'scan_overview' %}">Scanning</a>
         </li>
     {% elif user_is_marker %}
         <li class="nav-item">
-            <a class="nav-link link-secondary" href="{% url 'mark_papers' %}">Mark papers</a>
+            <a class="nav-link link-body-emphasis" href="{% url 'mark_papers' %}">Mark papers</a>
         </li>
         {% if user_is_lead_marker %}
             <li class="nav-item">
-                <a class="nav-link link-secondary" href="{% url 'progress_landing' %}">Marking and IDing</a>
+                <a class="nav-link link-body-emphasis"
+                   href="{% url 'progress_landing' %}">Marking and IDing</a>
             </li>
         {% else %}
             <li class="nav-item">
-                <a class="nav-link link-secondary" href="{% url 'progress_marking' %}">Marking progress</a>
+                <a class="nav-link link-body-emphasis"
+                   href="{% url 'progress_marking' %}">Marking progress</a>
             </li>
         {% endif %}
     {% endif %}
