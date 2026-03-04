@@ -2,7 +2,7 @@
 /* Copyright (C) 2022 Edith Coates */
 /* Copyright (C) 2022-2023 Brennen Chiu */
 /* Copyright (C) 2023 Andrew Rechnitzer */
-/* Copyright (C) 2024-2025 Colin B. Macdonald */
+/* Copyright (C) 2024-2026 Colin B. Macdonald */
 /* Copyright (C) 2026 Aidan Murphy */
 
 /* Bootstrap classes should be used instead of custom CSS
@@ -59,8 +59,8 @@ div.is_pdf_thumbnail:hover {
 
 
 
-/* some nice colours */
-/* bootstrap defaults make all apps look the same */
+/* some nice colours to be used sparingly for branding */
+/* (some people feel Bootstrap defaults make all apps look the same) */
 .bg-plom-dark-teal {
     background-color: light-dark(#377373, #004040) !important;
 }
