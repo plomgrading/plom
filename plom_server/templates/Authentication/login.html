@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2026 Aidan Murphy
 -->
 {% load static %}
@@ -50,7 +50,7 @@
                                     <label class="form-label" for="check-password">Show Password</label>
                                 </div>
                                 {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
-                                <button class="btn btn-lg fw-light text-centre border border-2" type="submit">
+                                <button class="btn btn-lg btn-plom-custom text-centre" type="submit">
                                     <span class="m-5"><span class="bi-box-arrow-in-right"></span>
                                 Login</span>
                             </button>

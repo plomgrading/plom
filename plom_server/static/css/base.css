@@ -67,3 +67,13 @@ div.is_pdf_thumbnail:hover {
 .bg-plom-teal {
     background-color: light-dark(#8CBFBF, #587A7A) !important;
 }
+
+/* Custom buttons based on the purple in the Plom quill logo */
+.btn-plom-custom {
+  background-color: light-dark(#9899f0, #6568bb) !important;
+  border-color: light-dark(#6568bb, #9899f0) !important;
+  /* (border darker in light mode, lighter in dark mode) */
+}
+.btn-plom-custom:hover {
+  background-color: light-dark(#a6a6ff, #9899f0) !important;
+}
