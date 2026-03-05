@@ -77,3 +77,6 @@ div.is_pdf_thumbnail:hover {
 .btn-plom-custom:hover {
   background-color: light-dark(#a6a6ff, #9899f0) !important;
 }
+.btn-plom-custom:active {
+  background-color: light-dark(#9e9ee8, #6669bd) !important;
+}
