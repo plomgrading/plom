@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024-2025 Andrew Rechnitzer
+    Copyright (C) 2026 Aidan Murphy
 -->
 <body>
     <h2>Student report: {{ longname }}</h2>
@@ -70,9 +71,10 @@
             <li>The student mark is shown as a dot</li>
             <li>The median is shown as a thick vertical line in the middle of the box</li>
             <li>
-                The box shows the 25-75 percentile range of marks and the extreme left/right vertical lines show the minimum and maximum marks.
+                The box shows the 25-75 percentile range of marks and, excluding extreme values*, the far left/right vertical lines show the minimum and maximum marks.
             </li>
         </ul>
+        * This report defines extreme values as being more than 1.5 IQRs outside of the upper and lower quartiles. <a href="https://math.stackexchange.com/questions/966331/why-john-tukey-set-1-5-iqr-to-detect-outliers-instead-of-1-or-2"> Why 1.5 IQRs?</a>
     </p>
     {% for graph in boxplots %}
         <div class="col" style="margin-left:0mm;">
