@@ -8,10 +8,9 @@
     color-scheme: light dark;
 }
 
-/* some nice colours */
-.bg-plom-dark-teal{
-    background-color: light-dark(#377373, #004040);
+.login_box{
+   background-color: light-dark(#AD9CFF, #AD9CFF);
 }
-.bg-plom-teal{
-    background-color: light-dark(#479E9E, #377373);
+.btn{
+   background-color: #7A7CFF;
 }
