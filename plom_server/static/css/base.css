@@ -61,10 +61,10 @@ div.is_pdf_thumbnail:hover {
 
 /* some nice colours to be used sparingly for branding */
 /* (some people feel Bootstrap defaults make all apps look the same) */
-.bg-plom-dark-teal {
+.bg-plom-teal {
     background-color: light-dark(#377373, #004040) !important;
 }
-.bg-plom-teal {
+.bg-plom-teal-subtle {
     background-color: light-dark(#8CBFBF, #587A7A) !important;
 }
 
