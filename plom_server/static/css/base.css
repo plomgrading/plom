@@ -69,14 +69,14 @@ div.is_pdf_thumbnail:hover {
 }
 
 /* Custom buttons based on the purple in the Plom quill logo */
-.btn-plom-custom {
+.btn-plom-purple {
   background-color: light-dark(#9899f0, #6568bb) !important;
   border-color: light-dark(#6568bb, #9899f0) !important;
   /* (border darker in light mode, lighter in dark mode) */
 }
-.btn-plom-custom:hover {
+.btn-plom-purple:hover {
   background-color: light-dark(#a6a6ff, #9899f0) !important;
 }
-.btn-plom-custom:active {
+.btn-plom-purple:active {
   background-color: light-dark(#9e9ee8, #6669bd) !important;
 }
