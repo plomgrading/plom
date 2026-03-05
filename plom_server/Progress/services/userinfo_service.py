@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2026 Aidan Murphy
 
 from datetime import timedelta
 from typing import Any
@@ -213,6 +214,7 @@ class UserInfoService:
         """
         count_data: dict[str, dict[tuple[int, int], int]] = dict()
         total_marking_time_data: dict[str, dict[tuple[int, int], int]] = dict()
+        annotations = annotations.select_related("task", "user")
 
         for ann in annotations:
             key = (ann.task.question_index, ann.task.question_version)

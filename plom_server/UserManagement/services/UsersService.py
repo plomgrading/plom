@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024-2025 Aidan Murphy
+# Copyright (C) 2024-2026 Aidan Murphy
 # Copyright (C) 2025 Bryan Tanady
 
 from typing import Any
@@ -31,6 +31,7 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
     return [
         {
             "username": user.username,
+            "user": model_to_dict(user),
             "groups": ", ".join(user.groups.values_list("name", flat=True)),
             "last_login": user.last_login,
         }

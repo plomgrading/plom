@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from django.urls import path
 
@@ -24,6 +24,11 @@ urlpatterns = [
     path("enableScanners/", views.UserPage.enableScanners, name="enableScanners"),
     path("disableMarkers/", views.UserPage.disableMarkers, name="disableMarkers"),
     path("enableMarkers/", views.UserPage.enableMarkers, name="enableMarkers"),
+    path(
+        "toggleGroup/<str:username>/<str:group>",
+        views.UserToggleGroup.as_view(),
+        name="toggleGroup",
+    ),
     path(
         "toggleLeadMarker/<str:username>",
         views.UserToggleLeadMarker.as_view(),

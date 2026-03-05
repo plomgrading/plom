@@ -24,12 +24,12 @@ class AuthService:
     # TODO: is "demo" really a thing?
     plom_user_groups_list = (
         "admin",
-        "manager",
         "marker",
-        "scanner",
-        "demo",
         "lead_marker",
         "identifier",
+        "scanner",
+        "manager",
+        "demo",
     )
 
     @classmethod
@@ -43,6 +43,17 @@ class AuthService:
             else:
                 groups_already_existing.append(_.name)
         return groups_created, groups_already_existing
+
+    @classmethod
+    def get_editable_user_group_names(cls) -> list[str]:
+        """Return a list of user groups which are user editable.
+
+        For example, the 'admin' group isn't editable.
+        """
+        user_group_names = list(cls.plom_user_groups_list)
+        user_group_names.remove("admin")
+        user_group_names.remove("demo")
+        return user_group_names
 
     @staticmethod
     def ensure_superusers_in_admin_group() -> tuple[list[str], list[str]]:

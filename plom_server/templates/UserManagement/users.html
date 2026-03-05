@@ -25,12 +25,6 @@
     {% include "../base/alert_messages.html" with messages=messages %}
     <div class="card my-2">
         <div class="card-body">
-            <h4 class="card-title">Markers</h4>
-            <p>
-                <a class="btn btn-outline-success" href="{% url 'enableMarkers' %}">Enable all markers</a>
-                <a class="btn btn-outline-secondary" href="{% url 'disableMarkers' %}">Disable all markers</a>
-                <a class="btn btn-link" href="{% url 'progress_user_info_home' %}">Marker Quotas</a>
-            </p>
             <div class="table-responsive">
                 <table class="table table-striped sortable">
                     <thead>
@@ -38,51 +32,55 @@
                         <th>Online (web)</th>
                         <th>Online (client)</th>
                         <th>Last login</th>
+                        {% for group_name in plom_user_groups %}<th>{{ group_name|capfirst }}</th>{% endfor %}
                         <th>
-                            <!-- column for marker promotion/demotion -->
+                            <!-- enable/disable user -->enabled
                         </th>
-                        <th>Enabled</th>
                         <th>
-                            <!-- column for delete users buttons-->
+                            <!-- delete user -->
                         </th>
                     </thead>
-                    {% for user in markers %}
+                    {% for user_dict in user_info_list %}
                         <tr>
                             <td>
-                                <div>
-                                    <!-- <a href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}"
-    -->
-                                    <a href="{% url 'profile' user.username %}" class>{{ user.username }}</a>
-                                    {% if user in lead_markers %}
-                                        <i class="bi bi-bookmark-star text-primary"
-                                           data-bs-toggle="tooltip"
-                                           title="lead marker"></i>
-                                    {% endif %}
-                                </div>
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class=" link-underline link-underline-opacity-25"
-                                   style="font-size: 80%">change password</a>
-                            </td>
-                            {% if user.id in online_now_ids %}
-                                <td class="bg-success-subtle">Online</td>
-                            {% else %}
-                                <td>Offline</td>
-                            {% endif %}
-                            {% if user.auth_token %}
-                                <td class="bg-success-subtle">Online</td>
-                            {% else %}
-                                <td>Offline</td>
-                            {% endif %}
-                            <td>{{ user.last_login|naturaltime }}</td>
-                            <td>
-                                {% if user in lead_markers %}
-                                    <button hx-post="{% url 'toggleLeadMarker' user.username %}"
-                                            class="btn btn-success">demote</button>
+                                <a href="{% url 'profile' user_dict.user.username %}" class>{{ user_dict.user.username }}</a>
+                                {% if "admin" in user_dict.groups %}
+                                    <br />
+                                    <small class="text-muted">change password</small>
                                 {% else %}
-                                    <button hx-post="{% url 'toggleLeadMarker' user.username %}"
-                                            class="btn btn-secondary">promote</button>
+                                    <a href="{% url 'reset_user_password' user_dict.user.username %}"
+                                       class=" link-underline link-underline-opacity-25"
+                                       disabled>
+                                        <br />
+                                        <small>change password</small></a>
                                 {% endif %}
                             </td>
+                            {% if user_dict.user.id in online_now_ids %}
+                                <td class="bg-success-subtle">Online</td>
+                            {% else %}
+                                <td>Offline</td>
+                            {% endif %}
+                            {% if user_dict.user.auth_token %}
+                                <td class="bg-success-subtle">Online</td>
+                            {% else %}
+                                <td>Offline</td>
+                            {% endif %}
+                            <td>{{ user_dict.user.last_login|naturaltime }}</td>
+                            {% for group_name in plom_user_groups %}
+                                <td sorttable_customkey="{% if group_name in user_dict.groups %}1{% else %}0{% endif %}">
+                                    <div>
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               value="{{ group_name }}-{{ user_dict.user.id }}"
+                                               hx-trigger="change"
+                                               hx-target-error="closest div"
+                                               hx-post="{% url 'toggleGroup' user_dict.user.username group_name %}"
+                                               aria-label="{{ user_dict.user.username }} is {{ group_name }}"
+                                               autocomplete="off"
+                                               {% if group_name in user_dict.groups %}checked{% endif %}>
+                                    </div>
+                                </td>
+                            {% endfor %}
                             <td sorttable_customkey=0>
                                 <!-- autocomplete is Firefox-specific fix:
                                      https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
@@ -90,17 +88,16 @@
                                     <input class="form-check-input"
                                            type="checkbox"
                                            role="switch"
-                                           {% if user.is_active %}checked{% endif %}
+                                           {% if user_dict.user.is_active %}checked{% endif %}
                                            autocomplete="off"
-                                           hx-post="{% url 'modify_user' user.username %}" />
+                                           hx-post="{% url 'modify_user' user_dict.user.username %}" />
                                 </div>
-                                {% if not user.has_usable_password %}(no password set){% endif %}
+                                <!-- {% if not user_dict.user.has_usable_password %}(no password set){% endif %} -->
                             </td>
-                            <td sorttable_customkey=0>
-                                {% csrf_token %}
-                                <button hx-delete="{% url 'modify_user' user.username %}"
-                                        class="btn btn-danger"
-                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
+                            <td>
+                                <button hx-delete="{% url 'modify_user' user_dict.user.username %}"
+                                        class="btn btn-danger btn-sm"
+                                        {% if user_dict.user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -110,137 +107,17 @@
                 Notes:
                 <ul>
                     <li>
-                        Promoting a marker to <q>lead marker</q> allows them to see more detailed information about progress and tasks
+                        Some user groups imply others (e.g., Lead-Marker implies Marker),
+                        and must be revoked sequentially.
+                        Read more about this in <a href="https://plom.readthedocs.io/en/latest/marking.html#permissions-and-lead-markers">Plom's documentation</a>.
                     </li>
-                    <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
                     <li>
                         If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
                     </li>
+                    <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
                     <li>Currently, you cannot delete a user who has ever logged in.</li>
                 </ul>
             </p>
-        </div>
-    </div>
-    <div class="card my-2">
-        <div class="card-body">
-            <h4 class="card-title">Scanners</h4>
-            <p>
-                <a class="btn btn-outline-success" href="{% url 'enableScanners' %}">Enable all scanners</a>
-                <a class="btn btn-outline-secondary" href="{% url 'disableScanners' %}">Disable all scanners</a>
-            </p>
-            <div class="table-responsive">
-                <table class="table table-striped sortable">
-                    <thead>
-                        <th>Name</th>
-                        <th>Online</th>
-                        <th>Last login</th>
-                        <th>Enabled</th>
-                        <th>
-                            <!-- column for delete users buttons-->
-                        </th>
-                    </thead>
-                    {% for user in scanners %}
-                        <tr>
-                            <td>
-                                <div>
-                                    <a href="{% url 'profile' user.username %}" class>{{ user.username }}</a>
-                                    {% if user in lead_markers %}
-                                        <i class="bi bi-bookmark-star text-primary"
-                                           data-bs-toggle="tooltip"
-                                           title="lead marker"></i>
-                                    {% endif %}
-                                </div>
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class=" link-underline link-underline-opacity-25"
-                                   style="font-size: 80%">change password</a>
-                            </td>
-                            {% if user.id in online_now_ids %}
-                                <td class="bg-success-subtle">Online</td>
-                            {% else %}
-                                <td>Offline</td>
-                            {% endif %}
-                            <td>{{ user.last_login|naturaltime }}</td>
-                            <td sorttable_customkey=0>
-                                <!-- autocomplete is Firefox-specific fix:
-                                     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           role="switch"
-                                           {% if user.is_active %}checked{% endif %}
-                                           autocomplete="off"
-                                           hx-post="{% url 'modify_user' user.username %}" />
-                                </div>
-                                {% if not user.has_usable_password %}(no password set){% endif %}
-                            </td>
-                            <td sorttable_customkey=0>
-                                {% csrf_token %}
-                                <button hx-delete="{% url 'modify_user' user.username %}"
-                                        class="btn btn-danger"
-                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class="card my-2">
-        <div class="card-body">
-            <h4 class="card-title">Identifiers</h4>
-            <div>
-                <p>
-                    Accounts who can identify papers:
-                    {{ identifiers|join:", " }}
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="card my-2">
-        <div class="card-body">
-            <h4 class="card-title">Managers</h4>
-            <div class="table-responsive">
-                <table class="table table-striped sortable">
-                    <thead>
-                        <th>Name</th>
-                        <th>Online</th>
-                        <th>Last login</th>
-                        <th>
-                            <!-- column for delete users buttons-->
-                        </th>
-                    </thead>
-                    {% for user in managers %}
-                        <tr>
-                            <td>
-                                <div>
-                                    <a href="{% url 'profile' user.username %}" class>{{ user.username }}</a>
-                                    {% if user in lead_markers %}
-                                        <i class="bi bi-bookmark-star text-primary"
-                                           data-bs-toggle="tooltip"
-                                           title="lead marker"></i>
-                                    {% endif %}
-                                </div>
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class=" link-underline link-underline-opacity-25"
-                                   style="font-size: 80%"
-                                   onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">change password</a>
-                            </td>
-                            {% if user.id in online_now_ids %}
-                                <td class="bg-success-subtle">Online</td>
-                            {% else %}
-                                <td>Offline</td>
-                            {% endif %}
-                            <td>{{ user.last_login|naturaltime }}</td>
-                            <td sorttable_customkey=0>
-                                {% csrf_token %}
-                                <button hx-delete="{% url 'modify_user' user.username %}"
-                                        class="btn btn-danger"
-                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
         </div>
     </div>
 {% endblock main_content %}

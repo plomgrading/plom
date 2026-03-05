@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from .progress_landing import ProgressLandingView, ToolsLandingView
 
@@ -34,6 +35,6 @@ from .progress_task_annot import (
     MarkingTaskReassignView,
 )
 
-from .progress_userinfo import (
-    ProgressUserInfoHome,
+from .progress_markerinfo import (
+    ProgressMarkerInfoHome,
 )

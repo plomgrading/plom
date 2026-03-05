@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 import logging
 
@@ -40,17 +41,19 @@ def toggle_user_active(username: str) -> None:
 
     [1] https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#django.contrib.auth.models.User.is_active
     """
+    group_memberships = get_users_groups(username)
+    if "admin" in group_memberships:
+        return
+
     user = User.objects.get_by_natural_key(username)
     user.is_active = not user.is_active
     user.save()
     # if user is now inactive and a marker then make sure that they are logged
     # out of the API system by removing their API access token.
-    if not user.is_active:
-        marker_group_obj = Group.objects.get_by_natural_key("marker")
-        if marker_group_obj in user.groups.all():
-            MarkingTaskService.surrender_all_tasks(user)
-            IdentifyTaskService.surrender_all_tasks(user)
-            TokenService.drop_api_token(user)
+    if not user.is_active and "marker" in group_memberships:
+        MarkingTaskService.surrender_all_tasks(user)
+        IdentifyTaskService.surrender_all_tasks(user)
+        TokenService.drop_api_token(user)
 
 
 @transaction.atomic
@@ -146,6 +149,35 @@ def toggle_lead_marker_group_membership(username: str) -> None:
         _add_user_to_group(user_obj, "lead_marker")
         # for backwards compat, we enable identifier (but not in reverse)
         _add_user_to_group(user_obj, "identifier")
+
+
+def toggle_group_membership(
+    username: str, group: str, *, whoami: str | None = None
+) -> None:
+    """Toggle a user's membership in a specified group.
+
+    Essentially a wrapper for :func:`change_user_groups`.
+
+    Args:
+        username: the user to change.
+        group: the group to attempt to add/remove the user to.
+
+    Keyword Args:
+        whoami: optional username string of the calling user.
+            If you pass this, we'll prevent managers from
+            locking themselves out of the manager group.
+
+    Returns:
+        Nothing.
+    """
+    groups = get_users_groups(username)
+
+    if group in groups:
+        groups.remove(group)
+    else:
+        groups.append(group)
+
+    change_user_groups(username, groups, whoami=whoami)
 
 
 def change_user_groups(

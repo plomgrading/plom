@@ -6,7 +6,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 import json
 
@@ -29,7 +29,7 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Progress.services import UserInfoService
 from .services import PermissionChanger
 from .services import QuotaService
-from .services.UsersService import get_user_info, delete_user
+from .services.UsersService import delete_user, get_list_of_user_info
 from .models import Quota
 
 
@@ -47,7 +47,6 @@ class UserPage(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Fetch user management page."""
-        users = get_user_info()
         # fetch these so that we don't loop over this in the template
         # remove db hits in loops.
         uids = cache.get("online-now", [])
@@ -56,14 +55,12 @@ class UserPage(ManagerRequiredView):
         fresh = cache.get_many(online_keys).keys()
         online_now_ids = [int(k.replace("online-", "")) for k in fresh]
 
+        plom_user_groups = AuthService.get_editable_user_group_names()
+
         context = {
             "online_now_ids": online_now_ids,
-            "scanners": users["scanners"],
-            "markers": users["markers"],
-            "lead_markers": users["lead_markers"],
-            "managers": users["managers"],
-            "identifiers": users["identifiers"],
-            "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
+            "user_info_list": get_list_of_user_info(),
+            "plom_user_groups": plom_user_groups,
         }
         return render(request, "UserManagement/users.html", context)
 
@@ -81,25 +78,43 @@ class UserPage(ManagerRequiredView):
             messages.error(request, e, extra_tags="danger")
         return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def enableScanners(self):
+    def enableScanners(request):
         PermissionChanger.set_all_scanners_active(True)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def disableScanners(self):
+    def disableScanners(request):
         PermissionChanger.set_all_scanners_active(False)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def enableMarkers(self):
+    def enableMarkers(request):
         PermissionChanger.set_all_markers_active(True)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
+    @staticmethod
     @login_required
-    def disableMarkers(self):
+    def disableMarkers(request):
         PermissionChanger.set_all_markers_active(False)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
+
+
+class UserToggleGroup(ManagerRequiredView):
+    """Class to toggle group membership."""
+
+    def post(self, request: HttpRequest, *, username: str, group: str) -> HttpResponse:
+        """Post a username and group to toggle membership."""
+        try:
+            PermissionChanger.toggle_group_membership(
+                username, group, whoami=request.user.username
+            )
+        except (ValueError, RuntimeError) as e:
+            return HttpResponse(f"<b>Error:</b> {e}", status=400)
+        return HttpResponseClientRefresh()
 
 
 class UserToggleLeadMarker(ManagerRequiredView):
@@ -108,7 +123,7 @@ class UserToggleLeadMarker(ManagerRequiredView):
     def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Post a username to toggle them between lead_marker and not.
 
-        For *backwards compatbiility*, using this view to make someone a
+        For *backwards compatibility*, using this view to make someone a
         lead marker also makes them an identifier.  But not conversely.
         """
         PermissionChanger.toggle_lead_marker_group_membership(username)
@@ -256,7 +271,7 @@ class ModifyQuotaView(ManagerRequiredView):
                 "All quota limits updated successfully.",
                 extra_tags="modify_quota",
             )
-        return redirect(reverse("progress_user_info_home"))
+        return redirect(reverse("progress_marker_info_home"))
 
 
 class ModifyDefaultLimitView(ManagerRequiredView):
@@ -325,7 +340,7 @@ class BulkSetQuotaView(ManagerRequiredView):
                 extra_tags="modify_quota",
             )
 
-        return redirect(reverse("progress_user_info_home"))
+        return redirect(reverse("progress_marker_info_home"))
 
 
 class BulkUnsetQuotaView(ManagerRequiredView):
@@ -336,4 +351,4 @@ class BulkUnsetQuotaView(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker")
         Quota.objects.filter(user__in=markers).delete()
         messages.success(request, "Quota removed from all markers.")
-        return redirect(reverse("progress_user_info_home"))
+        return redirect(reverse("progress_marker_info_home"))
