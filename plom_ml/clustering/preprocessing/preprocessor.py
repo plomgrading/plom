@@ -23,7 +23,7 @@ class Preprocessor:
     input_keys: set[str]
 
     def __init_subclass__(cls):
-        """Enfoce every subclass MUST declare input_keys."""
+        """Enforce every subclass MUST declare input_keys."""
         super().__init_subclass__()
         if not hasattr(cls, "input_keys") or not isinstance(cls.input_keys, set):
             raise TypeError(
