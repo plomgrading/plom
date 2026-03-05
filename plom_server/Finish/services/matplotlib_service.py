@@ -768,6 +768,7 @@ class MinimalPlotService:
             boxprops={"alpha": 0.5},
             # WET - this defines outliers, changes must be reflected in generated report
             # docs: https://seaborn.pydata.org/generated/seaborn.boxplot.html#seaborn-boxplot
+            # in particular, 1.5 is mentioned explicitly in brief_student_report.html elsewhere
             whis=1.5,
             capprops={"linewidth": 4, "color": "red"},
             widths=[0.25],
