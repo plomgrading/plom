@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `plom-server` is the main command, although `plom-new-server` will continue to work for a while.
 * improved error messages associated with error pages in scanning app.
 * improved user group management screen.
+* static resources are collected each time plom-server is run (not just when an empty database is detected).
 
 ### Fixed
 * Fix tagging errors when usernames contain dots.
