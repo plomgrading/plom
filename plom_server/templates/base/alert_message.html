@@ -2,15 +2,17 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2026 Aidan Murphy
 -->
+<!-- linebreaksbr converts \n to <br /> -->
 {% if 'success' in message.tags %}
-    <div class="alert alert-success">{{ message }}</div>
+    <div class="alert alert-success">{{ message|linebreaksbr }}</div>
 {% elif 'warning' in message.tags %}
-    <div class="alert alert-warning">{{ message }}</div>
+    <div class="alert alert-warning">{{ message|linebreaksbr }}</div>
 {% elif 'error' in message.tags %}
-    <div class="alert alert-danger">{{ message }}</div>
+    <div class="alert alert-danger">{{ message|linebreaksbr }}</div>
 {% elif 'info' in message.tags %}
-    <div class="alert alert-info">{{ message }}</div>
+    <div class="alert alert-info">{{ message|linebreaksbr }}</div>
 {% else %}
-    <div class="alert alert-secondary">{{ message }}</div>
+    <div class="alert alert-secondary">{{ message|linebreaksbr }}</div>
 {% endif %}

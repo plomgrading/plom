@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 
 from django.test import TestCase
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from model_bakery import baker
 
@@ -66,15 +67,15 @@ class AuthService_user_creation(TestCase):
 
     def test_error_to_create_in_non_existing_group(self) -> None:
         baker.make(Group, name="marker")
-        with self.assertRaisesRegex(ValueError, "non-existent Group"):
+        with self.assertRaisesRegex(ObjectDoesNotExist, "non-existent Group"):
             AuthService.create_user_and_add_to_groups("Marker", ["marker", "foobar"])
-        with self.assertRaisesRegex(ValueError, "non-existent Group"):
+        with self.assertRaisesRegex(ObjectDoesNotExist, "non-existent Group"):
             AuthService.create_user_and_add_to_groups("Marker", ["foobar"])
 
     def test_lead_marker_requires_marker(self) -> None:
         baker.make(Group, name="lead_marker")
         baker.make(Group, name="identifier")
-        with self.assertRaisesRegex(ValueError, "non-existent Group .*marker"):
+        with self.assertRaisesRegex(ObjectDoesNotExist, "non-existent Group .*marker"):
             AuthService.create_user_and_add_to_group("Lee_Marker", "lead_marker")
 
         baker.make(Group, name="marker")

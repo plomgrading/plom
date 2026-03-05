@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2025 Andrew Rechnitzer
 
 import csv
@@ -146,10 +146,11 @@ class ImportUsers(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_import_users.html"
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
     example_csv = (
-        "username,usergroup\n"
+        "username,usergroups\n"
         "ExampleName1,marker\n"
         "ExampleName2,lead_marker\n"
         "ExampleName14,scanner\n"
+        'ExampleName18,"marker,scanner"\n'
         "exampleName37,manager"
     )
     valid_user_groups = AuthService.plom_user_groups_list
