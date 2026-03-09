@@ -6,11 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
-
-### Added
-
-### Removed
+## [0.20.2] - 2026-03-09
 
 ### Changed
 * `plom-server` is the main command, although `plom-new-server` will continue to work for a while.
@@ -22,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Fix tagging errors when usernames contain dots.
 * minor UI tweaks and fixes.
-
 
 
 
@@ -1653,7 +1648,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.20.1...main
+[0.20.2]: https://gitlab.com/plom/plom/-/compare/v0.20.1...v0.20.2
 [0.20.1]: https://gitlab.com/plom/plom/-/compare/v0.20.0...v0.20.1
 [0.20.0]: https://gitlab.com/plom/plom/-/compare/v0.19.8...v0.20.0
 [0.19.8]: https://gitlab.com/plom/plom/-/compare/v0.19.7...v0.19.8
