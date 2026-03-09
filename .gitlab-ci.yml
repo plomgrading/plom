@@ -90,7 +90,7 @@ codespell:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install codespell~=2.4.1
+    - pip install codespell~=2.4.2
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
     - codespell
@@ -335,7 +335,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.12.0
+    - pip install pytest pytest-cov coverage[toml]~=7.13.4
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -391,8 +391,8 @@ pylint:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install astroid~=4.0.2  # codespell:ignore astroid
-    - pip install pylint~=4.0.4
+    - pip install astroid~=4.1.1  # codespell:ignore astroid
+    - pip install pylint~=4.0.5
   script:
     - pylint plom
     - pylint plom_server
@@ -410,7 +410,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.19.0
+    - pip install mypy~=1.19.1
   script:
     - mypy --version
     - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
@@ -425,7 +425,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.407
+    - pip install pyright~=1.1.408
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -449,7 +449,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.0
+    - pip install ruff~=0.15.5
   script:
     - ruff check .
     # ruff format .
@@ -460,7 +460,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.0
+    - pip install ruff~=0.15.5
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -527,7 +527,7 @@ eslint:
   image: node:24
   stage: static_analysis
   script:
-    - npm install eslint@10.0.0 globals @eslint/js@10.0.0 @stylistic/eslint-plugin
+    - npm install eslint@10.0.3 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
     - npx eslint plom_server/**/*.js
 
 
@@ -536,7 +536,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.12.0
+    - pip install coverage~=7.13.4
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -560,7 +560,7 @@ webplom_api_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.12.0
+    - pip install coverage~=7.13.4
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
