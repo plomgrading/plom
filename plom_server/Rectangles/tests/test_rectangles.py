@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 import tempfile
 from importlib import resources
@@ -16,7 +16,7 @@ import plom_server.Scan.tests as _Scan_tests
 from plom_server.Scan.services import ScanService
 
 from ..services.rectangle import (
-    extract_rect_region_from_image,
+    _extract_rect_region_from_image,
     get_largest_rectangle_contour_from_image,
     get_reference_rectangle_from_QR_data,
     _get_affine_transf_matrix_ref_to_QR_target,
@@ -238,7 +238,7 @@ class RectangleServiceTests(TestCase):
             codes = QRextract(img_rot_path)
             parsed_codes = ScanService.parse_qr_code([codes])
 
-            output_bytes = extract_rect_region_from_image(
+            output_bytes = _extract_rect_region_from_image(
                 img_rot_path,
                 parsed_codes,
                 idbox_src_loc["left_f"],

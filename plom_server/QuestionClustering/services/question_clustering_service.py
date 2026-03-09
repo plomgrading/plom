@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Colin B. Macdonald
 
-from typing import Optional
 from collections import defaultdict
-from typing import Any
+from typing import Any, Mapping, Optional
 
 # django
 from django.forms.models import model_to_dict
@@ -212,7 +212,9 @@ class QuestionClusteringService:
                 base_cluster.paper.add(*papers)
                 user_facing_cluster.paper.add(*papers)
 
-    def cluster_mcq(self, question_idx: int, version: int, page_num: int, rect: dict):
+    def cluster_mcq(
+        self, question_idx: int, version: int, page_num: int, rect: dict
+    ) -> None:
         """Cluster mcq responses within the given rect for (q, v) context.
 
         Args:
@@ -220,6 +222,9 @@ class QuestionClusteringService:
             version: version of the clustering context.
             page_num: the page_number used for the clustering.
             rect: the rectangular region used for clustering.
+
+        Raises:
+            ValueError: problem extracting from reference image.
         """
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
@@ -231,10 +236,16 @@ class QuestionClusteringService:
 
         # get paper_num to ref, scanned mapping used for clustering input
         # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
-        paper_to_images = {
-            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img(pn, rect)}
+        paper_to_images: Mapping[int, Mapping[str, Any]] = {
+            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img_or_none(pn, rect)}
             for pn in paper_numbers
         }
+        # filter out any that failed
+        paper_to_images = {
+            pn: x for pn, x in paper_to_images.items() if x["scanned"] is not None
+        }
+        if not paper_to_images:
+            raise ValueError("Could not extract rectangles from ANY pages")
 
         # get mcq ClusteringStrategy (use @lru_cache)
         ClusteringStrategy = get_ClusteringStrategy(model_type=ClusteringModelType.MCQ)
@@ -251,7 +262,9 @@ class QuestionClusteringService:
             paper_to_clusterId, question_idx, version, page_num, rect
         )
 
-    def cluster_hme(self, question_idx: int, version: int, page_num: int, rect: dict):
+    def cluster_hme(
+        self, question_idx: int, version: int, page_num: int, rect: dict
+    ) -> None:
         """Cluster handwritten math expression responses within the given rect for (q, v) context.
 
         Args:
@@ -259,6 +272,9 @@ class QuestionClusteringService:
             version: version of the clustering context.
             page_num: the page_number used for the clustering.
             rect: the rectangular region used for clustering.
+
+        Raises:
+            ValueError: extraction from problem reference image.
         """
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
@@ -270,10 +286,17 @@ class QuestionClusteringService:
 
         # get paper_num to ref, scanned mapping used for clustering input
         # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
-        paper_to_images = {
-            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img(pn, rect)}
+        # TODO: why do we need typing here?
+        paper_to_images: Mapping[int, Mapping[str, Any]] = {
+            pn: {"ref": ref, "scanned": rex.get_cropped_scanned_img_or_none(pn, rect)}
             for pn in paper_numbers
         }
+        # filter out any that failed
+        paper_to_images = {
+            pn: x for pn, x in paper_to_images.items() if x["scanned"] is not None
+        }
+        if not paper_to_images:
+            raise ValueError("Could not extract rectangles from ANY pages")
 
         # load model
         ClusteringStrategy = get_ClusteringStrategy(model_type=ClusteringModelType.HME)
@@ -306,6 +329,9 @@ class QuestionClusteringService:
             page_num: the page num involved in the clustering.
             rect: the rectangular region used for clustering.
             clustering_model: the model used for clustering.
+
+        Raises:
+            ValueError: extraction from problem reference image.
         """
         if clustering_model == ClusteringModelType.MCQ:
             self.cluster_mcq(question_idx, version, page_num, rect)

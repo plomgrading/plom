@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -38,15 +38,16 @@ class Command(BaseCommand):
 
         for pn in paper_numbers:
             fname = er_dir / f"ex_rect_v{version}_pg{page}_{pn}.png"
-            rect_region_bytes = rex.extract_rect_region(
-                pn,
-                rectangle["left"],
-                rectangle["top"],
-                rectangle["right"],
-                rectangle["bottom"],
-            )
-            if rect_region_bytes is None:
-                self.stdout.write(f"Skipping papernum {pn}: rex could not extract")
+            try:
+                rect_region_bytes = rex.extract_rect_region(
+                    pn,
+                    rectangle["left"],
+                    rectangle["top"],
+                    rectangle["right"],
+                    rectangle["bottom"],
+                )
+            except ValueError as err:
+                self.stdout.write(f"Skipping papernum {pn}: {err}")
                 continue
             fname.write_bytes(rect_region_bytes)
 

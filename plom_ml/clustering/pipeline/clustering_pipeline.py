@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Colin B. Macdonald
 
 from typing import Mapping
 
@@ -38,7 +39,6 @@ class ClusteringPipeline:
                     than one input images,
                     eg: we need the blank and the scanned representation of the page to
                     extract the handwritten strokes.
-
 
         Returns:
             A dictionary mapping paper number to their cluster id.
