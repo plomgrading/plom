@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
@@ -338,6 +338,25 @@ class MarkingTaskService:
         MarkingTask.objects.filter(assigned_user=user, status=MarkingTask.OUT).update(
             assigned_user=None, status=MarkingTask.TO_DO
         )
+
+    @staticmethod
+    def surrender_task(user: User, papernum: int, question_idx: int) -> None:
+        """Surrender a particular marking task.
+
+        Quietly does nothing if the task isn't OUT or wasn't assigned to user.
+        TODO: caller might want error messages instead!
+
+        Args:
+            user: reference to a User instance.
+            papernum: which paper?
+            question_idx: which question?
+        """
+        MarkingTask.objects.filter(
+            paper__paper_number=papernum,
+            question_index=question_idx,
+            assigned_user=user,
+            status=MarkingTask.OUT,
+        ).update(assigned_user=None, status=MarkingTask.TO_DO)
 
     @staticmethod
     def get_n_marked_tasks() -> int:

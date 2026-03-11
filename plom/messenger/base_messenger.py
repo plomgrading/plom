@@ -71,6 +71,7 @@ Supported_Server_API_Versions = [
 # * 116
 #    - get/set public_code
 # * 117
+#    - surrender task
 
 
 log = logging.getLogger("messenger")
