@@ -68,6 +68,7 @@ Supported_Server_API_Versions = [
 # * 115
 #    - rubrics versions field uses string instead of list
 #    - tasks no longer start with "q"
+#    - user lists from /info/users
 # * 116
 #    - get/set public_code
 # * 117
@@ -533,6 +534,32 @@ class BaseMessenger:
                     if _role == "lead_marker":
                         return ["marker", "identifier", "lead_marker"]
                     return [_role]
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_user_list(self) -> dict[str, list[str]]:
+        """Get a list of users from the server and what groups they belong to.
+
+        Raises:
+            PlomAuthenticationException
+            PlomSeriousException: something unexpected happened.
+
+        Returns:
+            Returns a dict keyed by username (string).  Each value is list
+            of strings of groups that user belongs too.
+        """
+        if self.is_server_api_less_than(115):
+            raise PlomNoServerSupportException(
+                "older server does notsupport user lists"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/info/users")
+                response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
