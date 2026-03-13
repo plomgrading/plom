@@ -561,7 +561,8 @@ class MarkingTaskService:
             A list of the text of all tags for this task.
 
         Raises:
-            RuntimeError: no such code.
+            ValueError: invalid code.
+            RuntimeError: code valid but task does not exist.
         """
         # TODO: what if the client has an OLD task with the same code?
         task = self.get_task_from_code(code)
@@ -760,20 +761,24 @@ class MarkingTaskService:
         # does not raise exception - rather it returns a None if can't find the tag
         if not the_tag:
             raise ValueError(f'No such tag "{tag_text}"')
-        the_task = self.get_task_from_code(code)
+
         # raises ValueError if the code is invalid
         # RuntimeError if the code is okay but the task does not exist
+        the_task = self.get_task_from_code(code)
 
         self._remove_tag_from_task(the_tag, the_task)
 
-    def _remove_tag_from_task(self, tag, task):
+    def _remove_tag_from_task(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Backend to remove a tag from a marking task.
 
         Args:
-            tag: reference to a MarkingTaskTag instance
-                - should be selected for update since we
-                  are going to modify it.
+            tag: reference to a MarkingTaskTag instance,
+                should be selected for update since we
+                are going to modify it.
             task: reference to a MarkingTask instance
+
+        Raises:
+            ValueError: task does not have that tag.
         """
         # check if the tag and task are linked - see #2810
         if tag.task.filter(pk=task.pk).exists():
