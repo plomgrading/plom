@@ -329,6 +329,38 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def surrender_task(self, code: str) -> None:
+        """Inform the server that we no longer intend to complete this task.
+
+        In some sense, the opposite of claiming a task.
+
+        Note on logout all your tasks will be automatically surrendered,
+        so it need not be done explicitly in that case.
+
+        Args:
+            code: which paper number and which question index.
+                TODO: suggest replaces these with paper number and
+                question index inputs.
+
+        Raises:
+            PlomNoServerSupportException: server too old, does not support.
+            PlomAuthenticationException: no logged in.
+            PlomSeriousException: generic unexpected error.
+        """
+        if self.is_server_api_less_than(117):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support task surrender"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.delete_auth(f"/MK/tasks/{code}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def reassign_task(self, papernum: int, qidx: int, username: str) -> None:
         """Reassign a task that belongs to a user to a different user.
 
