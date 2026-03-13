@@ -960,7 +960,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException
-            PlomConflict: no such task
+            PlomConflict: no such task, or no such tag, or task does
+                not have this tag.
         """
         if self.is_server_api_less_than(115):
             assert not task.startswith("q")
