@@ -43,7 +43,7 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 
-Plom_API_Version = 116  # Our API version
+Plom_API_Version = 117  # Our API version
 
 # We can support earlier servers by special-case code, so
 # define an allow-list of versions we support.
@@ -52,6 +52,7 @@ Supported_Server_API_Versions = [
     114,  # 2025-05
     115,  # 2025-09
     116,  # 2026-01
+    117,  # 2026-04
 ]
 # Brief changelog
 #
@@ -69,6 +70,7 @@ Supported_Server_API_Versions = [
 #    - tasks no longer start with "q"
 # * 116
 #    - get/set public_code
+# * 117
 
 
 log = logging.getLogger("messenger")
