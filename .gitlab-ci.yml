@@ -413,10 +413,10 @@ mypy-type-checking:
     - pip install mypy~=1.19.1
   script:
     - mypy --version
-    - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom plom_server --python-ver 3.10
-    - mypy plom_ml --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom_ml --python-ver 3.10
+    - mypy plom plom_server --python-ver 3.11 --install-types --non-interactive || true
+    - mypy plom plom_server --python-ver 3.11
+    - mypy plom_ml --python-ver 3.11 --install-types --non-interactive || true
+    - mypy plom_ml --python-ver 3.11
   allow_failure: true
 
 
