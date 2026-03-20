@@ -40,10 +40,8 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
 
         user_list.append(
             {
-                "username": user.username,
                 "user": model_to_dict(user),
                 "groups": ", ".join(user.groups.values_list("name", flat=True)),
-                "last_login": user.last_login,
                 "auth_token": auth_token,
             }
         )
