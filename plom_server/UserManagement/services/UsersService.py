@@ -6,6 +6,7 @@
 from typing import Any
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.forms.models import model_to_dict
 
@@ -28,15 +29,25 @@ def get_user_info() -> dict:
 
 def get_list_of_user_info() -> list[dict[str, Any]]:
     """Get a list of info about Users."""
-    return [
-        {
-            "username": user.username,
-            "user": model_to_dict(user),
-            "groups": ", ".join(user.groups.values_list("name", flat=True)),
-            "last_login": user.last_login,
-        }
-        for user in User.objects.all()
-    ]
+    user_list = []
+    for user in User.objects.all():
+        # auth_token is a computed attribute on the model
+        # it is also sensitive, so don't place in user_dict
+        try:
+            auth_token = user.auth_token
+        except ObjectDoesNotExist:
+            auth_token = None
+
+        user_list.append(
+            {
+                "username": user.username,
+                "user": model_to_dict(user),
+                "groups": ", ".join(user.groups.values_list("name", flat=True)),
+                "last_login": user.last_login,
+                "auth_token": auth_token,
+            }
+        )
+    return user_list
 
 
 def get_users_groups_info() -> dict[str, list]:
