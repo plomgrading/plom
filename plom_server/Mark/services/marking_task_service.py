@@ -367,7 +367,7 @@ class MarkingTaskService:
             raise ValueError(
                 f'Not able to update an "OUT" task assigned to "{user}"'
                 f" for paper {papernum} question index {qidx}:"
-                " Perhaps someone took the task or it does not exist?"
+                " Perhaps someone else reassigned or reset the task?"
             )
         else:
             raise RuntimeError(
