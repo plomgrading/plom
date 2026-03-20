@@ -345,7 +345,10 @@ class Messenger(BaseMessenger):
         Raises:
             PlomNoServerSupportException: server too old, does not support.
             PlomAuthenticationException: no logged in.
+            PlomConflict: someone else took the task or task did not exist
+                etc.
             PlomSeriousException: generic unexpected error.
+                Poorly formatted "code" for example.
         """
         if self.is_server_api_less_than(117):
             raise PlomNoServerSupportException(
@@ -359,6 +362,8 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def reassign_task(self, papernum: int, qidx: int, username: str) -> None:

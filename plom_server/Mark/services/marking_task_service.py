@@ -340,23 +340,41 @@ class MarkingTaskService:
         )
 
     @staticmethod
-    def surrender_task(user: User, papernum: int, question_idx: int) -> None:
+    def surrender_task(user: User, papernum: int, qidx: int) -> None:
         """Surrender a particular marking task.
-
-        Quietly does nothing if the task isn't OUT or wasn't assigned to user.
-        TODO: caller might want error messages instead!
 
         Args:
             user: reference to a User instance.
             papernum: which paper?
-            question_idx: which question?
+            qidx: which question?
+
+        Raises:
+            ValueError: could not find such a task, an expected error, force
+                example b/c it does not exist or someone else took it: this
+                implementation uses "update" and as such does not distinguish
+                b/w various error cases.
+            RuntimeError: a software bug: multiple tasks for same thing.
         """
-        MarkingTask.objects.filter(
+        n = MarkingTask.objects.filter(
             paper__paper_number=papernum,
-            question_index=question_idx,
+            question_index=qidx,
             assigned_user=user,
             status=MarkingTask.OUT,
         ).update(assigned_user=None, status=MarkingTask.TO_DO)
+        if n == 1:
+            pass
+        elif n == 0:
+            raise ValueError(
+                f'Not able to update an "OUT" task assigned to "{user}"'
+                f" for paper {papernum} question index {qidx}:"
+                " Perhaps someone took the task or it does not exist?"
+            )
+        else:
+            raise RuntimeError(
+                f'Updated multiple ({n}) "OUT" tasks assigned to "{user}"'
+                f" for paper {papernum} question index {qidx}:"
+                " Likely software bug!"
+            )
 
     @staticmethod
     def get_n_marked_tasks() -> int:

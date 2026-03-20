@@ -146,15 +146,18 @@ class MarkTask(APIView):
     def delete(self, request: Request, *, code: str) -> Response:
         """Surrender (detach) a user from a marking task.
 
-        Reply with status 200, or 400 if malformed task code.
-        TODO: other error handling?
+        Reply with status 200, or 400 if malformed task code.  409 if the
+        task was taken by someone else, or didn't exist etc.
         """
         try:
             papernum, question_idx = unpack_task_code(code)
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
-        MarkingTaskService.surrender_task(request.user, papernum, question_idx)
+        try:
+            MarkingTaskService.surrender_task(request.user, papernum, question_idx)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
         return Response()
 
     # POST: /MK/tasks/{code}
