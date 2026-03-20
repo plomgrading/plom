@@ -37,6 +37,7 @@ import huey.api
 import huey.exceptions
 import pymupdf
 
+from plom.misc_utils import format_int_list_with_runs
 from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
@@ -1370,10 +1371,9 @@ class ScanService:
 
         return r
 
-    @transaction.atomic
     def get_bundle_papers_pages_list(
         self, bundle_obj: StagingBundle
-    ) -> list[tuple[int, list[dict[str, Any]]]]:
+    ) -> list[dict[str, Any]]:
         """Return an ordered list of papers and their known/extra pages in the given bundle.
 
         Each item in the list is a pair
@@ -1386,7 +1386,7 @@ class ScanService:
         # Loop over the known-images first and then the extra-pages.
         for known in StagingImage.objects.filter(
             bundle=bundle_obj, image_type=StagingImage.KNOWN
-        ).order_by("paper_number", "page_number"):
+        ).order_by("paper_number", "bundle_order"):
             papers.setdefault(known.paper_number, []).append(
                 {
                     "type": "known",
@@ -1407,11 +1407,47 @@ class ScanService:
                         "order": extra.bundle_order,
                     }
                 )
-        # # recast paper_pages as an **ordered** list of tuples (paper, page-info)
+        # recast paper_pages as a dict
+
         return [
-            (paper_number, page_info)
+            {"paper_number": paper_number, "page_info": page_info}
             for paper_number, page_info in sorted(papers.items())
         ]
+
+    def get_bundle_papers_info_list(
+        self, bundle_obj: StagingBundle
+    ) -> list[dict[str, Any]]:
+        """Return an ordered list of papers and various information.
+
+        The information pertains to each paper's existence within a staged bundle.
+
+        Args:
+            bundle_obj: the staging bundle from which to query information.
+
+        Returns:
+            Each item in the list is a dict. Each dict contains keys
+            "paper_number", "first_page_order", and "absent_pages" which key
+            the paper number, "order" of the first page from that paper in the
+            bundle and pages from that paper which are absent from the bundle.
+        """
+        papers_pages_list = self.get_bundle_papers_pages_list(bundle_obj)
+
+        missing_papers_pages = self.get_bundle_missing_paper_page_numbers(bundle_obj)
+
+        for paper_dict in papers_pages_list:
+            papernum = paper_dict["paper_number"]
+            # the page_info is ordered by bundle order, index 0 is the smallest order.
+            paper_dict["first_page_order"] = paper_dict["page_info"][0]["order"]
+
+            paper_dict["missing_pages"] = []
+            # if papernum is missing pages (in the given bundle)
+            if any(papernum == X[0] for X in missing_papers_pages):
+                missing_pages = [
+                    X[1] for X in missing_papers_pages if X[0] == papernum
+                ].pop()
+                paper_dict["missing_pages"] = format_int_list_with_runs(missing_pages)
+
+        return papers_pages_list
 
     @transaction.atomic
     def get_bundle_pages_info_cmd(

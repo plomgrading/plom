@@ -256,20 +256,22 @@
                 </div>
                 <div class="col-8 pb-1">
                     <h5>Bundle Contains:</h5>
-                    {% for paper,pages in papers_pages_list %}
-                        {% with first_pg=pages|dictsort:"order"|first %}
-                            {% if paper in incomplete_papers_list %}
-                                <button id="paper-btn-{{ paper }}"
-                                        class="btn m-1 btn-warning"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        data-bs-title="Is missing pages: TODO - which pages?"
-                                        onclick="clickThumbnail({{ first_pg.order }})">paper {{ paper }}</button>
-                            {% else %}
-                                <button class="btn m-1 btn-success"
-                                        onclick="clickThumbnail({{ first_pg.order }})">paper {{ paper }}</button>
-                            {% endif %}
-                        {% endwith %}
+                    {% for paper_dict in papers_info_list %}
+                        {% if paper_dict.paper_number in incomplete_papers_list %}
+                            <button id="paper-btn-{{ paper_dict.paper_number }}"
+                                    class="btn m-1 btn-warning"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-title="Is missing pages: {{ paper_dict.missing_pages }}"
+                                    onclick="clickThumbnail({{ paper_dict.first_page_order }})">
+                                paper {{ paper_dict.paper_number }}
+                            </button>
+                        {% else %}
+                            <button class="btn m-1 btn-success"
+                                    onclick="clickThumbnail({{ paper_dict.first_page_order }})">
+                                paper {{ paper_dict.paper_number }}
+                            </button>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
