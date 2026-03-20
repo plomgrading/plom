@@ -1,0 +1,34 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2026 Aidan Murphy
+-->
+<!-- an outer wrapping for pages shown to unauthenticated users -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>
+            {% block full_title %}
+            {% endblock full_title %}
+        </title>
+        <link href="{% static 'css3rdparty/bootstrap.min.css' %}" rel="stylesheet" />
+        <link href="{% static 'css3rdparty/bootstrap-icons.css' %}"
+              rel="stylesheet" />
+        <!-- Adjusts bootstrap styling to light-mode or dark-mode -->
+        <script type="module" src="{% static '/js/bootstrap_lightdark_mode.js' %}"></script>
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="navbar-brand" style="margin-left: 5px">
+                {% include "base/plom_logo.html" with width="276px" height="93px" %}
+            </div>
+        </nav>
+        {% block main_content %}
+        {% endblock main_content %}
+        <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+    </body>
+</html>
