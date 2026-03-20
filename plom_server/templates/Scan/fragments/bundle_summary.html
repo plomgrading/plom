@@ -257,16 +257,17 @@
                 <div class="col-8 pb-1">
                     <h5>Bundle Contains:</h5>
                     {% for paper,pages in papers_pages_list %}
-                        {% with pg=pages|dictsort:"order"|first %}
+                        {% with first_pg=pages|dictsort:"order"|first %}
                             {% if paper in incomplete_papers_list %}
                                 <button id="paper-btn-{{ paper }}"
                                         class="btn m-1 btn-warning"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
                                         data-bs-title="Is missing pages: TODO - which pages?"
-                                        onclick="clickThumbnail({{ pg.order }})">paper {{ paper }}</button>
+                                        onclick="clickThumbnail({{ first_pg.order }})">paper {{ paper }}</button>
                             {% else %}
-                                <button class="btn m-1 btn-success" onclick="clickThumbnail({{ pg.order }})">paper {{ paper }}</button>
+                                <button class="btn m-1 btn-success"
+                                        onclick="clickThumbnail({{ first_pg.order }})">paper {{ paper }}</button>
                             {% endif %}
                         {% endwith %}
                     {% endfor %}
