@@ -202,7 +202,7 @@ def get_the_spec_as_toml(*, _include_private_seed: bool = False) -> str:
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string(_legacy=False)
+    return sv.as_toml_string()
 
 
 def get_private_seed() -> str:

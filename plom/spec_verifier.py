@@ -44,7 +44,6 @@ chk = check_mark
 MAX_PAPERS_TO_PRODUCE = 9999
 
 # a canonical ordering of spec keys for output to toml
-# not used by legacy.
 _spec_key_order_for_toml_output = [
     "name",
     "longName",
@@ -470,16 +469,13 @@ class SpecVerifier:
         with open(fname, "rb") as f:
             return cls(tomllib.load(f))
 
-    def as_toml_string(self, *, _legacy: bool = True):
+    def as_toml_string(self):
         """Return the spec as a string in the TOML format."""
         # TODO bit yuck, we hack questions back to a list before saving
         s = deepcopy(self.spec)
         s["question"] = []
         for g in range(len(self.spec["question"])):
             s["question"].append(self.spec["question"][str(g + 1)])
-        # legacy spec is ready to go.
-        if _legacy:
-            return tomlkit.dumps(s)
 
         # this is deprecated; hide it from the new server
         s.pop("numberToProduce", None)
@@ -596,15 +592,11 @@ class SpecVerifier:
     def group_label_from_page(self, pagenum):
         return build_page_to_group_name_dict(self)[pagenum]
 
-    def verify(
-        self, *, verbose: str | None | bool = False, _legacy: bool = True
-    ) -> None:
+    def verify(self, *, verbose: str | None | bool = False) -> None:
         """Check that spec contains required attributes and insert default values."""
-        self.verifySpec(verbose=verbose, _legacy=_legacy)
+        self.verifySpec(verbose=verbose)
 
-    def verifySpec(
-        self, *, verbose: str | None | bool = True, _legacy: bool = True
-    ) -> None:
+    def verifySpec(self, *, verbose: str | None | bool = True) -> None:
         """Check that spec contains required attributes and insert default values.
 
         Keyword Args:
@@ -655,7 +647,7 @@ class SpecVerifier:
         if any(len(x) > 24 for x in labels):
             raise ValueError(f'Question labels should be at most 24 chars: "{labels}"')
 
-        self._check_pages(print=prnt, _legacy=_legacy)
+        self._check_pages(print=prnt)
 
     def checkCodes(self, *, verbose: bool | str = True) -> None:
         """Add public and private codes if the spec doesn't already have them.
@@ -949,7 +941,7 @@ class SpecVerifier:
                 "    select {} is a list of integers{}".format(question["select"], chk)
             )
 
-    def _check_pages(self, *, print=print, _legacy: bool = True) -> None:
+    def _check_pages(self, *, print=print) -> None:
         print("Checking which pages are used:")
         pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
         pageUse[self.spec["idPage"]] += 1
@@ -963,7 +955,7 @@ class SpecVerifier:
             if pageUse[p] == 0:
                 raise ValueError(f"Page {p} unused, perhaps it should be DNM?")
             print(f"  Page {p} used at least once{chk}")
-        if _legacy or not self.spec.get("allowSharedPages"):
+        if not self.spec.get("allowSharedPages"):
             for p in range(1, self.spec["numberOfPages"] + 1):
                 if pageUse[p] > 1:
                     # or perhaps this should be a warning, if we had such a mechanism

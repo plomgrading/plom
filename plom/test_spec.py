@@ -247,9 +247,7 @@ def test_spec_shared_page_not_allowed() -> None:
     r = deepcopy(raw)
     r["question"]["2"]["pages"] = [3, 4]
     with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=True)
-    with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_shared_page_explicit_disallowed() -> None:
@@ -257,16 +255,14 @@ def test_spec_shared_page_explicit_disallowed() -> None:
     r["allowSharedPages"] = False
     r["question"]["2"]["pages"] = [3, 4]
     with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=True)
-    with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_shared_page_must_be_explicitly_allowed() -> None:
     r = deepcopy(raw)
     r["allowSharedPages"] = True
     r["question"]["2"]["pages"] = [3, 4]
-    SpecVerifier(r).verify(_legacy=False)
+    SpecVerifier(r).verify()
 
 
 def test_spec_DNM_page_cannot_be_shared() -> None:
@@ -274,7 +270,7 @@ def test_spec_DNM_page_cannot_be_shared() -> None:
     r["allowSharedPages"] = True
     r["question"]["1"]["pages"] = [2, 3]
     with raises(ValueError, match="shared.*DNM.*question"):
-        SpecVerifier(r).verify(_legacy=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_legacy_overused_page() -> None:

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
 
@@ -82,8 +82,7 @@ class SpecSerializer(serializers.ModelSerializer):
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
         try:
-            vlad = SpecVerifier(data_with_dummy_num_to_produce)
-            vlad.verify(_legacy=False)
+            SpecVerifier(data_with_dummy_num_to_produce).verify()
         except ValueError as e:
             if raise_exception:
                 raise e from e
