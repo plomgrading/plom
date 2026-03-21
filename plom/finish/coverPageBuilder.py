@@ -10,7 +10,6 @@
 # Copyright (C) 2025 Philip D. Loewen
 
 import pathlib
-from copy import deepcopy
 from typing import Any
 
 import pymupdf
@@ -18,8 +17,43 @@ import pymupdf
 from plom.misc_utils import local_now_to_simple_string, pprint_score
 
 
-def make_cover(
-    tab: list[list[Any]],
+def make_cover(tab: list[list[Any]], pdfname: pathlib.Path, **kwargs) -> None:
+    """Create html page of name ID etc and table of marks."""
+    # check all table entries that should be numbers are non-negative numbers
+    solution = kwargs.get("solution", False)
+    for row in tab:
+        if solution:
+            assert len(row) == 3
+        else:
+            assert len(row) == 4
+        assert isinstance(
+            row[0], str
+        ), f'First row entry should be a string but we got "{row}"'
+        for x in row[1:]:
+            try:
+                y = float(x)
+                assert y >= 0, "Numeric data must be non-negative."
+            except (TypeError, ValueError):
+                raise AssertionError(f"Table data {x} should be numeric.")
+    if solution:
+        tab2 = [
+            {"question_label": row[0], "ver": row[1], "max_mark": row[2]} for row in tab
+        ]
+    else:
+        tab2 = [
+            {
+                "question_label": row[0],
+                "ver": row[1],
+                "mark": row[2],
+                "max_mark": row[3],
+            }
+            for row in tab
+        ]
+    return make_cover_page(tab2, pdfname, **kwargs)
+
+
+def make_cover_page(
+    tab: list[dict[str, str | bool | float | int]],
     pdfname: pathlib.Path,
     *,
     exam_name: str | None = None,
@@ -33,9 +67,11 @@ def make_cover(
 
     Args:
         tab: information about the paper that should be put on the
-            coverpage.  A list of lists where each row is
-            ``[qlabel, ver, mark, maxPossibleMark]`` if not solutions or
-            ``[qlabel, ver, maxPossibleMark]`` if solutions.
+            coverpage.  A list of dicts where each row has keys
+            ``question_label``, ``ver``, ``mark``, ``max_mark`` and
+            optionally ``bonus``.
+            If the ``solutions`` keyword arg is True, mark will have
+            value of `None`.  TODO: or omitted?  DECIDE
         pdfname: filename to save the pdf into.
 
     Keyword Args:
@@ -52,43 +88,18 @@ def make_cover(
     Returns:
         None
     """
-    # check all table entries that should be numbers are non-negative numbers
-    for row in tab:
-        if solution:
-            assert len(row) == 3
-        else:
-            assert len(row) == 4
-        assert isinstance(
-            row[0], str
-        ), f'First row entry should be a string but we got "{row}"'
-        for x in row[1:]:
-            try:
-                y = float(x)
-                assert y >= 0, "Numeric data must be non-negative."
-            except (TypeError, ValueError):
-                raise AssertionError(f"Table data {x} should be numeric.")
-
     # calculate additional table rows before casting marks to str
     if solution:
         headers = ["question", "version", "mark out of"]
-        totals = ["total", "", str(sum([row[2] for row in tab]))]
+        totals = ["total", "", str(sum([row["max_mark"] for row in tab]))]
     else:
         headers = ["question", "version", "mark", "out of"]
         totals = [
             "total",
             "",
-            pprint_score(sum([row[2] for row in tab])),
-            str(sum([row[3] for row in tab])),
+            pprint_score(sum([row["mark"] for row in tab])),
+            str(sum([row["max_mark"] for row in tab])),
         ]
-    # writer likes strings, cast table contents as str, but first make a copy
-    tab = deepcopy(tab)
-    for row in tab:
-        row[1] = str(row[1])  # version
-        if not solution:
-            row[2] = pprint_score(row[2])  # mark
-            row[3] = str(row[3])  # out of
-        else:
-            row[2] = str(row[2])  # "mark out of"
 
     # paper formatting
     m = 50  # margin
@@ -212,8 +223,8 @@ def make_cover(
             vpos += deltav + extra_sep
             page_row += 1
 
-        for txt, r in zip(row, make_boxes(vpos)):
-            make_box_with_text(tw, shape, r, txt)
+        for txt, r in zip(row.values(), make_boxes(vpos)):
+            make_box_with_text(tw, shape, r, str(txt))
         vpos += deltav
         page_row += 1
 

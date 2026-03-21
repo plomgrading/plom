@@ -25,7 +25,7 @@ import huey
 import huey.api
 import zipfly
 
-from plom.finish import make_cover, reassemble
+from plom.finish import make_cover_page, reassemble
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask
@@ -80,43 +80,18 @@ class ReassembleService:
 
         return legacy_cover_page_info
 
-    @staticmethod
-    def _get_cover_page_info(paper: Paper, solution: bool = False) -> list[Any]:
-        """Return information needed to build a cover page for a reassembled paper.
-
-        Args:
-            paper: a reference to a Paper instance.
-            solution (optional): bool, leave out the mark.
-
-        Returns:
-            If ``solution`` is True then returns a list of lists
-            ``[question_label, version, max_mark]`` for each question.
-            Otherwise, ``[question_label, version, mark, max_mark]``.
-        """
-        cover_page_info = []
-
-        for i in SpecificationService.get_question_indices():
-            question_label = SpecificationService.get_question_label(i)
-            max_mark = SpecificationService.get_question_mark(i)
-            version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
-
-            if solution:
-                cover_page_info.append([question_label, version, max_mark])
-            else:
-                cover_page_info.append([question_label, version, mark, max_mark])
-
-        return cover_page_info
-
     @classmethod
     def build_paper_cover_page(
-        cls, tmpdir: Path, paper: Paper, solution: bool = False
+        cls, tmpdir: Path, paper: Paper, *, solution: bool = False
     ) -> Path:
         """Build a cover page for a reassembled PDF or a solution.
 
         Args:
-            tmpdir (pathlib.Path): where to save the coverpage.
+            tmpdir: where to save the coverpage.
             paper: a reference to a Paper instance.
-            solution (optional): bool, build coverpage for solutions.
+
+        Keyword Args:
+            solution: bool, build coverpage for solutions, defaults to False.
 
         Returns:
             pathlib.Path: filename of the coverpage.
@@ -127,10 +102,19 @@ class ReassembleService:
         else:
             sid, sname = (None, None)
 
-        cover_page_table_data = cls._get_cover_page_info(paper, solution)
+        data_table = []
+        for i in SpecificationService.get_question_indices():
+            question_label = SpecificationService.get_question_label(i)
+            max_mark = SpecificationService.get_question_mark(i)
+            version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
+            d = {"question_label": question_label, "ver": version, "max_mark": max_mark}
+            if solution:
+                d.update({"mark": mark})
+            data_table.append(d)
+
         cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
-        make_cover(
-            cover_page_table_data,
+        make_cover_page(
+            data_table,
             cover_pdf_name,
             paper_num=paper.paper_number,
             info=(sname, sid),
