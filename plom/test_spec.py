@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
 
@@ -411,3 +411,39 @@ def test_spec_legacy_dupe_question_fails_to_load(tmpdir) -> None:
         f.write(old)
     with raises(tomllib.TOMLDecodeError):
         SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
+
+
+def test_spec_bonus_questions() -> None:
+    s = """
+        name = "bonus"
+        longName = "A spec with bonus questions"
+        numberOfVersions = 1
+        numberOfPages = 4
+        totalMarks = 10
+        allowSharedPages = true
+        idPage = 1
+        doNotMarkPages = []
+
+        [[question]]
+        pages = 2
+        mark = 4
+
+        [[question]]
+        pages = 3
+        mark = 6
+
+        [[question]]
+        pages = 4
+        mark = 2
+        bonus = true
+        label = "Bonus1"
+
+        [[question]]
+        pages = 4
+        mark = 3
+        bonus = true
+        label = "B2"
+    """
+    A = tomllib.loads(s)
+    sv = SpecVerifier(A)
+    sv.verify()

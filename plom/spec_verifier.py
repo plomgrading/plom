@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2024 Andrew Rechnitzer
-# Copyright (C) 2020-2025 Colin B. Macdonald
+# Copyright (C) 2020-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2025 Aidan Murphy
@@ -572,12 +572,15 @@ class SpecVerifier:
         )
         s += "\n"
         for gs, question in self.spec["question"].items():
-            s += "    {}: pages {}, selected as {}, worth {} marks\n".format(
+            s += "    {}: pages {}, selected as {}, worth {} marks".format(
                 self.get_question_label(gs),
                 question["pages"],
                 question.get("select", ""),
                 question["mark"],
             )
+            if question.get("bonus"):
+                s += " (bonus)"
+            s += "\n"
         K = self.spec.get("totalMarks", "TBD*")
         s += f"  Exam total = {K} marks"
         if K == "TBD*" or N == "TBD*":
@@ -823,7 +826,11 @@ class SpecVerifier:
             )
 
         print("  Checking mark totals")
-        K = sum(m["mark"] for m in self.spec["question"].values())
+        K = 0
+        for q in self.spec["question"].values():
+            if q.get("bonus"):
+                continue
+            K += q["mark"]
         if "totalMarks" not in self.spec:
             self.spec["totalMarks"] = K
             print(f'    "totalMarks" omitted; calculated as {K}{chk}')
@@ -884,7 +891,7 @@ class SpecVerifier:
         print("  Checking question group #{}".format(g))
         question = self.spec["question"][g]
         required_keys = set(("pages", "mark"))
-        optional_keys = set(("label", "select"))
+        optional_keys = set(("label", "select", "bonus"))
         for k in required_keys:
             if k not in question:
                 raise ValueError(f'Question error - could not find "{k}" key')
