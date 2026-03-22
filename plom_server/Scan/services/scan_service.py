@@ -1376,10 +1376,13 @@ class ScanService:
     ) -> list[dict[str, Any]]:
         """Return an ordered list of papers and their known/extra pages in the given bundle.
 
-        Each item in the list is a pair
-        (paper_number, page-info). The page-info is itself a ordered
-        list of dicts. Each dict contains information about a page in
-        the given paper in the given bundle.
+        Args:
+            bundle_obj: the staging bundle to query information from.
+
+        Returns:
+            A list of dicts, each dict contains keys "paper_number" and "page_info".
+            The page-info is itself a list of dicts, ordered by "bundle_order". Each
+            dict contains information about a page in a given paper.
         """
         # We build the ordered list in two steps. First build a dict of lists indexed by paper-number.
         papers: dict[int, list[dict[str, Any]]] = {}
@@ -1417,9 +1420,7 @@ class ScanService:
     def get_bundle_papers_info_list(
         self, bundle_obj: StagingBundle
     ) -> list[dict[str, Any]]:
-        """Return an ordered list of papers and various information.
-
-        The information pertains to each paper's existence within a staged bundle.
+        """Return an ordered list of information about papers in a bundle.
 
         Args:
             bundle_obj: the staging bundle from which to query information.
