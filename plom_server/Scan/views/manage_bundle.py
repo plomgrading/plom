@@ -5,7 +5,7 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Philip D. Loewen
 # Copyright (C) 2025 Deep Shah
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from datetime import datetime
 from typing import Any
