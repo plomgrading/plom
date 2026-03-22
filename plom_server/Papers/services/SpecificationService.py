@@ -16,7 +16,7 @@ from typing import Any
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Sum
 
 from plom.spec_verifier import SpecVerifier
 from ..models import Specification, SpecQuestion
@@ -413,20 +413,30 @@ def get_questions_max_marks() -> dict[int, int]:
 
 @transaction.atomic
 def get_max_all_question_mark() -> int:
-    """Get the maximum mark of all questions, or None if no questions."""
+    """Get the maximum mark of all questions, or None if no questions.
+
+    For example, if Q1 is out of 4 and Q2 is out of 6, this will return 6.
+    """
     # the aggregate function returns dict {"mark__max": n}
     return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
 
-@transaction.atomic
 def get_total_marks() -> int:
-    """Get the total maximum possible mark (over all questions).
+    """Get the total marks that this assessment is out of, the sum of all non-bonus questions.
 
-    Returns:
-        The maximum mark.
+    See also: `get_maximum_possible_score`.
+    TODO: we may need to audit callers to ensure they are calling the right one of these.
     """
     spec = Specification.objects.get()
     return spec.totalMarks
+
+
+def get_maximum_possible_score() -> int:
+    """Get the total maximum possible mark (over all questions, including bonus questions).
+
+    See also: `get_total_marks`.
+    """
+    return SpecQuestion.objects.all().aggregate(Sum("mark"))["mark__sum"]
 
 
 @transaction.atomic

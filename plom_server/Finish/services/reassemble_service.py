@@ -26,6 +26,7 @@ import huey.api
 import zipfly
 
 from plom.finish import make_cover_page, reassemble
+from plom.misc_utils import pprint_score
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask
@@ -103,10 +104,14 @@ class ReassembleService:
             sid, sname = (None, None)
 
         data_table = []
+        score = 0
+        total = SpecificationService.get_total_marks()
         for i in SpecificationService.get_question_indices():
             question_label = SpecificationService.get_question_label(i)
             max_mark = SpecificationService.get_question_mark(i)
             version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
+            score += mark
+            # useful to include the bonus status here?
             d = {"question_label": question_label, "ver": version, "max_mark": max_mark}
             if solution:
                 d.update({"mark": mark})
@@ -116,6 +121,8 @@ class ReassembleService:
         make_cover_page(
             data_table,
             cover_pdf_name,
+            score=pprint_score(score),
+            total=total,
             paper_num=paper.paper_number,
             info=(sname, sid),
             solution=solution,

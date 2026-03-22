@@ -36,26 +36,26 @@ def make_cover(tab: list[list[Any]], pdfname: pathlib.Path, **kwargs) -> None:
             except (TypeError, ValueError):
                 raise AssertionError(f"Table data {x} should be numeric.")
     if solution:
-        tab2 = [
-            {"question_label": row[0], "ver": row[1], "max_mark": row[2]} for row in tab
-        ]
+        tab2 = [{"question_label": r[0], "ver": r[1], "max_mark": r[2]} for r in tab]
     else:
         tab2 = [
-            {
-                "question_label": row[0],
-                "ver": row[1],
-                "mark": row[2],
-                "max_mark": row[3],
-            }
-            for row in tab
+            {"question_label": r[0], "ver": r[1], "mark": r[2], "max_mark": r[3]}
+            for r in tab
         ]
-    return make_cover_page(tab2, pdfname, **kwargs)
+    total = sum([row["max_mark"] for row in tab2])
+    if solution:
+        score = None
+    else:
+        score = pprint_score(sum([row["mark"] for row in tab2]))
+    return make_cover_page(tab2, pdfname, score=score, total=total, **kwargs)
 
 
 def make_cover_page(
     tab: list[dict[str, str | bool | float | int]],
     pdfname: pathlib.Path,
     *,
+    score: str,
+    total: float | int,
     exam_name: str | None = None,
     paper_num: str | int | None = None,
     info: tuple[str | None, str | None] | None = None,
@@ -68,13 +68,15 @@ def make_cover_page(
     Args:
         tab: information about the paper that should be put on the
             coverpage.  A list of dicts where each row has keys
-            ``question_label``, ``ver``, ``mark``, ``max_mark`` and
+            ``question_label``, ``ver``, ``max_mark`` and
             optionally ``bonus``.
-            If the ``solutions`` keyword arg is True, mark will have
-            value of `None`.  TODO: or omitted?  DECIDE
+            If the ``solutions`` keyword arg is True, the row must
+            also contain ``mark``.
         pdfname: filename to save the pdf into.
 
     Keyword Args:
+        score: the pretty-printed score as a string.
+        total: the value the score is out of.
         exam_name: the "long name" of this assessment.
         paper_num: the paper number for which we are making a cover, or
             ``None`` to omit.
@@ -91,15 +93,10 @@ def make_cover_page(
     # calculate additional table rows before casting marks to str
     if solution:
         headers = ["question", "version", "mark out of"]
-        totals = ["total", "", str(sum([row["max_mark"] for row in tab]))]
+        totals = ["total", "", str(total)]
     else:
         headers = ["question", "version", "mark", "out of"]
-        totals = [
-            "total",
-            "",
-            pprint_score(sum([row["mark"] for row in tab])),
-            str(sum([row["max_mark"] for row in tab])),
-        ]
+        totals = ["total", "", score, str(total)]
 
     # paper formatting
     m = 50  # margin
@@ -223,7 +220,11 @@ def make_cover_page(
             vpos += deltav + extra_sep
             page_row += 1
 
-        for txt, r in zip(row.values(), make_boxes(vpos)):
+        if solution:
+            strs = [row["question_label"], row["ver"], row["max_mark"]]
+        else:
+            strs = [row["question_label"], row["ver"], row["mark"], row["max_mark"]]
+        for txt, r in zip(strs, make_boxes(vpos)):
             make_box_with_text(tw, shape, r, str(txt))
         vpos += deltav
         page_row += 1
