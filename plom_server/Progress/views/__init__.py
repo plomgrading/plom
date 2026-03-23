@@ -9,6 +9,7 @@ from .progress_landing import ProgressLandingView, ToolsLandingView
 
 from .progress_identify import (
     ProgressAllIdentifyTasks,
+    ProgressIdentifyHome,
     IDImageView,
     ClearID,
     IDImageWrapView,

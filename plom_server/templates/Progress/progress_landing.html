@@ -6,10 +6,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Marking and identifying
+    Marking
 {% endblock title %}
 {% block page_heading %}
-    Marking and identifying
+    Marking
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card m-2">
@@ -53,22 +53,8 @@
     </div>
     <div class="card m-2">
         <div class="card-body pb-0">
-            <a class="btn btn-primary"
-               href="{% url 'progress_all_identify_tasks' %}">Identifying progress</a>
-            <ul>
-                <li>Shows current progress of identifying papers</li>
-                <li>User can view the ID page of any given paper</li>
-                <li>User can also clear ID from a given paper</li>
-            </ul>
-        </div>
-    </div>
-    <div class="card m-2">
-        <div class="card-body pb-0">
-            <p>
-                Looking to change the order in which your users mark
-                questions?  Need to run the auto-identifier?  Try the
-                <a href="{% url 'tools_landing' %}">Tools</a> menu.
-            </p>
+            <a class="btn btn-primary" href="{% url 'task_order_landing' %}">Change marking task ordering</a>
+            <p>Change the order in which tasks are presented to markers.</p>
         </div>
     </div>
 {% endblock main_content %}

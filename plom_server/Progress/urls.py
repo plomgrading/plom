@@ -10,6 +10,7 @@ from django.urls import path
 
 from .views import (
     ProgressAllIdentifyTasks,
+    ProgressIdentifyHome,
     ProgressMarkHome,
     ProgressMarkStatsView,
     ProgressMarkDetailsView,
@@ -97,9 +98,14 @@ urlpatterns = [
         name="progress_mark_version_compare",
     ),
     path(
-        "identify/overview/",
+        "identify/tasks/",
         ProgressAllIdentifyTasks.as_view(),
         name="progress_all_identify_tasks",
+    ),
+    path(
+        "identify/home/",
+        ProgressIdentifyHome.as_view(),
+        name="progress_identify_home",
     ),
     path(
         "identify/overview/id_img/<int:image_pk>",
