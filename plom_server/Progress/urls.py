@@ -9,7 +9,7 @@
 from django.urls import path
 
 from .views import (
-    ProgressIdentifyHome,
+    ProgressAllIdentifyTasks,
     ProgressMarkHome,
     ProgressMarkStatsView,
     ProgressMarkDetailsView,
@@ -98,8 +98,8 @@ urlpatterns = [
     ),
     path(
         "identify/overview/",
-        ProgressIdentifyHome.as_view(),
-        name="progress_identify_home",
+        ProgressAllIdentifyTasks.as_view(),
+        name="progress_all_identify_tasks",
     ),
     path(
         "identify/overview/id_img/<int:image_pk>",
