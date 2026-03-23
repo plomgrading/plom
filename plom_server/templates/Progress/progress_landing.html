@@ -43,6 +43,16 @@
     </div>
     <div class="card m-2">
         <div class="card-body pb-0">
+            <a class="btn btn-primary" href="{% url 'progress_marker_info_home' %}">Marker oversight</a>
+            <ul>
+                <li>Shows number of tasks completed by each marker</li>
+                <li>Modify and observe marker quotas</li>
+                <li>User can also clear ID from a given paper</li>
+            </ul>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body pb-0">
             <a class="btn btn-primary" href="{% url 'progress_identify_home' %}">Identifying progress</a>
             <ul>
                 <li>Shows current progress of identifying papers</li>
