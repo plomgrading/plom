@@ -271,11 +271,9 @@ def upload_demo_assessment_spec_file(*, multiversion=True) -> None:
     print("Uploading demo assessment spec")
     if multiversion:
         spec_file = demo_files / "demo_assessment_spec.toml"
-        # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
-        run_plom_cli_command(f"upload-spec {spec_file}")
     else:
         spec_file = demo_files / "demo_assessment_spec_single_version.toml"
-        run_plom_cli_command(f"upload-spec {spec_file}")
+    run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
