@@ -726,10 +726,11 @@ def main():
         r = delete_source(ver, msgr=(args.server, args.username, args.password))
 
     elif args.command == "upload-spec":
-        r = upload_spec(
+        success = upload_spec(
             Path(args.tomlfile),
             msgr=(args.server, args.username, args.password),
         )
+        sys.exit(0 if success else 1)
 
     elif args.command == "get-public-code":
         msgr = start_messenger(args.server, args.username, args.password)
