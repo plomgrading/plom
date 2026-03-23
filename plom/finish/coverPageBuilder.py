@@ -89,6 +89,9 @@ def make_cover_page(
 
     Returns:
         None
+
+    Raises:
+        KeyError: misformatted table.
     """
     # calculate additional table rows before casting marks to str
     if solution:

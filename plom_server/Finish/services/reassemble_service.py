@@ -113,8 +113,8 @@ class ReassembleService:
             score += mark
             # useful to include the bonus status here?
             d = {"question_label": question_label, "ver": version, "max_mark": max_mark}
-            if solution:
-                d.update({"mark": mark})
+            if not solution:
+                d.update({"mark": pprint_score(mark)})
             data_table.append(d)
 
         cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
