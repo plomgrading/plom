@@ -25,6 +25,7 @@ class SpecQuestion(models.Model):
         label: a human identifiable label for this question, e.g. Q1, Ex1, etc.
         question_index: a one-based index, used for unambiguous access and
             to define label if label isn't specified.
+        bonus: boolean, whether this question's mark counts toward the total.
     """
 
     # TODO: consider refactoring these these two JSONFields as CharField
@@ -34,6 +35,7 @@ class SpecQuestion(models.Model):
     select = models.JSONField(null=True)
     label = models.TextField(null=True)
     question_index = models.PositiveIntegerField(null=False, unique=True)
+    bonus = models.BooleanField(blank=True, default=False)
 
 
 class Specification(SingletonABCModel):

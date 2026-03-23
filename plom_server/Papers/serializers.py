@@ -18,7 +18,7 @@ from .models import SpecQuestion, Specification, SolnSpecification, SolnSpecQues
 
 
 class SpecQuestionSerializer(serializers.ModelSerializer):
-    """Handle serializing questions in the test specification."""
+    """Handle serializing questions in the specification."""
 
     pages = serializers.ListField(child=serializers.IntegerField(min_value=1))
     mark = serializers.IntegerField(min_value=0)

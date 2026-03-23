@@ -157,6 +157,7 @@ class Migration(migrations.Migration):
                 ("select", models.JSONField(null=True)),
                 ("label", models.TextField(null=True)),
                 ("question_index", models.PositiveIntegerField(unique=True)),
+                ("bonus", models.BooleanField(blank=True, default=False)),
             ],
         ),
         migrations.CreateModel(
