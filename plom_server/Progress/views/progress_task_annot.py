@@ -166,7 +166,10 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
 
 
 class AllTaskOverviewView(LeadMarkerOrManagerView):
+    """Operations related to all marking and Identifying tasks."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render a page containing all marking and identifying tasks."""
         context = self.build_context()
         pos = ProgressOverviewService()  # acronym excellence
         id_task_overview, marking_task_overview = pos.get_task_overview()

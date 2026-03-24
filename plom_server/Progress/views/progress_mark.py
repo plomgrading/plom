@@ -58,6 +58,36 @@ class ProgressMarkHome(MarkerOrManagerView):
                 "who_marked_how_many": who_marked,
             }
         )
+
+        # now all the stuff for the table of all tasks
+
+        pos = ProgressOverviewService()  # acronym excellence
+        id_task_overview, marking_task_overview = pos.get_task_overview()
+        papers_with_a_task = list(id_task_overview.keys())
+        n_papers = len(papers_with_a_task)
+
+        # get the counts for each id and marking task by their status
+        id_task_status_counts = ProgressOverviewService.get_id_task_status_counts(
+            _n_papers=n_papers
+        )
+        # TODO: this is already fetched above with different kwargs
+        task_status_counts = ProgressOverviewService.get_mark_task_status_counts(
+            breakdown_by_version=False, _n_papers=n_papers
+        )
+
+        context.update(
+            {
+                "question_indices": SpecificationService.get_question_indices(),
+                "question_labels": SpecificationService.get_question_index_label_pairs(),
+                "papers_with_a_task": papers_with_a_task,
+                "id_task_overview": id_task_overview,
+                "marking_task_overview": marking_task_overview,
+                "n_papers": n_papers,
+                "id_task_status_counts": id_task_status_counts,
+                "marking_task_status_counts": task_status_counts,
+            }
+        )
+
         return render(request, "Progress/Mark/mark_overview.html", context)
 
 
