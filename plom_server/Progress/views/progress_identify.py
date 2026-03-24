@@ -14,13 +14,6 @@ from plom_server.Identify.services import IDProgressService
 from ..services import ProgressOverviewService
 
 
-class ProgressIdentifyHome(LeadMarkerOrManagerView):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-
-        return render(request, "Progress/Identify/identify_home.html", context)
-
-
 class ProgressAllIdentifyTasks(LeadMarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
