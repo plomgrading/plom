@@ -17,16 +17,20 @@ class SpecQuestion(models.Model):
         pages: a list of pages where student work for this question should be found.
         marks: the maximum marks available for this question
         select: used to control how the question is chosen when there are multiple
-            versions.  ``"fix"`` means always choose version 1.  ``"shuffle"`` means
-            choose randomly from all versions.  In practice, the question-version
+            versions.  A list of integers means choose randomly from those versions.
+            TODO: an empty list means?
+            TODO: Omitted or ``None`` means choose from all available versions.
+            In practice, the question-version
             map can be custom-set in non-random ways.  Its not clearly defined what
             happens if the version-map in practice contradicts this setting.
-            See also Issue #2261 which proposes a more general mechanism.
+            TODO: also update the docs which don't talk about this
         label: a human identifiable label for this question, e.g. Q1, Ex1, etc.
         question_index: a one-based index, used for unambiguous access and
             to define label if label isn't specified.
     """
 
+    # TODO: consider refactoring these these two JSONFields as CharField
+    # with comma_separated_integer_list validator, as in Rubrics/models.py
     pages = models.JSONField()
     mark = models.PositiveIntegerField(null=False)
     select = models.JSONField(null=True)
