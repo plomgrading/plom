@@ -2,6 +2,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2026 Aidan Murphy
 
 import html
 

@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
+# Copyright (C) 2026 Aidan Murphy
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
