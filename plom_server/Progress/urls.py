@@ -26,7 +26,6 @@ from .views import (
     MarkingTaskReassignView,
     OriginalImageWrapView,
     ProgressMarkerInfoHome,
-    AllTaskOverviewView,
     ProgressLandingView,
     ToolsLandingView,
     IDImageView,
@@ -126,11 +125,6 @@ urlpatterns = [
         "markerinfo/overview/",
         ProgressMarkerInfoHome.as_view(),
         name="progress_marker_info_home",
-    ),
-    path(
-        "all_tasks/",
-        AllTaskOverviewView.as_view(),
-        name="all_tasks",
     ),
     path(
         "",

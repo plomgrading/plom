@@ -30,7 +30,6 @@ from .progress_task_annot import (
     AnnotationImageWrapView,
     AnnotationImageView,
     OriginalImageWrapView,
-    AllTaskOverviewView,
     MarkingTaskTagView,
     MarkingTaskResetView,
     MarkingTaskReassignView,
