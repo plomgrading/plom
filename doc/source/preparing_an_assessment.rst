@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2022-2025 Colin B. Macdonald
+   Copyright (C) 2022-2026 Colin B. Macdonald
    Copyright (C) 2018 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -136,7 +136,8 @@ The ``spec.toml`` for the template assessment above looks like::
 
 There are other fields which can be added to this file, for example,
 each question can have ``label = ...`` to specify something other than
-the "Qn" default.
+the "Qn" default, or ``bonus = true`` for a question which does not
+count toward the ``totalMarks``.
 The file can also contain comments starting with ``# ...``
 
 .. tip::
