@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2022-2025 Colin B. Macdonald
+   Copyright (C) 2022-2026 Colin B. Macdonald
    Copyright (C) 2018 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -30,6 +30,17 @@ of the built-in tooling will help you do this.
 
 Any questions that share a page must be the same version (this will
 happen automatically if you let Plom create the version mapping).
+
+
+Controlling which questions are multiversioned
+----------------------------------------------
+
+If you want a question to always come from version 1, specify
+``select = [1]`` under that question
+while :ref:`creating the specification <Creating a spec>`.
+You can also use ``select = [1, 2]`` to specify that question will
+be chosen from versions 1 and 2.
+Omitted ``select`` is the same as specifying a list of all versions.
 
 
 The question-version mapping

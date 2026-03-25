@@ -18,12 +18,10 @@ class SpecQuestion(models.Model):
         marks: the maximum marks available for this question
         select: used to control how the question is chosen when there are multiple
             versions.  A list of integers means choose randomly from those versions.
-            TODO: an empty list means?
-            TODO: Omitted or ``None`` means choose from all available versions.
-            In practice, the question-version
+            An empty list is invalid but omitted or ``None`` means choose from all
+            available versions.  In practice, the question-version
             map can be custom-set in non-random ways.  Its not clearly defined what
             happens if the version-map in practice contradicts this setting.
-            TODO: also update the docs which don't talk about this
         label: a human identifiable label for this question, e.g. Q1, Ex1, etc.
         question_index: a one-based index, used for unambiguous access and
             to define label if label isn't specified.
