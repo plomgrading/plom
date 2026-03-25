@@ -54,7 +54,7 @@ def make_cover_page(
     tab: list[dict[str, str | bool | float | int]],
     pdfname: pathlib.Path,
     *,
-    score: str,
+    score: str | None,
     total: float | int,
     exam_name: str | None = None,
     paper_num: str | int | None = None,
@@ -99,6 +99,8 @@ def make_cover_page(
         totals = ["total", "", str(total)]
     else:
         headers = ["question", "version", "mark", "out of"]
+        # score can only be None when doing solutions
+        assert score is not None
         totals = ["total", "", score, str(total)]
 
     # paper formatting
