@@ -379,7 +379,6 @@ def get_list_of_pages() -> list[int]:
     return [p + 1 for p in range(get_n_pages())]
 
 
-@transaction.atomic
 def get_question_max_mark(question_index: str | int) -> int:
     """Get the max mark of a given question.
 
@@ -437,6 +436,12 @@ def get_maximum_possible_score() -> int:
     See also: `get_total_marks`.
     """
     return SpecQuestion.objects.all().aggregate(Sum("mark"))["mark__sum"]
+
+
+def is_question_bonus(question_index: int) -> bool:
+    """Is a particular question a bonus question?"""
+    question = SpecQuestion.objects.get(question_index=question_index)
+    return question.bonus
 
 
 @transaction.atomic

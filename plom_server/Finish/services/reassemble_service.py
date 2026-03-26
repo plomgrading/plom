@@ -108,11 +108,13 @@ class ReassembleService:
         total = SpecificationService.get_total_marks()
         for i in SpecificationService.get_question_indices():
             question_label = SpecificationService.get_question_label(i)
-            max_mark = SpecificationService.get_question_mark(i)
+            if SpecificationService.is_question_bonus(i):
+                # TODO: maybe messing with the question labels is a bad idea?
+                question_label += " [bonus]"
+            max_mark = SpecificationService.get_question_max_mark(i)
             version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
             assert mark is not None, "mark cannot be None for reassembly"
             score += mark
-            # useful to include the bonus status here?
             d = {"question_label": question_label, "ver": version, "max_mark": max_mark}
             if not solution:
                 d.update({"mark": pprint_score(mark)})
