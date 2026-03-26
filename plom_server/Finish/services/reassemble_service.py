@@ -113,10 +113,10 @@ class ReassembleService:
                 question_label += " [bonus]"
             max_mark = SpecificationService.get_question_max_mark(i)
             version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
-            assert mark is not None, "mark cannot be None for reassembly"
-            score += mark
             d = {"question_label": question_label, "ver": version, "max_mark": max_mark}
             if not solution:
+                assert mark is not None, "mark cannot be None for reassembly"
+                score += mark
                 d.update({"mark": pprint_score(mark)})
             data_table.append(d)
 
