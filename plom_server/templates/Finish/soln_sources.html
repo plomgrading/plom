@@ -63,7 +63,7 @@
                             </div>
                         {% else %}
                             <h5 class="card-title">
-                                Upload solution PDF for version {{ soln.version }}
+                                PDF for version {{ soln.version }}
                                 <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                             </h5>
                             <div class="card-text">
@@ -72,10 +72,14 @@
                                       method="post"
                                       action="{% url 'soln_source_upload' soln.version %}">
                                     {% csrf_token %}
-                                    <div>
-                                        <input type="file" accepts=".pdf" name="soln_pdf" required />
-                                        <button class="btn btn-primary" type="submit">upload</button>
+                                    <div class="mb-2">
+                                        <input class="form-control"
+                                               type="file"
+                                               name="soln_pdf"
+                                               accepts="application/pdf"
+                                               required />
                                     </div>
+                                    <button class="btn btn-primary" type="submit">upload</button>
                                 </form>
                             </div>
                         {% endif %}
