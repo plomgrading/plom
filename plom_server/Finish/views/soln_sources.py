@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
@@ -15,7 +15,7 @@ from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.Papers.services import SolnSpecService, SpecificationService
+from plom_server.Papers.services import SolnSpecService
 from ..services import SolnSourceService, BuildSolutionService
 
 
@@ -51,8 +51,6 @@ class SolnSourcesView(ManagerRequiredView):
 
         context.update(
             {
-                "versions": SpecificationService.get_n_versions(),
-                "number_of_soln_pdfs": SolnSourceService().get_number_of_solution_pdf(),
                 "soln_sources": solns,
                 "dupes_warning": dupes_warning,
             }

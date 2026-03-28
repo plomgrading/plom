@@ -18,10 +18,6 @@
         </div>
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title">
-                    You have uploaded {{ number_of_soln_pdfs }} of {{ versions }} source pdfs
-                    {% if number_of_soln_pdfs == versions %}<i class="bi bi-check-circle text-success fs-4"></i>{% endif %}
-                </h4>
                 {% if dupes_warning %}
                     <p class="card-text alert alert-danger">
                         <strong>Warning:</strong> duplicate files detected.
