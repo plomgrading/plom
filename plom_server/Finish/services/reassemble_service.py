@@ -43,6 +43,11 @@ from .student_marks_service import StudentMarkService
 log = logging.getLogger(__name__)
 
 
+# future translation support
+def _(x: str) -> str:
+    return x
+
+
 class ReassembleService:
     """Tools for reassembling papers after marking."""
 
@@ -106,14 +111,13 @@ class ReassembleService:
         data_table = []
         score = 0.0
         total = SpecificationService.get_total_marks()
-        for i in SpecificationService.get_question_indices():
-            question_label = SpecificationService.get_question_label(i)
+        for i, label in SpecificationService.get_question_index_label_pairs():
             if SpecificationService.is_question_bonus(i):
                 # TODO: maybe messing with the question labels is a bad idea?
-                question_label += " [bonus]"
+                label += _(" [bonus]")
             max_mark = SpecificationService.get_question_max_mark(i)
             version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
-            d = {"question_label": question_label, "ver": version, "max_mark": max_mark}
+            d = {"question_label": label, "ver": version, "max_mark": max_mark}
             if not solution:
                 assert mark is not None, "mark cannot be None for reassembly"
                 score += mark
