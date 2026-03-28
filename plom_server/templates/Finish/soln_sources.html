@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
-    Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2025-2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -33,49 +33,7 @@
             </div>
         </div>
         {% for soln in soln_sources %}
-            <div>
-                <div class="card">
-                    <div class="card-body">
-                        {% if soln.uploaded %}
-                            <h5 class="card-title">
-                                PDF for version {{ soln.version }}:
-                                <a target="_blank" href="{% url 'soln_source_upload' soln.version %}">{{ soln.original_filename }}</a>
-                            </h5>
-                            <p class="card-text mb-2">
-                                sha256: <small class="text-muted"><tt>{{ soln.hash }}</tt></small>
-                            </p>
-                            <div>
-                                <button class="btn btn-danger"
-                                        hx-delete="{% url 'soln_source_upload' soln.version %}"
-                                        hx-confirm="Are you sure?"
-                                        hx-target="body"
-                                        hx-swap="outerHTML">Delete</button>
-                            </div>
-                        {% else %}
-                            <h5 class="card-title">
-                                PDF for version {{ soln.version }}
-                                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                            </h5>
-                            <div class="card-text">
-                                <form enctype="multipart/form-data"
-                                      id="form-{{ soln.version }}"
-                                      method="post"
-                                      action="{% url 'soln_source_upload' soln.version %}">
-                                    {% csrf_token %}
-                                    <div class="mb-2">
-                                        <input class="form-control"
-                                               type="file"
-                                               name="soln_pdf"
-                                               accepts="application/pdf"
-                                               required />
-                                    </div>
-                                    <button class="btn btn-primary" type="submit">upload</button>
-                                </form>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+            {% include "Finish/soln_item_view.html" with soln=soln %}
         {% endfor %}
     </div>
 {% endblock main_content %}
