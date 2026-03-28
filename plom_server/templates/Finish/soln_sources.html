@@ -42,19 +42,13 @@
                     <div class="card-body">
                         {% if soln.uploaded %}
                             <h5 class="card-title">
-                                PDF for version {{ soln.version }} uploaded
-                                <i class="bi bi-check-circle text-success"></i>
+                                PDF for version {{ soln.version }}:
+                                <a target="_blank" href="{% url 'soln_source_upload' soln.version %}">{{ soln.original_filename }}</a>
                             </h5>
-                            <p class="card-text">
+                            <p class="card-text mb-2">
                                 sha256: <small class="text-muted"><tt>{{ soln.hash }}</tt></small>
-                                <br />
-                                original filename: <small class="text-muted"><tt>{{ soln.original_filename }}</tt></small>
                             </p>
                             <div>
-                                <a class="btn btn-success"
-                                   target="_blank"
-                                   href="{% url 'soln_source_upload' soln.version %}">View</a>
-                                &nbsp;
                                 <button class="btn btn-danger"
                                         hx-delete="{% url 'soln_source_upload' soln.version %}"
                                         hx-confirm="Are you sure?"
