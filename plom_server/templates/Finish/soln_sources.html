@@ -68,7 +68,7 @@
                             </h5>
                             <div class="card-text">
                                 <form enctype="multipart/form-data"
-                                      id="form"
+                                      id="form-{{ soln.version }}"
                                       method="post"
                                       action="{% url 'soln_source_upload' soln.version %}">
                                     {% csrf_token %}
