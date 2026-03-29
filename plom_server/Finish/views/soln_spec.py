@@ -41,7 +41,7 @@ class SolnSpecView(ManagerRequiredView):
         pdfs as obsolete.
         """
         # remove any uploaded sources, and make any built soln pdfs obsolete.
-        BuildSolutionService().reset_all_soln_build()
+        BuildSolutionService.reset_all_soln_build()
         SolnSourceService.remove_all_solution_pdf()
         SolnSpecService.remove_soln_spec()
         return HttpResponseClientRedirect(reverse("soln_spec"))

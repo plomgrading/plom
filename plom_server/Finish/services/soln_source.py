@@ -39,23 +39,33 @@ class SolnSourceService:
         )
 
     @staticmethod
-    def get_list_of_sources() -> list[dict[str, Any]]:
+    def get_source_info(v: int) -> dict[str, Any]:
+        """Return a dictionary with info about the solution version.
+
+        Args:
+            v: which version, indexed from one.
+
+        Returns:
+            A dictionary with the version, uploaded status, and---if
+            uploaded---the file hash, original filename and other info
+        """
+        try:
+            x = SolutionSourcePDF.objects.filter(version=v).get()
+            # TODO: duplicate info here, like in source?
+            return {
+                "version": x.version,
+                "uploaded": True,
+                "hash": x.pdf_hash,
+                "original_filename": x.original_filename,
+            }
+        except SolutionSourcePDF.DoesNotExist:
+            return {"version": v, "uploaded": False}
+
+    @classmethod
+    def get_list_of_sources(cls) -> list[dict[str, Any]]:
         """Return a list of dicts describing all versions of the solutions, uploaded or not."""
-
-        def _get_source_dict(v):
-            try:
-                x = SolutionSourcePDF.objects.filter(version=v).get()
-                return {
-                    "version": x.version,
-                    "uploaded": True,
-                    "hash": x.pdf_hash,
-                    "original_filename": x.original_filename,
-                }
-            except SolutionSourcePDF.DoesNotExist:
-                return {"version": v, "uploaded": False}
-
         vers = SpecificationService.get_list_of_versions()
-        return [_get_source_dict(v) for v in vers]
+        return [cls.get_source_info(v) for v in vers]
 
     @staticmethod
     def remove_solution_pdf(version: int):

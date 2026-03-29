@@ -86,7 +86,7 @@ class SourceManageView(ManagerRequiredView):
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX POST requests are allowed")
 
-        context = {}
+        context = self.build_context()
         if not request.FILES["source_pdf"]:
             context.update(
                 {"success": False, "message": "Form invalid", "version": version}
@@ -109,7 +109,7 @@ class SourceManageView(ManagerRequiredView):
                     {
                         "error": not success,
                         "message": message,
-                        "src": SourceService.get_source(version),
+                        "src": SourceService.get_source_info(version),
                     }
                 )
             except PlomDependencyConflict as err:
@@ -117,7 +117,7 @@ class SourceManageView(ManagerRequiredView):
                     {
                         "error": True,
                         "message": err,
-                        "src": SourceService.get_source(version),
+                        "src": SourceService.get_source_info(version),
                     }
                 )
 
@@ -136,7 +136,7 @@ class SourceManageView(ManagerRequiredView):
             context = {
                 "error": True,
                 "message": err,
-                "src": SourceService.get_source(version),
+                "src": SourceService.get_source_info(version),
             }
             return render(request, "Preparation/source_item_view.html", context)
 

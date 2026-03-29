@@ -114,7 +114,7 @@ def assert_can_modify_prenaming_config():
     # cannot configure prenaming without version 1 source PDF
     # (Note Issue #3390: ID pages can have other versions but I think this restriction
     # is (mostly?) about drawing the UI, which currently uses only version 1.)
-    if not SourceService.get_source(1)["uploaded"]:
+    if not SourceService.get_source_info(1)["uploaded"]:
         raise PlomDependencyConflict(
             "Source PDF for assessment version 1 has not been uploaded."
         )
