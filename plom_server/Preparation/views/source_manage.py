@@ -46,8 +46,6 @@ class SourceManageView(ManagerRequiredView):
             )
 
         return {
-            "num_versions": SpecificationService.get_n_versions(),
-            "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
             "sources": sources,
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
@@ -124,7 +122,6 @@ class SourceManageView(ManagerRequiredView):
                 )
 
         context.update(self.build_context())
-        context.update({"request_is_htmx": request.htmx})
 
         return render(request, "Preparation/source_item_view.html", context)
 
@@ -150,7 +147,6 @@ class SourceManageView(ManagerRequiredView):
                     "version": version,
                     "uploaded": False,
                 },
-                "request_is_htmx": request.htmx,
             }
         )
 
