@@ -225,7 +225,7 @@ def store_source_pdf(
         )
 
 
-def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, str]:
+def take_source_from_upload(version: int, in_memory_file: File) -> None:
     """Store a PDF file as one of the source versions, after doing some checks.
 
     Args:
@@ -241,16 +241,13 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
     Raises:
         PlomDependencyException: if preparation dependencies prevent modification
             of source files.
-
-    Returns:
-        A tuple with a boolean for success and a message or error message,
-        for example if the PDF already exists.
+        ValueError: something wrong with the file, such as wrong number of pages.
     """
     # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
     if version not in SpecificationService.get_list_of_versions():
-        return (False, f"Version {version} is out of range")
+        raise ValueError(f"Version {version} is out of range")
     required_pages = SpecificationService.get_n_pages()
     # save the file to a temp directory
     # TODO - size limits please
@@ -263,8 +260,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         with pymupdf.open(tmp_pdf) as doc:
             page_count = doc.page_count
             if page_count != int(required_pages):
-                return (
-                    False,
+                raise ValueError(
                     f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}",
                 )
             # keep the first page's size in full float precision
@@ -295,28 +291,21 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         try:
             original_filename = validate_file_name(original_filename)
         except SuspiciousFileOperation as e:
-            return (
-                False,
+            raise ValueError(
                 f"File name is suspicious: {e}",
             )
 
-        # now try to store it
-        try:
-            store_source_pdf(
-                version,
-                tmp_pdf,
-                original_filename=original_filename,
-                page_count=page_count,
-                paper_size_name=paper_size_name,
-                paper_size_width=w_float,
-                paper_size_height=h_float,
-            )
-        except ValueError as err:
-            return (False, str(err))
-
+        # now try to store it, which can also raise a ValueError
+        store_source_pdf(
+            version,
+            tmp_pdf,
+            original_filename=original_filename,
+            page_count=page_count,
+            paper_size_name=paper_size_name,
+            paper_size_width=w_float,
+            paper_size_height=h_float,
+        )
         store_reference_images(version)
-
-        return (True, "PDF successfully uploaded")
 
 
 @transaction.atomic
