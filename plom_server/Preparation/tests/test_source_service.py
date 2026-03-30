@@ -11,6 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from model_bakery import baker
 
+from plom_server.Papers.services import SpecificationService
 from plom_server.TestingSupport.utils import config_test
 from ..services import SourceService, PapersPrinted
 from ..models import PaperSourcePDF
@@ -92,13 +93,15 @@ class SourceServiceTests(TestCase):
         # we explicitly **unset** papers-printed for testing purposes
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
+        minver = min(SpecificationService.get_list_of_versions())
+        maxver = max(SpecificationService.get_list_of_versions())
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with self.assertRaisesRegex(ValueError, "range"):
             with pdf.open("rb") as f:
-                SourceService.take_source_from_upload(0, f)
+                SourceService.take_source_from_upload(minver - 1, f)
         with self.assertRaisesRegex(ValueError, "range"):
             with pdf.open("rb") as f:
-                SourceService.take_source_from_upload(3, f)
+                SourceService.take_source_from_upload(maxver + 1, f)
 
     @config_test({"test_spec": "tiny_spec.toml"})
     def test_store_source_pdfs_wrong_page_count(self) -> None:
