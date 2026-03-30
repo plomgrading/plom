@@ -44,7 +44,8 @@
                 <form enctype="multipart/form-data"
                       id="form-{{ src.version }}"
                       hx-post="{% url 'prep_source_upload' src.version %}"
-                      hx-target="#card-{{ src.version }}">
+                      hx-target="#card-{{ src.version }}"
+                      hx-swap="outerHTML">
                     {% csrf_token %}
                     <div class="mb-2">
                         <input class="form-control"
