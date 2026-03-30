@@ -12,7 +12,7 @@ from plom_server.Base.services import Settings
 from ..models import Paper, FixedPage
 from .paper_creator import PaperCreatorService
 
-log = logging.getLogger("PaperInfoService")
+log = logging.getLogger(__name__)
 
 
 def fixedpage_version_count(page_number: int) -> dict[int, int]:

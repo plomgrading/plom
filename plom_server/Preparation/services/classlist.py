@@ -20,7 +20,7 @@ from .preparation_dependency_service import assert_can_modify_classlist
 from ..models import StagingStudent
 
 
-log = logging.getLogger("ClasslistService")
+log = logging.getLogger(__name__)
 
 
 class StagingStudentService:

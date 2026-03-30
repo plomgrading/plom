@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2026 Aidan Murphy
 
 import logging
 
@@ -14,6 +15,9 @@ from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.utils import timezone
 from django_huey import get_queue
+
+
+log = logging.getLogger(__name__)
 
 
 # TODO: Using the @signal decorator did not work with both queues
@@ -368,7 +372,7 @@ class BaseImage(models.Model):
 @main_queue.signal(huey.signals.SIGNAL_ERROR)
 def on_huey_task_error(signal, task: huey.api.Task, exc):
     """Action to take when a Huey task fails."""
-    logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
+    log.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
 
     # Note: using filter except of a exception on DoesNotExist because I think
@@ -403,7 +407,7 @@ def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
     This is slightly different from the regular one above b/c all parent tasks
     should always have a tracker (but child tasks might not).
     """
-    logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
+    log.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
 
     # Note: using filter except of a exception on DoesNotExist because I think

@@ -27,7 +27,7 @@ from plom_server.Preparation.services.preparation_dependency_service import (
 )
 from plom_server.Papers.models import MobilePage
 
-log = logging.getLogger("SpecificationService")
+log = logging.getLogger(__name__)
 
 
 def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:

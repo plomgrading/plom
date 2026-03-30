@@ -401,22 +401,56 @@ MAX_FILE_SIZE_DISPLAY = "1 MiB"
 # User uploaded files are written to /tmp if they exceed this, default is 2.5e6.
 # FILE_UPLOAD_MAX_MEMORY_SIZE = 2.5e6
 
+
+# don't log "DEBUG" level events in production
+MIN_LOGGING_LEVEL = "DEBUG" if DEBUG else "INFO"
+
 LOGGING: dict[str, Any] = {
     "version": 1,
+    "formatters": {
+        "prepend_time": {
+            "()": "django.utils.log.ServerFormatter",
+            "format": '[%(asctime)s] [%(levelname)s] "%(message)s"',
+        }
+    },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
+            "formatter": "prepend_time",
+        },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            # not sure what best practice is, but PLOM_BASE_DIR should be backed up
+            "filename": PLOM_BASE_DIR / "plom_server.log",
+            "formatter": "prepend_time",
         },
     },
+    # many built-in options offered by Django
+    # https://docs.djangoproject.com/en/6.0/ref/logging/#loggers
     "loggers": {
+        # show 400/500 code responses and server errors
         "django.request": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "propagate": True,
-            "level": "DEBUG",
-        }
+            "level": MIN_LOGGING_LEVEL,
+        },
+        # show suspicious operations
+        "django.security": {
+            "handlers": ["console", "file"],
+            "propagate": True,
+            "level": MIN_LOGGING_LEVEL,
+        },
+        # show log messages in plom_server applications
+        "plom_server": {
+            "handlers": ["console", "file"],
+            # "propagate": True,
+            "level": MIN_LOGGING_LEVEL,
+        },
     },
 }
+
 
 # For general debugging and introspection, consider the django-extensions app.
 # Get it with "pip install django-extensions". One good tool this enables is
@@ -449,6 +483,10 @@ if PROFILER_NPLUSONE_ENABLED:
             }
         }
     )
+    # TODO: this might cause problems
+    # https://docs.djangoproject.com/en/6.0/howto/logging/#make-a-basic-logging-call
+    # docs say don't make logging calls in settings.py
+    # maybe NPLUSONE_LOGGER_NAME = "nplusone"
     NPLUSONE_LOGGER = logging.getLogger("nplusone")
     NPLUSONE_LOG_LEVEL = logging.WARN
 

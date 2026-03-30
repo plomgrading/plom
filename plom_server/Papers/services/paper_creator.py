@@ -21,7 +21,7 @@ from plom_server.Preparation.services.preparation_dependency_service import (
 from ..services import SpecificationService
 from ..models import Paper, FixedPage, PopulateEvacuateDBChore
 
-log = logging.getLogger("PaperCreatorService")
+log = logging.getLogger(__name__)
 
 
 # The decorated function returns a ``huey.api.Result``

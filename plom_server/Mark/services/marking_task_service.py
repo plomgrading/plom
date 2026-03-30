@@ -28,7 +28,7 @@ from . import MarkingPriorityService, mark_task
 from ..models import MarkingTask, MarkingTaskTag, Annotation
 
 
-log = logging.getLogger("MarkingTaskService")
+log = logging.getLogger(__name__)
 
 
 class MarkingTaskService:
