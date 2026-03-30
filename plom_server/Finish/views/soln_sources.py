@@ -57,6 +57,35 @@ class SolnSourcesView(ManagerRequiredView):
         )
         return render(request, "Finish/soln_sources.html", context)
 
+    def post(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
+        """HTMX posts here will add a new solution PDF file to the server.
+
+        On success, this re-renders the particular card for this version.
+        TODO: on failure, does stuff with errors-as-success: consider porting to
+        hx-error as in other places; do it for source updates as well.
+        """
+        if not request.htmx:
+            return HttpResponseBadRequest("Only HTMX POST requests are allowed")
+
+        if not version:
+            return HttpResponseBadRequest("Only supports uploading by version")
+
+        if not request.FILES["soln_pdf"]:
+            return HttpResponseBadRequest("Must include a 'soln_pdf' field")
+
+        context = self.build_context()
+        try:
+            SolnSourceService().take_solution_source_pdf_from_upload(
+                version, request.FILES["soln_pdf"]
+            )
+            context["error"] = False
+            context["message"] = ""
+        except ValueError as err:
+            context["error"] = True
+            context["message"] = f"{err}"
+        context.update({"soln": SolnSourceService.get_source_info(version)})
+        return render(request, "Finish/soln_item_view.html", context)
+
     def delete(
         self, request: HttpRequest, *, version: int | None = None
     ) -> HttpResponse:
@@ -77,41 +106,5 @@ class SolnSourcesView(ManagerRequiredView):
         context = self.build_context()
         BuildSolutionService.reset_all_soln_build()
         SolnSourceService.remove_solution_pdf(version)
-        context.update(
-            {
-                "soln": {
-                    "version": version,
-                    "uploaded": False,
-                },
-            }
-        )
-        return render(request, "Finish/soln_item_view.html", context)
-
-    def post(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
-        """HTMX posts here will add a new solution PDF file to the server.
-
-        On success, this re-renders the particular card for this version.
-        TODO: on failure, does stuff with errors-as-success: consider porting to
-        hx-error as in other places; do it for source updates as well.
-        """
-        if not request.htmx:
-            return HttpResponseBadRequest("Only HTMX POST requests are allowed")
-
-        if not version:
-            return HttpResponseBadRequest("Only supports deleting a particular version")
-
-        if not request.FILES["soln_pdf"]:
-            return HttpResponseBadRequest("Must include a 'soln_pdf' field")
-
-        context = self.build_context()
-        try:
-            SolnSourceService().take_solution_source_pdf_from_upload(
-                version, request.FILES["soln_pdf"]
-            )
-            context["error"] = False
-            context["message"] = ""
-        except ValueError as err:
-            context["error"] = True
-            context["message"] = f"{err}"
         context.update({"soln": SolnSourceService.get_source_info(version)})
         return render(request, "Finish/soln_item_view.html", context)

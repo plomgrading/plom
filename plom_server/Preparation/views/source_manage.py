@@ -130,26 +130,20 @@ class SourceManageView(ManagerRequiredView):
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
 
+        context = self.build_context()
         try:
             SourceService.delete_source_pdf(version)
         except PlomDependencyConflict as err:
-            context = {
-                "error": True,
-                "message": err,
-                "src": SourceService.get_source_info(version),
-            }
+            context.update(
+                {
+                    "error": True,
+                    "message": err,
+                    "src": SourceService.get_source_info(version),
+                }
+            )
             return render(request, "Preparation/source_item_view.html", context)
 
-        context = self.build_context()
-        context.update(
-            {
-                "src": {
-                    "version": version,
-                    "uploaded": False,
-                },
-            }
-        )
-
+        context.update({"src": SourceService.get_source_info(version)})
         return render(request, "Preparation/source_item_view.html", context)
 
 
