@@ -74,10 +74,7 @@ class SourceServiceTests(TestCase):
                 content=f.read(),
                 content_type="application/pdf",
             )
-            r, msg = SourceService.take_source_from_upload(1, django_file)
-        assert r
-        assert "uploaded" in msg
-        assert "success" in msg
+            SourceService.take_source_from_upload(1, django_file)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_validate_filename(self) -> None:
@@ -86,11 +83,9 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(1, f)
-        assert not r
-        assert "suspicious" in msg
-        assert "name" in msg
+        with self.assertRaisesRegex(ValueError, "name.*suspicious.*path"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(1, f)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_out_of_range(self) -> None:
@@ -98,14 +93,12 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(0, f)
-            assert not r
-            assert "range" in msg
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(3, f)
-            assert not r
-            assert "range" in msg
+        with self.assertRaisesRegex(ValueError, "range"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(0, f)
+        with self.assertRaisesRegex(ValueError, "range"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(3, f)
 
     @config_test({"test_spec": "tiny_spec.toml"})
     def test_store_source_pdfs_wrong_page_count(self) -> None:
@@ -114,10 +107,9 @@ class SourceServiceTests(TestCase):
 
         # tiny_spec has 3 pages but the pdf here has 6
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(1, f)
-        assert not r
-        assert "pages" in msg
+        with self.assertRaisesRegex(ValueError, "pages"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(1, f)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdf_location(self) -> None:
@@ -142,7 +134,7 @@ class SourceServiceTests(TestCase):
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "already present"):
             SourceService.store_source_pdf(1, upload_path)
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)
