@@ -130,7 +130,7 @@ class SolnSourceService:
         with pymupdf.open(stream=file_bytes) as doc:
             if len(doc) != SolnSpecService.get_n_pages():
                 raise ValueError(
-                    f"Solution pdf does has {len(doc)} pages - should have "
+                    f"PDF file has {len(doc)} pages, but should have "
                     f"{SolnSpecService.get_n_pages()} to match soln spec."
                 )
 
