@@ -117,7 +117,11 @@ class ReassembleService:
                 label += _(" [bonus]")
             max_mark = SpecificationService.get_question_max_mark(i)
             version, mark = StudentMarkService.get_question_version_and_mark(paper, i)
-            d = {"question_label": label, "ver": version, "max_mark": max_mark}
+            d: dict[str, str | int | float] = {
+                "question_label": label,
+                "ver": version,
+                "max_mark": max_mark,
+            }
             if not solution:
                 assert mark is not None, "mark cannot be None for reassembly"
                 score += mark
