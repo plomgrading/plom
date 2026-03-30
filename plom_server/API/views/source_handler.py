@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
@@ -134,16 +134,14 @@ class SourceDetail(APIView):
         source_pdf = request.FILES["source_pdf"]
         if source_pdf.size > 0:
             try:
-                success, message = SourceService.take_source_from_upload(
-                    version, source_pdf
-                )
+                SourceService.take_source_from_upload(version, source_pdf)
             except PlomDependencyConflict as e:
                 return _error_response(
                     f"Modifying source {version} is not allowed. {e}",
                     status.HTTP_409_CONFLICT,
                 )
-            if not success:
-                return _error_response(message, status.HTTP_400_BAD_REQUEST)
+            except ValueError as e:
+                return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         ListOfSources = SourceService.get_list_of_sources()
         sourcenotes = ListOfSources[version - 1]
