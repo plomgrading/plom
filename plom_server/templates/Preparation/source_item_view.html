@@ -29,7 +29,7 @@
                 </div>
                 <div class="px-1 col">
                     <a class="btn btn-danger"
-                       hx-delete="{{ src.version }}"
+                       hx-delete="{% url 'prep_source_upload' src.version %}"
                        hx-confirm="Are you sure?"
                        hx-target="#card-{{ src.version }}"
                        hx-swap="outerHTML">Delete</a>
