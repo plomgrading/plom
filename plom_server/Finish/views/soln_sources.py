@@ -75,7 +75,7 @@ class SolnSourcesView(ManagerRequiredView):
 
         context = self.build_context()
         try:
-            SolnSourceService().take_solution_source_pdf_from_upload(
+            SolnSourceService.take_solution_source_pdf_from_upload(
                 version, request.FILES["soln_pdf"]
             )
             context["error"] = False

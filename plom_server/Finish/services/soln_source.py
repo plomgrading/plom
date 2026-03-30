@@ -110,10 +110,9 @@ class SolnSourceService:
             )
         return io.BytesIO(soln_pdf_obj.source_pdf.read())
 
+    @classmethod
     @transaction.atomic
-    def take_solution_source_pdf_from_upload(
-        self, version: int, in_memory_file
-    ) -> None:
+    def take_solution_source_pdf_from_upload(cls, version: int, in_memory_file) -> None:
         """Take the given solution source pdf and save it to the DB."""
         if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")
@@ -143,7 +142,7 @@ class SolnSourceService:
             )
             # We need to create solution images for display in the client
             # Assembly of solutions for each paper will use the source pdfs, not these images.
-            self._create_solution_images(version, doc)
+            cls._create_solution_images(version, doc)
 
     @staticmethod
     def _create_solution_images(version: int, doc: pymupdf.Document) -> None:
