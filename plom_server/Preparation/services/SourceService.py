@@ -166,7 +166,7 @@ def get_list_of_sources() -> list[dict[str, Any]]:
 
 def store_source_pdf(
     version: int,
-    source_pdf: Traversable,
+    source_pdf: Traversable | Path,
     *,
     original_filename: str = "",
     page_count: int | None = None,
