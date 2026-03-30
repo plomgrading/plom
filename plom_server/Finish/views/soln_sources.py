@@ -67,7 +67,7 @@ class SolnSourcesView(ManagerRequiredView):
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX POST requests are allowed")
 
-        if not version:
+        if version is None:
             return HttpResponseBadRequest("Only supports uploading by version")
 
         if not request.FILES["soln_pdf"]:
