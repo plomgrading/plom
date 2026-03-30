@@ -1,18 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
+import tomllib
 from dataclasses import dataclass
 from time import sleep
 from typing import Optional, List, Dict, Any
-
-import sys
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 from django.core.management.base import BaseCommand
 from django.core.management import call_command

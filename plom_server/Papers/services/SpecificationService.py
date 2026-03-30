@@ -8,6 +8,7 @@
 
 import html
 import logging
+import tomllib
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -18,8 +19,6 @@ from django.db import transaction
 from django.db.models import Max
 
 from plom.spec_verifier import SpecVerifier
-from plom_server.Base.compat import load_toml_from_path, load_toml_from_string
-from plom_server.Base.compat import TOMLDecodeError  # noqa: F401
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (
@@ -61,12 +60,12 @@ def validate_spec_from_string(spec_toml_str: str) -> bool:
     """Validate an assessment specification (from a toml format string), but don't install it on server.
 
     Raises:
-        TOMLDecodeError: cannot get toml from the string.
+        tomllib.TOMLDecodeError: cannot get toml from the string.
         ValueError: explaining what is invalid.
         serializers.ValidationError: in this case the ``.detail`` field
             will contain a list of what is wrong.
     """
-    spec_dict = load_toml_from_string(spec_toml_str)
+    spec_dict = tomllib.loads(spec_toml_str)
     return validate_spec_from_dict(spec_dict)
 
 
@@ -125,12 +124,13 @@ def install_spec_from_toml_file(
         pathname: what file to load from.
 
     Raises:
-        TOMLDecodeError: cannot read toml.
+        tomllib.TOMLDecodeError: cannot read toml.
         PlomDependencyConflict: if the spec cannot be modified.
         ValueError: see :func:`install_spec_from_dict`.
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
-    data = load_toml_from_path(pathname)
+    with open(pathname, "rb") as toml_file:
+        data = tomllib.load(toml_file)
     return install_spec_from_dict(data)
 
 
@@ -143,12 +143,12 @@ def install_spec_from_toml_string(
         tomlstr: a string containing toml.
 
     Raises:
-        TOMLDecodeError: cannot read toml.
+        tomllib.TOMLDecodeError: cannot read toml.
         PlomDependencyConflict: if the spec cannot be modified.
         ValueError: see :func:`install_spec_from_dict`.
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
-    data = load_toml_from_string(tomlstr)
+    data = tomllib.loads(tomlstr)
     return install_spec_from_dict(data)
 
 

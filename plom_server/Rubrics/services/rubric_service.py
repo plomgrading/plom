@@ -19,15 +19,10 @@ import io
 import html
 import json
 import logging
-import sys
+import tomllib
+import tomlkit
 from operator import itemgetter
 from typing import Any
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-import tomlkit
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
@@ -1340,6 +1335,7 @@ class RubricService:
         Raises:
             ValueError: If the file type is not supported.  Also if
                 username does not exist.
+            tomllib.TOMLDecodeError: invalid toml.
             PermissionDenied: username not allowed to make rubrics.
             serializers.ValidationError: rubric data is invalid.
             KeyError: TODO, what should happen if no user specified?
