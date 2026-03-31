@@ -453,10 +453,22 @@ LOGGING: dict[str, Any] = {
         "huey": {
             "handlers": ["console", "file"],
             "propagate": True,
-            "level": MIN_LOGGING_LEVEL,
+            "level": "INFO",
         },
     },
 }
+
+if DEBUG:
+    LOGGING["loggers"].update(
+        {
+            # flags missing context variables
+            "django.template": {
+                "handlers": ["console", "file"],
+                "propagate": True,
+                "level": MIN_LOGGING_LEVEL,
+            },
+        }
+    )
 
 
 # For general debugging and introspection, consider the django-extensions app.
