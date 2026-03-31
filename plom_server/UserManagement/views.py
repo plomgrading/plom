@@ -51,6 +51,7 @@ class UserPage(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Fetch user management page."""
+        log.info("here!")
         # fetch these so that we don't loop over this in the template
         # remove db hits in loops.
         uids = cache.get("online-now", [])

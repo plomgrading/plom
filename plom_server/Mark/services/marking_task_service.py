@@ -899,7 +899,7 @@ class MarkingTaskService:
                 if task_obj.status == MarkingTask.COMPLETE:
                     task_obj.assigned_user = new_user
                 elif task_obj.status == MarkingTask.OUT_OF_DATE:
-                    # log.warn(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
+                    # log.warning(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
                     task_obj.assigned_user = new_user
                 elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
                     # if out then set it as todo and clear the assigned_user.
