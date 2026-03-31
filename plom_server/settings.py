@@ -423,7 +423,6 @@ LOGGING: dict[str, Any] = {
         "file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            # not sure what best practice is, but PLOM_BASE_DIR should be backed up
             "filename": PLOM_BASE_DIR / "plom_server.log",
             "formatter": "prepend_time",
         },
@@ -453,7 +452,7 @@ LOGGING: dict[str, Any] = {
         "huey": {
             "handlers": ["console", "file"],
             "propagate": True,
-            "level": "INFO",
+            "level": "INFO",  # "DEBUG" is very spammy
         },
     },
 }
