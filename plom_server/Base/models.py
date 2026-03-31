@@ -373,7 +373,6 @@ class BaseImage(models.Model):
 def on_huey_task_error(signal, task: huey.api.Task, exc):
     """Action to take when a Huey task fails."""
     log.warning(f"Error in task {task.id} {task.name} {task.args} - {exc}")
-    print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
 
     # Note: using filter except of a exception on DoesNotExist because I think
     # the exception handling was rewinding some atomic transactions
@@ -381,7 +380,7 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         # or perhaps this huey task is not being tracked by a one of our trackers
         # (for example, it may have a parent task that is doing the tracking)
-        print(
+        log.error(
             f"(Error) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet or never will be) in the database."
         )
@@ -397,7 +396,7 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
 # @signal(huey.signals.SIGNAL_INTERRUPTED)
 @main_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
 def on_huey_task_interrupted(signal, task: huey.api.Task):
-    print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
+    log.info(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
 
 
 @parent_queue.signal(huey.signals.SIGNAL_ERROR)
@@ -408,13 +407,12 @@ def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
     should always have a tracker (but child tasks might not).
     """
     log.warning(f"Error in task {task.id} {task.name} {task.args} - {exc}")
-    print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
 
     # Note: using filter except of a exception on DoesNotExist because I think
     # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
-        print(
+        log.error(
             f"(Error) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet) in the database."
         )
@@ -430,4 +428,4 @@ def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
 @parent_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
 def on_huey_parent_task_interrupted(signal, task: huey.api.Task):
     # TODO: this code is duplicated b/c @signal decorate did work for both queues
-    print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
+    log.info(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
