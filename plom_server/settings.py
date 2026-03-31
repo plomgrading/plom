@@ -410,7 +410,8 @@ LOGGING: dict[str, Any] = {
     "formatters": {
         "prepend_time": {
             "()": "django.utils.log.ServerFormatter",
-            "format": '[%(asctime)s] [%(levelname)s] "%(message)s"',
+            # the process is important for huey
+            "format": '[%(asctime)s] [%(process)d] [%(levelname)s] %(name)s:"%(message)s"',
         }
     },
     "handlers": {
@@ -446,6 +447,12 @@ LOGGING: dict[str, Any] = {
         "plom_server": {
             "handlers": ["console", "file"],
             # "propagate": True,
+            "level": MIN_LOGGING_LEVEL,
+        },
+        # This overrides a default logger for huey
+        "huey": {
+            "handlers": ["console", "file"],
+            "propagate": True,
             "level": MIN_LOGGING_LEVEL,
         },
     },
