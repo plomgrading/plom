@@ -355,7 +355,7 @@ def scribble_name_and_id(
         color=blue,
         fontname=fontname,
         fontfile=fontres,
-        align=0,
+        align=pymupdf.TEXT_ALIGN_LEFT,
     )
     assert excess > 0
     del id_page
@@ -421,7 +421,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
             color=color,
             fontname=fontname,
             fontfile=fontres,
-            align=0,
+            align=pymupdf.TEXT_ALIGN_LEFT,
         )
         assert excess > 0
 
@@ -646,7 +646,7 @@ def make_colliding_pages(paper_dir, outfile):
                 color=blue,
                 fontname="helv",
                 fontfile=None,
-                align=0,
+                align=pymupdf.TEXT_ALIGN_LEFT,
             )
             assert excess > 0
 

@@ -108,7 +108,7 @@ class BuildSolutionService:
                 watermark_text,
                 fontsize=18,
                 color=(0, 0, 0),
-                align=1,
+                align=pymupdf.TEXT_ALIGN_CENTER,
                 stroke_opacity=0.33,
                 fill_opacity=0.33,
                 overlay=True,
