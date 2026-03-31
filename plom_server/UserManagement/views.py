@@ -9,6 +9,7 @@
 # Copyright (C) 2025-2026 Aidan Murphy
 
 import json
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -31,6 +32,9 @@ from .services import PermissionChanger
 from .services import QuotaService
 from .services.UsersService import delete_user, get_list_of_user_info
 from .models import Quota
+
+
+log = logging.getLogger(__name__)
 
 
 class UserPage(ManagerRequiredView):
@@ -157,6 +161,8 @@ class HTMXExplodeView(ManagerRequiredView):
             1 / 0
         if random.random() < 0.5:
             raise Http404("Should happen 1/3 of the time")
+
+        log.info("debug button pushed - no explosion")
         return HttpResponse("Button pushed", status=200)
 
 
