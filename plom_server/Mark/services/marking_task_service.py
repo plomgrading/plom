@@ -341,7 +341,7 @@ class MarkingTaskService:
 
     @staticmethod
     def surrender_task(user: User, papernum: int, qidx: int) -> None:
-        """Surrender a particular marking task.
+        """Surrender a particular marking task assigned to a user.
 
         Args:
             user: reference to a User instance.
