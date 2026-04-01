@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
 import pathlib
@@ -34,15 +34,13 @@ class SourceServiceTests(TestCase):
         for src in d:
             assert not src["uploaded"]
 
-        # TODO: mypy complains about Traversable, in Python 3.11, remove when
-        # we drop support for Python 3.10, and similar throughout this file
-        SourceService.store_source_pdf(1, ver1pdf)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, ver1pdf)
         d = SourceService.get_list_of_sources()
         v1, v2 = d
         assert v1["uploaded"]
         assert not v2["uploaded"]
 
-        SourceService.store_source_pdf(2, ver2pdf)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(2, ver2pdf)
         d = SourceService.get_list_of_sources()
         v1, v2 = d
         assert v1["uploaded"]
@@ -127,7 +125,7 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
         __, f = SourceService._get_source_file(1)
         pdf_source_path = settings.MEDIA_ROOT / "sourceVersions"
         self.assertTrue(pdf_source_path.exists())
@@ -143,9 +141,9 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
         with self.assertRaises(ValueError):
-            SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+            SourceService.store_source_pdf(1, upload_path)
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)
         SourceService.delete_source_pdf(1)
@@ -162,7 +160,7 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
         d = SourceService.get_list_of_sources()
         assert len(d[0]["hash"]) > 50
         SourceService.delete_source_pdf(1)
@@ -174,7 +172,7 @@ class SourceServiceTests(TestCase):
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         original_bytes = upload_path.read_bytes()
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
         stored_bytes = SourceService.get_source_as_bytes(1)
         self.assertEqual(original_bytes, stored_bytes)
         with self.assertRaises(ValueError):

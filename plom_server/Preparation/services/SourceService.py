@@ -8,6 +8,7 @@ import hashlib
 import pathlib
 import tempfile
 from collections import defaultdict
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any
 
@@ -163,11 +164,9 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     return [get_source(v) for v in vers]
 
 
-# TODO: mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
-# source_pdf: pathlib.Path | resources.abc.Traversable,
 def store_source_pdf(
     version: int,
-    source_pdf: pathlib.Path,
+    source_pdf: Traversable | Path,
     *,
     original_filename: str = "",
     page_count: int | None = None,
@@ -208,11 +207,11 @@ def store_source_pdf(
     else:
         raise ValueError(f"Source pdf with version {version} already present.")
 
-    with open(source_pdf, "rb") as fh:
+    with source_pdf.open("rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
     hash_value = hashlib.sha256(the_bytes).hexdigest()
 
-    with open(source_pdf, "rb") as fh:
+    with source_pdf.open("rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")
         PaperSourcePDF.objects.create(
             version=version,

@@ -9,13 +9,8 @@ Assumes that the config describes a valid server state, and that the
 server will be created in order from test specification to building test-papers.
 """
 
-import sys
+import tomllib
 from importlib import resources
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 from plom_server.Papers.services import PaperCreatorService, SpecificationService
 from plom_server.Preparation import useful_files_for_testing as useful_files

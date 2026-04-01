@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+
+import tomllib
 
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
@@ -90,7 +92,7 @@ class SpecEditorView(ManagerRequiredView):
             context["error_list"] = [f"Dependency error - {e}"]
         except PermissionDenied as e:
             context["error_list"] = [str(e)]
-        except (SpecificationService.TOMLDecodeError, ValueError) as e:
+        except (tomllib.TOMLDecodeError, ValueError) as e:
             context["error_list"] = [f"Cannot modify specification - {e}"]
         except RuntimeError as e:
             context["error_list"] = [f"Cannot modify, unexpected RuntimeError - {e}"]

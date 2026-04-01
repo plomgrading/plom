@@ -1,25 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
-import sys
+import tomllib
 from typing import Any
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from plom_server.Base.compat import load_toml_from_path
-from ..models import (
-    Specification,
-    SolnSpecification,
-    SolnSpecQuestion,
-)
+from ..models import Specification, SolnSpecification, SolnSpecQuestion
 from ..serializers import SolnSpecSerializer
 from ..services import SpecificationService
 
@@ -48,16 +37,12 @@ def load_soln_spec_from_dict(
     return serializer.create(serializer.validated_data)
 
 
-def load_soln_spec_from_toml(
-    pathname: str,
-) -> Specification:
-    """Load a test spec from a TOML file and save it to the database."""
-    data = load_toml_from_path(pathname)
-    return load_soln_spec_from_dict(data)
-
-
 def load_soln_spec_from_toml_string(toml_string: str) -> Specification:
-    """Load a test spec from a TOML file and save it to the database."""
+    """Load a soln spec from a TOML string and save it to the database.
+
+    Raises:
+        ValueError: invalid TOML.
+    """
     try:
         dat = tomllib.loads(toml_string)
     except tomllib.TOMLDecodeError as err:

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Colin B. Macdonald
 
 from abc import ABC, abstractmethod
 
@@ -203,7 +204,9 @@ class TrOCREmbedder(Embedder):
             1D numpy array of length D (hidden size of the encoder).
         """
         pil = Image.fromarray(arr).convert("RGB")
-        x_t = self.processor.image_processor(pil, return_tensors="pt").pixel_values
+        # I don't know why this needs a typing exception: "imge_processor" was
+        # renamed during transformers 4 -> 5, but this is the new name: strange
+        x_t = self.processor.image_processor(pil, return_tensors="pt").pixel_values  # type: ignore[attr-defined]
         x_np = x_t.numpy().astype(np.float32)
         cls_tokens = self.model.run(None, {self.input_name: x_np})[0][0, 0, :]
 
