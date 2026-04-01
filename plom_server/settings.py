@@ -405,6 +405,12 @@ MAX_FILE_SIZE_DISPLAY = "1 MiB"
 # don't log "DEBUG" level events in production
 MIN_LOGGING_LEVEL = "DEBUG" if DEBUG else "INFO"
 
+FILE_HANDLER = "file"
+CONSOLE_HANDLER = "console"
+LOGGER_HANDLERS = (
+    [CONSOLE_HANDLER, FILE_HANDLER] if DEBUG else [CONSOLE_HANDLER, FILE_HANDLER]
+)
+
 LOGGING: dict[str, Any] = {
     "version": 1,
     "formatters": {
@@ -415,12 +421,12 @@ LOGGING: dict[str, Any] = {
         }
     },
     "handlers": {
-        "console": {
+        CONSOLE_HANDLER: {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "prepend_time",
         },
-        "file": {
+        FILE_HANDLER: {
             "level": "DEBUG",
             "class": "logging.FileHandler",
             "filename": PLOM_BASE_DIR / "plom_server.log",
@@ -432,25 +438,25 @@ LOGGING: dict[str, Any] = {
     "loggers": {
         # show 400/500 code responses and server errors
         "django.request": {
-            "handlers": ["console", "file"],
+            "handlers": LOGGER_HANDLERS,
             "propagate": True,
             "level": MIN_LOGGING_LEVEL,
         },
         # show suspicious operations
         "django.security": {
-            "handlers": ["console", "file"],
+            "handlers": LOGGER_HANDLERS,
             "propagate": True,
             "level": MIN_LOGGING_LEVEL,
         },
         # show log messages in plom_server applications
         "plom_server": {
-            "handlers": ["console", "file"],
+            "handlers": LOGGER_HANDLERS,
             # "propagate": True,
             "level": MIN_LOGGING_LEVEL,
         },
         # This overrides a default logger for huey
         "huey": {
-            "handlers": ["console", "file"],
+            "handlers": LOGGER_HANDLERS,
             "propagate": True,
             "level": "INFO",  # "DEBUG" is very spammy
         },
@@ -462,7 +468,7 @@ if DEBUG:
         {
             # flags missing context variables
             "django.template": {
-                "handlers": ["console", "file"],
+                "handlers": LOGGER_HANDLERS,
                 "propagate": True,
                 "level": MIN_LOGGING_LEVEL,
             },
