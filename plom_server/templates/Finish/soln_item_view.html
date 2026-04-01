@@ -1,0 +1,48 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2025-2026 Colin B. Macdonald
+-->
+<div class="card" id="card-{{ soln.version }}">
+    <div class="card-body">
+        {% if error %}<div class="alert alert-danger" role="alert">{{ message }}</div>{% endif %}
+        {% if soln.uploaded %}
+            <h5 class="card-title">
+                PDF for version {{ soln.version }}:
+                <a target="_blank" href="{% url 'soln_source_upload' soln.version %}">{{ soln.original_filename }}</a>
+            </h5>
+            <p class="card-text mb-2">
+                sha256: <small class="text-muted"><tt>{{ soln.hash }}</tt></small>
+            </p>
+            <div>
+                <button class="btn btn-danger"
+                        hx-delete="{% url 'soln_source_upload' soln.version %}"
+                        hx-confirm="Are you sure?"
+                        hx-target="#card-{{ soln.version }}"
+                        hx-swap="outerHTML">Delete</button>
+            </div>
+        {% else %}
+            <h5 class="card-title">
+                PDF for version {{ soln.version }}
+                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            </h5>
+            <div class="card-text">
+                <form enctype="multipart/form-data"
+                      id="form-{{ soln.version }}"
+                      hx-post="{% url 'soln_source_upload' soln.version %}"
+                      hx-target="#card-{{ soln.version }}"
+                      hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <input class="form-control"
+                               type="file"
+                               name="soln_pdf"
+                               accepts="application/pdf"
+                               required />
+                    </div>
+                    <button class="btn btn-primary" type="submit">upload</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>

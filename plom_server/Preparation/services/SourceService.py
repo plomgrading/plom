@@ -119,7 +119,7 @@ def delete_all_source_pdfs() -> None:
         delete_source_pdf(pdf_obj.version)
 
 
-def get_source(version: int) -> dict[str, Any]:
+def get_source_info(version: int) -> dict[str, Any]:
     """Return a dictionary with info about the source version.
 
     Args:
@@ -127,7 +127,7 @@ def get_source(version: int) -> dict[str, Any]:
 
     Returns:
         A dictionary with the version, uploaded status, and---if
-        uploaded---the file hash and original filename.
+        uploaded---the file hash, original filename and other info
     """
     try:
         src = PaperSourcePDF.objects.filter(version=version).get()
@@ -161,7 +161,7 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     The list is sorted by the version.
     """
     vers = SpecificationService.get_list_of_versions()
-    return [get_source(v) for v in vers]
+    return [get_source_info(v) for v in vers]
 
 
 def store_source_pdf(

@@ -5,7 +5,6 @@
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
-from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpRequest,
@@ -24,13 +23,6 @@ from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 
 from ..services import SourceService
-
-
-class SourceUploadForm(forms.Form):
-    pdf_file = forms.FileField(
-        label="",
-        widget=forms.FileInput(attrs={"accept": ".pdf"}),
-    )
 
 
 class SourceManageView(ManagerRequiredView):
@@ -54,9 +46,6 @@ class SourceManageView(ManagerRequiredView):
             )
 
         return {
-            "form": SourceUploadForm(),
-            "num_versions": SpecificationService.get_n_versions(),
-            "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
             "sources": sources,
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
@@ -97,7 +86,7 @@ class SourceManageView(ManagerRequiredView):
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX POST requests are allowed")
 
-        context = {}
+        context = self.build_context()
         if not request.FILES["source_pdf"]:
             context.update(
                 {"success": False, "message": "Form invalid", "version": version}
@@ -120,7 +109,7 @@ class SourceManageView(ManagerRequiredView):
                     {
                         "error": not success,
                         "message": message,
-                        "src": SourceService.get_source(version),
+                        "src": SourceService.get_source_info(version),
                     }
                 )
             except PlomDependencyConflict as err:
@@ -128,12 +117,11 @@ class SourceManageView(ManagerRequiredView):
                     {
                         "error": True,
                         "message": err,
-                        "src": SourceService.get_source(version),
+                        "src": SourceService.get_source_info(version),
                     }
                 )
 
         context.update(self.build_context())
-        context.update({"request_is_htmx": request.htmx})
 
         return render(request, "Preparation/source_item_view.html", context)
 
@@ -142,27 +130,20 @@ class SourceManageView(ManagerRequiredView):
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
 
+        context = self.build_context()
         try:
             SourceService.delete_source_pdf(version)
         except PlomDependencyConflict as err:
-            context = {
-                "error": True,
-                "message": err,
-                "src": SourceService.get_source(version),
-            }
+            context.update(
+                {
+                    "error": True,
+                    "message": err,
+                    "src": SourceService.get_source_info(version),
+                }
+            )
             return render(request, "Preparation/source_item_view.html", context)
 
-        context = self.build_context()
-        context.update(
-            {
-                "src": {
-                    "version": version,
-                    "uploaded": False,
-                },
-                "request_is_htmx": request.htmx,
-            }
-        )
-
+        context.update({"src": SourceService.get_source_info(version)})
         return render(request, "Preparation/source_item_view.html", context)
 
 

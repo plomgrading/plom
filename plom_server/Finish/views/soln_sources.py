@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
@@ -9,13 +9,13 @@ from django.http import (
     HttpResponseRedirect,
     FileResponse,
     Http404,
+    HttpResponseBadRequest,
 )
 from django.shortcuts import render
 from django.urls import reverse
-from django_htmx.http import HttpResponseClientRedirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.Papers.services import SolnSpecService, SpecificationService
+from plom_server.Papers.services import SolnSpecService
 from ..services import SolnSourceService, BuildSolutionService
 
 
@@ -51,35 +51,60 @@ class SolnSourcesView(ManagerRequiredView):
 
         context.update(
             {
-                "versions": SpecificationService.get_n_versions(),
-                "number_of_soln_pdfs": SolnSourceService().get_number_of_solution_pdf(),
                 "soln_sources": solns,
                 "dupes_warning": dupes_warning,
             }
         )
         return render(request, "Finish/soln_sources.html", context)
 
-    def delete(
-        self, request: HttpRequest, *, version: int | None = None
-    ) -> HttpResponse:
-        """Delete to reset any built soln pdfs as well as delete this soln source pdf."""
-        if version:
-            BuildSolutionService().reset_all_soln_build()
-            SolnSourceService.remove_solution_pdf(version)
+    def post(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
+        """HTMX posts here will add a new solution PDF file to the server.
 
-        return HttpResponseClientRedirect(reverse("soln_sources"))
+        On success, this re-renders the particular card for this version.
+        TODO: on failure, does stuff with errors-as-success: consider porting to
+        hx-error as in other places; do it for source updates as well.
+        """
+        if not request.htmx:
+            return HttpResponseBadRequest("Only HTMX POST requests are allowed")
 
-    def post(self, request, version=None):
-        if not version or not request.FILES["soln_pdf"]:
-            HttpResponseRedirect(reverse("soln_sources"))
+        if version is None:
+            return HttpResponseBadRequest("Only supports uploading by version")
+
+        if not request.FILES["soln_pdf"]:
+            return HttpResponseBadRequest("Must include a 'soln_pdf' field")
 
         context = self.build_context()
         try:
-            SolnSourceService().take_solution_source_pdf_from_upload(
+            SolnSourceService.take_solution_source_pdf_from_upload(
                 version, request.FILES["soln_pdf"]
             )
-            context["success"] = True
+            context["error"] = False
+            context["message"] = ""
         except ValueError as err:
-            context["success"] = False
+            context["error"] = True
             context["message"] = f"{err}"
-        return render(request, "Finish/soln_source_attempt.html", context)
+        context.update({"soln": SolnSourceService.get_source_info(version)})
+        return render(request, "Finish/soln_item_view.html", context)
+
+    def delete(
+        self, request: HttpRequest, *, version: int | None = None
+    ) -> HttpResponse:
+        """HTMX delete here to delete this soln source pdf (and reset any built soln pdfs).
+
+        On success, this re-renders the particular card for this version.
+        Currently the only failures are from misuse: none of the work here is expected
+        to fail.
+        TODO: despite no errors expected, consider porting to hx-error as in other
+        places; do it for source updates as well.
+        """
+        if not request.htmx:
+            return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
+
+        if not version:
+            return HttpResponseBadRequest("Only supports deleting a particular version")
+
+        context = self.build_context()
+        BuildSolutionService.reset_all_soln_build()
+        SolnSourceService.remove_solution_pdf(version)
+        context.update({"soln": SolnSourceService.get_source_info(version)})
+        return render(request, "Finish/soln_item_view.html", context)
