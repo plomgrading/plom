@@ -463,10 +463,13 @@ LOGGING: dict[str, Any] = {
     },
 }
 
-if DEBUG:
+
+# django.template flags missing context variables when rendering templates
+# but it also flags {% if error_variable %} existence checks (prevalent in our code).
+# This floods the logs, so turn on selectively.
+if False:
     LOGGING["loggers"].update(
         {
-            # flags missing context variables
             "django.template": {
                 "handlers": LOGGER_HANDLERS,
                 "propagate": True,
