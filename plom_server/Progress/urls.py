@@ -42,7 +42,7 @@ from plom_server.UserManagement.views import (
 
 urlpatterns = [
     path(
-        "mark/",
+        "mark/all_tasks",
         ProgressMarkHome.as_view(),
         name="progress_marking",
     ),
@@ -97,14 +97,29 @@ urlpatterns = [
         name="progress_mark_version_compare",
     ),
     path(
+        "mark/markerinfo/",
+        ProgressMarkerInfoHome.as_view(),
+        name="progress_marker_info_home",
+    ),
+    path(
+        "mark/reset_task/<int:task_pk>",
+        MarkingTaskResetView.as_view(),
+        name="reset_marking_task",
+    ),
+    path(
+        "mark/reassign_task/<int:task_pk>",
+        MarkingTaskReassignView.as_view(),
+        name="reassign_marking_task",
+    ),
+    path(
+        "mark/",
+        ProgressLandingView.as_view(),
+        name="progress_landing",
+    ),
+    path(
         "identify/tasks/",
         ProgressAllIdentifyTasks.as_view(),
         name="progress_all_identify_tasks",
-    ),
-    path(
-        "identify/home/",
-        ProgressIdentifyHome.as_view(),
-        name="progress_identify_home",
     ),
     path(
         "identify/overview/id_img/<int:image_pk>",
@@ -122,14 +137,9 @@ urlpatterns = [
         name="ID_img_wrap",
     ),
     path(
-        "markerinfo/overview/",
-        ProgressMarkerInfoHome.as_view(),
-        name="progress_marker_info_home",
-    ),
-    path(
-        "",
-        ProgressLandingView.as_view(),
-        name="progress_landing",
+        "identify/",
+        ProgressIdentifyHome.as_view(),
+        name="progress_identify_home",
     ),
     path(
         "tools_landing/",
@@ -145,16 +155,6 @@ urlpatterns = [
         "new_task_tag/<int:task_pk>",
         MarkingTaskTagView.as_view(),
         name="create_marking_task_tag",
-    ),
-    path(
-        "mark/reset_task/<int:task_pk>",
-        MarkingTaskResetView.as_view(),
-        name="reset_marking_task",
-    ),
-    path(
-        "mark/reassign_task/<int:task_pk>",
-        MarkingTaskReassignView.as_view(),
-        name="reassign_marking_task",
     ),
     path(
         "set_quota/<str:username>/",
