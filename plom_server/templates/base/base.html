@@ -74,7 +74,9 @@
                  class="d-flex flex-column flex-shrink-0 p-2 shadow bg-{{ navbar_color }}-subtle text-start offcanvas-md offcanvas-start overflow-auto"
                  style="max-width: 13rem">
                 <!-- Plom logo-->
-                <a class="navbar-brand nav-link" href="{% url 'home' %}">{% include "base/plom_logo.html" with max_width="8rem" %}</a>
+                <a class="navbar-brand nav-link" href="{% url 'home' %}">
+                    {% include "base/plom_logo.html" with height="unset" width="unset" max_width="8rem" %}
+                </a>
                 {% if assessment_shortname_if_defined %}
                     <p class="text-center fs-5 fw-dark mt-0 mb-0">
                         <q>{{ assessment_shortname_if_defined }}</q>
@@ -90,7 +92,9 @@
             <!-- flex-fill here will go off the screen for very wide pages -->
             <div class="w-100">
                 <div class="p-2 d-md-none shadow bg-{{ navbar_color }}-subtle navbar">
-                    <a class="navbar-brand nav-link" href="{% url 'home' %}">{% include "base/plom_logo.html" with max_width="8rem" %}</a>
+                    <a class="navbar-brand nav-link" href="{% url 'home' %}">
+                        {% include "base/plom_logo.html" with height="unset" width="unset" max_width="8rem" %}
+                    </a>
                     {% if assessment_shortname_if_defined %}
                         <span class="nav-item fw-dark fs-4"> <q>{{ assessment_shortname_if_defined }}</q></span>
                     {% endif %}
