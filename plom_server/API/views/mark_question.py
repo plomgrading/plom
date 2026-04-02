@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
@@ -90,7 +90,7 @@ class MarkTaskNextAvailable(APIView):
 
 
 class MarkTask(APIView):
-    """Handles patch and post for tasks, corresponding to claiming and submitting annotations."""
+    """Handles claiming or surrendering tasks, and submitting annotations."""
 
     # PATCH: /MK/tasks/{code}
     def patch(self, request: Request, *, code: str) -> Response:
@@ -141,6 +141,24 @@ class MarkTask(APIView):
             question_data = page_data.get_question_pages_list(papernum, question_idx)
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([question_data, tags, task.pk])
+
+    # DELETE: /MK/tasks/{code}
+    def delete(self, request: Request, *, code: str) -> Response:
+        """Surrender (detach) a user from a marking task.
+
+        Reply with status 200, or 400 if malformed task code.  409 if the
+        task was taken by someone else, or didn't exist etc.
+        """
+        try:
+            papernum, question_idx = unpack_task_code(code)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
+
+        try:
+            MarkingTaskService.surrender_task(request.user, papernum, question_idx)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
+        return Response()
 
     # POST: /MK/tasks/{code}
     def post(self, request: Request, *, code: str) -> Response:

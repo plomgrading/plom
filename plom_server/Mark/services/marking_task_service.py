@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
@@ -340,6 +340,43 @@ class MarkingTaskService:
         )
 
     @staticmethod
+    def surrender_task(user: User, papernum: int, qidx: int) -> None:
+        """Surrender a particular marking task assigned to a user.
+
+        Args:
+            user: reference to a User instance.
+            papernum: which paper?
+            qidx: which question?
+
+        Raises:
+            ValueError: could not find such a task, an expected error, force
+                example b/c it does not exist or someone else took it: this
+                implementation uses "update" and as such does not distinguish
+                b/w various error cases.
+            RuntimeError: a software bug: multiple tasks for same thing.
+        """
+        n = MarkingTask.objects.filter(
+            paper__paper_number=papernum,
+            question_index=qidx,
+            assigned_user=user,
+            status=MarkingTask.OUT,
+        ).update(assigned_user=None, status=MarkingTask.TO_DO)
+        if n == 1:
+            pass
+        elif n == 0:
+            raise ValueError(
+                f'Not able to update an "OUT" task assigned to "{user}"'
+                f" for paper {papernum} question index {qidx}:"
+                " Perhaps someone else reassigned or reset the task?"
+            )
+        else:
+            raise RuntimeError(
+                f'Updated multiple ({n}) "OUT" tasks assigned to "{user}"'
+                f" for paper {papernum} question index {qidx}:"
+                " Likely software bug!"
+            )
+
+    @staticmethod
     def get_n_marked_tasks() -> int:
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
@@ -542,7 +579,8 @@ class MarkingTaskService:
             A list of the text of all tags for this task.
 
         Raises:
-            RuntimeError: no such code.
+            ValueError: invalid code.
+            RuntimeError: code valid but task does not exist.
         """
         # TODO: what if the client has an OLD task with the same code?
         task = self.get_task_from_code(code)
@@ -741,20 +779,24 @@ class MarkingTaskService:
         # does not raise exception - rather it returns a None if can't find the tag
         if not the_tag:
             raise ValueError(f'No such tag "{tag_text}"')
-        the_task = self.get_task_from_code(code)
+
         # raises ValueError if the code is invalid
         # RuntimeError if the code is okay but the task does not exist
+        the_task = self.get_task_from_code(code)
 
         self._remove_tag_from_task(the_tag, the_task)
 
-    def _remove_tag_from_task(self, tag, task):
+    def _remove_tag_from_task(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Backend to remove a tag from a marking task.
 
         Args:
-            tag: reference to a MarkingTaskTag instance
-                - should be selected for update since we
-                  are going to modify it.
+            tag: reference to a MarkingTaskTag instance,
+                should be selected for update since we
+                are going to modify it.
             task: reference to a MarkingTask instance
+
+        Raises:
+            ValueError: task does not have that tag.
         """
         # check if the tag and task are linked - see #2810
         if tag.task.filter(pk=task.pk).exists():

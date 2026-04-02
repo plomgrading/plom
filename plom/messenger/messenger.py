@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
@@ -327,6 +327,43 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 if response.status_code == 410:
                     raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def surrender_task(self, code: str) -> None:
+        """Inform the server that we no longer intend to complete this task.
+
+        In some sense, the opposite of claiming a task.
+
+        Note on logout all your tasks will be automatically surrendered,
+        so it need not be done explicitly in that case.
+
+        Args:
+            code: which paper number and which question index.
+                TODO: suggest replaces these with paper number and
+                question index inputs.
+
+        Raises:
+            PlomNoServerSupportException: server too old, does not support.
+            PlomAuthenticationException: no logged in.
+            PlomConflict: someone else took the task or task did not exist
+                etc.
+            PlomSeriousException: generic unexpected error.
+                Poorly formatted "code" for example.
+        """
+        if self.is_server_api_less_than(117):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support task surrender"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.delete_auth(f"/MK/tasks/{code}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def reassign_task(self, papernum: int, qidx: int, username: str) -> None:

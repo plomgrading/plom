@@ -144,6 +144,7 @@ class ServerInfo(APIView):
         return Response(info)
 
 
+# GET /info/user/{username}
 class UserRole(APIView):
     """Get the user's role.
 
