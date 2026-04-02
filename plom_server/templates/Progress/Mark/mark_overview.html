@@ -17,7 +17,7 @@
     {% if user_is_lead_marker or user_is_manager %}
         <div>
             <p>
-                <a class="btn btn-primary" href="{% url 'progress_landing' %}">Marking and Identifying</a>
+                <a class="btn btn-primary" href="{% url 'progress_landing' %}">Marking</a>
             </p>
         </div>
     {% endif %}
@@ -70,9 +70,13 @@
                 <!-- DELETE ME -->
             {% endfor %}
         {% endif %}
+        <!-- table of all tasks -->
+        <br />
+        <br />
+        {% include "Progress/Mark/all_marking_tasks_table_fragment.html" %}
+        <!-- include this for tool-tips on the progress bar -->
+        <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
     </div>
-    <!-- include this for tool-tips on the progress bar -->
-    <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
     <script>
       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
       const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))

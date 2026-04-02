@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Support for Python 3.10.
 
 ### Changed
+* reorganisation of some Marking and Identifying tools in the UI.
 
 ### Fixed
 
