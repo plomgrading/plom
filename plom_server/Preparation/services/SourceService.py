@@ -261,7 +261,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
             page_count = doc.page_count
             if page_count != int(required_pages):
                 raise ValueError(
-                    f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}",
+                    f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}"
                 )
             # keep the first page's size in full float precision
             w_float, h_float = doc[0].rect.width, doc[0].rect.height
@@ -291,9 +291,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
         try:
             original_filename = validate_file_name(original_filename)
         except SuspiciousFileOperation as e:
-            raise ValueError(
-                f"File name is suspicious: {e}",
-            )
+            raise ValueError(f"File name is suspicious: {e}")
 
         # now try to store it, which can also raise a ValueError
         store_source_pdf(
