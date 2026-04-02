@@ -156,7 +156,7 @@ class MarkTask(APIView):
 
         try:
             MarkingTaskService.surrender_task(request.user, papernum, question_idx)
-        except ValueError as e:
+        except (ValueError, PlomConflict) as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
         return Response()
 

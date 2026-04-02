@@ -19,6 +19,7 @@ from django.db.models import QuerySet, Count, Q
 from django.db import transaction
 from rest_framework import serializers
 
+from plom.plom_exceptions import PlomConflict
 from plom.misc_utils import unpack_task_code
 from plom.tagging import is_valid_tag_text
 from plom_server.Papers.services import ImageBundleService, PaperInfoService
@@ -349,10 +350,9 @@ class MarkingTaskService:
             qidx: which question?
 
         Raises:
-            ValueError: could not find such a task, an expected error, force
-                example b/c it does not exist or someone else took it: this
-                implementation uses "update" and as such does not distinguish
-                b/w various error cases.
+            ValueError: a task for papernum, qidx does not exist.
+            PlomConflict: task exits but it is either not assigned to,
+                or not "OUT" with, that user.
             RuntimeError: a software bug: multiple tasks for same thing.
         """
         n = MarkingTask.objects.filter(
@@ -364,10 +364,17 @@ class MarkingTaskService:
         if n == 1:
             pass
         elif n == 0:
-            raise ValueError(
-                f'Not able to update an "OUT" task assigned to "{user}"'
-                f" for paper {papernum} question index {qidx}:"
-                " Perhaps someone else reassigned or reset the task?"
+            basemsg = f"Cannot surrender paper {papernum} question index {qidx}: "
+            try:
+                t = MarkingTask.objects.get(
+                    paper__paper_number=papernum, question_index=qidx
+                )
+            except MarkingTask.DoesNotExist as e:
+                raise ValueError(basemsg + "task does not exist") from e
+            raise PlomConflict(
+                basemsg + "task currently assigned"
+                f' to "{t.assigned_user}" status "{t.get_status_display()}";'
+                " perhaps someone else reassigned or reset the task?"
             )
         else:
             raise RuntimeError(

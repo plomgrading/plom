@@ -8,6 +8,8 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
 
+from plom.plom_exceptions import PlomConflict
+
 from ..services import MarkingTaskService, mark_task
 from ..models import MarkingTask
 
@@ -104,25 +106,34 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(task2.assigned_user, user)
 
     def test_surrender_a_not_OUT_task(self) -> None:
-        user: User = baker.make(User)
+        user1: User = baker.make(User, username="Talia")
+        user2: User = baker.make(User, username="Trent")
         papernum = 17
         qidx = 2
         baker.make(
             MarkingTask,
             question_index=qidx,
             paper__paper_number=papernum,
-            assigned_user=user,
+            assigned_user=user1,
             status=MarkingTask.TO_DO,
         )
-        with self.assertRaisesRegex(ValueError, "Not.*OUT.*task"):
-            MarkingTaskService.surrender_task(user, papernum, qidx)
+        with self.assertRaisesRegex(PlomConflict, 'Cannot.*status "To Do"'):
+            MarkingTaskService.surrender_task(user1, papernum, qidx)
+        baker.make(
+            MarkingTask,
+            question_index=qidx,
+            paper__paper_number=papernum + 1,
+            assigned_user=user2,
+            status=MarkingTask.TO_DO,
+        )
+        with self.assertRaisesRegex(PlomConflict, 'Cannot.*assigned to "Trent"'):
+            MarkingTaskService.surrender_task(user1, papernum + 1, qidx)
 
     def test_surrender_a_non_existing_task(self) -> None:
         user: User = baker.make(User)
         papernum = 17
         qidx = 2
-        # currently same error as above, theoretically could be different error
-        with self.assertRaisesRegex(ValueError, "Not.*OUT.*task"):
+        with self.assertRaisesRegex(ValueError, "Cannot.*task does not exist"):
             MarkingTaskService.surrender_task(user, papernum, qidx)
 
     # TODO: test MarkingTaskService._validate_and_clean_marking_data(...)
