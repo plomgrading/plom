@@ -110,7 +110,7 @@ class ReassembleService:
 
         data_table = []
         score = 0.0
-        total = SpecificationService.get_total_marks()
+        total = SpecificationService.get_assessment_total(include_bonus=False)
         for i, label in SpecificationService.get_question_index_label_pairs():
             if SpecificationService.is_question_bonus(i):
                 # TODO: maybe messing with the question labels is a bad idea?

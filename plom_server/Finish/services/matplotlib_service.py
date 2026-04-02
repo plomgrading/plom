@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024-2025 Andrew Rechnitzer
@@ -105,11 +105,14 @@ class MatplotlibService:
 
         fig, ax = plt.subplots()
 
-        paper_total_marks = SpecificationService.get_total_marks()
+        # note this could be higher than "totalMarks" b/c of bonus questions
+        max_possible_score = SpecificationService.get_assessment_total(
+            include_bonus=True
+        )
 
         ax.hist(
             self.des.get_totals(),
-            bins=np.arange(paper_total_marks + RANGE_BIN_OFFSET) - 0.5,  # type: ignore[arg-type]
+            bins=np.arange(max_possible_score + RANGE_BIN_OFFSET) - 0.5,  # type: ignore[arg-type]
             ec="black",
             alpha=0.5,
             width=0.8,
@@ -710,13 +713,17 @@ class MinimalPlotService:
         """
         assert format in _acceptable_formats
         _ensure_all_figures_closed()
+        # note this could be higher than "totalMarks" b/c of bonus questions
+        max_possible_score = SpecificationService.get_assessment_total(
+            include_bonus=True
+        )
         sns.set_theme()
         sns.kdeplot(
             data=np.array(total_score_list),
             fill=True,
-            clip=(0, SpecificationService.get_total_marks()),
+            clip=(0, max_possible_score),
         )
-        plt.xlim(0, SpecificationService.get_total_marks())
+        plt.xlim(0, max_possible_score)
         # Overlay the student's score by highlighting the bar
         if highlighted_score is not None:
             # this gives x-coord of bar, we get the y-coord from the ylim of the plot

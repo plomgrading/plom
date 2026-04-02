@@ -89,7 +89,7 @@ def brief_report_pdf_builder(
     context = {
         "longname": SpecificationService.get_longname(),
         "timestamp_str": timestamp_str,
-        "totalMarks": SpecificationService.get_total_marks(),
+        "totalMarks": SpecificationService.get_assessment_total(include_bonus=False),
         "name": paper_info["name"],
         "sid": paper_info["sid"],
         "paper_number": paper_number,

@@ -420,21 +420,21 @@ def get_max_all_question_mark() -> int:
     return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
 
-def get_total_marks() -> int:
-    """Get the total marks that this assessment is out of, the sum of all non-bonus questions.
+def get_assessment_total(*, include_bonus: bool) -> int:
+    """Get the total marks that this assessment is out of, optioanlly including bonus questions.
 
-    See also: `get_maximum_possible_score`.
-    TODO: we may need to audit callers to ensure they are calling the right one of these.
+    Keyword Args:
+        include_bonus: whether to include bonus points.  For example,
+            if the paper is out of 30 and has a bonus question worth
+            two points, then passing ``include_bonus=True`` will return
+            32, whereas passing False will return 30.
+            There is currently no default to force calling code to make
+            a conscious decision, but the default might become False
+            in the future.
     """
-    spec = Specification.objects.get()
-    return spec.totalMarks
-
-
-def get_maximum_possible_score() -> int:
-    """Get the total maximum possible mark (over all questions, including bonus questions).
-
-    See also: `get_total_marks`.
-    """
+    if not include_bonus:
+        spec = Specification.objects.get()
+        return spec.totalMarks
     return SpecQuestion.objects.all().aggregate(Sum("mark"))["mark__sum"]
 
 
