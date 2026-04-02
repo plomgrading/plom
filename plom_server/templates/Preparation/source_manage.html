@@ -57,7 +57,10 @@
             </div>
         </div>
         {% for src in sources %}
-            {% include "Preparation/source_item_view.html" with src=src %}
+            <div id="card_ver{{ src.version }}">
+                <!-- HTMX calls may re-render this content -->
+                {% include "Preparation/source_item_view.html" with src=src %}
+            </div>
         {% endfor %}
     </div>
 {% endblock main_content %}

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
@@ -142,16 +142,8 @@ class Command(BaseCommand):
         with open(source_path, "rb") as fh:
             # TODO: confused by the type of fh: here we have a plain
             # file handle but the function talks about "in memory file"...
-            success, msg = SourceService.take_source_from_upload(version, fh)
-            if success:
-                self.stdout.write(
-                    f"Upload of source PDF for version {version} succeeded."
-                )
-            else:
-                self.stderr.write(
-                    f"Upload of source PDF for version {version} failed: {msg}"
-                )
-                return
+            SourceService.take_source_from_upload(version, fh)
+            self.stdout.write(f"Upload of source PDF for version {version} succeeded.")
 
         # check for any duplicates
         self.check_duplicates()

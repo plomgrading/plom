@@ -33,7 +33,10 @@
             </div>
         </div>
         {% for soln in soln_sources %}
-            {% include "Finish/soln_item_view.html" with soln=soln %}
+            <div id="card_ver{{ soln.version }}">
+                <!-- HTMX calls may re-render this content -->
+                {% include "Finish/soln_item_view.html" with soln=soln %}
+            </div>
         {% endfor %}
     </div>
 {% endblock main_content %}

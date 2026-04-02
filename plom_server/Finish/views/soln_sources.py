@@ -61,8 +61,10 @@ class SolnSourcesView(ManagerRequiredView):
         """HTMX posts here will add a new solution PDF file to the server.
 
         On success, this re-renders the particular card for this version.
-        TODO: on failure, does stuff with errors-as-success: consider porting to
-        hx-error as in other places; do it for source updates as well.
+
+        On errors, this returns 400 http response, with plain
+        textual human-readable error messages.  The error messages
+        are undecorated.
         """
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX POST requests are allowed")
@@ -70,19 +72,16 @@ class SolnSourcesView(ManagerRequiredView):
         if version is None:
             return HttpResponseBadRequest("Only supports uploading by version")
 
-        if not request.FILES["soln_pdf"]:
-            return HttpResponseBadRequest("Must include a 'soln_pdf' field")
+        try:
+            pdf = request.FILES["soln_pdf"]
+        except KeyError as err:
+            return HttpResponseBadRequest(f"Missing file, no field {err}")
 
         context = self.build_context()
         try:
-            SolnSourceService.take_solution_source_pdf_from_upload(
-                version, request.FILES["soln_pdf"]
-            )
-            context["error"] = False
-            context["message"] = ""
+            SolnSourceService.take_solution_source_pdf_from_upload(version, pdf)
         except ValueError as err:
-            context["error"] = True
-            context["message"] = f"{err}"
+            return HttpResponseBadRequest(err)
         context.update({"soln": SolnSourceService.get_source_info(version)})
         return render(request, "Finish/soln_item_view.html", context)
 
@@ -92,16 +91,14 @@ class SolnSourcesView(ManagerRequiredView):
         """HTMX delete here to delete this soln source pdf (and reset any built soln pdfs).
 
         On success, this re-renders the particular card for this version.
-        Currently the only failures are from misuse: none of the work here is expected
-        to fail.
-        TODO: despite no errors expected, consider porting to hx-error as in other
-        places; do it for source updates as well.
+
+        No errors are expected.
         """
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
 
         if not version:
-            return HttpResponseBadRequest("Only supports deleting a particular version")
+            return HttpResponseBadRequest("Only supports deleting by version")
 
         context = self.build_context()
         BuildSolutionService.reset_all_soln_build()
