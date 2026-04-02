@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased dev version
 
 ### Added
+* API support to surrender individual tasks.
 
 ### Removed
 * Support for Python 3.10.
