@@ -134,7 +134,7 @@ class ScannerUploadView(ScannerRequiredView):
                     "username": bundle.user.username,
                     "n_pages": n_pages,
                     "is_pushed": bundle.pushed,
-                    "hash": bundle.pdf_hash,
+                    "pdf_hash": bundle.pdf_hash,
                 }
             )
         context.update({"uploaded_bundles": uploaded_bundles})

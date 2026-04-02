@@ -265,13 +265,13 @@ class StagingStudentService:
         paper_number_overlap = known_paper_numbers & new_paper_numbers
 
         if False:
-            print("\nDEBUGGING classlist.py: Here are the known paper_numbers:")
-            print(known_paper_numbers)
-            print("DEBUGGING classlist.py: Here are the new paper_numbers:")
-            print(new_paper_numbers)
-            print("DEBUGGING classlist.py: Here is the set intersection:")
-            print(paper_number_overlap)
-            print(
+            log.debug("\nDEBUGGING classlist.py: Here are the known paper_numbers:")
+            log.debug(known_paper_numbers)
+            log.debug("DEBUGGING classlist.py: Here are the new paper_numbers:")
+            log.debug(new_paper_numbers)
+            log.debug("DEBUGGING classlist.py: Here is the set intersection:")
+            log.debug(paper_number_overlap)
+            log.debug(
                 f"DEBUGGING classlist.py: len(paper_number_overlap) = {len(paper_number_overlap)}."
             )
 

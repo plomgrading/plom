@@ -3,12 +3,16 @@
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
+import logging
 from pathlib import Path
 import sqlite3
 
 from django.conf import settings
 
 from plom_server import __version__, Plom_DB_Version
+
+
+log = logging.getLogger(__name__)
 
 
 def get_database_engine() -> str:
@@ -46,7 +50,7 @@ def _is_there_a_postgres_database(*, verbose: bool = True) -> bool:
         conn = psycopg.connect(user=user, password=password, host=host, dbname=db_name)
     except psycopg.OperationalError:
         if verbose:
-            print(f'Cannot find database "{db_name}"')
+            log.info(f'Cannot find database "{db_name}"')
         return False
     conn.close()
     return True
@@ -56,7 +60,7 @@ def _is_there_a_sqlite_database(*, verbose: bool = True) -> bool:
     db_name = settings.DATABASES["default"]["NAME"]
     r = Path(db_name).exists()
     if verbose and not r:
-        print(f"Cannot find database {db_name}")
+        log.info(f"Cannot find database {db_name}")
     return r
 
 
@@ -103,7 +107,7 @@ def check_database_version(*, verbose: bool = True) -> None:
     if dbver == -1:
         # TODO: in the future, this could be changed to be an error
         if verbose:
-            print(
+            log.warning(
                 "Warning: older database w/o metadata: compatibility unknown, "
                 "optimistically continuing w/o further checks"
             )
@@ -117,7 +121,7 @@ def check_database_version(*, verbose: bool = True) -> None:
         d = get_database_metadata()
         dbname = d["database-name"]
         created_ver = d["database-created-by-plom-version"]
-        print(
+        log.info(
             f'Plom {__version__}: compatible database "{dbname}"'
             f" version {dbver}; created by Plom {created_ver}"
         )
@@ -167,13 +171,13 @@ def _drop_postgres_database(*, verbose: bool = True) -> None:
     conn.autocommit = True
 
     if verbose:
-        print(f'Removing old database "{db_name}"')
+        log.info(f'Removing old database "{db_name}"')
     try:
         with conn.cursor() as curs:
             curs.execute(f"DROP DATABASE {db_name};")
     except psycopg.errors.InvalidCatalogName:
         if verbose:
-            print(f'There was no database "{db_name}"')
+            log.info(f'There was no database "{db_name}"')
     conn.close()
 
 
@@ -203,7 +207,7 @@ def _create_postgres_database(*, verbose: bool = True) -> None:
     conn.autocommit = True
 
     if verbose:
-        print(f'Creating database "{db_name}"')
+        log.info(f'Creating database "{db_name}"')
     try:
         with conn.cursor() as curs:
             curs.execute(f"CREATE DATABASE {db_name};")
@@ -220,7 +224,7 @@ def _create_sqlite_database(*, verbose: bool = True) -> None:
         raise ValueError(f"Database already exists: {db_name}")
 
     if verbose:
-        print(f'Creating database "{db_name}"')
+        log.info(f'Creating database "{db_name}"')
     _sqlite_set_wal()
     conn = sqlite3.connect(db_name)
     conn.close()
@@ -228,7 +232,7 @@ def _create_sqlite_database(*, verbose: bool = True) -> None:
 
 def _sqlite_set_wal() -> None:
     db_name = settings.DATABASES["default"]["NAME"]
-    print(f"Setting journal mode WAL for sqlite database: {db_name}")
+    log.info(f"Setting journal mode WAL for sqlite database: {db_name}")
     conn = sqlite3.connect(db_name)
     conn.execute("pragma journal_mode=wal")
     conn.close()
@@ -236,5 +240,5 @@ def _sqlite_set_wal() -> None:
 
 def sqlite_delete_database() -> None:
     db_name = settings.DATABASES["default"]["NAME"]
-    print(f"Deleting sqlite database: {db_name}")
+    log.info(f"Deleting sqlite database: {db_name}")
     Path(db_name).unlink(missing_ok=True)

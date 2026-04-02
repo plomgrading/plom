@@ -4,6 +4,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from io import BytesIO
+import logging
 from math import ceil, floor
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,9 @@ from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.models import Paper, FixedPage
 from plom_server.Papers.services import PaperInfoService
 from plom.scan import rotate
+
+
+log = logging.getLogger(__name__)
 
 
 def get_reference_qr_coords_for_page(
@@ -358,7 +362,7 @@ class RectangleExtractor:
         # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
         if _version_ignore:
-            print("recklessly ignoring the version...")
+            log.info("recklessly ignoring the version...")
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
                 .filter(page_number=self.page_number, paper=paper_obj)
