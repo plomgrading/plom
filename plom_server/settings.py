@@ -428,9 +428,11 @@ LOGGING: dict[str, Any] = {
         },
         FILE_HANDLER: {
             "level": "DEBUG",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": PLOM_BASE_DIR / "plom_server.log",
             "formatter": "prepend_time",
+            "maxBytes": 1024 * 1024 * 10,  # 10MiB
+            "backupCount": 3,
         },
     },
     # many built-in options offered by Django
