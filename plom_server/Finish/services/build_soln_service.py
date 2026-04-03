@@ -100,7 +100,8 @@ class BuildSolutionService:
     def watermark_pages(self, doc: pymupdf.Document, watermark_text: str) -> None:
         """Watermark the pages of the given document with the given text."""
         margin = 10
-        for pg in doc:
+        # iteration over pages of doc confuses mypy
+        for pg in doc:  # type: ignore[attr-defined]
             h = pg.rect.height
             wm_rect = pymupdf.Rect(margin, h - margin - 32, margin + 200, h - margin)
             excess = pg.insert_textbox(
@@ -108,7 +109,7 @@ class BuildSolutionService:
                 watermark_text,
                 fontsize=18,
                 color=(0, 0, 0),
-                align=1,
+                align=pymupdf.TEXT_ALIGN_CENTER,
                 stroke_opacity=0.33,
                 fill_opacity=0.33,
                 overlay=True,

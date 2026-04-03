@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 """Command Line Tool to simulate PDF errors while scanning."""
 
@@ -303,7 +303,7 @@ def generate_fold_points(
     """Generates points for a fold.
 
     Args:
-        corner (str): Specify which corner to fold. Valid options are:
+        corner: Specify which corner to fold. Valid options are:
             'top_left', 'top_right', 'bottom_left', 'bottom_right'.
         severity (float): How severe the fold should be, as a percentage.
             Must be between (0, 1.0).
@@ -315,12 +315,6 @@ def generate_fold_points(
         item at index 3 is the innermost vertex of an inward fold.
     """
     side = severity * 0.5 * r.width
-    vertex1, vertex2, vertex3, vertex4 = (
-        None,
-        None,
-        None,
-        None,
-    )  # Initialize variables
 
     if corner == "top_left":
         vertex1 = r.tl
@@ -345,6 +339,9 @@ def generate_fold_points(
         vertex2 = pymupdf.Point(r.br.x - side, r.br.y)
         vertex3 = pymupdf.Point(r.br.x, r.br.y - side)
         vertex4 = pymupdf.Point(r.br.x - side, r.br.y - side)
+
+    else:
+        raise RuntimeError(f"invalid choice: corner={corner}")
 
     return [vertex1, vertex2, vertex3, vertex4]
 
@@ -381,7 +378,6 @@ def _get_bounding_box(corner: str, severity: float, r: pymupdf.Rect) -> pymupdf.
         Bounding box of the fold.
     """
     side = severity * 0.5 * r.width
-    clip = None
 
     if corner == "top_left":
         clip = pymupdf.Rect(r.tl, pymupdf.Point(r.tl.x + side, r.tl.y + side))
@@ -395,6 +391,8 @@ def _get_bounding_box(corner: str, severity: float, r: pymupdf.Rect) -> pymupdf.
         )
     elif corner == "bottom_right":
         clip = pymupdf.Rect(pymupdf.Point(r.br.x - side, r.bl.y - side), r.br)
+    else:
+        raise RuntimeError(f"invalid choice: corner={corner}")
 
     return clip
 
@@ -700,7 +698,6 @@ def detect_qr_code_area(corner: str, page: pymupdf.Page) -> pymupdf.Rect:
     """
     page_width = page.rect.width
     page_height = page.rect.height
-    qr_area = None
 
     if corner == "top_left":
         qr_area = pymupdf.Rect(15, 15, 100, 100)
@@ -712,6 +709,8 @@ def detect_qr_code_area(corner: str, page: pymupdf.Page) -> pymupdf.Rect:
         qr_area = pymupdf.Rect(
             page_width - 100, page_height - 100, page_width - 15, page_height - 15
         )
+    else:
+        raise RuntimeError(f"invalid choice: corner={corner}")
 
     return qr_area
 
