@@ -510,12 +510,10 @@ if PROFILER_NPLUSONE_ENABLED:
             }
         }
     )
-    # TODO: this might cause problems
-    # https://docs.djangoproject.com/en/6.0/howto/logging/#make-a-basic-logging-call
-    # docs say don't make logging calls in settings.py
-    # maybe NPLUSONE_LOGGER_NAME = "nplusone"
-    NPLUSONE_LOGGER = logging.getLogger("nplusone")
-    NPLUSONE_LOG_LEVEL = logging.WARN
+    # TODO: removed these lines 2026-04, as the previous config should be enough
+    # TODO: next time someone uses nplusone they can confirm, this means you Andrew
+    # NPLUSONE_LOGGER = logging.getLogger("nplusone")
+    # NPLUSONE_LOG_LEVEL = logging.WARN
 
 # django-tables2 configs
 DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
