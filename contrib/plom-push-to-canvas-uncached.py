@@ -81,7 +81,7 @@ from plom.plom_exceptions import PlomException
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.6.3"
+__script_version__ = "0.6.4"
 __DEBUG__ = True
 
 # These are the keys for the json returned by the Plom 'get spreadsheet' API call
@@ -481,6 +481,8 @@ def interactively_get_canvas_assignment_id(course: canvasapi.course.Course) -> i
 
 def get_canvas_id_dict(
     course_or_section: canvasapi.course.Course | canvasapi.section.Section,
+    *,
+    verbose: bool = False,
 ) -> dict[str, int]:
     """Get a dictionary of student canvas IDs keyed by student ID.
 
@@ -490,6 +492,11 @@ def get_canvas_id_dict(
     canvas_ids = {}
     enrollees = course_or_section.get_enrollments()
 
+    if verbose:
+        enrollees = tqdm(
+            enrollees,
+            bar_format="Retrieving Canvas IDs [{elapsed}, {n_fmt}/{total_fmt}]",
+        )
     # Student ID format will vary by institution
     # explicitly casting the student ID to string is intentional
     # Canvas ID should always be a number, so less concern there.
@@ -716,7 +723,12 @@ def main():
         inclusions.append("rubric_assessment")  # magic string - see Canvas API
     raw_submissions = canvas_assignment.get_submissions(include=inclusions)
     canvas_submissions = {}
-    for submission in raw_submissions:
+
+    # this is slow, put in a timer as a spinner
+    for submission in tqdm(
+        raw_submissions,
+        bar_format="Retrieving Canvas submissions [{elapsed}, {n_fmt}/{total_fmt}]",
+    ):
         canvas_submissions.update({submission.user_id: submission})
 
     if args.map_plom_questions_to_canvas_rubrics:
@@ -724,11 +736,12 @@ def main():
             canvas_assignment, student_marks
         )
 
-    # get canvas conversion dict - student id to canvas id
+    # get canvas conversion dict - student id to canvas id.
+    # this takes a while, verbose puts in a timer as a spinner
     if canvas_course_section:
-        canvas_ids = get_canvas_id_dict(canvas_course_section)
+        canvas_ids = get_canvas_id_dict(canvas_course_section, verbose=True)
     else:
-        canvas_ids = get_canvas_id_dict(canvas_course)
+        canvas_ids = get_canvas_id_dict(canvas_course, verbose=True)
 
     successes = []
     count = 0
