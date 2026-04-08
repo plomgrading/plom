@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2026 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 import tempfile
 from io import BytesIO
@@ -141,6 +141,14 @@ class PQVMappingView(ManagerRequiredView):
 
         num_students = StagingStudentService.how_many_students()
 
+        q_version_columns = ["q" + str(i) + ".version" for i in question_indices]
+        custom_pqv_csv_template = ""
+        custom_pqv_csv_template += (
+            f"paper_number,id.version,{','.join(q_version_columns)}\n"
+        )
+        custom_pqv_csv_template += f"1,1,{','.join(['1' for i in question_indices])}\n"
+        custom_pqv_csv_template += f"2,1,{','.join(['1' for i in question_indices])}\n"
+
         context = {
             "question_indices": question_indices,
             "question_labels_html": question_triples,
@@ -155,6 +163,7 @@ class PQVMappingView(ManagerRequiredView):
             "chore_message": PaperCreatorService.get_chore_message(),
             "populate_in_progress": PaperCreatorService.is_populate_in_progress(),
             "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),
+            "custom_pqv_csv_template": custom_pqv_csv_template,
         }
 
         prenamed_papers_list = list(StagingStudentService.get_prenamed_papers().keys())

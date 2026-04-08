@@ -137,16 +137,16 @@
               button.innerText = prevText;
             }
             async function downloadCSV(buttonObj) {
-	    const csvContent = buttonObj.dataset.downloadtext;
-            const blob = new Blob([csvContent], { type: 'text/csv' });
+	      const csvContent = buttonObj.dataset.downloadtext;
+              const blob = new Blob([csvContent], { type: 'text/csv' });
 
-            // download via 'a' element
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = buttonObj.dataset.filename;
+              // download via 'a' element
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = buttonObj.dataset.filename;
 
-            link.click();
-            URL.revokeObjectURL(link.href);
+              link.click();
+              URL.revokeObjectURL(link.href);
             }
 
     </script>
