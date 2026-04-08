@@ -415,7 +415,7 @@ LOGGING: dict[str, Any] = {
         "prepend_time": {
             "()": "django.utils.log.ServerFormatter",
             # the process is important for huey
-            "format": '[%(asctime)s] [%(process)d] [%(levelname)s] %(name)s:"%(message)s"',
+            "format": '[%(asctime)s] [%(process)d] [%(levelname)s] %(name)s: %(message)s',
         }
     },
     "handlers": {
