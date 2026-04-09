@@ -12,7 +12,8 @@
 
 # Courses that have used Plom
 
-These are as best we can recall.  Currently UBC Maths-centric (interest from Biology as of May 2024).
+These are as best we can recall.  Currently UBC Maths-centric, interest from
+Biology as of May 2024, and Physics starting September 2025.
 
 
 ## 2018-19
@@ -384,3 +385,32 @@ Approx: 1100 students over 10 courses
 | SCIE001     | Midterm+Final                     | 65          |                                                                 |
 
 Approx: 11,700 students over 30 courses
+
+
+## 2025W2
+
+| Course          | Tasks                             | # students  | Notes                                 |
+|----------       |---------------------------------- |:----------: |-------------------------------        |
+| Math100         | Quiz(x5)+Midterm(x2)+Final        | 300         | Midterms scheduled as PBTF exams      |
+| Math101         | Midterm+Final                     | 3000        |                                       |
+| Math152         | Midterm(x2)+Final                 | 1000        |                                       |
+| Math200         | Quiz(x4)+Final                    | 200         |                                       |
+| Math215-201/202 | Midterm(x2)+Final                 | 320         |                                       |
+| Math111/221     | Midterm(x2)+Final                 | 570         |                                       |
+| Math227         | Midterm(x2)                       | 40          |                                       |
+| Math264         | Quiz(many)+Final                  | 800         | cross listed with BMEG220 and ELEC211 |
+| Math302         | Midterm+Final                     | 160         |                                       |
+| Math344         | Midterm+Final                     | 80          |                                       |
+| Math307         | Midterm(x2)+Final                 | 240         |                                       |
+| Math210         | Midterm+Final                     | 115         |                                       |
+| Math305         | Midterm(x2)+Final                 | 85          |                                       |
+| Math257/316     | Midterm(x2)+Final                 | 110         |                                       |
+| Math317         | Midterm(x2)+Final                 | 184         |                                       |
+| Math318         | Midterm(x3)+Final                 | 120         |                                       |
+| Math340         | Quiz(x4)+Final                    | 230         |                                       |
+| Math341         | Quiz(x6)+Final                    | 70          |                                       |
+| Phys118         | Midterm(x2)+Final                 | 202         |                                       |
+| Phys158         | Midterm(x2)+Final                 | 950         |                                       |
+
+TODO: BIOL, SCIE001 (?)
+Approx: 8,776 students over 19 courses
