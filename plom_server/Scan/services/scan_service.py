@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025-2026 Aidan Murphy
@@ -1441,12 +1441,16 @@ class ScanService:
             paper_dict["first_page_order"] = paper_dict["page_info"][0]["order"]
 
             paper_dict["missing_pages"] = []
+            paper_dict["missing_pages_pprint"] = ""
             # if papernum is missing pages (in the given bundle)
             if any(papernum == X[0] for X in missing_papers_pages):
                 missing_pages = [
                     X[1] for X in missing_papers_pages if X[0] == papernum
                 ].pop()
-                paper_dict["missing_pages"] = format_int_list_with_runs(missing_pages)
+                paper_dict["missing_pages"] = missing_pages
+                paper_dict["missing_pages_pprint"] = format_int_list_with_runs(
+                    missing_pages
+                )
 
         return papers_pages_list
 
