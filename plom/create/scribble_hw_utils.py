@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2024, 2026 Colin B. Macdonald
 
 """Plom tools for scribbling fake homework answers for testing purposes."""
 
@@ -52,7 +52,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
                     color=[0.1, 0.1, 0.1],
                     fontname="helv",
                     fontfile=None,
-                    align=0,
+                    align=pymupdf.TEXT_ALIGN_LEFT,
                 )
                 # page.draw_rect(rect1, color=(1, 0, 0), width=0.25)
                 assert rc > 0, f"overfull pymupdf textbox by {rc}"
@@ -68,7 +68,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
                 color=[0.1, 0.1, 0.8],
                 fontname="helv",
                 fontfile=None,
-                align=0,
+                align=pymupdf.TEXT_ALIGN_LEFT,
             )
             # page.draw_rect(rect, color=(1, 0, 0), width=0.25)
             assert rc > 0, f"overfull pymupdf textbox by {rc}"

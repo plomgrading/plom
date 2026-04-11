@@ -2,6 +2,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2026 Aidan Murphy
 
 import html
 
@@ -163,37 +164,6 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
         return render(
             request, "Progress/Mark/original_image_wrap_fragment.html", context
         )
-
-
-class AllTaskOverviewView(LeadMarkerOrManagerView):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        pos = ProgressOverviewService()  # acronym excellence
-        id_task_overview, marking_task_overview = pos.get_task_overview()
-        papers_with_a_task = list(id_task_overview.keys())
-        n_papers = len(papers_with_a_task)
-
-        # get the counts for each id and marking task by their status
-        id_task_status_counts = ProgressOverviewService.get_id_task_status_counts(
-            _n_papers=n_papers
-        )
-        task_status_counts = ProgressOverviewService.get_mark_task_status_counts(
-            breakdown_by_version=False, _n_papers=n_papers
-        )
-
-        context.update(
-            {
-                "question_indices": SpecificationService.get_question_indices(),
-                "question_labels": SpecificationService.get_question_index_label_pairs(),
-                "papers_with_a_task": papers_with_a_task,
-                "id_task_overview": id_task_overview,
-                "marking_task_overview": marking_task_overview,
-                "n_papers": n_papers,
-                "id_task_status_counts": id_task_status_counts,
-                "marking_task_status_counts": task_status_counts,
-            }
-        )
-        return render(request, "Progress/all_tasks.html", context=context)
 
 
 class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):

@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
+# Copyright (C) 2026 Aidan Murphy
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
@@ -24,6 +25,33 @@ from ..services import ProgressOverviewService
 
 class ProgressMarkHome(MarkerOrManagerView):
     """The Marking Progress page showing progress and stats for all question/version pairs in a grid of small cards."""
+
+    def _build_task_table_context(self) -> dict:
+        """Build context required for the table of all tasks."""
+        pos = ProgressOverviewService()  # acronym excellence
+        id_task_overview, marking_task_overview = pos.get_task_overview()
+        papers_with_a_task = list(id_task_overview.keys())
+        n_papers = len(papers_with_a_task)
+
+        # get the counts for each id and marking task by their status
+        id_task_status_counts = ProgressOverviewService.get_id_task_status_counts(
+            _n_papers=n_papers
+        )
+        # TODO: this is already fetched above with different kwargs
+        task_status_counts = ProgressOverviewService.get_mark_task_status_counts(
+            breakdown_by_version=False, _n_papers=n_papers
+        )
+
+        return {
+            "question_indices": SpecificationService.get_question_indices(),
+            "question_labels": SpecificationService.get_question_index_label_pairs(),
+            "papers_with_a_task": papers_with_a_task,
+            "id_task_overview": id_task_overview,
+            "marking_task_overview": marking_task_overview,
+            "n_papers": n_papers,
+            "id_task_status_counts": id_task_status_counts,
+            "marking_task_status_counts": task_status_counts,
+        }
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the page with all the marking stats cards for all questions and versions."""
@@ -58,6 +86,9 @@ class ProgressMarkHome(MarkerOrManagerView):
                 "who_marked_how_many": who_marked,
             }
         )
+
+        context.update(self._build_task_table_context())
+
         return render(request, "Progress/Mark/mark_overview.html", context)
 
 

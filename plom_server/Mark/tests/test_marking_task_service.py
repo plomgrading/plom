@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
@@ -74,5 +74,55 @@ class MarkingTaskServiceTests(TestCase):
         task2.refresh_from_db()
         self.assertEqual(task1.status, MarkingTask.TO_DO)
         self.assertEqual(task2.status, MarkingTask.TO_DO)
+
+    def test_surrender_a_task(self) -> None:
+        user: User = baker.make(User)
+        papernum = 17
+        qidx = 2
+        task1 = baker.make(
+            MarkingTask,
+            question_index=qidx,
+            paper__paper_number=papernum,
+            assigned_user=user,
+            status=MarkingTask.OUT,
+        )
+        task2 = baker.make(
+            MarkingTask,
+            question_index=qidx,
+            paper__paper_number=papernum + 1,
+            assigned_user=user,
+            status=MarkingTask.OUT,
+        )
+
+        MarkingTaskService.surrender_task(user, papernum, qidx)
+        task1.refresh_from_db()
+        task2.refresh_from_db()
+        self.assertEqual(task1.status, MarkingTask.TO_DO)
+        self.assertIsNone(task1.assigned_user)
+        # but task2 is unchanged
+        self.assertEqual(task2.status, MarkingTask.OUT)
+        self.assertEqual(task2.assigned_user, user)
+
+    def test_surrender_a_not_OUT_task(self) -> None:
+        user: User = baker.make(User)
+        papernum = 17
+        qidx = 2
+        baker.make(
+            MarkingTask,
+            question_index=qidx,
+            paper__paper_number=papernum,
+            assigned_user=user,
+            status=MarkingTask.TO_DO,
+        )
+        with self.assertRaisesRegex(ValueError, "Not.*OUT.*task"):
+            MarkingTaskService.surrender_task(user, papernum, qidx)
+
+    def test_surrender_a_non_existing_task(self) -> None:
+        user: User = baker.make(User)
+        papernum = 17
+        qidx = 2
+        # currently same error as above, theoretically could be different error
+        with self.assertRaisesRegex(ValueError, "Not.*OUT.*task"):
+            MarkingTaskService.surrender_task(user, papernum, qidx)
 
     # TODO: test MarkingTaskService._validate_and_clean_marking_data(...)

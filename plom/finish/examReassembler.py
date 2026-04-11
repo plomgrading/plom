@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2025 Aidan Murphy
 
@@ -164,7 +164,7 @@ def _insert_img_list_at_3_per_page(
                 text,
                 fontsize=12,
                 color=(0, 0, 0),
-                align="left",
+                align=pymupdf.TEXT_ALIGN_LEFT,
             )
             assert r > 0
         rect = pymupdf.Rect(offset, header_bottom, offset + W, h - margin)

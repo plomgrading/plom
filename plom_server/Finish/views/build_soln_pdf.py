@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django.shortcuts import render
 from django.http import HttpRequest, FileResponse, StreamingHttpResponse
@@ -84,7 +84,7 @@ class StartAllBuildSoln(ManagerRequiredView):
         return HttpResponseClientRedirect(reverse("build_soln"))
 
     def delete(self, request):
-        BuildSolutionService().reset_all_soln_build()
+        BuildSolutionService.reset_all_soln_build()
         return HttpResponseClientRedirect(reverse("build_soln"))
 
     def get(self, request: HttpRequest) -> StreamingHttpResponse:
@@ -102,5 +102,5 @@ class StartAllBuildSoln(ManagerRequiredView):
 
 class CancelQueuedBuildSoln(ManagerRequiredView):
     def delete(self, request):
-        BuildSolutionService().try_to_cancel_all_queued_chores()
+        BuildSolutionService.try_to_cancel_all_queued_chores()
         return HttpResponseClientRedirect(reverse("build_soln"))

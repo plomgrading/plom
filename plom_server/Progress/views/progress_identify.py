@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, FileResponse
@@ -13,7 +14,7 @@ from plom_server.Identify.services import IDProgressService
 from ..services import ProgressOverviewService
 
 
-class ProgressIdentifyHome(LeadMarkerOrManagerView):
+class ProgressAllIdentifyTasks(LeadMarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
@@ -25,7 +26,7 @@ class ProgressIdentifyHome(LeadMarkerOrManagerView):
             }
         )
 
-        return render(request, "Progress/Identify/identify_home.html", context)
+        return render(request, "Progress/Identify/all_identify_tasks.html", context)
 
 
 class IDImageWrapView(LeadMarkerOrManagerView):

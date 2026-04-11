@@ -5,10 +5,15 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
-from .progress_landing import ProgressLandingView, ToolsLandingView
+from .progress_landing import (
+    ProgressLandingView,
+    ToolsLandingView,
+    ProgressIdentifyHome,
+)
+
 
 from .progress_identify import (
-    ProgressIdentifyHome,
+    ProgressAllIdentifyTasks,
     IDImageView,
     ClearID,
     IDImageWrapView,
@@ -29,7 +34,6 @@ from .progress_task_annot import (
     AnnotationImageWrapView,
     AnnotationImageView,
     OriginalImageWrapView,
-    AllTaskOverviewView,
     MarkingTaskTagView,
     MarkingTaskResetView,
     MarkingTaskReassignView,
