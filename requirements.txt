@@ -24,8 +24,8 @@ pytest-qt==4.5.0
 
 arrow==1.4.0
 canvasapi==3.4.0
-cryptography==46.0.6
-django==5.2.12
+cryptography==46.0.7
+django==5.2.13
 django-braces==1.17.0
 django-filter==25.2
 django-htmx==1.27.0
@@ -55,7 +55,7 @@ pydyf==0.12.1
 pymupdf==1.27.2.2
 PyMySQL==1.1.2
 random-username==1.0.2
-requests==2.32.5
+requests==2.33.1
 requests-toolbelt==1.0.0
 scikit-image==0.26.0
 scikit-learn==1.8.0
