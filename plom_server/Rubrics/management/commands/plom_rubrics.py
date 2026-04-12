@@ -56,8 +56,12 @@ class Command(BaseCommand):
             question_indices = list(range(1, _numquestions + 1))
 
         with (resources.files(plom) / "demo_rubrics.toml").open("rb") as f:
-            # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
-            rubrics_in = tomllib.load(f)["rubric"]  # type: ignore[arg-type]
+            try:
+                # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
+                rubrics_in = tomllib.load(f)["rubric"]  # type: ignore[arg-type]
+            except tomllib.TOMLDecodeError as e:
+                raise CommandError(e)
+
         rubrics = []
         for rub in rubrics_in:
             if not rub.get("kind"):
@@ -99,7 +103,7 @@ class Command(BaseCommand):
                 raise CommandError(f"{e} field(s) missing from rubrics file.")
             except serializers.ValidationError as e:
                 raise CommandError(e.args[0])
-            except (ValueError, tomllib.TOMLDecodeError, PlomConflict) as e:
+            except (ValueError, PlomConflict) as e:
                 raise CommandError(e)
         return len(rubrics)
 
