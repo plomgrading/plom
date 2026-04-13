@@ -287,7 +287,11 @@ class Command(BaseCommand):
 
         elif opt["command"] == "fractional_delta":
             try:
-                n = RubricService.build_fractional_delta_rubrics(opt["username"])
+                user = User.objects.get(username__iexact=opt["username"])
+            except User.DoesNotExist as e:
+                raise CommandError(e) from e
+            try:
+                n = RubricService.build_fractional_delta_rubrics(user)
                 self.stdout.write(
                     self.style.SUCCESS(f"Added {n} fractional delta rubrics")
                 )

@@ -949,18 +949,17 @@ class RubricService:
                     # )
 
     @classmethod
-    def build_fractional_delta_rubrics(cls, username: str) -> int:
+    def build_fractional_delta_rubrics(cls, user: User) -> int:
         """Create any missing plus/minus fractional delta rubrics.
 
         Args:
-            username: which user to associate with the demo rubrics.
+            user: which user to associate with the demo rubrics.
 
         Returns:
             The number of rubrics that were created.
 
         Exceptions:
-            ValueError: username does not exist or is not part of the
-                manager group.
+            None are expected.
 
         Note its not an error of some deltas already exist: we just skip those.
         This checking isn't done very efficiently: we just check before creating
@@ -970,12 +969,6 @@ class RubricService:
         TODO: there may be (rare) race conditions here b/c we don't have a
         `get_or_create` for rubrics.  For now, don't click the button too fast!
         """
-        try:
-            user = User.objects.get(username__iexact=username, groups__name="manager")
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"User '{username}' does not exist or has wrong permissions"
-            ) from e
         num = cls._build_fractional_delta_rubrics(user)
         return num
 

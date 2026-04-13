@@ -80,13 +80,7 @@ class RubricCreateFractionalDeltaView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         """An htmx endpoint to create the fractional delta rubrics."""
-        # TODO: why any manager instead of the current user who clicked the button?
-        # TODO: do we even get to this check, given the use of ManagerRequiredView?
-        any_manager = User.objects.filter(groups__name="manager").first()
-        try:
-            n = RubricService.build_fractional_delta_rubrics(any_manager.username)
-        except ValueError as e:
-            return HttpResponse(f"Error: {e}", status=403)
+        n = RubricService.build_fractional_delta_rubrics(request.user)
         return HttpResponse(f"Created {n} new rubrics")
 
 
