@@ -601,13 +601,15 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+    @staticmethod
+    def get_or_create_tag(user: User | None, tag_text: str) -> MarkingTaskTag:
         """Get an existing tag, or create if necessary, based on the given text.
 
         Args:
             user: the user creating the tag, if a new tag needs to be
                 created.  If the tag already exists, we DO NOT update
-                the user.
+                the user.  If you pass None, you don't care or don't
+                want to record the user.
             tag_text: the text of the tag.
 
         Returns:
@@ -620,11 +622,15 @@ class MarkingTaskService:
             raise serializers.ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
+        defaults = {} if user is None else {"user": user}
         tag_obj, _created = MarkingTaskTag.objects.get_or_create(
-            text=tag_text, defaults={"user": user}
+            text=tag_text, defaults=defaults
         )
         if _created:
-            log.debug('New tag "%s" created by %s', tag_obj.text, user)
+            if user is None:
+                log.debug('New tag "%s" created', tag_obj.text)
+            else:
+                log.debug('New tag "%s" created by %s', tag_obj.text, user)
         return tag_obj
 
     @transaction.atomic
