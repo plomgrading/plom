@@ -19,6 +19,7 @@ import io
 import html
 import json
 import logging
+import math
 import tomllib
 import tomlkit
 from operator import itemgetter
@@ -226,9 +227,15 @@ def _modify_rubric_by_making_new_one(
 
 
 def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
-    tol = 1e-14
-    # Note: interval avoids a floating point equality check
+    # We use an interval to avoid a floating point equality check.
+    # Probably the database is IEEE-754 so will store the float the same as we do.
+    # Somewhat more likely is two clients (say arm versus amd64) which do
+    # calculations in a different order, encurring a different rounding error.
+    # We use a tolerance of a small multiple of "machine epsilon": if two clients
+    # send 0.3333333333333332 and 0.3333333333333334 we'll get a collision.
+    # Note: this is unrelated to `_frac_value_tolerance` (which is much larger).
     value = d.get("value", 0)
+    tol = 5 * math.ulp(value)  # about 1e-15 when value is 1
     if Rubric.objects.filter(
         text=d["text"],
         question_index=d["question_index"],
