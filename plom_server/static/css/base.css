@@ -2,7 +2,8 @@
 /* Copyright (C) 2022 Edith Coates */
 /* Copyright (C) 2022-2023 Brennen Chiu */
 /* Copyright (C) 2023 Andrew Rechnitzer */
-/* Copyright (C) 2024-2025 Colin B. Macdonald */
+/* Copyright (C) 2024-2026 Colin B. Macdonald */
+/* Copyright (C) 2026 Aidan Murphy */
 
 /* Bootstrap classes should be used instead of custom CSS
  *
@@ -11,6 +12,12 @@
  *
  * Avoid hardcoded colours; exceptions should be carefully commented.
  */
+
+/* enables different colours for light and dark-mode */
+/* https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark */
+:root {
+    color-scheme: light dark;
+}
 
 /* prevents flicker during page load of some pages using Alpine */
 [x-cloak] { display: none !important; }
@@ -24,8 +31,10 @@ div.is_pdf_thumbnail:hover {
     opacity: 0.5;
 }
 
-/* Customization of the left-hand/popup menu bar */
-.nav-link:hover {
+/* this is the only link class which supports light/dark mode */
+/* it doesn't underline on hover by default, so overwrite it */
+/* https://getbootstrap.com/docs/5.3/helpers/colored-links/#link-colors */
+.link-body-emphasis:hover {
     text-decoration: underline;
 }
 
@@ -46,4 +55,39 @@ div.is_pdf_thumbnail:hover {
     object-fit: cover;
     height: auto;
     width: 100%;
+}
+
+
+
+/* Some nice colours to be used sparingly for branding */
+/* (some people feel Bootstrap defaults make all apps look the same) */
+/* Currently, only the *-branded-* ones are in use */
+.bg-plom-teal {
+    background-color: light-dark(#377373, #004040) !important;
+}
+.bg-plom-teal-subtle {
+    background-color: light-dark(#ABC4C4, #1F3B3B) !important;
+}
+.bg-plom-purple, .bg-branded-plom {
+    background-color: light-dark(#ad9cff, #50488f) !important;
+}
+.bg-plom-purple-subtle {
+    background-color: light-dark(#ddddff, #222240) !important;
+}
+/* maybe temporary?  This light yellow was originally a mix of Bootstrap's warning */
+-bg-plom-statusquo-subtle, .bg-branded-plom-subtle {
+    background-color: light-dark(#fff3cd, #222240) !important;
+}
+
+/* Custom buttons based on the purple in the Plom quill logo */
+.btn-plom-purple {
+  background-color: light-dark(#9899f0, #6568bb) !important;
+  border-color: light-dark(#6568bb, #9899f0) !important;
+  /* (border darker in light mode, lighter in dark mode) */
+}
+.btn-plom-purple:hover {
+  background-color: light-dark(#a6a6ff, #9899f0) !important;
+}
+.btn-plom-purple:active {
+  background-color: light-dark(#9e9ee8, #6669bd) !important;
 }
