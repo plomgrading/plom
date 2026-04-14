@@ -2,10 +2,10 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Winnie Cheung
     Copyright (C) 2025 Philip D. Loewen
-    Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025-2026 Aidan Murphy
 -->
 <div class="card mt-2">
     <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
@@ -256,19 +256,22 @@
                 </div>
                 <div class="col-8 pb-1">
                     <h5>Bundle Contains:</h5>
-                    {% for paper,pages in papers_pages_list %}
-                        {% with pg=pages|dictsort:"order"|first %}
-                            {% if paper in incomplete_papers_list %}
-                                <button id="paper-btn-{{ paper }}"
-                                        class="btn m-1 btn-warning"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        data-bs-title="Is missing pages: TODO - which pages?"
-                                        onclick="clickThumbnail({{ pg.order }})">paper {{ paper }}</button>
-                            {% else %}
-                                <button class="btn m-1 btn-success" onclick="clickThumbnail({{ pg.order }})">paper {{ paper }}</button>
-                            {% endif %}
-                        {% endwith %}
+                    {% for paper_dict in papers_info_list %}
+                        {% if paper_dict.paper_number in incomplete_papers_list %}
+                            <button id="paper-btn-{{ paper_dict.paper_number }}"
+                                    class="btn m-1 btn-warning"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-title="page{{ paper_dict.missing_pages|length|pluralize }} {{ paper_dict.missing_pages_pprint }} {{ paper_dict.missing_pages|length|pluralize:'is,are' }} absent from this bundle"
+                                    onclick="clickThumbnail({{ paper_dict.first_page_order }})">
+                                paper {{ paper_dict.paper_number }}
+                            </button>
+                        {% else %}
+                            <button class="btn m-1 btn-success"
+                                    onclick="clickThumbnail({{ paper_dict.first_page_order }})">
+                                paper {{ paper_dict.paper_number }}
+                            </button>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
