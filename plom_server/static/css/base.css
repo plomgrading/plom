@@ -59,14 +59,22 @@ div.is_pdf_thumbnail:hover {
 
 
 
-/* some nice colours to be used sparingly for branding */
+/* Some nice colours to be used sparingly for branding */
 /* (some people feel Bootstrap defaults make all apps look the same) */
+/* Currently, only the *-branded-* ones are in use */
 .bg-plom-teal {
     background-color: light-dark(#377373, #004040) !important;
 }
 .bg-plom-teal-subtle {
     background-color: light-dark(#ABC4C4, #1F3B3B) !important;
 }
+.bg-plom-purple, .bg-branded-plom {
+    background-color: light-dark(#ad9cff, #50488f) !important;
+}
+.bg-plom-purple-subtle, .bg-branded-plom-subtle {
+    background-color: light-dark(#ddddff, #282850) !important;
+}
+
 
 /* Custom buttons based on the purple in the Plom quill logo */
 .btn-plom-purple {
