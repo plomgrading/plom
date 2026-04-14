@@ -10,15 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * API support to surrender individual tasks.
+* Instructors can disable ("unpublish") all "delta rubrics" without text.
 
 ### Removed
 * Support for Python 3.10.
 
 ### Changed
-* reorganisation of some Marking and Identifying tools in the UI.
+* Reorganisation of some Marking and Identifying tools in the UI.
+* Improvements to creating the +1/2, -1/2 rubrics and other fractional delta rubrics.
 
 ### Fixed
-
+* Creating duplicate rubrics is an error (again).
 
 
 
