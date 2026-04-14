@@ -554,7 +554,6 @@ class QuestionClusteringService:
         Keyword Args:
             userid: the id of the user who calls the tagging.
         """
-        mts = MarkingTaskService()
         user = User.objects.get(id=userid)
 
         # get cluster_id to paper mapping
@@ -566,7 +565,7 @@ class QuestionClusteringService:
         ]
 
         # get/create tags
-        tags = mts.bulk_get_or_create_tag(user=user, tag_texts=tag_texts)
+        tags = MarkingTaskService.bulk_get_or_create_tag(tag_texts, user=user)
 
         # cluster_id to tag.pk
         cid_to_tag = {self._get_cluster_id_from_cluster_tag(t.text): t for t in tags}

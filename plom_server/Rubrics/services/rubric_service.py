@@ -726,7 +726,7 @@ class RubricService:
         new_rubric.pedagogy_tags.set(data.get("pedagogy_tags", []))
 
         if not is_minor_change and tag_tasks:
-            tag = MarkingTaskService.get_or_create_tag(None, "rubric_changed")
+            tag = MarkingTaskService.get_or_create_tag("rubric_changed")
             # find all complete annotations using older revisions of this rubric
             tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,

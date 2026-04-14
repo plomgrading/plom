@@ -602,15 +602,15 @@ class MarkingTaskService:
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
     @staticmethod
-    def get_or_create_tag(user: User | None, tag_text: str) -> MarkingTaskTag:
+    def get_or_create_tag(tag_text: str, user: User | None = None) -> MarkingTaskTag:
         """Get an existing tag, or create if necessary, based on the given text.
 
         Args:
+            tag_text: the text of the tag.
             user: the user creating the tag, if a new tag needs to be
                 created.  If the tag already exists, we DO NOT update
                 the user.  If you pass None, you don't care or don't
-                want to record the user.
-            tag_text: the text of the tag.
+                want to record the user.  Defaults to None.
 
         Returns:
             MarkingTaskTag: reference to the tag
@@ -633,18 +633,19 @@ class MarkingTaskService:
                 log.debug('New tag "%s" created by %s', tag_obj.text, user)
         return tag_obj
 
+    @staticmethod
     @transaction.atomic
     def bulk_get_or_create_tag(
-        self, user: User, tag_texts: list[str]
+        tag_texts: list[str], user: User
     ) -> list[MarkingTaskTag]:
         """Get existing tags, or create if necessary, based on the given texts.
 
         Args:
-            user: the user creating/attaching the tag.
             tag_texts: the text of the tags.
+            user: the user creating/attaching the tags.
 
         Returns:
-            a list referencing the tags
+            A list referencing the tags.
 
         Raises:
             serializers.ValidationError: if the tag text is not legal.
@@ -756,7 +757,7 @@ class MarkingTaskService:
             serializers.ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
-        the_tag = self.get_or_create_tag(user, tag_text)
+        the_tag = self.get_or_create_tag(tag_text, user=user)
         self._add_tag(the_tag, the_task)
 
     @transaction.atomic
@@ -903,7 +904,7 @@ class MarkingTaskService:
         Raises:
             serializers.ValidationError: if the tag text is not legal.
         """
-        tag_obj = self.get_or_create_tag(user, tag_text)
+        tag_obj = self.get_or_create_tag(tag_text, user=user)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @staticmethod
