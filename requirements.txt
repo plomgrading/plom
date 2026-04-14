@@ -39,7 +39,7 @@ djangorestframework==3.17.1
 exif==1.6.1
 file-magic==0.4.1
 gunicorn==25.3.0
-huggingface-hub==1.8.0
+huggingface-hub==1.10.1
 imutils==0.5.4
 matplotlib==3.10.8
 model-bakery==1.23.4
@@ -77,4 +77,4 @@ zxing-cpp==2.3.0
 # django-silk==5.4.3  # for hunting down inefficient db queries
 
 # plom_ml
-transformers==5.4.0
+transformers==5.5.4
