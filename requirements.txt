@@ -49,7 +49,7 @@ opencv-python-headless==4.13.0.92
 packaging==26.0
 pandas==2.3.3
 passlib==1.7.4
-Pillow==12.1.1
+Pillow==12.2.0
 psycopg[binary]==3.3.3
 pydyf==0.12.1
 pymupdf==1.27.2.2
