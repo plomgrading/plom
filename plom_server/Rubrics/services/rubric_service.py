@@ -468,7 +468,6 @@ class RubricService:
         data: dict[str, Any],
         *,
         _bypass_serializer: bool = False,
-        _bypass_user: User | None = None,
     ) -> Rubric:
         """Create rubrics with less error checking, internal use only.
 
@@ -499,7 +498,6 @@ class RubricService:
 
         data["latest"] = True
         if _bypass_serializer:
-            assert _bypass_user is not None
             new_rubric = Rubric.objects.create(
                 text=data["text"],
                 question_index=data["question_index"],
@@ -509,8 +507,6 @@ class RubricService:
                 out_of=data["out_of"],
                 display_delta=data["display_delta"],
                 meta=data.get("meta"),
-                user=_bypass_user,
-                modified_by_user=_bypass_user,
                 latest=data.get("latest"),
                 versions=data.get("versions", ""),
                 parameters=data.get("parameters", []),
@@ -844,23 +840,11 @@ class RubricService:
 
     @classmethod
     def _build_system_rubrics(cls) -> None:
-        log.info("Building special manager-generated rubrics")
-
-        # get the first manager object
-        any_manager = User.objects.filter(groups__name="manager").first()
-        # raise an exception if there aren't any managers.
-        if any_manager is None:
-            raise ObjectDoesNotExist("No manager users have been created.")
-        # TODO: experimenting with passing in User object instead...
-        # any_manager_pk = any_manager.pk
+        log.info("Building special system rubrics")
 
         def create_system_rubric(data):
-            # data["user"] = any_manager_pk
-            # data["modified_by_user"] = any_manager_pk
             data["system_rubric"] = True
-            cls._create_rubric_lowlevel(
-                data, _bypass_serializer=True, _bypass_user=any_manager
-            )
+            cls._create_rubric_lowlevel(data, _bypass_serializer=True)
 
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in SpecificationService.get_question_indices():
