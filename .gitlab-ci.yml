@@ -449,7 +449,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.5
+    - pip install ruff~=0.15.10
   script:
     - ruff check .
     # ruff format .
@@ -460,7 +460,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.5
+    - pip install ruff~=0.15.10
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -527,7 +527,7 @@ eslint:
   image: node:24
   stage: static_analysis
   script:
-    - npm install eslint@10.0.3 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
+    - npm install eslint@10.2.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
     - npx eslint plom_server/**/*.js
 
 
