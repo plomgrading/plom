@@ -1,19 +1,24 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2026 Aidan Murphy
 -->
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Invalid Link</title>
-    </head>
-    <body>
-        <h1>Sorry, the link has expired or was already used</h1>
-        <p>
-            Password reset links expire after a certain amount of time, or after they are used.
-            Please contact the person who shared this link with you.
-        </p>
-    </body>
-</html>
+{% extends "Authentication/unauthenticated_base.html" %}
+{% block full_title %}
+    Invalid Link
+{% endblock full_title %}
+{% block main_content %}
+    <div class="container">
+        <div class="card m-4 p-4 bg-secondary-subtle">
+            <h2>Invalid set password link</h2>
+            <hr />
+            <p>
+                It may have expired or already been used.
+                <br />
+                Please contact the person who shared this link with you.
+            </p>
+        </div>
+    </div>
+{% endblock main_content %}
