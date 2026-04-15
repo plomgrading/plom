@@ -353,35 +353,23 @@ class MarkingTaskService:
             ValueError: a task for papernum, qidx does not exist.
             PlomConflict: task exits but it is either not assigned to,
                 or not "OUT" with, that user.
-            RuntimeError: a software bug: multiple tasks for same thing.
         """
-        n = MarkingTask.objects.filter(
-            paper__paper_number=papernum,
-            question_index=qidx,
-            assigned_user=user,
-            status=MarkingTask.OUT,
-        ).update(assigned_user=None, status=MarkingTask.TO_DO)
-        if n == 1:
-            pass
-        elif n == 0:
-            basemsg = f"Cannot surrender paper {papernum} question index {qidx}: "
-            try:
-                t = MarkingTask.objects.get(
-                    paper__paper_number=papernum, question_index=qidx
-                )
-            except MarkingTask.DoesNotExist as e:
-                raise ValueError(basemsg + "task does not exist") from e
+        basemsg = f"Cannot surrender paper {papernum} question index {qidx}: "
+        try:
+            t = MarkingTask.objects.select_for_update().get(
+                paper__paper_number=papernum, question_index=qidx
+            )
+        except MarkingTask.DoesNotExist as e:
+            raise ValueError(basemsg + "task does not exist") from e
+        if t.assigned_user != user or t.status != MarkingTask.OUT:
             raise PlomConflict(
-                basemsg + "task currently assigned"
+                basemsg + f'task not "Out" with "{user}"; currently assigned'
                 f' to "{t.assigned_user}" status "{t.get_status_display()}";'
-                " perhaps someone else reassigned or reset the task?"
+                " perhaps someone reassigned or reset the task?"
             )
-        else:
-            raise RuntimeError(
-                f'Updated multiple ({n}) "OUT" tasks assigned to "{user}"'
-                f" for paper {papernum} question index {qidx}:"
-                " Likely software bug!"
-            )
+        t.assigned_user = None
+        t.status = MarkingTask.TO_DO
+        t.save()
 
     @staticmethod
     def get_n_marked_tasks() -> int:
