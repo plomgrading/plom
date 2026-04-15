@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from plom_server import __version__ as plom_version
 from plom_server.Papers.services import SpecificationService
@@ -26,17 +27,7 @@ def user_group_information(request):
         "user_is_scanner": "scanner" in group_list,
         "user_is_lead_marker": "lead_marker" in group_list,
         "user_is_marker": "marker" in group_list,
-        "navbar_color": "primary",
-        # default to the marker color, no 'u' to keep north americans happy
     }
-    if "admin" in group_list:
-        context["navbar_color"] = "danger"
-    elif "manager" in group_list:
-        context["navbar_color"] = "warning"
-    elif "scanner" in group_list:
-        context["navbar_color"] = "info"
-    elif "lead_marker" in group_list:
-        context["navbar_color"] = "dark"
     return context
 
 

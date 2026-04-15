@@ -5,7 +5,7 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Philip D. Loewen
 # Copyright (C) 2025 Deep Shah
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from datetime import datetime
 from typing import Any
@@ -101,11 +101,11 @@ class BundleThumbnailsView(ScannerRequiredView):
         # list of dicts of page info, in bundle order
         bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
         # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
-        bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
+        bundle_papers_info_list = scanner.get_bundle_papers_info_list(bundle)
         # get a list of the paper-numbers in bundle that are missing pages
-        bundle_incomplete_papers_list = [
-            X[0] for X in scanner.get_bundle_missing_paper_page_numbers(bundle)
-        ]
+        missing_paper_pages = scanner.get_bundle_missing_paper_page_numbers(bundle)
+        bundle_incomplete_papers_list = [X[0] for X in missing_paper_pages]
+
         bundle_colliding_images = scanner.get_bundle_colliding_images(bundle)
 
         filter_options = [
@@ -132,7 +132,7 @@ class BundleThumbnailsView(ScannerRequiredView):
                 "bundle_id": bundle.pk,
                 "timestamp": bundle.timestamp,
                 "pages": bundle_page_info_list,
-                "papers_pages_list": bundle_papers_pages_list,
+                "papers_info_list": bundle_papers_info_list,
                 "incomplete_papers_list": bundle_incomplete_papers_list,
                 "n_incomplete": len(bundle_incomplete_papers_list),
                 "colliding_image_orders": bundle_colliding_images,
@@ -192,7 +192,7 @@ class BundleThumbnailsSummaryFragmentView(ScannerRequiredView):
         bundle = scanner.get_bundle_from_pk(bundle_id)
 
         # an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
-        bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
+        bundle_papers_info_list = scanner.get_bundle_papers_info_list(bundle)
         bundle_incomplete_papers_list = [
             X[0] for X in scanner.get_bundle_missing_paper_page_numbers(bundle)
         ]
@@ -213,7 +213,7 @@ class BundleThumbnailsSummaryFragmentView(ScannerRequiredView):
                 "extra_pages": scanner.get_n_extra_images(bundle),
                 "discard_pages": scanner.get_n_discard_images(bundle),
                 "error_pages": scanner.get_n_error_images(bundle),
-                "papers_pages_list": bundle_papers_pages_list,
+                "papers_info_list": bundle_papers_info_list,
                 "is_pushed": bundle.pushed,
                 "is_perfect": scanner.is_bundle_perfect(bundle.pk),
                 "has_page_images": bundle.has_page_images,

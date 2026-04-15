@@ -71,7 +71,7 @@
         <div class="container-fluid p-0 d-flex vh-100">
             <!-- TODO: style max width here stops the hamburger menu from popping up too wide: find better fix -->
             <div id="sidebar"
-                 class="d-flex flex-column flex-shrink-0 p-2 shadow bg-{{ navbar_color }}-subtle text-start offcanvas-md offcanvas-start overflow-auto"
+                 class="d-flex flex-column flex-shrink-0 p-2 shadow bg-branded-plom-subtle text-start offcanvas-md offcanvas-start overflow-auto"
                  style="max-width: 13rem">
                 <!-- Plom logo-->
                 <a class="navbar-brand nav-link" href="{% url 'home' %}">
@@ -91,7 +91,7 @@
             </div>
             <!-- flex-fill here will go off the screen for very wide pages -->
             <div class="w-100">
-                <div class="p-2 d-md-none shadow bg-{{ navbar_color }}-subtle navbar">
+                <div class="p-2 d-md-none shadow bg-branded-plom-subtle navbar">
                     <a class="navbar-brand nav-link" href="{% url 'home' %}">
                         {% include "base/plom_logo.html" with height="unset" width="unset" max_width="8rem" %}
                     </a>

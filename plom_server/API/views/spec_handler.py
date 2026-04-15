@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
+
+import tomllib
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
@@ -112,7 +114,7 @@ class SpecificationAPIView(APIView):
             )
         except PlomDependencyConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
-        except (SpecificationService.TOMLDecodeError, ValueError) as e:
+        except (tomllib.TOMLDecodeError, ValueError) as e:
             return _error_response(
                 f"Cannot modify specification - {e}",
                 status.HTTP_400_BAD_REQUEST,

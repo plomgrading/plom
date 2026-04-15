@@ -196,6 +196,7 @@ urlpatterns += [
         "MK/tasks/available", MarkTaskNextAvailable.as_view(), name="api_mark_task_next"
     ),
     path("MK/tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
+    # TODO: consider changing to api/v0/tasks/<int:papernum>/<int:qidx>
     path("MK/tasks/<str:code>", MarkTask.as_view(), name="api_mark_task"),
     path(
         "api/v0/tasks/<int:papernum>/<int:qidx>/reassign/<str:new_username>",

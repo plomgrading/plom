@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -26,7 +26,7 @@ class Command(BaseCommand):
     def upload_source(self, version: int, source_pdf_path: str | Path) -> None:
         try:
             with Path(source_pdf_path).open("rb") as fh:
-                SolnSourceService().take_solution_source_pdf_from_upload(version, fh)
+                SolnSourceService.take_solution_source_pdf_from_upload(version, fh)
         except (OSError, ValueError) as err:
             raise CommandError(err)
 

@@ -68,9 +68,11 @@ Supported_Server_API_Versions = [
 # * 115
 #    - rubrics versions field uses string instead of list
 #    - tasks no longer start with "q"
+#    - user lists from /info/users
 # * 116
 #    - get/set public_code
 # * 117
+#    - surrender task
 
 
 log = logging.getLogger("messenger")
@@ -538,6 +540,32 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def get_user_list(self) -> dict[str, list[str]]:
+        """Get a list of users from the server and what groups they belong to.
+
+        Raises:
+            PlomAuthenticationException
+            PlomSeriousException: something unexpected happened.
+
+        Returns:
+            Returns a dict keyed by username (string).  Each value is list
+            of strings of groups that user belongs too.
+        """
+        if self.is_server_api_less_than(115):
+            raise PlomNoServerSupportException(
+                "older server does notsupport user lists"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/info/users")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def requestAndSaveToken(
         self, user: str, pw: str, *, exclusive: bool = False
     ) -> None:
@@ -932,7 +960,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException
-            PlomConflict: no such task
+            PlomConflict: no such task, or no such tag, or task does
+                not have this tag.
         """
         if self.is_server_api_less_than(115):
             assert not task.startswith("q")

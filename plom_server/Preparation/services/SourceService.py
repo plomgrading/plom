@@ -8,6 +8,7 @@ import hashlib
 import pathlib
 import tempfile
 from collections import defaultdict
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any
 
@@ -118,7 +119,7 @@ def delete_all_source_pdfs() -> None:
         delete_source_pdf(pdf_obj.version)
 
 
-def get_source(version: int) -> dict[str, Any]:
+def get_source_info(version: int) -> dict[str, Any]:
     """Return a dictionary with info about the source version.
 
     Args:
@@ -126,7 +127,7 @@ def get_source(version: int) -> dict[str, Any]:
 
     Returns:
         A dictionary with the version, uploaded status, and---if
-        uploaded---the file hash and original filename.
+        uploaded---the file hash, original filename and other info
     """
     try:
         src = PaperSourcePDF.objects.filter(version=version).get()
@@ -160,14 +161,12 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     The list is sorted by the version.
     """
     vers = SpecificationService.get_list_of_versions()
-    return [get_source(v) for v in vers]
+    return [get_source_info(v) for v in vers]
 
 
-# TODO: mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
-# source_pdf: pathlib.Path | resources.abc.Traversable,
 def store_source_pdf(
     version: int,
-    source_pdf: pathlib.Path,
+    source_pdf: Traversable | Path,
     *,
     original_filename: str = "",
     page_count: int | None = None,
@@ -208,11 +207,11 @@ def store_source_pdf(
     else:
         raise ValueError(f"Source pdf with version {version} already present.")
 
-    with open(source_pdf, "rb") as fh:
+    with source_pdf.open("rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
     hash_value = hashlib.sha256(the_bytes).hexdigest()
 
-    with open(source_pdf, "rb") as fh:
+    with source_pdf.open("rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")
         PaperSourcePDF.objects.create(
             version=version,
@@ -226,7 +225,7 @@ def store_source_pdf(
         )
 
 
-def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, str]:
+def take_source_from_upload(version: int, in_memory_file: File) -> None:
     """Store a PDF file as one of the source versions, after doing some checks.
 
     Args:
@@ -242,16 +241,13 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
     Raises:
         PlomDependencyException: if preparation dependencies prevent modification
             of source files.
-
-    Returns:
-        A tuple with a boolean for success and a message or error message,
-        for example if the PDF already exists.
+        ValueError: something wrong with the file, such as wrong number of pages.
     """
     # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
     if version not in SpecificationService.get_list_of_versions():
-        return (False, f"Version {version} is out of range")
+        raise ValueError(f"Version {version} is out of range")
     required_pages = SpecificationService.get_n_pages()
     # save the file to a temp directory
     # TODO - size limits please
@@ -264,9 +260,8 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         with pymupdf.open(tmp_pdf) as doc:
             page_count = doc.page_count
             if page_count != int(required_pages):
-                return (
-                    False,
-                    f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}",
+                raise ValueError(
+                    f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}"
                 )
             # keep the first page's size in full float precision
             w_float, h_float = doc[0].rect.width, doc[0].rect.height
@@ -296,28 +291,19 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         try:
             original_filename = validate_file_name(original_filename)
         except SuspiciousFileOperation as e:
-            return (
-                False,
-                f"File name is suspicious: {e}",
-            )
+            raise ValueError(f"File name is suspicious: {e}")
 
-        # now try to store it
-        try:
-            store_source_pdf(
-                version,
-                tmp_pdf,
-                original_filename=original_filename,
-                page_count=page_count,
-                paper_size_name=paper_size_name,
-                paper_size_width=w_float,
-                paper_size_height=h_float,
-            )
-        except ValueError as err:
-            return (False, str(err))
-
+        # now try to store it, which can also raise a ValueError
+        store_source_pdf(
+            version,
+            tmp_pdf,
+            original_filename=original_filename,
+            page_count=page_count,
+            paper_size_name=paper_size_name,
+            paper_size_width=w_float,
+            paper_size_height=h_float,
+        )
         store_reference_images(version)
-
-        return (True, "PDF successfully uploaded")
 
 
 @transaction.atomic

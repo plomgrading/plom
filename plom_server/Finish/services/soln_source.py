@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 import hashlib
 import io
@@ -39,23 +39,33 @@ class SolnSourceService:
         )
 
     @staticmethod
-    def get_list_of_sources() -> list[dict[str, Any]]:
+    def get_source_info(v: int) -> dict[str, Any]:
+        """Return a dictionary with info about the solution version.
+
+        Args:
+            v: which version, indexed from one.
+
+        Returns:
+            A dictionary with the version, uploaded status, and---if
+            uploaded---the file hash, original filename and other info
+        """
+        try:
+            x = SolutionSourcePDF.objects.filter(version=v).get()
+            # TODO: duplicate info here, like in source?
+            return {
+                "version": x.version,
+                "uploaded": True,
+                "hash": x.pdf_hash,
+                "original_filename": x.original_filename,
+            }
+        except SolutionSourcePDF.DoesNotExist:
+            return {"version": v, "uploaded": False}
+
+    @classmethod
+    def get_list_of_sources(cls) -> list[dict[str, Any]]:
         """Return a list of dicts describing all versions of the solutions, uploaded or not."""
-
-        def _get_source_dict(v):
-            try:
-                x = SolutionSourcePDF.objects.filter(version=v).get()
-                return {
-                    "version": x.version,
-                    "uploaded": True,
-                    "hash": x.pdf_hash,
-                    "original_filename": x.original_filename,
-                }
-            except SolutionSourcePDF.DoesNotExist:
-                return {"version": v, "uploaded": False}
-
         vers = SpecificationService.get_list_of_versions()
-        return [_get_source_dict(v) for v in vers]
+        return [cls.get_source_info(v) for v in vers]
 
     @staticmethod
     def remove_solution_pdf(version: int):
@@ -100,10 +110,9 @@ class SolnSourceService:
             )
         return io.BytesIO(soln_pdf_obj.source_pdf.read())
 
+    @classmethod
     @transaction.atomic
-    def take_solution_source_pdf_from_upload(
-        self, version: int, in_memory_file
-    ) -> None:
+    def take_solution_source_pdf_from_upload(cls, version: int, in_memory_file) -> None:
         """Take the given solution source pdf and save it to the DB."""
         if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")
@@ -120,7 +129,7 @@ class SolnSourceService:
         with pymupdf.open(stream=file_bytes) as doc:
             if len(doc) != SolnSpecService.get_n_pages():
                 raise ValueError(
-                    f"Solution pdf does has {len(doc)} pages - should have "
+                    f"PDF file has {len(doc)} pages, but should have "
                     f"{SolnSpecService.get_n_pages()} to match soln spec."
                 )
 
@@ -133,7 +142,7 @@ class SolnSourceService:
             )
             # We need to create solution images for display in the client
             # Assembly of solutions for each paper will use the source pdfs, not these images.
-            self._create_solution_images(version, doc)
+            cls._create_solution_images(version, doc)
 
     @staticmethod
     def _create_solution_images(version: int, doc: pymupdf.Document) -> None:

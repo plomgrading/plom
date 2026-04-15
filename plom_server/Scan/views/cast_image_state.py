@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -209,7 +209,7 @@ class ExtraliseImageView(ScannerRequiredView):
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         """HTMX posts here to make a page into an extra page.
 
-        On errors, this returns 400, 404, http responses, with plain
+        On errors, this returns 400, 404 http responses, with plain
         textual human-readable error messages.  The error messages
         are undecorated.
 

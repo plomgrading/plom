@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
 import pathlib
@@ -11,6 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from model_bakery import baker
 
+from plom_server.Papers.services import SpecificationService
 from plom_server.TestingSupport.utils import config_test
 from ..services import SourceService, PapersPrinted
 from ..models import PaperSourcePDF
@@ -34,15 +35,13 @@ class SourceServiceTests(TestCase):
         for src in d:
             assert not src["uploaded"]
 
-        # TODO: mypy complains about Traversable, in Python 3.11, remove when
-        # we drop support for Python 3.10, and similar throughout this file
-        SourceService.store_source_pdf(1, ver1pdf)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, ver1pdf)
         d = SourceService.get_list_of_sources()
         v1, v2 = d
         assert v1["uploaded"]
         assert not v2["uploaded"]
 
-        SourceService.store_source_pdf(2, ver2pdf)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(2, ver2pdf)
         d = SourceService.get_list_of_sources()
         v1, v2 = d
         assert v1["uploaded"]
@@ -76,10 +75,7 @@ class SourceServiceTests(TestCase):
                 content=f.read(),
                 content_type="application/pdf",
             )
-            r, msg = SourceService.take_source_from_upload(1, django_file)
-        assert r
-        assert "uploaded" in msg
-        assert "success" in msg
+            SourceService.take_source_from_upload(1, django_file)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_validate_filename(self) -> None:
@@ -88,26 +84,24 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(1, f)
-        assert not r
-        assert "suspicious" in msg
-        assert "name" in msg
+        with self.assertRaisesRegex(ValueError, "name.*suspicious.*path"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(1, f)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_out_of_range(self) -> None:
         # we explicitly **unset** papers-printed for testing purposes
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
+        minver = min(SpecificationService.get_list_of_versions())
+        maxver = max(SpecificationService.get_list_of_versions())
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(0, f)
-            assert not r
-            assert "range" in msg
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(3, f)
-            assert not r
-            assert "range" in msg
+        with self.assertRaisesRegex(ValueError, "range"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(minver - 1, f)
+        with self.assertRaisesRegex(ValueError, "range"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(maxver + 1, f)
 
     @config_test({"test_spec": "tiny_spec.toml"})
     def test_store_source_pdfs_wrong_page_count(self) -> None:
@@ -116,10 +110,9 @@ class SourceServiceTests(TestCase):
 
         # tiny_spec has 3 pages but the pdf here has 6
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with pdf.open("rb") as f:
-            r, msg = SourceService.take_source_from_upload(1, f)
-        assert not r
-        assert "pages" in msg
+        with self.assertRaisesRegex(ValueError, "pages"):
+            with pdf.open("rb") as f:
+                SourceService.take_source_from_upload(1, f)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdf_location(self) -> None:
@@ -127,7 +120,7 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
         __, f = SourceService._get_source_file(1)
         pdf_source_path = settings.MEDIA_ROOT / "sourceVersions"
         self.assertTrue(pdf_source_path.exists())
@@ -143,9 +136,9 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
-        with self.assertRaises(ValueError):
-            SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
+        with self.assertRaisesRegex(ValueError, "already present"):
+            SourceService.store_source_pdf(1, upload_path)
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)
         SourceService.delete_source_pdf(1)
@@ -162,7 +155,7 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
         d = SourceService.get_list_of_sources()
         assert len(d[0]["hash"]) > 50
         SourceService.delete_source_pdf(1)
@@ -174,7 +167,7 @@ class SourceServiceTests(TestCase):
 
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         original_bytes = upload_path.read_bytes()
-        SourceService.store_source_pdf(1, upload_path)  # type: ignore[arg-type]
+        SourceService.store_source_pdf(1, upload_path)
         stored_bytes = SourceService.get_source_as_bytes(1)
         self.assertEqual(original_bytes, stored_bytes)
         with self.assertRaises(ValueError):

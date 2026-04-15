@@ -41,7 +41,7 @@ variables:
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
   QT_QPA_PLATFORM: offscreen
-  PLOMCLIENT_BRANCHNAME: 021x
+  PLOMCLIENT_BRANCHNAME: main
 
 stages:
   - static_analysis
@@ -391,7 +391,7 @@ pylint:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install astroid~=4.1.1  # codespell:ignore astroid
+    - pip install astroid~=4.1.2  # codespell:ignore astroid
     - pip install pylint~=4.0.5
   script:
     - pylint plom
@@ -410,13 +410,13 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.19.1
+    - pip install mypy~=1.20.1
   script:
     - mypy --version
-    - mypy plom plom_server --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom plom_server --python-ver 3.10
-    - mypy plom_ml --python-ver 3.10 --install-types --non-interactive || true
-    - mypy plom_ml --python-ver 3.10
+    - mypy plom plom_server --python-ver 3.12 --install-types --non-interactive || true
+    - mypy plom plom_server --python-ver 3.12
+    - mypy plom_ml --python-ver 3.12 --install-types --non-interactive || true
+    - mypy plom_ml --python-ver 3.12
   allow_failure: true
 
 
@@ -449,7 +449,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.5
+    - pip install ruff~=0.15.10
   script:
     - ruff check .
     # ruff format .
@@ -460,7 +460,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.5
+    - pip install ruff~=0.15.10
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -527,7 +527,7 @@ eslint:
   image: node:24
   stage: static_analysis
   script:
-    - npm install eslint@10.0.3 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
+    - npm install eslint@10.2.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
     - npx eslint plom_server/**/*.js
 
 
@@ -536,7 +536,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.13.4
+    - pip install coverage~=7.13.5
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -560,7 +560,7 @@ webplom_api_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.13.4
+    - pip install coverage~=7.13.5
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -827,7 +827,7 @@ minpy_mindeps_django_tests:
     # ideally we'd test with OOTB pip so hide pip upgrade msg
     PIP_DISABLE_PIP_VERSION_CHECK: 1
   stage: alt_build
-  image: python:3.10
+  image: python:3.11
   before_script:
     # Note: Python image based on Debian (can install deps)
     - apt-get update

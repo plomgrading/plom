@@ -5,7 +5,6 @@
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
-from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpRequest,
@@ -24,13 +23,6 @@ from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 
 from ..services import SourceService
-
-
-class SourceUploadForm(forms.Form):
-    pdf_file = forms.FileField(
-        label="",
-        widget=forms.FileInput(attrs={"accept": ".pdf"}),
-    )
 
 
 class SourceManageView(ManagerRequiredView):
@@ -54,9 +46,6 @@ class SourceManageView(ManagerRequiredView):
             )
 
         return {
-            "form": SourceUploadForm(),
-            "num_versions": SpecificationService.get_n_versions(),
-            "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
             "sources": sources,
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
@@ -93,76 +82,52 @@ class SourceManageView(ManagerRequiredView):
         return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
-        """HTMX posts here will add a new source PDF file to the server."""
+        """HTMX posts here will add a new source PDF file to the server.
+
+        On success, this re-renders the particular card for this version.
+
+        On errors, this returns 400 or 409 http response, with plain
+        textual human-readable error messages.  The error messages
+        are undecorated.
+        """
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX POST requests are allowed")
 
-        context = {}
-        if not request.FILES["source_pdf"]:
-            context.update(
-                {"success": False, "message": "Form invalid", "version": version}
-            )
-        elif version is None:
-            context.update(
-                {
-                    "success": False,
-                    "message": "Version not specified",
-                    "version": version,
-                }
-            )
-        else:
-            try:
-                success, message = SourceService.take_source_from_upload(
-                    version,
-                    request.FILES["source_pdf"],
-                )
-                context.update(
-                    {
-                        "error": not success,
-                        "message": message,
-                        "src": SourceService.get_source(version),
-                    }
-                )
-            except PlomDependencyConflict as err:
-                context.update(
-                    {
-                        "error": True,
-                        "message": err,
-                        "src": SourceService.get_source(version),
-                    }
-                )
+        context = self.build_context()
+        try:
+            pdf = request.FILES["source_pdf"]
+        except KeyError as err:
+            return HttpResponseBadRequest(f"Missing file, no field {err}")
 
-        context.update(self.build_context())
-        context.update({"request_is_htmx": request.htmx})
+        if version is None:
+            return HttpResponseBadRequest("Only supports uploading by version")
 
+        try:
+            SourceService.take_source_from_upload(version, pdf)
+        except PlomDependencyConflict as err:
+            return HttpResponse(err, status=409)
+        except ValueError as err:
+            return HttpResponse(err, status=400)
+        context.update({"src": SourceService.get_source_info(version)})
         return render(request, "Preparation/source_item_view.html", context)
 
     def delete(self, request: HttpRequest, *, version: int) -> HttpResponse:
-        """HTMX delete here will remove a source PDF file from the server."""
+        """HTMX delete here will remove a source PDF file from the server.
+
+        On success, this re-renders the particular card for this version.
+
+        On error, typically b/c the files are in use, return an 409 and
+        error message.
+        """
         if not request.htmx:
             return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
 
+        context = self.build_context()
         try:
             SourceService.delete_source_pdf(version)
         except PlomDependencyConflict as err:
-            context = {
-                "error": True,
-                "message": err,
-                "src": SourceService.get_source(version),
-            }
-            return render(request, "Preparation/source_item_view.html", context)
-
-        context = self.build_context()
-        context.update(
-            {
-                "src": {
-                    "version": version,
-                    "uploaded": False,
-                },
-                "request_is_htmx": request.htmx,
-            }
-        )
-
+            return HttpResponse(err, status=409)
+        context.update({"src": SourceService.get_source_info(version)})
         return render(request, "Preparation/source_item_view.html", context)
 
 

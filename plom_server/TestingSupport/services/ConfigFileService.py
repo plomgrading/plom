@@ -5,16 +5,11 @@
 
 """Handle building a server database from a config file."""
 
-import sys
+import tomllib
 from dataclasses import asdict, dataclass
 from importlib import resources
 from pathlib import Path
 from typing import List, Optional
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 from . import PlomConfigError
 

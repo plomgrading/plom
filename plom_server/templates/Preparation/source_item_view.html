@@ -4,19 +4,9 @@
     Copyright (C) 2025-2026 Colin B. Macdonald
     Copyright (C) 2026 Aidan Murphy
 -->
-{% if request_is_htmx %}
-    <h4 class="card-title" hx-swap-oob="innerHTML:#source_status">
-        You have uploaded {{ num_uploaded_source_versions }} of {{ num_versions }} source pdfs
-        {% if all_sources_uploaded %}
-            <i class="bi bi-check-circle text-success"></i>
-        {% else %}
-            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-        {% endif %}
-    </h4>
-{% endif %}
-<div class="card" id="card-{{ src.version }}">
-    <div class="card-body">
-        {% if error %}<div class="alert alert-danger" role="alert">{{ message }}</div>{% endif %}
+<div class="card">
+    <!-- pb-0 so we can sneak in the error div -->
+    <div class="card-body pb-0">
         {% if src.uploaded %}
             <h5 class="card-title">
                 PDF for version {{ src.version }}: <a target="_blank" href={{ src.version }}>{{ src.original_filename }}</a>
@@ -39,10 +29,10 @@
                 </div>
                 <div class="px-1 col">
                     <a class="btn btn-danger"
-                       hx-delete="{{ src.version }}"
+                       hx-delete="{% url 'prep_source_upload' src.version %}"
                        hx-confirm="Are you sure?"
-                       hx-target="#card-{{ src.version }}"
-                       hx-swap="outerHTML">Delete</a>
+                       hx-target="#card_ver{{ src.version }}"
+                       hx-target-error="#error_msg_ver{{ src.version }}">Delete</a>
                 </div>
             </div>
         {% else %}
@@ -54,19 +44,25 @@
                 <form enctype="multipart/form-data"
                       id="form-{{ src.version }}"
                       hx-post="{% url 'prep_source_upload' src.version %}"
-                      hx-target="#card-{{ src.version }}">
+                      hx-target="#card_ver{{ src.version }}"
+                      hx-target-error="#error_msg_ver{{ src.version }}">
                     {% csrf_token %}
                     <div class="mb-2">
                         <input class="form-control"
                                type="file"
                                name="source_pdf"
                                accept="application/pdf"
-                               required
-                               id="pdf_file">
+                               required />
                     </div>
                     <button class="btn btn-primary" type="submit">upload</button>
                 </form>
             </div>
         {% endif %}
+        <div class="mt-2 mb-2">
+            <!-- this is the target for any htmx error message -->
+            <!-- p-0 border-0 here tries to hide the div when its empty -->
+            <div id="error_msg_ver{{ src.version }}"
+                 class="p-0 border-0 alert alert-danger"></div>
+        </div>
     </div>
 </div>

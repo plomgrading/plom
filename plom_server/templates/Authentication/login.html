@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2026 Aidan Murphy
 -->
 {% load static %}
@@ -17,13 +17,10 @@
         <link href="{% static 'css3rdparty/bootstrap-icons.css' %}"
               rel="stylesheet" />
         <link rel="stylesheet" href="{% static 'css/base.css' %}">
-        <link rel="stylesheet"
-              type="text/css"
-              href="{% static '/css/loginPage.css' %}">
         <!-- Adjusts bootstrap styling to light-mode or dark-mode -->
         <script type="module" src="{% static '/js/bootstrap_lightdark_mode.js' %}"></script>
     </head>
-    <body class="login_box">
+    <body class="bg-branded-plom">
         <div class="container py-5">
             <div class="row d-flex justify-content-center align-items-center h-100">
                 <div class="col-12 col-md-8 col-lg-6 col-xl-5">
@@ -53,7 +50,8 @@
                                     <label class="form-label" for="check-password">Show Password</label>
                                 </div>
                                 {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
-                                <button class="btn btn-lg fw-light text-centre border border-2" type="submit">
+                                <button class="btn btn-lg btn-plom-purple text-centre focus-ring"
+                                        type="submit">
                                     <span class="m-5"><span class="bi-box-arrow-in-right"></span>
                                 Login</span>
                             </button>

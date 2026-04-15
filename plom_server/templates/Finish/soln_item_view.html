@@ -1,0 +1,55 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2025-2026 Colin B. Macdonald
+-->
+<div class="card">
+    <!-- pb-0 so we can sneak in the error div -->
+    <div class="card-body pb-0">
+        {% if error %}<div class="alert alert-danger" role="alert">{{ message }}</div>{% endif %}
+        {% if soln.uploaded %}
+            <h5 class="card-title">
+                PDF for version {{ soln.version }}:
+                <a target="_blank" href="{% url 'soln_source_upload' soln.version %}">{{ soln.original_filename }}</a>
+            </h5>
+            <p class="card-text mb-2">
+                sha256: <small class="text-muted"><tt>{{ soln.hash }}</tt></small>
+            </p>
+            <div>
+                <button class="btn btn-danger"
+                        hx-delete="{% url 'soln_source_upload' soln.version %}"
+                        hx-confirm="Are you sure?"
+                        hx-target="#card_ver{{ soln.version }}"
+                        hx-target-error="#error_msg_ver{{ soln.version }}">Delete</button>
+            </div>
+        {% else %}
+            <h5 class="card-title">
+                PDF for version {{ soln.version }}
+                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            </h5>
+            <div class="card-text">
+                <form enctype="multipart/form-data"
+                      id="form-{{ soln.version }}"
+                      hx-post="{% url 'soln_source_upload' soln.version %}"
+                      hx-target="#card_ver{{ soln.version }}"
+                      hx-target-error="#error_msg_ver{{ soln.version }}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <input class="form-control"
+                               type="file"
+                               name="soln_pdf"
+                               accepts="application/pdf"
+                               required />
+                    </div>
+                    <button class="btn btn-primary" type="submit">upload</button>
+                </form>
+            </div>
+        {% endif %}
+        <div class="mt-2 mb-2">
+            <!-- this is the target for any htmx error message -->
+            <!-- p-0 border-0 here tries to hide the div when its empty -->
+            <div id="error_msg_ver{{ soln.version }}"
+                 class="p-0 border-0 alert alert-danger"></div>
+        </div>
+    </div>
+</div>

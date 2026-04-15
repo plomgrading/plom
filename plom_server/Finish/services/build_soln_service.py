@@ -104,7 +104,8 @@ class BuildSolutionService:
     def watermark_pages(self, doc: pymupdf.Document, watermark_text: str) -> None:
         """Watermark the pages of the given document with the given text."""
         margin = 10
-        for pg in doc:
+        # iteration over pages of doc confuses mypy
+        for pg in doc:  # type: ignore[attr-defined]
             h = pg.rect.height
             wm_rect = pymupdf.Rect(margin, h - margin - 32, margin + 200, h - margin)
             excess = pg.insert_textbox(
@@ -112,7 +113,7 @@ class BuildSolutionService:
                 watermark_text,
                 fontsize=18,
                 color=(0, 0, 0),
-                align=1,
+                align=pymupdf.TEXT_ALIGN_CENTER,
                 stroke_opacity=0.33,
                 fill_opacity=0.33,
                 overlay=True,
@@ -242,12 +243,17 @@ class BuildSolutionService:
                     f"The running chore {chore.huey_id} has finished, and returned {r}"
                 )
 
-    def reset_all_soln_build(self) -> None:
-        """Reset all build soln, including completed ones."""
+    @classmethod
+    def reset_all_soln_build(cls) -> None:
+        """Reset all build soln, including completed ones.
+
+        Raises:
+            Not expected to raise anything.
+        """
         # TODO: future work for a waiting version, see WIP below?
         wait = None
         # first cancel all queued chores
-        self.try_to_cancel_all_queued_chores()
+        cls.try_to_cancel_all_queued_chores()
         # any ones that we did not obsolete, we'll get 'em now:
         for chore in BuildSolutionPDFChore.objects.filter(obsolete=False).all():
             chore.set_as_obsolete()
@@ -369,7 +375,8 @@ class BuildSolutionService:
         ):
             chore.transition_to_error("never ran: forcibly dequeued")
 
-    def try_to_cancel_all_queued_chores(self) -> int:
+    @staticmethod
+    def try_to_cancel_all_queued_chores() -> int:
         """Loop over all not-yet-running chores, marking them obsolete and cancelling (if possible) any in Huey.
 
         This is a "best-attempt" at catching soln-build chores while they
@@ -381,6 +388,9 @@ class BuildSolutionService:
         Returns:
             The number of chores that we tried to revoke (and/or stopped
             before they reached the queue).
+
+        Raises:
+            Not expected to raise anything.
         """
         N = 0
         queue = get_queue("chores")

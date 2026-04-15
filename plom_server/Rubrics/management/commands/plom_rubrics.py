@@ -5,14 +5,9 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import pathlib
-import sys
+import tomllib
 from importlib import resources
 from pathlib import Path
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
@@ -103,7 +98,7 @@ class Command(BaseCommand):
                 raise CommandError(f"{e} field(s) missing from rubrics file.")
             except serializers.ValidationError as e:
                 raise CommandError(e.args[0])
-            except ValueError as e:
+            except (ValueError, tomllib.TOMLDecodeError) as e:
                 raise CommandError(e)
         return len(rubrics)
 

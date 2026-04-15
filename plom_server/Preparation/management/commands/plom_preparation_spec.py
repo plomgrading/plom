@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
+import tomllib
 from pathlib import Path
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -54,7 +55,7 @@ class Command(BaseCommand):
             SpecificationService.install_spec_from_toml_file(spec_file)
         except (
             PlomDependencyConflict,
-            SpecificationService.TOMLDecodeError,
+            tomllib.TOMLDecodeError,
             ValueError,
             serializers.ValidationError,
         ) as e:
