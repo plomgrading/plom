@@ -7,6 +7,7 @@
 
 from datetime import datetime
 from importlib import resources
+import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import dedent
@@ -21,6 +22,9 @@ from plom_server.Mark.services import MarkingTaskService
 from plom_server.Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
 from .. import services as _finish_services
+
+
+log = logging.getLogger(__name__)
 
 
 def _identity_in_first_input(x, *args, **kwargs):
@@ -81,8 +85,8 @@ def pdf_builder(
         tqdm = _tqdm
 
     if verbose:
-        print("Building report.")
-        print(
+        log.info("Building report.")
+        log.debug(
             dedent(
                 """
                 Graphs to generate:
@@ -133,7 +137,7 @@ def pdf_builder(
     selected_graphs = selected_graphs or {}
 
     if verbose:
-        print("Histogram of total marks.")
+        log.debug("Histogram of total marks.")
     graphs["graph1"].append(mpls.histogram_of_total_marks())
 
     if not brief or selected_graphs.get("graph2"):
@@ -148,7 +152,7 @@ def pdf_builder(
 
     if not brief or selected_graphs.get("graph3"):
         if verbose:
-            print("Correlation heatmap.")
+            log.debug("Correlation heatmap.")
         graphs["graph3"].append(mpls.correlation_heatmap_of_questions())
 
     if not brief or selected_graphs.get("graph4"):
@@ -245,7 +249,7 @@ def pdf_builder(
         )
 
     if verbose:
-        print("\nGenerating HTML.")
+        log.debug("\nGenerating HTML.")
 
     def _html_add_title(title: str) -> str:
         """Generate HTML for a title."""

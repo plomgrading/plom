@@ -45,7 +45,7 @@ from .rubric_permissions import RubricPermissionsService
 from .utils import _generate_display_delta, _Rubric_to_dict
 
 
-log = logging.getLogger("RubricService")
+log = logging.getLogger(__name__)
 
 
 # TODO: validation of JSONFields that the model/form/serializer could/should

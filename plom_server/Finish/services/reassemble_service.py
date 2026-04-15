@@ -5,6 +5,7 @@
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
+import logging
 import random
 import tempfile
 import time
@@ -36,6 +37,9 @@ from plom_server.Scan.services import ManageScanService
 
 from ..models import ReassemblePaperChore
 from .student_marks_service import StudentMarkService
+
+
+log = logging.getLogger(__name__)
 
 
 class ReassembleService:
@@ -547,7 +551,7 @@ class ReassembleService:
             question_score_lists=question_score_lists,
             _debug_be_flaky=False,
         )
-        print(f"Just enqueued Huey reassembly task id={res.id}")
+        log.info(f"Just enqueued Huey reassembly task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     @staticmethod
@@ -676,16 +680,16 @@ class ReassembleService:
             chore.transition_to_error("never ran: forcibly dequeued")
         if chore.status == HueyTaskTracker.RUNNING:
             if wait is None:
-                print(
+                log.info(
                     f"Note: Chore running: {chore.huey_id};"
                     " we marked it obsolete but otherwise ignoring"
                 )
             else:
-                print(f"Chore running: {chore.huey_id}, we will wait for {wait}s...")
+                log.info(f"Chore running: {chore.huey_id}, we will wait for {wait}s...")
                 r = queue.result(
                     str(chore.huey_id), blocking=True, timeout=wait, preserve=True
                 )
-                print(
+                log.info(
                     f"The running task {chore.huey_id} has finished, and returned {r}"
                 )
 
@@ -700,7 +704,7 @@ class ReassembleService:
             chore.set_as_obsolete()
             if chore.status == HueyTaskTracker.RUNNING:
                 if wait is None:
-                    print(
+                    log.info(
                         f"Note: Chore running: {chore.huey_id};"
                         " we marked it obsolete but otherwise ignoring"
                     )
@@ -739,11 +743,11 @@ class ReassembleService:
                     queue.revoke_by_id(str(task.huey_id))
                 elif task.status == HueyTaskTracker.RUNNING:
                     how_many_running += 1
-                    print(f"There is a running task: {task.huey_id}")
+                    log.info(f"There is a running task: {task.huey_id}")
                 else:
                     task.set_as_obsolete()
             if how_many_running > 0:
-                print(
+                log.info(
                     f"There are {how_many_running} running task(s): "
                     f"waiting for {tries} more seconds..."
                 )
@@ -758,7 +762,7 @@ class ReassembleService:
         for task in ReassemblePaperChore.objects.filter(obsolete=False).all():
             task.set_as_obsolete()
             if task.status == HueyTaskTracker.RUNNING:
-                print(
+                log.info(
                     f"There is STILL a running task: {task.huey_id}, "
                     f"blocking wait for {blocking_wait}s before exception!"
                 )
@@ -768,7 +772,9 @@ class ReassembleService:
                     timeout=blocking_wait,
                     preserve=True,
                 )
-                print(f"The running task {task.huey_id} has finished, and returned {r}")
+                log.info(
+                    f"The running task {task.huey_id} has finished, and returned {r}"
+                )
 
     def queue_all_paper_reassembly(self, *, build_student_report: bool = True) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked).
@@ -981,7 +987,7 @@ def huey_reassemble_paper(
 
         if _debug_be_flaky:
             for i in range(5):
-                print(f"Huey sleep i={i}/4: {task.id}")
+                log.debug(f"Huey sleep i={i}/4: {task.id}")
                 time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:

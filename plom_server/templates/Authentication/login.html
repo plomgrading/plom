@@ -26,7 +26,7 @@
                 <div class="col-12 col-md-8 col-lg-6 col-xl-5">
                     <div class="card rounded-4">
                         <div class="card-body p-5 text-center mt-4 mb-5">
-                            {% include "base/plom_logo.html" with width="276px" height="93px" %}
+                            {% include "base/plom_logo.html" with width="276px" height="93px" max_width="unset" %}
                             <p class="fw-light mb-5">v{{ plom_version }}</p>
                             <form method="post" action="">
                                 {% csrf_token %}

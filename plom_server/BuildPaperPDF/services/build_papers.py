@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024, 2026 Aidan Murphy
 
+import logging
 import pathlib
 import random
 import time
@@ -41,6 +42,9 @@ from plom_server.Preparation.services.preparation_dependency_service import (
 )
 
 from ..models import BuildPaperPDFChore
+
+
+log = logging.getLogger(__name__)
 
 
 # The decorated function returns a ``huey.api.Result``
@@ -113,7 +117,7 @@ def huey_build_single_paper(
 
         if _debug_be_flaky:
             for i in range(5):
-                print(f"Huey sleep i={i}/4: {task.id}")
+                log.debug(f"Huey sleep i={i}/4: {task.id}")
                 time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:

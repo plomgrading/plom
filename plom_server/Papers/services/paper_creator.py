@@ -21,7 +21,7 @@ from plom_server.Preparation.services.preparation_dependency_service import (
 from ..services import SpecificationService
 from ..models import Paper, FixedPage, PopulateEvacuateDBChore
 
-log = logging.getLogger("PaperCreatorService")
+log = logging.getLogger(__name__)
 
 
 # The decorated function returns a ``huey.api.Result``
@@ -78,7 +78,7 @@ def huey_populate_whole_db(
             PopulateEvacuateDBChore.set_message(
                 tracker_pk, f"Populated {idx} of {N} papers in database"
             )
-            print(f"Populated {idx} of {N} papers in database")
+            log.info(f"Populated {idx} of {N} papers in database")
 
     # TODO: currently we let the catch-all in Base/models.py handle exceptions but
     # we could do so here, avoiding errors in Huey logs... Which is better?
@@ -92,7 +92,7 @@ def huey_populate_whole_db(
     PopulateEvacuateDBChore.transition_to_complete(
         tracker_pk, msg=f"Populated all {N} papers in database"
     )
-    print(f"Populated all {N} papers in database")
+    log.info(f"Populated all {N} papers in database")
     return True
 
 
@@ -128,7 +128,7 @@ def huey_evacuate_whole_db(
             PopulateEvacuateDBChore.set_message(
                 tracker_pk, f"Deleted {idx} of {N} papers from database"
             )
-            print(f"Deleted {idx} of {N} papers from database")
+            log.info(f"Deleted {idx} of {N} papers from database")
     # TODO - decide if we should delete by table rather than by paper.
     # Table delete code follows below
     # with transaction.atomic():
@@ -139,7 +139,7 @@ def huey_evacuate_whole_db(
     PopulateEvacuateDBChore.transition_to_complete(
         tracker_pk, msg=f"Deleted all {N} papers from database"
     )
-    print(f"Deleted all {N} papers from database")
+    log.info(f"Deleted all {N} papers from database")
     return True
 
 
@@ -439,11 +439,11 @@ class PaperCreatorService:
             tracker_pk = tr.pk
 
         res = huey_populate_whole_db(qv_map, tracker_pk=tracker_pk)
-        print(f"Just enqueued Huey populate-database task id={res.id}")
+        log.info(f"Just enqueued Huey populate-database task id={res.id}")
         if background is False:
-            print("Running the task in foreground - will block until completed.")
+            log.info("Running the task in foreground - will block until completed.")
             res.get(blocking=True)
-            print("Completed.")
+            log.info("Completed.")
         else:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
@@ -488,10 +488,10 @@ class PaperCreatorService:
             tracker_pk = tr.pk
 
         res = huey_evacuate_whole_db(tracker_pk=tracker_pk)
-        print(f"Just enqueued Huey evacuate-database task id={res.id}")
+        log.info(f"Just enqueued Huey evacuate-database task id={res.id}")
         if background is False:
-            print("Running the task in foreground - will block until completed.")
+            log.info("Running the task in foreground - will block until completed.")
             res.get(blocking=True)
-            print("Completed.")
+            log.info("Completed.")
         else:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)

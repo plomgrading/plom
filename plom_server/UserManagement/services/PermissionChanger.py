@@ -244,7 +244,7 @@ def change_user_groups(
                             f'Cowardly preventing "{username}" from locking'
                             " themselves out of their own manager account"
                         )
-                        log.warn(msg)
+                        log.warning(msg)
                         raise RuntimeError(msg)
                 _remove_user_from_group(user_obj, g)
     return groups

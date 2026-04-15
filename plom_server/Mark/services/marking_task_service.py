@@ -28,7 +28,7 @@ from . import MarkingPriorityService, mark_task
 from ..models import MarkingTask, MarkingTaskTag, Annotation
 
 
-log = logging.getLogger("MarkingTaskService")
+log = logging.getLogger(__name__)
 
 
 class MarkingTaskService:
@@ -629,9 +629,7 @@ class MarkingTaskService:
             text=tag_text, defaults={"user": user}
         )
         if _created:
-            # "The bank might keep declining 'em. But these hundred dollar cheques,
-            #  I'm signin' 'em."  -- Street Sweeper Social Club re: Issue #2642
-            log.debug('New tag "%d" created by %s', tag_obj, user)
+            log.debug('New tag "%s" created by %s', tag_obj.text, user)
         return tag_obj
 
     @transaction.atomic
@@ -941,7 +939,7 @@ class MarkingTaskService:
                 if task_obj.status == MarkingTask.COMPLETE:
                     task_obj.assigned_user = new_user
                 elif task_obj.status == MarkingTask.OUT_OF_DATE:
-                    # log.warn(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
+                    # log.warning(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
                     task_obj.assigned_user = new_user
                 elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
                     # if out then set it as todo and clear the assigned_user.

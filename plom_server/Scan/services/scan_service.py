@@ -1805,7 +1805,6 @@ def huey_parent_split_bundle_chore(
             try:
                 result_chunks = [X.get() for X in task_list]
             except huey.exceptions.TaskException as e:
-                print(f"Parent: child image split chore failed with {e}")
                 log.error("Parent: child image split chore failed with %s", str(e))
                 # make an attempt to stop any remaining unqueued child tasks.
                 # note those already started probably will not stop.
@@ -1915,7 +1914,6 @@ def huey_parent_read_qr_codes_chore(
         try:
             results = [X.get() for X in task_list]
         except huey.exceptions.TaskException as e:
-            print(f"Parent: child QR read chore failed with {e}")
             log.error("Parent: child QR read chore failed with %s", str(e))
             # TODO: what about the child tasks still running?
             raise RuntimeError(f"child task failed QR read: {e}") from e
@@ -2005,7 +2003,6 @@ def huey_child_get_page_images(
     with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
             if _debug_be_flaky:
-                print(f"Huey debug, random sleep in task {task.id}")
                 log.debug("Huey debug, random sleep in task %d", task.id)
                 time.sleep(random.random() * 4)
                 if random.random() < 0.04:
@@ -2106,7 +2103,6 @@ def huey_child_parse_qr_code(
     page_data = ScanService.parse_qr_code([code_dict])
 
     if _debug_be_flaky:
-        print(f"Huey debug, random sleep in task {task.id}")
         log.debug("Huey debug, random sleep in task %d", task.id)
         time.sleep(random.random() * 4)
         if random.random() < 0.04:

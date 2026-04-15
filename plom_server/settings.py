@@ -11,7 +11,6 @@
 
 """Django settings for Plom project."""
 
-import logging
 import os
 import warnings
 from pathlib import Path
@@ -401,22 +400,83 @@ MAX_FILE_SIZE_DISPLAY = "1 MiB"
 # User uploaded files are written to /tmp if they exceed this, default is 2.5e6.
 # FILE_UPLOAD_MAX_MEMORY_SIZE = 2.5e6
 
+
+# don't log "DEBUG" level events in production
+MIN_LOGGING_LEVEL = "DEBUG" if DEBUG else "INFO"
+
+FILE_HANDLER = "file"
+CONSOLE_HANDLER = "console"
+LOGGER_HANDLERS = [CONSOLE_HANDLER] if DEBUG else [CONSOLE_HANDLER, FILE_HANDLER]
+
 LOGGING: dict[str, Any] = {
     "version": 1,
-    "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-        },
-    },
-    "loggers": {
-        "django.request": {
-            "handlers": ["console"],
-            "propagate": True,
-            "level": "DEBUG",
+    "formatters": {
+        "prepend_time": {
+            "()": "django.utils.log.ServerFormatter",
+            # the process is important for huey
+            "format": "[%(asctime)s] [%(process)d] [%(levelname)s] %(name)s: %(message)s",
         }
     },
+    "handlers": {
+        CONSOLE_HANDLER: {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "prepend_time",
+        },
+        FILE_HANDLER: {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": PLOM_BASE_DIR / "plom_server.log",
+            "formatter": "prepend_time",
+            "maxBytes": 1024 * 1024 * 10,  # 10MiB
+            "backupCount": 3,
+        },
+    },
+    # many built-in options offered by Django
+    # https://docs.djangoproject.com/en/6.0/ref/logging/#loggers
+    "loggers": {
+        # show 400/500 code responses and server errors
+        "django.request": {
+            "handlers": LOGGER_HANDLERS,
+            "propagate": True,
+            "level": MIN_LOGGING_LEVEL,
+        },
+        # show suspicious operations
+        "django.security": {
+            "handlers": LOGGER_HANDLERS,
+            "propagate": True,
+            "level": MIN_LOGGING_LEVEL,
+        },
+        # show log messages in plom_server applications
+        "plom_server": {
+            "handlers": LOGGER_HANDLERS,
+            # "propagate": True,
+            "level": MIN_LOGGING_LEVEL,
+        },
+        # This overrides a default logger for huey
+        "huey": {
+            "handlers": LOGGER_HANDLERS,
+            "propagate": True,
+            "level": "INFO",  # "DEBUG" is very spammy
+        },
+    },
 }
+
+
+# django.template flags missing context variables when rendering templates
+# but it also flags {% if error_variable %} existence checks (prevalent in our code).
+# This floods the logs, so turn on selectively.
+if False:
+    LOGGING["loggers"].update(
+        {
+            "django.template": {
+                "handlers": LOGGER_HANDLERS,
+                "propagate": True,
+                "level": MIN_LOGGING_LEVEL,
+            },
+        }
+    )
+
 
 # For general debugging and introspection, consider the django-extensions app.
 # Get it with "pip install django-extensions". One good tool this enables is
@@ -449,8 +509,10 @@ if PROFILER_NPLUSONE_ENABLED:
             }
         }
     )
-    NPLUSONE_LOGGER = logging.getLogger("nplusone")
-    NPLUSONE_LOG_LEVEL = logging.WARN
+    # TODO: removed these lines 2026-04, as the previous config should be enough
+    # TODO: next time someone uses nplusone they can confirm, this means you Andrew
+    # NPLUSONE_LOGGER = logging.getLogger("nplusone")
+    # NPLUSONE_LOG_LEVEL = logging.WARN
 
 # django-tables2 configs
 DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"

@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 
 import io
+import logging
 import random
 import tempfile
 import time
@@ -31,6 +32,9 @@ from ..models import SolutionSourcePDF, BuildSolutionPDFChore
 from .student_marks_service import StudentMarkService
 from .soln_source import SolnSourceService
 from .reassemble_service import ReassembleService
+
+
+log = logging.getLogger(__name__)
 
 
 class BuildSolutionService:
@@ -226,16 +230,16 @@ class BuildSolutionService:
             chore.transition_to_error("never ran: forcibly dequeued")
         if chore.status == HueyTaskTracker.RUNNING:
             if wait is None:
-                print(
+                log.info(
                     f"Note: Chore running: {chore.huey_id};"
                     " we marked it obsolete but otherwise ignoring"
                 )
             else:
-                print(f"Chore running: {chore.huey_id}, we will wait for {wait}s...")
+                log.info(f"Chore running: {chore.huey_id}, we will wait for {wait}s...")
                 r = queue.result(
                     str(chore.huey_id), blocking=True, timeout=wait, preserve=True
                 )
-                print(
+                log.info(
                     f"The running chore {chore.huey_id} has finished, and returned {r}"
                 )
 
@@ -255,7 +259,7 @@ class BuildSolutionService:
             chore.set_as_obsolete()
             if chore.status == HueyTaskTracker.RUNNING:
                 if wait is None:
-                    print(
+                    log.info(
                         f"Note: Chore running: {chore.huey_id};"
                         " we marked it obsolete but otherwise ignoring"
                     )
@@ -302,7 +306,7 @@ class BuildSolutionService:
         res = huey_build_soln_for_paper(
             paper_num, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
-        print(f"Just enqueued Huey solution build task id={res.id}")
+        log.info(f"Just enqueued Huey solution build task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def queue_all_solution_builds(self) -> None:
@@ -481,7 +485,7 @@ def huey_build_soln_for_paper(
 
     if _debug_be_flaky:
         for i in range(5):
-            print(f"Huey sleep i={i}/4: {task.id}")
+            log.debug(f"Huey sleep i={i}/4: {task.id}")
             time.sleep(1)
         roll = random.randint(1, 10)
         if roll % 5 == 0:
