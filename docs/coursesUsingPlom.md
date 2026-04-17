@@ -411,6 +411,18 @@ Approx: 11,700 students over 30 courses
 | Math341         | Quiz(x6)+Final                    | 70          |                                       |
 | Phys118         | Midterm(x2)+Final                 | 202         |                                       |
 | Phys158         | Midterm(x2)+Final                 | 950         |                                       |
-
+ Biol 111   | Midterm(x2)+Final                 | 416
+Biol 112    | Midterm+Final                     | 1004
+Biol 155    | Midterm+Tutorial(x2)+Final        | 413
+Biol 180    | Midterm(x2)                       | 207
+Biol 200    | Midterm+Final                     | 355
+Biol 201    | Midterm+Final                     | 435
+Biol 204    | Midterm(x2)+Final(x2)             | 196
+Biol 260    | Midterm(x2)+Final                 | 398
+Biol 300    | Midterm+Final                     | 305
+Biol 331    | Midterm+Final                     | 70
+Biol 363    | Final                             | 66
+Biol 372    | Midterm+Final                     | 155
+SCIE 001    | Midterm+Final                     | 65
 TODO: BIOL, SCIE001 (?)
 Approx: 8,776 students over 19 courses
