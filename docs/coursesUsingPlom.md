@@ -8,6 +8,7 @@
     Copyright (C) 2022 Tony Nguyen
     Copyright (C) 2022 Charlotte Dean
     Copyright (C) 2024-2026 Aidan Murphy
+    Copyright (C) 2026 Jessica Ni
 -->
 
 # Courses that have used Plom
