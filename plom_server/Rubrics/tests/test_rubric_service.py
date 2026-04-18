@@ -780,3 +780,16 @@ class RubricServiceTests(TestCase):
         RubricService.create_rubric(rub)
         with self.assertRaisesRegex(PlomConflict, "exists"):
             RubricService.create_rubric(rub)
+
+    def test_duplicate_rubric_tells_us_rid(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        r = RubricService.create_rubric(rub)
+        rid = r["rid"]
+
+        with self.assertRaisesRegex(PlomConflict, f"rid={rid}.*exists"):
+            RubricService.create_rubric(rub)
