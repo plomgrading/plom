@@ -5,6 +5,8 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2025 Andrew Rechnitzer
 
+from typing import Any
+
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
@@ -16,13 +18,13 @@ from plom_server.Authentication.services import AuthService
 from ..services import RubricService
 
 
-def _make_ex():
+def _make_ex(text: str = "ABC") -> dict[str, Any]:
     """Simulate input e.g., from client."""
     return {
         "username": "xenia",
         "kind": "neutral",
         "display_delta": ".",
-        "text": "ABC",
+        "text": text,
         "question_index": 1,
     }
 
@@ -36,10 +38,10 @@ class RubricServiceTests_permissions(TestCase):
         baker.make(User, username="yvonne")
 
     def test_rubrics_creating_user_overrides_user_namedata(self) -> None:
-        r = RubricService.create_rubric(_make_ex())
+        r = RubricService.create_rubric(_make_ex("text1"))
         self.assertEqual(r["username"], "xenia")
         yvonne = User.objects.get(username="yvonne")
-        r = RubricService.create_rubric(_make_ex(), creating_user=yvonne)
+        r = RubricService.create_rubric(_make_ex("text2"), creating_user=yvonne)
         self.assertEqual(r["username"], yvonne.username)
 
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 import logging
 import math
@@ -84,8 +84,17 @@ class RubricPermissionsService:
     """Handles setting/getting and other aspects of Rubric permissions."""
 
     @staticmethod
-    def get_fractional_settings() -> list[dict[str, Any]]:
-        """Get a table of the current fractional rubric settings, suitable for making HTML forms."""
+    def get_fractional_settings(*, all_rows: bool = True) -> list[dict[str, Any]]:
+        """Get a table of the current fractional rubric settings.
+
+        This could be used to make an HTML form or for checking which
+        fractions are enabled.
+
+        Keyword Args:
+            all_rows: include all rows (default).  Pass False to hide
+                any rows that are not to be shown in the UI (*unless*
+                they are checked).
+        """
         rubric_fractional_options = deepcopy(_frac_opt_table)
         # figure out which are currently checked by checking settings
         for opt in rubric_fractional_options:
@@ -94,11 +103,12 @@ class RubricPermissionsService:
             opt["checked"] = (
                 True if Settings.key_value_store_get_or_none(name) else False
             )
-        rubric_fractional_options = [
-            opt
-            for opt in rubric_fractional_options
-            if opt["show-in-ui"] or opt["checked"]
-        ]
+        if not all_rows:
+            rubric_fractional_options = [
+                opt
+                for opt in rubric_fractional_options
+                if opt["show-in-ui"] or opt["checked"]
+            ]
         return rubric_fractional_options
 
     @staticmethod

@@ -19,6 +19,7 @@ import io
 import html
 import json
 import logging
+import math
 import tomllib
 import tomlkit
 from operator import itemgetter
@@ -225,6 +226,57 @@ def _modify_rubric_by_making_new_one(
     return serializer.save()
 
 
+def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
+    """Check if there is an existing Rubric which overlaps too much with the proposed data.
+
+    Currently, Rubrics must differ in ONE OF::
+
+        * text
+        * question_index
+        * kind
+        * out_of (if relevant to kind)
+        * value (if relevant to kind).  Note that Rubrics that differ only
+          by "rounding error" (roughly) will be deemed to collide.
+
+    Somewhat subject to change::
+
+        * versions
+        * parameters: currently these prevent collision
+
+    Of course, we only compare against the "latest" Rubrics; conflicts will
+    not be raises based on historical rubric data, that has since changed.
+
+    Raises:
+        PlomConflict: there is a conflicting Rubric.
+    """
+    # We use an interval to avoid a floating point equality check.
+    # Probably the database is IEEE-754 so will store the float the same as we do.
+    # Somewhat more likely is two clients (say arm versus amd64) which do
+    # calculations in a different order, encurring a different rounding error.
+    # We use a tolerance of a small multiple of "machine epsilon": if two clients
+    # send 0.3333333333333332 and 0.3333333333333334 we'll get a collision.
+    # Note: this is unrelated to `_frac_value_tolerance` (which is much larger).
+    value = d.get("value", 0)
+    tol = 5 * math.ulp(value)  # about 1e-15 when value is 1
+    if Rubric.objects.filter(
+        text=d["text"],
+        question_index=d["question_index"],
+        kind=d["kind"],
+        out_of=d.get("out_of", 0),
+        value__gte=value - tol,
+        value__lte=value + tol,
+        # would two identical rubrics except for versions/parameters be ok?
+        versions=d.get("versions", ""),
+        parameters=d.get("parameters", []),
+        latest=True,
+    ).exists():
+        # TODO: more info here, ideally the "rid" of the conflicting Rubric
+        raise PlomConflict(
+            f"A rubric already exists with text={d['text']}, "
+            f"value={value}, question_index={d['question_index']}"
+        )
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
@@ -261,6 +313,7 @@ class RubricService:
                 are disallowed.
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
+            PlomConflict: a conflicting rubric already exists.
         """
         rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
         return _Rubric_to_dict(rubric_obj)
@@ -352,6 +405,10 @@ class RubricService:
                     " rubrics on this server"
                 )
             pass
+
+        # TODO: likely has race conditionsl consider refactoring into model/serializer
+        # or use `get_or_create` later.
+        _check_if_rubric_dupes_existing(incoming_data)
 
         return cls._create_rubric_lowlevel(incoming_data)
 
@@ -448,6 +505,7 @@ class RubricService:
                 modified_by_user=_bypass_user,
                 latest=data.get("latest"),
                 versions=data.get("versions", ""),
+                parameters=data.get("parameters", []),
             )
             for tag in data.get("pedagogy_tags", []):
                 new_rubric.pedagogy_tags.add(tag)
@@ -920,66 +978,106 @@ class RubricService:
                     # )
 
     @classmethod
-    def build_half_mark_delta_rubrics(cls, username: str) -> None:
-        """Create the plus and minus one-half delta rubrics that are optional.
+    def build_fractional_delta_rubrics(cls, user: User) -> int:
+        """Create any missing plus/minus fractional delta rubrics.
 
         Args:
-            username: which user to associate with the demo rubrics.
+            user: which user to associate with the demo rubrics.
+
+        Returns:
+            The number of rubrics that were created.
 
         Exceptions:
-            ValueError: username does not exist or is not part of the
-                manager group, or the half-point rubrics are disabled,
-                or these rubrics already exist.
+            None are expected.
+
+        Note its not an error of some deltas already exist: we just skip those.
+        This checking isn't done very efficiently: we just check before creating
+        each one, so we query the database N times when creating N rubrics, but
+        N is only ``2 * num_fractions * num_questions`` which shouldn't be too
+        large.
+        TODO: there may be (rare) race conditions here b/c we don't have a
+        `get_or_create` for rubrics.  For now, don't click the button too fast!
         """
-        try:
-            user = User.objects.get(username__iexact=username, groups__name="manager")
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"User '{username}' does not exist or has wrong permissions"
-            ) from e
-        if Rubric.objects.filter(value__exact=0.5).filter(text__exact=".").exists():
-            raise ValueError(
-                "Could not create half-mark delta rubrics b/c they already exist"
-            )
-        cls._build_half_mark_delta_rubrics(user)
+        num = cls._build_fractional_delta_rubrics(user)
+        return num
 
     @classmethod
-    def _build_half_mark_delta_rubrics(cls, user: User) -> None:
-        log.info("Building half-mark delta rubrics")
-        for q in SpecificationService.get_question_indices():
-            rubric = {
-                "display_delta": "+\N{VULGAR FRACTION ONE HALF}",
-                "value": 0.5,
-                "text": ".",
-                "kind": "relative",
-                "question_index": q,
-                "username": user.username,
-                "system_rubric": True,
-            }
-            r = cls.create_rubric(rubric, creating_user=user)
-            log.info(
-                "Built delta-rubric %s for Qidx %d: %s",
-                r["display_delta"],
-                r["question_index"],
-                r["rid"],
-            )
+    def _build_fractional_delta_rubrics(cls, user: User) -> int:
+        """Lower-level code to create any missing plus/minus fractional delta rubrics.
 
-            rubric = {
-                "display_delta": "-\N{VULGAR FRACTION ONE HALF}",
-                "value": -0.5,
-                "text": ".",
-                "kind": "relative",
-                "question_index": q,
-                "username": user.username,
-                "system_rubric": True,
-            }
-            r = cls.create_rubric(rubric, creating_user=user)
-            log.info(
-                "Built delta-rubric %s for Qidx %d: %s",
-                r["display_delta"],
-                r["question_index"],
-                r["rid"],
-            )
+        Returns:
+            number of newly-created rubrics.
+
+        Exceptions:
+            None are expected.
+        """
+        log.info("Building delta rubrics for any enabled fractional rubrics...")
+        num_added = 0
+        qindices = SpecificationService.get_question_indices()
+        frac_opts = RubricPermissionsService.get_fractional_settings(all_rows=True)
+        for qi in qindices:
+            for row in frac_opts:
+                if not row["checked"]:
+                    continue
+                for value in (1.0 / row["denom"], -1.0 / row["denom"]):
+                    rubric = {
+                        "value": value,
+                        "text": ".",
+                        "kind": "relative",
+                        "question_index": qi,
+                        "username": user.username,
+                        "system_rubric": True,
+                    }
+                    try:
+                        r = cls.create_rubric(rubric, creating_user=user)
+                    except PlomConflict:
+                        continue
+                    num_added += 1
+                    log.info(
+                        "Built delta-rubric %s for Qidx %d: %s",
+                        r["display_delta"],
+                        r["question_index"],
+                        r["rid"],
+                    )
+        return num_added
+
+    @classmethod
+    def publish_all_delta_rubrics(cls) -> tuple[int, int]:
+        """Publish any unpublished delta rubrics, effectively enabling delta rubrics.
+
+        Returns:
+            A pair of numbers, the total number of (latest) delta rubrics
+            and the number we published (which might be zero if they were
+            all already published.
+        """
+        with transaction.atomic():
+            rubric_queryset = Rubric.objects.filter(
+                latest=True, text="."
+            ).select_for_update()
+            n = rubric_queryset.count()
+            unpub = rubric_queryset.filter(published=False)
+            m = unpub.count()
+            unpub.update(published=True)
+            return n, m
+
+    @classmethod
+    def unpublish_all_delta_rubrics(cls) -> tuple[int, int]:
+        """Unpublish any published delta rubrics, effectively disabling delta rubrics.
+
+        Returns:
+            A pair of numbers, the total number of (latest) delta rubrics
+            and the number we unpublished (which might be zero if they were
+            all already unpublished.
+        """
+        with transaction.atomic():
+            rubric_queryset = Rubric.objects.filter(
+                latest=True, text="."
+            ).select_for_update()
+            n = rubric_queryset.count()
+            pub = rubric_queryset.filter(published=True)
+            m = pub.count()
+            pub.update(published=False)
+            return n, m
 
     @staticmethod
     def _erase_all_rubrics() -> None:

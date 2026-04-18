@@ -59,13 +59,12 @@ class RubricAdminPageView(ManagerRequiredView):
         upload_form = RubricUploadForm()
         template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
-        # TODO: flaky?
-        half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
-        rubric_fractional_options = RubricPermissionsService.get_fractional_settings()
+        rubric_fractional_options = RubricPermissionsService.get_fractional_settings(
+            all_rows=False
+        )
         context.update(
             {
                 "rubrics": rubrics,
-                "half_point_rubrics": half_point_rubrics,
                 "rubric_fractional_options": rubric_fractional_options,
                 "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,
@@ -76,16 +75,27 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricCreateHalfMarksView(ManagerRequiredView):
-    """Create half-point rubrics."""
+class RubricCreateFractionalDeltaView(ManagerRequiredView):
+    """Create fractional delta rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        any_manager = User.objects.filter(groups__name="manager").first()
-        try:
-            RubricService.build_half_mark_delta_rubrics(any_manager.username)
-        except ValueError as e:
-            messages.error(request, e)
-        return redirect("rubrics_admin")
+        """An htmx endpoint to create the fractional delta rubrics."""
+        n = RubricService.build_fractional_delta_rubrics(request.user)
+        return HttpResponse(f"Created {n} new rubrics")
+
+
+class RubricDeltaPublishView(ManagerRequiredView):
+    """Publish/unpublish the delta rubrics."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """An htmx endpoint to publish any existing delta rubrics."""
+        n, m = RubricService.publish_all_delta_rubrics()
+        return HttpResponse(f"Published {m} of {n} delta rubrics")
+
+    def delete(self, request: HttpRequest) -> HttpResponse:
+        """An htmx endpoint to unpublish any existing delta rubrics."""
+        n, m = RubricService.unpublish_all_delta_rubrics()
+        return HttpResponse(f"Unpublished {m} of {n} delta rubrics")
 
 
 class RubricFractionalPreferencesView(ManagerRequiredView):
@@ -519,7 +529,7 @@ class RubricCreateView(ManagerRequiredView):
         }
         try:
             RubricService.create_rubric(rubric_data, creating_user=request.user)
-        except (ValueError, PermissionDenied) as e:
+        except (ValueError, PermissionDenied, PlomConflict) as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:
             # see comments elsewhere about formatting serializer.ValidationError

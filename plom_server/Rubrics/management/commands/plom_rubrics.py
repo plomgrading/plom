@@ -19,6 +19,7 @@ from tabulate import tabulate
 
 import plom
 
+from plom.plom_exceptions import PlomConflict
 from plom_server.Papers.services import SpecificationService
 from ...services import RubricService
 
@@ -55,8 +56,12 @@ class Command(BaseCommand):
             question_indices = list(range(1, _numquestions + 1))
 
         with (resources.files(plom) / "demo_rubrics.toml").open("rb") as f:
-            # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
-            rubrics_in = tomllib.load(f)["rubric"]  # type: ignore[arg-type]
+            try:
+                # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
+                rubrics_in = tomllib.load(f)["rubric"]  # type: ignore[arg-type]
+            except tomllib.TOMLDecodeError as e:
+                raise CommandError(e)
+
         rubrics = []
         for rub in rubrics_in:
             if not rub.get("kind"):
@@ -98,7 +103,7 @@ class Command(BaseCommand):
                 raise CommandError(f"{e} field(s) missing from rubrics file.")
             except serializers.ValidationError as e:
                 raise CommandError(e.args[0])
-            except (ValueError, tomllib.TOMLDecodeError) as e:
+            except (ValueError, PlomConflict) as e:
                 raise CommandError(e)
         return len(rubrics)
 
@@ -246,16 +251,19 @@ class Command(BaseCommand):
             metavar="N",
             help="Get rubrics only for question (index) N, or all rubrics if omitted.",
         )
-        sp_half = sub.add_parser(
-            "half",
-            help="Add plus/minus half-mark rubrics",
+        s = sub.add_parser(
+            "fractional_delta",
+            help="Add plus/minus 1/N delta rubrics",
             description="""
-                Add plus/minus half-mark rubrics to the system for all questions.""",
+                Add \N{PLUS-MINUS SIGN}1/N delta rubrics for all questions,
+                for whichever fractions are currently enabled on the server.
+                Any existing rubrics will be skipped.
+            """,
         )
-        sp_half.add_argument(
+        s.add_argument(
             "username",
             type=str,
-            help="Name of user who is enabling the half-mark rubrics",
+            help="Name of user to associate with the fractional delta rubrics",
         )
 
     def handle(self, *args, **opt):
@@ -277,10 +285,16 @@ class Command(BaseCommand):
             N = self.upload_rubrics_from_file(f)
             self.stdout.write(self.style.SUCCESS(f"Added {N} rubrics from {f}"))
 
-        elif opt["command"] == "half":
+        elif opt["command"] == "fractional_delta":
             try:
-                RubricService.build_half_mark_delta_rubrics(opt["username"])
-                self.stdout.write(self.style.SUCCESS("Half-mark rubrics added."))
+                user = User.objects.get(username__iexact=opt["username"])
+            except User.DoesNotExist as e:
+                raise CommandError(e) from e
+            try:
+                n = RubricService.build_fractional_delta_rubrics(user)
+                self.stdout.write(
+                    self.style.SUCCESS(f"Added {n} fractional delta rubrics")
+                )
             except ValueError as e:
                 raise CommandError(e)
         else:
