@@ -19,6 +19,7 @@ from django.db.models import QuerySet, Count, Q
 from django.db import transaction
 from rest_framework import serializers
 
+from plom.plom_exceptions import PlomConflict
 from plom.misc_utils import unpack_task_code
 from plom.tagging import is_valid_tag_text
 from plom_server.Papers.services import ImageBundleService, PaperInfoService
@@ -349,32 +350,26 @@ class MarkingTaskService:
             qidx: which question?
 
         Raises:
-            ValueError: could not find such a task, an expected error, force
-                example b/c it does not exist or someone else took it: this
-                implementation uses "update" and as such does not distinguish
-                b/w various error cases.
-            RuntimeError: a software bug: multiple tasks for same thing.
+            ValueError: a task for papernum, qidx does not exist.
+            PlomConflict: task exits but it is either not assigned to,
+                or not "OUT" with, that user.
         """
-        n = MarkingTask.objects.filter(
-            paper__paper_number=papernum,
-            question_index=qidx,
-            assigned_user=user,
-            status=MarkingTask.OUT,
-        ).update(assigned_user=None, status=MarkingTask.TO_DO)
-        if n == 1:
-            pass
-        elif n == 0:
-            raise ValueError(
-                f'Not able to update an "OUT" task assigned to "{user}"'
-                f" for paper {papernum} question index {qidx}:"
-                " Perhaps someone else reassigned or reset the task?"
+        basemsg = f"Cannot surrender paper {papernum} question index {qidx}: "
+        try:
+            t = MarkingTask.objects.select_for_update().get(
+                paper__paper_number=papernum, question_index=qidx
             )
-        else:
-            raise RuntimeError(
-                f'Updated multiple ({n}) "OUT" tasks assigned to "{user}"'
-                f" for paper {papernum} question index {qidx}:"
-                " Likely software bug!"
+        except MarkingTask.DoesNotExist as e:
+            raise ValueError(basemsg + "task does not exist") from e
+        if t.assigned_user != user or t.status != MarkingTask.OUT:
+            raise PlomConflict(
+                basemsg + f'task not "Out" with "{user}"; currently assigned'
+                f' to "{t.assigned_user}" status "{t.get_status_display()}";'
+                " perhaps someone reassigned or reset the task?"
             )
+        t.assigned_user = None
+        t.status = MarkingTask.TO_DO
+        t.save()
 
     @staticmethod
     def get_n_marked_tasks() -> int:

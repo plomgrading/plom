@@ -20,6 +20,7 @@ import requests
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomNoPaper,
     PlomNoPermission,
     PlomNoServerSupportException,
     PlomQuotaLimitExceeded,
@@ -345,8 +346,9 @@ class Messenger(BaseMessenger):
         Raises:
             PlomNoServerSupportException: server too old, does not support.
             PlomAuthenticationException: no logged in.
-            PlomConflict: someone else took the task or task did not exist
-                etc.
+            PlomConflict: someone else took the task or it was otherwise in
+                an unexpected state.
+            PlomNoPaper: task did not exist.
             PlomSeriousException: generic unexpected error.
                 Poorly formatted "code" for example.
         """
@@ -362,6 +364,8 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
                 if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
