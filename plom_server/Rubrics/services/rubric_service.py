@@ -227,6 +227,28 @@ def _modify_rubric_by_making_new_one(
 
 
 def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
+    """Check if there is an existing Rubric which overlaps too much with the proposed data.
+
+    Currently, Rubrics must differ in ONE OF::
+
+        * text
+        * question_index
+        * kind
+        * out_of (if relevant to kind)
+        * value (if relevant to kind).  Note that Rubrics that differ only
+          by "rounding error" (roughly) will be deemed to collide.
+
+    Somewhat subject to change::
+
+        * versions
+        * parameters: currently these prevent collision
+
+    Of course, we only compare against the "latest" Rubrics; conflicts will
+    not be raises based on historical rubric data, that has since changed.
+
+    Raises:
+        PlomConflict: there is a conflicting Rubric.
+    """
     # We use an interval to avoid a floating point equality check.
     # Probably the database is IEEE-754 so will store the float the same as we do.
     # Somewhat more likely is two clients (say arm versus amd64) which do
