@@ -721,3 +721,62 @@ class RubricServiceTests(TestCase):
         new2 = RubricService.modify_rubric(rid, new1, is_minor_change=False)
         self.assertEqual(new2["revision"], new1["revision"] + 1)
         self.assertEqual(new2["subrevision"], 0)
+
+    def test_fails_to_create_duplicate_rubric(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        RubricService.create_rubric(rub)
+
+        with self.assertRaisesRegex(PlomConflict, "exists"):
+            RubricService.create_rubric(rub)
+
+        # some overlap is ok, e.g., different question
+        rub["question_index"] += 1
+        RubricService.create_rubric(rub)
+
+        with self.assertRaisesRegex(PlomConflict, "exists"):
+            RubricService.create_rubric(rub)
+
+    def test_duplicate_relative_rubric(self) -> None:
+        rub = {
+            "kind": "relative",
+            "value": 2,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        RubricService.create_rubric(rub)
+        with self.assertRaisesRegex(PlomConflict, "exists"):
+            RubricService.create_rubric(rub)
+
+        rub["value"] += 1
+        RubricService.create_rubric(rub)
+        with self.assertRaisesRegex(PlomConflict, "exists"):
+            RubricService.create_rubric(rub)
+
+    def test_duplicate_absolute_rubric(self) -> None:
+        rub = {
+            "kind": "absolute",
+            "value": 2,
+            "out_of": 4,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        RubricService.create_rubric(rub)
+        with self.assertRaisesRegex(PlomConflict, "exists"):
+            RubricService.create_rubric(rub)
+
+        rub["value"] += 1
+        RubricService.create_rubric(rub)
+        with self.assertRaisesRegex(PlomConflict, "exists"):
+            RubricService.create_rubric(rub)
+
+        rub["out_of"] += 1
+        RubricService.create_rubric(rub)
+        with self.assertRaisesRegex(PlomConflict, "exists"):
+            RubricService.create_rubric(rub)
