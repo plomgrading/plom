@@ -8,11 +8,13 @@
     Copyright (C) 2022 Tony Nguyen
     Copyright (C) 2022 Charlotte Dean
     Copyright (C) 2024-2026 Aidan Murphy
+    Copyright (C) 2026 Jessica Ni
 -->
 
 # Courses that have used Plom
 
-These are as best we can recall.  Currently UBC Maths-centric (interest from Biology as of May 2024).
+These are as best we can recall.  Currently UBC Maths-centric, interest from
+Biology as of May 2024, and Physics starting September 2025.
 
 
 ## 2018-19
@@ -384,3 +386,44 @@ Approx: 1100 students over 10 courses
 | SCIE001     | Midterm+Final                     | 65          |                                                                 |
 
 Approx: 11,700 students over 30 courses
+
+
+## 2025W2
+
+| Course          | Tasks                             | # students  | Notes                                 |
+|----------       |---------------------------------- |:----------: |-------------------------------        |
+| Math100         | Quiz(x5)+Midterm(x2)+Final        | 300         | Midterms scheduled as PBTF exams      |
+| Math101         | Midterm+Final                     | 3000        |                                       |
+| Math152         | Midterm(x2)+Final                 | 1000        |                                       |
+| Math200         | Quiz(x4)+Final                    | 200         |                                       |
+| Math215-201/202 | Midterm(x2)+Final                 | 320         |                                       |
+| Math111/221     | Midterm(x2)+Final                 | 570         |                                       |
+| Math227         | Midterm(x2)                       | 40          |                                       |
+| Math264         | Quiz(many)+Final                  | 800         | cross listed with BMEG220 and ELEC211 |
+| Math302         | Midterm+Final                     | 160         |                                       |
+| Math344         | Midterm+Final                     | 80          |                                       |
+| Math307         | Midterm(x2)+Final                 | 240         |                                       |
+| Math210         | Midterm+Final                     | 115         |                                       |
+| Math305         | Midterm(x2)+Final                 | 85          |                                       |
+| Math257/316     | Midterm(x2)+Final                 | 110         |                                       |
+| Math317         | Midterm(x2)+Final                 | 184         |                                       |
+| Math318         | Midterm(x3)+Final                 | 120         |                                       |
+| Math340         | Quiz(x4)+Final                    | 230         |                                       |
+| Math341         | Quiz(x6)+Final                    | 70          |                                       |
+| Phys118         | Midterm(x2)+Final                 | 202         |                                       |
+| Phys158         | Midterm(x2)+Final                 | 950         |                                       |
+| Biol 111        | Midterm(x2)+Final                 | 416         |                                       |
+| Biol 112        | Midterm+Final                     | 1004        |                                       |
+| Biol 155        | Midterm+Tutorial(x2)+Final        | 413         |                                       |
+| Biol 180        | Midterm(x2)                       | 207         |                                       |
+| Biol 200        | Midterm+Final                     | 355         |                                       |
+| Biol 201        | Midterm+Final                     | 435         |                                       |
+| Biol 204        | Midterm(x2)+Final(x2)             | 196         |                                       |
+| Biol 260        | Midterm(x2)+Final                 | 398         |                                       |
+| Biol 300        | Midterm+Final                     | 305         |                                       |
+| Biol 331        | Midterm+Final                     | 70          |                                       |
+| Biol 363        | Final                             | 66          |                                       |
+| Biol 372        | Midterm+Final                     | 155         |                                       |
+| SCIE 001        | Midterm+Final                     | 65          |                                       |
+
+Approx: 12,861 students over 32 courses
