@@ -735,7 +735,7 @@ class RubricServiceTests(TestCase):
             RubricService.create_rubric(rub)
 
         # some overlap is ok, e.g., different question
-        rub["question_index"] += 1
+        rub["question_index"] = 2
         RubricService.create_rubric(rub)
 
         with self.assertRaisesRegex(PlomConflict, "exists"):
@@ -744,7 +744,7 @@ class RubricServiceTests(TestCase):
     def test_duplicate_relative_rubric(self) -> None:
         rub = {
             "kind": "relative",
-            "value": 2,
+            "value": 1,
             "text": "qwerty",
             "username": "Liam",
             "question_index": 1,
@@ -753,7 +753,7 @@ class RubricServiceTests(TestCase):
         with self.assertRaisesRegex(PlomConflict, "exists"):
             RubricService.create_rubric(rub)
 
-        rub["value"] += 1
+        rub["value"] = 2
         RubricService.create_rubric(rub)
         with self.assertRaisesRegex(PlomConflict, "exists"):
             RubricService.create_rubric(rub)
@@ -761,8 +761,8 @@ class RubricServiceTests(TestCase):
     def test_duplicate_absolute_rubric(self) -> None:
         rub = {
             "kind": "absolute",
-            "value": 2,
-            "out_of": 4,
+            "value": 1,
+            "out_of": 3,
             "text": "qwerty",
             "username": "Liam",
             "question_index": 1,
@@ -771,12 +771,12 @@ class RubricServiceTests(TestCase):
         with self.assertRaisesRegex(PlomConflict, "exists"):
             RubricService.create_rubric(rub)
 
-        rub["value"] += 1
+        rub["value"] = 2
         RubricService.create_rubric(rub)
         with self.assertRaisesRegex(PlomConflict, "exists"):
             RubricService.create_rubric(rub)
 
-        rub["out_of"] += 1
+        rub["out_of"] = 4
         RubricService.create_rubric(rub)
         with self.assertRaisesRegex(PlomConflict, "exists"):
             RubricService.create_rubric(rub)
