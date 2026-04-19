@@ -185,7 +185,7 @@ class ReassembleService:
         ]
 
     def _get_seen_but_nonmarked_page_images(self, paper: Paper) -> list[dict[str, Any]]:
-        """Get the path and rotation for a paper's pages that weere seen but non-marked.
+        """Get the path and rotation for a paper's pages that were seen but non-marked.
 
         TODO: eventually this should look inside the annotations to decide if
         a page was used or not.  For efficiency, perhaps this should should
