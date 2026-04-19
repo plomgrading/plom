@@ -80,16 +80,11 @@ class FixedPage(models.Model):
     Every "fixed" page has a definite page-number and version-number,
     related to the assessment specification.
 
-    There are various sorts of pages.  Currently that information is stored in
-    the "kind" field.  QuestionPage can share a physical page.
-    IDPage and DNMPage also point to a particular FixedPage.  Currently DNMPages
-    always have version 1.
+    If you're searching on FixedPage, you may want to search on the `page_type`
+    field to be more specific about what kind of one pages your looking for.
 
-    If you're searching on FixedPage, you may want to search on one QuestionPage,
-    IDPage or DNMPage instead, via the kind field, depending on what you want to do.
-
-    paper (ref to Paper): the test-paper to which this page image belongs
-    image (ref to Image): the image (see note below)
+    paper: the Paper to which this FixedPage belongs.
+    image: a reference to an Image of the page, see notes below.
     page_number: the integer position of this page within the paper,
         starting from one.
         Note that (paper, page_number) is NOT unique: there could be two
@@ -100,6 +95,11 @@ class FixedPage(models.Model):
         ``.get(paper__paper_number=..., page_number=)``.
     version: the integer version of this paper/page as determined by
         the qvmap.
+    page_type: There are various sorts of pages.  QuestionPage can share
+        a physical page.  IDPage and DNMPage also point to a particular
+        FixedPage.  Currently DNMPages always have version 1.
+    question_index: which question to associate this page to, indexed from 1.
+        Must be NULL if this isn't a QuestionPage.
 
     Note that the image associated to a fixed page is allowed to be
     None.
