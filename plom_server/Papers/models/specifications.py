@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 
@@ -70,19 +70,6 @@ class Specification(SingletonABCModel):
         TODO: is this used?
         """
         return {str(q.question_index): q for q in SpecQuestion.objects.all()}
-
-    def get_question_list(self):
-        """Return the questions in the form of a list."""
-        return list(SpecQuestion.objects.all())
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the Specification model.
-
-        Raises:
-            Specification.DoesNotExist: If the Specification model does not exist.
-        """
-        return cls.objects.get(pk=1)
 
 
 class SolnSpecQuestion(models.Model):
