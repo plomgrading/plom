@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
-    Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2025-2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -118,7 +118,7 @@
                            @click.prevent="$dispatch('update-priority'); openMenu=false;">Update priority</a>
                         <a class="dropdown-item"
                            href="#"
-                           title="Tag each cluster with cluster_{qidx}_{version}_{clusterId}"
+                           title="Tag each cluster"
                            @click.prevent="document.getElementById('bulk-tag-form').submit(); openMenu=false;">
                             Bulk tagging
                         </a>

@@ -540,27 +540,27 @@ class QuestionClusteringService:
         return {cluster.clusterId: list(cluster.paper.all()) for cluster in clusters}
 
     @transaction.atomic
-    def bulk_tagging(self, question_idx: int, version: int, userid: int):
+    def bulk_tagging(self, qidx: int, version: int, *, userid: int) -> None:
         """Bulk tag all clusters with default cluster tag.
 
-        NOTE: current default cluster tag is cluster_{question_idx}_{version}_{clusterId}.
+        NOTE: current default cluster tag is cluster_qi{idx}v{version}_{clusterId}.
 
         Args:
-            question_idx: question_index of the clustering context.
+            qidx: question_index of the clustering context.
             version: version of the clustering context.
-            userid: the id of the user who calls the tagging.
 
+        Keyword Args:
+            userid: the id of the user who calls the tagging.
         """
         mts = MarkingTaskService()
         user = User.objects.get(id=userid)
 
         # get cluster_id to paper mapping
-        clusterid_to_papers = self.get_clusterid_to_paper_mapping(question_idx, version)
+        clusterid_to_papers = self.get_clusterid_to_paper_mapping(qidx, version)
 
         # get tag_texts
         tag_texts = [
-            f"cluster_{question_idx}_{version}_{cid}"
-            for cid in clusterid_to_papers.keys()
+            f"cluster_qi{qidx}v{version}_{cid}" for cid in clusterid_to_papers.keys()
         ]
 
         # get/create tags
@@ -578,7 +578,7 @@ class QuestionClusteringService:
 
         # fetch all tasks
         task_tuples = MarkingTask.objects.filter(
-            question_index=question_idx,
+            question_index=qidx,
             question_version=version,
             paper__paper_number__in=paper_num_to_tag_pk.keys(),
         ).values_list("pk", "paper__paper_number")
@@ -941,18 +941,18 @@ class QuestionClusteringService:
         for cid in clusterIds:
             self._reset_cluster(question_idx, version, cid)
 
-    def _reset_cluster(self, question_idx: int, version: int, clusterId: int) -> None:
+    def _reset_cluster(self, qidx: int, version: int, clusterId: int) -> None:
         """Reset the cluster identified by the (q, v, clusterId).
 
         NOTE: This also resets the state of the papers in the cluster and remove cluster tag.
 
         Args:
-            question_idx: question_index of the clustering context.
+            qidx: question_index of the clustering context.
             version: version of the clustering context.
             clusterId: the identifier of the cluster to be reset.
         """
         user_facing_cluster = QVCluster.objects.get(
-            question_idx=question_idx,
+            question_idx=qidx,
             version=version,
             clusterId=clusterId,
             type=ClusteringGroupType.user_facing,
@@ -962,9 +962,9 @@ class QuestionClusteringService:
 
         with transaction.atomic():
             # reset tags
-            tasks = self.get_all_tasks_in_a_cluster(question_idx, version, clusterId)
+            tasks = self.get_all_tasks_in_a_cluster(qidx, version, clusterId)
             MarkingTaskTag.objects.filter(
-                task__in=tasks, text__startswith=f"cluster_{question_idx}_{version}_"
+                task__in=tasks, text__startswith=f"cluster_qi{qidx}v{version}_"
             ).delete()
 
             # delete the old UF cluster

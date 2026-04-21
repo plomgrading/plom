@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 from urllib.parse import urlencode
 
@@ -431,7 +431,7 @@ class ClusterBulkTaggingView(ManagerRequiredView):
         uid = request.user.id
 
         qcs = QuestionClusteringService()
-        qcs.bulk_tagging(question_idx=question_idx, version=version, userid=uid)
+        qcs.bulk_tagging(question_idx, version, userid=uid)
 
         messages.success(request, "Bulk tagged")
         return redirect(next_url)
