@@ -476,19 +476,16 @@ class QuestionClusteringService:
 
     def update_priority_based_on_scene(
         self, cluster_order: list[int], question_idx: int, version: int
-    ):
+    ) -> None:
         """Update priority values based on the cluster table's order.
 
         NOTE: the priority values is given in the range of [0, len(cluster_order)],
-            priority 0 is given to the papers that are not part of any clsuters
+            priority 0 is given to the papers that are not part of any clusters
 
         Args:
             cluster_order: an ordered list of clusterIds where lower index has higher priority.
             question_idx: question_index of the clustering context.
             version: version of the clustering context.
-
-
-        cluster_order: a list of clusterIds sorted based on decreasing priority.
         """
         # grab the relevant clusters in a (q, v) context
         clusters = QVCluster.objects.filter(
