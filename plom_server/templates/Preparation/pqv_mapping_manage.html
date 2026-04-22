@@ -263,13 +263,14 @@
                                                 up to
                                                 <tt>q{{ question_indices|last }}.version</tt>
                                                 , and optionally an <tt>id.version</tt> column. Here is a template:
-                                                <button class="btn btn-link"
-                                                        onclick="downloadCSV(this)"
-                                                        id="download-all"
-                                                        data-downloadText='{{ custom_pqv_csv_template }}'
-                                                        data-filename="custom_pqv_csv_template.csv">
+                                                <a class="link-opacity-100"
+                                                   href="#"
+                                                   onclick="downloadCSV(this)"
+                                                   id="download-all"
+                                                   data-downloadText='{{ custom_pqv_csv_template }}'
+                                                   data-filename="custom_pqv_csv_template.csv">
                                                     custom_pqv_csv_template.csv<i class="bi bi-download"></i>
-                                                </button>
+                                                </a>
                                             </li>
                                             {% if student_list_present %}
                                                 <li>
