@@ -112,10 +112,12 @@
                                 top:100%;
                                 z-index:2000;
                                 min-width:12rem">
+                        <!-- djlint:off H037 -->
                         <a class="dropdown-item"
                            href="#"
                            title="Set priorities based on table order, higher row has higher priority"
                            @click.prevent="$dispatch('update-priority'); openMenu=false;">Update priority</a>
+                        <!-- djlint:on -->
                         <a class="dropdown-item"
                            href="#"
                            title="Tag each cluster"
