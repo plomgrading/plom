@@ -414,9 +414,11 @@ class UpdateClusterPriorityView(ManagerRequiredView):
 
         qcs = QuestionClusteringService()
         new_order_int = list(map(int, new_order))
-        qcs.update_priority_based_on_scene(new_order_int, question_idx, version)
+        qcs.update_priority_based_on_cluster_order(new_order_int, question_idx, version)
 
-        messages.success(request, "Updated priority to match scene")
+        messages.success(
+            request, "Updated priorities based on cluster order in the table"
+        )
         return redirect(next_url)
 
 

@@ -474,7 +474,7 @@ class QuestionClusteringService:
             )
         }
 
-    def update_priority_based_on_scene(
+    def update_priority_based_on_cluster_order(
         self, cluster_order: list[int], question_idx: int, version: int
     ) -> None:
         """Update priority values based on the cluster table's order.
