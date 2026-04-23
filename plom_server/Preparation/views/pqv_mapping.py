@@ -2,10 +2,11 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2026 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
+import csv
 import tempfile
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any
 
@@ -141,6 +142,18 @@ class PQVMappingView(ManagerRequiredView):
 
         num_students = StagingStudentService.how_many_students()
 
+        q_version_columns = ["q" + str(i) + ".version" for i in question_indices]
+        fieldnames = ["paper_number", "id.version"] + q_version_columns
+        # paper_number and id.version don't need to be generated dynamically
+        row1 = [1, 1] + [1 for i in question_indices]
+        row2 = [2, 1] + [1 for i in question_indices]
+
+        with StringIO() as iostream:
+            writer = csv.writer(iostream, delimiter=",")
+            writer.writerow(fieldnames)
+            writer.writerows([row1, row2])
+            custom_pqv_csv_template = iostream.getvalue()
+
         context = {
             "question_indices": question_indices,
             "question_labels_html": question_triples,
@@ -155,6 +168,7 @@ class PQVMappingView(ManagerRequiredView):
             "chore_message": PaperCreatorService.get_chore_message(),
             "populate_in_progress": PaperCreatorService.is_populate_in_progress(),
             "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),
+            "custom_pqv_csv_template": custom_pqv_csv_template,
         }
 
         prenamed_papers_list = list(StagingStudentService.get_prenamed_papers().keys())

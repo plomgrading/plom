@@ -4,7 +4,7 @@
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2025 Philip D. Loewen
-    Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025-2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -262,6 +262,15 @@
                                                 <tt>q{{ question_indices|first }}.version</tt>
                                                 up to
                                                 <tt>q{{ question_indices|last }}.version</tt>
+                                                , and optionally an <tt>id.version</tt> column. Here is a template:
+                                                <a class="link-opacity-100"
+                                                   href="#"
+                                                   onclick="downloadCSV(this)"
+                                                   id="download-template"
+                                                   data-downloadText='{{ custom_pqv_csv_template }}'
+                                                   data-filename="custom_pqv_csv_template.csv">
+                                                    custom_pqv_csv_template.csv<i class="bi bi-download"></i>
+                                                </a>
                                             </li>
                                             {% if student_list_present %}
                                                 <li>
@@ -306,4 +315,18 @@
             setTimeout(function () { window.location.reload(1); }, 5000);
         </script>
     {% endif %}
+    <script>
+        async function downloadCSV(buttonObj) {
+          const csvContent = buttonObj.dataset.downloadtext;
+          const blob = new Blob([csvContent], { type: 'text/csv' });
+
+          // download via 'a' element
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = buttonObj.dataset.filename;
+
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+    </script>
 {% endblock main_content %}
