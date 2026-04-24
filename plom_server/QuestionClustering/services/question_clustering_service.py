@@ -476,19 +476,16 @@ class QuestionClusteringService:
 
     def update_priority_based_on_scene(
         self, cluster_order: list[int], question_idx: int, version: int
-    ):
+    ) -> None:
         """Update priority values based on the cluster table's order.
 
         NOTE: the priority values is given in the range of [0, len(cluster_order)],
-            priority 0 is given to the papers that are not part of any clsuters
+            priority 0 is given to the papers that are not part of any clusters
 
         Args:
             cluster_order: an ordered list of clusterIds where lower index has higher priority.
             question_idx: question_index of the clustering context.
             version: version of the clustering context.
-
-
-        cluster_order: a list of clusterIds sorted based on decreasing priority.
         """
         # grab the relevant clusters in a (q, v) context
         clusters = QVCluster.objects.filter(
@@ -512,13 +509,17 @@ class QuestionClusteringService:
 
             # update all tasks under that cluster to the same priority val
             priority = len(cluster_order) - i
+            # TODO: this is probably inefficient for large numbers of tasks
+            # investigate using a bulk priority setter
             for task in curr_tasks:
                 MarkingPriorityService.modify_task_priority(task, priority)
 
             paper_nums_in_clusters.update(p.paper_number for p in curr_papers)
 
         # update priority for paper not part of any cluster to 0
-        task_not_in_cluster = tasks.exclude(paper__in=paper_nums_in_clusters)
+        task_not_in_cluster = tasks.exclude(
+            paper__paper_number__in=paper_nums_in_clusters
+        )
         for task in task_not_in_cluster:
             MarkingPriorityService.modify_task_priority(task, 0)
 
@@ -673,7 +674,7 @@ class QuestionClusteringService:
             MarkingTask.objects.filter(
                 question_index=question_idx,
                 question_version=version,
-                paper_id__in=paper_nums,
+                paper__paper_number__in=paper_nums,
             )
             .select_related(
                 "paper"
@@ -693,7 +694,7 @@ class QuestionClusteringService:
             # Get all tasks for this cluster (via its papers)
             task_list = []
             for p in papers:
-                task_list.extend(paper_to_tasks.get(p.id, []))
+                task_list.extend(paper_to_tasks.get(p.paper_number, []))
 
             if not task_list:
                 cluster_to_common_tag[cid] = set()
