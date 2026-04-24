@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Reorganisation of some Marking and Identifying tools in the UI.
 * Improvements to creating the +1/2, -1/2 rubrics and other fractional delta rubrics.
+* Remove student name box from extrasheet template.
 
 ### Fixed
 * Creating duplicate rubrics is an error (again).
