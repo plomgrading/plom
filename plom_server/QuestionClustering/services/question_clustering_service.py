@@ -509,6 +509,8 @@ class QuestionClusteringService:
 
             # update all tasks under that cluster to the same priority val
             priority = len(cluster_order) - i
+            # TODO: this is probably inefficient for large numbers of tasks
+            # investigate using a bulk priority setter
             for task in curr_tasks:
                 MarkingPriorityService.modify_task_priority(task, priority)
 
