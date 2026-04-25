@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
+    Copyright (C) 2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -75,7 +76,9 @@
                 </div>
                 <button type="submit"
                         class="btn btn-danger mt-4"
-                        onclick="return confirm('Really delete selected images?');">Delete Selected</button>
+                        onclick="return confirm('Really remove the selected images from this cluster?');">
+                    Remove selected
+                </button>
             </form>
         {% else %}
             There are no papers in this cluster. Consider delete or reset this cluster.
