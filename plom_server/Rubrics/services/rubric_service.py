@@ -26,7 +26,11 @@ from operator import itemgetter
 from typing import Any
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    PermissionDenied,
+)
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.db.models import QuerySet
@@ -247,7 +251,9 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     not be raises based on historical rubric data, that has since changed.
 
     Raises:
-        PlomConflict: there is a conflicting Rubric.
+        PlomConflict: there is a conflicting Rubric, the message gives the "rid".
+            Also can happen if there are (unexpectedly) multiple collisions,
+            which shouldn't be possible.
     """
     # We use an interval to avoid a floating point equality check.
     # Probably the database is IEEE-754 so will store the float the same as we do.
@@ -258,23 +264,25 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     # Note: this is unrelated to `_frac_value_tolerance` (which is much larger).
     value = d.get("value", 0)
     tol = 5 * math.ulp(value)  # about 1e-15 when value is 1
-    if Rubric.objects.filter(
-        text=d["text"],
-        question_index=d["question_index"],
-        kind=d["kind"],
-        out_of=d.get("out_of", 0),
-        value__gte=value - tol,
-        value__lte=value + tol,
-        # would two identical rubrics except for versions/parameters be ok?
-        versions=d.get("versions", ""),
-        parameters=d.get("parameters", []),
-        latest=True,
-    ).exists():
-        # TODO: more info here, ideally the "rid" of the conflicting Rubric
-        raise PlomConflict(
-            f"A rubric already exists with text={d['text']}, "
-            f"value={value}, question_index={d['question_index']}"
+    try:
+        existing = Rubric.objects.get(
+            text=d["text"],
+            question_index=d["question_index"],
+            kind=d["kind"],
+            out_of=d.get("out_of", 0),
+            value__gte=value - tol,
+            value__lte=value + tol,
+            # would two identical rubrics except for versions/parameters be ok?
+            versions=d.get("versions", ""),
+            parameters=d.get("parameters", []),
+            latest=True,
         )
+    except Rubric.DoesNotExist:
+        return
+    except MultipleObjectsReturned as e:
+        raise PlomConflict(f"Multiple conflicting Rubrics unexpectedly exist: {e}")
+
+    raise PlomConflict(f"A conflicting rubric rid={existing.rid} already exists")
 
 
 class RubricService:
