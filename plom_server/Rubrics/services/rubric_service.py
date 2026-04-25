@@ -130,7 +130,9 @@ def _validate_parameters(parameters: None | list, num_versions: None | int = 1) 
 def _validate_value(value: int | float | str | None, max_mark: int) -> None:
     # check that the "value" lies in [-max_mark, max_mark]
     if value is None:
-        raise serializers.ValidationError({"value": "value cannot be None"})
+        raise serializers.ValidationError(
+            {"value": 'This type of rubric requires a "value"'}
+        )
     try:
         value = float(value)
     except (ValueError, TypeError) as e:
@@ -144,6 +146,10 @@ def _validate_value(value: int | float | str | None, max_mark: int) -> None:
 
 
 def _validate_value_out_of(value, out_of, max_mark: int) -> None:
+    if out_of is None:
+        raise serializers.ValidationError(
+            {"out_of": 'This type of rubric requires an "out_of": it cannot be omitted'}
+        )
     try:
         out_of = float(out_of)
     except (ValueError, TypeError) as e:
