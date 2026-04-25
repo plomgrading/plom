@@ -919,31 +919,29 @@ class MarkingTaskService:
         Raises:
             ValueError: cannot find marking task.
         """
-        with transaction.atomic():
-            # grab the task
-            try:
-                task_obj = MarkingTask.objects.select_for_update().get(pk=task_id)
-            except MarkingTask.DoesNotExist:
-                raise ValueError(f"Cannot find marking task {task_id}")
-            if task_obj.assigned_user == user:
-                # already assigned to user, nothing needs done
-                return
-            if task_obj.status == MarkingTask.COMPLETE:
-                task_obj.assigned_user = user
-            elif task_obj.status == MarkingTask.OUT_OF_DATE:
-                # log.warning(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
-                task_obj.assigned_user = user
-            elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
-                # if out then set it as todo and clear the assigned_user.
-                # Note: this makes it available to anyone; the caller
-                # might want to additionally tag it for user.
-                task_obj.status = MarkingTask.TO_DO
-                task_obj.assigned_user = None
-            else:
-                raise AssertionError(
-                    f'Tertium non datur: impossible status "{task_obj.status}"'
-                )
-            task_obj.save()
+        try:
+            task_obj = MarkingTask.objects.select_for_update().get(pk=task_id)
+        except MarkingTask.DoesNotExist:
+            raise ValueError(f"Cannot find marking task {task_id}")
+        if task_obj.assigned_user == user:
+            # already assigned to user, nothing needs done
+            return
+        if task_obj.status == MarkingTask.COMPLETE:
+            task_obj.assigned_user = user
+        elif task_obj.status == MarkingTask.OUT_OF_DATE:
+            # log.warning(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
+            task_obj.assigned_user = user
+        elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
+            # if out then set it as todo and clear the assigned_user.
+            # Note: this makes it available to anyone; the caller
+            # might want to additionally tag it for user.
+            task_obj.status = MarkingTask.TO_DO
+            task_obj.assigned_user = None
+        else:
+            raise AssertionError(
+                f'Tertium non datur: impossible status "{task_obj.status}"'
+            )
+        task_obj.save()
 
     @classmethod
     def reassign_task_to_user(
