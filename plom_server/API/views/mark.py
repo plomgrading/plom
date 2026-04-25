@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
@@ -21,7 +21,6 @@ from plom_server.Mark.services import (
 )
 from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import Image
-
 from plom_server.Progress.services import UserInfoService
 
 from .utils import _error_response
