@@ -24,6 +24,14 @@ class MarkingTaskServiceTaggingTests(TestCase):
         # probably exactly 2 but I don't quite understand when things are reset
         assert len(s.get_all_tags()) >= 2
 
+    def test_tag_create_tag_no_user(self) -> None:
+        tag = MarkingTaskService.get_or_create_tag("A")
+        assert tag.text == "A"
+
+    def test_tag_create_tag_explicit_None_user(self) -> None:
+        tag = MarkingTaskService.get_or_create_tag("B", user=None)
+        assert tag.text == "B"
+
     def test_tag_create_user_keyword(self) -> None:
         user: User = baker.make(User)
         tag = MarkingTaskService.get_or_create_tag("tag", user=user)
