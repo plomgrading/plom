@@ -58,6 +58,7 @@ import argparse
 import os
 import sys
 import random
+from requests.exceptions import MissingSchema
 import string
 import time
 from datetime import datetime, timezone
@@ -69,7 +70,7 @@ from tqdm import tqdm
 
 import canvasapi
 from canvasapi import Canvas
-from canvasapi.exceptions import CanvasException
+from canvasapi.exceptions import CanvasException, InvalidAccessToken
 from canvasapi import __version__ as __canvasapi_version__
 
 from plom.common import (
@@ -115,7 +116,7 @@ def get_parser() -> argparse.ArgumentParser:
         f"and canvasapi package version {__canvasapi_version__})",
     )
     parser.add_argument(
-        "--api_url",
+        "--api-url",
         type=str,
         default=__DEFAULT_CANVAS_API_URL__,
         action="store",
@@ -302,34 +303,28 @@ def get_interactively_from_dict(choices: dict, *, prompt="Select one:"):
 # A suite of functions to get Canvas related stuff
 
 
-def canvas_login(
-    api_key: str, api_url: str | None = None, *, max_attempts: int = 3
-) -> canvasapi.current_user.CurrentUser | None:
+def canvas_login(api_key: str, api_url: str) -> canvasapi.current_user.CurrentUser:
     """Login to a Canvas server using an API key.
 
-    Args:
-        api_url: the Canvas server to login to, uses a default if omitted.
-        api_key: the Canvas API key.
+    The canvasapi exceptions aren't always clear, so we translate
+    them to ValueError and with more information.
 
-    Keyword Args:
-        max_attempts: if the credentials fail to authenticate,
-            try again until they fail this many times.
+    Args:
+        api_url: the Canvas server to login to.
+        api_key: the Canvas API key.
 
     Returns:
         The user referenced by the given API key if successful, or None if not.
-    """
-    if not api_url:
-        api_url = __DEFAULT_CANVAS_API_URL__
 
-    count = 0
-    while count < max_attempts:
-        try:
-            return Canvas(api_url, api_key).get_current_user()
-        except CanvasException:
-            count += 1
-    # after max_attempts failures, assume issue with input credentials
-    print("Couldn't authenticate with provided API key and api url")
-    return None
+    Raises:
+        ValueError: api_url or api_key is invalid.
+    """
+    try:
+        return Canvas(api_url, api_key).get_current_user()
+    except InvalidAccessToken as e:
+        raise ValueError("supplied 'api-key' is invalid") from e
+    except MissingSchema as e:
+        raise ValueError("supplied 'api-url' is invalid") from e
 
 
 def get_courses_teaching(
