@@ -661,8 +661,10 @@ class RubricService:
         if modifying_user is not None:
             data["modified_by_user"] = modifying_user.pk
 
-        # To be changed by future MR  (TODO: what does this comment mean?)
-        data["user"] = old_rubric.user.pk
+        if old_rubric.user is None:
+            data["user"] = None
+        else:
+            data["user"] = old_rubric.user.pk
 
         data["rid"] = old_rubric.rid
 
