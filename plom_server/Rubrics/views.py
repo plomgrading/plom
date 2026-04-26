@@ -200,7 +200,9 @@ class RubricLandingPageView(ManagerRequiredView):
         question_max_marks_dict = SpecificationService.get_questions_max_marks()
 
         filter_form = rubric_filter_form(request.GET)
-        rubrics = RubricService.get_all_rubrics()
+        # Calculate the number of times each Rubric is used.  This is done lazily
+        # on evaluation of the QuerySet and is fed into the django_tables2 Table.
+        rubrics = RubricService.get_all_rubrics_with_counts()
 
         if filter_form.is_valid():
             question_filter = filter_form.cleaned_data["question_filter"]
