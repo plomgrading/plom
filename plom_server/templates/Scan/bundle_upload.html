@@ -3,6 +3,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -32,11 +33,13 @@
                           hx-indicator="#upload_indicator">
                         {% csrf_token %}
                         <div class="mb-2">
+                            <!-- name="pdf" is WET - see Scan/views/scanner_home.py -->
                             <input class="form-control form-control-lg"
                                    type="file"
                                    name="pdf"
                                    accept="application/pdf"
                                    required
+                                   multiple
                                    id="pdf_file">
                         </div>
                         <div class="form-check mb-2">
