@@ -156,6 +156,7 @@ class Rubric(models.Model):
         NEUTRAL = "neutral", _("Neutral")
         RELATIVE = "relative", _("Relative")
 
+    # TODO: look into _parent = models.ForeignKey(RubricTable, ...)
     rid = models.IntegerField(null=False, default=generate_rid)
     kind = models.TextField(null=False, choices=RubricKind.choices)
     display_delta = models.TextField(null=False, blank=True, default="")  # is short
