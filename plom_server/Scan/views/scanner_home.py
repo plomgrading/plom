@@ -150,30 +150,35 @@ class ScannerUploadView(ScannerRequiredView):
         Refreshes the page on success.  On errors, sends error messages
         via the via the "messages" system and refreshes the page.
         """
-        bundle_file = request.FILES.get("pdf")
         user = request.user
         force_render = request.POST.get("force_render") == "on"
         read_after = request.POST.get("read_after") == "on"
         force = request.POST.get("accept_duplicates") == "on"
-        try:
-            info = ScanService.upload_bundle(
-                bundle_file,
-                user,
-                force_render=force_render,
-                read_after=read_after,
-                force=force,
-            )
-        except PlomConflict as e:
-            messages.add_message(request, messages.ERROR, e)
-            return HttpResponseClientRefresh()
-        except ValidationError as e:
-            messages.add_message(request, messages.ERROR, e.message)
-            return HttpResponseClientRefresh()
-        if info["warnings"]:
-            messages.add_message(
-                request, messages.WARNING, "Warning: " + info["warnings"]
-            )
-        messages.add_message(request, messages.INFO, "Success: " + info["msg"])
+        # "pdf" is WET - see templates/Scan/bundle_upload.html
+        file_list = request.FILES.getlist("pdf")
+
+        for bundle_file in file_list:
+            try:
+                info = ScanService.upload_bundle(
+                    bundle_file,
+                    user,
+                    force_render=force_render,
+                    read_after=read_after,
+                    force=force,
+                )
+            except PlomConflict as e:
+                messages.add_message(request, messages.ERROR, e)
+                continue
+            except ValidationError as e:
+                messages.add_message(request, messages.ERROR, e.message)
+                continue
+            # upload was successful - append success messages and any warnings
+            if info["warnings"]:
+                messages.add_message(
+                    request, messages.WARNING, "Warning: " + info["warnings"]
+                )
+            messages.add_message(request, messages.INFO, "Success: " + info["msg"])
+
         return HttpResponseClientRefresh()
 
 
