@@ -137,7 +137,7 @@ class ServerInfo(APIView):
         info: dict[str, Any] = {
             "product_string": "Plom Server",
             "version": __version__,
-            "API_version": Plom_API_Version,
+            "API_version": str(Plom_API_Version),  # TODO: does client expect str?
             "version_string": _version_string(),
             "client-reject-list": _client_reject_list(),
         }
@@ -259,7 +259,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             )
 
         # note if client is more recent then their responsibility to check compat
-        if client_api < int(Plom_API_Version):
+        if client_api < Plom_API_Version:
             return _error_response(
                 f"Client API version {client_api} is too old for this server "
                 f"(server API version {Plom_API_Version})",

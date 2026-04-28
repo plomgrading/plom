@@ -19,8 +19,8 @@ __version__ = "0.21.0.dev0"
 # The API and the database are versioned to give a quick way to address compatibility.
 # There is no reason that they must match, although we generally bump both for the first
 # release 0.x.0.  Both should not change during patches of the 0.x.y cycle.  That is our
-# practice as of early 2026.  TODO: why is API_Version a string?
-Plom_API_Version = "117"
+# practice as of early 2026.
+Plom_API_Version = 117
 Plom_DB_Version = 116
 
 # __all__ = [
