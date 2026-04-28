@@ -105,13 +105,7 @@ def check_database_version(*, verbose: bool = True) -> None:
     """
     dbver = get_database_version()
     if dbver == -1:
-        # TODO: in the future, this could be changed to be an error
-        if verbose:
-            log.warning(
-                "Warning: older database w/o metadata: compatibility unknown, "
-                "optimistically continuing w/o further checks"
-            )
-        return
+        raise ValueError("Older database w/o metadata: compatibility unknown")
     if dbver != Plom_DB_Version:
         raise ValueError(
             f"There is an existing database of version {dbver},"
