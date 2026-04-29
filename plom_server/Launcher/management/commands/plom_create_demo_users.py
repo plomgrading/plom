@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2026 Aidan Murphy
 
 from tabulate import tabulate
 
@@ -127,8 +128,8 @@ class Command(BaseCommand):
         # rebuild to reorder, and lookup passwords
         user_list = [
             {
-                "Username": d["username"],
-                "Password": user_passwords.get(d["username"], None),
+                "Username": d["user"]["username"],
+                "Password": user_passwords.get(d["user"]["username"], None),
                 "Groups": d["groups"],
             }
             for d in user_list

@@ -6,6 +6,7 @@
 from typing import Any
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.forms.models import model_to_dict
 
@@ -27,16 +28,32 @@ def get_user_info() -> dict:
 
 
 def get_list_of_user_info() -> list[dict[str, Any]]:
-    """Get a list of info about Users."""
-    return [
-        {
-            "username": user.username,
-            "user": model_to_dict(user),
-            "groups": ", ".join(user.groups.values_list("name", flat=True)),
-            "last_login": user.last_login,
-        }
-        for user in User.objects.all()
-    ]
+    """Get a list of info about Users.
+
+    Returns:
+        A list of dicts, one dict for each user. Each dict has three
+        keys: "user", "groups", and "signed_in_to_client". The "user"
+        key returns a dict equivalent of the User obj, *not including
+        @property fields* like "auth_token" or "has_usable_password".
+    """
+    user_list = []
+    for user in User.objects.all():
+        # auth_token is a computed attribute on the model
+        # it is also sensitive, so don't place in user_dict
+        try:
+            user.auth_token  # throws exception if it doesn't exist
+            has_auth_token = True
+        except ObjectDoesNotExist:
+            has_auth_token = False
+
+        user_list.append(
+            {
+                "user": model_to_dict(user),
+                "groups": ", ".join(user.groups.values_list("name", flat=True)),
+                "signed_in_to_client": has_auth_token,
+            }
+        )
+    return user_list
 
 
 def get_users_groups_info() -> dict[str, list]:

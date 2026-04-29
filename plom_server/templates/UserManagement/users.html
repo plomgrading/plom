@@ -60,7 +60,7 @@
                             {% else %}
                                 <td>Offline</td>
                             {% endif %}
-                            {% if user_dict.user.auth_token %}
+                            {% if user_dict.signed_in_to_client %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>
