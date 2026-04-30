@@ -224,17 +224,18 @@ class MarkTask(APIView):
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         annotation_image = files["annotation_image"]
-        img_md5sum = data["md5sum"]
 
         try:
             # TODO: use query param, allow client to override require_latest_rubrics=True?
             QuestionMarkingService.mark_task(
                 code,
                 user=request.user,
-                marking_data=mark_data,
+                score=mark_data["score"],
+                marking_time=mark_data["marking_time"],
+                integrity_check=mark_data["integrity_check"],
                 annotation_data=annot_data,
                 annotation_image=annotation_image,
-                annotation_image_md5sum=img_md5sum,
+                annotation_image_md5sum=mark_data["md5sum"],
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
