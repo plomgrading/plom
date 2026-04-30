@@ -78,6 +78,8 @@ class SpecificationAPIView(APIView):
             request: An HTTP request that includes a serialized file
                 accessible through key "spec_toml".
 
+        TODO: it might be nice to ALSO accept a json payload, rather than a file.
+
         Returns:
             A Response object whose json field contains the freshly-installed spec,
             with status 200, when everything works. Status 400 means TOML didn't
