@@ -34,8 +34,7 @@ class PrivateRubricParent(models.Model):
             have.
 
     For technical reasons, it cannot start with an underscore, but
-    spiritually it does; don't use this!  For example, note its not
-    listed in `admin.py`.
+    spiritually it does; don't use this!
 
     Perhaps in the future, this could be refactored into an official
     and potentially useful RubricParent table, e.g., Issue #3541.
