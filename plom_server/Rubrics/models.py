@@ -15,7 +15,6 @@ from django.core.validators import (
 )
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-import django_tables2
 
 from plom_server.Mark.models.annotations import Annotation
 
@@ -251,52 +250,3 @@ class RubricPane(models.Model):
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     question = models.PositiveIntegerField(default=0)
     data = models.JSONField(null=False, default=dict)
-
-
-# TODO: why does this live here in models?  Why can't I build this in a service
-# with "normal" prefetch etc for efficiency instead of whatever special pixie
-# dust is driving this?  What makes it so special to live here in the model?
-class RubricTable(django_tables2.Table):
-    """Table class for displaying rubrics.
-
-    More information on django-tables2 can be found at:
-    https://django-tables2.readthedocs.io/en/latest
-    """
-
-    rid = django_tables2.Column("rid", linkify=True)
-    # prevent newlines from rendering in json fields
-    parameters = django_tables2.JSONColumn(json_dumps_kwargs={})
-    # TODO: issue #3648, seeking a way to display how often they are used
-    # times_used = django_tables2.Column(
-    #     verbose_name="# Used",
-    #     accessor="get_usage_count",
-    #     orderable=False
-    # )
-    # TODO: accessor="annotations__xxx__xxx" somehow?
-    # TODO: i want to make sortable but it just crashes unless orderable=False
-
-    class Meta:
-        model = Rubric
-
-        row_attrs = {
-            "class": lambda record: "opacity-25" if not record.published else ""
-        }
-
-        # which fields to include in the table.  Or omit for all fields
-        # and use sequence = (...) to control the order.
-        fields = (
-            "rid",
-            "display_delta",
-            "last_modified",
-            "revision",
-            "subrevision",
-            "published",
-            "kind",
-            "system_rubric",
-            "question_index",
-            "text",
-            "versions",
-            "parameters",
-            "tags",
-            "pedagogy_tags",
-        )

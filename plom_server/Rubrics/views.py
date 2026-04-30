@@ -41,7 +41,7 @@ from .forms import (
     RubricItemForm,
     RubricTemplateDownloadForm,
 )
-from .models import RubricTable
+from .tables import RubricTable
 
 
 class RubricAdminPageView(ManagerRequiredView):
