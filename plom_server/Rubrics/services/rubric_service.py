@@ -130,7 +130,9 @@ def _validate_parameters(parameters: None | list, num_versions: None | int = 1) 
 def _validate_value(value: int | float | str | None, max_mark: int) -> None:
     # check that the "value" lies in [-max_mark, max_mark]
     if value is None:
-        raise serializers.ValidationError({"value": "value cannot be None"})
+        raise serializers.ValidationError(
+            {"value": 'This type of rubric requires a "value"'}
+        )
     try:
         value = float(value)
     except (ValueError, TypeError) as e:
@@ -144,6 +146,10 @@ def _validate_value(value: int | float | str | None, max_mark: int) -> None:
 
 
 def _validate_value_out_of(value, out_of, max_mark: int) -> None:
+    if out_of is None:
+        raise serializers.ValidationError(
+            {"out_of": 'This type of rubric requires an "out_of": it cannot be omitted'}
+        )
     try:
         out_of = float(out_of)
     except (ValueError, TypeError) as e:
@@ -255,28 +261,36 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
             Also can happen if there are (unexpectedly) multiple collisions,
             which shouldn't be possible.
     """
-    # We use an interval to avoid a floating point equality check.
-    # Probably the database is IEEE-754 so will store the float the same as we do.
-    # Somewhat more likely is two clients (say arm versus amd64) which do
-    # calculations in a different order, encurring a different rounding error.
-    # We use a tolerance of a small multiple of "machine epsilon": if two clients
-    # send 0.3333333333333332 and 0.3333333333333334 we'll get a collision.
-    # Note: this is unrelated to `_frac_value_tolerance` (which is much larger).
+    # deal with everything except value first
+    queryset = Rubric.objects.filter(
+        text=d["text"],
+        question_index=d["question_index"],
+        kind=d["kind"],
+        out_of=d.get("out_of", 0),
+        # would two identical rubrics except for versions/parameters be ok?
+        versions=d.get("versions", ""),
+        parameters=d.get("parameters", []),
+        latest=True,
+    )
+
     value = d.get("value", 0)
-    tol = 5 * math.ulp(value)  # about 1e-15 when value is 1
+    if value is None or value == 0:
+        # None will be converted to zero internally
+        queryset = queryset.filter(value=0)
+    else:
+        # We use an interval to avoid a floating point equality check.
+        # Probably the database is IEEE-754 so will store the float the same as we do.
+        # Somewhat more likely is two clients (say arm versus amd64) which do
+        # calculations in a different order, encurring a different rounding error.
+        # We use a tolerance of a small multiple of "machine epsilon": if two clients
+        # send 0.3333333333333332 and 0.3333333333333334 we'll get a collision.
+        # Note: this is unrelated to `_frac_value_tolerance` (which is much larger).
+        tol = 5 * math.ulp(value)  # about 1e-15 when value is 1
+        queryset = queryset.filter(value__gte=value - tol, value__lte=value + tol)
+
+    # now there should be exactly zero or one Rubrics
     try:
-        existing = Rubric.objects.get(
-            text=d["text"],
-            question_index=d["question_index"],
-            kind=d["kind"],
-            out_of=d.get("out_of", 0),
-            value__gte=value - tol,
-            value__lte=value + tol,
-            # would two identical rubrics except for versions/parameters be ok?
-            versions=d.get("versions", ""),
-            parameters=d.get("parameters", []),
-            latest=True,
-        )
+        existing = queryset.get()
     except Rubric.DoesNotExist:
         return
     except MultipleObjectsReturned as e:
