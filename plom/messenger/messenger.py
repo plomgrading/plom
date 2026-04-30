@@ -11,8 +11,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Any
 
 import requests
@@ -486,7 +487,7 @@ class Messenger(BaseMessenger):
         score,
         marking_time,
         annotated_img,
-        plomfile,
+        plom_data: dict[str, Any],
         rubrics,
         integrity_check,
     ) -> dict[str, Any]:
@@ -501,8 +502,8 @@ class Messenger(BaseMessenger):
                 the paper.
             annotated_img (pathlib.Path): the annotated image, either a
                 png or a jpeg.
-            plomfile (pathlib.Path): machine-readable json of annotations
-                on the page.
+            plom_data: a dictionary representation of the annotation on
+                the page.
             rubrics (list): list of rubric IDs used on the page.
             integrity_check (str): a blob that the server expects to get
                 back.
@@ -526,12 +527,11 @@ class Messenger(BaseMessenger):
         if self.is_server_api_less_than(115):
             assert not code.startswith("q")
             code = "q" + code
+        plom_data_ascii_str_of_json = json.dumps(plom_data)
         with self.SRmutex:
             try:
-                with (
-                    open(annotated_img, "rb") as annot_img_file,
-                    open(plomfile, "rb") as plom_data_file,
-                ):
+                with open(annotated_img, "rb") as annot_img_file:
+                    # Note that "data" here is key-value only, no directly dumping in json
                     data = {
                         "pg": str(q),
                         "ver": str(ver),
@@ -539,6 +539,7 @@ class Messenger(BaseMessenger):
                         "marking_time": marking_time,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
+                        "annotations": plom_data_ascii_str_of_json,
                     }
 
                     annot_img_file.seek(0)
@@ -546,8 +547,12 @@ class Messenger(BaseMessenger):
                     # automatically puts the filename in
                     files = {
                         "annotation_image": annot_img_file,
-                        "plomfile": plom_data_file,
                     }
+                    if self.is_server_api_less_than(117):
+                        # on old servers we to send the annotations as a file
+                        # (the data string above is ignored)
+                        tmp_file = StringIO(plom_data_ascii_str_of_json)
+                        files.update({"plomfile": tmp_file})
 
                     # increase read timeout relative to default: Issue #1575
                     timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
