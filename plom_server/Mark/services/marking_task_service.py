@@ -601,14 +601,16 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+    @staticmethod
+    def get_or_create_tag(tag_text: str, user: User | None = None) -> MarkingTaskTag:
         """Get an existing tag, or create if necessary, based on the given text.
 
         Args:
+            tag_text: the text of the tag.
             user: the user creating the tag, if a new tag needs to be
                 created.  If the tag already exists, we DO NOT update
-                the user.
-            tag_text: the text of the tag.
+                the user.  If you pass None, you don't care or don't
+                want to record the user.  Defaults to None.
 
         Returns:
             MarkingTaskTag: reference to the tag
@@ -620,25 +622,32 @@ class MarkingTaskService:
             raise serializers.ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
+        defaults = {} if user is None else {"user": user}
         tag_obj, _created = MarkingTaskTag.objects.get_or_create(
-            text=tag_text, defaults={"user": user}
+            text=tag_text, defaults=defaults
         )
         if _created:
-            log.debug('New tag "%s" created by %s', tag_obj.text, user)
+            if user is None:
+                log.debug('New tag "%s" created', tag_obj.text)
+            else:
+                log.debug('New tag "%s" created by %s', tag_obj.text, user)
         return tag_obj
 
+    @staticmethod
     @transaction.atomic
     def bulk_get_or_create_tag(
-        self, user: User, tag_texts: list[str]
+        tag_texts: list[str], user: User
     ) -> list[MarkingTaskTag]:
         """Get existing tags, or create if necessary, based on the given texts.
 
         Args:
-            user: the user creating/attaching the tag.
             tag_texts: the text of the tags.
+            user: the user creating/attaching the tags, currently
+                must not be None, see :meth:`get_or_create_tag` if
+                you need that feature.
 
         Returns:
-            a list referencing the tags
+            A list referencing the tags.
 
         Raises:
             serializers.ValidationError: if the tag text is not legal.
@@ -657,6 +666,8 @@ class MarkingTaskService:
             if x not in seen:
                 seen.add(x)
                 tag_texts_unique.append(x)
+
+        assert user is not None
 
         # Get all existing tags for this user
         existing_tags = MarkingTaskTag.objects.filter(
@@ -750,7 +761,7 @@ class MarkingTaskService:
             serializers.ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
-        the_tag = self.get_or_create_tag(user, tag_text)
+        the_tag = self.get_or_create_tag(tag_text, user=user)
         self._add_tag(the_tag, the_task)
 
     @transaction.atomic
@@ -897,7 +908,7 @@ class MarkingTaskService:
         Raises:
             serializers.ValidationError: if the tag text is not legal.
         """
-        tag_obj = self.get_or_create_tag(user, tag_text)
+        tag_obj = self.get_or_create_tag(tag_text, user=user)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @staticmethod

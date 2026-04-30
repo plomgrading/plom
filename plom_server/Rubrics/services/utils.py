@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2019-2025 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
@@ -31,7 +31,7 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         "text": r.text,
         "tags": r.tags,
         "meta": r.meta,
-        "username": r.user.username,
+        "username": "" if not r.user else r.user.username,
         "question_index": r.question_index,
         "versions": r.versions,
         "parameters": r.parameters,
