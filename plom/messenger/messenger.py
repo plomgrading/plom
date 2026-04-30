@@ -482,8 +482,6 @@ class Messenger(BaseMessenger):
     def MreturnMarkedTask(
         self,
         code: str,
-        q: int,
-        ver: int,
         score,
         marking_time,
         annotated_img,
@@ -533,21 +531,23 @@ class Messenger(BaseMessenger):
                 with open(annotated_img, "rb") as annot_img_file:
                     # Note that "data" here is key-value only, no directly dumping in json
                     data = {
-                        "pg": str(q),
-                        "ver": str(ver),
                         "score": str(score),
                         "marking_time": marking_time,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
                         "annotations": plom_data_ascii_str_of_json,
                     }
-
                     annot_img_file.seek(0)
 
                     # automatically puts the filename in
                     files = {
                         "annotation_image": annot_img_file,
                     }
+
+                    if self.is_server_api_less_than(117):
+                        # these eys must be present but no one checks the values (!)
+                        data.update({"pg": "1", "ver": "1"})
+
                     if self.is_server_api_less_than(117):
                         # on old servers we to send the annotations as a file
                         # (the data string above is ignored)
