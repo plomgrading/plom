@@ -159,7 +159,7 @@ class QuestionMarkingService:
         *,
         user: User,
         marking_data: dict[str, Any],
-        annotation_data: dict,
+        annotation_data: dict[str, Any],
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
         require_latest_rubrics: bool = True,

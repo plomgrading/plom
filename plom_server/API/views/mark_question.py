@@ -166,6 +166,20 @@ class MarkTask(APIView):
     def post(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
+        Args:
+            request: should contain a file keyed by "annotation_image"
+                and data of key-value pairs.  The data has keys "pg",
+                "ver", "score", "marking_time", "md5sum", "integrity_check".
+                Also "annotations" which contains an ascii string encoding
+                of JSON: in Python you can create this using
+                ``json.dumps(annotation_data)``.  The expected format of
+                the dictionary `annotation_data` is hopefully documented
+                elsewhere.
+                TODO: drop pg, ver: unused for a long time
+
+        Keyword Args:
+            code: a string such as "0123g4" specifying a task.
+
         Returns:
             200: returns two integers, first the number of marked papers
             for this question/version and the total number of papers for
@@ -194,12 +208,16 @@ class MarkTask(APIView):
         data = request.POST
         files = request.FILES
 
-        plomfile = request.FILES["plomfile"]
-        plomfile_data = plomfile.read().decode("utf-8")
+        raw_annotation_data = data.get("annotations")
+        if not raw_annotation_data:
+            return _error_response(
+                "data must contain 'annotations', a string of json",
+                status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             mark_data, annot_data = mts.validate_and_clean_marking_data(
-                code, data, plomfile_data
+                code, data, raw_annotation_data
             )
         except serializers.ValidationError as e:
             # happens automatically but this way we keep the error msg
