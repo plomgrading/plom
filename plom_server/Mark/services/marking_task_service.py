@@ -436,28 +436,6 @@ class MarkingTaskService:
         cleaned_data: dict[str, Any] = {}
 
         try:
-            cleaned_data["pg"] = int(data["pg"])
-        except IndexError as e:
-            raise serializers.ValidationError(
-                'Multiple values for "pg", expected 1.'
-            ) from e
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError(
-                f'Could not cast "pg" as int: {data["pg"]}'
-            ) from e
-
-        try:
-            cleaned_data["ver"] = int(data["ver"])
-        except IndexError as e:
-            raise serializers.ValidationError(
-                'Multiple values for "ver", expected 1.'
-            ) from e
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError(
-                f'Could not cast "ver" as int: {data["ver"]}'
-            ) from e
-
-        try:
             cleaned_data["score"] = float(data["score"])
         except IndexError as e:
             raise serializers.ValidationError(

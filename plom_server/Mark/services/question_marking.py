@@ -171,7 +171,7 @@ class QuestionMarkingService:
 
         Keyword Args:
             user: which user.
-            marking_data: TODO.
+            marking_data: must contain keys "integrity_check", "score", "marking_time".
             annotation_data: TODO.
             annotation_image: TODO.
             annotation_image_md5sum: TODO.

@@ -168,14 +168,14 @@ class MarkTask(APIView):
 
         Args:
             request: should contain a file keyed by "annotation_image"
-                and data of key-value pairs.  The data has keys "pg",
-                "ver", "score", "marking_time", "md5sum", "integrity_check".
+                and data of key-value pairs.  The data has keys "score",
+                "marking_time", "md5sum", "integrity_check".
                 Also "annotations" which contains an ascii string encoding
                 of JSON: in Python you can create this using
                 ``json.dumps(annotation_data)``.  The expected format of
                 the dictionary `annotation_data` is hopefully documented
                 elsewhere.
-                TODO: drop pg, ver: unused for a long time
+                This format is still influx: expect changes in the future.
 
         Keyword Args:
             code: a string such as "0123g4" specifying a task.
