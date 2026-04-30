@@ -642,7 +642,9 @@ class MarkingTaskService:
 
         Args:
             tag_texts: the text of the tags.
-            user: the user creating/attaching the tags.
+            user: the user creating/attaching the tags, currently
+                must not be None, see :meth:`get_or_create_tag` if
+                you need that feature.
 
         Returns:
             A list referencing the tags.
@@ -664,6 +666,8 @@ class MarkingTaskService:
             if x not in seen:
                 seen.add(x)
                 tag_texts_unique.append(x)
+
+        assert user is not None
 
         # Get all existing tags for this user
         existing_tags = MarkingTaskTag.objects.filter(
