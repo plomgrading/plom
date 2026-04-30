@@ -659,6 +659,7 @@ class PlomAdminMessenger(Messenger):
         """
         # Caution: don't use json= with post when files= is used: use data= instead
         # https://requests.readthedocs.io/en/latest/user/quickstart/#more-complicated-post-requests
+        # And note that "data" is key-value only, no directly dumping in json
         with self.SRmutex:
             try:
                 with spec_toml.open("rb") as f:
