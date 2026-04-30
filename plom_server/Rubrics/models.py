@@ -22,11 +22,11 @@ from plom_server.Mark.models.annotations import Annotation
 
 def generate_rid():
     """Generate a new "rubric id"."""
-    new_parent = PrivateRubricParent.objects.create()
+    new_parent = RubricParent.objects.create()
     return new_parent.id
 
 
-class PrivateRubricParent(models.Model):
+class RubricParent(models.Model):
     """A technical implementation detail of rubrics.
 
     Fields:
@@ -56,7 +56,7 @@ class Rubric(models.Model):
             the same rid is preserved across revisions, even if
             we use new rows (new ``pk``) for each revision.
             Technically, this ``rid`` is the ``id`` ("pk") of a row of the
-            PrivateRubricParent table, although that is an implementation detail
+            RubricParent table, although that is an implementation detail
             that shouldn't be used.
         kind: one of "relative"; "abs"; or "neutral". This field indicates how the
             ``value`` and ``out_of`` fields are to be interpreted.

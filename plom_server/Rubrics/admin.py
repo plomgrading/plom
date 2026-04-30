@@ -4,9 +4,9 @@
 
 from django.contrib import admin
 
-from .models import PrivateRubricParent, Rubric, RubricPane
+from .models import RubricParent, Rubric, RubricPane
 
 # This makes models appear in the admin interface
-admin.site.register(PrivateRubricParent)
+admin.site.register(RubricParent)
 admin.site.register(Rubric)
 admin.site.register(RubricPane)
