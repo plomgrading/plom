@@ -405,6 +405,7 @@ class Messenger(BaseMessenger):
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code in (403, 406):
+                    # Note: 406 can be removed once we drop support for 116
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomRangeException(response.reason) from None
@@ -441,6 +442,7 @@ class Messenger(BaseMessenger):
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code in (403, 406):
+                    # Note: 406 can be removed once we drop support for 116
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomRangeException(response.reason) from None
