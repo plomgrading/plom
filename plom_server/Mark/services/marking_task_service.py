@@ -460,6 +460,13 @@ class MarkingTaskService:
                 f"Could not get 'integrity_check' as a int: {e}"
             ) from e
 
+        try:
+            cleaned_data["md5sum"] = str(data["md5sum"])
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(
+                f"Could not get 'md5sumk' as a str: {e}"
+            ) from e
+
         # We used to unpack the rubrics and ensure they all exist in the DB.
         # That will happen later when we try to save: I'm not sure its worth
         # the overhead of checking twice: smells like asking permission...
