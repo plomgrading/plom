@@ -164,6 +164,7 @@ class QuestionMarkingService:
         annotation_data: dict[str, Any],
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
+        rubric_list: list[tuple[int, int | None]],
         require_latest_rubrics: bool = True,
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
@@ -182,6 +183,7 @@ class QuestionMarkingService:
                 This is annotation_data rendered on top of the underlying
                 images.  Its the image that should be shown back to users.
             annotation_image_md5sum: the md5sum of the annotated image.
+            rubric_list: a list of the rubrics used in these annotations.
             require_latest_rubrics: TODO.
 
         Raises:
@@ -253,6 +255,7 @@ class QuestionMarkingService:
             marking_time,
             annotation_image_md5sum,
             annotation_image,
+            rubric_list,
             annotation_data,
             require_latest_rubrics=require_latest_rubrics,
         )

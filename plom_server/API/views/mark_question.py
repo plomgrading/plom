@@ -169,8 +169,19 @@ class MarkTask(APIView):
         Args:
             request: should contain a file keyed by "annotation_image"
                 and data of key-value pairs.  The data has keys "score",
-                "marking_time", "md5sum", "integrity_check".
-                Also "annotations" which contains an ascii string encoding
+                "marking_time", "md5sum", "integrity_check", "rubric",
+                and "annotations".
+                "rubric" can be repeated to give a list of integers
+                (which will come as strings b/c I think http just does that),
+                corresponding to the rids of the Rubrics used in this
+                annotation.  It can be empty.  If you use a Rubric more than
+                once, repeat it in the list.  Providing only the integer rids
+                means Plom will assume you're using the latest revisions of each.
+                To enable more precise checking, pass in ``<rid>.<rev>``,
+                ``<rid>r<rev>``, or ``<rid>rev<rev>`` (for example "14.3"
+                "15r0" or "15rev0").  That way you'll get errors if those are
+                not the latest revisions.
+                "annotations" contains an ascii string encoding
                 of JSON: in Python you can create this using
                 ``json.dumps(annotation_data)``.  The expected format of
                 the dictionary `annotation_data` is hopefully documented
@@ -214,6 +225,36 @@ class MarkTask(APIView):
                 "data must contain 'annotations', a string of json",
                 status.HTTP_400_BAD_REQUEST,
             )
+        # TODO: move these checks to the validate code?
+        rubric_list = []
+        for x in data.getlist("rubric"):
+            print(x)
+            if "." in x:
+                rid, rev = x.split(".")
+            elif "rev" in x:
+                rid, rev = x.split("rev")
+            elif "r" in x:
+                rid, rev = x.split("r")
+            else:
+                rid, rev = x, None
+
+            try:
+                rid = int(rid)
+            except (ValueError, TypeError) as e:
+                return _error_response(
+                    f'failed to extract integer "rid" from rubric "{x}": {e}',
+                    status.HTTP_400_BAD_REQUEST,
+                )
+            if rev is not None:
+                try:
+                    rev = int(rev)
+                except (ValueError, TypeError) as e:
+                    return _error_response(
+                        f'failed to extract integer "rev" from rubric "{x}": {e}',
+                        status.HTTP_400_BAD_REQUEST,
+                    )
+            rubric_list.append((rid, rev))
+        print(rubric_list)
 
         try:
             mark_data, annot_data = mts.validate_and_clean_marking_data(
@@ -222,6 +263,14 @@ class MarkTask(APIView):
         except serializers.ValidationError as e:
             # happens automatically but this way we keep the error msg
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
+
+        # take rid rev pairs from the annotation data
+        # TODO: this is temporary/debugging
+        from plom_server.Mark.services.annotations import _extract_rubric_rid_rev_pairs
+
+        rubric_list2 = _extract_rubric_rid_rev_pairs(annot_data)
+        print(rubric_list2)
+        # rubric_list = rubric_list2
 
         annotation_image = files["annotation_image"]
 
@@ -236,6 +285,7 @@ class MarkTask(APIView):
                 annotation_data=annot_data,
                 annotation_image=annotation_image,
                 annotation_image_md5sum=mark_data["md5sum"],
+                rubric_list=rubric_list,
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)

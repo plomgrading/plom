@@ -486,7 +486,7 @@ class Messenger(BaseMessenger):
         marking_time,
         annotated_img,
         plom_data: dict[str, Any],
-        rubrics,
+        rubrics: list[int],
         integrity_check,
     ) -> dict[str, Any]:
         """Upload annotated image and associated data to the server.
@@ -502,7 +502,7 @@ class Messenger(BaseMessenger):
                 png or a jpeg.
             plom_data: a dictionary representation of the annotation on
                 the page.
-            rubrics (list): list of rubric IDs used on the page.
+            rubrics: list of rubric IDs used on the page.
             integrity_check (str): a blob that the server expects to get
                 back.
 
@@ -535,6 +535,7 @@ class Messenger(BaseMessenger):
                         "marking_time": marking_time,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
+                        "rubric": rubrics,
                         "annotations": plom_data_ascii_str_of_json,
                     }
                     annot_img_file.seek(0)
