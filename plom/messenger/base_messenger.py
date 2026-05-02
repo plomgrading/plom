@@ -73,6 +73,7 @@ Supported_Server_API_Versions = [
 #    - get/set public_code
 # * 117
 #    - surrender task
+#    - reassign/reset return 403 not 406 for wrong user
 
 
 log = logging.getLogger("messenger")
