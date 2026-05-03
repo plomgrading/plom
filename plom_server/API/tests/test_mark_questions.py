@@ -164,7 +164,6 @@ class TestMarkQuestionAPI:
                 "integrity_check": 1,
                 "annotation_image": dummy_file,
                 "md5sum": 1,
-                "annotations": "{}",
             },
             format="multipart",
         )
@@ -238,7 +237,6 @@ class TestMarkQuestionAPI:
                 "integrity_check": 9,
                 "annotation_image": self.dummy_file,
                 "md5sum": 1,
-                "annotations": "{}",
             },
             format="multipart",
         )

@@ -189,7 +189,8 @@ class MarkTask(APIView):
                 ``<rid>r<rev>``, or ``<rid>rev<rev>`` (for example "14.3"
                 "15r0" or "15rev0").  That way you'll get errors if those are
                 not the latest revisions.
-                "annotations" contains an ascii string encoding
+                Optionally, you can provide "annotations" containing an ascii
+                string encoding
                 of JSON: in Python you can create this using
                 ``json.dumps(annotation_data)``.  The expected format of
                 the dictionary `annotation_data` is hopefully documented
@@ -280,10 +281,9 @@ class MarkTask(APIView):
                     )
             rubric_list.append((rid, rev))
 
-        try:
-            raw_annotation_data = data["annotations"]
-        except KeyError as e:
-            return _400(f"You must provide the value: {e}")
+        raw_annotation_data = data.get("annotations")
+        if raw_annotation_data is None:
+            raw_annotation_data = "{}"
 
         # TODO: error handling around this loads, unless we stop doing this
         annot_data = json.loads(raw_annotation_data)
