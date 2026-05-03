@@ -191,9 +191,8 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
         MarkingTaskService.assign_task_to_user(task.pk, user0)
         img = baker.make(AnnotationImage)
-        rubs = [(123456, 42)]
         with self.assertRaises(KeyError):
-            _create_new_annotation_in_database(task, 3.0, 21, img, rubs)
+            _create_new_annotation_in_database(task, 3.0, 21, img, [(123456, 42)])
 
     def test_marking_submits_outofdate_rubric(self) -> None:
         user0: User = baker.make(User)

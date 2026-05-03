@@ -553,7 +553,7 @@ class Messenger(BaseMessenger):
                         # on old servers we to send the annotations as a file
                         # (the data string above is ignored)
                         tmp_file = StringIO(plom_data_ascii_str_of_json)
-                        files.update({"plomfile": tmp_file})
+                        files.update({"plomfile": tmp_file})  # type: ignore[dict-item]
 
                     # increase read timeout relative to default: Issue #1575
                     timeout = (self.default_timeout[0], 3 * self.default_timeout[1])

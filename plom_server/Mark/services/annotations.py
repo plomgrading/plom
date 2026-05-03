@@ -138,7 +138,7 @@ def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
 def _validate_rubric_use_and_score(
     question_index: int,
     client_score: float,
-    rid_rev_pairs: list[tuple[int, int]],
+    rid_rev_pairs: list[tuple[int, int | None]],
     *,
     tolerance: float = 1e-9,
     require_latest_rubrics: bool = True,
