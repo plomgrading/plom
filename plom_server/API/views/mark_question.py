@@ -26,6 +26,7 @@ from plom.plom_exceptions import (
 from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
 from plom_server.Progress.services import UserInfoService
+from plom_server.Papers.services import PaperInfoService
 from .utils import _error_response
 
 
@@ -286,22 +287,25 @@ class MarkTask(APIView):
 
         # TODO: error handling around this loads, unless we stop doing this
         annot_data = json.loads(raw_annotation_data)
+        # TODO: temporarily do extra work here when client agent is org.plomgrading.PlomClient
+        if False:
+            # Colin thinks this is a very bad idea
+            src_img_data = annot_data["base_images"]
+            for image_data in src_img_data:
+                # TODO: this looks like direct file access on the server, Issue #3888.
+                img_path = pathlib.Path(image_data["server_path"])
+                if not img_path.exists():
+                    return _400("Invalid original-image in request")
 
-        # Colin thinks this is a very bad idea
-        src_img_data = annot_data["base_images"]
-        for image_data in src_img_data:
-            # TODO: this looks like direct file access on the server, Issue #3888.
-            img_path = pathlib.Path(image_data["server_path"])
-            if not img_path.exists():
-                return _400("Invalid original-image in request")
+            # take rid rev pairs from the annotation data
+            # TODO: this is temporary/debugging
+            from plom_server.Mark.services.annotations import (
+                _extract_rubric_rid_rev_pairs,
+            )
 
-        # take rid rev pairs from the annotation data
-        # TODO: this is temporary/debugging
-        from plom_server.Mark.services.annotations import _extract_rubric_rid_rev_pairs
-
-        rubric_list2 = _extract_rubric_rid_rev_pairs(annot_data)
-        print(rubric_list2)
-        # rubric_list = rubric_list2
+            rubric_list2 = _extract_rubric_rid_rev_pairs(annot_data)
+            print(rubric_list2)
+            # rubric_list = rubric_list2
 
         annotation_image = files["annotation_image"]
 
@@ -335,12 +339,12 @@ class MarkTask(APIView):
         def int_or_None(x):
             return None if x is None else int(x)
 
-        question = int_or_None(data.get("pg"))
-        version = int_or_None(data.get("ver"))
+        papernum, qidx = unpack_task_code(code)
+        version = PaperInfoService.get_version_from_paper_question(papernum, qidx)
 
         username = request.user.username
         progress = UserInfoService.get_user_progress(username=username)
-        n, m = mts.get_marking_progress(question, version)
+        n, m = mts.get_marking_progress(qidx, version)
         progress["total_tasks_marked"] = n
         progress["total_tasks"] = m
         return Response(progress, status=status.HTTP_200_OK)

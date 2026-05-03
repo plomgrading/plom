@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025, 2026 Colin B. Macdonald
 
 import json
 from typing import Any
@@ -13,9 +13,9 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
 from plom_server.Papers.models import Paper
+from plom_server.Papers.services import PaperInfoService
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 from plom_server.Mark.services import (
-    MarkingTaskService,
     page_data,
     QuestionMarkingService,
 )
@@ -128,17 +128,10 @@ class TestMarkQuestionAPI:
         invalid_code = "123invalid7"
         url = reverse("api_mark_task", kwargs={"code": invalid_code})
 
-        # Make a stub for validate_and_clean_marking_data function
-        mocker.patch.object(
-            MarkingTaskService,
-            MarkingTaskService.validate_and_clean_marking_data.__name__,
-            return_value=(self.fake_mark_data, {}),
-        )
-
         response = self.auth_client.post(
             url,
             {
-                "plomfile": self.dummy_file,
+                "score": 10,
                 "annotation_image": self.dummy_file,
                 "md5sum": 1,
             },
@@ -163,18 +156,16 @@ class TestMarkQuestionAPI:
             content_type="application/json",
         )
 
-        # Make a stub for validate_and_clean_marking_data function
-        fake_cleaned_data: dict = {}
-        fake_annot_data: dict = {}
-        mocker.patch.object(
-            MarkingTaskService,
-            MarkingTaskService.validate_and_clean_marking_data.__name__,
-            return_value=(fake_cleaned_data, fake_annot_data),
-        )
-
         response = self.auth_client.post(
             url,
-            {"plomfile": dummy_file, "annotation_image": dummy_file, "md5sum": 1},
+            {
+                "score": 5,
+                "marking_time": 1.23,
+                "integrity_check": 1,
+                "annotation_image": dummy_file,
+                "md5sum": 1,
+                "annotations": "{}",
+            },
             format="multipart",
         )
 
@@ -225,17 +216,16 @@ class TestMarkQuestionAPI:
 
         # submit annotation for the task
 
-        # Make a stub for validate_and_clean_marking_data function
-        mocker.patch.object(
-            MarkingTaskService,
-            MarkingTaskService.validate_and_clean_marking_data.__name__,
-            return_value=(self.fake_mark_data, {}),
-        )
-
         # Make a stub for mark_task function
         mocker.patch.object(
             QuestionMarkingService,
             QuestionMarkingService.mark_task.__name__,
+        )
+        # I don't like this: should we not just actually test instead of mocking?
+        mocker.patch.object(
+            PaperInfoService,
+            PaperInfoService.get_version_from_paper_question.__name__,
+            return_value=1,
         )
         self.task.status = MarkingTask.COMPLETE
         self.task.save()
@@ -243,11 +233,12 @@ class TestMarkQuestionAPI:
         response = self.auth_client.post(
             url,
             {
-                "plomfile": self.dummy_file,
+                "score": 10,
+                "marking_time": 1.23,
+                "integrity_check": 9,
                 "annotation_image": self.dummy_file,
                 "md5sum": 1,
-                "ver": 1,
-                "pg": 2,
+                "annotations": "{}",
             },
             format="multipart",
         )
