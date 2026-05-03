@@ -151,9 +151,10 @@ def _validate_rubric_use_and_score(
     check that each rubric used belongs to the question.
 
     Args:
-       question_index: the question index that the annotation belongs to.
-       client_score: the score for the annotation uploaded by the client.
-       rid_rev_pairs: a list of the rubrics and their revisions.
+        question_index: the question index that the annotation belongs to.
+        client_score: the score for the annotation uploaded by the client.
+        rid_rev_pairs: a list of the rubrics and their revisions.  If a
+            revision is ``None``, skip the check.
 
     Keyword Args:
         tolerance: the max floating point error to allow when comparing the
@@ -199,7 +200,7 @@ def _validate_rubric_use_and_score(
                     "Try again later, ask your marking team, "
                     "or use a different rubric."
                 )
-            if rubric_data[rid]["revision"] != rev:
+            if rev is not None and rubric_data[rid]["revision"] != rev:
                 raise PlomConflict(
                     f"rubric rid {rid} revision {rev} is not the latest revision: "
                     "refresh your rubrics and try again"
