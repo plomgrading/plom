@@ -105,7 +105,7 @@ wet_css_js_3rd_party:
 # By default we assume the target is origin/main but if a MR is open,
 # we try to determine the target branch and use that instead.
 copyright_year:
-  image: fedora:43
+  image: fedora:44
   stage: static_analysis
   rules:
     # Tags don't have this defined and non-empty. This job doesn't run on releases
@@ -606,7 +606,7 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:43
+  image: fedora:44
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
@@ -699,13 +699,13 @@ fedora-django-tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:43
+  image: fedora:44
   when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
-          tex-preview tex-charter tex-exam tex-preprint
+          tex-preview texlive-charter texlive-exam texlive-preprint
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
@@ -716,7 +716,7 @@ fedora-django-tests:
           python3-cryptography
           python3-zxing-cpp
           python3-psycopg3
-          python3-pytest
+          python3-pytest python3-pytest-qt
           python3-PyMuPDF
           python3-PyMySQL
           python3-scikit-learn python3-scikit-image
