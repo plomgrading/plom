@@ -176,9 +176,10 @@ class MarkTask(APIView):
 
         Args:
             request: should contain a file keyed by "annotation_image"
-                and data of key-value pairs.  The data has keys "score",
-                "marking_time", "md5sum", "integrity_check", "rubric",
-                and "annotations".
+                and data of key-value pairs.  The data must have keys
+                "score", "marking_time", "md5sum", and "integrity_check".
+                Optional keys include "rubric", "annotations", "user_agent",
+                and "user_agent_version".
                 "rubric" can be repeated to give a list of integers
                 (which will come as strings b/c I think http just does that),
                 corresponding to the rids of the Rubrics used in this
@@ -281,6 +282,10 @@ class MarkTask(APIView):
                     )
             rubric_list.append((rid, rev))
 
+        # TODO: probably we should record this
+        user_agent = data.get("user_agent")
+        # user_agent_version = data.get("user_agent_version")
+
         raw_annotation_data = data.get("annotations")
         if raw_annotation_data is None:
             raw_annotation_data = "{}"
@@ -288,7 +293,9 @@ class MarkTask(APIView):
         # TODO: error handling around this loads, unless we stop doing this
         annot_data = json.loads(raw_annotation_data)
         # TODO: temporarily do extra work here when client agent is org.plomgrading.PlomClient
-        if False:
+        # TODO: this is mainly b/c of uncertainty about the existing provided rids (with have
+        # TODO: no rev) and also have been bitrottng for a long time.
+        if user_agent == "org.plomgrading.PlomClient":
             # Colin thinks this is a very bad idea
             src_img_data = annot_data["base_images"]
             for image_data in src_img_data:
@@ -305,7 +312,8 @@ class MarkTask(APIView):
 
             rubric_list2 = _extract_rubric_rid_rev_pairs(annot_data)
             print(rubric_list2)
-            # rubric_list = rubric_list2
+            # For now, let's keep this one.
+            rubric_list = rubric_list2
 
         annotation_image = files["annotation_image"]
 

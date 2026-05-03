@@ -488,6 +488,9 @@ class Messenger(BaseMessenger):
         plom_data: dict[str, Any],
         rubrics: list[int],
         integrity_check,
+        *,
+        user_agent: str = "",
+        user_agent_version: str = "",
     ) -> dict[str, Any]:
         """Upload annotated image and associated data to the server.
 
@@ -505,6 +508,12 @@ class Messenger(BaseMessenger):
             rubrics: list of rubric IDs used on the page.
             integrity_check (str): a blob that the server expects to get
                 back.
+
+        Keyword Args:
+            user_agent: a string such as "com.example.PlutoClient", or
+                a uuid, or whatever you'd like to be identified with these
+                annotations.  Optional.
+            user_agent_version: an optional version string such as "1.3.2".
 
         Returns:
             A dict of progress information.  See :meth:`get_marking_progress`.
@@ -531,6 +540,8 @@ class Messenger(BaseMessenger):
                 with open(annotated_img, "rb") as annot_img_file:
                     # Note that "data" here is key-value only, no directly dumping in json
                     data = {
+                        "user_agent": user_agent,
+                        "user_agent_version": user_agent_version,
                         "score": str(score),
                         "marking_time": marking_time,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
