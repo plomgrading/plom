@@ -91,7 +91,7 @@ def _create_new_annotation_in_database(
     time: int,
     annotation_image: AnnotationImage,
     rid_rev_pairs: list[tuple[int, int | None]],
-    annotation_data: dict[str, Any],
+    annotation_data: dict[str, Any] = {},
     *,
     require_latest_rubrics: bool = True,
 ) -> Annotation:
@@ -118,7 +118,7 @@ def _create_new_annotation_in_database(
         user=task.assigned_user,
     )
     new_annotation.save()
-    _add_annotation_to_rubrics(new_annotation)
+    _add_annotation_to_rubrics(new_annotation, [r for r, __ in rid_rev_pairs])
 
     # caution: we are writing to an object given as an input
     task.latest_annotation = new_annotation
@@ -220,13 +220,8 @@ def _validate_rubric_use_and_score(
         )
 
 
-def _add_annotation_to_rubrics(annotation: Annotation) -> None:
+def _add_annotation_to_rubrics(annotation: Annotation, rids: list[int]) -> None:
     """Add a relation to this annotation for every rubric that this annotation uses."""
-    # again grab all rubrics from the annotation meta-data. this
-    # has been validated earlier.
-    rids = [
-        rid for (rid, _) in _extract_rubric_rid_rev_pairs(annotation.annotation_data)
-    ]
     rubric_data = {r.rid: r for r in Rubric.objects.filter(rid__in=rids, latest=True)}
     # now attach the annotation to each used rubric
     # with multiplicity - so iterate over list.

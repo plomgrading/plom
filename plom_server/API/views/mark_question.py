@@ -5,9 +5,12 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
 
+import json
+import pathlib
+
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -24,6 +27,10 @@ from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
 from plom_server.Progress.services import UserInfoService
 from .utils import _error_response
+
+
+def _400(m):
+    return _error_response(m, status.HTTP_400_BAD_REQUEST)
 
 
 class MarkTaskNextAvailable(APIView):
@@ -219,13 +226,34 @@ class MarkTask(APIView):
         data = request.POST
         files = request.FILES
 
-        raw_annotation_data = data.get("annotations")
-        if not raw_annotation_data:
-            return _error_response(
-                "data must contain 'annotations', a string of json",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        # TODO: move these checks to the validate code?
+        try:
+            score = float(data["score"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+        except IndexError:
+            return _400('Multiple values for "score", expected 1')
+        except (ValueError, TypeError) as e:
+            return _400(f'Could not cast "score" as float: {e}')
+
+        try:
+            marking_time = float(data["marking_time"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+        except (ValueError, TypeError) as e:
+            return _400(f'Could not cast "marking_time" as float: {e}')
+
+        try:
+            integrity_check = int(data["integrity_check"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+        except (ValueError, TypeError) as e:
+            return _400(f'Could not get "integrity_check" as a int: {e}')
+
+        try:
+            md5sum = str(data["md5sum"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+
         rubric_list = []
         for x in data.getlist("rubric"):
             print(x)
@@ -241,28 +269,31 @@ class MarkTask(APIView):
             try:
                 rid = int(rid)
             except (ValueError, TypeError) as e:
-                return _error_response(
-                    f'failed to extract integer "rid" from rubric "{x}": {e}',
-                    status.HTTP_400_BAD_REQUEST,
-                )
+                return _400(f'failed to extract integer "rid" from rubric "{x}": {e}')
             if rev is not None:
                 try:
                     rev = int(rev)
                 except (ValueError, TypeError) as e:
-                    return _error_response(
-                        f'failed to extract integer "rev" from rubric "{x}": {e}',
-                        status.HTTP_400_BAD_REQUEST,
+                    return _400(
+                        f'failed to extract integer "rev" from rubric "{x}": {e}'
                     )
             rubric_list.append((rid, rev))
-        print(rubric_list)
 
         try:
-            mark_data, annot_data = mts.validate_and_clean_marking_data(
-                code, data, raw_annotation_data
-            )
-        except serializers.ValidationError as e:
-            # happens automatically but this way we keep the error msg
-            return _error_response(e, status.HTTP_400_BAD_REQUEST)
+            raw_annotation_data = data["annotations"]
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+
+        # TODO: error handling around this loads, unless we stop doing this
+        annot_data = json.loads(raw_annotation_data)
+
+        # Colin thinks this is a very bad idea
+        src_img_data = annot_data["base_images"]
+        for image_data in src_img_data:
+            # TODO: this looks like direct file access on the server, Issue #3888.
+            img_path = pathlib.Path(image_data["server_path"])
+            if not img_path.exists():
+                return _400("Invalid original-image in request")
 
         # take rid rev pairs from the annotation data
         # TODO: this is temporary/debugging
@@ -279,12 +310,12 @@ class MarkTask(APIView):
             QuestionMarkingService.mark_task(
                 code,
                 user=request.user,
-                score=mark_data["score"],
-                marking_time=mark_data["marking_time"],
-                integrity_check=mark_data["integrity_check"],
+                score=score,
+                marking_time=marking_time,
+                integrity_check=integrity_check,
                 annotation_data=annot_data,
                 annotation_image=annotation_image,
-                annotation_image_md5sum=mark_data["md5sum"],
+                annotation_image_md5sum=md5sum,
                 rubric_list=rubric_list,
             )
         except ValueError as e:
