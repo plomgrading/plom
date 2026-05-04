@@ -311,9 +311,21 @@ class MarkTask(APIView):
             )
 
             rubric_list2 = _extract_rubric_rid_rev_pairs(annot_data)
-            print(rubric_list2)
-            # For now, let's keep this one.
-            rubric_list = rubric_list2
+            rids1 = list(r for r, __ in rubric_list)
+            rids2 = list(r for r, __ in rubric_list2)
+            if sorted(rids1) != sorted(rids2):
+                return _400(
+                    f"Unexpected mismatch between data and json blob: {rids1} vs {rids2}"
+                )
+            # currently the client isn't sending revisions, so use the list extracted from
+            # the data.  This should automatically stop happening once client sends the
+            # correct rubric list.
+            if all(rev is None for rid, rev in rubric_list):
+                rubric_list = rubric_list2
+            if sorted(rubric_list) != sorted(rubric_list2):
+                return _400(
+                    f"Unexpected mismatch between data and json blob: {rubric_list} vs {rubric_list2}"
+                )
 
         annotation_image = files["annotation_image"]
 
