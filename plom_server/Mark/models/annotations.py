@@ -75,5 +75,7 @@ class Annotation(models.Model):
         """Perhaps temporary, but some parts of the code need the actual annotation data.
 
         Unpack it, assuming its JSON, in contradiction with the docs above.
+
+        There is at least one place in the code that needs this: its WIP.
         """
         return json.loads(self.annotation_data)

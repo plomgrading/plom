@@ -292,8 +292,10 @@ class MarkTask(APIView):
         # TODO: this is mainly b/c of uncertainty about the existing provided rids (with have
         # TODO: no rev) and also have been bitrottng for a long time.
         if user_agent == "org.plomgrading.PlomClient":
-            # TODO: error handling around this loads, unless we stop doing this
-            annot_data = json.loads(raw_annotation_data)
+            try:
+                annot_data = json.loads(raw_annotation_data)
+            except json.JSONDecodeError as e:
+                return _400(f"Invalid JSON in annotation data: {e}")
 
             # Colin thinks this is a very bad idea
             src_img_data = annot_data["base_images"]

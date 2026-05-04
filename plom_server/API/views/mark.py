@@ -362,6 +362,7 @@ class MgetAnnotations(APIView):
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
 
+        # TODO: messing around in the client's data... this is not the way?
         annotation_data["user"] = annotation.user.username
         annotation_data["annotation_edition"] = annotation.edition
         annotation_data["annotation_reference"] = annotation.pk
