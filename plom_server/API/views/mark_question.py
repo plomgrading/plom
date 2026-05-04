@@ -225,7 +225,6 @@ class MarkTask(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        mts = MarkingTaskService()
         data = request.POST
         files = request.FILES
 
@@ -259,8 +258,8 @@ class MarkTask(APIView):
 
         rubric_list = []
         for x in data.getlist("rubric"):
-            print(x)
             if "." in x:
+                # TODO: likely drop this..., after unit tests in place?
                 rid, rev = x.split(".")
             elif "rev" in x:
                 rid, rev = x.split("rev")
@@ -356,15 +355,12 @@ class MarkTask(APIView):
         except PlomQuotaLimitExceeded as e:
             return _error_response(e, status.HTTP_423_LOCKED)
 
-        def int_or_None(x):
-            return None if x is None else int(x)
-
         papernum, qidx = unpack_task_code(code)
         version = PaperInfoService.get_version_from_paper_question(papernum, qidx)
 
         username = request.user.username
         progress = UserInfoService.get_user_progress(username=username)
-        n, m = mts.get_marking_progress(qidx, version)
+        n, m = MarkingTaskService.get_marking_progress(qidx, version)
         progress["total_tasks_marked"] = n
         progress["total_tasks"] = m
         return Response(progress, status=status.HTTP_200_OK)
