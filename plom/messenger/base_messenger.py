@@ -76,6 +76,8 @@ Supported_Server_API_Versions = [
 #    - surrender task
 #    - reassign/reset return 403 not 406 for wrong user
 #    - rename /info/users to /api/beta/users
+#    - /MK/tasks/{code}: change post to take string of annotations and more detailed rubric info
+#    - /annotations/{num}/{question}: return includes metadata and the annotation data itself.
 
 
 log = logging.getLogger("messenger")
@@ -1343,6 +1345,7 @@ class BaseMessenger:
             url = f"/annotations/{num}/{question}"
         else:
             url = f"/annotations/{num}/{question}/{edition}"
+        # TODO: this integrity seems to be unused at the server end of the API?
         if integrity is None:
             integrity = ""
         with self.SRmutex:
