@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024, 2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 from django.db import models
@@ -42,6 +42,11 @@ class Annotation(models.Model):
         task: The marking task.
         user: The user who made the annotation.
         time_of_last_update: The time of the last update.
+        user_agent: a string describing the client reasponsible for this
+            Annotation.  At most 64 chars.  Could be a uuid or a string
+            such as "org.plomgrading.PlomClient".
+        user_agent_version: the version of the user agent such as "1.3.7"
+            or "0.22.3.dev0".
     """
 
     edition = models.IntegerField(null=True)
@@ -53,3 +58,5 @@ class Annotation(models.Model):
     task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)
+    user_agent = models.CharField(null=False, blank=True, max_length=64)
+    user_agent_version = models.CharField(null=False, blank=True, max_length=64)

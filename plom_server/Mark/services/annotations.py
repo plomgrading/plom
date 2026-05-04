@@ -35,6 +35,8 @@ def create_new_annotation_in_database(
     rubric_list: list[tuple[int, int | None]],
     annotation_data: dict[str, Any],
     *,
+    user_agent: str = "",
+    user_agent_version: str = "",
     require_latest_rubrics: bool = True,
 ) -> Annotation:
     """Save an annotation.
@@ -55,6 +57,8 @@ def create_new_annotation_in_database(
             here.
 
     Keyword Args:
+        user_agent: the client software.
+        user_agent_version: version of the client software.
         require_latest_rubrics: if True (the default), we check if the
             rubrics in-use are (a) the latest and (b) published and
             fail if those conditions are not satisfied.
@@ -81,6 +85,8 @@ def create_new_annotation_in_database(
         annotation_image,
         rubric_list,
         annotation_data,
+        user_agent=user_agent,
+        user_agent_version=user_agent_version,
         require_latest_rubrics=require_latest_rubrics,
     )
 
@@ -93,6 +99,8 @@ def _create_new_annotation_in_database(
     rid_rev_pairs: list[tuple[int, int | None]],
     annotation_data: dict[str, Any] = {},
     *,
+    user_agent: str = "",
+    user_agent_version: str = "",
     require_latest_rubrics: bool = True,
 ) -> Annotation:
 
@@ -116,6 +124,8 @@ def _create_new_annotation_in_database(
         marking_delta_time=time - old_time,
         task=task,
         user=task.assigned_user,
+        user_agent=user_agent,
+        user_agent_version=user_agent_version,
     )
     new_annotation.save()
     _add_annotation_to_rubrics(new_annotation, [r for r, __ in rid_rev_pairs])

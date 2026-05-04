@@ -165,6 +165,8 @@ class QuestionMarkingService:
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
         rubric_list: list[tuple[int, int | None]],
+        user_agent: str = "",
+        user_agent_version: str = "",
         require_latest_rubrics: bool = True,
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
@@ -184,6 +186,8 @@ class QuestionMarkingService:
                 images.  Its the image that should be shown back to users.
             annotation_image_md5sum: the md5sum of the annotated image.
             rubric_list: a list of the rubrics used in these annotations.
+            user_agent: the client software.
+            user_agent_version: version of the client software.
             require_latest_rubrics: TODO.
 
         Raises:
@@ -257,6 +261,8 @@ class QuestionMarkingService:
             annotation_image,
             rubric_list,
             annotation_data,
+            user_agent=user_agent,
+            user_agent_version=user_agent_version,
             require_latest_rubrics=require_latest_rubrics,
         )
         # Note the helper function above also performs `task.save`; that seems ok.

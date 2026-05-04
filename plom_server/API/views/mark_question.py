@@ -281,9 +281,8 @@ class MarkTask(APIView):
                     )
             rubric_list.append((rid, rev))
 
-        # TODO: probably we should record this
         user_agent = data.get("user_agent")
-        # user_agent_version = data.get("user_agent_version")
+        user_agent_version = data.get("user_agent_version")
 
         raw_annotation_data = data.get("annotations")
         if raw_annotation_data is None:
@@ -340,6 +339,8 @@ class MarkTask(APIView):
                 annotation_image=annotation_image,
                 annotation_image_md5sum=md5sum,
                 rubric_list=rubric_list,
+                user_agent=user_agent,
+                user_agent_version=user_agent_version,
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)

@@ -48,6 +48,8 @@ class Migration(migrations.Migration):
                 ("marking_time", models.FloatField(null=True)),
                 ("marking_delta_time", models.FloatField(null=True)),
                 ("time_of_last_update", models.DateTimeField(auto_now=True)),
+                ("user_agent", models.CharField(blank=True, max_length=64)),
+                ("user_agent_version", models.CharField(blank=True, max_length=64)),
                 (
                     "user",
                     models.ForeignKey(
