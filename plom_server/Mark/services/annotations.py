@@ -9,10 +9,8 @@
 
 """Services for annotations and annotation images."""
 
-from typing import Any
-
-from math import isclose
 import pathlib
+from math import isclose
 
 from django.db import transaction
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -33,8 +31,8 @@ def create_new_annotation_in_database(
     annot_img_md5sum: str,
     annot_img_file: InMemoryUploadedFile,
     rubric_list: list[tuple[int, int | None]],
-    annotation_data: dict[str, Any],
     *,
+    annotation_data: str = "",
     user_agent: str = "",
     user_agent_version: str = "",
     require_latest_rubrics: bool = True,
@@ -52,9 +50,8 @@ def create_new_annotation_in_database(
         annot_img_file: the annotation image file in memory.
             The filename including extension is taken from this.
         rubric_list: a list of Rubrics used.
-        annotation_data: came from a JSON blob of SVG data, but should be dict of
-            string keys by the time we see it.  TODO: change happening
-            here.
+        annotation_data: an ascii-string which the client can use to
+            reconstruct the annotation image, say svg or json.
 
     Keyword Args:
         user_agent: the client software.
@@ -84,9 +81,9 @@ def create_new_annotation_in_database(
         time,
         annotation_image,
         rubric_list,
-        annotation_data,
         user_agent=user_agent,
         user_agent_version=user_agent_version,
+        annotation_data=annotation_data,
         require_latest_rubrics=require_latest_rubrics,
     )
 
@@ -97,10 +94,10 @@ def _create_new_annotation_in_database(
     time: int,
     annotation_image: AnnotationImage,
     rid_rev_pairs: list[tuple[int, int | None]],
-    annotation_data: dict[str, Any] = {},
     *,
     user_agent: str = "",
     user_agent_version: str = "",
+    annotation_data: str = "",
     require_latest_rubrics: bool = True,
 ) -> Annotation:
 

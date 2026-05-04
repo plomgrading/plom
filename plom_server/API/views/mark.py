@@ -347,7 +347,7 @@ class MgetAnnotations(APIView):
         except ValueError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         annotation_task = annotation.task
-        annotation_data = annotation.annotation_data
+        annotation_data = annotation._get_annotation_data()
 
         # TODO is this really needed?  Issue #3283.
         try:

@@ -25,6 +25,9 @@ from plom.plom_exceptions import (
 
 from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
+from plom_server.Mark.services.annotations import (
+    _extract_rubric_rid_rev_pairs,
+)
 from plom_server.Progress.services import UserInfoService
 from plom_server.Papers.services import PaperInfoService
 from .utils import _error_response
@@ -281,19 +284,17 @@ class MarkTask(APIView):
                     )
             rubric_list.append((rid, rev))
 
-        user_agent = data.get("user_agent")
-        user_agent_version = data.get("user_agent_version")
+        user_agent = data.get("user_agent", "")
+        user_agent_version = data.get("user_agent_version", "")
+        raw_annotation_data = data.get("annotations", "")
 
-        raw_annotation_data = data.get("annotations")
-        if raw_annotation_data is None:
-            raw_annotation_data = "{}"
-
-        # TODO: error handling around this loads, unless we stop doing this
-        annot_data = json.loads(raw_annotation_data)
         # TODO: temporarily do extra work here when client agent is org.plomgrading.PlomClient
         # TODO: this is mainly b/c of uncertainty about the existing provided rids (with have
         # TODO: no rev) and also have been bitrottng for a long time.
         if user_agent == "org.plomgrading.PlomClient":
+            # TODO: error handling around this loads, unless we stop doing this
+            annot_data = json.loads(raw_annotation_data)
+
             # Colin thinks this is a very bad idea
             src_img_data = annot_data["base_images"]
             for image_data in src_img_data:
@@ -303,11 +304,6 @@ class MarkTask(APIView):
                     return _400("Invalid original-image in request")
 
             # take rid rev pairs from the annotation data
-            # TODO: this is temporary/debugging
-            from plom_server.Mark.services.annotations import (
-                _extract_rubric_rid_rev_pairs,
-            )
-
             rubric_list2 = _extract_rubric_rid_rev_pairs(annot_data)
             rids1 = list(r for r, __ in rubric_list)
             rids2 = list(r for r, __ in rubric_list2)
@@ -335,7 +331,7 @@ class MarkTask(APIView):
                 score=score,
                 marking_time=marking_time,
                 integrity_check=integrity_check,
-                annotation_data=annot_data,
+                annotation_data=raw_annotation_data,
                 annotation_image=annotation_image,
                 annotation_image_md5sum=md5sum,
                 rubric_list=rubric_list,

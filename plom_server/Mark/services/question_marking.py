@@ -5,8 +5,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
-from typing import Any
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
@@ -161,7 +159,7 @@ class QuestionMarkingService:
         score: float,
         marking_time: float,
         integrity_check: int,
-        annotation_data: dict[str, Any],
+        annotation_data: str,
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
         rubric_list: list[tuple[int, int | None]],
@@ -179,8 +177,8 @@ class QuestionMarkingService:
             score: careful, this is currently duplicated inside the ``annotation_data``.
             marking_time: TODO: document whether cumulative or not?
             integrity_check: integer thing, safety feature, details long forgotten.
-            annotation_data: a dictionary of the annotation data.  Think
-                of this like an SVG.
+            annotation_data: an ascii-string which the client can use to
+                reconstruct the annotation image, say svg or json.
             annotation_image: the rendered bitmap of the annotations.
                 This is annotation_data rendered on top of the underlying
                 images.  Its the image that should be shown back to users.
@@ -260,7 +258,7 @@ class QuestionMarkingService:
             annotation_image_md5sum,
             annotation_image,
             rubric_list,
-            annotation_data,
+            annotation_data=annotation_data,
             user_agent=user_agent,
             user_agent_version=user_agent_version,
             require_latest_rubrics=require_latest_rubrics,

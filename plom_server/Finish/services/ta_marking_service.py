@@ -64,7 +64,10 @@ class TaMarkingService:
                     "question_index": task.question_index,
                     "question_version": task.question_version,
                     "score_given": task.latest_annotation.score,
-                    "max_score": task.latest_annotation.annotation_data["maxMark"],
+                    # TODO: must be easier way to get this than looking into the blob
+                    "max_score": task.latest_annotation._get_annotation_data()[
+                        "maxMark"
+                    ],
                     "seconds_spent_marking": task.latest_annotation.marking_time,
                     "last_update_time": arrow.get(task.last_update).isoformat(
                         " ", "seconds"

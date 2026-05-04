@@ -3,6 +3,9 @@
 # Copyright (C) 2024, 2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
+import json
+from typing import Any
+
 from django.db import models
 from django.contrib.auth.models import User
 from . import MarkingTask
@@ -30,8 +33,6 @@ class Annotation(models.Model):
         edition: The edition of the annotation for the specified task.
         score: The score given to the student's work.
         image: The image of the annotated question.
-        annotation_data: A Json blob of annotation data containing image path info,
-            rubric info, svg annotation info.
         marking_time: The total cumulative time in seconds spent by all
             markers on this question of this paper.  As a question gets
             remarked or revisited this number will increase.
@@ -47,12 +48,20 @@ class Annotation(models.Model):
             such as "org.plomgrading.PlomClient".
         user_agent_version: the version of the user agent such as "1.3.7"
             or "0.22.3.dev0".
+        annotation_data: A blob of data encoded as an ascii-string.
+            We generally don't look at this: the client sends something
+            and can get it back to reconstruct the scene for further
+            editing.  This will generally be a JSON blob, written to
+            a string with Python's ``json.dumps`` for example.  It could
+            also be a uuencoded binary data or whatever the client sees
+            bit.  It should not be excessively large: think SVG not
+            large bitmap data.  If a client needs large binary data,
+            we could consider a file-based mechanism in the future.
     """
 
     edition = models.IntegerField(null=True)
     score = models.FloatField(null=True)
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
-    annotation_data = models.JSONField(null=True)
     marking_time = models.FloatField(null=True)
     marking_delta_time = models.FloatField(null=True)
     task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
@@ -60,3 +69,11 @@ class Annotation(models.Model):
     time_of_last_update = models.DateTimeField(auto_now=True)
     user_agent = models.CharField(null=False, blank=True, max_length=64)
     user_agent_version = models.CharField(null=False, blank=True, max_length=64)
+    annotation_data = models.TextField(null=False, blank=True)
+
+    def _get_annotation_data(self) -> dict[str, Any]:
+        """Perhaps temporary, but some parts of the code need the actual annotation data.
+
+        Unpack it, assuming its JSON, in contradiction with the docs above.
+        """
+        return json.loads(self.annotation_data)

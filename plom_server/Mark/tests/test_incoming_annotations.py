@@ -145,7 +145,6 @@ class MiscIncomingAnnotationsTests(TestCase):
             17,
             img1,
             [(self.rubric1_on_3.rid, 0)],
-            {},
         )
         task.latest_annotation == a1
         img2 = baker.make(AnnotationImage)
@@ -155,7 +154,6 @@ class MiscIncomingAnnotationsTests(TestCase):
             21,
             img2,
             [(self.rubric3.rid, 0)],
-            {},
         )
         task.refresh_from_db()
         # creating the new annotation replaces the task's latest annotation
