@@ -71,11 +71,13 @@
             {% endfor %}
         {% endif %}
         <!-- table of all tasks -->
-        <br />
-        <br />
-        {% include "Progress/Mark/all_marking_tasks_table_fragment.html" %}
-        <!-- include this for tool-tips on the progress bar -->
-        <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
+        {% if user_is_lead_marker or user_is_manager %}
+            <br />
+            <br />
+            {% include "Progress/Mark/all_marking_tasks_table_fragment.html" %}
+            <!-- include this for tool-tips on the progress bar -->
+            <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
+        {% endif %}
     </div>
     <script>
       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
