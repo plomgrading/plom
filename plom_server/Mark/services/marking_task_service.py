@@ -813,7 +813,7 @@ class MarkingTaskService:
         cls, task_id: int, username: str, calling_user: User, unassign_others: bool
     ) -> None:
         """Tag a task for a user, removing other user tags."""
-        task = MarkingTask.objects.get(pk=task_id)
+        task = MarkingTask.objects.get(id=task_id)
         # TODO: maybe these many-to-many things don't need select_for_update
         # task = MarkingTask.objects.select_for_update().get(pk=task_pk)
         if unassign_others:
@@ -920,7 +920,7 @@ class MarkingTaskService:
             ValueError: cannot find marking task.
         """
         try:
-            task_obj = MarkingTask.objects.select_for_update().get(pk=task_id)
+            task_obj = MarkingTask.objects.select_for_update().get(id=task_id)
         except MarkingTask.DoesNotExist:
             raise ValueError(f"Cannot find marking task {task_id}")
         if task_obj.assigned_user == user:
