@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import threading
@@ -1313,7 +1314,9 @@ class BaseMessenger:
             self.SRmutex.release()
         return image
 
-    def get_annotations(self, num, question, edition=None, integrity=None):
+    def get_annotations(
+        self, num, question, edition=None, integrity=None
+    ) -> dict[str, Any]:
         """Download the latest annotations (or a particular set of annotations).
 
         Args:
@@ -1324,7 +1327,8 @@ class BaseMessenger:
                 changed under us.  Can be omitted if not relevant.
 
         Returns:
-            dict: contents of the plom file.
+            A dictionary of data about the annotations.  Keys include
+            "annotations", the raw annotation data that we sent to the server.
 
         Raises:
             PlomAuthenticationException
@@ -1332,6 +1336,8 @@ class BaseMessenger:
             PlomTaskDeletedError
             PlomNoPaper
             PlomSeriousException
+            PlomConflict: server sent data that seems bad to use, maybe we
+                didn't make it and a different incompatible client did.
         """
         if edition is None:
             url = f"/annotations/{num}/{question}"
@@ -1346,7 +1352,7 @@ class BaseMessenger:
                     json={"integrity": integrity},
                 )
                 response.raise_for_status()
-                return response.json()
+                r = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomRangeException(response.reason) from None
@@ -1361,6 +1367,18 @@ class BaseMessenger:
                 elif response.status_code == 416:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+            if self.is_server_api_less_than(117):
+                r = {"annotations": r}
+            else:
+                try:
+                    # TODO: if we're really going string-of-anything, then clients
+                    # should be doing this, not messenger.
+                    r["annotations"] = json.loads(r["annotations"])
+                except json.JSONDecodeError as e:
+                    raise PlomConflict(
+                        f"could not decode the annotation data from server: {e}"
+                    )
+            return r
 
     def get_annotations_image(
         self, num: int, question: int, *, edition: int | None = None
