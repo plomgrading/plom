@@ -404,10 +404,11 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code in (403, 406):
+                    # Note: 406 can be removed once we drop support for 116
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomRangeException(response.reason) from None
-                if response.status_code == 406:
-                    raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def reset_task(self, papernum: int, qidx: int) -> bool:
@@ -440,10 +441,11 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code in (403, 406):
+                    # Note: 406 can be removed once we drop support for 116
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomRangeException(response.reason) from None
-                if response.status_code == 406:
-                    raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MlatexFragment(self, latex: str) -> tuple[bool, bytes | str]:

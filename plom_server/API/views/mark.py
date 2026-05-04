@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
@@ -118,7 +118,7 @@ class ReassignTask(APIView):
     Returns:
         200: returns json of True.
         404: task or user not found.
-        406: request not acceptable from calling user, e.g.,
+        403: request not acceptable from calling user, e.g.,
             not lead marker or manager.
     """
 
@@ -132,7 +132,7 @@ class ReassignTask(APIView):
             return _error_response(
                 f"You ({calling_user}) cannot reassign tasks because "
                 "you are not a lead marker or manager",
-                status.HTTP_406_NOT_ACCEPTABLE,
+                status.HTTP_403_FORBIDDEN,
             )
 
         try:
@@ -160,7 +160,7 @@ class ResetTask(APIView):
     Returns:
         200: returns json of True.
         404: task not found.
-        406: request not acceptable from calling user, e.g.,
+        403: request not acceptable from calling user, e.g.,
             not lead marker or manager.
     """
 
@@ -172,7 +172,7 @@ class ResetTask(APIView):
             return _error_response(
                 f"You ({calling_user}) cannot reassign tasks because "
                 "you are not a lead marker or manager",
-                status.HTTP_406_NOT_ACCEPTABLE,
+                status.HTTP_403_FORBIDDEN,
             )
 
         try:

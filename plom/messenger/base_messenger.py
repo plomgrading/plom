@@ -52,7 +52,7 @@ Supported_Server_API_Versions = [
     114,  # 2025-05
     115,  # 2025-09
     116,  # 2026-01
-    117,  # 2026-04
+    117,  # 2026-05
 ]
 # Brief changelog
 #
@@ -73,6 +73,7 @@ Supported_Server_API_Versions = [
 #    - get/set public_code
 # * 117
 #    - surrender task
+#    - reassign/reset return 403 not 406 for wrong user
 
 
 log = logging.getLogger("messenger")

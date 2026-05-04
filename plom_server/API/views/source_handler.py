@@ -96,17 +96,17 @@ class SourceDetail(APIView):
         Returns:
             Http response 200 with a dict describing the freshly-uploaded source,
             which is one entry of the list in :class:`SourceOverview`.
-            (400) File provided is absent or invalid (empty files are OK),
-                  or version number out of range, or upload failed for some reason
-            (401) User does not belong to "manager" group
-            (409) Changing the source is not allowed.
-                  Typically because the server is either too raw or too advanced.
+            400: File provided is absent or invalid (empty files are OK),
+                or version number out of range, or upload failed for some reason
+            403: User does not belong to "manager" group
+            409: Changing the source is not allowed.
+                Typically because the server is either too raw or too advanced.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
-                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_403_FORBIDDEN,
             )
 
         try:
@@ -160,7 +160,7 @@ class SourceDetail(APIView):
             HTTP response 200 with the updated list of dicts as described
             in :class:`SourceOverview`.  200 is returned even in the case
             where no such source version exists (that's not an error).
-            Only managers can do this; others get a 401.
+            Only managers can do this; others get a 403.
             409 is returned if the source is "in use", typically b/c
             server configuration has progressed further.
         """
@@ -168,7 +168,7 @@ class SourceDetail(APIView):
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
-                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_403_FORBIDDEN,
             )
 
         n_versions = SpecificationService.get_n_versions()
