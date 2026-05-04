@@ -71,11 +71,11 @@ div.is_pdf_thumbnail:hover {
 .bg-plom-purple, .bg-branded-plom {
     background-color: light-dark(#ad9cff, #50488f) !important;
 }
-.bg-plom-purple-subtle {
+.bg-plom-purple-subtle, .bg-branded-plom-subtle {
     background-color: light-dark(#ddddff, #222240) !important;
 }
 /* maybe temporary?  This light yellow was originally a mix of Bootstrap's warning */
--bg-plom-statusquo-subtle, .bg-branded-plom-subtle {
+.bg-plom-statusquo-subtle {
     background-color: light-dark(#fff3cd, #222240) !important;
 }
 
