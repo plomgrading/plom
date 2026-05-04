@@ -482,6 +482,8 @@ class Messenger(BaseMessenger):
     def MreturnMarkedTask(
         self,
         code: str,
+        q: int,
+        ver: int,
         score,
         marking_time,
         annotated_img,
@@ -496,8 +498,8 @@ class Messenger(BaseMessenger):
 
         Args:
             code: e.g., "0003g1"
-            q: question number.
-            ver: which version.
+            q: question number.  Deprecated and unused on API 117.
+            ver: which version.  Deprecated and unused on API 117.
             score: assigned score for the task.
             marking_time (int/float): number of seconds spend on grading
                 the paper.
@@ -558,7 +560,7 @@ class Messenger(BaseMessenger):
 
                     if self.is_server_api_less_than(117):
                         # these eys must be present but no one checks the values (!)
-                        data.update({"pg": "1", "ver": "1"})
+                        data.update({"pg": str(q), "ver": str(ver)})
 
                     if self.is_server_api_less_than(117):
                         # on old servers we to send the annotations as a file
