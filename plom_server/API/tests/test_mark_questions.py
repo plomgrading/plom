@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
-# Copyright (C) 2025, 2026 Colin B. Macdonald
+# Copyright (C) 2025-2026 Colin B. Macdonald
 
 import json
 from typing import Any
@@ -45,7 +45,6 @@ class TestMarkQuestionAPI:
             content_type="application/json",
         )
 
-    # ======== MarkTaskNextAvailable(APIView) test ========
     def test_get_next_available(self) -> None:
         """Test GET: /MK/tasks/available endpoint with valid params.
 
@@ -54,19 +53,13 @@ class TestMarkQuestionAPI:
             b. It returns the taskcode (identified as "code" attribute)
                 of the task returned by the service level.
         """
-        # make the GET API call with params
         url = reverse("api_mark_task_next")
         resp = self.auth_client.get(
             url, {"q": self.task.question_index, "tags": "foo, bar"}
         )
-
-        # check status code
         assert resp.status_code == status.HTTP_200_OK
-
-        # check it returns the task code
         assert resp.json() == self.task.code
 
-    # ======== MarkTask(APIView) test ========
     def test_claim_task_invalid_code(self) -> None:
         """Test PATCH: /MK/tasks/{code} with invalid code format."""
         code = "123invalid7"
@@ -117,14 +110,10 @@ class TestMarkQuestionAPI:
         auth_client: APIClient = self.auth_client
         resp = auth_client.patch(url)
 
-        # ensure 409 status
         assert resp.status_code == status.HTTP_409_CONFLICT
 
-    def test_submit_malformed_input(self, mocker: pytest_mock.MockerFixture) -> None:
-        """Test POST: /MK/tasks/{code} with incorrect code formatting.
-
-        Ensures that when code is improperly formatted server responds with 400 status.
-        """
+    def test_submit_malformed_input(self) -> None:
+        """Test POST: /MK/tasks/{code} with incorrect code formatting."""
         invalid_code = "123invalid7"
         url = reverse("api_mark_task", kwargs={"code": invalid_code})
 
@@ -137,10 +126,49 @@ class TestMarkQuestionAPI:
             },
             format="multipart",
         )
-
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_submit_non_existing_task(self, mocker: pytest_mock.MockerFixture) -> None:
+    def test_submit_malformed_data(self) -> None:
+        """Posting with missing required key in data."""
+        url = reverse("api_mark_task", kwargs={"code": "123g7"})
+        response = self.auth_client.post(
+            url,
+            {
+                "marking_time": 1.23,
+                "md5sum": 1,
+                "annotation_image": self.dummy_file,
+            },
+            format="multipart",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response = self.auth_client.post(
+            url,
+            {
+                "score": 10,
+                "md5sum": 1,
+                "annotation_image": self.dummy_file,
+            },
+            format="multipart",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response = self.auth_client.post(
+            url,
+            {
+                "score": 10,
+                "marking_time": 1.23,
+                "annotation_image": self.dummy_file,
+            },
+            format="multipart",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        # TODO: why can't I get the error message?
+        # print(response)
+        # print(type(response))
+        # print(response.data)
+        # print(response.content)
+        # assert False
+
+    def test_submit_non_existing_task(self) -> None:
         """Test POST: /MK/tasks/{code} where code is valid but refers to non-existing task.
 
         Ensures that server responds with status 410.
