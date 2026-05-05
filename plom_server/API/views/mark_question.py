@@ -189,10 +189,9 @@ class MarkTask(APIView):
                 annotation.  It can be empty.  If you use a Rubric more than
                 once, repeat it in the list.  Providing only the integer rids
                 means Plom will assume you're using the latest revisions of each.
-                To enable more precise checking, pass in ``<rid>.<rev>``,
-                ``<rid>r<rev>``, or ``<rid>rev<rev>`` (for example "14.3"
-                "15r0" or "15rev0").  That way you'll get errors if those are
-                not the latest revisions.
+                To enable more precise checking, pass in ``{rid}rev{rev}``,
+                or ``{rid}r{rev>}` (for example "15rev0" or "15r2").  By doing
+                that you'll get errors if those are not the latest revisions.
                 Optionally, you can provide "annotations" containing an ascii
                 string encoding
                 of JSON: in Python you can create this using
@@ -261,10 +260,7 @@ class MarkTask(APIView):
 
         rubric_list = []
         for x in data.getlist("rubric"):
-            if "." in x:
-                # TODO: likely drop this..., after unit tests in place?
-                rid, rev = x.split(".")
-            elif "rev" in x:
+            if "rev" in x:
                 rid, rev = x.split("rev")
             elif "r" in x:
                 rid, rev = x.split("r")
