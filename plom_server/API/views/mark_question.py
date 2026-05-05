@@ -280,6 +280,8 @@ class MarkTask(APIView):
                     )
             rubric_list.append((rid, rev))
 
+        annotation_image = files["annotation_image"]
+
         user_agent = data.get("user_agent", "")
         user_agent_version = data.get("user_agent_version", "")
         raw_annotation_data = data.get("annotations", "")
@@ -318,8 +320,6 @@ class MarkTask(APIView):
                 return _400(
                     f"Unexpected mismatch between data and json blob: {rubric_list} vs {rubric_list2}"
                 )
-
-        annotation_image = files["annotation_image"]
 
         try:
             # TODO: use query param, allow client to override require_latest_rubrics=True?
