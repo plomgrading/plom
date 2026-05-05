@@ -488,7 +488,7 @@ class Messenger(BaseMessenger):
         marking_time,
         annotated_img,
         plom_data: dict[str, Any],
-        rubrics: list[int],
+        rubrics: list[int] | list[tuple[int, int | None]],
         integrity_check,
         *,
         user_agent: str = "",
@@ -507,7 +507,9 @@ class Messenger(BaseMessenger):
                 png or a jpeg.
             plom_data: a dictionary representation of the annotation on
                 the page.
-            rubrics: list of rubric IDs used on the page.
+            rubrics: list of rubric IDs used on the page, or a list of tuples
+                of (rubric IDs, revision), which will allow the server to
+                verify that up-to-date rubrics are being used.
             integrity_check (str): a blob that the server expects to get
                 back.
 
@@ -539,6 +541,16 @@ class Messenger(BaseMessenger):
         # TODO: if we're really going string-of-anything, then clients
         # should be doing this, not messenger.
         plom_data_ascii_str_of_json = json.dumps(plom_data)
+        rubrics_encoded = []
+        for x in rubrics:
+            if isinstance(x, int):
+                rubrics_encoded.append(f"{x}")
+            else:
+                rid, rev = x
+                if rev is None:
+                    rubrics_encoded.append(f"{rid}")
+                else:
+                    rubrics_encoded.append(f"{rid}rev{rev}")
         with self.SRmutex:
             try:
                 with open(annotated_img, "rb") as annot_img_file:
@@ -550,7 +562,7 @@ class Messenger(BaseMessenger):
                         "marking_time": marking_time,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
-                        "rubric": rubrics,
+                        "rubric": rubrics_encoded,
                         "annotations": plom_data_ascii_str_of_json,
                     }
                     annot_img_file.seek(0)
