@@ -1316,16 +1316,16 @@ class BaseMessenger:
         return image
 
     def get_annotations(
-        self, num, question, edition=None, integrity=None
+        self, papernum: int, question_idx: int, edition: int | None = None
     ) -> dict[str, Any]:
         """Download the latest annotations (or a particular set of annotations).
 
         Args:
-            num (int): the paper number.
-            question (int): the question number.
-            edition (int/None): which annotation set or None for latest.
-            integrity (str/None): a checksum to ensure the server hasn't
-                changed under us.  Can be omitted if not relevant.
+            papernum: which paper.
+            question_idx: which question.
+
+        Keyword Args:
+            edition: which annotation set or None for latest.
 
         Returns:
             A dictionary of data about the annotations.  Keys include
@@ -1339,18 +1339,13 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            url = f"/annotations/{num}/{question}"
+            url = f"/annotations/{papernum}/{question_idx}"
         else:
-            url = f"/annotations/{num}/{question}/{edition}"
-        # TODO: this integrity seems to be unused at the server end of the API?
-        if integrity is None:
-            integrity = ""
+            url = f"/annotations/{papernum}/{question_idx}/{edition}"
+            raise NotImplementedError("Server does not implement edition")
         with self.SRmutex:
             try:
-                response = self.get_auth(
-                    url,
-                    json={"integrity": integrity},
-                )
+                response = self.get_auth(url)
                 response.raise_for_status()
                 r = response.json()
             except requests.HTTPError as e:
