@@ -161,7 +161,7 @@ class TestMarkQuestionAPI:
             format="multipart",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        # TODO: why can't I get the error message?
+        # TODO: why can't I get the error message?  Issue #4216.
         # print(response)
         # print(type(response))
         # print(response.data)
