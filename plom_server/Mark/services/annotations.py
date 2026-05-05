@@ -11,6 +11,7 @@
 
 import pathlib
 from math import isclose
+from typing import Any
 
 from django.db import transaction
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -32,7 +33,7 @@ def create_new_annotation_in_database(
     annot_img_file: InMemoryUploadedFile,
     rubric_list: list[tuple[int, int | None]],
     *,
-    annotation_data: str = "",
+    annotation_data: dict[str, Any] = {},
     user_agent: str = "",
     user_agent_version: str = "",
     require_latest_rubrics: bool = True,
@@ -50,8 +51,7 @@ def create_new_annotation_in_database(
         annot_img_file: the annotation image file in memory.
             The filename including extension is taken from this.
         rubric_list: a list of Rubrics used.
-        annotation_data: an ascii-string which the client can use to
-            reconstruct the annotation image, say svg or json.
+        annotation_data: whatever the client sent, something like svg.
 
     Keyword Args:
         user_agent: the client software.
@@ -97,7 +97,7 @@ def _create_new_annotation_in_database(
     *,
     user_agent: str = "",
     user_agent_version: str = "",
-    annotation_data: str = "",
+    annotation_data: dict[str, Any] = {},
     require_latest_rubrics: bool = True,
 ) -> Annotation:
 

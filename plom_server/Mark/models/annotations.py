@@ -3,7 +3,6 @@
 # Copyright (C) 2024, 2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
-import json
 from typing import Any
 
 from django.db import models
@@ -52,10 +51,14 @@ class Annotation(models.Model):
             We generally don't look at this: the client sends something
             and can get it back to reconstruct the scene for further
             editing.  This will generally be a JSON blob, written to
-            a string with Python's ``json.dumps`` for example.  It could
-            also be a uuencoded binary data or whatever the client sees
-            bit.  It should not be excessively large: think SVG not
-            large bitmap data.  If a client needs large binary data,
+            a string with Python's ``json.dumps`` for example.  This is
+            currently required, and we store it in a JSONField.  Subject
+            to change with little notice: exercise some caution using
+            the data in this.  It should not be excessively large: think
+            "SVG" not "large bitmap data".
+            In the future, we might replace this with a string, and
+            really let the client decide its meaning (e.g., uuencoded
+            binary data).  Although if a client needs large binary data,
             we could consider a file-based mechanism in the future.
     """
 
@@ -69,13 +72,15 @@ class Annotation(models.Model):
     time_of_last_update = models.DateTimeField(auto_now=True)
     user_agent = models.CharField(null=False, blank=True, max_length=64)
     user_agent_version = models.CharField(null=False, blank=True, max_length=64)
-    annotation_data = models.TextField(null=False, blank=True)
+    annotation_data = models.JSONField(null=True)
+    # To consider in the future:
+    # annotation_data = models.TextField(null=False, blank=True)
 
     def _get_annotation_data(self) -> dict[str, Any]:
         """Perhaps temporary, but some parts of the code need the actual annotation data.
 
-        Unpack it, assuming its JSON, in contradiction with the docs above.
-
-        There is at least one place in the code that needs this: its WIP.
+        Unpack it, assuming its JSON.  There is at least one place in
+        the code that needs this: its WIP.
         """
-        return json.loads(self.annotation_data)
+        # return json.loads(self.annotation_data)
+        return self.annotation_data

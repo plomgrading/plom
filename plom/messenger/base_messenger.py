@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import threading
@@ -1338,8 +1337,6 @@ class BaseMessenger:
             PlomTaskDeletedError
             PlomNoPaper
             PlomSeriousException
-            PlomConflict: server sent data that seems bad to use, maybe we
-                didn't make it and a different incompatible client did.
         """
         if edition is None:
             url = f"/annotations/{num}/{question}"
@@ -1372,17 +1369,6 @@ class BaseMessenger:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
             if self.is_server_api_less_than(117):
                 r = {"annotations": r}
-            else:
-                try:
-                    # TODO: if we're really going string-of-anything, then clients
-                    # should be doing this, not messenger.
-                    r["annotations"] = json.loads(r["annotations"])
-                except json.JSONDecodeError as e:
-                    raise PlomConflict(
-                        f"could not decode the annotation data from server: {e}\n"
-                        f"user_agent={r.get('user_agent')} "
-                        f"version={r.get('user_agent_version')}"
-                    )
             return r
 
     def get_annotations_image(

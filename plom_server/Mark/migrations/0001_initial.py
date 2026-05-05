@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 ("time_of_last_update", models.DateTimeField(auto_now=True)),
                 ("user_agent", models.CharField(blank=True, max_length=64)),
                 ("user_agent_version", models.CharField(blank=True, max_length=64)),
-                ("annotation_data", models.TextField(blank=True)),
+                ("annotation_data", models.JSONField(null=True)),
                 (
                     "user",
                     models.ForeignKey(

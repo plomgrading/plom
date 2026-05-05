@@ -538,7 +538,7 @@ class Messenger(BaseMessenger):
         if self.is_server_api_less_than(115):
             assert not code.startswith("q")
             code = "q" + code
-        # TODO: if we're really going string-of-anything, then clients
+        # Note: if we decide to make it string-of-anything, then clients
         # should be doing this, not messenger.
         plom_data_ascii_str_of_json = json.dumps(plom_data)
         rubrics_encoded = []
