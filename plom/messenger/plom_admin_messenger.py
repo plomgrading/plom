@@ -783,7 +783,7 @@ class PlomAdminMessenger(Messenger):
             and a password reset link for their account.
 
         Raises:
-            PlomSeriousException - if the GET request produces an HTTPError
+            PlomSeriousException: if the GET request produces an HTTPError
             PlomNoPermission: user is not in the group required to make
                 these changes.
         """

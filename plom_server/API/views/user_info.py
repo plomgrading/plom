@@ -23,6 +23,7 @@ class UsersInfo(APIView):
 
 
 class UserManage(APIView):
+    """API to manage user accounts."""
 
     # PUT /api/beta/users/<username>
     def put(self, request: Request, *, username) -> Response:
@@ -58,7 +59,7 @@ class UserManage(APIView):
         }
         return Response(response_dict, status=status.HTTP_200_OK)
 
-    # POST /api/beta/users/<username>&group=
+    # POST /api/beta/users/<username>?group=<group1>&group=<group2>
     def post(self, request: Request, *, username: str) -> Response:
         """Create a user account belonging to a number of groups.
 
