@@ -106,6 +106,7 @@ class Home(RoleRequiredView):
     redirect_field_name = "login"
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        print(request.session.get_expiry_date())
         context: dict[str, Any] = {}
         return render(request, "Authentication/home.html", context)
 
@@ -127,6 +128,8 @@ class LoginView(View):
             return redirect("home")
 
         username = request.POST.get("username")
+        remember_me = request.POST.get("remember_me")
+        print(remember_me)
         # be wary making db calls for unauthenticated users, see #3733
         # TODO: maybe just delete this?
         # temp_username = User.objects.filter(username__iexact=username).values()
@@ -146,6 +149,10 @@ class LoginView(View):
             return render(request, self.template_name)
 
         login(request, user)
+        if not remember_me:
+            print("not remembering...")
+            request.session.set_expiry(0)  # on browser close
+            print(request.session.get_expiry_date())
         if "next" in request.POST:
             return redirect(request.POST.get("next"))
         else:

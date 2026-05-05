@@ -283,12 +283,22 @@ PLOM_MODEL_CACHE = PLOM_BASE_DIR / "model_cache"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Web login sessions expire this many seconds after initial login (defaults: two weeks)
-SESSION_COOKIE_AGE = 60 * 60 * 48  # 48 hours
+# Web login Sessions
+# ------------------------------------------------------------
+#
+
+# see docs for options: https://docs.djangoproject.com/en/6.0/ref/settings/#session-engine
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_SAVE_EVERY_REQUEST = True
+# Web login sessions expire after this many seconds (defaults: two weeks)
+SESSION_COOKIE_AGE = 10  # 30 minutes
+if False and DEBUG:
+    SESSION_COOKIE_AGE = 60 * 60 * 24 * 2  # 2 days
 # If True, then every time user makes a request, the timeout will be reset (some performance cost)
-# SESSION_SAVE_EVERY_REQUEST = False
-# You can set the cookie to expire when they close their browser (for some browsers anyway)
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+# You can set the cookie to expire when they close their browser (for some browsers anyway).
+# Plom overrides this case-by-case with a checkbox on the login screen
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 
 SESSION_COOKIE_NAME = "sessionid"
