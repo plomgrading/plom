@@ -366,7 +366,7 @@ class MgetAnnotations(APIView):
             "user": annotation.user.username,
             "edition": annotation.edition,
             "id": annotation.id,
-            "annotations": annotation.annotation_data,
+            "user_agent_data": annotation.user_agent_data,
         }
         return Response(data, status=status.HTTP_200_OK)
 

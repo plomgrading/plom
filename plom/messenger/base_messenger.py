@@ -1363,7 +1363,7 @@ class BaseMessenger:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
             if self.is_server_api_less_than(117):
-                r = {"annotations": r}
+                r = {"user_agent_data": r}
             return r
 
     def get_annotations_image(

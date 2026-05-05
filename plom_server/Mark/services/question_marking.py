@@ -161,12 +161,12 @@ class QuestionMarkingService:
         score: float,
         marking_time: float,
         integrity_check: int,
-        annotation_data: dict[str, Any],
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
         rubric_list: list[tuple[int, int | None]],
         user_agent: str = "",
         user_agent_version: str = "",
+        user_agent_data: dict[str, Any],
         require_latest_rubrics: bool = True,
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
@@ -176,17 +176,18 @@ class QuestionMarkingService:
 
         Keyword Args:
             user: which user.
-            score: careful, this is currently duplicated inside the ``annotation_data``.
+            score: the score to be assigned.
             marking_time: TODO: document whether cumulative or not?
             integrity_check: integer thing, safety feature, details long forgotten.
-            annotation_data: whatever the client sent, something like svg.
             annotation_image: the rendered bitmap of the annotations.
-                This is annotation_data rendered on top of the underlying
-                images.  Its the image that should be shown back to users.
+                This is generally the user_agent_data rendered on top of the
+                underlying images.  Its the image that should be shown back
+                to users.
             annotation_image_md5sum: the md5sum of the annotated image.
             rubric_list: a list of the rubrics used in these annotations.
             user_agent: the client software.
             user_agent_version: version of the client software.
+            user_agent_data: whatever the client sent, something like svg.
             require_latest_rubrics: TODO.
 
         Raises:
@@ -259,9 +260,9 @@ class QuestionMarkingService:
             annotation_image_md5sum,
             annotation_image,
             rubric_list,
-            annotation_data=annotation_data,
             user_agent=user_agent,
             user_agent_version=user_agent_version,
+            user_agent_data=user_agent_data,
             require_latest_rubrics=require_latest_rubrics,
         )
         # Note the helper function above also performs `task.save`; that seems ok.

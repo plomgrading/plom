@@ -47,7 +47,7 @@ class Annotation(models.Model):
             such as "org.plomgrading.PlomClient".
         user_agent_version: the version of the user agent such as "1.3.7"
             or "0.22.3.dev0".
-        annotation_data: A blob of data encoded as an ascii-string.
+        user_agent_data: A blob of data encoded as an ascii-string.
             We generally don't look at this: the client sends something
             and can get it back to reconstruct the scene for further
             editing.  This will generally be a JSON blob, written to
@@ -56,10 +56,9 @@ class Annotation(models.Model):
             to change with little notice: exercise some caution using
             the data in this.  It should not be excessively large: think
             "SVG" not "large bitmap data".
-            In the future, we might replace this with a string, and
-            really let the client decide its meaning (e.g., uuencoded
-            binary data).  Although if a client needs large binary data,
-            we could consider a file-based mechanism in the future.
+            In the future, we might replace this with a string.
+            Note: its generally accepted that clients should decide on
+            a defacto standard, but the server doesn't care too much.
     """
 
     edition = models.IntegerField(null=True)
@@ -72,9 +71,9 @@ class Annotation(models.Model):
     time_of_last_update = models.DateTimeField(auto_now=True)
     user_agent = models.CharField(null=False, blank=True, max_length=64)
     user_agent_version = models.CharField(null=False, blank=True, max_length=64)
-    annotation_data = models.JSONField(null=True)
+    user_agent_data = models.JSONField(null=True)
     # To consider in the future:
-    # annotation_data = models.TextField(null=False, blank=True)
+    # user_agent_data = models.TextField(null=False, blank=True)
 
     def _get_annotation_data(self) -> dict[str, Any]:
         """Perhaps temporary, but some parts of the code need the actual annotation data.
@@ -82,5 +81,5 @@ class Annotation(models.Model):
         Unpack it, assuming its JSON.  There is at least one place in
         the code that needs this: its WIP.
         """
-        # return json.loads(self.annotation_data)
-        return self.annotation_data
+        # return json.loads(self.user_agent_data)
+        return self.user_agent_data

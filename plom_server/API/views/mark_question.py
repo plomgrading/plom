@@ -181,8 +181,8 @@ class MarkTask(APIView):
             request: should contain a file keyed by "annotation_image"
                 and data of key-value pairs.  The data must have keys
                 "score", "marking_time", "md5sum", and "integrity_check".
-                Optional keys include "rubric", "annotations", "user_agent",
-                and "user_agent_version".
+                Optional keys include "rubric", "user_agent",
+                "user_agent_version", and "user_agent_data".
                 "rubric" can be repeated to give a list of integers
                 (which will come as strings b/c I think http just does that),
                 corresponding to the rids of the Rubrics used in this
@@ -192,12 +192,15 @@ class MarkTask(APIView):
                 To enable more precise checking, pass in ``{rid}rev{rev}``,
                 or ``{rid}r{rev>}` (for example "15rev0" or "15r2").  By doing
                 that you'll get errors if those are not the latest revisions.
-                Optionally, you can provide "annotations" containing an ascii
-                string encoding of JSON: in Python you can create this using
-                ``json.dumps(annotation_data)``.  The expected format of
-                the dictionary `annotation_data` is hopefully documented
-                elsewhere.
+                Optionally, you can (and probably should) provide
+                "user_agent_data" containing an ascii string encoding of JSON:
+                in Python you can create this using ``json.dumps(data)``.
+                The expected format of the dictionary, `data`, sometimes called
+                ``annotation_data`` is hopefully documented elsewhere.
                 This format is still influx: expect changes in the future.
+                There is currently an expectation that humans can use the
+                official Plom Client to edit annotation, and thus you should
+                send something that client can render.
 
         Keyword Args:
             code: a string such as "0123g4" specifying a task.
@@ -283,9 +286,9 @@ class MarkTask(APIView):
 
         user_agent = data.get("user_agent", "")
         user_agent_version = data.get("user_agent_version", "")
-        raw_annotation_data = data.get("annotations", "{}")
+        raw_user_agent_data = data.get("user_agent_data", "{}")
         try:
-            annot_data = json.loads(raw_annotation_data)
+            user_agent_data = json.loads(raw_user_agent_data)
         except json.JSONDecodeError as e:
             return _400(f"Invalid JSON in annotation data: {e}")
 
@@ -294,7 +297,7 @@ class MarkTask(APIView):
         # TODO: no rev) and also have been bitrottng for a long time.
         if user_agent == "org.plomgrading.PlomClient":
             # Colin thinks this is a very bad idea
-            src_img_data = annot_data["base_images"]
+            src_img_data = user_agent_data["base_images"]
             for image_data in src_img_data:
                 # TODO: this looks like direct file access on the server, Issue #3888.
                 img_path = pathlib.Path(image_data["server_path"])
@@ -302,7 +305,7 @@ class MarkTask(APIView):
                     return _400("Invalid original-image in request")
 
             # take rid rev pairs from the annotation data
-            rubric_list2 = _extract_rubric_rid_rev_pairs(annot_data)
+            rubric_list2 = _extract_rubric_rid_rev_pairs(user_agent_data)
             rids1 = list(r for r, __ in rubric_list)
             rids2 = list(r for r, __ in rubric_list2)
             if sorted(rids1) != sorted(rids2):
@@ -327,7 +330,7 @@ class MarkTask(APIView):
                 score=score,
                 marking_time=marking_time,
                 integrity_check=integrity_check,
-                annotation_data=annot_data,
+                user_agent_data=user_agent_data,
                 annotation_image=annotation_image,
                 annotation_image_md5sum=md5sum,
                 rubric_list=rubric_list,

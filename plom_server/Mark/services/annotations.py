@@ -33,9 +33,9 @@ def create_new_annotation_in_database(
     annot_img_file: InMemoryUploadedFile,
     rubric_list: list[tuple[int, int | None]],
     *,
-    annotation_data: dict[str, Any] = {},
     user_agent: str = "",
     user_agent_version: str = "",
+    user_agent_data: dict[str, Any] = {},
     require_latest_rubrics: bool = True,
 ) -> Annotation:
     """Save an annotation.
@@ -51,11 +51,11 @@ def create_new_annotation_in_database(
         annot_img_file: the annotation image file in memory.
             The filename including extension is taken from this.
         rubric_list: a list of Rubrics used.
-        annotation_data: whatever the client sent, something like svg.
 
     Keyword Args:
         user_agent: the client software.
         user_agent_version: version of the client software.
+        user_agent_data: whatever the client sent, something like svg.
         require_latest_rubrics: if True (the default), we check if the
             rubrics in-use are (a) the latest and (b) published and
             fail if those conditions are not satisfied.
@@ -83,7 +83,7 @@ def create_new_annotation_in_database(
         rubric_list,
         user_agent=user_agent,
         user_agent_version=user_agent_version,
-        annotation_data=annotation_data,
+        user_agent_data=user_agent_data,
         require_latest_rubrics=require_latest_rubrics,
     )
 
@@ -97,7 +97,7 @@ def _create_new_annotation_in_database(
     *,
     user_agent: str = "",
     user_agent_version: str = "",
-    annotation_data: dict[str, Any] = {},
+    user_agent_data: dict[str, Any] = {},
     require_latest_rubrics: bool = True,
 ) -> Annotation:
 
@@ -116,13 +116,13 @@ def _create_new_annotation_in_database(
         edition=last_annotation_edition + 1,
         score=score,
         image=annotation_image,
-        annotation_data=annotation_data,
         marking_time=time,
         marking_delta_time=time - old_time,
         task=task,
         user=task.assigned_user,
         user_agent=user_agent,
         user_agent_version=user_agent_version,
+        user_agent_data=user_agent_data,
     )
     new_annotation.save()
     _add_annotation_to_rubrics(new_annotation, [r for r, __ in rid_rev_pairs])

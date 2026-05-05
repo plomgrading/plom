@@ -506,7 +506,10 @@ class Messenger(BaseMessenger):
             annotated_img (pathlib.Path): the annotated image, either a
                 png or a jpeg.
             plom_data: a dictionary representation of the annotation on
-                the page.
+                the page.  The server will store this and give it back if you
+                revisit this task (e.g., to make changes).  Clients should strive
+                to be compatible with one another, although the precise format
+                of this data is not completely fixed yet (as of 2026-05).
             rubrics: list of rubric IDs used on the page, or a list of tuples
                 of (rubric IDs, revision), which will allow the server to
                 verify that up-to-date rubrics are being used.
@@ -563,7 +566,7 @@ class Messenger(BaseMessenger):
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
                         "rubric": rubrics_encoded,
-                        "annotations": plom_data_ascii_str_of_json,
+                        "user_agent_data": plom_data_ascii_str_of_json,
                     }
                     annot_img_file.seek(0)
 
