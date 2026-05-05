@@ -48,6 +48,7 @@ from .views import (
     SourceOverview,
     SourceDetail,
     SpecificationAPIView,
+    UserManage,
     PublicCodeAPIView,
     RectangleExtractorView,
     PQVmap,
@@ -132,6 +133,11 @@ urlpatterns = [
         "api/beta/finish/unmarked/<int:papernum>",
         FinishUnmarked.as_view(),
         name="api_Finish_unmarked",
+    ),
+    path(
+        "api/beta/users/<str:username>",
+        UserManage.as_view(),
+        name="api_user_manage",
     ),
     path(
         "REP/spreadsheet",
