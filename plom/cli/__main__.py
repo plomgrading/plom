@@ -38,6 +38,7 @@ from plom.cli import (
     bundle_map_page,
     clear_login,
     create_user,
+    create_user_password_reset_link,
     delete_classlist,
     delete_source,
     get_marks_as_csv_string,
@@ -583,6 +584,17 @@ def get_parser() -> argparse.ArgumentParser:
     )
     _add_server_args(s)
 
+    s = sub.add_parser(
+        "generate-password-reset",
+        help="generate a link to reset a user's password",
+    )
+    s.add_argument(
+        "specified_username",
+        type=str,
+        help="Username for which the link should be generated",
+    )
+    _add_server_args(s)
+
     # perhaps unnecessary for modern Plom?
     s = sub.add_parser(
         "clear",
@@ -831,6 +843,10 @@ def main():
 
     elif args.command == "create-user":
         response = create_user(args.new_username, args.groups, msgr=m)
+        print(response)
+
+    elif args.command == "generate-password-reset":
+        response = create_user_password_reset_link(args.specified_username, msgr=m)
         print(response)
 
     elif args.command == "clear":

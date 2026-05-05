@@ -23,3 +23,21 @@ def create_user(
         user, and a password reset link.
     """
     return msgr.create_user(username, user_groups)
+
+
+@with_messenger
+def create_user_password_reset_link(
+    username: str, *, msgr
+) -> dict[str, str | list[str]]:
+    """Create a user account.
+
+    Args:
+        username: the username for the account.
+
+    Keyword Args:
+        msgr:  An active Messenger object.
+
+    Returns:
+        A dict containing a username and a password reset link.
+    """
+    return msgr.create_user_password_reset_link(username)
