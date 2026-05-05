@@ -22,8 +22,43 @@ class UsersInfo(APIView):
         return Response(userInfo, status=status.HTTP_200_OK)
 
 
-# POST /api/beta/users/<username>&group=
 class UserManage(APIView):
+
+    # PUT /api/beta/users/<username>
+    def put(self, request: Request, *, username) -> Response:
+        """Generate a password reset link for the specified user.
+
+        Responses:
+            200 when it succeeds, returning a username and password reset link.
+            400 for invalid username.
+            403 if you do not have permissions to generate a password reset link.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only "manager" users can generate password reset links',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            password_reset_link_dict = AuthService().generate_password_reset_links_dict(
+                request, [username]
+            )
+            password_reset_link = password_reset_link_dict[username]
+        # invalid username supplied
+        except ObjectDoesNotExist as e:
+            return _error_response(
+                e,
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        response_dict = {
+            "username": username,
+            "password_reset_link": password_reset_link,
+        }
+        return Response(response_dict, status=status.HTTP_200_OK)
+
+    # POST /api/beta/users/<username>&group=
     def post(self, request: Request, *, username: str) -> Response:
         """Create a user account belonging to a number of groups.
 
