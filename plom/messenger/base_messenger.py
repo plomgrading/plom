@@ -1379,7 +1379,9 @@ class BaseMessenger:
                     r["annotations"] = json.loads(r["annotations"])
                 except json.JSONDecodeError as e:
                     raise PlomConflict(
-                        f"could not decode the annotation data from server: {e}"
+                        f"could not decode the annotation data from server: {e}\n"
+                        f"user_agent={r.get('user_agent')} "
+                        f"version={r.get('user_agent_version')}"
                     )
             return r
 
