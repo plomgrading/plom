@@ -40,6 +40,7 @@ from .classlist_tools import delete_classlist
 from .classlist_tools import download_classlist
 from .classlist_tools import upload_classlist
 from .rectangle_extractor_tools import extract_rectangle
+from .user_tools import create_user
 
 # what you get from "from plom.cli import *"
 __all__ = [
