@@ -4,5 +4,4 @@
 
 """Serializers of the Plom Server Mark app."""
 
-from .annotations import AnnotationSerializer
 from .tasks import MarkingTaskSerializer

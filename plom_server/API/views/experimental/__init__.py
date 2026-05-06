@@ -3,5 +3,4 @@
 
 from .base import ManagerReadOnlyViewSet
 from .rubrics import RubricViewSet
-from .annotations import AnnotationViewSet
 from .marking_tasks import MarkingTaskViewSet

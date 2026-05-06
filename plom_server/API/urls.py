@@ -10,7 +10,6 @@ from rest_framework.routers import DefaultRouter
 
 from .views.experimental import (
     RubricViewSet,
-    AnnotationViewSet,
     MarkingTaskViewSet,
 )
 
@@ -196,7 +195,6 @@ urlpatterns = [
 
 experimental_router = DefaultRouter(trailing_slash=True)
 experimental_router.register("rubrics", RubricViewSet, basename="rubrics")
-experimental_router.register("annotations", AnnotationViewSet, basename="annotations")
 experimental_router.register(
     "marking-tasks", MarkingTaskViewSet, basename="marking-tasks"
 )
