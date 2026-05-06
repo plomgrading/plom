@@ -56,6 +56,27 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
     return user_list
 
 
+def get_user_info_list_of_dicts() -> list[dict[str, Any]]:
+    """Get a list of info about Users, appropriate to the outside, such as the client.
+
+    Returns:
+        A list of dicts, one dict for each user. Each dict has keys "uid"
+        "username", name", and "groups".  More might be added later, such
+        as when last online, or an approximate "is_active" field?
+    """
+    user_list = []
+    for user in User.objects.all().prefetch_related("groups"):
+        user_list.append(
+            {
+                "uid": user.id,
+                "username": user.username,
+                "name": user.first_name,  # Plom uses this as the "name" field
+                "groups": user.groups.values_list("name", flat=True),
+            }
+        )
+    return user_list
+
+
 def get_users_groups_info() -> dict[str, list]:
     """Get a dictionary mapping each user's username to a list of their groups.
 

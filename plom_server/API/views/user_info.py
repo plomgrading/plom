@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2026 Aidan Murphy
+# Copyright (C) 2026 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
@@ -9,17 +10,26 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
-from plom_server.UserManagement.services import get_users_groups_info
+
+from plom_server.UserManagement.services import UsersService
 from plom_server.Authentication.services import AuthService
+
 from .utils import _error_response
 
 
-# GET /info/users/
 class UsersInfo(APIView):
+    """Information about users on the system."""
+
+    # GET /info/users/
     def get(self, request: Request) -> Response:
-        """Get a dictionary mapping all users' username to their groups."""
-        userInfo = get_users_groups_info()
-        return Response(userInfo, status=status.HTTP_200_OK)
+        """Get a list of users, their usernames, uid, what groups they belong to and other info.
+
+        Responses:
+            200 when it succeeds, returning list of dicts, each with at least keys
+            for "username", "uid", "name", and "groups".
+        """
+        response_list = UsersService.get_user_info_list_of_dicts()
+        return Response(response_list, status=status.HTTP_200_OK)
 
 
 class UserManage(APIView):
