@@ -87,14 +87,7 @@ class UserManage(APIView):
             created_username, joined_groups = AuthService.create_user_and_add_to_groups(
                 username, groups
             )
-        # invalid group names supplied
-        except (ObjectDoesNotExist, ValueError) as e:
-            return _error_response(
-                e,
-                status.HTTP_400_BAD_REQUEST,
-            )
-        # username conflicts with existing user
-        except IntegrityError as e:
+        except (ObjectDoesNotExist, ValueError, IntegrityError) as e:
             return _error_response(
                 f"Couldn't create user, {e}",
                 status.HTTP_400_BAD_REQUEST,
