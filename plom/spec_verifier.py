@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2026 Joseph Eremondi
 
 from __future__ import annotations
 
@@ -186,6 +187,11 @@ def build_page_to_group_name_dict(
         'Q7' or maybe 'Q7, Q8' if there are shared pages.
     """
     page_to_group = {p + 1: "" for p in range(spec["numberOfPages"])}
+    # Keep a list of questions for each page, so we don't have to print them all
+    # If there are too many
+    page_to_qlist: dict[int, list[str]] = {
+        p + 1: [] for p in range(spec["numberOfPages"])
+    }
     page_to_group[spec["idPage"]] = "ID"
     for pg in spec["doNotMarkPages"]:
         page_to_group[pg] = "DNM"
@@ -196,11 +202,19 @@ def build_page_to_group_name_dict(
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
             label = get_question_label(spec, q)
-            # If questions share a page, we might already have a label; concatenate
-            already = page_to_group.get(pg)
-            if already:
-                label = already + ", " + label
-            page_to_group[pg] = label
+            # Store this question and its label to potentially use
+            # in this page's label
+            page_to_qlist[pg].append(label)
+    # Then, go through each page and generate its label from the attached questions
+    for pg, qlist in page_to_qlist.items():
+        # Just generate the label if it's not too many
+        # TODO: look at its actual length/size
+        if len(qlist) == 0:
+            pass
+        elif len(qlist) <= 3:  # TODO don't hardcode
+            page_to_group[pg] = ", ".join(qlist)
+        else:  # For long lists, just show the range
+            page_to_group[pg] = qlist[0] + " ... " + qlist[-1]
 
     return page_to_group
 
