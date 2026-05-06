@@ -37,6 +37,8 @@ from plom.common import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,
+    create_user,
+    create_user_password_reset_link,
     delete_classlist,
     delete_source,
     get_marks_as_csv_string,
@@ -565,6 +567,34 @@ def get_parser() -> argparse.ArgumentParser:
     s.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
     _add_server_args(s)
 
+    s = sub.add_parser(
+        "create-user",
+        help="Create a user account",
+        description="""
+            Username and user groups can be specified, and a password
+            reset link is returned.
+        """,
+    )
+    s.add_argument("new_username", type=str, help="Username for the new account")
+    s.add_argument(
+        "--groups",
+        type=str,
+        nargs="+",
+        help="Which groups the new account should belong to.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "generate-password-reset",
+        help="generate a link to reset a user's password",
+    )
+    s.add_argument(
+        "specified_username",
+        type=str,
+        help="Username for which the link should be generated",
+    )
+    _add_server_args(s)
+
     # perhaps unnecessary for modern Plom?
     s = sub.add_parser(
         "clear",
@@ -810,6 +840,14 @@ def main():
         finally:
             msgr.closeUser()
             msgr.stop()
+
+    elif args.command == "create-user":
+        response = create_user(args.new_username, args.groups, msgr=m)
+        print(response)
+
+    elif args.command == "generate-password-reset":
+        response = create_user_password_reset_link(args.specified_username, msgr=m)
+        print(response)
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)

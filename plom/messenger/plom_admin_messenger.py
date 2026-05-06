@@ -747,6 +747,61 @@ class PlomAdminMessenger(Messenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def create_user_password_reset_link(self, username: str) -> dict[str, str]:
+        """Get a password reset link for the specified user.
+
+        Returns:
+            A dict containing the username of the created user,
+            and a password reset link for their account.
+
+        Raises:
+            PlomSeriousException: if the GET request produces an HTTPError
+            PlomNoPermission: user is not in the group required to make
+                these changes.
+            ValueError: the specified username doesn't exist.
+        """
+        with self.SRmutex:
+            try:
+                response = self.post_auth(f"/api/beta/users/{username}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise ValueError(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.json()
+
+    def create_user(
+        self, username: str, group_list: list[str]
+    ) -> dict[str, str | list[str]]:
+        """Create a user on the server.
+
+        Returns:
+            A dict containing the username of the created user, their usergroups,
+            and a password reset link for their account.
+
+        Raises:
+            PlomSeriousException: if the GET request produces an HTTPError
+            PlomNoPermission: user is not in the group required to make
+                these changes.
+        """
+        query_args = [f"group={group_name}" for group_name in group_list]
+        p = f"/api/beta/users/{username}" + "?" + "&".join(query_args)
+        with self.SRmutex:
+            try:
+                response = self.put_auth(p)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise ValueError(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.json()
+
     def download_classlist(self) -> BytesIO:
         """Download the classlist (if any) held by the server.
 

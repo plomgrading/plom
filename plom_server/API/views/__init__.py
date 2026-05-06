@@ -19,7 +19,7 @@ from .server_info import (
     ObtainAuthTokenUpdateLastLogin,
 )
 
-from .user_info import UsersInfo
+from .user_info import UsersInfo, UserManage
 
 
 from .source_handler import (
