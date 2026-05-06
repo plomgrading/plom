@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2026 Jax Lim
 
 from __future__ import annotations
 
