@@ -507,11 +507,8 @@ class BaseMessenger:
                     ) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    # ------------------------
-    # ------------------------
-    # Authentication stuff
     def get_user_roles(self) -> list[str]:
-        """Obtain user's roles from the server.
+        """Obtain the current user's roles from the server.
 
         Args:
             user: the username of the user.
@@ -521,11 +518,13 @@ class BaseMessenger:
             PlomSeriousException: something unexpected happened.
 
         Returns:
-            Returns a list of groups that the user belongs to such as
-            ["lead_marker", "marker", "scanner"].  Can also
+            Returns a list of groups that the current  user belongs to
+            such as ["lead_marker", "marker", "scanner"].  Can also
             include "identifier" and "manager", and perhaps others.
         """
-        path = f"/info/user/{self.user}"
+        path = f"/api/beta/users/{self.user}"
+        if self.is_server_api_less_than(117):
+            path = "/info/users/{self.user}"
         with self.SRmutex:
             try:
                 response = self.get_auth(path)
@@ -536,11 +535,15 @@ class BaseMessenger:
                     if _role == "lead_marker":
                         return ["marker", "identifier", "lead_marker"]
                     return [_role]
-                return response.json()
+                r = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+        if self.is_server_api_less_than(117):
+            return r
+        # newer servers give additional info
+        return r["groups"]
 
     def get_user_list(self) -> list[dict[str, Any]]:
         """Get a list of users from the server and info such as what groups they belong to.
