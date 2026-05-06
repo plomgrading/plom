@@ -56,18 +56,6 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
     return user_list
 
 
-def get_users_groups_info() -> dict[str, list[str]]:
-    """Get a dictionary mapping each user's username to a list of their groups.
-
-    Returns:
-        A dict mapping username to a list of the user's groups.
-    """
-    return {
-        user.username: list(user.groups.values_list("name", flat=True))
-        for user in User.objects.all()
-    }
-
-
 def get_user_info_as_list_of_dicts() -> list[dict[str, Any]]:
     """Get a list of users, their usernames, uid, what groups they belong to and other info.
 
