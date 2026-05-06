@@ -541,7 +541,7 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_user_list(self) -> dict[str, list[str]]:
+    def get_user_list(self) -> list[dict[str, Any]]:
         """Get a list of users from the server and what groups they belong to.
 
         Raises:
@@ -549,8 +549,8 @@ class BaseMessenger:
             PlomSeriousException: something unexpected happened.
 
         Returns:
-            Returns a dict keyed by username (string).  Each value is list
-            of strings of groups that user belongs too.
+            Returns a list of dicts, one for each user.  Keys include "username"
+            and "groups" and maybe more in the future.
         """
         if self.is_server_api_less_than(115):
             raise PlomNoServerSupportException(
@@ -561,11 +561,14 @@ class BaseMessenger:
             try:
                 response = self.get_auth("/info/users")
                 response.raise_for_status()
-                return response.json()
+                r = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+        if self.is_server_api_less_than(117):
+            r = [{"username": u, "groups": g} for u, g in r.items()]
+        return r
 
     def requestAndSaveToken(
         self, user: str, pw: str, *, exclusive: bool = False
