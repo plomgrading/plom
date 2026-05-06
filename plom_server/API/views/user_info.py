@@ -25,8 +25,8 @@ class UsersInfo(APIView):
 class UserManage(APIView):
     """API to manage user accounts."""
 
-    # PUT /api/beta/users/<username>
-    def put(self, request: Request, *, username) -> Response:
+    # POST /api/beta/users/<username>
+    def post(self, request: Request, *, username) -> Response:
         """Generate a password reset link for the specified user.
 
         Responses:
@@ -58,8 +58,8 @@ class UserManage(APIView):
         }
         return Response(response_dict, status=status.HTTP_200_OK)
 
-    # POST /api/beta/users/<username>?group=<group1>&group=<group2>
-    def post(self, request: Request, *, username: str) -> Response:
+    # PUT /api/beta/users/<username>?group=<group1>&group=<group2>
+    def put(self, request: Request, *, username: str) -> Response:
         """Create a user account belonging to a number of groups.
 
         You must pass at least one "group=" in each request.

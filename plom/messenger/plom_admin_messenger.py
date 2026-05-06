@@ -762,7 +762,7 @@ class PlomAdminMessenger(Messenger):
         """
         with self.SRmutex:
             try:
-                response = self.put_auth(f"/api/beta/users/{username}")
+                response = self.post_auth(f"/api/beta/users/{username}")
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 400:
@@ -791,7 +791,7 @@ class PlomAdminMessenger(Messenger):
         p = f"/api/beta/users/{username}" + "?" + "&".join(query_args)
         with self.SRmutex:
             try:
-                response = self.post_auth(p)
+                response = self.put_auth(p)
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 400:
