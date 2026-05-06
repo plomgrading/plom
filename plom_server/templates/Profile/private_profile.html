@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2025 Bryan Tanady
 -->
@@ -40,7 +40,10 @@
             <div id="edit-user" class="col-md-12 col-xl-8">
                 <form class="form" method="post">
                     {% csrf_token %}
-                    <p>Username: {{ request.user.username }}</p>
+                    <p>
+                        Username: {{ request.user.username }}
+                        <span class="ms-3">(uid: {{ request.user.id }})</span>
+                    </p>
                     <p id="name-label">Preferred name: {{ form.first_name }}</p>
                     <p class="text-muted lh-1">
                         <small>
