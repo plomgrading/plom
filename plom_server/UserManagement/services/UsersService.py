@@ -68,6 +68,35 @@ def get_users_groups_info() -> dict[str, list[str]]:
     }
 
 
+def get_user_info_as_list_of_dicts() -> list[dict[str, Any]]:
+    """Get a list of users, their usernames, uid, what groups they belong to and other info.
+
+    Returns:
+        A list of dicts with keys for "uid", "username", "name", and
+        "groups".  Perhaps others in the future.
+    """
+    return [
+        get_user_obj_as_dict_manual(user)
+        for user in User.objects.all().prefetch_related("groups")
+    ]
+
+
+def get_user_obj_as_dict_manual(user: User) -> dict[str, Any]:
+    """A manually-curated dict representation of a User object.
+
+    See also :py:`get_user_info_as_list_of_dicts()` which includes the same keys.
+
+    Returns:
+        A dict with keys for "uid", "username", "name", and "groups".
+    """
+    return {
+        "uid": user.id,
+        "username": user.username,
+        "name": user.first_name,  # Plom uses this as the "name" field
+        "groups": user.groups.values_list("name", flat=True),
+    }
+
+
 def get_user_as_dict(username: str) -> dict[str, Any]:
     """Get a User object as a dict."""
     return model_to_dict(User.objects.get_by_natural_key(username))

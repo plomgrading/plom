@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from plom_server.Authentication.services import AuthService
+from plom_server.UserManagement.service import UsersService
 
 from .utils import _error_response
 
@@ -28,17 +29,7 @@ class UserInfo(APIView):
             200 on success, returning a list of dicts, each with (at least)
             keys for "uid", "username", "name", and "groups".
         """
-        user_list = []
-        for user in User.objects.all().prefetch_related("groups"):
-            user_list.append(
-                {
-                    "uid": user.id,
-                    "username": user.username,
-                    "name": user.first_name,  # Plom uses this as the "name" field
-                    "groups": user.groups.values_list("name", flat=True),
-                }
-            )
-        return Response(user_list)
+        return Response(UsersService.get_user_info_as_list_of_dicts())
 
 
 class UserManage(APIView):
@@ -64,15 +55,7 @@ class UserManage(APIView):
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist as e:
             return _error_response(f"No such user: {e}", status.HTTP_404_NOT_FOUND)
-
-        return Response(
-            {
-                "uid": user.id,
-                "username": user.username,
-                "name": user.first_name,  # Plom uses this as the "name" field
-                "groups": user.groups.values_list("name", flat=True),
-            }
-        )
+        return Response(UsersService.get_user_obj_as_dict_manual(user))
 
     # POST /api/beta/users/<username>
     def post(self, request: Request, *, username) -> Response:
