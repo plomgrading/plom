@@ -46,10 +46,9 @@ class UserManage(APIView):
                 request, [username]
             )
             password_reset_link = password_reset_link_dict[username]
-        # invalid username supplied
         except ObjectDoesNotExist as e:
             return _error_response(
-                e,
+                f"Invalid username supplied: {e}",
                 status.HTTP_400_BAD_REQUEST,
             )
 
