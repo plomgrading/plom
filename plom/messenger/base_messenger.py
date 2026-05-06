@@ -563,13 +563,13 @@ class BaseMessenger:
                 "older server does not support user lists"
             )
 
-        url = "/api/beta/users"
+        path = "/api/beta/users"
         if self.is_server_api_less_than(117):
-            url = "/info/users"
+            path = "/info/users"
 
         with self.SRmutex:
             try:
-                response = self.get_auth(url)
+                response = self.get_auth(path)
                 response.raise_for_status()
                 r = response.json()
             except requests.HTTPError as e:
