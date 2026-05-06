@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024, 2026 Colin B. Macdonald
 
 from rest_framework.serializers import (
     ModelSerializer,
     StringRelatedField,
     SerializerMethodField,
-    HyperlinkedRelatedField,
 )
 from ..models import MarkingTask
 
@@ -17,8 +16,6 @@ class MarkingTaskSerializer(ModelSerializer):
     # some nonsense to avoid pretty printing using Paper.str
     # paper = serializers.SlugRelatedField(slug_field="paper_number", queryset=TODO.sth.sth)
     tags = SerializerMethodField()
-    # TODO: Issue #3521: potentially broken URLs, anyone using this?
-    latest_annotation = HyperlinkedRelatedField("annotations-detail", read_only=True)
 
     class Meta:
         model = MarkingTask
