@@ -13,9 +13,9 @@ from ..models import MarkingTask
 class MarkingTaskSerializer(ModelSerializer):
     assigned_user = StringRelatedField()
     status = SerializerMethodField()
-    # some nonsense to avoid pretty printing using Paper.str
-    # paper = serializers.SlugRelatedField(slug_field="paper_number", queryset=TODO.sth.sth)
     tags = SerializerMethodField()
+    # careful: "paper" will be the id of the paper object, Issue #3522.
+    paper_number = SerializerMethodField()
 
     class Meta:
         model = MarkingTask
@@ -26,3 +26,6 @@ class MarkingTaskSerializer(ModelSerializer):
 
     def get_status(self, obj):
         return obj.StatusChoices.choices[obj.status - 1][1]
+
+    def get_paper_number(self, obj):
+        return obj.paper.paper_number

@@ -203,7 +203,6 @@ class MgetRubricMarkingTasks(APIView):
             Returns 404 if the rubric is not found.
 
         Notes: the format of the output is still stabilizing.
-        TODO: Similarly, `paper` field is broken (Issue #3522).
         """
         try:
             rubric = RubricService.get_rubric_by_rid(rid)
