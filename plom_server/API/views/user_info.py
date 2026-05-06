@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from plom_server.Authentication.services import AuthService
-from plom_server.UserManagement.service import UsersService
+from plom_server.UserManagement.services import UsersService
 
 from .utils import _error_response
 
