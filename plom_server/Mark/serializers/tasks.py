@@ -22,7 +22,7 @@ class MarkingTaskSerializer(serializers.ModelSerializer):
         return [str(tag) for tag in obj.markingtasktag_set.all()]
 
     def get_status(self, obj):
-        return obj.StatusChoices.choices[obj.status - 1][1]
+        return obj.get_status_display()
 
     def get_paper_number(self, obj):
         return obj.paper.paper_number
