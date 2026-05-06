@@ -59,6 +59,9 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
 def get_user_info_as_list_of_dicts() -> list[dict[str, Any]]:
     """Get a list of users, their usernames, uid, what groups they belong to and other info.
 
+    This is rather similar to :py:`get_list_of_user_info`: maybe they
+    can be deduped in the future somehow?
+
     Returns:
         A list of dicts with keys for "uid", "username", "name", and
         "groups".  Perhaps others in the future.
