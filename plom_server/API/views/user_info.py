@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2026 Aidan Murphy
+# Copyright (C) 2026 Colin B. Macdonald
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 
@@ -9,21 +11,51 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
-from plom_server.UserManagement.services import get_users_groups_info
+
 from plom_server.Authentication.services import AuthService
+from plom_server.UserManagement.services import UsersService
+
 from .utils import _error_response
 
 
-# GET /info/users/
-class UsersInfo(APIView):
+class UserInfo(APIView):
+    """Information about users on the system."""
+
+    # GET /api/beta/users/
     def get(self, request: Request) -> Response:
-        """Get a dictionary mapping all users' username to their groups."""
-        userInfo = get_users_groups_info()
-        return Response(userInfo, status=status.HTTP_200_OK)
+        """Get a list of users, their usernames, uid, what groups they belong to and other info.
+
+        Responses:
+            200 on success, returning a list of dicts, each with (at least)
+            keys for "uid", "username", "name", and "groups".
+        """
+        return Response(UsersService.get_user_info_as_list_of_dicts())
 
 
 class UserManage(APIView):
     """API to manage user accounts."""
+
+    # GET /api/beta/user/{username}
+    def get(self, request: Request, *, username: str) -> Response:
+        """Get a dict of information about a particular user.
+
+        The username lookup is done in a case-insensitive fashion.
+
+        Returns:
+            200 on success, returning a dict with at least keys for
+            "uid", "username", "name", and "groups".  "groups" will be
+            a list of strings of group names that the user belongs to
+            such as ``["lead_marker", "marker", "identifier"]``.  Other
+            values with known meanings include `"scanner"` and
+            `"manager"`.  Callers should probably ignore any group names
+            they do not recognize.
+            404 if the username was not found.
+        """
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist as e:
+            return _error_response(f"No such user: {e}", status.HTTP_404_NOT_FOUND)
+        return Response(UsersService.get_user_obj_as_dict_manual(user))
 
     # POST /api/beta/users/<username>
     def post(self, request: Request, *, username) -> Response:

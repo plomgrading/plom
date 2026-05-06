@@ -8,10 +8,16 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 from django.forms.models import model_to_dict
 
 
-def get_user_info() -> dict:
+def get_user_info() -> dict[str, QuerySet[User]]:
+    """Return a dict keyed by the major group names mapping to Users in those groups.
+
+    This is the mapping from group names to their Users, done as lazy
+    (unevaluated) QuerySet of User objects.  Generally for internal use.
+    """
     # TODO: can probably do this in one call
     # all_users = User.objects.all().prefetch_related("auth_token")
     # for x in all_users:
@@ -56,19 +62,39 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
     return user_list
 
 
-def get_users_groups_info() -> dict[str, list]:
-    """Get a dictionary mapping each user's username to a list of their groups.
+def get_user_info_as_list_of_dicts() -> list[dict[str, Any]]:
+    """Get a list of users, their usernames, uid, what groups they belong to and other info.
+
+    This is rather similar to :py:`get_list_of_user_info`: maybe they
+    can be deduped in the future somehow?
 
     Returns:
-        A dict mapping username to a list of the user's groups.
+        A list of dicts with keys for "uid", "username", "name", and
+        "groups".  Perhaps others in the future.
+    """
+    return [
+        get_user_obj_as_dict_manual(user)
+        for user in User.objects.all().prefetch_related("groups")
+    ]
+
+
+def get_user_obj_as_dict_manual(user: User) -> dict[str, Any]:
+    """A manually-curated dict representation of a User object.
+
+    See also :py:`get_user_info_as_list_of_dicts()` which includes the same keys.
+
+    Returns:
+        A dict with keys for "uid", "username", "name", and "groups".
     """
     return {
-        user.username: list(user.groups.values_list("name", flat=True))
-        for user in User.objects.all()
+        "uid": user.id,
+        "username": user.username,
+        "name": user.first_name,  # Plom uses this as the "name" field
+        "groups": user.groups.values_list("name", flat=True),
     }
 
 
-def get_user_as_dict(username: str) -> dict:
+def get_user_as_dict(username: str) -> dict[str, Any]:
     """Get a User object as a dict."""
     return model_to_dict(User.objects.get_by_natural_key(username))
 

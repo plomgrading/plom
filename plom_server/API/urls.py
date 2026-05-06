@@ -48,6 +48,7 @@ from .views import (
     SourceOverview,
     SourceDetail,
     SpecificationAPIView,
+    UserInfo,
     UserManage,
     PublicCodeAPIView,
     RectangleExtractorView,
@@ -133,6 +134,11 @@ urlpatterns = [
         "api/beta/finish/unmarked/<int:papernum>",
         FinishUnmarked.as_view(),
         name="api_Finish_unmarked",
+    ),
+    path(
+        "api/beta/users/",
+        UserInfo.as_view(),
+        name="api_user_info",
     ),
     path(
         "api/beta/users/<str:username>",

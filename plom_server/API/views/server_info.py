@@ -7,7 +7,7 @@
 
 from typing import Any
 
-from django.contrib.auth.models import update_last_login, User
+from django.contrib.auth.models import update_last_login
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -142,23 +142,6 @@ class ServerInfo(APIView):
             "client-reject-list": _client_reject_list(),
         }
         return Response(info)
-
-
-# GET /info/user/{username}
-class UserRole(APIView):
-    """Get the user's role.
-
-    Returns:
-        A list of strings of group names that the user belongs to such
-        as ``["lead_marker", "marker", "identifier"]``.  Other values
-        with known meanings include `"scanner"` and `"manager"`.  Callers
-        should probably ignore any group names they do not recognize.
-    """
-
-    def get(self, request: Request, *, username: str) -> Response:
-        user = User.objects.get(username__iexact=username)
-        groups = list(user.groups.values_list("name", flat=True))
-        return Response(groups)
 
 
 class ExamInfo(APIView):

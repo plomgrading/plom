@@ -32,6 +32,7 @@ from pathlib import Path
 import sys
 
 from stdiomask import getpass
+from tabulate import tabulate
 
 from plom.common import Default_Port, __version__
 from plom.cli import (
@@ -51,6 +52,7 @@ from plom.cli import (
     get_all_solutions,
     get_unmarked,
     get_all_unmarked,
+    get_user_list,
     id_paper,
     un_id_paper,
     list_bundles,
@@ -568,6 +570,12 @@ def get_parser() -> argparse.ArgumentParser:
     _add_server_args(s)
 
     s = sub.add_parser(
+        "list-users",
+        help="List user accounts",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "create-user",
         help="Create a user account",
         description="""
@@ -840,6 +848,10 @@ def main():
         finally:
             msgr.closeUser()
             msgr.stop()
+
+    elif args.command == "list-users":
+        user_list = get_user_list(msgr=m)
+        print(tabulate(user_list, headers="keys", tablefmt="simple_outline"))
 
     elif args.command == "create-user":
         response = create_user(args.new_username, args.groups, msgr=m)

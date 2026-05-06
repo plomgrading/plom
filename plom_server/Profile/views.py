@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -85,8 +86,9 @@ class ProfileView(ManagerRequiredView):
         Returns:
             An HTML page.
         """
+        user = User.objects.get(username__iexact=username)
         user_dict = UsersService.get_user_as_dict(username)
-        user_groups = UsersService.get_users_groups_info()[username]
+        user_groups = UsersService.get_user_obj_as_dict_manual(user)["groups"]
         all_groups_list = AuthService.plom_user_groups_list
         # TODO: maybe we should manually-ish filter out "demo"?
         all_groups_info = [
