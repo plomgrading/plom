@@ -2,20 +2,17 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024, 2026 Colin B. Macdonald
 
-from rest_framework.serializers import (
-    ModelSerializer,
-    StringRelatedField,
-    SerializerMethodField,
-)
+from rest_framework import serializers
+
 from ..models import MarkingTask
 
 
-class MarkingTaskSerializer(ModelSerializer):
-    assigned_user = StringRelatedField()
-    status = SerializerMethodField()
-    tags = SerializerMethodField()
+class MarkingTaskSerializer(serializers.ModelSerializer):
+    assigned_user = serializers.StringRelatedField()
+    status = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
     # careful: "paper" will be the id of the paper object, Issue #3522.
-    paper_number = SerializerMethodField()
+    paper_number = serializers.SerializerMethodField()
 
     class Meta:
         model = MarkingTask
