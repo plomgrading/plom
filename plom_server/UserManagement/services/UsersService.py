@@ -8,10 +8,16 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 from django.forms.models import model_to_dict
 
 
-def get_user_info() -> dict[str, User]:
+def get_user_info() -> dict[str, QuerySet[User]]:
+    """Return a dict keyed by the major group names mapping to Users in those groups.
+
+    This is the mapping from group names to their Users, done as lazy
+    (unevaluated) QuerySet of User objects.  Generally for internal use.
+    """
     # TODO: can probably do this in one call
     # all_users = User.objects.all().prefetch_related("auth_token")
     # for x in all_users:
