@@ -11,7 +11,7 @@ from django.db import transaction
 from django.forms.models import model_to_dict
 
 
-def get_user_info() -> dict:
+def get_user_info() -> dict[str, User]:
     # TODO: can probably do this in one call
     # all_users = User.objects.all().prefetch_related("auth_token")
     # for x in all_users:
@@ -56,7 +56,7 @@ def get_list_of_user_info() -> list[dict[str, Any]]:
     return user_list
 
 
-def get_users_groups_info() -> dict[str, list]:
+def get_users_groups_info() -> dict[str, list[str]]:
     """Get a dictionary mapping each user's username to a list of their groups.
 
     Returns:
@@ -68,7 +68,7 @@ def get_users_groups_info() -> dict[str, list]:
     }
 
 
-def get_user_as_dict(username: str) -> dict:
+def get_user_as_dict(username: str) -> dict[str, Any]:
     """Get a User object as a dict."""
     return model_to_dict(User.objects.get_by_natural_key(username))
 
