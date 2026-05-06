@@ -17,10 +17,10 @@ from plom_server.Authentication.services import AuthService
 from .utils import _error_response
 
 
-class UsersInfo(APIView):
+class UserInfo(APIView):
     """Information about users on the system."""
 
-    # GET /info/users/
+    # GET /api/beta/users/
     def get(self, request: Request) -> Response:
         """Get a list of users, their usernames, uid, what groups they belong to and other info.
 
