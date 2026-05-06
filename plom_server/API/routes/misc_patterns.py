@@ -13,7 +13,6 @@ from ..views import (
     ServerInfo,
     ServerVersion,
     CloseUser,
-    UserRole,
     QuestionMaxMark,
     ObtainAuthTokenUpdateLastLogin,
 )
@@ -31,7 +30,6 @@ class MiscURLPatterns:
             path("Version/", ServerVersion.as_view(), name="api_server_version"),
             path("info/server/", ServerInfo.as_view(), name="api_server_info"),
             path("info/exam/", ExamInfo.as_view(), name="api_exam_info"),
-            path("info/user/<str:username>", UserRole.as_view(), name="api_user_role"),
             path(
                 "maxmark/<int:question>",
                 QuestionMaxMark.as_view(),

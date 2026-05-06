@@ -11,7 +11,6 @@ from .paperstoprint import (
 )
 
 from .server_info import (
-    UserRole,
     ExamInfo,
     ServerVersion,
     ServerInfo,

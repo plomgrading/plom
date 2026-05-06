@@ -3,6 +3,7 @@
 # Copyright (C) 2026 Aidan Murphy
 # Copyright (C) 2026 Colin B. Macdonald
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 
@@ -11,7 +12,6 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
 
-from plom_server.UserManagement.services import UsersService
 from plom_server.Authentication.services import AuthService
 
 from .utils import _error_response
@@ -25,15 +25,54 @@ class UserInfo(APIView):
         """Get a list of users, their usernames, uid, what groups they belong to and other info.
 
         Responses:
-            200 when it succeeds, returning list of dicts, each with at least keys
-            for "username", "uid", "name", and "groups".
+            200 on success, returning a list of dicts, each with (at least)
+            keys for "uid", "username", "name", and "groups".
         """
-        response_list = UsersService.get_user_info_list_of_dicts()
-        return Response(response_list, status=status.HTTP_200_OK)
+        user_list = []
+        for user in User.objects.all().prefetch_related("groups"):
+            user_list.append(
+                {
+                    "uid": user.id,
+                    "username": user.username,
+                    "name": user.first_name,  # Plom uses this as the "name" field
+                    "groups": user.groups.values_list("name", flat=True),
+                }
+            )
+        return Response(user_list)
 
 
 class UserManage(APIView):
     """API to manage user accounts."""
+
+    # GET /api/beta/user/{username}
+    def get(self, request: Request, *, username: str) -> Response:
+        """Get a dict of information about a particular user.
+
+        The username lookup is done in a case-insensitive fashion.
+
+        Returns:
+            200 on success, returning a dict with at least keys for
+            "uid", "username", "name", and "groups".  "groups" will be
+            a list of strings of group names that the user belongs to
+            such as ``["lead_marker", "marker", "identifier"]``.  Other
+            values with known meanings include `"scanner"` and
+            `"manager"`.  Callers should probably ignore any group names
+            they do not recognize.
+            404 if the username was not found.
+        """
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist as e:
+            return _error_response(f"No such user: {e}", status.HTTP_404_NOT_FOUND)
+
+        return Response(
+            {
+                "uid": user.id,
+                "username": user.username,
+                "name": user.first_name,  # Plom uses this as the "name" field
+                "groups": user.groups.values_list("name", flat=True),
+            }
+        )
 
     # POST /api/beta/users/<username>
     def post(self, request: Request, *, username) -> Response:
