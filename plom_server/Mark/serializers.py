@@ -4,7 +4,7 @@
 
 from rest_framework import serializers
 
-from ..models import MarkingTask
+from .models import MarkingTask
 
 
 class MarkingTaskSerializer(serializers.ModelSerializer):

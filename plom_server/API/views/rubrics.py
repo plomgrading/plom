@@ -13,7 +13,7 @@ from rest_framework import status, serializers
 
 from plom.plom_exceptions import PlomConflict
 from plom_server.Rubrics.services import RubricService
-from plom_server.Mark.serializers.tasks import MarkingTaskSerializer
+from plom_server.Mark.serializers import MarkingTaskSerializer
 
 from plom_server.UserManagement.models import User
 
