@@ -62,10 +62,10 @@ else:
     PAPERSIZE = _
 
 
-# Size of QR codes in paper corners (incl. white borders).  Default is 70 points, about 25mm
+# Size of QR codes in paper corners (incl. white borders).  Default is 45 points, about 16mm
 __ = os.environ.get("PLOM_QR_CODE_SIZE")
 if not __:
-    PLOM_QR_CODE_SIZE = 70
+    PLOM_QR_CODE_SIZE = 45
 else:
     PLOM_QR_CODE_SIZE = int(__)
 
