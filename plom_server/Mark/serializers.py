@@ -12,7 +12,7 @@ class MarkingTaskSerializer(serializers.ModelSerializer):
 
     Otherwise, using things like ``.values()`` converts references into integers
     via their ID.  Having a serializer allows us some control over that process.
-    Currently this is only used in one place, to convert about of tasks associated
+    Currently this is only used in one place, to convert a bunch of tasks associated
     with a rubric into a form that can be sent over the API.  Its possible it should
     be used in more places.
     """
