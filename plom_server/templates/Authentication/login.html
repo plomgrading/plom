@@ -45,18 +45,20 @@
                                            placeholder="Password" />
                                     <label class="form-label" for="typePasswordX">Password</label>
                                 </div>
-                                <div class="medium mb-5 pb-lg-2">
-                                    <span>
-                                        <input id="check-password" class="text-black-100" type="checkbox">
-                                        <label class="form-label" for="check-password">Show Password</label>
-                                    </span>
-                                    <span>
-                                        <input id="remember"
-                                               name="remember_me"
-                                               class="text-black-100"
-                                               type="checkbox">
-                                        <label class="form-label" for="remember">Remember me</label>
-                                    </span>
+                                <div class="medium mb-5 pb-lg-2 container">
+                                    <div class="row text-start">
+                                        <div class="col">
+                                            <input id="check-password" class="text-black-100" type="checkbox">
+                                            <label class="form-label" for="check-password">Show Password</label>
+                                        </div>
+                                        <div class="col">
+                                            <input id="remember"
+                                                   name="remember_me"
+                                                   class="text-black-100"
+                                                   type="checkbox">
+                                            <label class="form-label" for="remember">Remember me</label>
+                                        </div>
+                                    </div>
                                 </div>
                                 {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
                                 <button class="btn btn-lg btn-plom-purple text-centre focus-ring"
