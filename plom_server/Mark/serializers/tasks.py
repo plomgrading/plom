@@ -8,6 +8,15 @@ from ..models import MarkingTask
 
 
 class MarkingTaskSerializer(serializers.ModelSerializer):
+    """This class is used by Django to convert objects into dict, and maybe other things.
+
+    Otherwise, using things like ``.values()`` converts references into integers
+    via their ID.  Having a serializer allows us some control over that process.
+    Currently this is only used in one place, to convert about of tasks associated
+    with a rubric into a form that can be sent over the API.  Its possible it should
+    be used in more places.
+    """
+
     assigned_user = serializers.StringRelatedField()
     status = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
