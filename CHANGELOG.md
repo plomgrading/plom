@@ -16,14 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Support for Python 3.10.
 
 ### Changed
+* QR code size reduced and placement adjusted when building papers.
 * Reorganisation of some Marking and Identifying tools in the UI.
 * Improvements to creating the +1/2, -1/2 rubrics and other fractional delta rubrics.
-* Remove student name box from extrasheet template.
+* Remove student name box from default extrasheet template.
 * Scanners can select more than one PDF bundle to upload at a time.
+* API improvements.
 
 ### Fixed
 * Creating duplicate rubrics is an error (again).
-
+* Abbreviate top-of-page labels for shared pages to avoid errors when labels are too long.
+* Online (client) status fixed in user list.
 
 
 ## [0.20.2] - 2026-03-09
