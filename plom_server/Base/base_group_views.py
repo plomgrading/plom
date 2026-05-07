@@ -3,12 +3,12 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from typing import Any
 
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
-from django.urls import reverse
 
 from django.contrib.auth.views import redirect_to_login
 from django_htmx.http import HttpResponseClientRedirect
@@ -18,7 +18,6 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for any authorised user."""
 
     group_required = ["admin", "manager", "scanner", "marker", "lead_marker"]
-    login_url = "login"
     raise_exception = True
     redirect_unauthenticated_users = True
 
@@ -37,7 +36,7 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
         # https://stackoverflow.com/questions/70510216/how-can-i-check-if-the-current-request-is-from-htmx
         if request.META.get("HTTP_HX_REQUEST"):
             # is htmx so send a htmx redirect to the login url
-            return HttpResponseClientRedirect(reverse(self.login_url))
+            return HttpResponseClientRedirect(self.get_login_url())
         else:
             # send a normal redirect
             return redirect_to_login(

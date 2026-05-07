@@ -283,8 +283,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Web login Sessions
 # ------------------------------------------------------------
-#
-
+# Various django.contrib.auth tools assume the login view is at "/accounts/login/",
+# Plom needs to tell it otherwise
+LOGIN_URL = "/login/"
 # see docs for options: https://docs.djangoproject.com/en/6.0/ref/settings/#session-engine
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_SAVE_EVERY_REQUEST = True
