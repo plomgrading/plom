@@ -243,17 +243,20 @@ def pdf_page_add_labels_QRs(
         None: but modifies page as a side-effect.
     """
     if qr_code_size is None:
-        qr_code_size = 70
+        qr_code_size = 45
     w = qr_code_size  # QR box width
     w_tri = 70  # staple corner indicator box width
-    mx, my = (15, 20)  # margins
+    mx, my = (23, 30)  # QR box margins
+    mx_tri, my_tri = (15, 20)  # staple corner margins
 
     pg_width = page.bound().width
     pg_height = page.bound().height
 
     # create two "do not write" staple indicators TL (top left) and TR (top right)
-    rDNW_TL = pymupdf.Rect(mx, my, mx + w_tri, my + w_tri)
-    rDNW_TR = pymupdf.Rect(pg_width - mx - w_tri, my, pg_width - mx, my + w_tri)
+    rDNW_TL = pymupdf.Rect(mx_tri, my_tri, mx_tri + w_tri, my_tri + w_tri)
+    rDNW_TR = pymupdf.Rect(
+        pg_width - mx_tri - w_tri, my_tri, pg_width - mx_tri, my_tri + w_tri
+    )
 
     # page-corner boxes for the QR codes
     # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
