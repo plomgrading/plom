@@ -99,9 +99,8 @@ class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
         return render(request, self.template_name, status=200)
 
 
-# login_required make sure user is log in first
 class Home(RoleRequiredView):
-    redirect_field_name = "login"
+    """The landing page for logged in users."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         print(request.session.get_expiry_date())
