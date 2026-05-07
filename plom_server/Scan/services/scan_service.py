@@ -1311,6 +1311,7 @@ class ScanService:
 
         for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.ERROR):
             pages[img.bundle_order]["info"] = {"reason": img.error_reason}
+            pages[img.bundle_order]["page_label"] = img.get_error_reason_enum_display()
 
         for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD):
             pages[img.bundle_order]["info"] = {"reason": img.discard_reason}
@@ -1330,14 +1331,17 @@ class ScanService:
         # now build an ordered list by running the keys (which are bundle-order) of the pages-dict in order.
         r = [pages[ord] for ord in sorted(pages.keys())]
 
-        # generate the page labels
+        # generate the page labels, short texts appropriate for tooltips
+        # TODO: unsure why this isn't done during the loops above...?
         for pg in r:
             status = pg["status"]
             info = pg["info"]
             if status == "known":
                 label = f"paper-{info['paper_number']}.{info['page_number']}"
+                pg["page_label"] = label
             elif status == "unknown":
                 label = "Unknown page"
+                pg["page_label"] = label
             elif status == "extra":
                 label = "Extra page"
                 if pg["info"]["paper_number"]:
@@ -1354,20 +1358,20 @@ class ScanService:
                         label += "qidx[" + ",".join(str(x) for x in qidx_list) + "]"
                 else:
                     label += " - " + _("no data")
+                pg["page_label"] = label
             elif status == "error":
-                # "reason" might be long and have HTML, see StagingImage model docs
-                __ = shorten(info["reason"], 42, placeholder="\N{HORIZONTAL ELLIPSIS}")
-                label = f"error: {__}"
+                pass
             elif status == "unread":
                 label = "qr-unread"
+                pg["page_label"] = label
             elif status == "discard":
                 # "reason" might be quite long
                 __ = shorten(info["reason"], 42, placeholder="\N{HORIZONTAL ELLIPSIS}")
                 label = f"discard: {__}"
+                pg["page_label"] = label
             else:
                 raise RuntimeError(f"Programming error: unexpected case pg={pg}")
                 # label = "unexpected error"
-            pg["page_label"] = label
 
         return r
 

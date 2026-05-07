@@ -61,6 +61,20 @@ class Migration(migrations.Migration):
                     models.JSONField(blank=True, default=None, null=True),
                 ),
                 ("discard_reason", models.TextField(blank=True, default="")),
+                (
+                    "error_reason_enum",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[
+                            (1, "Unset"),
+                            (2, "Collision"),
+                            (3, "Inconsistent Qr Codes"),
+                            (4, "Inconsistent With Spec"),
+                            (5, "Other"),
+                        ],
+                        default=1,
+                    ),
+                ),
                 ("error_reason", models.TextField(blank=True, default="")),
                 ("history", models.TextField(blank=True, default="")),
                 (

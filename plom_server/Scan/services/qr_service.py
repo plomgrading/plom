@@ -67,23 +67,42 @@ class QRService:
 
                 try:
                     cls._check_consistent_qrs(img.parsed_qr)
-                    cls._check_qrs_against_spec_and_qvmap(img.parsed_qr)
-                    # we know the codes are consistent, sufficient to check just one.
-                    tpv = list(img.parsed_qr.values())[0]["tpv"]
-                    if tpv == "plomX":  # is an extra page
-                        extra_imgs.append(img.pk)
-                    elif tpv == "plomS":  # is a scrap-paper page
-                        scrap_imgs.append(img.pk)
-                    elif tpv == "plomB":  # is a bundle separator page
-                        bsep_imgs.append(img.pk)
-                    else:  # a normal qr-coded page
-                        # if not seen before then store as **list** [img.pk]
-                        # if has been seen before then append to that list.
-                        known_imgs.setdefault(tpv, []).append(img.pk)
-                        img_bundle_order[img.pk] = img.bundle_order
-
                 except ValueError as err:
-                    error_imgs.append((img.pk, str(err), html.escape(str(err))))
+                    error_imgs.append(
+                        (
+                            img.pk,
+                            StagingImage.ErrorReasonChoices.INCONSISTENT_QR_CODES,
+                            str(err),
+                            html.escape(str(err)),
+                        )
+                    )
+                    continue
+                try:
+                    cls._check_qrs_against_spec_and_qvmap(img.parsed_qr)
+                except ValueError as err:
+                    error_imgs.append(
+                        (
+                            img.pk,
+                            StagingImage.ErrorReasonChoices.INCONSISTENT_WITH_SPEC,
+                            str(err),
+                            html.escape(str(err)),
+                        )
+                    )
+                    continue
+
+                # we know the codes are consistent, sufficient to check just one.
+                tpv = list(img.parsed_qr.values())[0]["tpv"]
+                if tpv == "plomX":  # is an extra page
+                    extra_imgs.append(img.pk)
+                elif tpv == "plomS":  # is a scrap-paper page
+                    scrap_imgs.append(img.pk)
+                elif tpv == "plomB":  # is a bundle separator page
+                    bsep_imgs.append(img.pk)
+                else:  # a normal qr-coded page
+                    # if not seen before then store as **list** [img.pk]
+                    # if has been seen before then append to that list.
+                    known_imgs.setdefault(tpv, []).append(img.pk)
+                    img_bundle_order[img.pk] = img.bundle_order
 
         # check for internal collisions: tpv with 2 or more images
         for tpv, colliding in known_imgs.items():
@@ -106,7 +125,14 @@ class QRService:
                     ' - <a href="https://plom.readthedocs.io/en/latest/scanning.html#collisions">'
                     "why are collisions a problem, and what are my options?</a>"
                 )
-                error_imgs.append((img_pk, short_err, long_err))
+                error_imgs.append(
+                    (
+                        img_pk,
+                        StagingImage.ErrorReasonChoices.COLLISION,
+                        short_err,
+                        long_err,
+                    )
+                )
 
         with transaction.atomic():
             # save all the known images that are not collisions.
@@ -155,9 +181,10 @@ class QRService:
                 img.history += "; Discarded based on special bundle separator QR codes"
                 img.save()
             # save all the error-pages with the error string
-            for k, short_err, long_err in error_imgs:
+            for k, enum, short_err, long_err in error_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = StagingImage.ERROR
+                img.error_reason_enum = enum
                 img.error_reason = long_err
                 # TODO: short_err should be recorded too? see StagingImage model docs
                 img.history += f"; Made into error image: {short_err}"
