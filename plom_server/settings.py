@@ -167,7 +167,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "plom_server.middleware.OnlineNowMiddleware",
-    "django_session_timeout.middleware.SessionTimeoutMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
 ]
 
