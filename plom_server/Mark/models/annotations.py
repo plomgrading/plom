@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024, 2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
+
+from typing import Any
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -30,8 +32,6 @@ class Annotation(models.Model):
         edition: The edition of the annotation for the specified task.
         score: The score given to the student's work.
         image: The image of the annotated question.
-        annotation_data: A Json blob of annotation data containing image path info,
-            rubric info, svg annotation info.
         marking_time: The total cumulative time in seconds spent by all
             markers on this question of this paper.  As a question gets
             remarked or revisited this number will increase.
@@ -42,14 +42,45 @@ class Annotation(models.Model):
         task: The marking task.
         user: The user who made the annotation.
         time_of_last_update: The time of the last update.
+        user_agent: a string describing the client responsible for this
+            Annotation.  At most 64 chars.  Could be a uuid or a string
+            such as "org.plomgrading.PlomClient".
+        user_agent_version: the version of the user agent such as "1.3.7"
+            or "0.22.3.dev0".
+        user_agent_data: A blob of data generally consisting of a dict.
+            This used to be called "annotation_data".
+            We generally don't look at this: the client sends something
+            and can get it back to reconstruct the scene for further
+            editing.  This will generally be a JSON blob, written to
+            a string with Python's ``json.dumps`` for example.  This is
+            currently required, and we store it in a JSONField.  Subject
+            to change with little notice: exercise some caution using
+            the data in this.  It should not be excessively large: think
+            "SVG" not "large bitmap data".
+            In the future, we might replace this with a string.
+            Note: its generally accepted that clients should decide on
+            a defacto standard, but the server doesn't care too much.
     """
 
     edition = models.IntegerField(null=True)
     score = models.FloatField(null=True)
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
-    annotation_data = models.JSONField(null=True)
     marking_time = models.FloatField(null=True)
     marking_delta_time = models.FloatField(null=True)
     task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)
+    user_agent = models.CharField(null=False, blank=True, max_length=64)
+    user_agent_version = models.CharField(null=False, blank=True, max_length=64)
+    user_agent_data = models.JSONField(null=True)
+    # To consider in the future:
+    # user_agent_data = models.TextField(null=False, blank=True)
+
+    def _get_annotation_data(self) -> dict[str, Any]:
+        """Perhaps temporary, but some parts of the code need the actual annotation data.
+
+        Unpack it, assuming its JSON.  There is at least one place in
+        the code that needs this: its WIP.
+        """
+        # return json.loads(self.user_agent_data)
+        return self.user_agent_data

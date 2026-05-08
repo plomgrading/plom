@@ -144,11 +144,7 @@ class MiscIncomingAnnotationsTests(TestCase):
             1 / 3,
             17,
             img1,
-            {
-                "sceneItems": [
-                    ["Rubric", 0, 0, {"rid": self.rubric1_on_3.rid, "revision": 0}],
-                ]
-            },
+            [(self.rubric1_on_3.rid, 0)],
         )
         task.latest_annotation == a1
         img2 = baker.make(AnnotationImage)
@@ -157,11 +153,7 @@ class MiscIncomingAnnotationsTests(TestCase):
             3.0,
             21,
             img2,
-            {
-                "sceneItems": [
-                    ["Rubric", 0, 0, {"rid": self.rubric3.rid, "revision": 0}]
-                ]
-            },
+            [(self.rubric3.rid, 0)],
         )
         task.refresh_from_db()
         # creating the new annotation replaces the task's latest annotation
@@ -197,9 +189,8 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
         MarkingTaskService.assign_task_to_user(task.pk, user0)
         img = baker.make(AnnotationImage)
-        data = {"sceneItems": [["Rubric", 1, 1, {"rid": 123456, "revision": 42}]]}
         with self.assertRaises(KeyError):
-            _create_new_annotation_in_database(task, 3.0, 21, img, data)
+            _create_new_annotation_in_database(task, 3.0, 21, img, [(123456, 42)])
 
     def test_marking_submits_outofdate_rubric(self) -> None:
         user0: User = baker.make(User)
@@ -223,14 +214,10 @@ class MiscIncomingAnnotationsTests(TestCase):
         baker.make(Rubric, question_index=1, rid=rold.rid, revision=10, latest=True)
         MarkingTaskService.assign_task_to_user(task.pk, user0)
         img = baker.make(AnnotationImage)
-        data = {
-            "sceneItems": [
-                ["Rubric", 1, 1, {"rid": rold.rid, "revision": rold.revision}]
-            ]
-        }
+        rubs = [(rold.rid, rold.revision)]
         with self.assertRaisesRegex(PlomConflict, "not the latest revision"):
             _create_new_annotation_in_database(
-                task, 3.0, 21, img, data, require_latest_rubrics=True
+                task, 3.0, 21, img, rubs, require_latest_rubrics=True
             )
 
     def test_marking_submits_unpublished_rubric(self) -> None:
@@ -256,12 +243,10 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
         MarkingTaskService.assign_task_to_user(task.pk, user0)
         img = baker.make(AnnotationImage)
-        data = {
-            "sceneItems": [["Rubric", 1, 1, {"rid": r.rid, "revision": r.revision}]]
-        }
+        rubs = [(r.rid, r.revision)]
         with self.assertRaisesRegex(PlomConflict, "not currently published"):
             _create_new_annotation_in_database(
-                task, 3.0, 21, img, data, require_latest_rubrics=True
+                task, 3.0, 21, img, rubs, require_latest_rubrics=True
             )
 
     def test_marking_rubric_from_wrong_question(self) -> None:
@@ -293,11 +278,7 @@ class MiscIncomingAnnotationsTests(TestCase):
                 1,
                 17,
                 img1,
-                {
-                    "sceneItems": [
-                        ["Rubric", 0, 0, {"rid": self.rubric_q2.rid, "revision": 0}],
-                    ]
-                },
+                [(self.rubric_q2.rid, 0)],
             )
 
     def test_marking_rubric_wrong_scores(self) -> None:
@@ -329,16 +310,7 @@ class MiscIncomingAnnotationsTests(TestCase):
                 1 / 3,
                 17,
                 img1,
-                {
-                    "sceneItems": [
-                        [
-                            "Rubric",
-                            0,
-                            0,
-                            {"rid": self.rubric1_on_3_poor_rounding.rid, "revision": 0},
-                        ],
-                    ]
-                },
+                [(self.rubric1_on_3_poor_rounding.rid, 0)],
             )
         with self.assertRaisesRegex(PlomConflict, "Conflict between"):
             _create_new_annotation_in_database(
@@ -346,11 +318,7 @@ class MiscIncomingAnnotationsTests(TestCase):
                 1,
                 17,
                 img1,
-                {
-                    "sceneItems": [
-                        ["Rubric", 0, 0, {"rid": self.rubric3.rid, "revision": 0}],
-                    ]
-                },
+                [(self.rubric3.rid, 0)],
             )
 
     def test_marking_rubric_no_rubrics_used(self) -> None:
@@ -377,4 +345,4 @@ class MiscIncomingAnnotationsTests(TestCase):
         MarkingTaskService.assign_task_to_user(task.pk, user0)
         img1 = baker.make(AnnotationImage)
         with self.assertRaisesRegex(PlomInconsistentRubric, "computed score is None"):
-            _create_new_annotation_in_database(task, 0, 17, img1, {"sceneItems": []})
+            _create_new_annotation_in_database(task, 0, 17, img1, [])

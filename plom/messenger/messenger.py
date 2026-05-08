@@ -11,9 +11,10 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
-from io import BytesIO
-from typing import Any
+from io import BytesIO, StringIO
+from typing import Any, Sequence
 
 import requests
 
@@ -486,26 +487,40 @@ class Messenger(BaseMessenger):
         score,
         marking_time,
         annotated_img,
-        plomfile,
-        rubrics,
+        plom_data: dict[str, Any],
+        rubrics: Sequence[int] | Sequence[tuple[int, int | None]],
         integrity_check,
+        *,
+        user_agent: str = "",
+        user_agent_version: str = "",
     ) -> dict[str, Any]:
         """Upload annotated image and associated data to the server.
 
         Args:
             code: e.g., "0003g1"
-            q: question number.
-            ver: which version.
+            q: question number.  Deprecated and unused on API 117.
+            ver: which version.  Deprecated and unused on API 117.
             score: assigned score for the task.
             marking_time (int/float): number of seconds spend on grading
                 the paper.
             annotated_img (pathlib.Path): the annotated image, either a
                 png or a jpeg.
-            plomfile (pathlib.Path): machine-readable json of annotations
-                on the page.
-            rubrics (list): list of rubric IDs used on the page.
+            plom_data: a dictionary representation of the annotation on
+                the page.  The server will store this and give it back if you
+                revisit this task (e.g., to make changes).  Clients should strive
+                to be compatible with one another, although the precise format
+                of this data is not completely fixed yet (as of 2026-05).
+            rubrics: list of rubric IDs used on the page, or a list of tuples
+                of (rubric IDs, revision), which will allow the server to
+                verify that up-to-date rubrics are being used.
             integrity_check (str): a blob that the server expects to get
                 back.
+
+        Keyword Args:
+            user_agent: a string such as "com.example.PlutoClient", or
+                a uuid, or whatever you'd like to be identified with these
+                annotations.  Optional.
+            user_agent_version: an optional version string such as "1.3.2".
 
         Returns:
             A dict of progress information.  See :meth:`get_marking_progress`.
@@ -526,28 +541,46 @@ class Messenger(BaseMessenger):
         if self.is_server_api_less_than(115):
             assert not code.startswith("q")
             code = "q" + code
+        # Note: if we decide to make it string-of-anything, then clients
+        # should be doing this, not messenger.
+        plom_data_ascii_str_of_json = json.dumps(plom_data)
+        rubrics_encoded = []
+        for x in rubrics:
+            if isinstance(x, int):
+                rubrics_encoded.append(f"{x}")
+            else:
+                rid, rev = x
+                if rev is None:
+                    rubrics_encoded.append(f"{rid}")
+                else:
+                    rubrics_encoded.append(f"{rid}rev{rev}")
         with self.SRmutex:
             try:
-                with (
-                    open(annotated_img, "rb") as annot_img_file,
-                    open(plomfile, "rb") as plom_data_file,
-                ):
+                with open(annotated_img, "rb") as annot_img_file:
+                    # Note that "data" here is key-value only, no directly dumping in json
                     data = {
-                        "pg": str(q),
-                        "ver": str(ver),
+                        "user_agent": user_agent,
+                        "user_agent_version": user_agent_version,
                         "score": str(score),
                         "marking_time": marking_time,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
+                        "rubric": rubrics_encoded,
+                        "user_agent_data": plom_data_ascii_str_of_json,
                     }
-
                     annot_img_file.seek(0)
 
                     # automatically puts the filename in
                     files = {
                         "annotation_image": annot_img_file,
-                        "plomfile": plom_data_file,
                     }
+
+                    if self.is_server_api_less_than(117):
+                        data.update({"pg": str(q), "ver": str(ver)})
+                        # on old servers we to send the annotations as a file
+                        # (the data string above is ignored)
+                        tmp_file = StringIO(plom_data_ascii_str_of_json)
+                        files.update({"plomfile": tmp_file})  # type: ignore[dict-item]
 
                     # increase read timeout relative to default: Issue #1575
                     timeout = (self.default_timeout[0], 3 * self.default_timeout[1])

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019 Omer Angel
-# Copyright (C) 2019, 2021-2025 Colin B. Macdonald
+# Copyright (C) 2019, 2021-2026 Colin B. Macdonald
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Edith Coates
@@ -355,3 +355,15 @@ def unpack_task_code(code: str) -> tuple[int, int]:
         raise ValueError(errbase + f"cannot get question_idx: {e}") from None
 
     return paper_number, question_idx
+
+
+def extract_rubric_rid_rev_pairs(data) -> list[tuple[int, int]]:
+    """Extracts the id and revision of the rubrics from the raw client annotation data.
+
+    This is all subject to change, although it hasn't in quite a long time.
+    """
+    scene_items = data["sceneItems"]
+    # scene items are lists, the 0th entry is string saying what kind of
+    # item it is.  The 3rd entry is a dict with various keys.
+    pairs = [(x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"]
+    return pairs

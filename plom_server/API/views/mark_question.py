@@ -5,14 +5,17 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
 
+import json
+import pathlib
+
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from plom.misc_utils import unpack_task_code
+from plom.misc_utils import unpack_task_code, extract_rubric_rid_rev_pairs
 from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
@@ -23,7 +26,12 @@ from plom.plom_exceptions import (
 from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
 from plom_server.Progress.services import UserInfoService
+from plom_server.Papers.services import PaperInfoService
 from .utils import _error_response
+
+
+def _400(m):
+    return _error_response(m, status.HTTP_400_BAD_REQUEST)
 
 
 class MarkTaskNextAvailable(APIView):
@@ -166,6 +174,37 @@ class MarkTask(APIView):
     def post(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
+        Args:
+            request: should contain a file keyed by "annotation_image"
+                and data of key-value pairs.  The data must have keys
+                "score", "marking_time", "md5sum", and "integrity_check".
+                Optional keys include "rubric", "user_agent",
+                "user_agent_version", and "user_agent_data".
+                "rubric" can be repeated to give a list of integers
+                (which will come as strings b/c I think http just does that),
+                corresponding to the rids of the Rubrics used in this
+                annotation.  It can be empty.  If you use a Rubric more than
+                once, repeat it in the list.  Providing only the integer rids
+                means Plom will assume you're using the latest revisions of each.
+                To enable more precise checking, pass in ``{rid}rev{rev}``,
+                or ``{rid}r{rev>}` (for example "15rev0" or "15r2").  By doing
+                that you'll get errors if those are not the latest revisions.
+                Optionally, you can (and probably should) provide
+                "user_agent_data" containing an ascii string encoding of JSON:
+                in Python you can create this using ``json.dumps(data)``.
+                The expected format of the dictionary, `data`, sometimes called
+                ``annotation_data`` is hopefully documented elsewhere.
+                This format is still influx: expect changes in the future.
+                There is currently an expectation that humans can use the
+                official Plom Client to edit annotation, and thus you should
+                send something that client can render.
+                If you send something official Plom Client doesn't understand,
+                then the client will likely be unable to edit your annotations,
+                and might even crash.
+
+        Keyword Args:
+            code: a string such as "0123g4" specifying a task.
+
         Returns:
             200: returns two integers, first the number of marked papers
             for this question/version and the total number of papers for
@@ -190,33 +229,104 @@ class MarkTask(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        mts = MarkingTaskService()
         data = request.POST
         files = request.FILES
 
-        plomfile = request.FILES["plomfile"]
-        plomfile_data = plomfile.read().decode("utf-8")
+        try:
+            score = float(data["score"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+        except IndexError:
+            return _400('Multiple values for "score", expected 1')
+        except (ValueError, TypeError) as e:
+            return _400(f'Could not cast "score" as float: {e}')
 
         try:
-            mark_data, annot_data = mts.validate_and_clean_marking_data(
-                code, data, plomfile_data
-            )
-        except serializers.ValidationError as e:
-            # happens automatically but this way we keep the error msg
-            return _error_response(e, status.HTTP_400_BAD_REQUEST)
+            marking_time = float(data["marking_time"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+        except (ValueError, TypeError) as e:
+            return _400(f'Could not cast "marking_time" as float: {e}')
+
+        try:
+            integrity_check = int(data["integrity_check"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+        except (ValueError, TypeError) as e:
+            return _400(f'Could not get "integrity_check" as a int: {e}')
+
+        try:
+            md5sum = str(data["md5sum"])
+        except KeyError as e:
+            return _400(f"You must provide the value: {e}")
+
+        rubric_list = []
+        for x in data.getlist("rubric"):
+            if "rev" in x:
+                rid, rev = x.split("rev")
+            elif "r" in x:
+                rid, rev = x.split("r")
+            else:
+                rid, rev = x, None
+
+            try:
+                rid = int(rid)
+            except (ValueError, TypeError) as e:
+                return _400(f'failed to extract integer "rid" from rubric "{x}": {e}')
+            if rev is not None:
+                try:
+                    rev = int(rev)
+                except (ValueError, TypeError) as e:
+                    return _400(
+                        f'failed to extract integer "rev" from rubric "{x}": {e}'
+                    )
+            rubric_list.append((rid, rev))
 
         annotation_image = files["annotation_image"]
-        img_md5sum = data["md5sum"]
+
+        user_agent = data.get("user_agent", "")
+        user_agent_version = data.get("user_agent_version", "")
+        raw_user_agent_data = data.get("user_agent_data", "{}")
+        try:
+            user_agent_data = json.loads(raw_user_agent_data)
+        except json.JSONDecodeError as e:
+            return _400(f"Invalid JSON in annotation data: {e}")
+
+        # Perhaps in the future we could have some kind of plugin architecture
+        # around sanitizing the user_agent_data.
+
+        # For now, and perhaps temporarily, we do some extra checking when
+        # the client agent is specifically our official client.
+        if user_agent == "org.plomgrading.PlomClient":
+            # Colin thinks this is a very bad idea: Issue #4219.
+            src_img_data = user_agent_data["base_images"]
+            for image_data in src_img_data:
+                # TODO: this looks like direct file access on the server, Issue #3888.
+                img_path = pathlib.Path(image_data["server_path"])
+                if not img_path.exists():
+                    return _400("Invalid original-image in request")
+
+            # take rid rev pairs from the annotation data, and verify they match
+            rubric_list2 = extract_rubric_rid_rev_pairs(user_agent_data)
+            if sorted(rubric_list) != sorted(rubric_list2):
+                return _400(
+                    f"Unexpected mismatch between data and json blob: {rubric_list} vs {rubric_list2}"
+                )
 
         try:
             # TODO: use query param, allow client to override require_latest_rubrics=True?
             QuestionMarkingService.mark_task(
                 code,
                 user=request.user,
-                marking_data=mark_data,
-                annotation_data=annot_data,
+                score=score,
+                marking_time=marking_time,
+                integrity_check=integrity_check,
+                user_agent_data=user_agent_data,
                 annotation_image=annotation_image,
-                annotation_image_md5sum=img_md5sum,
+                annotation_image_md5sum=md5sum,
+                rubric_list=rubric_list,
+                user_agent=user_agent,
+                user_agent_version=user_agent_version,
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
@@ -232,15 +342,12 @@ class MarkTask(APIView):
         except PlomQuotaLimitExceeded as e:
             return _error_response(e, status.HTTP_423_LOCKED)
 
-        def int_or_None(x):
-            return None if x is None else int(x)
-
-        question = int_or_None(data.get("pg"))
-        version = int_or_None(data.get("ver"))
+        papernum, qidx = unpack_task_code(code)
+        version = PaperInfoService.get_version_from_paper_question(papernum, qidx)
 
         username = request.user.username
         progress = UserInfoService.get_user_progress(username=username)
-        n, m = mts.get_marking_progress(question, version)
+        n, m = MarkingTaskService.get_marking_progress(qidx, version)
         progress["total_tasks_marked"] = n
         progress["total_tasks"] = m
         return Response(progress, status=status.HTTP_200_OK)

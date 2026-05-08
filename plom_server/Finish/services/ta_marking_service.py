@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 
 import csv
 from io import StringIO
@@ -64,7 +64,10 @@ class TaMarkingService:
                     "question_index": task.question_index,
                     "question_version": task.question_version,
                     "score_given": task.latest_annotation.score,
-                    "max_score": task.latest_annotation.annotation_data["maxMark"],
+                    # TODO: must be easier way to get this than looking into the blob
+                    "max_score": task.latest_annotation._get_annotation_data()[
+                        "maxMark"
+                    ],
                     "seconds_spent_marking": task.latest_annotation.marking_time,
                     "last_update_time": arrow.get(task.last_update).isoformat(
                         " ", "seconds"

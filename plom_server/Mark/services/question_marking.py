@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
@@ -158,10 +158,15 @@ class QuestionMarkingService:
         code: str,
         *,
         user: User,
-        marking_data: dict[str, Any],
-        annotation_data: dict,
+        score: float,
+        marking_time: float,
+        integrity_check: int,
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
+        rubric_list: list[tuple[int, int | None]],
+        user_agent: str = "",
+        user_agent_version: str = "",
+        user_agent_data: dict[str, Any],
         require_latest_rubrics: bool = True,
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
@@ -171,10 +176,18 @@ class QuestionMarkingService:
 
         Keyword Args:
             user: which user.
-            marking_data: TODO.
-            annotation_data: TODO.
-            annotation_image: TODO.
-            annotation_image_md5sum: TODO.
+            score: the score to be assigned.
+            marking_time: TODO: document whether cumulative or not?
+            integrity_check: integer thing, safety feature, details long forgotten.
+            annotation_image: the rendered bitmap of the annotations.
+                This is generally the user_agent_data rendered on top of the
+                underlying images.  Its the image that should be shown back
+                to users.
+            annotation_image_md5sum: the md5sum of the annotated image.
+            rubric_list: a list of the rubrics used in these annotations.
+            user_agent: the client software.
+            user_agent_version: version of the client software.
+            user_agent_data: whatever the client sent, something like svg.
             require_latest_rubrics: TODO.
 
         Raises:
@@ -204,7 +217,7 @@ class QuestionMarkingService:
                 " perhaps task has been reassigned"
             )
 
-        old_pk = marking_data["integrity_check"]
+        old_pk = integrity_check
         if old_pk != task.pk:
             raise PlomConflict(
                 f'Integrity failed: trying to modify "{old_pk}"'
@@ -242,11 +255,14 @@ class QuestionMarkingService:
         # associated Rubrics and managing the task's latest annotation link.
         create_new_annotation_in_database(
             task,
-            marking_data["score"],
-            marking_data["marking_time"],
+            score,
+            marking_time,
             annotation_image_md5sum,
             annotation_image,
-            annotation_data,
+            rubric_list,
+            user_agent=user_agent,
+            user_agent_version=user_agent_version,
+            user_agent_data=user_agent_data,
             require_latest_rubrics=require_latest_rubrics,
         )
         # Note the helper function above also performs `task.save`; that seems ok.

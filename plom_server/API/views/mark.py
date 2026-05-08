@@ -336,9 +336,8 @@ class MgetAnnotations(APIView):
 
     def get(self, request: Request, *, paper: int, question: int) -> Response:
         """Get the latest annotations."""
-        mts = MarkingTaskService()
         try:
-            annotation = mts.get_latest_annotation(paper, question)
+            annotation = MarkingTaskService().get_latest_annotation(paper, question)
         except ObjectDoesNotExist as e:
             return _error_response(
                 f"No annotations for paper {paper} question {question}: {e}",
@@ -347,7 +346,6 @@ class MgetAnnotations(APIView):
         except ValueError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         annotation_task = annotation.task
-        annotation_data = annotation.annotation_data
 
         # TODO is this really needed?  Issue #3283.
         try:
@@ -362,11 +360,15 @@ class MgetAnnotations(APIView):
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        annotation_data["user"] = annotation.user.username
-        annotation_data["annotation_edition"] = annotation.edition
-        annotation_data["annotation_reference"] = annotation.pk
-
-        return Response(annotation_data, status=status.HTTP_200_OK)
+        data = {
+            "user_agent": annotation.user_agent,
+            "user_agent_version": annotation.user_agent_version,
+            "user": annotation.user.username,
+            "edition": annotation.edition,
+            "id": annotation.id,
+            "user_agent_data": annotation.user_agent_data,
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 # GET: /annotations_image/{paper}/{question}

@@ -75,6 +75,8 @@ Supported_Server_API_Versions = [
 #    - surrender task
 #    - reassign/reset return 403 not 406 for wrong user
 #    - rename /info/users to /api/beta/users
+#    - /MK/tasks/{code}: change post to take string of annotations and more detailed rubric info
+#    - /annotations/{num}/{question}: return includes metadata and the annotation data itself.
 
 
 log = logging.getLogger("messenger")
@@ -1313,18 +1315,21 @@ class BaseMessenger:
             self.SRmutex.release()
         return image
 
-    def get_annotations(self, num, question, edition=None, integrity=None):
+    def get_annotations(
+        self, papernum: int, question_idx: int, edition: int | None = None
+    ) -> dict[str, Any]:
         """Download the latest annotations (or a particular set of annotations).
 
         Args:
-            num (int): the paper number.
-            question (int): the question number.
-            edition (int/None): which annotation set or None for latest.
-            integrity (str/None): a checksum to ensure the server hasn't
-                changed under us.  Can be omitted if not relevant.
+            papernum: which paper.
+            question_idx: which question.
+
+        Keyword Args:
+            edition: which annotation set or None for latest.
 
         Returns:
-            dict: contents of the plom file.
+            A dictionary of data about the annotations.  Keys include
+            "user_agent_data", the raw annotation data that we sent to the server.
 
         Raises:
             PlomAuthenticationException
@@ -1334,19 +1339,15 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            url = f"/annotations/{num}/{question}"
+            url = f"/annotations/{papernum}/{question_idx}"
         else:
-            url = f"/annotations/{num}/{question}/{edition}"
-        if integrity is None:
-            integrity = ""
+            url = f"/annotations/{papernum}/{question_idx}/{edition}"
+            raise NotImplementedError("Server does not implement edition")
         with self.SRmutex:
             try:
-                response = self.get_auth(
-                    url,
-                    json={"integrity": integrity},
-                )
+                response = self.get_auth(url)
                 response.raise_for_status()
-                return response.json()
+                r = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomRangeException(response.reason) from None
@@ -1361,6 +1362,9 @@ class BaseMessenger:
                 elif response.status_code == 416:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+            if self.is_server_api_less_than(117):
+                r = {"user_agent_data": r}
+            return r
 
     def get_annotations_image(
         self, num: int, question: int, *, edition: int | None = None

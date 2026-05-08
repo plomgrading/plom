@@ -8,10 +8,7 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024-2025 Bryan Tanady
 
-import json
 import logging
-import pathlib
-from typing import Any
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -406,94 +403,6 @@ class MarkingTaskService:
             valid=Count("id", filter=~Q(status=MarkingTask.OUT_OF_DATE)),
             all=Count("id"),
         )
-
-    def validate_and_clean_marking_data(
-        self, code: str, data: dict[str, Any], plomfile: str
-    ) -> tuple[dict[str, Any], dict]:
-        """Validate the incoming marking data.
-
-        Note this doesn't actually touch the database.  Its more like type checking
-        of the inputs and in-expensive things like that.  There is one exception:
-        it confirms that all the underlying images actually exist on the server.
-        This is a file system (later object store) hit, which will have some IO cost.
-
-        Args:
-            code: key of the associated task.
-            data: information about the mark, rubrics, and annotation images.
-            plomfile: a JSON field representing annotation data, the contents
-                of the so-called "plom file".
-
-        Returns:
-            Two things in a tuple;
-            `cleaned_data`: dict of the cleaned request data.
-            `annot_data`: dict of the annotation-image data parsed from
-            a JSON string.
-
-        Raises:
-            serializers.ValidationError
-        """
-        annot_data = json.loads(plomfile)
-        cleaned_data: dict[str, Any] = {}
-
-        try:
-            cleaned_data["pg"] = int(data["pg"])
-        except IndexError as e:
-            raise serializers.ValidationError(
-                'Multiple values for "pg", expected 1.'
-            ) from e
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError(
-                f'Could not cast "pg" as int: {data["pg"]}'
-            ) from e
-
-        try:
-            cleaned_data["ver"] = int(data["ver"])
-        except IndexError as e:
-            raise serializers.ValidationError(
-                'Multiple values for "ver", expected 1.'
-            ) from e
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError(
-                f'Could not cast "ver" as int: {data["ver"]}'
-            ) from e
-
-        try:
-            cleaned_data["score"] = float(data["score"])
-        except IndexError as e:
-            raise serializers.ValidationError(
-                'Multiple values for "score", expected 1.'
-            ) from e
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError(
-                f'Could not cast "score" as float: {data["score"]}'
-            ) from e
-
-        try:
-            cleaned_data["marking_time"] = float(data["marking_time"])
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError(
-                f"Could not cast 'marking_time' as float: {e}"
-            ) from e
-
-        try:
-            cleaned_data["integrity_check"] = int(data["integrity_check"])
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError(
-                f"Could not get 'integrity_check' as a int: {e}"
-            ) from e
-
-        # We used to unpack the rubrics and ensure they all exist in the DB.
-        # That will happen later when we try to save: I'm not sure its worth
-        # the overhead of checking twice: smells like asking permission...
-
-        src_img_data = annot_data["base_images"]
-        for image_data in src_img_data:
-            # TODO: this looks like direct file access on the server, Issue #3888.
-            img_path = pathlib.Path(image_data["server_path"])
-            if not img_path.exists():
-                raise serializers.ValidationError("Invalid original-image in request.")
-
-        return cleaned_data, annot_data
 
     def get_latest_annotation(self, paper: int, question_idx: int) -> Annotation:
         """Get the latest annotation for a particular paper/question.

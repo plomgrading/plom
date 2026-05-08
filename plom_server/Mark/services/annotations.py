@@ -9,10 +9,9 @@
 
 """Services for annotations and annotation images."""
 
-from typing import Any
-
-from math import isclose
 import pathlib
+from math import isclose
+from typing import Any
 
 from django.db import transaction
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -32,13 +31,14 @@ def create_new_annotation_in_database(
     time: int,
     annot_img_md5sum: str,
     annot_img_file: InMemoryUploadedFile,
-    data: dict[str, Any],
+    rubric_list: list[tuple[int, int | None]],
     *,
+    user_agent: str = "",
+    user_agent_version: str = "",
+    user_agent_data: dict[str, Any] = {},
     require_latest_rubrics: bool = True,
 ) -> Annotation:
     """Save an annotation.
-
-    TODO: `data` should be converted into a dataclass of some kind
 
     Args:
         task: the relevant MarkingTask. Assumes that task.assigned_user is
@@ -50,10 +50,12 @@ def create_new_annotation_in_database(
         annot_img_md5sum: the annotation image's hash.
         annot_img_file: the annotation image file in memory.
             The filename including extension is taken from this.
-        data: came from a JSON blob of SVG data, but should be dict of
-            string keys by the time we see it.
+        rubric_list: a list of Rubrics used.
 
     Keyword Args:
+        user_agent: the client software.
+        user_agent_version: version of the client software.
+        user_agent_data: whatever the client sent, something like svg.
         require_latest_rubrics: if True (the default), we check if the
             rubrics in-use are (a) the latest and (b) published and
             fail if those conditions are not satisfied.
@@ -78,7 +80,10 @@ def create_new_annotation_in_database(
         score,
         time,
         annotation_image,
-        data,
+        rubric_list,
+        user_agent=user_agent,
+        user_agent_version=user_agent_version,
+        user_agent_data=user_agent_data,
         require_latest_rubrics=require_latest_rubrics,
     )
 
@@ -88,12 +93,16 @@ def _create_new_annotation_in_database(
     score: float,
     time: int,
     annotation_image: AnnotationImage,
-    data: dict[str, Any],
+    rid_rev_pairs: list[tuple[int, int | None]],
     *,
+    user_agent: str = "",
+    user_agent_version: str = "",
+    user_agent_data: dict[str, Any] = {},
     require_latest_rubrics: bool = True,
 ) -> Annotation:
+
     # first check the rubric use is consistent and valid
-    _validate_rubric_use_and_score(task.question_index, score, data)
+    _validate_rubric_use_and_score(task.question_index, score, rid_rev_pairs)
     # at this point no exceptions raised, so go ahead and wire things up.
 
     if task.latest_annotation:
@@ -107,14 +116,16 @@ def _create_new_annotation_in_database(
         edition=last_annotation_edition + 1,
         score=score,
         image=annotation_image,
-        annotation_data=data,
         marking_time=time,
         marking_delta_time=time - old_time,
         task=task,
         user=task.assigned_user,
+        user_agent=user_agent,
+        user_agent_version=user_agent_version,
+        user_agent_data=user_agent_data,
     )
     new_annotation.save()
-    _add_annotation_to_rubrics(new_annotation)
+    _add_annotation_to_rubrics(new_annotation, [r for r, __ in rid_rev_pairs])
 
     # caution: we are writing to an object given as an input
     task.latest_annotation = new_annotation
@@ -123,18 +134,10 @@ def _create_new_annotation_in_database(
     return new_annotation
 
 
-def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
-    scene_items = raw_annot_data["sceneItems"]
-    rubric_rid_rev_pairs = [
-        (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
-    ]
-    return rubric_rid_rev_pairs
-
-
 def _validate_rubric_use_and_score(
     question_index: int,
     client_score: float,
-    data: dict[str, Any],
+    rid_rev_pairs: list[tuple[int, int | None]],
     *,
     tolerance: float = 1e-9,
     require_latest_rubrics: bool = True,
@@ -147,9 +150,10 @@ def _validate_rubric_use_and_score(
     check that each rubric used belongs to the question.
 
     Args:
-       question_index: the question index that the annotation belongs to.
-       client_score: the score for the annotation uploaded by the client.
-       data: the meta-data for the annotation uploaded by the client.
+        question_index: the question index that the annotation belongs to.
+        client_score: the score for the annotation uploaded by the client.
+        rid_rev_pairs: a list of the rubrics and their revisions.  If a
+            revision is ``None``, skip the check.
 
     Keyword Args:
         tolerance: the max floating point error to allow when comparing the
@@ -165,8 +169,6 @@ def _validate_rubric_use_and_score(
         KeyError: one or more non-existent rubrics where used.
     """
     question_max_mark = get_question_max_mark(question_index)
-    # get the rubrics used in this annotation
-    rid_rev_pairs = _extract_rubric_rid_rev_pairs(data)
     rids = list(set([rid for rid, rev in rid_rev_pairs]))  # remove repeats
     # dict of rid to rubric data
     # only get the latest edit of each rid.
@@ -197,7 +199,7 @@ def _validate_rubric_use_and_score(
                     "Try again later, ask your marking team, "
                     "or use a different rubric."
                 )
-            if rubric_data[rid]["revision"] != rev:
+            if rev is not None and rubric_data[rid]["revision"] != rev:
                 raise PlomConflict(
                     f"rubric rid {rid} revision {rev} is not the latest revision: "
                     "refresh your rubrics and try again"
@@ -217,13 +219,8 @@ def _validate_rubric_use_and_score(
         )
 
 
-def _add_annotation_to_rubrics(annotation: Annotation) -> None:
+def _add_annotation_to_rubrics(annotation: Annotation, rids: list[int]) -> None:
     """Add a relation to this annotation for every rubric that this annotation uses."""
-    # again grab all rubrics from the annotation meta-data. this
-    # has been validated earlier.
-    rids = [
-        rid for (rid, _) in _extract_rubric_rid_rev_pairs(annotation.annotation_data)
-    ]
     rubric_data = {r.rid: r for r in Rubric.objects.filter(rid__in=rids, latest=True)}
     # now attach the annotation to each used rubric
     # with multiplicity - so iterate over list.
