@@ -1507,7 +1507,6 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_extra_pages_info(bundle_obj)
 
-    @transaction.atomic
     def get_bundle_single_page_info(
         self, bundle_obj: StagingBundle, index: int
     ) -> dict[str, Any]:

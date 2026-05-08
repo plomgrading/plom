@@ -181,7 +181,6 @@ class QRService:
                 img.image_type = StagingImage.ERROR
                 img.error_reason_enum = enum
                 img.error_reason = long_err
-                # TODO: short_err should be recorded too? see StagingImage model docs
                 img.history += f"; Made into error image: {short_err}"
                 img.save()
 
