@@ -289,9 +289,8 @@ class MarkTask(APIView):
         except json.JSONDecodeError as e:
             return _400(f"Invalid JSON in annotation data: {e}")
 
-        # TODO: temporarily do extra work here when client agent is org.plomgrading.PlomClient
-        # TODO: this is mainly b/c of uncertainty about the existing provided rids (with have
-        # TODO: no rev) and also have been bitrottng for a long time.
+        # Perhaps temporarily do extra work here when client agent is
+        # specifically org.plomgrading.PlomClient
         if user_agent == "org.plomgrading.PlomClient":
             # Colin thinks this is a very bad idea: Issue #4219.
             src_img_data = user_agent_data["base_images"]
@@ -301,7 +300,7 @@ class MarkTask(APIView):
                 if not img_path.exists():
                     return _400("Invalid original-image in request")
 
-            # take rid rev pairs from the annotation data
+            # take rid rev pairs from the annotation data, and verify they match
             rubric_list2 = extract_rubric_rid_rev_pairs(user_agent_data)
             if sorted(rubric_list) != sorted(rubric_list2):
                 return _400(
