@@ -293,7 +293,7 @@ class MarkTask(APIView):
         # TODO: this is mainly b/c of uncertainty about the existing provided rids (with have
         # TODO: no rev) and also have been bitrottng for a long time.
         if user_agent == "org.plomgrading.PlomClient":
-            # Colin thinks this is a very bad idea
+            # Colin thinks this is a very bad idea: Issue #4219.
             src_img_data = user_agent_data["base_images"]
             for image_data in src_img_data:
                 # TODO: this looks like direct file access on the server, Issue #3888.
