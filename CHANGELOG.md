@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * API support to surrender individual tasks.
 * Instructors can disable ("unpublish") all "delta rubrics" without text.
+* Web UI rubric table includes usage counts, somewhat inaccurate for now.
 
 ### Removed
 * Support for Python 3.10.
@@ -21,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Improvements to creating the +1/2, -1/2 rubrics and other fractional delta rubrics.
 * Remove student name box from default extrasheet template.
 * Scanners can select more than one PDF bundle to upload at a time.
-* API improvements.
+* API changes and improvements.
 
 ### Fixed
 * Creating duplicate rubrics is an error (again).
