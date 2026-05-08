@@ -729,11 +729,11 @@ class MarkingTaskService:
         self._remove_tag_from_task(the_tag, the_task)
 
     @classmethod
-    def _tag_task_pk_for_user(
-        cls, task_pk: int, username: str, calling_user: User, unassign_others: bool
+    def _tag_task_for_user(
+        cls, task_id: int, username: str, calling_user: User, unassign_others: bool
     ) -> None:
         """Tag a task for a user, removing other user tags."""
-        task = MarkingTask.objects.get(pk=task_pk)
+        task = MarkingTask.objects.get(id=task_id)
         # TODO: maybe these many-to-many things don't need select_for_update
         # task = MarkingTask.objects.select_for_update().get(pk=task_pk)
         if unassign_others:
@@ -742,7 +742,7 @@ class MarkingTaskService:
                     # TODO: colin doesn't understand this notation
                     tag.task.remove(task)
         attn_user_tag_text = f"@{username}"
-        cls().create_tag_and_attach_to_task(calling_user, task_pk, attn_user_tag_text)
+        cls().create_tag_and_attach_to_task(calling_user, task_id, attn_user_tag_text)
 
     @transaction.atomic
     def set_paper_marking_task_outdated(
@@ -821,7 +821,7 @@ class MarkingTaskService:
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @staticmethod
-    def _reassign_task_to_user(task_pk: int, username: str) -> None:
+    def _reassign_task_to_user(task_id: int, user: User) -> None:
         """Reassign a task to a different user, low level routine.
 
         If tasks status is "COMPLETE" then the assigned_user will be updated,
@@ -830,50 +830,43 @@ class MarkingTaskService:
         an appropriate @username tag (by the caller; we don't do it for you!)
 
         Args:
-            task_pk: the primary key of a task.
-            username: a string of a username.
+            task_id: the primary key of a task.
+            user: a User object.
 
         Returns:
             None.
 
         Raises:
-            ValueError: cannot find user, or cannot find marking task.
+            ValueError: cannot find marking task.
         """
-        # make sure the given username corresponds to a marker
         try:
-            new_user = User.objects.get(username=username, groups__name="marker")
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a marker-user {username}")
-        # grab the task
-        try:
-            with transaction.atomic():
-                task_obj = MarkingTask.objects.select_for_update().get(pk=task_pk)
-                if task_obj.assigned_user == new_user:
-                    # already assigned to new_user, nothing needs done
-                    return
-                if task_obj.status == MarkingTask.COMPLETE:
-                    task_obj.assigned_user = new_user
-                elif task_obj.status == MarkingTask.OUT_OF_DATE:
-                    # log.warning(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
-                    task_obj.assigned_user = new_user
-                elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
-                    # if out then set it as todo and clear the assigned_user.
-                    # Note: this makes it available to anyone; the caller
-                    # might want to additionally tag it for new_user.
-                    task_obj.status = MarkingTask.TO_DO
-                    task_obj.assigned_user = None
-                else:
-                    raise AssertionError(
-                        f'Tertium non datur: impossible status "{task_obj.status}"'
-                    )
-                task_obj.save()
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find marking task {task_pk}")
+            task_obj = MarkingTask.objects.select_for_update().get(id=task_id)
+        except MarkingTask.DoesNotExist:
+            raise ValueError(f"Cannot find marking task {task_id}")
+        if task_obj.assigned_user == user:
+            # already assigned to user, nothing needs done
+            return
+        if task_obj.status == MarkingTask.COMPLETE:
+            task_obj.assigned_user = user
+        elif task_obj.status == MarkingTask.OUT_OF_DATE:
+            # log.warning(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
+            task_obj.assigned_user = user
+        elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
+            # if out then set it as todo and clear the assigned_user.
+            # Note: this makes it available to anyone; the caller
+            # might want to additionally tag it for user.
+            task_obj.status = MarkingTask.TO_DO
+            task_obj.assigned_user = None
+        else:
+            raise AssertionError(
+                f'Tertium non datur: impossible status "{task_obj.status}"'
+            )
+        task_obj.save()
 
     @classmethod
     def reassign_task_to_user(
         cls,
-        task_pk: int,
+        task_id: int,
         *,
         new_username: str,
         calling_user: User,
@@ -891,7 +884,7 @@ class MarkingTaskService:
         them toward a different user.
 
         Args:
-            task_pk: the primary key of a task.
+            task_id: the primary key of a task.
 
         Keyword Args:
             new_username: a string of a username to reassign to.
@@ -907,10 +900,16 @@ class MarkingTaskService:
             serializers.ValidationError: tag name failure, unexpected as
                 we make the tag.
         """
+        # make sure the given username corresponds to a marker
+        try:
+            new_user = User.objects.get(username=new_username, groups__name="marker")
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a marker-user {new_username}")
+
         with transaction.atomic():
             # first reassign the task - this checks if the username
             # corresponds to an existing marker-user
-            cls._reassign_task_to_user(task_pk, new_username)
-            cls._tag_task_pk_for_user(
-                task_pk, new_username, calling_user, unassign_others
+            cls._reassign_task_to_user(task_id, new_user)
+            cls._tag_task_for_user(
+                task_id, new_user.username, calling_user, unassign_others
             )

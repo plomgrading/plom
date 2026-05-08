@@ -21,7 +21,6 @@ from plom_server.Mark.services import (
 )
 from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import Image
-
 from plom_server.Progress.services import UserInfoService
 
 from .utils import _error_response
