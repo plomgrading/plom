@@ -145,7 +145,8 @@ The file can also contain comments starting with ``# ...``
 
 .. tip::
    Another experimental feature: adding ``bonus = true`` to a question
-   means it does not count toward the ``totalMarks``.
+   means it does not count toward the ``totalMarks``.  No one has used
+   this yet; highly experimental: you have been warned.
 
 
 Building the database of papers
