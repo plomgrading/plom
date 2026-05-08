@@ -61,15 +61,11 @@ function viewPassword() {
 
 // toggle password visibility (again)
 /* *********************************************************** */
-document.addEventListener('DOMContentLoaded', showLoginPassword);
+let showPasswordCheckbox = document.getElementById('showPasswordCheckbox');
+let loginPasswordInput = document.getElementById('passwordInput');
 
-let showPassword = document.getElementById('check-password');
-
-function showLoginPassword() {
-  let loginPasswordInput = document.getElementById('typePasswordX');
-  showPassword.addEventListener('click', () => {
-    const passwordType = loginPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    loginPasswordInput.setAttribute('type', passwordType);
-  });
-}
+showPasswordCheckbox.addEventListener('change', function () {
+  const newType = this.checked ? 'text' : 'password';
+  loginPasswordInput.setAttribute('type', newType);
+});
 /* *********************************************************** */
