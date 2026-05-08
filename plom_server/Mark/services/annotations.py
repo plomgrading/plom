@@ -134,14 +134,6 @@ def _create_new_annotation_in_database(
     return new_annotation
 
 
-def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
-    scene_items = raw_annot_data["sceneItems"]
-    rubric_rid_rev_pairs = [
-        (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
-    ]
-    return rubric_rid_rev_pairs
-
-
 def _validate_rubric_use_and_score(
     question_index: int,
     client_score: float,

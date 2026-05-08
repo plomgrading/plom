@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from plom.misc_utils import unpack_task_code
+from plom.misc_utils import unpack_task_code, extract_rubric_rid_rev_pairs
 from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
@@ -25,9 +25,6 @@ from plom.plom_exceptions import (
 
 from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
-from plom_server.Mark.services.annotations import (
-    _extract_rubric_rid_rev_pairs,
-)
 from plom_server.Progress.services import UserInfoService
 from plom_server.Papers.services import PaperInfoService
 from .utils import _error_response
@@ -305,7 +302,7 @@ class MarkTask(APIView):
                     return _400("Invalid original-image in request")
 
             # take rid rev pairs from the annotation data
-            rubric_list2 = _extract_rubric_rid_rev_pairs(user_agent_data)
+            rubric_list2 = extract_rubric_rid_rev_pairs(user_agent_data)
             if sorted(rubric_list) != sorted(rubric_list2):
                 return _400(
                     f"Unexpected mismatch between data and json blob: {rubric_list} vs {rubric_list2}"
