@@ -21,18 +21,13 @@ window.toggleVisibility = function (passwordInputId) {
 
 // generate a random username
 /* *********************************************************** */
-document.addEventListener('DOMContentLoaded', generateRandomUsername);
-
-let generateUsernameBtn = document.getElementById('generate-username');
-
-function generateRandomUsername() {
-  generateUsernameBtn.addEventListener('click', () => {
-    let firstUserWord = firstWordList[Math.floor(Math.random() * firstWordList.length)].split(' ').join('');
-    let secondUserWord = secondWordList[Math.floor(Math.random() * secondWordList.length)].split(' ').join('');
-    let randomNumAsString = (Math.floor(Math.random() * 10) + 1).toString();
-    document.getElementById('id_username').value = firstUserWord + secondUserWord + randomNumAsString;
-  });
-}
+window.insertRandomUsername = function (textInputId) {
+  const firstUserWord = firstWordList[Math.floor(Math.random() * firstWordList.length)].split(' ').join('');
+  const secondUserWord = secondWordList[Math.floor(Math.random() * secondWordList.length)].split(' ').join('');
+  const randomNumAsString = (Math.floor(Math.random() * 10) + 1).toString();
+  let textInput = document.getElementById(textInputId);
+  textInput.value = firstUserWord + secondUserWord + randomNumAsString;
+};
 /* *********************************************************** */
 
 // copy password reset link
