@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
 
@@ -247,9 +247,7 @@ def test_spec_shared_page_not_allowed() -> None:
     r = deepcopy(raw)
     r["question"]["2"]["pages"] = [3, 4]
     with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=True)
-    with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_shared_page_explicit_disallowed() -> None:
@@ -257,16 +255,14 @@ def test_spec_shared_page_explicit_disallowed() -> None:
     r["allowSharedPages"] = False
     r["question"]["2"]["pages"] = [3, 4]
     with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=True)
-    with raises(ValueError, match="overused"):
-        SpecVerifier(r).verify(_legacy=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_shared_page_must_be_explicitly_allowed() -> None:
     r = deepcopy(raw)
     r["allowSharedPages"] = True
     r["question"]["2"]["pages"] = [3, 4]
-    SpecVerifier(r).verify(_legacy=False)
+    SpecVerifier(r).verify()
 
 
 def test_spec_DNM_page_cannot_be_shared() -> None:
@@ -274,7 +270,7 @@ def test_spec_DNM_page_cannot_be_shared() -> None:
     r["allowSharedPages"] = True
     r["question"]["1"]["pages"] = [2, 3]
     with raises(ValueError, match="shared.*DNM.*question"):
-        SpecVerifier(r).verify(_legacy=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_legacy_overused_page() -> None:
@@ -411,3 +407,39 @@ def test_spec_legacy_dupe_question_fails_to_load(tmpdir) -> None:
         f.write(old)
     with raises(tomllib.TOMLDecodeError):
         SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
+
+
+def test_spec_bonus_questions() -> None:
+    s = """
+        name = "bonus"
+        longName = "A spec with bonus questions"
+        numberOfVersions = 1
+        numberOfPages = 4
+        totalMarks = 10
+        allowSharedPages = true
+        idPage = 1
+        doNotMarkPages = []
+
+        [[question]]
+        pages = 2
+        mark = 4
+
+        [[question]]
+        pages = 3
+        mark = 6
+
+        [[question]]
+        pages = 4
+        mark = 2
+        bonus = true
+        label = "Bonus1"
+
+        [[question]]
+        pages = 4
+        mark = 3
+        bonus = true
+        label = "B2"
+    """
+    A = tomllib.loads(s)
+    sv = SpecVerifier(A)
+    sv.verify()

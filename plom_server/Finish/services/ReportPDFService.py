@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2025 Andrew Rechnitzer
 # Copyright (C) 2025 Bryan Tanady
@@ -110,7 +110,7 @@ def pdf_builder(
     # info for report
     shortname = SpecificationService.get_shortname()
     longname = SpecificationService.get_longname()
-    totalMarks = SpecificationService.get_total_marks()
+    totalMarks = SpecificationService.get_assessment_total(include_bonus=False)
     timestamp = datetime.now()
     timestamp_str = timestamp.strftime("%d/%m/%Y %H:%M:%S+00:00")
     num_students = (

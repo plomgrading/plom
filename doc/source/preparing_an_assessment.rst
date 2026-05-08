@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2022-2025 Colin B. Macdonald
+   Copyright (C) 2022-2026 Colin B. Macdonald
    Copyright (C) 2018 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -142,6 +142,11 @@ The file can also contain comments starting with ``# ...``
 .. tip::
    Shared pages are a new experimental feature: you can enable them by
    explicitly putting ``allowSharedPages = true`` in your specification.
+
+.. tip::
+   Another experimental feature: adding ``bonus = true`` to a question
+   means it does not count toward the ``totalMarks``.  No one has used
+   this yet; highly experimental: you have been warned.
 
 
 Building the database of papers

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
 
@@ -89,7 +89,7 @@ def brief_report_pdf_builder(
     context = {
         "longname": SpecificationService.get_longname(),
         "timestamp_str": timestamp_str,
-        "totalMarks": SpecificationService.get_total_marks(),
+        "totalMarks": SpecificationService.get_assessment_total(include_bonus=False),
         "name": paper_info["name"],
         "sid": paper_info["sid"],
         "paper_number": paper_number,

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
@@ -134,23 +134,21 @@ class MarkingStatsService:
         if all_task_count == 0:
             return stats_dict
 
-        stats_dict["number_of_completed_tasks"] = completed_tasks.count()
+        num_completed_tasks = completed_tasks.count()
+        stats_dict["number_of_completed_tasks"] = num_completed_tasks
         stats_dict["all_task_count"] = all_task_count
-        stats_dict["remaining_task_count"] = (
-            stats_dict["all_task_count"] - stats_dict["number_of_completed_tasks"]
-        )
+        remaining_task_count = all_task_count - num_completed_tasks
+        stats_dict["remaining_task_count"] = remaining_task_count
         stats_dict["completed_percentage"] = round(
-            stats_dict["number_of_completed_tasks"] / stats_dict["all_task_count"] * 100
+            num_completed_tasks / all_task_count * 100
         )
-        if stats_dict["number_of_completed_tasks"]:
+        if num_completed_tasks:
             stats_dict["avg_marking_time"] = round(
                 sum([X.latest_annotation.marking_time for X in completed_tasks])
-                / stats_dict["number_of_completed_tasks"]
+                / num_completed_tasks
             )
             stats_dict["approx_remaining_hours"] = round(
-                stats_dict["avg_marking_time"]
-                * stats_dict["remaining_task_count"]
-                / 3600,
+                stats_dict["avg_marking_time"] * remaining_task_count / 3600,
                 2,
             )
             # the following don't make sense until something is marked

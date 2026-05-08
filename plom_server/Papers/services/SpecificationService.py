@@ -16,7 +16,7 @@ from typing import Any
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Sum
 
 from plom.spec_verifier import SpecVerifier
 from ..models import Specification, SpecQuestion
@@ -202,7 +202,7 @@ def get_the_spec_as_toml(*, _include_private_seed: bool = False) -> str:
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string(_legacy=False)
+    return sv.as_toml_string()
 
 
 def get_private_seed() -> str:
@@ -379,7 +379,6 @@ def get_list_of_pages() -> list[int]:
     return [p + 1 for p in range(get_n_pages())]
 
 
-@transaction.atomic
 def get_question_max_mark(question_index: str | int) -> int:
     """Get the max mark of a given question.
 
@@ -413,20 +412,36 @@ def get_questions_max_marks() -> dict[int, int]:
 
 @transaction.atomic
 def get_max_all_question_mark() -> int:
-    """Get the maximum mark of all questions, or None if no questions."""
+    """Get the maximum mark of all questions, or None if no questions.
+
+    For example, if Q1 is out of 4 and Q2 is out of 6, this will return 6.
+    """
     # the aggregate function returns dict {"mark__max": n}
     return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
 
-@transaction.atomic
-def get_total_marks() -> int:
-    """Get the total maximum possible mark (over all questions).
+def get_assessment_total(*, include_bonus: bool) -> int:
+    """Get the total marks that this assessment is out of, optioanlly including bonus questions.
 
-    Returns:
-        The maximum mark.
+    Keyword Args:
+        include_bonus: whether to include bonus points.  For example,
+            if the paper is out of 30 and has a bonus question worth
+            two points, then passing ``include_bonus=True`` will return
+            32, whereas passing False will return 30.
+            There is currently no default to force calling code to make
+            a conscious decision, but the default might become False
+            in the future.
     """
-    spec = Specification.objects.get()
-    return spec.totalMarks
+    if not include_bonus:
+        spec = Specification.objects.get()
+        return spec.totalMarks
+    return SpecQuestion.objects.all().aggregate(Sum("mark"))["mark__sum"]
+
+
+def is_question_bonus(question_index: int) -> bool:
+    """Is a particular question a bonus question?"""
+    question = SpecQuestion.objects.get(question_index=question_index)
+    return question.bonus
 
 
 @transaction.atomic

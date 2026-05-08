@@ -10,7 +10,6 @@
 # Copyright (C) 2025 Philip D. Loewen
 
 import pathlib
-from copy import deepcopy
 from typing import Any
 
 import pymupdf
@@ -18,41 +17,10 @@ import pymupdf
 from plom.misc_utils import local_now_to_simple_string, pprint_score
 
 
-def make_cover(
-    tab: list[list[Any]],
-    pdfname: pathlib.Path,
-    *,
-    exam_name: str | None = None,
-    paper_num: str | int | None = None,
-    info: tuple[str | None, str | None] | None = None,
-    solution: bool = False,
-    footer: bool = True,
-    papersize: str = "",
-) -> None:
-    """Create html page of name ID etc and table of marks.
-
-    Args:
-        tab: information about the paper that should be put on the
-            coverpage.  A list of lists where each row is
-            ``[qlabel, ver, mark, maxPossibleMark]`` if not solutions or
-            ``[qlabel, ver, maxPossibleMark]`` if solutions.
-        pdfname: filename to save the pdf into.
-
-    Keyword Args:
-        exam_name: the "long name" of this assessment.
-        paper_num: the paper number for which we are making a cover, or
-            ``None`` to omit.
-        info: currently a 2-tuple/2-list of student name (str)
-            and student id (str).
-        solution: whether or not this is a cover page for solutions.
-        footer: whether to print a footer with timestamp.
-        papersize: a string describing the paper size.  If omitted or
-            empty, use "letter" as the default.
-
-    Returns:
-        None
-    """
+def make_cover(tab: list[list[Any]], pdfname: pathlib.Path, **kwargs) -> None:
+    """Create html page of name ID etc and table of marks."""
     # check all table entries that should be numbers are non-negative numbers
+    solution = kwargs.get("solution", False)
     for row in tab:
         if solution:
             assert len(row) == 3
@@ -67,28 +35,73 @@ def make_cover(
                 assert y >= 0, "Numeric data must be non-negative."
             except (TypeError, ValueError):
                 raise AssertionError(f"Table data {x} should be numeric.")
+    if solution:
+        tab2 = [{"question_label": r[0], "ver": r[1], "max_mark": r[2]} for r in tab]
+    else:
+        tab2 = [
+            {"question_label": r[0], "ver": r[1], "mark": r[2], "max_mark": r[3]}
+            for r in tab
+        ]
+    total = sum([row["max_mark"] for row in tab2])
+    if solution:
+        score = None
+    else:
+        score = pprint_score(sum([row["mark"] for row in tab2]))
+    return make_cover_page(tab2, pdfname, score=score, total=total, **kwargs)
 
+
+def make_cover_page(
+    tab: list[dict[str, str | bool | float | int]],
+    pdfname: pathlib.Path,
+    *,
+    score: str | None,
+    total: float | int,
+    exam_name: str | None = None,
+    paper_num: str | int | None = None,
+    info: tuple[str | None, str | None] | None = None,
+    solution: bool = False,
+    footer: bool = True,
+    papersize: str = "",
+) -> None:
+    """Create html page of name ID etc and table of marks.
+
+    Args:
+        tab: information about the paper that should be put on the
+            coverpage.  A list of dicts where each row has keys
+            ``question_label``, ``ver``, ``max_mark`` and
+            optionally ``bonus``.
+            If the ``solutions`` keyword arg is True, the row must
+            also contain ``mark``.
+        pdfname: filename to save the pdf into.
+
+    Keyword Args:
+        score: the pretty-printed score as a string.
+        total: the value the score is out of.
+        exam_name: the "long name" of this assessment.
+        paper_num: the paper number for which we are making a cover, or
+            ``None`` to omit.
+        info: currently a 2-tuple/2-list of student name (str)
+            and student id (str).
+        solution: whether or not this is a cover page for solutions.
+        footer: whether to print a footer with timestamp.
+        papersize: a string describing the paper size.  If omitted or
+            empty, use "letter" as the default.
+
+    Returns:
+        None
+
+    Raises:
+        KeyError: misformatted table.
+    """
     # calculate additional table rows before casting marks to str
     if solution:
         headers = ["question", "version", "mark out of"]
-        totals = ["total", "", str(sum([row[2] for row in tab]))]
+        totals = ["total", "", str(total)]
     else:
         headers = ["question", "version", "mark", "out of"]
-        totals = [
-            "total",
-            "",
-            pprint_score(sum([row[2] for row in tab])),
-            str(sum([row[3] for row in tab])),
-        ]
-    # writer likes strings, cast table contents as str, but first make a copy
-    tab = deepcopy(tab)
-    for row in tab:
-        row[1] = str(row[1])  # version
-        if not solution:
-            row[2] = pprint_score(row[2])  # mark
-            row[3] = str(row[3])  # out of
-        else:
-            row[2] = str(row[2])  # "mark out of"
+        # score can only be None when doing solutions
+        assert score is not None
+        totals = ["total", "", score, str(total)]
 
     # paper formatting
     m = 50  # margin
@@ -212,8 +225,12 @@ def make_cover(
             vpos += deltav + extra_sep
             page_row += 1
 
-        for txt, r in zip(row, make_boxes(vpos)):
-            make_box_with_text(tw, shape, r, txt)
+        if solution:
+            strs = [row["question_label"], row["ver"], row["max_mark"]]
+        else:
+            strs = [row["question_label"], row["ver"], row["mark"], row["max_mark"]]
+        for txt, r in zip(strs, make_boxes(vpos)):
+            make_box_with_text(tw, shape, r, str(txt))
         vpos += deltav
         page_row += 1
 
