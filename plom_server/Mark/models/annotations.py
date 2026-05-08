@@ -42,7 +42,7 @@ class Annotation(models.Model):
         task: The marking task.
         user: The user who made the annotation.
         time_of_last_update: The time of the last update.
-        user_agent: a string describing the client reasponsible for this
+        user_agent: a string describing the client responsible for this
             Annotation.  At most 64 chars.  Could be a uuid or a string
             such as "org.plomgrading.PlomClient".
         user_agent_version: the version of the user agent such as "1.3.7"
