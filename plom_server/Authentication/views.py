@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2022 Natalie Balashov
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
 from typing import Any
@@ -92,7 +92,6 @@ class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
     """Displayed when user has successfully completed setting their password."""
 
     template_name = "Authentication/set_password_complete.html"
-    login_url = "login"
     group_required = ["manager", "marker", "scanner"]
     raise_exception = True
 
@@ -100,10 +99,8 @@ class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
         return render(request, self.template_name, status=200)
 
 
-# login_required make sure user is log in first
 class Home(RoleRequiredView):
-    login_url = "login/"
-    redirect_field_name = "login"
+    """The landing page for logged in users."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context: dict[str, Any] = {}
@@ -127,6 +124,7 @@ class LoginView(View):
             return redirect("home")
 
         username = request.POST.get("username")
+        remember_me = request.POST.get("remember_me")
         # be wary making db calls for unauthenticated users, see #3733
         # TODO: maybe just delete this?
         # temp_username = User.objects.filter(username__iexact=username).values()
@@ -146,6 +144,8 @@ class LoginView(View):
             return render(request, self.template_name)
 
         login(request, user)
+        if not remember_me:
+            request.session.set_expiry(0)  # on browser close
         if "next" in request.POST:
             return redirect(request.POST.get("next"))
         else:

@@ -10,6 +10,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
+# Copyright (C) 2026 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -53,7 +54,6 @@ dependencies = [
     "django-mathfilters>=1.0.0",
     "django-huey>=1.1.1",
     "django-reset-migrations>=0.4.0",
-    "django-session-timeout>=0.1.0",
     "djangorestframework>=3.14.0",
     "django-tables2>=2.7.0",
     "exif>=1.6.1",
