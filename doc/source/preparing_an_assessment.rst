@@ -136,13 +136,16 @@ The ``spec.toml`` for the template assessment above looks like::
 
 There are other fields which can be added to this file, for example,
 each question can have ``label = ...`` to specify something other than
-the "Qn" default, or ``bonus = true`` for a question which does not
-count toward the ``totalMarks``.
+the "Qn" default.
 The file can also contain comments starting with ``# ...``
 
 .. tip::
    Shared pages are a new experimental feature: you can enable them by
    explicitly putting ``allowSharedPages = true`` in your specification.
+
+.. tip::
+   Another experimental feature: adding ``bonus = true`` to a question
+   means it does not count toward the ``totalMarks``.
 
 
 Building the database of papers
