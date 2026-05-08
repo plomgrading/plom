@@ -25,6 +25,9 @@ class RubricTable(django_tables2.Table):
     rid = django_tables2.Column("rid", linkify=True)
     # prevent newlines from rendering in json fields
     parameters = django_tables2.JSONColumn(json_dumps_kwargs={})
+    # the current count includes out-of-date annotations
+    # see https://gitlab.com/plom/plom/-/merge_requests/3607
+    use_count = django_tables2.Column("\N{ALMOST EQUAL TO} use count")
 
     class Meta:
         model = Rubric
