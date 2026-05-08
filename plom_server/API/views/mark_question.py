@@ -30,6 +30,11 @@ from plom_server.Papers.services import PaperInfoService
 from .utils import _error_response
 
 
+# Limit how many bytes of client non-image data we're willing to store,
+# larger values could effect database performance
+user_data_limit = 256 * 1024
+
+
 def _400(m):
     return _error_response(m, status.HTTP_400_BAD_REQUEST)
 
@@ -287,6 +292,13 @@ class MarkTask(APIView):
         user_agent = data.get("user_agent", "")
         user_agent_version = data.get("user_agent_version", "")
         raw_user_agent_data = data.get("user_agent_data", "{}")
+        len_data = len(raw_user_agent_data)
+        if len_data >= user_data_limit:
+            return _error_response(
+                f'"user_agent_data" of size {len_data} exceeds '
+                f"limit of {user_data_limit} bytes",
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            )
         try:
             user_agent_data = json.loads(raw_user_agent_data)
         except json.JSONDecodeError as e:
