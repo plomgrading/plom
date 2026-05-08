@@ -166,6 +166,7 @@ class ScanStagingImageTypesTests(TestCase):
                 bundle_order=1,
                 image_type=StagingImage.ERROR,
                 error_reason="error",
+                error_reason_enum=StagingImage.ErrorReasonChoices.OTHER,
                 pushed=True,
             )
 

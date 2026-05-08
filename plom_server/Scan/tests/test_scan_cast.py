@@ -42,6 +42,7 @@ class ScanCastServiceTests(TestCase):
                 bundle_order=number_of_pages,
                 image_type=image_type,
                 error_reason="error",
+                error_reason_enum=StagingImage.ErrorReasonChoices.OTHER,
             )
         else:
             baker.make(

@@ -185,7 +185,6 @@ class QRServiceTest(TestCase):
         )
 
     def test_classification(self):
-        """Test QRService in classifying StagingImages."""
         QRService.classify_staging_images_based_on_QR_codes(self.bundle)
 
         # No-QR -> UNKNOWN
@@ -216,7 +215,9 @@ class QRServiceTest(TestCase):
             img = StagingImage.objects.get(pk=img.pk)
             self.assertEqual(img.image_type, StagingImage.ERROR)
             self.assertIn("same QR codes", img.error_reason)
-            self.assertIn("collision", img.error_reason)
+            self.assertEqual(
+                img.error_reason_enum, StagingImage.ErrorReasonChoices.COLLISION
+            )
 
     def test_bundle_no_qr(self):
         """Test exception is correctly raised when attempting to push unread QR bundle."""
