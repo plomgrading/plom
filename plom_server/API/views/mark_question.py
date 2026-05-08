@@ -198,6 +198,9 @@ class MarkTask(APIView):
                 There is currently an expectation that humans can use the
                 official Plom Client to edit annotation, and thus you should
                 send something that client can render.
+                If you send something official Plom Client doesn't understand,
+                then the client will likely be unable to edit your annotations,
+                and might even crash.
 
         Keyword Args:
             code: a string such as "0123g4" specifying a task.
@@ -289,8 +292,11 @@ class MarkTask(APIView):
         except json.JSONDecodeError as e:
             return _400(f"Invalid JSON in annotation data: {e}")
 
-        # Perhaps temporarily do extra work here when client agent is
-        # specifically org.plomgrading.PlomClient
+        # Perhaps in the future we could have some kind of plugin architecture
+        # around sanitizing the user_agent_data.
+
+        # For now, and perhaps temporarily, we do some extra checking when
+        # the client agent is specifically our official client.
         if user_agent == "org.plomgrading.PlomClient":
             # Colin thinks this is a very bad idea: Issue #4219.
             src_img_data = user_agent_data["base_images"]
