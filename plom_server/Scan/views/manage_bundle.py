@@ -79,7 +79,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         *,
         bundle_id: int | None = None,
     ) -> dict[str, Any]:
-        """Build a context for a particular page of a bundle.
+        """Build a context for a particular bundle.
 
         Keyword Args:
             bundle_id: which bundle.
@@ -269,6 +269,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
         prev_paper_number = None
 
+        # TODO: potentially O(index) database queries: Issue #4218
         for i in range(index - 1, 0, -1):
             page_info = scanner.get_bundle_single_page_info(bundle, i)
             if page_info.get("status") == "known":
@@ -380,7 +381,7 @@ class HandwritingComparisonView(ScannerRequiredView):
         prev_paper_number = None
         nearest_prev_known_index = None
 
-        # WARNING: Potentially inefficient DB access
+        # WARNING: Potentially inefficient DB access, Issue #4218
         for i in range(index - 1, 0, -1):
             page_info = scanner.get_bundle_single_page_info(bundle, i)
             if page_info.get("status") == "known":
