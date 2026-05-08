@@ -1310,7 +1310,11 @@ class ScanService:
             }
 
         for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.ERROR):
-            pages[img.bundle_order]["info"] = {"reason": img.error_reason}
+            pages[img.bundle_order]["info"] = {
+                "reason": img.error_reason,
+                "reason_enum": img.get_error_reason_enum_display(),
+            }
+            # We could also prepend with "Error: ", but I'm not sure its necessary
             pages[img.bundle_order]["page_label"] = img.get_error_reason_enum_display()
 
         for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD):
@@ -1518,7 +1522,10 @@ class ScanService:
             "history": img.history,
         }
         if img.image_type == StagingImage.ERROR:
-            info = {"reason": img.error_reason}
+            info = {
+                "reason": img.error_reason,
+                "reason_enum": img.get_error_reason_enum_display(),
+            }
         elif img.image_type == StagingImage.DISCARD:
             info = {"reason": img.discard_reason}
         elif img.image_type == StagingImage.KNOWN:

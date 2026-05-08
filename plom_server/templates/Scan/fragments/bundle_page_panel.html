@@ -69,7 +69,11 @@
                     {% elif current_page.status == 'error' %}
                         <div class="alert alert-danger my-2 p-2">
                             <h5 class="alert-heading">Error</h5>
-                            {{ current_page.info.reason|safe }}
+                            {{ current_page.info.reason }}
+                            {% if current_page.info.reason_enum == "Collision" %}
+                                <a href="https://plom.readthedocs.io/en/latest/scanning.html#collisions">Why
+                                are collisions a problem, and what are my options?</a>
+                            {% endif %}
                         </div>
                     {% elif current_page.status == 'unread' %}
                         <div class="alert alert-dark my-2">

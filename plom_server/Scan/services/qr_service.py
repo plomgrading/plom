@@ -5,7 +5,6 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Forest Kobayashi
 
-import html
 from typing import Any
 
 from django.db import transaction
@@ -73,7 +72,7 @@ class QRService:
                             img.pk,
                             StagingImage.ErrorReasonChoices.INCONSISTENT_QR_CODES,
                             str(err),
-                            html.escape(str(err)),
+                            str(err),
                         )
                     )
                     continue
@@ -85,7 +84,7 @@ class QRService:
                             img.pk,
                             StagingImage.ErrorReasonChoices.INCONSISTENT_WITH_SPEC,
                             str(err),
-                            html.escape(str(err)),
+                            str(err),
                         )
                     )
                     continue
@@ -120,11 +119,7 @@ class QRService:
                 short_err += pagestr
                 short_err += " in this bundle"
                 long_err += pagestr
-                long_err += " (in this bundle)"
-                long_err += (
-                    ' - <a href="https://plom.readthedocs.io/en/latest/scanning.html#collisions">'
-                    "why are collisions a problem, and what are my options?</a>"
-                )
+                long_err += " (in this bundle)."
                 error_imgs.append(
                     (
                         img_pk,
