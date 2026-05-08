@@ -47,7 +47,8 @@ class Annotation(models.Model):
             such as "org.plomgrading.PlomClient".
         user_agent_version: the version of the user agent such as "1.3.7"
             or "0.22.3.dev0".
-        user_agent_data: A blob of data encoded as an ascii-string.
+        user_agent_data: A blob of data generally consisting of a dict.
+            This used to be called "annotation_data".
             We generally don't look at this: the client sends something
             and can get it back to reconstruct the scene for further
             editing.  This will generally be a JSON blob, written to
