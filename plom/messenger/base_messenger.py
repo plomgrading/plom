@@ -1329,7 +1329,7 @@ class BaseMessenger:
 
         Returns:
             A dictionary of data about the annotations.  Keys include
-            "annotations", the raw annotation data that we sent to the server.
+            "user_agent_data", the raw annotation data that we sent to the server.
 
         Raises:
             PlomAuthenticationException

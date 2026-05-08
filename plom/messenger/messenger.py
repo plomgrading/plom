@@ -576,10 +576,7 @@ class Messenger(BaseMessenger):
                     }
 
                     if self.is_server_api_less_than(117):
-                        # these eys must be present but no one checks the values (!)
                         data.update({"pg": str(q), "ver": str(ver)})
-
-                    if self.is_server_api_less_than(117):
                         # on old servers we to send the annotations as a file
                         # (the data string above is ignored)
                         tmp_file = StringIO(plom_data_ascii_str_of_json)
