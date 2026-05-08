@@ -17,19 +17,17 @@ class RubricTable(django_tables2.Table):
 
     More information on django-tables2 can be found at:
     https://django-tables2.readthedocs.io/en/latest
+
+    Note that "use_count" is a computed quantity ("annotation") not in
+    the original Rubric model.  Callers will need to compute it first.
     """
 
     rid = django_tables2.Column("rid", linkify=True)
     # prevent newlines from rendering in json fields
     parameters = django_tables2.JSONColumn(json_dumps_kwargs={})
-    # TODO: issue #3648, seeking a way to display how often they are used
-    # times_used = django_tables2.Column(
-    #     verbose_name="# Used",
-    #     accessor="get_usage_count",
-    #     orderable=False
-    # )
-    # TODO: accessor="annotations__xxx__xxx" somehow?
-    # TODO: i want to make sortable but it just crashes unless orderable=False
+    # the current count includes out-of-date annotations
+    # see https://gitlab.com/plom/plom/-/work_items/4221
+    use_count = django_tables2.Column("\N{ALMOST EQUAL TO} use count")
 
     class Meta:
         model = Rubric
@@ -45,6 +43,7 @@ class RubricTable(django_tables2.Table):
             "display_delta",
             "text",
             "user",
+            "use_count",
             "last_modified",
             "modified_by_user",
             "revision",

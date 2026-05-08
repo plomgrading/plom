@@ -3,7 +3,7 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2023-2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
 -->
@@ -50,6 +50,15 @@
         </div>
         {% comment %} Table {% endcomment %}
         <div class="m-2">{% render_table rubrics_table %}</div>
+        <div>
+            <p class="mx-2 mt-0 mb-1 fw-light small">
+                <small>
+                    &ldquo;Use count&rdquo; is not always accurate b/c
+                    it currently includes out-of-date annotations; see
+                    <a href="https://gitlab.com/plom/plom/-/work_items/4221">Issue #4221</a>.
+                </small>
+            </p>
+        </div>
     </div>
     {% include "./modal_forms.html" %}
 {% endblock main_content %}

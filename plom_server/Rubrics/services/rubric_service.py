@@ -32,8 +32,7 @@ from django.core.exceptions import (
     PermissionDenied,
 )
 from django.db import transaction
-from django.db.models.aggregates import Count
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
@@ -795,20 +794,19 @@ class RubricService:
         """
         return Rubric.objects.filter(latest=True)
 
-    def get_all_rubrics_with_counts(self) -> QuerySet[Rubric]:
+    @classmethod
+    def get_all_rubrics_with_counts(cls) -> QuerySet[Rubric]:
         """Get all latest rubrics but also annotate with how many times it has been used.
 
             Times used included all annotations, not just latest ones.
             @arechnitzer promises to fix this behavior in a future MR.
+            @colin will also try...
 
         Returns:
-            Lazy queryset of all rubrics with counts.
+            Lazy queryset of all rubrics annotated with counts.
         """
-        qs = self.get_all_rubrics()
-        return qs.annotate(times_used=Count("annotations"))
-
-    # TODO: create method to get all rubrics with counts of how many times
-    #       it has been used in the latest edition of a paper
+        qs = cls.get_all_rubrics()
+        return qs.annotate(use_count=Count("annotations"))
 
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
