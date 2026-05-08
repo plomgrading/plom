@@ -32,14 +32,26 @@ window.insertRandomUsername = function (textInputId) {
 
 // copy password reset link
 /* *********************************************************** */
-document.addEventListener('DOMContentLoaded', copyToClipboard);
+// Call this function on a button with the intended content
+// in the "data-copyText" attribute.
+// For example:
+// <button id="myElementId"
+//         data-copyText="https://www.examplewebsite.com/"
+//         onclick="copyToClipboard(this)">
+//     Copy Link
+// </button>
+window.copyToClipboard = function (buttonElement) {
+  const copyText = buttonElement.dataset.copytext;
+  navigator.clipboard.writeText(copyText);
 
-let copyBtn = document.getElementById('copy-btn');
+  buttonElement.disabled = true;
+  let tickIcon = document.createElement('i');
+  tickIcon.className = 'bi bi-check';
+  buttonElement.insertAdjacentElement('afterend', tickIcon);
 
-function copyToClipboard() {
-  const passwordResetLink = copyBtn.getAttribute('data-passwordResetLink');
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(passwordResetLink);
-  });
-}
+  setTimeout(() => {
+    buttonElement.disabled = false;
+    tickIcon.remove();
+  }, 500);
+};
 /* *********************************************************** */
