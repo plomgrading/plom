@@ -286,13 +286,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Plom needs to tell it otherwise
 LOGIN_URL = "/login/"
 # see docs for options: https://docs.djangoproject.com/en/6.0/ref/settings/#session-engine
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-# Web login sessions expire after this many seconds (defaults: two weeks)
-SESSION_COOKIE_AGE = (
-    60 * 60 * 24 * 14 if DEBUG else 60 * 60 * 24 * 2
-)  # 2 weeks or 2 days
+# No cache specified so Django will default to process specific RAM, i.e., this doesn't
+# work with gunicorn in production.
+# SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+# Web login sessions expire after this many seconds (Django default: two weeks)
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14  # explicitly two weeks
 # If True, then every time user makes a request, the timeout will be reset (some performance cost)
-SESSION_SAVE_EVERY_REQUEST = True
+SESSION_SAVE_EVERY_REQUEST = False
 # You can set the cookie to expire when they close their browser (for some browsers anyway).
 # Plom overrides this case-by-case with a checkbox on the login screen
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
