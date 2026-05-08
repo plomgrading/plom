@@ -84,6 +84,14 @@ class ScanStagingImageTypesTests(TestCase):
                 bundle_order=1,
                 image_type=StagingImage.ERROR,
             )
+        with self.assertRaisesRegex(ValidationError, "ERROR .* enumerate"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.ERROR,
+                error_reason="error",
+            )
 
     def test_illegal_unread_stagingimage_errors(self) -> None:
         with self.assertRaisesRegex(ValidationError, "UNREAD .* not .* paper_number"):
