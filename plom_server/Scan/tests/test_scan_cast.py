@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django.test import TestCase
 from django.contrib.auth.models import User, Group
@@ -42,6 +42,7 @@ class ScanCastServiceTests(TestCase):
                 bundle_order=number_of_pages,
                 image_type=image_type,
                 error_reason="error",
+                error_reason_enum=StagingImage.ErrorReasonChoices.OTHER,
             )
         else:
             baker.make(

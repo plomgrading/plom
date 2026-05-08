@@ -165,6 +165,7 @@ class ScanCastService:
             reason = f"Extra page discarded by {user_obj.username}"
         elif image_type == StagingImage.ERROR:
             img.error_reason = ""
+            img.error_reason_enum = StagingImage.ErrorReasonChoices.UNSET
             reason = f"Error page discarded by {user_obj.username}"
         else:
             raise RuntimeError(f"Should not be here! {image_type}")
@@ -316,6 +317,7 @@ class ScanCastService:
             img.question_idx_list = None
         elif image_type == StagingImage.ERROR:
             img.error_reason = ""
+            img.error_reason_enum = StagingImage.ErrorReasonChoices.UNSET
         else:
             raise RuntimeError("Cannot recognise image type")
 
@@ -677,6 +679,7 @@ class ScanCastService:
             pass
         elif image_type == StagingImage.ERROR:
             img.error_reason = ""
+            img.error_reason_enum = StagingImage.ErrorReasonChoices.UNSET
         else:
             raise RuntimeError("Cannot recognise image type")
 
@@ -793,6 +796,7 @@ class ScanCastService:
             pass
         elif img.image_type == StagingImage.ERROR:
             img.error_reason = ""
+            img.error_reason_enum = StagingImage.ErrorReasonChoices.UNSET
         else:
             raise ValueError(
                 f"Cannot knowify an image of type {img.image_type}. Permitted types are 'DISCARD', 'UNKNOWN', and 'ERROR'"

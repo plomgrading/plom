@@ -54,11 +54,12 @@ class StagingImage(models.Model):
             isn't discarded, or perhaps wasn't recently.
         error_reason: if the image is of type ERROR, this will give a
             human-readable error message.  Should generally be empty if this
-            StagingImage isn't in error.  This can contain HTML and should
-            be "html-safe", but the first sentence (say at least 42 chars)
-            should be plain text (this is b/c it is currently used to generate
-            tooltips).  TODO: consider adding a new "error_reason_explanation"
-            field that contains HTML, or an "error_reason_short"?
+            StagingImage isn't in error.
+        error_reason_enum: used in conjunction with `error_reason`.  This gives
+            a short code for what sort of an error it is.  The display of it
+            might be useful for tooltips or other labels.  If the image is NOT
+            of type ERROR, this must be set to the choice UNSET.  And if the
+            image is of type ERROR, this must be set to another choice.
         paper_number: used by type KNOWN or EXTRA, undefined for other types.
             if KNOWN, then this *must* be non-None, and gives the paper number
             of the known image.
@@ -121,6 +122,16 @@ class StagingImage(models.Model):
     # used for DISCARD
     discard_reason = models.TextField(default="", blank=True)
     # used for ERROR
+    ErrorReasonChoices = models.IntegerChoices(
+        "ErrorReason",
+        "UNSET COLLISION INCONSISTENT_QR_CODES INCONSISTENT_WITH_SPEC OTHER",
+    )
+    error_reason_enum = models.IntegerField(
+        null=False,
+        choices=ErrorReasonChoices.choices,
+        default=ErrorReasonChoices.UNSET,
+        blank=True,
+    )
     error_reason = models.TextField(default="", blank=True)
     history = models.TextField(blank=True, null=False, default="")
 
@@ -183,6 +194,9 @@ class StagingImage(models.Model):
             assert self.discard_reason, "DISCARD must have discard_reason"
         elif self.image_type == ERROR:
             assert self.error_reason, "ERROR must have error_reason"
+            assert (
+                self.error_reason_enum != self.ErrorReasonChoices.UNSET
+            ), "ERROR must have error_reason enumerated"
         else:
             raise ValueError("Unexpected value for enum")
 
@@ -210,6 +224,10 @@ class StagingImage(models.Model):
             assert self.image_type == DISCARD, "Only DISCARD should have discard_reason"
         if self.error_reason:
             assert self.image_type == ERROR, "Only ERROR should have error_reason"
+        if self.error_reason_enum != self.ErrorReasonChoices.UNSET:
+            assert (
+                self.image_type == ERROR
+            ), "Only ERROR should have error_reason_enum set"
 
 
 class StagingThumbnail(models.Model):
