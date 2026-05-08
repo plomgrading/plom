@@ -6,13 +6,6 @@
 # Copyright (C) 2025-2026 Aidan Murphy
 
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
-from .views.experimental import (
-    RubricViewSet,
-    AnnotationViewSet,
-    MarkingTaskViewSet,
-)
 
 from .routes import (
     MarkURLPatterns,
@@ -194,15 +187,7 @@ urlpatterns = [
     ),
 ]
 
-experimental_router = DefaultRouter(trailing_slash=True)
-experimental_router.register("rubrics", RubricViewSet, basename="rubrics")
-experimental_router.register("annotations", AnnotationViewSet, basename="annotations")
-experimental_router.register(
-    "marking-tasks", MarkingTaskViewSet, basename="marking-tasks"
-)
-
 urlpatterns += [
-    path("experimental/", include(experimental_router.urls)),
     # Note: other MK/ paths are in routes/mark_patterns.py
     path(
         "MK/tasks/available", MarkTaskNextAvailable.as_view(), name="api_mark_task_next"
