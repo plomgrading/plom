@@ -1310,6 +1310,8 @@ class ScanService:
             }
 
         for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.ERROR):
+            # TODO: it seems that this info reason might be never displayed?
+            # See also get_bundle_single_page_info, which definitely is displayed
             pages[img.bundle_order]["info"] = {
                 "reason": img.error_reason,
                 "reason_enum": img.get_error_reason_enum_display(),
