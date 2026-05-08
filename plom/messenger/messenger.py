@@ -14,7 +14,7 @@ import hashlib
 import json
 import logging
 from io import BytesIO, StringIO
-from typing import Any
+from typing import Any, Sequence
 
 import requests
 
@@ -488,7 +488,7 @@ class Messenger(BaseMessenger):
         marking_time,
         annotated_img,
         plom_data: dict[str, Any],
-        rubrics: list[int] | list[tuple[int, int | None]],
+        rubrics: Sequence[int] | Sequence[tuple[int, int | None]],
         integrity_check,
         *,
         user_agent: str = "",
