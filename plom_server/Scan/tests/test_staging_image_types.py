@@ -77,6 +77,8 @@ class ScanStagingImageTypesTests(TestCase):
                 bundle_order=1,
                 image_type=StagingImage.DISCARD,
             )
+
+    def test_illegal_stagingimage_errors_error_pages(self) -> None:
         with self.assertRaisesRegex(ValidationError, "ERROR .* error_reason"):
             baker.make(
                 StagingImage,
@@ -91,6 +93,15 @@ class ScanStagingImageTypesTests(TestCase):
                 bundle_order=1,
                 image_type=StagingImage.ERROR,
                 error_reason="error",
+            )
+        with self.assertRaisesRegex(ValidationError, "Only ERROR .* error_reason_enum"):
+            baker.make(
+                StagingImage,
+                bundle=self.bundle,
+                bundle_order=1,
+                image_type=StagingImage.UNKNOWN,
+                error_reason="",
+                error_reason_enum=StagingImage.ErrorReasonChoices.INCONSISTENT_QR_CODES,
             )
 
     def test_illegal_unread_stagingimage_errors(self) -> None:

@@ -1316,7 +1316,6 @@ class ScanService:
                 "reason": img.error_reason,
                 "reason_enum": img.get_error_reason_enum_display(),
             }
-            # We could also prepend with "Error: ", but I'm not sure its necessary
             pages[img.bundle_order]["page_label"] = img.get_error_reason_enum_display()
 
         for img in bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD):
