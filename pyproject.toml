@@ -127,10 +127,8 @@ Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 [tool.setuptools]
 packages = [
     "plom",
-    "plom.cli",
     "plom.create",
     "plom.create.fonts",
-    "plom.messenger",
     "plom.scan",
     "plom.finish",
     "plom.idreader",
@@ -225,7 +223,7 @@ packages = [
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = 'plom.common.__version__'}
+version = {attr = 'plom_server.__init__.__version__'}
 
 [project.scripts]
 plom-create = "plom.create.__main__:main"
@@ -233,7 +231,6 @@ plom-finish = "plom.finish.__main__:main"
 plom-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-demo = "plom_server.scripts.launch_plom_demo_server:main"
-plom-cli = "plom.cli.__main__:main"
 
 
 # Tooling configuration
