@@ -70,8 +70,8 @@ table = [
         "license": "0BSD",
         "files": [
             {
-                "url": "https://unpkg.com/htmx.org@2.0.8/dist/htmx.js",
-                "hash": "sha256-upUwYnay6R+DA68rROTAP+EdfO3NvOqtE513PgDyAYM=",
+                "url": "https://unpkg.com/htmx.org@2.0.10/dist/htmx.js",
+                "hash": "sha256-c5SYIE7T1Dejf9XKPRaxvaFOO5M1PqdEDH8Sm9C/k9U=",
             },
         ],
     },
@@ -90,9 +90,9 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://unpkg.com/alpinejs@3.15.8/dist/cdn.min.js",
+                "url": "https://unpkg.com/alpinejs@3.15.12/dist/cdn.min.js",
                 "filename": "alpine.js",
-                "hash": "sha256-iZhCeCp/0W/MLXp8h3/57BWTlARMh7FYsu8TJ4ZgaTI=",
+                "hash": "sha256-V7N9fK6aJ9ll/a5K3MhEJF39xAfmVa7oXc//OggDaj8=",
             },
         ],
     },
@@ -122,8 +122,8 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js",
-                "hash": "sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc=",
+                "url": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js",
+                "hash": "sha256-v0JBvHP+9/EcWaKDpp/oBRzdMcbY/1orm6IZ54Mfz3Y=",
             }
         ],
     },
@@ -133,12 +133,12 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.7.0/dist/tablesort.min.js",
-                "hash": "sha256-XxWSSIyNHg1iophaASFYOr+098oDUz6H4pGJJx+1erA=",
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.7.1/dist/tablesort.min.js",
+                "hash": "sha256-7pnxfryYUXCJmgBOn2vwnn9g60tFm2v+ZoPPAUA1LGM=",
             },
             {
-                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.7.0/dist/sorts/tablesort.number.min.js",
-                "hash": "sha256-V/+IH7olnI916x/XSP0lobHmSrxhbUJMjJ5m1wVfRDs=",
+                "url": "https://cdn.jsdelivr.net/npm/tablesort@5.7.1/dist/sorts/tablesort.number.min.js",
+                "hash": "sha256-4l2tCMUzYRgttnDQ9nDoXuoPV+XTutBDmDHHXhhCCWw=",
             },
         ],
     },
