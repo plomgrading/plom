@@ -352,15 +352,17 @@ class AuthService:
         """
         links_dict = {}
         request_domain_port = get_current_site(request).domain
-        request_domain = request_domain_port.split(":")[0]
+        request_domain, request_port = request_domain_port.split(":")
 
         for username in username_list:
             user = User.objects.get(username=username)
-            links_dict[username] = self.generate_link(user, request_domain)
+            links_dict[username] = self.generate_link(
+                user, request_domain, request_port
+            )
         return links_dict
 
     @classmethod
-    def generate_link(cls, user: User, hostname: str = "") -> str:
+    def generate_link(cls, user: User, hostname: str = "", port: str = "") -> str:
         """Generate a password reset link for a user.
 
         Args:
@@ -368,13 +370,15 @@ class AuthService:
                 generated.
             hostname: If the server cannot find a domain while constructing
                 the link, this variable will be used as the domain.
+            port: If the server cannot find a port while constructing
+                the link, this variable will be used as the port.
 
         Returns:
             The generated password reset link as a string.
 
         See :method:`get_base_link` for details about how to influence this link.
         """
-        baselink = cls.get_base_link(default_host=hostname)
+        baselink = cls.get_base_link(default_host=hostname, default_port=port)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         link = baselink + f"reset/{uid}/{token}"
@@ -382,7 +386,9 @@ class AuthService:
         return link
 
     @classmethod
-    def get_base_link(cls, *, default_host: str = "localhost") -> str:
+    def get_base_link(
+        cls, *, default_host: str = "localhost", default_port: str = ""
+    ) -> str:
         """Generate the base part of the URL to link to this server.
 
         Keyword Args:
@@ -390,6 +396,10 @@ class AuthService:
                 request), you can pass it here.  It will be overridden
                 by the ``PLOM_HOSTNAME`` environment variable, if that is
                 defined, and defaults to "localhost" if omitted.
+            default_port: if you have a guess at the port (e.g., from a
+                request), you can pass it here.  It will be overridden
+                by the ``PLOM_PUBLIC_FACING_PORT`` environment variable, if that is
+                defined, and defaults to "" if omitted.
 
         Returns:
             A string of with a http or https URL.  It will always
@@ -411,9 +421,8 @@ class AuthService:
         scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
         # TODO: do we need a public facing hostname var too?
         domain = os.environ.get("PLOM_HOSTNAME", default_host)
-        print(domain)
         prefix = os.environ.get("SCRIPT_NAME", "")
-        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
+        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", default_port)
         return cls._assemble_base_link(
             scheme=scheme, domain=domain, port=port, prefix=prefix
         )
