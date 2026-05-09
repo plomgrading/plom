@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024, 2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -15,28 +15,25 @@
         <ol>
             <li>
                 You need to download the
-                <a href="https://plom.readthedocs.io/en/latest/getting_started.html">desktop
-                    &ldquo;Plom Client&rdquo; app</a>.
-                </li>
-                <li>
-                    Copy-paste this link into the client:
-                    <br />
-                    <br />
+                <a href="https://plom.readthedocs.io/en/latest/getting_started.html">desktop &ldquo;Plom Client&rdquo; app</a>.
+            </li>
+            <li>
+                Copy-paste this link into the client:
+                <div class="m-3">
                     <big>
                         <tt>{{ server_link }}</tt>
                     </big>
-                    <br />
-                    <br />
-                    and login using your account information.
-                </li>
-                <li>Be fair and be kind.</li>
-            </ol>
-            <p>Happy grading!</p>
-            <!-- If we had "using the client" docs, or an intro video, we could link it here -->
-            <!--
+                </div>
+            </li>
+            <li>Login using your account information.</li>
+            <li>Be fair and be kind.</li>
+        </ol>
+        <p>Happy marking!</p>
+        <!-- If we had "using the client" docs, or an intro video, we could link it here -->
+        <!--
       <h2>Using the client</h2>
       <p>You can read more about marking with Plom [in our docs].</p>
       <p>You can also read tipcs about using the client most effectively.</p>
     -->
-        </div>
-    {% endblock main_content %}
+    </div>
+{% endblock main_content %}
