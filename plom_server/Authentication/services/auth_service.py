@@ -403,7 +403,7 @@ class AuthService:
 
                - PLOM_PUBLIC_FACING_SCHEME
                - PLOM_PUBLIC_FACING_PORT
-               - PLOM_PUBLIC_FACING_PREFIX
+               - SCRIPT_NAME
                - PLOM_HOSTNAME
         """
         scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
@@ -411,10 +411,12 @@ class AuthService:
         domain = os.environ.get("PLOM_HOSTNAME", default_host)
         if not domain:
             domain = "localhost"
-        prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
+        prefix = os.environ.get("SCRIPT_NAME", "")
         if prefix and not prefix.endswith("/"):
             prefix += "/"
+        if prefix and not prefix.startswith("/"):
+            prefix = "/" + prefix
         port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
         if port:
             port = ":" + port
-        return f"{scheme}://{domain}{port}/{prefix}"
+        return f"{scheme}://{domain}{port}{prefix}"

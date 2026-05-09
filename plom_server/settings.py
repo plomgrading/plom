@@ -89,9 +89,11 @@ if env_port:
 # TODO: it bothers me that we need to know this (for CSRF)
 _scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "https")
 
-# Use PLOM_PUBLIC_FACING_PREFIX if you want to proxy your connection like
+# Use SCRIPT_NAME if you want to proxy your connection like
 # this: `https://plom.example.com/<prefix>/...`
-#
+# This requires a proper WSGI/web server, it won't work on the dev server,
+# i.e., use `plom-server` not `manage.py runserver`
+
 # Finally, PLOM_HOSTNAME should be the external-facing hostname to which
 # clients connect.
 env_hostname = os.environ.get("PLOM_HOSTNAME")
@@ -258,8 +260,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # --------------------------------------
 #
-# Something important, see docs
 STATIC_URL = "static/"
+__ = os.environ.get("SCRIPT_NAME")
+if __:
+    # whitenoise and Django disagree on conventions with server path prefixing
+    # so we do it manually and put "/" at the front to tell them not to be clever
+    WHITENOISE_STATIC_PREFIX = f"/{STATIC_URL}"  # no prefix
+    STATIC_URL = f"{__}/{STATIC_URL}"
+
 # These are the "source" dirs for static files.  The first one might be readonly (Issue #2932)
 # Second one is a hack to get some oxymoronic "dynamic" static stuff: see extra pages, scrap
 # pages, javascript downloads, etc).
@@ -304,10 +312,15 @@ __ = os.environ.get("PLOM_PUBLIC_FACING_PORT")
 if __:
     SESSION_COOKIE_NAME += __
     CSRF_COOKIE_NAME += __
-__ = os.environ.get("PLOM_PUBLIC_FACING_PREFIX")
+__ = os.environ.get("SCRIPT_NAME")
 if __:
+    __ = __.replace("/", "")  # pathing stuff not allowed in csrf token
     SESSION_COOKIE_NAME += __
     CSRF_COOKIE_NAME += __
+    # This helps isolate distinct Django instances on the same domain,
+    # some custom javascript and css woouldn't work without it.
+    # https://docs.djangoproject.com/en/6.0/ref/settings/#csrf-cookie-path
+    CSRF_COOKIE_PATH = f"/{__}/"
 
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
