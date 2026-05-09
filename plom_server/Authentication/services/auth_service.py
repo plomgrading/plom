@@ -351,9 +351,9 @@ class AuthService:
             Dictionary of username to password reset link.
         """
         links_dict = {}
-        request_domain = get_current_site(request).domain
-        print(get_current_site(request).__dict__)
-        print(request_domain)
+        request_domain_port = get_current_site(request).domain
+        request_domain = request_domain_port.split(":")[0]
+
         for username in username_list:
             user = User.objects.get(username=username)
             links_dict[username] = self.generate_link(user, request_domain)
