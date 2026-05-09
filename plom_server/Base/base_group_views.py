@@ -24,6 +24,7 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     def build_context(self) -> dict[str, Any]:
         return {}
 
+    # TODO: this is doing weird things when we prefix the server
     # this is adapted from the django braces source code for access-required-mixin
     def no_permissions_fail(self, request=None):
         """Called when the user has no permissions and no exception was raised.

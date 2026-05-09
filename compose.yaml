@@ -50,7 +50,8 @@ services:
       # must match nginx's config above, not needed if running on 80/443?
       - PLOM_PUBLIC_FACING_PORT=8443
       - PLOM_PUBLIC_FACING_SCHEME=https
-      # - PLOM_PUBLIC_FACING_PREFIX=
+      # use script name as a path prefix, i.e., http://exampledomain.com<SCRIPT_NAME>/
+      # - SCRIPT_NAME="/bluepanda"
       # For production, set PLOM_DEBUG to 0; and must define a random secret
       # - PLOM_DEBUG=0
       # - PLOM_SECRET_KEY=bismarkomitleafagebuckbank
