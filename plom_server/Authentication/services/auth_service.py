@@ -352,6 +352,8 @@ class AuthService:
         """
         links_dict = {}
         request_domain = get_current_site(request).domain
+        print(get_current_site(request).__dict__)
+        print(request_domain)
         for username in username_list:
             user = User.objects.get(username=username)
             links_dict[username] = self.generate_link(user, request_domain)
@@ -379,8 +381,8 @@ class AuthService:
 
         return link
 
-    @staticmethod
-    def get_base_link(*, default_host: str = "") -> str:
+    @classmethod
+    def get_base_link(cls, *, default_host: str = "localhost") -> str:
         """Generate the base part of the URL to link to this server.
 
         Keyword Args:
@@ -409,14 +411,34 @@ class AuthService:
         scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
         # TODO: do we need a public facing hostname var too?
         domain = os.environ.get("PLOM_HOSTNAME", default_host)
-        if not domain:
-            domain = "localhost"
+        print(domain)
         prefix = os.environ.get("SCRIPT_NAME", "")
+        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
+        return cls._assemble_base_link(
+            scheme=scheme, domain=domain, port=port, prefix=prefix
+        )
+
+    @staticmethod
+    def _assemble_base_link(
+        *, scheme: str, domain: str, port: str = "", prefix: str = ""
+    ) -> str:
+        """Construct a base link for the server.
+
+        Keyword Args:
+            scheme: "http" or "https"
+            domain: the domain of the link, e.g. www.example.com
+            port: a port for the link, e.g. 8000. Optional.
+            prefix: the path prefix for the relevant server,
+                e.g. /prefix1/. Optional
+
+        Returns:
+            A a valid URL as a string assembled from user inputs,
+            it always ends with a trailing slash.
+        """
+        if prefix.startswith("/"):
+            prefix = prefix[1:]
         if prefix and not prefix.endswith("/"):
             prefix += "/"
-        if prefix and not prefix.startswith("/"):
-            prefix = "/" + prefix
-        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
         if port:
             port = ":" + port
-        return f"{scheme}://{domain}{port}{prefix}"
+        return f"{scheme}://{domain}{port}/{prefix}"
