@@ -24,6 +24,18 @@ class AuthService__assemble_base_link(TestCase):
         )
         self.assertEqual(link, "http://www.example.com/bluepanda/")
 
+    def test_scheme_domain_prefix_trailing_slash(self) -> None:
+        link = AuthService._assemble_base_link(
+            scheme="http", domain="www.example.com", prefix="bluepanda/"
+        )
+        self.assertEqual(link, "http://www.example.com/bluepanda/")
+
+    def test_scheme_domain_prefix_leading_slash(self) -> None:
+        link = AuthService._assemble_base_link(
+            scheme="http", domain="www.example.com", prefix="/bluepanda"
+        )
+        self.assertEqual(link, "http://www.example.com/bluepanda/")
+
     def test_scheme_domain_port_prefix(self) -> None:
         link = AuthService._assemble_base_link(
             scheme="http", domain="www.example.com", port="8000", prefix="bluepanda"
