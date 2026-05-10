@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
-from plom.misc_utils import interpolate_questions_over_pages
+from plom.common.misc_utils import interpolate_questions_over_pages
 
 
 class TemplateSpecBuilderService:

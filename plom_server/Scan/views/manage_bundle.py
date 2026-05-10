@@ -20,7 +20,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
-from plom.misc_utils import format_int_list_with_runs
+from plom.common.misc_utils import format_int_list_with_runs
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService, PaperInfoService

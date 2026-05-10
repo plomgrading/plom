@@ -4,7 +4,7 @@
 
 import os
 
-from plom.misc_utils import working_directory
+from plom.common.misc_utils import working_directory
 from .demotools import buildDemoSourceFiles
 
 

@@ -5,7 +5,7 @@
 from pytest import raises
 from pathlib import Path
 
-from plom.misc_utils import working_directory
+from plom.common.misc_utils import working_directory
 from .classlistValidator import PlomClasslistValidator
 from .buildClasslist import clean_non_canvas_csv
 

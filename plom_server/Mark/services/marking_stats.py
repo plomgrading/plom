@@ -13,7 +13,7 @@ from django.db import transaction
 from django.db.models import Count
 from numpy import histogram
 
-from plom.misc_utils import pprint_score
+from plom.common.misc_utils import pprint_score
 from plom_server.Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
 

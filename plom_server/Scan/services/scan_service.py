@@ -37,7 +37,7 @@ import huey.api
 import huey.exceptions
 import pymupdf
 
-from plom.misc_utils import format_int_list_with_runs
+from plom.common.misc_utils import format_int_list_with_runs
 from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image

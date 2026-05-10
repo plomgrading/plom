@@ -9,7 +9,7 @@ from typing import Any
 from django.db import transaction
 from django.db.models import Count, Min, Max
 
-from plom.misc_utils import pprint_score
+from plom.common.misc_utils import pprint_score
 
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask

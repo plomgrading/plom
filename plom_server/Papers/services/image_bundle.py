@@ -16,7 +16,7 @@ from django.db.models import QuerySet, Count, Q, OuterRef, Exists
 
 from plom.tpv_utils import encodePaperPageVersion
 from plom.plom_exceptions import PlomPushCollisionException
-from plom.misc_utils import format_int_list_with_runs
+from plom.common.misc_utils import format_int_list_with_runs
 from plom_server.Scan.models import StagingImage, StagingBundle
 from plom_server.Preparation.services import PapersPrinted
 from ..models import (

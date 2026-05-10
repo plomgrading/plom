@@ -25,7 +25,7 @@ from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
 
-from plom.misc_utils import pprint_score
+from plom.common.misc_utils import pprint_score
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.services import Settings
