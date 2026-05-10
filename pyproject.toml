@@ -67,6 +67,7 @@ dependencies = [
     "pandas>=2.1.4",
     "passlib",
     "Pillow>=10.2",
+    "plom-common",
     "pymupdf>=1.25.3",
     "PyMySQL>=1.0.2",
     "pytest>=7.2.0",
