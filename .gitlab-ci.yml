@@ -673,6 +673,7 @@ out-of-tree-scratch:
           python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
+          git
     - pip --version
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
