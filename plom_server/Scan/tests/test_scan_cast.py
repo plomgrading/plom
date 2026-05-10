@@ -10,7 +10,7 @@ from model_bakery import baker
 from ..models import StagingBundle, StagingImage
 from ..services import ScanCastService
 
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.common.exceptions import PlomBundleLockedException
 
 
 class ScanCastServiceTests(TestCase):

@@ -9,7 +9,7 @@ from django.core.files import File
 
 from ..models import StagingImage, StagingThumbnail, StagingBundle
 
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.common.exceptions import PlomBundleLockedException
 
 
 def check_bundle_object_is_neither_locked_nor_pushed(bundle_obj: StagingBundle) -> None:

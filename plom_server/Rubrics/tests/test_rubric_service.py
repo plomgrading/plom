@@ -15,7 +15,7 @@ from model_bakery import baker
 from rest_framework import serializers
 from typing import Any
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.TestingSupport.utils import config_test
 from plom_server.Mark.models.annotations import Annotation
 from plom_server.Mark.models.tasks import MarkingTask

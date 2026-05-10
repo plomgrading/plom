@@ -19,7 +19,7 @@ from tabulate import tabulate
 
 import plom
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.Papers.services import SpecificationService
 from ...services import RubricService
 

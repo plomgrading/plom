@@ -16,7 +16,7 @@ from django.views.generic import View
 from django_htmx.http import HttpResponseClientRedirect
 from django_huey import get_queue
 
-from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom_server.Authentication.services import AuthService
 from plom_server.Base.services import Settings, database_service
 from plom_server.Papers.services import SpecificationService

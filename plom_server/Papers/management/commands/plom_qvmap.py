@@ -9,7 +9,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.db.utils import IntegrityError
 
-from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom.version_maps import version_map_from_file
 from plom_server.Preparation.services import PQVMappingService
 from ...services import PaperCreatorService, PaperInfoService

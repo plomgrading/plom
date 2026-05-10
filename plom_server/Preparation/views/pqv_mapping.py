@@ -24,7 +24,7 @@ from plom_server.Papers.services import (
 )
 
 from plom.common.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 from ..services import PQVMappingService, StagingStudentService, PapersPrinted
 

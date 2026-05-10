@@ -35,7 +35,7 @@ from django.db import transaction
 from django.db.models import QuerySet, Count
 from rest_framework import serializers
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.Base.services import Settings
 from plom_server.Mark.models import Annotation
 from plom_server.Mark.models.tasks import MarkingTask

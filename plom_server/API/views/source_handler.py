@@ -16,7 +16,7 @@ from rest_framework import status
 
 from plom_server.Preparation.models import PaperSourcePDF
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import SourceService
 from plom_server.Preparation.services.preparation_dependency_service import (

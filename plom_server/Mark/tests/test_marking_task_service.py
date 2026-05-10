@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 
 from ..services import MarkingTaskService, mark_task
 from ..models import MarkingTask

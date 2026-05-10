@@ -19,7 +19,7 @@ from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.Papers.models import FixedPage, Image, Paper
 from .services import IdentifyTaskService, IDProgressService, IDDirectService
 from .models import PaperIDTask, PaperIDAction

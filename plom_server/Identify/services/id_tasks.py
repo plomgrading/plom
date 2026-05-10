@@ -12,7 +12,7 @@ from django.core.exceptions import (
 )
 from django.db import transaction, IntegrityError
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.Papers.models import FixedPage, Paper, Image
 from plom_server.Papers.services import ImageBundleService
 from ..models import PaperIDTask, PaperIDAction, IDPrediction

@@ -15,7 +15,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from ..services import StagingStudentService, PapersPrinted
 
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 
 
 class ClasslistDownloadView(ManagerRequiredView):

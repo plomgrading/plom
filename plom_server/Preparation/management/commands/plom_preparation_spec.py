@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from rest_framework import serializers
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 
 

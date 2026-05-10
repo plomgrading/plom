@@ -8,7 +8,7 @@
 from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
 
-from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
+from plom.common.exceptions import PlomBundleLockedException, PlomPushCollisionException
 from plom_server.Base.base_group_views import ScannerRequiredView
 from ..services import ScanService
 

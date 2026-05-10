@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.views.generic.edit import UpdateView
 from rest_framework import serializers
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 
 from plom.common.misc_utils import pprint_score
 
