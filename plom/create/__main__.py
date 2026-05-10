@@ -195,18 +195,6 @@ def get_parser():
         """,
     )
 
-    sp_uploadspec = sub.add_parser(
-        "uploadspec",
-        help="Upload spec to server",
-        description="Upload exam specification to server.",
-    )
-    sp_uploadspec.add_argument(
-        "specFile",
-        nargs="?",
-        default="testSpec.toml",
-        help="defaults to '%(default)s'.",
-    )
-
     sub.add_parser(
         "extra-pages",
         help="Make an extra pages PDF",
@@ -367,7 +355,6 @@ def get_parser():
 
     for sp in (
         sp_status,
-        sp_uploadspec,
         sp_user,
         sp_users,
         sp_pred,
@@ -448,34 +435,12 @@ def main():
             if not buildDemoSourceFiles(solutions=True):
                 sys.exit(1)
             print(
-                f'DEMO: please upload the spec to a server using "plom-create uploadspec {fname}"'
+                f'DEMO: please upload the spec to a server using "plom-cli upload-spec {fname}"'
             )
-
-    elif args.command == "parse":
-        raise NotImplementedError(
-            'The "parse" command has been removed, see "validatespec" and/or "uploadspec"'
-        )
 
     elif args.command == "validatespec":
         fname = ensure_toml_extension(args.specFile)
         parse_verify_save_spec(fname, save=args.save)
-
-    elif args.command == "uploadspec":
-        fname = ensure_toml_extension(args.specFile)
-        sv = SpecVerifier.from_toml_file(fname)
-        sv.verifySpec()
-        sv.checkCodes()
-        print(f"spec seems ok: we will upload it to the server {args.server}")
-        msgr = start_messenger(args.server, args.password)
-        try:
-            # TODO: sv.spec versus sv.get_public_spec_dict()?
-            # TODO: think about who is supposed to know/generate the privateSeed
-            msgr.upload_spec(sv.spec)
-        finally:
-            msgr.closeUser()
-            msgr.stop()
-        print('Creating "sourceVersions/" directory for your test source PDFs.')
-        Path("sourceVersions").mkdir(exist_ok=True)
 
     elif args.command == "extra-pages":
         print("Building extra page in case students need more space...")
