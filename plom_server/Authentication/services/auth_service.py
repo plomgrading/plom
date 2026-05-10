@@ -351,8 +351,14 @@ class AuthService:
             Dictionary of username to password reset link.
         """
         links_dict = {}
+        # this may include the port, parsing required
+        # https://docs.djangoproject.com/en/6.0/ref/contrib/sites/#django.contrib.sites.shortcuts.get_current_site
         request_domain_port = get_current_site(request).domain
-        request_domain, request_port = request_domain_port.split(":")
+        domain_port_list = request_domain_port.split(":")
+        request_domain = domain_port_list[0]
+        request_port = ""
+        if len(domain_port_list) > 1:
+            request_port = domain_port_list[1]
 
         for username in username_list:
             user = User.objects.get(username=username)
@@ -386,9 +392,7 @@ class AuthService:
         return link
 
     @classmethod
-    def get_base_link(
-        cls, *, default_host: str = "localhost", default_port: str = ""
-    ) -> str:
+    def get_base_link(cls, *, default_host: str = "", default_port: str = "") -> str:
         """Generate the base part of the URL to link to this server.
 
         Keyword Args:
@@ -399,7 +403,7 @@ class AuthService:
             default_port: if you have a guess at the port (e.g., from a
                 request), you can pass it here.  It will be overridden
                 by the ``PLOM_PUBLIC_FACING_PORT`` environment variable, if that is
-                defined, and defaults to "" if omitted.
+                defined, and assumes no port (80 or 443) if omitted.
 
         Returns:
             A string of with a http or https URL.  It will always
@@ -409,7 +413,8 @@ class AuthService:
 
             The generated link follows the format:
             `<scheme>://<domain>:<port>/<prefix>/` or
-            `<scheme>://<domain>:<port>/`.
+            `<scheme>://<domain>:<port>/` or
+            `<scheme>://<domain>/`.
             Because you may have proxies between your server and the client, the
             URL can be influenced with the environment variables:
 
@@ -421,8 +426,10 @@ class AuthService:
         scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
         # TODO: do we need a public facing hostname var too?
         domain = os.environ.get("PLOM_HOSTNAME", default_host)
-        prefix = os.environ.get("SCRIPT_NAME", "")
+        if not domain:
+            domain = "localhost"
         port = os.environ.get("PLOM_PUBLIC_FACING_PORT", default_port)
+        prefix = os.environ.get("SCRIPT_NAME", "")
         return cls._assemble_base_link(
             scheme=scheme, domain=domain, port=port, prefix=prefix
         )
@@ -444,10 +451,10 @@ class AuthService:
             A a valid URL as a string assembled from user inputs,
             it always ends with a trailing slash.
         """
+        if port:
+            port = ":" + port
         if prefix.startswith("/"):
             prefix = prefix[1:]
         if prefix and not prefix.endswith("/"):
             prefix += "/"
-        if port:
-            port = ":" + port
         return f"{scheme}://{domain}{port}/{prefix}"
