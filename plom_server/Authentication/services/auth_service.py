@@ -414,6 +414,7 @@ class AuthService:
             The generated link follows the format:
             `<scheme>://<domain>:<port>/<prefix>/` or
             `<scheme>://<domain>:<port>/` or
+            `<scheme>://<domain>/<prefix>/` or
             `<scheme>://<domain>/`.
             Because you may have proxies between your server and the client, the
             URL can be influenced with the environment variables:
