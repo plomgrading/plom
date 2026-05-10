@@ -231,6 +231,7 @@ plom-finish = "plom.finish.__main__:main"
 plom-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-demo = "plom_server.scripts.launch_plom_demo_server:main"
+plom-demo = "plom_server.scripts.launch_plom_demo_server:main"
 
 
 # Tooling configuration
