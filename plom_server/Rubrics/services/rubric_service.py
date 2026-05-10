@@ -1233,7 +1233,7 @@ class RubricService:
         Returns:
             HTML representation of the rubric.
 
-        TODO: code duplication from plom.rubric_utils.py.
+        TODO: code duplication from plom.common.rubric_utils.
         """
         text = html.escape(rubric.text)
         display_delta = html.escape(rubric.display_delta)
