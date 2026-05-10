@@ -1,11 +1,11 @@
-# Copyright (C) 2020, 2025 Colin B. Macdonald
+# Copyright (C) 2020, 2025-2026 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import importlib.metadata
 import subprocess
 
 
-from plom.common import __version__
+from plom.misc_version import __version__
 
 
 def find_my_console_scripts(package_name):
