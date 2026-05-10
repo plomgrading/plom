@@ -16,7 +16,7 @@ RUN apt-get -y update && \
         cmake make g++ \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended texlive-pictures \
         libpango-1.0-0 libpangocairo-1.0-0 \
-        file \
+        git file \
         python3 \
         python3-dev \
         python3-pip \
