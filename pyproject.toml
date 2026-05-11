@@ -134,7 +134,6 @@ packages = [
     "plom.finish",
     "plom.idreader",
     "plom.canvas",
-    "plom.scripts",
     "plom_server",
     "plom_server.API",
     "plom_server.API.services",
