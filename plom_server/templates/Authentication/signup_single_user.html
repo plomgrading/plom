@@ -24,7 +24,8 @@
             {{ form.username }}
             <button class="btn btn-secondary btn-sm align-baseline"
                     type="button"
-                    id="generate-username">Autogenerate</button>
+                    id="generate-username"
+                    onclick="insertRandomUsername('id_username')">Autogenerate</button>
         </p>
         <p>
             {{ form.email.label }}
@@ -36,5 +37,4 @@
         </p>
     </form>
     {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 {% endblock card_content %}

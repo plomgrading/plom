@@ -93,7 +93,7 @@
                         <th scope="col">
                             {% if tsv %}
                                 <button class="btn btn-primary"
-                                        onclick="copyText(this)"
+                                        onclick="copyToClipboard(this)"
                                         id="copy-all"
                                         data-copyText="{{ tsv|safe }}">Copy all</button>
                             {% endif %}
@@ -117,7 +117,7 @@
                             <td>
                                 <button class="btn btn-primary"
                                         style="margin-left: 4px"
-                                        onclick="copyText(this)"
+                                        onclick="copyToClipboard(this)"
                                         data-copyText="{{ user.link }}"
                                         id="copy-button-{{ forloop.counter0 }}">Copy</button>
                             </td>
@@ -128,14 +128,7 @@
         </div>
     {% endif %}
     <script>
-            async function copyText(buttonObj) {
-              const button = buttonObj;
-              navigator.clipboard.writeText(buttonObj.dataset.copytext);
-              const prevText = button.innerText;
-              button.innerText = "Copied!";
-              await new Promise(r => setTimeout(r, 2000));
-              button.innerText = prevText;
-            }
+	    // TODO: refactor into frontend_utils
             async function downloadCSV(buttonObj) {
 	      const csvContent = buttonObj.dataset.downloadtext;
               const blob = new Blob([csvContent], { type: 'text/csv' });

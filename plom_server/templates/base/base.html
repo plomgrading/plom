@@ -39,6 +39,8 @@
         <link rel="stylesheet"
               type="text/css"
               href="{% static '/css/diff_table.css' %}" />
+        <!-- some custom js functions for common page interactions -->
+        <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
         <!-- Prevents indicator flicker on page load: https://github.com/bigskysoftware/htmx/issues/566 -->
         <style>
             .htmx-indicator {

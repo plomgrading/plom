@@ -19,6 +19,7 @@
         <link rel="stylesheet" href="{% static 'css/base.css' %}">
         <!-- Adjusts bootstrap styling to light-mode or dark-mode -->
         <script type="module" src="{% static '/js/bootstrap_lightdark_mode.js' %}"></script>
+        <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
     </head>
     <body class="bg-branded-plom">
         <div class="container py-5">
@@ -37,26 +38,25 @@
                                            placeholder="Username" />
                                     <label class="form-label">Username</label>
                                 </div>
-                                <div class="form-floating mb-4">
+                                <div class="form-floating input-group mb-4">
                                     <input type="password"
-                                           id="typePasswordX"
-                                           class="form-control form-control-lg border border-secondary bg-transparent rounded-1"
+                                           id="passwordInput"
+                                           class="form-control form-control-lg border border-secondary bg-transparent rounded-start-1"
                                            name="password"
                                            placeholder="Password" />
-                                    <label class="form-label" for="typePasswordX">Password</label>
+                                    <button type="button"
+                                            class="btn btn-outline-secondary rounded-end-1"
+                                            onclick="toggleVisibility('passwordInput')">
+                                        <i class="fs-4 bi bi-eye"></i>
+                                    </button>
+                                    <label class="form-label" for="passwordInput">Password</label>
                                 </div>
                                 <div class="medium mb-5 pb-lg-2">
-                                    <span>
-                                        <input id="check-password" class="text-black-100" type="checkbox">
-                                        <label class="form-label" for="check-password">Show Password</label>
-                                    </span>
-                                    <span class="ms-4">
-                                        <input id="remember"
-                                               name="remember_me"
-                                               class="text-black-100"
-                                               type="checkbox">
-                                        <label class="form-label" for="remember">Remember me</label>
-                                    </span>
+                                    <input id="remember"
+                                           name="remember_me"
+                                           class="text-black-100"
+                                           type="checkbox">
+                                    <label class="form-label" for="remember">Remember me</label>
                                 </div>
                                 {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
                                 <button class="btn btn-lg btn-plom-purple text-centre focus-ring"
@@ -73,5 +73,4 @@
         </div>
     </div>
 </body>
-<script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 </html>
