@@ -99,7 +99,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         error_pages = scanner.get_n_error_images(bundle)
 
         # list of dicts of page info, in bundle order
-        bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
+        bundle_pages_info_list = scanner.get_bundle_pages_info_list(bundle)
         # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
         bundle_papers_info_list = scanner.get_bundle_papers_info_list(bundle)
         # get a list of the paper-numbers in bundle that are missing pages
@@ -131,7 +131,7 @@ class BundleThumbnailsView(ScannerRequiredView):
                 "slug": bundle.slug,
                 "bundle_id": bundle.pk,
                 "timestamp": bundle.timestamp,
-                "pages": bundle_page_info_list,
+                "pages": bundle_pages_info_list,
                 "papers_info_list": bundle_papers_info_list,
                 "incomplete_papers_list": bundle_incomplete_papers_list,
                 "n_incomplete": len(bundle_incomplete_papers_list),
