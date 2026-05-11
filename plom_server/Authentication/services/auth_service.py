@@ -351,14 +351,24 @@ class AuthService:
             Dictionary of username to password reset link.
         """
         links_dict = {}
-        request_domain = get_current_site(request).domain
+        # this may include the port, parsing required
+        # https://docs.djangoproject.com/en/6.0/ref/contrib/sites/#django.contrib.sites.shortcuts.get_current_site
+        request_domain_port = get_current_site(request).domain
+        domain_port_list = request_domain_port.split(":")
+        request_domain = domain_port_list[0]
+        request_port = ""
+        if len(domain_port_list) > 1:
+            request_port = domain_port_list[1]
+
         for username in username_list:
             user = User.objects.get(username=username)
-            links_dict[username] = self.generate_link(user, request_domain)
+            links_dict[username] = self.generate_link(
+                user, request_domain, request_port
+            )
         return links_dict
 
     @classmethod
-    def generate_link(cls, user: User, hostname: str = "") -> str:
+    def generate_link(cls, user: User, hostname: str = "", port: str = "") -> str:
         """Generate a password reset link for a user.
 
         Args:
@@ -366,21 +376,23 @@ class AuthService:
                 generated.
             hostname: If the server cannot find a domain while constructing
                 the link, this variable will be used as the domain.
+            port: If the server cannot find a port while constructing
+                the link, this variable will be used as the port.
 
         Returns:
             The generated password reset link as a string.
 
         See :method:`get_base_link` for details about how to influence this link.
         """
-        baselink = cls.get_base_link(default_host=hostname)
+        baselink = cls.get_base_link(default_host=hostname, default_port=port)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         link = baselink + f"reset/{uid}/{token}"
 
         return link
 
-    @staticmethod
-    def get_base_link(*, default_host: str = "") -> str:
+    @classmethod
+    def get_base_link(cls, *, default_host: str = "", default_port: str = "") -> str:
         """Generate the base part of the URL to link to this server.
 
         Keyword Args:
@@ -388,6 +400,10 @@ class AuthService:
                 request), you can pass it here.  It will be overridden
                 by the ``PLOM_HOSTNAME`` environment variable, if that is
                 defined, and defaults to "localhost" if omitted.
+            default_port: if you have a guess at the port (e.g., from a
+                request), you can pass it here.  It will be overridden
+                by the ``PLOM_PUBLIC_FACING_PORT`` environment variable, if that is
+                defined, and assumes no port (80 or 443) if omitted.
 
         Returns:
             A string of with a http or https URL.  It will always
@@ -397,7 +413,9 @@ class AuthService:
 
             The generated link follows the format:
             `<scheme>://<domain>:<port>/<prefix>/` or
-            `<scheme>://<domain>:<port>/`.
+            `<scheme>://<domain>:<port>/` or
+            `<scheme>://<domain>/<prefix>/` or
+            `<scheme>://<domain>/`.
             Because you may have proxies between your server and the client, the
             URL can be influenced with the environment variables:
 
@@ -411,12 +429,33 @@ class AuthService:
         domain = os.environ.get("PLOM_HOSTNAME", default_host)
         if not domain:
             domain = "localhost"
+        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", default_port)
         prefix = os.environ.get("SCRIPT_NAME", "")
-        if prefix and not prefix.endswith("/"):
-            prefix += "/"
-        if prefix and not prefix.startswith("/"):
-            prefix = "/" + prefix
-        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
+        return cls._assemble_base_link(
+            scheme=scheme, domain=domain, port=port, prefix=prefix
+        )
+
+    @staticmethod
+    def _assemble_base_link(
+        *, scheme: str, domain: str, port: str = "", prefix: str = ""
+    ) -> str:
+        """Construct a base link for the server.
+
+        Keyword Args:
+            scheme: "http" or "https"
+            domain: the domain of the link, e.g. www.example.com
+            port: a port for the link, e.g. 8000. Optional.
+            prefix: the path prefix for the relevant server,
+                e.g. /prefix1/. Optional
+
+        Returns:
+            A a valid URL as a string assembled from user inputs,
+            it always ends with a trailing slash.
+        """
         if port:
             port = ":" + port
-        return f"{scheme}://{domain}{port}{prefix}"
+        if prefix.startswith("/"):
+            prefix = prefix[1:]
+        if prefix and not prefix.endswith("/"):
+            prefix += "/"
+        return f"{scheme}://{domain}{port}/{prefix}"
