@@ -39,9 +39,7 @@ import pymupdf
 
 from plom.common.misc_utils import format_int_list_with_runs
 from plom.common.exceptions import PlomConflict
-from plom.scan import QRextract
-from plom.scan import render_page_to_bitmap, try_to_extract_image
-from plom.tpv_utils import (
+from plom.common.tpv_utils import (
     parseTPV,
     parseExtraPageCode,
     getPaperPageVersion,
@@ -50,6 +48,8 @@ from plom.tpv_utils import (
     isValidScrapPaperCode,
     isValidBundleSeparatorPaperCode,
 )
+from plom.scan import QRextract
+from plom.scan import render_page_to_bitmap, try_to_extract_image
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
 from plom_server.Papers.models import MobilePage

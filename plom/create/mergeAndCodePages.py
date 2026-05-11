@@ -17,15 +17,14 @@ from typing import Any
 import pymupdf
 import segno
 
-from plom.create import paperdir
+# from plom.common.misc_utils import run_length_encoding
+from plom.common.tpv_utils import encodeScrapPaperCode, encodeTPV
 from plom.spec_verifier import (
     build_page_to_group_name_dict,
     build_page_to_version_dict,
     get_question_labels,
 )
-from plom.tpv_utils import encodeScrapPaperCode, encodeTPV
-
-# from plom.common.misc_utils import run_length_encoding
+from plom.create import paperdir
 
 
 def create_QR_codes(

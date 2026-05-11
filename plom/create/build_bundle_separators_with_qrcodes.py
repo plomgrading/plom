@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from pathlib import Path
 import shutil
@@ -10,8 +10,8 @@ import sys
 import tempfile
 import segno
 
+from plom.common.tpv_utils import encodeBundleSeparatorPaperCode
 import plom.create
-from plom.tpv_utils import encodeBundleSeparatorPaperCode
 
 if sys.version_info >= (3, 9):
     from importlib import resources

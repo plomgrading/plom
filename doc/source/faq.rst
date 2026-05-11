@@ -212,7 +212,7 @@ server) to this new server.
     manually reconstruct the specification.
     You can extract the "public code" from the QR codes of the
     printed pages (e.g., using a QR app on your phone).
-    See the source code ``plom/tpv_utils.py`` for hints on
+    See the source code ``plom/common/tpv_utils.py`` for hints on
     interpreting the results.
     If the server was multi-versioned, you're in trouble: in
     principle as of 2025, you could write a script to

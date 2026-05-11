@@ -9,7 +9,7 @@ from typing import Any
 
 from django.db import transaction
 
-from plom.tpv_utils import parse_paper_page_version
+from plom.common.tpv_utils import parse_paper_page_version
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import PaperInfoService

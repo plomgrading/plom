@@ -23,7 +23,7 @@ from django.utils import timezone
 from model_bakery import baker
 from PIL import Image
 
-from plom.tpv_utils import encodePaperPageVersion
+from plom.common.tpv_utils import encodePaperPageVersion
 from plom.scan import QRextract, pdfmucker, rotate
 
 from .. import tests as _Scan_tests
