@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.shortcuts import render
 
-from plom.misc_utils import humanize_seconds
+from plom.common.misc_utils import humanize_seconds
 from plom_server.Base.base_group_views import AdminOrManagerRequiredView
 from .services import AuthService
 from .forms.signupForm import CreateSingleUserForm, CreateMultiUsersForm

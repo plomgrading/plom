@@ -4,7 +4,7 @@
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 
 # move all service imports into the functions in order
 # to avoid circular-dependency hell

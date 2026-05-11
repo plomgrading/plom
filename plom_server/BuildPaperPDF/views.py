@@ -23,7 +23,7 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from .services import BuildPapersService
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 
 
 def _task_context_and_status() -> tuple[dict[str, Any], int]:

@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from ...services import ImageRotateService
 
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.common.exceptions import PlomBundleLockedException
 
 
 class Command(BaseCommand):

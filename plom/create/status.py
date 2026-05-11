@@ -6,8 +6,8 @@ from textwrap import wrap
 
 from plom.spec_verifier import SpecVerifier
 from plom.create import with_manager_messenger
-from plom.plom_exceptions import PlomServerNotReady, PlomNoClasslist
-from plom.misc_utils import format_int_list_with_runs
+from plom.common.exceptions import PlomServerNotReady, PlomNoClasslist
+from plom.common.misc_utils import format_int_list_with_runs
 
 
 # support for colour checkmarks

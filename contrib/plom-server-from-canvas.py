@@ -52,7 +52,7 @@ import requests
 from tqdm import tqdm
 
 from plom.common import __version__ as __plom_version__
-from plom.misc_utils import working_directory
+from plom.common.misc_utils import working_directory
 
 # TODO: no such thing anymore
 # pylint: disable=import-error

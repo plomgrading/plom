@@ -13,7 +13,7 @@ from django_huey import db_task
 import huey
 import huey.api
 
-from plom.plom_exceptions import PlomDatabaseCreationError
+from plom.common.exceptions import PlomDatabaseCreationError
 from plom_server.Base.services import Settings
 from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,

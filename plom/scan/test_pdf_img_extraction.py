@@ -7,7 +7,7 @@ from pytest import raises
 import pymupdf
 from PIL import Image
 
-from plom.misc_utils import working_directory
+from plom.common.misc_utils import working_directory
 from plom.scan import DefaultPixelHeight
 from plom.scan import processFileToBitmaps
 

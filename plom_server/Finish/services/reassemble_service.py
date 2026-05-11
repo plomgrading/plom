@@ -26,7 +26,7 @@ import huey.api
 import zipfly
 
 from plom.finish import make_cover_page, reassemble
-from plom.misc_utils import pprint_score
+from plom.common.misc_utils import pprint_score
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Base.services import Settings
 from plom_server.Identify.models import PaperIDTask

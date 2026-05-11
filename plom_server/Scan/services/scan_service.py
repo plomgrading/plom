@@ -37,8 +37,8 @@ import huey.api
 import huey.exceptions
 import pymupdf
 
-from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomConflict
+from plom.common.misc_utils import format_int_list_with_runs
+from plom.common.exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
 from plom.tpv_utils import (
@@ -69,7 +69,7 @@ from ..services.util import (
     check_any_bundle_push_locked,
     check_bundle_object_is_neither_locked_nor_pushed,
 )
-from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
+from plom.common.exceptions import PlomBundleLockedException, PlomPushCollisionException
 
 
 # future translation support

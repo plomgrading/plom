@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom.scan.question_list_utils import check_question_list
 from plom_server.Papers.services import SpecificationService
 from ...services import ScanCastService, ScanService

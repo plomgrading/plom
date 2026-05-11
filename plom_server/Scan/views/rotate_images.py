@@ -17,7 +17,7 @@ from ..services import (
     hard_rotate_image_from_file_by_exif_and_angle,
 )
 
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.common.exceptions import PlomBundleLockedException
 
 from datetime import datetime
 

@@ -10,7 +10,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 
@@ -20,7 +20,7 @@ from ..services import (
     check_bundle_object_is_neither_locked_nor_pushed,
 )
 
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.common.exceptions import PlomBundleLockedException
 
 from datetime import datetime
 

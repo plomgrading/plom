@@ -14,7 +14,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
 from ..services import ReassembleService
-from plom.misc_utils import format_int_list_with_runs
+from plom.common.misc_utils import format_int_list_with_runs
 
 from plom_server.Scan.services import ManageScanService
 

@@ -9,7 +9,7 @@ from time import sleep
 from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from ...services import ScanService
 
 

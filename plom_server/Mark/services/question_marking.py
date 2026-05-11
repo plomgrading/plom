@@ -12,8 +12,8 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
 from django.db import transaction
 
-from plom.misc_utils import unpack_task_code
-from plom.plom_exceptions import (
+from plom.common.misc_utils import unpack_task_code
+from plom.common.exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,

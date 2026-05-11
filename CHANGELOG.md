@@ -15,8 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 * Support for Python 3.10.
+* The `plom-cli` tool has moved to the new `plom-common` package so it no longer depends on the entire server.
 
 ### Changed
+* Plom-server now depends on the new `plom-common` package.  Messenger, and some common utilities have moved there.
 * QR code size reduced and placement adjusted when building papers.
 * Reorganisation of some Marking and Identifying tools in the UI.
 * Improvements to creating the +1/2, -1/2 rubrics and other fractional delta rubrics.

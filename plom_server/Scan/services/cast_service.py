@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.Papers.models import Paper, FixedPage, MobilePage
 from plom_server.Papers.services import PaperInfoService, SpecificationService
 

@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 from plom_server.Base.base_group_views import ManagerRequiredView
 from ..services import PrenameSettingService, ExamMockerService
 

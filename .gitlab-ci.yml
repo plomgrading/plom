@@ -42,6 +42,7 @@ variables:
   PLOM_NO_SSL_VERIFY: 1
   QT_QPA_PLATFORM: offscreen
   PLOMCLIENT_BRANCHNAME: main
+  PLOMCOMMON_BRANCHNAME: main
 
 stages:
   - static_analysis
@@ -111,7 +112,7 @@ wet_no_drift:
     - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "If version info duplicated, ensure same"
-    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/common.py`
+    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/misc_version.py`
     - echo $VER0
     - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
     - echo $VER1
@@ -672,7 +673,9 @@ out-of-tree-scratch:
           python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
+          git
     - pip --version
+    - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install --ignore-installed -U pytest
@@ -806,6 +809,7 @@ newOS_newdeps_django_tests:
     # pip install plom-client
     # but we might need a more recent one if API recently changed
     - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
+    - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
     # we can run in-tree but we need pip for dependencies
     - pip install .
     - pip uninstall -y plom
@@ -838,6 +842,7 @@ minpy_mindeps_django_tests:
       libsm6 libxrender1
       git
     - pip install pytest
+    - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .

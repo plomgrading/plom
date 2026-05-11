@@ -12,7 +12,7 @@ import PIL.Image
 from pytest import raises
 import onnxruntime as ort  # type: ignore
 
-from plom.misc_utils import working_directory
+from plom.common.misc_utils import working_directory
 from .predictStudentID import compute_probabilities
 from .assign_prob import calc_log_likelihood
 from .assign_prob import assemble_cost_matrix, lap_solver

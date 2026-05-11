@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pymupdf
 
-from plom.misc_utils import working_directory
+from plom.common.misc_utils import working_directory
 from .build_extra_page_with_qrcodes import build_extra_page_pdf
 
 

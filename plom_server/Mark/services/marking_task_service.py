@@ -16,8 +16,8 @@ from django.db.models import QuerySet, Count, Q
 from django.db import transaction
 from rest_framework import serializers
 
-from plom.plom_exceptions import PlomConflict
-from plom.misc_utils import unpack_task_code
+from plom.common.exceptions import PlomConflict
+from plom.common.misc_utils import unpack_task_code
 from plom.tagging import is_valid_tag_text
 from plom_server.Papers.services import ImageBundleService, PaperInfoService
 from plom_server.Papers.models import Paper

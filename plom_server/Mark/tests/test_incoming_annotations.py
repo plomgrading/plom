@@ -13,7 +13,7 @@ from model_bakery import baker
 from plom_server.Papers.models import FixedPage, Paper
 from plom_server.Rubrics.models import Rubric
 
-from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
+from plom.common.exceptions import PlomConflict, PlomInconsistentRubric
 from ..services import MarkingTaskService
 from ..models import MarkingTask, AnnotationImage
 from ..services.annotations import _create_new_annotation_in_database

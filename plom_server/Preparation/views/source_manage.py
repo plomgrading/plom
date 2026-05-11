@@ -17,7 +17,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService

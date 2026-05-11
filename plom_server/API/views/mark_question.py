@@ -15,8 +15,8 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from plom.misc_utils import unpack_task_code, extract_rubric_rid_rev_pairs
-from plom.plom_exceptions import (
+from plom.common.misc_utils import unpack_task_code, extract_rubric_rid_rev_pairs
+from plom.common.exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,

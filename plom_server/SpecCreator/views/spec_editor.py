@@ -13,7 +13,7 @@ from rest_framework import serializers
 
 # from django.http import HttpResponseBadRequest
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 from django_htmx.http import HttpResponseClientRedirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView

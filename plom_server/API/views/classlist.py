@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
 
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.common.exceptions import PlomDependencyConflict
 from plom_server.Preparation.services import StagingStudentService
 from plom_server.Preparation.views import ClasslistDownloadView
 

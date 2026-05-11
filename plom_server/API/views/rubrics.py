@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status, serializers
 
-from plom.plom_exceptions import PlomConflict
+from plom.common.exceptions import PlomConflict
 from plom_server.Rubrics.services import RubricService
 from plom_server.Mark.serializers import MarkingTaskSerializer
 

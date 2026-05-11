@@ -20,8 +20,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
-from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomBundleLockedException, PlomConflict
+from plom.common.misc_utils import format_int_list_with_runs
+from plom.common.exceptions import PlomBundleLockedException, PlomConflict
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService

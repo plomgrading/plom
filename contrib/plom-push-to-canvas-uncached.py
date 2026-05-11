@@ -78,7 +78,7 @@ from plom.common import (
     Default_Port,
 )
 from plom.cli import start_messenger
-from plom.plom_exceptions import PlomException
+from plom.common.exceptions import PlomException
 
 
 # bump this a bit if you change this script

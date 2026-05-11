@@ -25,7 +25,7 @@ from plom.spec_verifier import (
 )
 from plom.tpv_utils import encodeScrapPaperCode, encodeTPV
 
-# from plom.misc_utils import run_length_encoding
+# from plom.common.misc_utils import run_length_encoding
 
 
 def create_QR_codes(
