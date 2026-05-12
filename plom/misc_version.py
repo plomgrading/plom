@@ -6,4 +6,4 @@
 
 # Any utilities that don't have there own version can use this one
 # Also in plom_server/__init__.py
-__version__ = "0.21.0.dev0"
+__version__ = "0.21.0"
