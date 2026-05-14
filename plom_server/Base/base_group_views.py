@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
 from typing import Any
@@ -17,7 +17,14 @@ from django_htmx.http import HttpResponseClientRedirect
 class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for any authorised user."""
 
-    group_required = ["admin", "manager", "scanner", "marker", "lead_marker"]
+    group_required = [
+        "admin",
+        "manager",
+        "scanner",
+        "marker",
+        "lead_marker",
+        "identifier",
+    ]
     raise_exception = True
     redirect_unauthenticated_users = True
 
