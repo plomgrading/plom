@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser, CommandError
@@ -61,21 +62,6 @@ class Command(BaseCommand):
         call_command("plom_create_groups")
 
         # generate random passwords if no info is provided via the commandline
-        self.stdout.write("Make admin user")
-        if options["admin_login"] is None:
-            self.stdout.write("No admin login details provided: autogenerating...")
-            admin_username = "admin"
-            admin_password = simple_password(6)
-            self.stdout.write("v" * 40)
-            self.stdout.write(
-                f"Admin username: {admin_username}\n"
-                f"Admin password: {admin_password}\n"
-            )
-            self.stdout.write("^" * 40)
-        else:
-            admin_username, admin_password = options["admin_login"]
-        self.create_admin(username=admin_username, password=admin_password)
-
         self.stdout.write("Make manager user")
         if options["manager_login"] is None:
             self.stdout.write("No manager login details provided: autogenerating...")
@@ -90,3 +76,18 @@ class Command(BaseCommand):
         else:
             manager_username, manager_password = options["manager_login"]
         self.create_first_manager(manager_username, password=manager_password)
+
+        self.stdout.write("Make admin user")
+        if options["admin_login"] is None:
+            self.stdout.write("No admin login details provided: autogenerating...")
+            admin_username = "admin"
+            admin_password = simple_password(6)
+            self.stdout.write("v" * 40)
+            self.stdout.write(
+                f"Admin username: {admin_username}\n"
+                f"Admin password: {admin_password}\n"
+            )
+            self.stdout.write("^" * 40)
+        else:
+            admin_username, admin_password = options["admin_login"]
+        self.create_admin(username=admin_username, password=admin_password)
