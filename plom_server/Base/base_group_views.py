@@ -7,19 +7,18 @@
 
 from typing import Any
 
-from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
-
 from django.contrib.auth.views import redirect_to_login
+from django.views.generic import View
 from django_htmx.http import HttpResponseClientRedirect
 
-from plom_sever.Authentication.services import AuthService
+from plom_server.Authentication.services import AuthService
 
 
 class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for any authorised user."""
 
-    group_required = AuthService.plom_user_groups_list.copy()
+    group_required = AuthService.plom_user_groups_list
     raise_exception = True
     redirect_unauthenticated_users = True
 
