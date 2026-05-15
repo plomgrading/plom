@@ -274,3 +274,37 @@ class TestMarkQuestionAPI:
 
         assert response_body["total_tasks"] == 1
         assert response_body["total_tasks_marked"] == 1
+
+    def test_submit_too_much_data(self) -> None:
+        code = "0001g1"
+        url = reverse("api_mark_task", kwargs={"code": code})
+
+        # mock file
+        dummy_file = SimpleUploadedFile(
+            "sample.png",
+            b"hi",
+            content_type="image/png",
+        )
+
+        from plom_server.API.views.mark_question import user_data_limit
+
+        s = "the very hungry caterpillar "
+        num_copies = int((1.5 * user_data_limit) // len(s))
+        big_ol_string = s * num_copies
+
+        assert len(big_ol_string) >= user_data_limit
+
+        response = self.auth_client.post(
+            url,
+            {
+                "score": 5,
+                "marking_time": 1.23,
+                "integrity_check": 1,
+                "annotation_image": dummy_file,
+                "md5sum": 1,
+                "user_agent_data": big_ol_string,
+            },
+            format="multipart",
+        )
+
+        assert response.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
