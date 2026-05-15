@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023, 2026 Colin B. Macdonald
     Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
@@ -13,6 +13,12 @@
     Marking
 {% endblock page_heading %}
 {% block main_content %}
+    <div class="card m-2">
+        <div class="card-body pb-0">
+            <a class="btn btn-primary" href="{% url 'mark_papers' %}">Start marking</a>
+            <p>Markers use the desktop application &ldquo;Plom Client&rdquo; to mark papers.</p>
+        </div>
+    </div>
     <div class="card m-2">
         <div class="card-body pb-0">
             <a class="btn btn-primary" href="{% url 'progress_marking' %}">Marking progress and statistics</a>
