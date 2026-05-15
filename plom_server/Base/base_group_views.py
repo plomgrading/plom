@@ -84,6 +84,12 @@ class LeadMarkerOrManagerView(RoleRequiredView):
     group_required = ["lead_marker", "manager"]
 
 
+class IdentifierOrManagerView(RoleRequiredView):
+    """A base class view for identifiers and managers."""
+
+    group_required = ("identifier", "manager")
+
+
 class MarkerRequiredView(RoleRequiredView):
     """A class view for markers."""
 
