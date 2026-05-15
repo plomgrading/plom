@@ -7,12 +7,13 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from plom_server.Base.base_group_views import (
+    MarkerOrManagerView,
     LeadMarkerOrManagerView,
     IdentifierOrManagerView,
 )
 
 
-class ProgressLandingView(LeadMarkerOrManagerView):
+class ProgressLandingView(MarkerOrManagerView):
     """Page displaying a menu of different 'Marking' progress views."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
