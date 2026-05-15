@@ -101,13 +101,13 @@ class LoginView(View):
 
     template_name = "Authentication/login.html"
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         """Get the login page."""
         if request.user.is_authenticated:
             return redirect("home")
         return render(request, self.template_name)
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Attempt to authenticate and log in."""
         if request.user.is_authenticated:
             return redirect("home")
