@@ -16,7 +16,6 @@ from .views import (
     LoginView,
     LogoutView,
     SetPassword,
-    SetPasswordComplete,
 )
 
 urlpatterns = [
@@ -31,5 +30,4 @@ urlpatterns = [
         SetPassword.as_view(),
         name="password_reset",
     ),
-    path("reset/done/", SetPasswordComplete.as_view(), name="password_reset_complete"),
 ]

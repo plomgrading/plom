@@ -1,18 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
 from typing import Any
 
-from braces.views import GroupRequiredMixin
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.http import HttpRequest, HttpResponse
@@ -86,17 +84,6 @@ class SetPassword(View):
         user.profile.signup_confirmation = True
         user.save()
         return render(request, self.set_password_complete)
-
-
-class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
-    """Displayed when user has successfully completed setting their password."""
-
-    template_name = "Authentication/set_password_complete.html"
-    group_required = ["manager", "marker", "scanner"]
-    raise_exception = True
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        return render(request, self.template_name, status=200)
 
 
 class Home(RoleRequiredView):
