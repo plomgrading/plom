@@ -18,7 +18,7 @@ from plom_server.Authentication.services import AuthService
 class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for any authorised user."""
 
-    group_required = AuthService.plom_user_groups_list
+    group_required: tuple[str, ...] = AuthService.plom_user_groups_list
     raise_exception = True
     redirect_unauthenticated_users = True
 
@@ -51,37 +51,37 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 class AdminRequiredView(RoleRequiredView):
     """A class view for admins."""
 
-    group_required = ["admin"]
+    group_required = ("admin",)
 
 
 class AdminOrManagerRequiredView(RoleRequiredView):
     """A class view for admins and managers."""
 
-    group_required = ["admin", "manager"]
+    group_required = ("admin", "manager")
 
 
 class ManagerRequiredView(RoleRequiredView):
     """A class view for managers."""
 
-    group_required = ["manager"]
+    group_required = ("manager",)
 
 
 class ScannerRequiredView(RoleRequiredView):
     """A class view for scanners."""
 
-    group_required = ["scanner"]
+    group_required = ("scanner",)
 
 
 class LeadMarkerRequiredView(RoleRequiredView):
     """A base class view for lead markers."""
 
-    group_required = ["lead_marker"]
+    group_required = ("lead_marker",)
 
 
 class LeadMarkerOrManagerView(RoleRequiredView):
     """A base class view for lead markers and managers."""
 
-    group_required = ["lead_marker", "manager"]
+    group_required = ("lead_marker", "manager")
 
 
 class IdentifierOrManagerView(RoleRequiredView):
@@ -93,16 +93,16 @@ class IdentifierOrManagerView(RoleRequiredView):
 class MarkerRequiredView(RoleRequiredView):
     """A class view for markers."""
 
-    group_required = ["marker"]
+    group_required = ("marker",)
 
 
 class MarkerOrManagerView(RoleRequiredView):
     """A base class view for markers (and thus lead markers) and managers."""
 
-    group_required = ["marker", "manager"]
+    group_required = ("marker", "manager")
 
 
 class ScannerLeadMarkerOrManagerView(RoleRequiredView):
     """A base class view for scanners, lead markers and managers."""
 
-    group_required = ["scanner", "lead_marker", "manager"]
+    group_required = ("scanner", "lead_marker", "manager")
