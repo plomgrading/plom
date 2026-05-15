@@ -158,11 +158,3 @@ class LogoutView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         logout(request)
         return redirect("login")
-
-
-class Maintenance(Home, View):
-    """The accounts maintenance page."""
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context: dict[str, Any] = {}
-        return render(request, "Authentication/maintenance.html", context)
