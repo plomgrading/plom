@@ -3,23 +3,21 @@
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
+from typing import Any
+
 from plom_server import __version__ as plom_version
+from plom_server.Authentication.services import AuthService
 from plom_server.Papers.services import SpecificationService
 
 
-def user_group_information(request):
+def user_group_information(request) -> dict[str, Any]:
     """Add user group membership booleans to every view context.
 
     Adds booleans "user_is_<X>" for the various groups.
     """
-    group_list = list(request.user.groups.values_list("name", flat=True))
+    this_user_groups = list(request.user.groups.values_list("name", flat=True))
     context = {
-        "user_is_admin": "admin" in group_list,
-        "user_is_manager": "manager" in group_list,
-        "user_is_scanner": "scanner" in group_list,
-        "user_is_lead_marker": "lead_marker" in group_list,
-        "user_is_marker": "marker" in group_list,
-        "user_is_identifier": "identifier" in group_list,
+        f"user_is_{g}": g in this_user_groups for g in AuthService.plom_user_groups_list
     }
     return context
 
