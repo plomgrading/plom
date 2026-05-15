@@ -43,19 +43,21 @@ class SetPassword(View):
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
-        reset_form = SetPasswordForm(user)
-        if user is not None and default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.profile.signup_confirmation = False
-            user.save()
-            context = {
-                "form": reset_form,
-                "help_text": self.help_text,
-                "username": user.username,
-            }
-            return render(request, self.template_name, context)
-        else:
+
+        if user is None or not default_token_generator.check_token(user, token):
             return render(request, self.reset_invalid)
+
+        reset_form = SetPasswordForm(user)
+
+        user.is_active = True
+        user.profile.signup_confirmation = False
+        user.save()
+        context = {
+            "form": reset_form,
+            "help_text": self.help_text,
+            "username": user.username,
+        }
+        return render(request, self.template_name, context)
 
     def post(self, request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
         """Attempt to set a user's password."""
