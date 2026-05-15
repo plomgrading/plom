@@ -26,39 +26,58 @@
                 <i class="bi bi-box-arrow-in-right"></i> Log out</a>
         </li>
     </ul>
-    {% if user_is_admin %}
+    {% if user_is_admin or user_is_manager %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis" href="{% url 'users' %}">
                 <i class="bi bi-people-fill"></i> Users</a>
         </li>
-    {% elif user_is_manager %}
-        <li class="nav-item">
-            <a class="nav-link link-body-emphasis" href="{% url 'users' %}">
-                <i class="bi bi-people-fill"></i> Users</a>
-        </li>
+    {% endif %}
+    {% if user_is_manager %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis" href="{% url 'prep_landing' %}">
                 <i class="bi bi-list-task"></i> Prepare</a>
         </li>
+    {% endif %}
+    {% if user_is_manager or user_is_scanner %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis" href="{% url 'scan_overview' %}">
                 <i class="bi bi-qr-code-scan"></i> Scanning</a>
         </li>
+    {% endif %}
+    {% if user_is_manager %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis"
                href="{% url 'rubrics_landing' %}">
                 <i class="bi bi-list-columns-reverse"></i> Rubrics</a>
         </li>
+    {% endif %}
+    {% if user_is_marker %}
+        <li class="nav-item">
+            <a class="nav-link link-body-emphasis" href="{% url 'mark_papers' %}">
+                <i class="bi bi-files-alt"></i> Start marking</a>
+        </li>
+    {% endif %}
+    {% if user_is_manager or user_is_lead_marker %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis"
                href="{% url 'progress_landing' %}">
                 <i class="bi bi-pen-fill"></i> Marking</a>
         </li>
+    {% elif user_is_marker %}
+        <li class="nav-item">
+            <a class="nav-link link-body-emphasis"
+               href="{% url 'progress_marking' %}">
+                <i class="bi bi-graph-up"></i> Marking progress</a>
+        </li>
+    {% endif %}
+    {% if user_is_identifier %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis"
                href="{% url 'progress_identify_home' %}">
                 <i class="bi bi-eye-fill"></i> Identifying</a>
         </li>
+    {% endif %}
+    {% if user_is_manager %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis" href="{% url 'tools_landing' %}">
                 <i class="bi bi-tools"></i> Tools</a>
@@ -96,32 +115,5 @@
                 <!-- I also liked bi-server and bi-heart-pulse for this -->
                 <i class="bi bi-gear-fill"></i> Server status</a>
         </li>
-    {% elif user_is_scanner %}
-        <li class="nav-item">
-            <a class="nav-link link-body-emphasis" href="{% url 'scan_overview' %}">Scanning</a>
-        </li>
-    {% elif user_is_marker %}
-        <li class="nav-item">
-            <a class="nav-link link-body-emphasis" href="{% url 'mark_papers' %}">
-                <i class="bi bi-files-alt"></i> Mark papers</a>
-        </li>
-        {% if user_is_lead_marker %}
-            <li class="nav-item">
-                <a class="nav-link link-body-emphasis"
-                   href="{% url 'progress_landing' %}">
-                    <i class="bi bi-pen-fill"></i> Marking</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link link-body-emphasis"
-                   href="{% url 'progress_identify_home' %}">
-                    <i class="bi bi-eye-fill"></i> Identifying</a>
-            </li>
-        {% else %}
-            <li class="nav-item">
-                <a class="nav-link link-body-emphasis"
-                   href="{% url 'progress_marking' %}">
-                    <i class="bi bi-graph-up"></i> Marking progress</a>
-            </li>
-        {% endif %}
     {% endif %}
 </ul>
