@@ -28,7 +28,6 @@ class SetPassword(View):
     template_name = "Authentication/set_password.html"
     reset_invalid = "Authentication/activation_invalid.html"
     set_password_complete = "Authentication/set_password_complete.html"
-    group_required = ["manager", "scanner", "marker"]
     help_text = [
         "Your password can’t be too similar to your other personal information.",
         "Your password must contain at least 8 characters.",
