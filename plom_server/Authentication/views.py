@@ -49,6 +49,7 @@ class SetPassword(View):
 
         reset_form = SetPasswordForm(user)
 
+        # TODO: why are we changing the object on get?
         user.is_active = True
         user.profile.signup_confirmation = False
         user.save()
