@@ -39,7 +39,7 @@ class SetPassword(View):
     def get(self, request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
         """Get the password setting page."""
         try:
-            uid = force_str((urlsafe_base64_decode(uidb64)))
+            uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
@@ -62,7 +62,7 @@ class SetPassword(View):
     def post(self, request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
         """Attempt to set a user's password."""
         try:
-            uid = force_str((urlsafe_base64_decode(uidb64)))
+            uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
