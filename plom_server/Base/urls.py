@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 from django.urls import path
 from .views import TroublesAfootGenericErrorView
-from .views import ServerStatusView, ResetView
+from .views import Home, ServerStatusView, ResetView
 
 
 urlpatterns = [
+    path("", Home.as_view(), name="home"),
     path(
         "troubles_afoot/<str:hint>",
         TroublesAfootGenericErrorView.as_view(),

@@ -6,8 +6,6 @@
 # Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
-from typing import Any
-
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
@@ -17,8 +15,6 @@ from django.shortcuts import redirect, render
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.views.generic import View
-
-from plom_server.Base.base_group_views import RoleRequiredView
 
 
 class SetPassword(View):
@@ -85,14 +81,6 @@ class SetPassword(View):
         user.profile.signup_confirmation = True
         user.save()
         return render(request, self.set_password_complete)
-
-
-class Home(RoleRequiredView):
-    """The landing page for logged in users."""
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context: dict[str, Any] = {}
-        return render(request, "Authentication/home.html", context)
 
 
 class LoginView(View):
