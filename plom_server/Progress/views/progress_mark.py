@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
 # Copyright (C) 2026 Aidan Murphy
@@ -13,6 +13,7 @@ from django.shortcuts import render
 from plom_server.Base.base_group_views import (
     MarkerOrManagerView,
     LeadMarkerOrManagerView,
+    IdentifierOrMarkerOrManagerView,
 )
 
 from collections import Counter
@@ -92,7 +93,7 @@ class ProgressMarkHome(MarkerOrManagerView):
         return render(request, "Progress/Mark/mark_overview.html", context)
 
 
-class ProgressMarkStartMarking(MarkerOrManagerView):
+class ProgressMarkStartMarking(IdentifierOrMarkerOrManagerView):
     """Display a page telling users how to get the client and get started."""
 
     def get(self, request: HttpRequest) -> HttpResponse:

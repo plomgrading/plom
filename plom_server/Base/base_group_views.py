@@ -90,6 +90,12 @@ class IdentifierOrManagerView(RoleRequiredView):
     group_required = ("identifier", "manager")
 
 
+class IdentifierOrMarkerOrManagerView(RoleRequiredView):
+    """A base class view for identifiers, markers, or managers."""
+
+    group_required = ("identifier", "marker", "manager")
+
+
 class MarkerRequiredView(RoleRequiredView):
     """A class view for markers."""
 
