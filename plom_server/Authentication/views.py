@@ -122,7 +122,7 @@ class LoginView(View):
             context = {
                 "error": 'Access denied. Check username, password, and "enabled" status.'
             }
-            return render(request, self.template_name, context)
+            return render(request, self.template_name, context, status=401)
 
         login(request, user)
         if not remember_me:
