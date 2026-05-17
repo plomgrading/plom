@@ -44,7 +44,7 @@ class SetPassword(View):
             user = None
 
         if user is None or not default_token_generator.check_token(user, token):
-            return render(request, self.reset_invalid, status=403)
+            return render(request, self.reset_invalid, status=404)
 
         reset_form = SetPasswordForm(user)
 
@@ -64,7 +64,7 @@ class SetPassword(View):
             user = None
 
         if user is None or not default_token_generator.check_token(user, token):
-            return render(request, self.reset_invalid, status=403)
+            return render(request, self.reset_invalid, status=404)
 
         reset_form = SetPasswordForm(user, request.POST)
 
