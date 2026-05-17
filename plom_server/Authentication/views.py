@@ -8,7 +8,6 @@
 
 from typing import Any
 
-from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
@@ -110,23 +109,16 @@ class LoginView(View):
 
         username = request.POST.get("username")
         remember_me = request.POST.get("remember_me")
-        # be wary making db calls for unauthenticated users, see #3733
-        # TODO: maybe just delete this?
-        # temp_username = User.objects.filter(username__iexact=username).values()
-        # if not temp_username.exists():
-        #     messages.info(request, "User does not exist!")
-        #     return render(request, self.template_name)
         user = authenticate(
             request,
             username=username,
             password=request.POST.get("password"),
         )
         if user is None:
-            messages.info(
-                request,
-                "Access denied. Check username, password, and 'enabled' status.",
-            )
-            return render(request, self.template_name)
+            context = {
+                "error": 'Access denied. Check username, password, and "enabled" status.'
+            }
+            return render(request, self.template_name, context, status=401)
 
         login(request, user)
         if not remember_me:
