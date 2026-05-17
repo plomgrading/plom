@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023, 2026 Colin B. Macdonald
     Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
@@ -15,6 +15,12 @@
 {% block main_content %}
     <div class="card m-2">
         <div class="card-body pb-0">
+            <a class="btn btn-primary" href="{% url 'mark_papers' %}">Start marking</a>
+            <p>Markers use the desktop application &ldquo;Plom Client&rdquo; to mark papers.</p>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body pb-0">
             <a class="btn btn-primary" href="{% url 'progress_marking' %}">Marking progress and statistics</a>
             <ul>
                 <li>Shows current marking progress for each question / version</li>
@@ -23,30 +29,32 @@
             </ul>
         </div>
     </div>
-    <div class="card m-2">
-        <div class="card-body pb-0">
-            <a class="btn btn-primary"
-               href="{% url 'progress_marking_task_filter' %}">Search, filter and browse marking tasks</a>
-            <ul>
-                <li>Tasks can be filtered by question, version, marker, tags, etc</li>
-                <li>Can view original page images and the annotations</li>
-            </ul>
+    {% if user_is_manager or user_is_lead_marker %}
+        <div class="card m-2">
+            <div class="card-body pb-0">
+                <a class="btn btn-primary"
+                   href="{% url 'progress_marking_task_filter' %}">Search, filter and browse marking tasks</a>
+                <ul>
+                    <li>Tasks can be filtered by question, version, marker, tags, etc</li>
+                    <li>Can view original page images and the annotations</li>
+                </ul>
+            </div>
         </div>
-    </div>
-    <div class="card m-2">
-        <div class="card-body pb-0">
-            <a class="btn btn-primary" href="{% url 'progress_marker_info_home' %}">Marker oversight</a>
-            <ul>
-                <li>Shows number of tasks completed by each marker</li>
-                <li>Modify and observe marker quotas</li>
-                <li>User can also clear ID from a given paper</li>
-            </ul>
+        <div class="card m-2">
+            <div class="card-body pb-0">
+                <a class="btn btn-primary" href="{% url 'progress_marker_info_home' %}">Marker oversight</a>
+                <ul>
+                    <li>Shows number of tasks completed by each marker</li>
+                    <li>Modify and observe marker quotas</li>
+                    <li>User can also clear ID from a given paper</li>
+                </ul>
+            </div>
         </div>
-    </div>
-    <div class="card m-2">
-        <div class="card-body pb-0">
-            <a class="btn btn-primary" href="{% url 'task_order_landing' %}">Change marking task ordering</a>
-            <p>Change the order in which tasks are presented to markers.</p>
+        <div class="card m-2">
+            <div class="card-body pb-0">
+                <a class="btn btn-primary" href="{% url 'task_order_landing' %}">Change marking task ordering</a>
+                <p>Change the order in which tasks are presented to markers.</p>
+            </div>
         </div>
-    </div>
+    {% endif %}
 {% endblock main_content %}

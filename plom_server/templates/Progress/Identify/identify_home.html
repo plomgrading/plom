@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023, 2026 Colin B. Macdonald
     Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
@@ -13,6 +13,16 @@
     Identifying
 {% endblock page_heading %}
 {% block main_content %}
+    <div class="card m-2">
+        <div class="card-body pb-0">
+            <!-- TODO: not quite right as this will talk about marking -->
+            <a class="btn btn-primary" href="{% url 'mark_papers' %}">Start identifying papers</a>
+            <ul>
+                <li>Papers must be matched to students</li>
+                <li>This can be done with the desktop client after papers are scanned.</li>
+            </ul>
+        </div>
+    </div>
     <div class="card m-2">
         <div class="card-body pb-0">
             <a class="btn btn-primary"

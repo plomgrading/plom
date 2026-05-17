@@ -51,23 +51,11 @@
                 <i class="bi bi-list-columns-reverse"></i> Rubrics</a>
         </li>
     {% endif %}
-    {% if user_is_marker %}
-        <li class="nav-item">
-            <a class="nav-link link-body-emphasis" href="{% url 'mark_papers' %}">
-                <i class="bi bi-files-alt"></i> Start marking</a>
-        </li>
-    {% endif %}
-    {% if user_is_manager or user_is_lead_marker %}
+    {% if user_is_manager or user_is_marker %}
         <li class="nav-item">
             <a class="nav-link link-body-emphasis"
                href="{% url 'progress_landing' %}">
                 <i class="bi bi-pen-fill"></i> Marking</a>
-        </li>
-    {% elif user_is_marker %}
-        <li class="nav-item">
-            <a class="nav-link link-body-emphasis"
-               href="{% url 'progress_marking' %}">
-                <i class="bi bi-graph-up"></i> Marking progress</a>
         </li>
     {% endif %}
     {% if user_is_identifier %}
