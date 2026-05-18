@@ -13,8 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* Django messages are now stored serverside, and respect user authentication.
 
 ### Fixed
+* misc bug fixes and UI tweaks.
 
 
 
