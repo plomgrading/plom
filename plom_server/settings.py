@@ -322,6 +322,11 @@ if __:
     # https://docs.djangoproject.com/en/6.0/ref/settings/#csrf-cookie-path
     CSRF_COOKIE_PATH = f"/{__}/"
 
+# Django "messages" are stored in cookies in the user's browser by default.
+# This is bad because messages can (and do) persist across different user logins,
+# we fix this by forcing Django to store messages with sessions on the server.
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
 __ = os.environ.get("PLOM_MEDIA_ROOT")
