@@ -1,10 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2026 Colin B. Macdonald
 
-from django.contrib import admin
-
-from .models import Profile
-
-# This makes models appear in the admin interface
-admin.site.register(Profile)
+# This file is used to register models in the admin interface
+# But current this App has no Models.

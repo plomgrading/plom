@@ -78,7 +78,6 @@ class SetPassword(View):
             return render(request, self.template_name, context)
         user = reset_form.save()
         user.is_active = True
-        user.profile.signup_confirmation = True
         user.save()
         return render(request, self.set_password_complete)
 
