@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
@@ -33,9 +33,7 @@
                         <th>Online (client)</th>
                         <th>Last login</th>
                         {% for group_name in plom_user_groups %}<th>{{ group_name|capfirst }}</th>{% endfor %}
-                        <th>
-                            <!-- enable/disable user -->enabled
-                        </th>
+                        <th>Enabled</th>
                         <th>
                             <!-- delete user -->
                         </th>
