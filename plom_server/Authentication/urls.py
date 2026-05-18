@@ -12,7 +12,6 @@ from .signup_views import (
     SingleUserSignUp,
 )
 from .views import (
-    Home,
     LoginView,
     LogoutView,
     SetPassword,
@@ -21,7 +20,6 @@ from .views import (
 urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
-    path("", Home.as_view(), name="home"),
     path("signup/single/", SingleUserSignUp.as_view(), name="signup_single"),
     path("signup/multiple/", MultiUsersSignUp.as_view(), name="signup_multiple"),
     path("signup/import/", ImportUsers.as_view(), name="signup_import"),

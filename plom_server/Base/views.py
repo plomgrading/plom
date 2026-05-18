@@ -18,12 +18,20 @@ from django_huey import get_queue
 
 from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom_server.Authentication.services import AuthService
+from plom_server.Base.base_group_views import RoleRequiredView
 from plom_server.Base.services import Settings, database_service
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 
 from .base_group_views import ManagerRequiredView
 from .services import big_red_button
+
+
+class Home(RoleRequiredView):
+    """The landing page for logged in users."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        return render(request, "base/home.html")
 
 
 class TroublesAfootGenericErrorView(View):
