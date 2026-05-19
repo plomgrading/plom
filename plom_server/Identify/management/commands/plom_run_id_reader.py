@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 from tabulate import tabulate
 from time import sleep
@@ -9,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import MultipleObjectsReturned
 
+from plom_server.ML.services.client import PlomDigitServiceError
 from plom_server.Rectangles.services import RectangleExtractor
 from plom_server.Papers.services import SpecificationService
 from ...services import IDReaderService
@@ -42,6 +44,8 @@ class Command(BaseCommand):
             )
         except MultipleObjectsReturned:
             raise CommandError("The ID reader is already running.")
+        except PlomDigitServiceError as e:
+            raise CommandError(f"Digit recognition service unavailable: {e}")
 
     def delete_all_ML_ID_predictions(self) -> None:
         self.stdout.write("Deleting all machine learning ID predictions.")

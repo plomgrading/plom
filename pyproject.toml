@@ -9,7 +9,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Bryan Tanady
-# Copyright (C) 2025 Deep Shah
+# Copyright (C) 2025-2026 Deep Shah
 # Copyright (C) 2026 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
@@ -161,6 +161,8 @@ packages = [
     "plom_server.Mark",
     "plom_server.Mark.services",
     "plom_server.Mark.tests",
+    "plom_server.ML",
+    "plom_server.ML.services",
     "plom_server.Papers",
     "plom_server.Papers.services",
     "plom_server.Papers.models",

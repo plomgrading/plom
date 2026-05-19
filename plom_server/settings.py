@@ -8,10 +8,12 @@
 # Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Deep Shah
 
 """Django settings for Plom project."""
 
 import os
+import platform
 import warnings
 from pathlib import Path
 
@@ -301,6 +303,24 @@ STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Similar to the "dynamic" static stuff, these are downloaded at runtime and cached.
 PLOM_MODEL_CACHE = PLOM_BASE_DIR / "model_cache"
 
+# External Plom digit recognition service used for ID-digit inference.
+# Plom owns ID-box extraction, digit segmentation, ID matching, and DB writes.
+# The external service only receives prepared digit crops and returns immediate
+# 0-9-plus-blank probabilities.
+PLOM_DIGIT_SERVICE_URL = os.environ.get("PLOM_DIGIT_SERVICE_URL", "").rstrip("/")
+PLOM_DIGIT_SERVICE_TOKEN = os.environ.get("PLOM_DIGIT_SERVICE_TOKEN", "")
+PLOM_DIGIT_SERVICE_TIMEOUT = float(os.environ.get("PLOM_DIGIT_SERVICE_TIMEOUT", "30"))
+if not PLOM_DIGIT_SERVICE_URL:
+    if not DEBUG:
+        raise RuntimeError(
+            "When PLOM_DEBUG is off, you must set PLOM_DIGIT_SERVICE_URL. "
+            "ID prediction now requires the external Plom digit recognition service."
+        )
+    warnings.warn(
+        "PLOM_DIGIT_SERVICE_URL is unset; ID-prediction tasks will fail at runtime.",
+        RuntimeWarning,
+    )
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -365,7 +385,11 @@ else:
 # a bundle and reading the QR codes.
 _huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
 _huey_parent_workers = int(os.environ.get("PLOM_HUEY_PARENT_WORKERS", 2))
-
+# On macOS, fork() in a multi-threaded process (numpy/OpenCV/onnxruntime)
+# crashes the worker on first native call. Default to "thread" to avoid that;
+# Linux production deployments can set PLOM_HUEY_WORKER_TYPE=process.
+_default_huey_worker_type = "thread" if platform.system() == "Darwin" else "process"
+_huey_worker_type = os.environ.get("PLOM_HUEY_WORKER_TYPE", _default_huey_worker_type)
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
     "default": "chores",
@@ -379,7 +403,7 @@ DJANGO_HUEY = {
             "utc": True,
             "consumer": {
                 "workers": _huey_workers,
-                "worker_type": "process",
+                "worker_type": _huey_worker_type,
                 "initial_delay": 0.1,
                 "backoff": 1.15,
                 "max_delay": 10.0,
@@ -398,7 +422,7 @@ DJANGO_HUEY = {
             "utc": True,
             "consumer": {
                 "workers": _huey_parent_workers,
-                "worker_type": "process",
+                "worker_type": _huey_worker_type,
                 "initial_delay": 0.1,
                 "backoff": 1.15,
                 "max_delay": 10.0,
