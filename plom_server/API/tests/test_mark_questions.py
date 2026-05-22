@@ -141,6 +141,8 @@ class TestMarkQuestionAPI:
             format="multipart",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "must provide" in response.reason_phrase
+        assert "score" in response.reason_phrase
         response = self.auth_client.post(
             url,
             {
@@ -151,6 +153,8 @@ class TestMarkQuestionAPI:
             format="multipart",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "must provide" in response.reason_phrase
+        assert "marking_time" in response.reason_phrase
         response = self.auth_client.post(
             url,
             {
@@ -161,12 +165,8 @@ class TestMarkQuestionAPI:
             format="multipart",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        # TODO: why can't I get the error message?  Issue #4216.
-        # print(response)
-        # print(type(response))
-        # print(response.data)
-        # print(response.content)
-        # assert False
+        assert "must provide" in response.reason_phrase
+        assert "integrity_check" in response.reason_phrase
 
     def test_submit_non_existing_task(self) -> None:
         """Test POST: /MK/tasks/{code} where code is valid but refers to non-existing task.
