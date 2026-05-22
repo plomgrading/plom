@@ -6,8 +6,9 @@ from typing import Any
 
 from django.conf import settings
 
-from plom.tpv_utils import new_magic_code, is_valid_public_code
+from plom.common.tpv_utils import new_magic_code, is_valid_public_code
 from plom.feedback_rules import feedback_rules as static_feedback_rules
+
 from ..models import SettingsModel
 
 

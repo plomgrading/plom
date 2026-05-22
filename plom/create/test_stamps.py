@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022, 2024-2025 Colin B. Macdonald
+# Copyright (C) 2022, 2024-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from pathlib import Path
@@ -7,7 +7,7 @@ from pathlib import Path
 from pytest import raises
 import pymupdf
 
-from plom.tpv_utils import new_magic_code
+from plom.common.tpv_utils import new_magic_code
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import make_PDF

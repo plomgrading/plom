@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022, 2024-2025 Colin B. Macdonald
+# Copyright (C) 2022, 2024-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from pytest import raises
 
 import pymupdf
 
+from plom.common.tpv_utils import new_magic_code
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import make_PDF
 from plom.spec_verifier import SpecVerifier
-from plom.tpv_utils import new_magic_code
 
 
 def test_make_pdf_shared_pages(tmp_path) -> None:
