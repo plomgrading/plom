@@ -466,6 +466,10 @@ class RubricService:
                 raise serializers.ValidationError(
                     {"value": "Absolute rubric requires value"}
                 )
+            if "out_of" not in data:
+                raise serializers.ValidationError(
+                    {"out_of": "Absolute rubric requires out_of"}
+                )
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
         elif data["kind"] == "relative":
@@ -478,11 +482,19 @@ class RubricService:
                 raise serializers.ValidationError(
                     {"value": "Relative rubric must not have zero value"}
                 )
+            if data.get("out_of", 0) != 0:
+                raise serializers.ValidationError(
+                    {"out_of": "Relative rubric must omit value or have zero out_of"}
+                )
 
         elif data["kind"] == "neutral":
             if data.get("value", 0) != 0:
                 raise serializers.ValidationError(
                     {"value": "Neutral rubric must omit value or have zero value"}
+                )
+            if data.get("out_of", 0) != 0:
+                raise serializers.ValidationError(
+                    {"out_of": "Neutral rubric must omit value or have zero out_of"}
                 )
 
         # TODO: more validation of fields that the model/form/serializer could/should
@@ -503,11 +515,6 @@ class RubricService:
         Careful with ``_pypass_serializer``.  I think this stuff was introduced
         to decrease the number of database queries when making many rubrics.
         """
-        # As stated in Rubric's model: out_of must be 0 for non-absolute kind and value is 0 for neutral
-        # TODO: but if we just do this, we won't get errors!
-        if data["kind"] != "absolute":
-            data["out_of"] = 0
-
         RubricService._validate_rubric_fields(data)
 
         if data.get("display_delta", None) is None:
