@@ -198,6 +198,27 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaisesRegex(serializers.ValidationError, "must not.*zero"):
             RubricService.create_rubric(rub)
 
+    def test_relative_rubric_missing_value(self) -> None:
+        rub = {
+            "text": "qwerty",
+            "kind": "relative",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "requires value"):
+            RubricService.create_rubric(rub)
+
+    def test_absolute_rubric_missing_value(self) -> None:
+        rub = {
+            "out_of": 2,
+            "text": "qwerty",
+            "kind": "relative",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "requires value"):
+            RubricService.create_rubric(rub)
+
     def test_neutral_rubric_nonzero_value_is_ValidationError(self) -> None:
         rub = {
             "value": 1,
@@ -208,6 +229,15 @@ class RubricServiceTests_exceptions(TestCase):
         }
         with self.assertRaisesRegex(serializers.ValidationError, "must.*zero value"):
             RubricService.create_rubric(rub)
+
+    def test_neutral_rubric_can_have_missing_value(self) -> None:
+        rub = {
+            "text": "qwerty",
+            "kind": "neutral",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        RubricService.create_rubric(rub)
 
     def test_rubric_absolute_out_of_range(self) -> None:
         rub = {
