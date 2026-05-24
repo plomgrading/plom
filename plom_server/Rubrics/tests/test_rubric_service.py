@@ -212,7 +212,7 @@ class RubricServiceTests_exceptions(TestCase):
         rub = {
             "out_of": 2,
             "text": "qwerty",
-            "kind": "relative",
+            "kind": "absolute",
             "question_index": 1,
             "username": "Liam",
         }
