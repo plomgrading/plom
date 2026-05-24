@@ -58,7 +58,7 @@ log = logging.getLogger(__name__)
 # in Django's model/form.
 
 
-def _validate_versions_in_range(vers: None | str, num_versions: None | int = 1) -> None:
+def _validate_versions_in_range(vers: None | str, num_versions: int) -> None:
     if not vers:
         return
 
@@ -81,7 +81,7 @@ def _validate_versions_in_range(vers: None | str, num_versions: None | int = 1) 
             raise serializers.ValidationError({"versions": _errmsg})
 
 
-def _validate_parameters(parameters: None | list, num_versions: None | int = 1) -> None:
+def _validate_parameters(parameters: None | list, num_versions: int) -> None:
     if not parameters:
         return
 
@@ -170,7 +170,7 @@ def _validate_value_out_of(value, out_of, max_mark: int) -> None:
         )
 
 
-def _validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None:
+def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None:
     """Validate data that will be used to create rubric.
 
     Args:
@@ -179,6 +179,9 @@ def _validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> Non
     Keyword Args:
         quick: False by default but if True we skip any expensive tests,
             generally those ones that hit the database.
+
+    Raises:
+        serializers.ValidationError
     """
     V = serializers.ValidationError
     if "kind" not in data.keys():
@@ -486,7 +489,7 @@ class RubricService:
             pass
 
         # The full validator will run later: just do enough for the collision checker
-        _validate_rubric_fields(incoming_data, quick=True)
+        validate_rubric_fields(incoming_data, quick=True)
         # TODO: likely has race conditions consider refactoring into model/serializer
         # or use `get_or_create` later.
         _check_if_rubric_dupes_existing(incoming_data)
@@ -504,7 +507,7 @@ class RubricService:
         Careful with ``_pypass_serializer``.  I think this stuff was introduced
         to decrease the number of database queries when making many rubrics.
         """
-        _validate_rubric_fields(data)
+        validate_rubric_fields(data)
 
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
@@ -694,7 +697,7 @@ class RubricService:
 
         data["rid"] = old_rubric.rid
 
-        _validate_rubric_fields(data)
+        validate_rubric_fields(data)
 
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
