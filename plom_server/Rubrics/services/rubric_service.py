@@ -704,11 +704,7 @@ class RubricService:
 
         data["rid"] = old_rubric.rid
 
-        if data["kind"] in ("relative", "neutral"):
-            data["out_of"] = 0
-
-        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
-        _validate_value(data.get("value", 0), max_mark)
+        RubricService._validate_rubric_fields(data)
 
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
@@ -724,30 +720,6 @@ class RubricService:
             data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
                 data["value"]
             )
-
-        if data["kind"] == "absolute":
-            _validate_value_out_of(data["value"], data["out_of"], max_mark)
-        elif data["kind"] == "relative":
-            if "value" not in data:
-                raise serializers.ValidationError(
-                    {"value": "Relative rubric requires value"}
-                )
-            if data["value"] == 0:
-                # Note: Plom disallows +0, -0 rubrics (#4145)
-                raise serializers.ValidationError(
-                    {"value": "Relative rubric must not have zero value"}
-                )
-        elif data["kind"] == "neutral":
-            if data.get("value", 0) != 0:
-                raise serializers.ValidationError(
-                    {"value": "Neutral rubric must omit value or have zero value"}
-                )
-
-        _validate_versions_in_range(data.get("versions"))
-
-        _validate_parameters(
-            data.get("parameters"), SpecificationService.get_n_versions()
-        )
 
         serializer = RubricSerializer(data=data)
 
