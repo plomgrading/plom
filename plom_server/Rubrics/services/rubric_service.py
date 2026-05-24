@@ -479,6 +479,12 @@ class RubricService:
                     {"value": "Relative rubric must not have zero value"}
                 )
 
+        elif data["kind"] == "neutral":
+            if data.get("value", 0) != 0:
+                raise serializers.ValidationError(
+                    {"value": "Neutral rubric must omit value or have zero value"}
+                )
+
         # TODO: more validation of fields that the model/form/serializer could/should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
         _validate_versions_in_range(data.get("versions"))
@@ -498,9 +504,9 @@ class RubricService:
         to decrease the number of database queries when making many rubrics.
         """
         # As stated in Rubric's model: out_of must be 0 for non-absolute kind and value is 0 for neutral
+        # TODO: but if we just do this, we won't get errors!
         if data["kind"] != "absolute":
             data["out_of"] = 0
-            data["value"] = 0 if data["kind"] == "neutral" else data["value"]
 
         RubricService._validate_rubric_fields(data)
 
@@ -723,6 +729,11 @@ class RubricService:
                 # Note: Plom disallows +0, -0 rubrics (#4145)
                 raise serializers.ValidationError(
                     {"value": "Relative rubric must not have zero value"}
+                )
+        elif data["kind"] == "neutral":
+            if data.get("value", 0) != 0:
+                raise serializers.ValidationError(
+                    {"value": "Neutral rubric must omit value or have zero value"}
                 )
 
         _validate_versions_in_range(data.get("versions"))
