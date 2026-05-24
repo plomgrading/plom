@@ -469,6 +469,17 @@ class RubricService:
                 )
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
+        elif data["kind"] == "relative":
+            if "value" not in data:
+                raise serializers.ValidationError(
+                    {"value": "Relative rubric requires value"}
+                )
+            if data["value"] == 0:
+                # Note: Plom disallows +0, -0 rubrics (#4145)
+                raise serializers.ValidationError(
+                    {"value": "Relative rubric must not have zero value"}
+                )
+
         # TODO: more validation of fields that the model/form/serializer could/should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
         _validate_versions_in_range(data.get("versions"))
@@ -705,6 +716,16 @@ class RubricService:
 
         if data["kind"] == "absolute":
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
+        elif data["kind"] == "relative":
+            if "value" not in data:
+                raise serializers.ValidationError(
+                    {"value": "Relative rubric requires value"}
+                )
+            if data["value"] == 0:
+                # Note: Plom disallows +0, -0 rubrics (#4145)
+                raise serializers.ValidationError(
+                    {"value": "Relative rubric must not have zero value"}
+                )
 
         _validate_versions_in_range(data.get("versions"))
 

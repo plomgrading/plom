@@ -187,6 +187,17 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(serializers.ValidationError):
             RubricService.create_rubric(rub)
 
+    def test_issue4145_relative_rubric_zero_value_is_ValidationError(self) -> None:
+        rub = {
+            "value": 0,
+            "text": "qwerty",
+            "kind": "relative",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "must not.*zero"):
+            RubricService.create_rubric(rub)
+
     def test_rubric_absolute_out_of_range(self) -> None:
         rub = {
             "value": 4,
