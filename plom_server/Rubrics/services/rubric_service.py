@@ -147,14 +147,10 @@ def _validate_value_in_range(value: int | float | str, max_mark: int) -> None:
 
 
 def _validate_value_out_of(
-    value: int | float | str, out_of: int | float | None, max_mark: int
+    value: int | float | str, out_of: int | float, max_mark: int
 ) -> None:
     _validate_value(value)
     value = float(value)
-    if out_of is None:
-        raise serializers.ValidationError(
-            {"out_of": 'This type of rubric requires an "out_of": it cannot be omitted'}
-        )
     try:
         out_of = float(out_of)
     except (ValueError, TypeError) as e:

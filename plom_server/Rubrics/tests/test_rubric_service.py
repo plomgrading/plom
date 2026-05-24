@@ -309,6 +309,16 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaisesRegex(serializers.ValidationError, "must be integer"):
             RubricService.create_rubric(rub)
 
+    def test_create_rubric_question_index_missing(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+        }
+        VE = serializers.ValidationError
+        with self.assertRaisesRegex(VE, "question.*index.*required"):
+            RubricService.create_rubric(rub)
+
 
 class RubricServiceTests_extra_validation(TestCase):
     """Tests for various validation routines, currently those not model-integrated."""
