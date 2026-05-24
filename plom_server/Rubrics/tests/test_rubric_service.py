@@ -289,6 +289,26 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaisesRegex(serializers.ValidationError, 'not have a "rid"'):
             RubricService.create_rubric(rub)
 
+    def test_create_rubric_question_index_out_of_range(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 42,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService.create_rubric(rub)
+
+    def test_create_rubric_question_index_non_integer(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": "eleventy seven",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService.create_rubric(rub)
+
 
 class RubricServiceTests_extra_validation(TestCase):
     """Tests for various validation routines, currently those not model-integrated."""

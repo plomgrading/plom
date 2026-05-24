@@ -58,7 +58,7 @@ log = logging.getLogger(__name__)
 # in Django's model/form.
 
 
-def _validate_versions_in_range(vers: None | str) -> None:
+def _validate_versions_in_range(vers: None | str, num_versions: None | int = 1) -> None:
     if not vers:
         return
 
@@ -75,10 +75,9 @@ def _validate_versions_in_range(vers: None | str) -> None:
         _errmsg = f'nonempty "versions" must be a comma-separated list of ints but got "{vers}": {e}'
         raise serializers.ValidationError({"versions": _errmsg})
 
-    n_versions = SpecificationService.get_n_versions()
     for v in parsed_vers:
-        if v < 1 or v > n_versions:
-            _errmsg = f"Version {v} is out of range — must be in [1, {n_versions}]"
+        if v < 1 or v > num_versions:
+            _errmsg = f"Version {v} is out of range — must be in [1, {num_versions}]"
             raise serializers.ValidationError({"versions": _errmsg})
 
 
@@ -169,6 +168,75 @@ def _validate_value_out_of(value, out_of, max_mark: int) -> None:
         raise serializers.ValidationError(
             {"out_of": f"out of range: {out_of} is not in (0, {max_mark}]"}
         )
+
+
+def _validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None:
+    """Validate data that will be used to create rubric.
+
+    Args:
+        data: a dictionary representing a rubric.
+
+    Keyword Args:
+        quick: False by default but if True we skip any expensive tests,
+            generally those ones that hit the database.
+    """
+    V = serializers.ValidationError
+    if "kind" not in data.keys():
+        raise V({"kind": "Kind is required."})
+    if data["kind"] not in ("absolute", "relative", "neutral"):
+        raise V({"kind": f"{data['kind']} is not a valid kind."})
+
+    # Ensure text is not empty or whitespace only
+    if str(data["text"]).strip() == "":
+        raise V({"text": "Text can't be empty or contain only whitespace"})
+
+    # Must have an integer question index, in valid range
+    if "question_index" not in data.keys():
+        raise V({"question_index": "question index is required."})
+    try:
+        q_index = int(data["question_index"])
+    except (ValueError, TypeError) as e:
+        raise V({"question_index": f"question index must be integer: {e}"})
+    if not quick:
+        max_q_index = SpecificationService.get_n_questions()
+        if q_index < 1 or q_index > max_q_index:
+            __ = f"{q_index} out of range, must be within [1, {max_q_index}]"
+            raise V({"question_index": __})
+
+    if not quick:
+        # check that the "value" lies in [-max_mark, max_mark]
+        max_mark = SpecificationService.get_question_max_mark(q_index)
+        _validate_value(data.get("value", 0), max_mark)
+
+    if data["kind"] == "absolute":
+        if "value" not in data:
+            raise V({"value": "Absolute rubric requires value"})
+        if "out_of" not in data:
+            raise V({"out_of": "Absolute rubric requires out_of"})
+        if not quick:
+            _validate_value_out_of(data["value"], data["out_of"], max_mark)
+
+    elif data["kind"] == "relative":
+        if "value" not in data:
+            raise V({"value": "Relative rubric requires value"})
+        if data["value"] == 0:
+            # Note: Plom disallows +0, -0 rubrics (#4145)
+            raise V({"value": "Relative rubric must not have zero value"})
+        if data.get("out_of", 0) != 0:
+            raise V({"out_of": "Relative rubric must omit value or have zero out_of"})
+
+    elif data["kind"] == "neutral":
+        if data.get("value", 0) != 0:
+            raise V({"value": "Neutral rubric must omit value or have zero value"})
+        if data.get("out_of", 0) != 0:
+            raise V({"out_of": "Neutral rubric must omit value or have zero out_of"})
+
+    # TODO: more validation of fields that the model/form/serializer could/should
+    # be doing (see `clean_versions` commented out in Rubrics/models.py)
+    if not quick:
+        num_versions = SpecificationService.get_n_versions()
+        _validate_versions_in_range(data.get("versions"), num_versions)
+        _validate_parameters(data.get("parameters"), num_versions)
 
 
 # TODO: consider refactoring to wherever we compute diffs
@@ -430,84 +498,6 @@ class RubricService:
         return cls._create_rubric_lowlevel(incoming_data)
 
     @staticmethod
-    def _validate_rubric_fields(data: dict[str, Any]) -> None:
-        """Validate data that will be used to create rubric.
-
-        Args:
-            data: a dictionary representing a rubric.
-        """
-        if "kind" not in data.keys():
-            raise serializers.ValidationError({"kind": "Kind is required."})
-        if data["kind"] not in ("absolute", "relative", "neutral"):
-            raise serializers.ValidationError(
-                {"kind": f"{data['kind']} is not a valid kind."}
-            )
-
-        # Ensure text is not empty or whitespace only
-        if str(data["text"]).strip() == "":
-            raise serializers.ValidationError(
-                {"text": "Text can't be empty or contain only whitespace"}
-            )
-
-        q_index = int(data["question_index"])
-
-        # Ensure question index (indexed from 1) is within range
-        max_q_index = SpecificationService.get_n_questions()
-        if q_index < 1 or q_index > max_q_index:
-            raise serializers.ValidationError(
-                {
-                    "question_index": f"{q_index} out of range, must be within [1, {max_q_index}]"
-                }
-            )
-
-        # check that the "value" lies in [-max_mark, max_mark]
-        max_mark = SpecificationService.get_question_max_mark(q_index)
-        _validate_value(data.get("value", 0), max_mark)
-
-        if data["kind"] == "absolute":
-            if "value" not in data:
-                raise serializers.ValidationError(
-                    {"value": "Absolute rubric requires value"}
-                )
-            if "out_of" not in data:
-                raise serializers.ValidationError(
-                    {"out_of": "Absolute rubric requires out_of"}
-                )
-            _validate_value_out_of(data["value"], data["out_of"], max_mark)
-
-        elif data["kind"] == "relative":
-            if "value" not in data:
-                raise serializers.ValidationError(
-                    {"value": "Relative rubric requires value"}
-                )
-            if data["value"] == 0:
-                # Note: Plom disallows +0, -0 rubrics (#4145)
-                raise serializers.ValidationError(
-                    {"value": "Relative rubric must not have zero value"}
-                )
-            if data.get("out_of", 0) != 0:
-                raise serializers.ValidationError(
-                    {"out_of": "Relative rubric must omit value or have zero out_of"}
-                )
-
-        elif data["kind"] == "neutral":
-            if data.get("value", 0) != 0:
-                raise serializers.ValidationError(
-                    {"value": "Neutral rubric must omit value or have zero value"}
-                )
-            if data.get("out_of", 0) != 0:
-                raise serializers.ValidationError(
-                    {"out_of": "Neutral rubric must omit value or have zero out_of"}
-                )
-
-        # TODO: more validation of fields that the model/form/serializer could/should
-        # be doing (see `clean_versions` commented out in Rubrics/models.py)
-        _validate_versions_in_range(data.get("versions"))
-        _validate_parameters(
-            data.get("parameters"), SpecificationService.get_n_versions()
-        )
-
-    @staticmethod
     def _create_rubric_lowlevel(
         data: dict[str, Any],
         *,
@@ -518,7 +508,7 @@ class RubricService:
         Careful with ``_pypass_serializer``.  I think this stuff was introduced
         to decrease the number of database queries when making many rubrics.
         """
-        RubricService._validate_rubric_fields(data)
+        _validate_rubric_fields(data)
 
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
@@ -707,7 +697,7 @@ class RubricService:
 
         data["rid"] = old_rubric.rid
 
-        RubricService._validate_rubric_fields(data)
+        _validate_rubric_fields(data)
 
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
