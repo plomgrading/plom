@@ -461,7 +461,6 @@ class RubricService:
         max_mark = SpecificationService.get_question_max_mark(q_index)
         _validate_value(data.get("value", 0), max_mark)
 
-        # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
             if "value" not in data:
                 raise serializers.ValidationError(
@@ -695,7 +694,6 @@ class RubricService:
         if data["kind"] in ("relative", "neutral"):
             data["out_of"] = 0
 
-        # TODO: Perhaps the serializer should do this
         max_mark = SpecificationService.get_question_max_mark(data["question_index"])
         _validate_value(data.get("value", 0), max_mark)
 
