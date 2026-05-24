@@ -124,9 +124,7 @@ def _validate_parameters(parameters: None | list, num_versions: int) -> None:
                 )
 
 
-# TODO: this code belongs in model/serializer?
-def _validate_value(value: int | float | str | None, max_mark: int) -> None:
-    # check that the "value" lies in [-max_mark, max_mark]
+def _validate_value(value: int | float | str | None) -> None:
     if value is None:
         raise serializers.ValidationError(
             {"value": 'This type of rubric requires a "value"'}
@@ -137,13 +135,22 @@ def _validate_value(value: int | float | str | None, max_mark: int) -> None:
         raise serializers.ValidationError(
             {"value": f"value {value} must be convertible to number: {e}"}
         ) from e
+
+
+def _validate_value_in_range(value: int | float | str, max_mark: int) -> None:
+    _validate_value(value)
+    value = float(value)
     if not -max_mark <= value <= max_mark:
         raise serializers.ValidationError(
             {"value": f"Value out of range: must lie in [-{max_mark}, {max_mark}]"}
         )
 
 
-def _validate_value_out_of(value, out_of, max_mark: int) -> None:
+def _validate_value_out_of(
+    value: int | float | str, out_of: int | float | None, max_mark: int
+) -> None:
+    _validate_value(value)
+    value = float(value)
     if out_of is None:
         raise serializers.ValidationError(
             {"out_of": 'This type of rubric requires an "out_of": it cannot be omitted'}
@@ -153,12 +160,6 @@ def _validate_value_out_of(value, out_of, max_mark: int) -> None:
     except (ValueError, TypeError) as e:
         raise serializers.ValidationError(
             {"out_of": f"out of {out_of} must be convertible to number: {e}"}
-        ) from e
-    try:
-        value = float(value)
-    except (ValueError, TypeError) as e:
-        raise serializers.ValidationError(
-            {"value": f"value {value} must be convertible to number: {e}"}
         ) from e
     if not 0 <= value <= out_of:
         raise serializers.ValidationError(
@@ -184,10 +185,6 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
         serializers.ValidationError
     """
     V = serializers.ValidationError
-    if "kind" not in data.keys():
-        raise V({"kind": "Kind is required."})
-    if data["kind"] not in ("absolute", "relative", "neutral"):
-        raise V({"kind": f"{data['kind']} is not a valid kind."})
 
     # Ensure text is not empty or whitespace only
     if str(data["text"]).strip() == "":
@@ -206,10 +203,14 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             __ = f"{q_index} out of range, must be within [1, {max_q_index}]"
             raise V({"question_index": __})
 
+    _validate_value(data.get("value", 0))
     if not quick:
         # check that the "value" lies in [-max_mark, max_mark]
         max_mark = SpecificationService.get_question_max_mark(q_index)
-        _validate_value(data.get("value", 0), max_mark)
+        _validate_value_in_range(data.get("value", 0), max_mark)
+
+    if "kind" not in data.keys():
+        raise V({"kind": "Kind is required."})
 
     if data["kind"] == "absolute":
         if "value" not in data:
@@ -226,13 +227,16 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             # Note: Plom disallows +0, -0 rubrics (#4145)
             raise V({"value": "Relative rubric must not have zero value"})
         if data.get("out_of", 0) != 0:
-            raise V({"out_of": "Relative rubric must omit value or have zero out_of"})
+            raise V({"out_of": "Relative rubric must omit out_of or have zero out_of"})
 
     elif data["kind"] == "neutral":
         if data.get("value", 0) != 0:
             raise V({"value": "Neutral rubric must omit value or have zero value"})
         if data.get("out_of", 0) != 0:
-            raise V({"out_of": "Neutral rubric must omit value or have zero out_of"})
+            raise V({"out_of": "Neutral rubric must omit out_of or have zero out_of"})
+
+    else:
+        raise V({"kind": f"{data['kind']} is not a valid kind."})
 
     # TODO: more validation of fields that the model/form/serializer could/should
     # be doing (see `clean_versions` commented out in Rubrics/models.py)
