@@ -397,7 +397,6 @@ class RubricService:
 
         if "kind" not in incoming_data.keys():
             raise serializers.ValidationError({"kind": "Kind is required."})
-
         if incoming_data["kind"] not in ("absolute", "relative", "neutral"):
             raise serializers.ValidationError(
                 {"kind": f"{incoming_data['kind']} is not a valid kind."}
@@ -510,7 +509,7 @@ class RubricService:
         *,
         _bypass_serializer: bool = False,
     ) -> Rubric:
-        """Create rubrics with less error checking, internal use only.
+        """Create rubrics with less error checking, internal use only, does not check for collisions.
 
         Careful with ``_pypass_serializer``.  I think this stuff was introduced
         to decrease the number of database queries when making many rubrics.

@@ -150,41 +150,23 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises((KeyError, ValueError)):
             RubricService._create_rubric(rub)
 
-    def test_no_kind_ValidationError(self) -> None:
-        """Test for the RubricService.create_rubric() method when 'kind' is invalid.
-
-        This test case checks if the RubricService.create_rubric()
-        method raises a serializers.ValidationError when attempting to create
-        a rubric with an invalid 'kind' value. The 'kind' value
-        is expected to be one of the following: "absolute", "neutral",
-        or "relative".
-        """
+    def test_invalid_kind_ValidationError(self) -> None:
         rub = {
             "kind": "No kind",
-            "value": 0,
             "text": "qwerty",
             "username": "Liam",
             "question_index": 1,
         }
-
-        with self.assertRaises(serializers.ValidationError):
+        with self.assertRaisesRegex(serializers.ValidationError, "not.*valid kind"):
             RubricService.create_rubric(rub)
 
     def test_no_kind_KeyValidationError(self) -> None:
-        """Test ValidationError in RubricService.create_rubric().
-
-        This test case checks if the RubricService.create_rubric()
-        method raises a serializers.ValidationError when attempting to create a rubric
-        without providing the 'kind' key in the rubric dictionary.
-        """
         rub = {
-            "value": 0,
             "text": "qwerty",
             "username": "Liam",
             "question_index": 1,
         }
-
-        with self.assertRaises(serializers.ValidationError):
+        with self.assertRaisesRegex(serializers.ValidationError, "kind.*required"):
             RubricService.create_rubric(rub)
 
     def test_issue4145_relative_rubric_zero_value_is_ValidationError(self) -> None:
