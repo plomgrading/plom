@@ -463,6 +463,17 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["out_of"], data["out_of"])
         self.assertEqual(r["username"], data["username"])
 
+    def test_modify_no_kind(self) -> None:
+        rid = make_example_absolute_rubric()["rid"]
+        data = {
+            "rid": rid,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "kind.*required"):
+            RubricService.modify_rubric(rid, data)
+
     def test_modify_absolute_rubric_change_value_autogen_display(self) -> None:
         rid = make_example_absolute_rubric()["rid"]
 
