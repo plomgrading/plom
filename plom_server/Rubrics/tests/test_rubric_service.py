@@ -306,7 +306,7 @@ class RubricServiceTests_exceptions(TestCase):
             "username": "Liam",
             "question_index": "eleventy seven",
         }
-        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+        with self.assertRaisesRegex(serializers.ValidationError, "must be integer"):
             RubricService.create_rubric(rub)
 
 

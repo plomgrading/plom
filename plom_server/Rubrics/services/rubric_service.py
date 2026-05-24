@@ -323,9 +323,8 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     Of course, we only compare against the "latest" Rubrics; conflicts will
     not be raises based on historical rubric data, that has since changed.
 
-    Annoyingly, this function is currently called BEFORE the fields are
-    validated, meaning we have to use `.get()` even for fields that must
-    be present.
+    This function is currently called BEFORE the fields are fully validated;
+    we may have to use `.get()` even for fields that must be present.
 
     Raises:
         PlomConflict: there is a conflicting Rubric, the message gives the "rid".
@@ -336,7 +335,7 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     queryset = Rubric.objects.filter(
         text=d["text"],
         question_index=d["question_index"],
-        kind=d.get("kind", ""),
+        kind=d["kind"],
         out_of=d.get("out_of", 0),
         # would two identical rubrics except for versions/parameters be ok?
         versions=d.get("versions", ""),
@@ -458,14 +457,9 @@ class RubricService:
             )
 
         # some mangling because client still uses "question"
-        # checking if question_index/question column is present
-        if "question_index" not in incoming_data:
-            if "question" in incoming_data:
+        if "question_index" not in incoming_data.keys():
+            if "question" in incoming_data.keys():
                 incoming_data["question_index"] = incoming_data.pop("question")
-            else:
-                raise serializers.ValidationError(
-                    {"question_index": "question index is required."}
-                )
 
         # Check permissions
         who_can_create_rubrics = Settings.get_who_can_create_rubrics()
@@ -491,7 +485,9 @@ class RubricService:
                 )
             pass
 
-        # TODO: likely has race conditionsl consider refactoring into model/serializer
+        # The full validator will run later: just do enough for the collision checker
+        _validate_rubric_fields(incoming_data, quick=True)
+        # TODO: likely has race conditions consider refactoring into model/serializer
         # or use `get_or_create` later.
         _check_if_rubric_dupes_existing(incoming_data)
 
@@ -652,7 +648,8 @@ class RubricService:
 
         # some mangling because client still uses "question"
         if "question_index" not in data.keys():
-            data["question_index"] = data.pop("question")
+            if "question" in data.keys():
+                data["question_index"] = data.pop("question")
 
         who_can_modify_rubrics = Settings.get_who_can_modify_rubrics()
         if modifying_user is None:
