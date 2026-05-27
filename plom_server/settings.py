@@ -309,7 +309,11 @@ PLOM_MODEL_CACHE = PLOM_BASE_DIR / "model_cache"
 # 0-9-plus-blank probabilities.
 PLOM_DIGIT_SERVICE_URL = os.environ.get("PLOM_DIGIT_SERVICE_URL", "").rstrip("/")
 PLOM_DIGIT_SERVICE_TOKEN = os.environ.get("PLOM_DIGIT_SERVICE_TOKEN", "")
-PLOM_DIGIT_SERVICE_TIMEOUT = float(os.environ.get("PLOM_DIGIT_SERVICE_TIMEOUT", "30"))
+PLOM_DIGIT_SERVICE_TIMEOUT = float(os.environ.get("PLOM_DIGIT_SERVICE_TIMEOUT", "10"))
+PLOM_DIGIT_SERVICE_USE_NDIGITS = (
+    os.environ.get("PLOM_DIGIT_SERVICE_USE_NDIGITS", "1").strip().lower()
+    not in {"0", "false", "no", "off"}
+)
 if not PLOM_DIGIT_SERVICE_URL:
     if not DEBUG:
         raise RuntimeError(
