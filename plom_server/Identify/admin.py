@@ -6,6 +6,7 @@ from django.contrib import admin
 
 from .models import (
     IDPrediction,
+    IDPredictionHeatmap,
     IDReadingHueyTaskTracker,
     IDRectangle,
     PaperIDAction,
@@ -14,6 +15,7 @@ from .models import (
 
 # This makes models appear in the admin interface
 admin.site.register(IDPrediction)
+admin.site.register(IDPredictionHeatmap)
 admin.site.register(IDReadingHueyTaskTracker)
 admin.site.register(IDRectangle)
 admin.site.register(PaperIDAction)

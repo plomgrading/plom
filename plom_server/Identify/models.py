@@ -143,6 +143,15 @@ class IDPrediction(models.Model):
     certainty = models.FloatField(null=False, default=0.0)
 
 
+class IDPredictionHeatmap(models.Model):
+    """Per-paper digit probability heatmap for machine ID prediction."""
+
+    paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
+    probabilities = models.JSONField()
+    time = models.DateTimeField(default=timezone.now)
+    last_update = models.DateTimeField(auto_now=True)
+
+
 class IDReadingHueyTaskTracker(HueyTaskTracker):
     """Support running the ID-box extraction and ID prediction in the background.
 
