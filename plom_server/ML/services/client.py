@@ -217,8 +217,7 @@ class PlomDigitServiceClient:
             )
 
         expected_crop_ids = {
-            (crop.paper_number, crop.digit_position): crop.crop_id
-            for crop in crop_list
+            (crop.paper_number, crop.digit_position): crop.crop_id for crop in crop_list
         }
         results: dict[tuple[int, int], list[float]] = {}
         for prediction in predictions:

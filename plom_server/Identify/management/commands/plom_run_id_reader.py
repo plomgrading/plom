@@ -10,10 +10,14 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import MultipleObjectsReturned
 
-from plom_server.ML.services.client import PlomDigitServiceError
 from plom_server.Rectangles.services import RectangleExtractor
 from plom_server.Papers.services import SpecificationService
-from ...services import IDReaderService
+from ...services import (
+    HEATMAP_MODE_FRESH,
+    HEATMAP_MODE_RESUME,
+    HEATMAP_MODE_REUSE,
+    IDReaderService,
+)
 
 
 class Command(BaseCommand):
@@ -34,18 +38,18 @@ class Command(BaseCommand):
         self.stdout.write(f"Found id box rectangle at = {initial_rectangle}")
         return initial_rectangle
 
-    def run_the_reader(self, user_obj, rectangle: dict[str, float]) -> None:
+    def run_the_reader(
+        self, user_obj, rectangle: dict[str, float], *, heatmap_mode: str
+    ) -> None:
         try:
-            self.stdout.write("Running the ID reader")
+            self.stdout.write(f"Running the ID reader using {heatmap_mode} heatmaps")
             IDReaderService.run_id_reader_in_background_via_huey(
                 user_obj,
                 {1: rectangle},
-                recompute_heatmap=True,
+                heatmap_mode=heatmap_mode,
             )
         except MultipleObjectsReturned:
             raise CommandError("The ID reader is already running.")
-        except PlomDigitServiceError as e:
-            raise CommandError(f"Digit recognition service unavailable: {e}")
 
     def delete_all_ML_ID_predictions(self) -> None:
         self.stdout.write("Deleting all machine learning ID predictions.")
@@ -83,6 +87,16 @@ class Command(BaseCommand):
         )
         parser.add_argument("--run", action="store_true", help="Run the ID-reader")
         parser.add_argument(
+            "--fresh",
+            action="store_true",
+            help="Discard saved digit heatmaps and recompute all papers",
+        )
+        parser.add_argument(
+            "--reuse-heatmaps",
+            action="store_true",
+            help="Do not call the digit service; match using saved digit heatmaps",
+        )
+        parser.add_argument(
             "--delete", action="store_true", help="Delete any predictions"
         )
         parser.add_argument(
@@ -101,11 +115,26 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise CommandError(f"User '{username}' does not exist")
 
+        if kwargs["fresh"] and kwargs["reuse_heatmaps"]:
+            raise CommandError("Choose only one of --fresh or --reuse-heatmaps.")
+        if (kwargs["fresh"] or kwargs["reuse_heatmaps"]) and not kwargs["run"]:
+            raise CommandError(
+                "--fresh and --reuse-heatmaps can only be used with --run."
+            )
+
         if kwargs["rectangle"]:
             the_id_box_rectangle = self.get_the_rectangle()
         elif kwargs["run"]:
             the_id_box_rectangle = self.get_the_rectangle()
-            self.run_the_reader(user_obj, the_id_box_rectangle)
+            if kwargs["fresh"]:
+                heatmap_mode = HEATMAP_MODE_FRESH
+            elif kwargs["reuse_heatmaps"]:
+                heatmap_mode = HEATMAP_MODE_REUSE
+            else:
+                heatmap_mode = HEATMAP_MODE_RESUME
+            self.run_the_reader(
+                user_obj, the_id_box_rectangle, heatmap_mode=heatmap_mode
+            )
         elif kwargs["list"]:
             self.list_predictions()
         elif kwargs["wait"]:

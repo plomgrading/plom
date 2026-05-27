@@ -4,14 +4,12 @@
 # Copyright (C) 2026 Aidan Murphy
 # Copyright (C) 2026 Deep Shah
 
-from django.contrib import messages
 from django.core.exceptions import MultipleObjectsReturned
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
-from plom_server.ML.services.client import PlomDigitServiceError
 from plom_server.Papers.services import SpecificationService, fixedpage_version_count
 from plom_server.Base.base_group_views import (
     IdentifierOrManagerView,
@@ -25,7 +23,7 @@ from plom_server.Rectangles.services import (
     clear_idbox_rectangle,
     RectangleExtractor,
 )
-from .services import IDReaderService, IDProgressService
+from .services import HEATMAP_MODE_RESUME, IDReaderService, IDProgressService
 
 
 class IDPredictionView(IdentifierOrManagerView):
@@ -96,14 +94,12 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
             IDReaderService.run_id_reader_in_background_via_huey(
                 request.user,
                 id_version_rectangles,
-                recompute_heatmap=True,
+                heatmap_mode=HEATMAP_MODE_RESUME,
             )
         except MultipleObjectsReturned:
             # this means a ID predictor task was already running, so
             # we also redirect back to the prediction home
             pass
-        except PlomDigitServiceError as e:
-            messages.error(request, f"Digit recognition service unavailable: {e}")
         return HttpResponseClientRedirect(reverse("id_prediction_home"))
 
 
