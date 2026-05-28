@@ -293,6 +293,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Various django.contrib.auth tools assume the login view is at "/accounts/login/",
 # Plom needs to tell it otherwise
 LOGIN_URL = "/login/"
+prefix = os.environ.get("SCRIPT_NAME", None)
+if prefix:
+    LOGIN_URL = f"{prefix}{LOGIN_URL}"
 # see docs for options: https://docs.djangoproject.com/en/6.0/ref/settings/#session-engine
 # No cache specified so Django will default to process specific RAM, i.e., this doesn't
 # work with gunicorn in production.
