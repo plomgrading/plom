@@ -150,41 +150,109 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises((KeyError, ValueError)):
             RubricService._create_rubric(rub)
 
-    def test_no_kind_ValidationError(self) -> None:
-        """Test for the RubricService.create_rubric() method when 'kind' is invalid.
-
-        This test case checks if the RubricService.create_rubric()
-        method raises a serializers.ValidationError when attempting to create
-        a rubric with an invalid 'kind' value. The 'kind' value
-        is expected to be one of the following: "absolute", "neutral",
-        or "relative".
-        """
+    def test_invalid_kind_ValidationError(self) -> None:
         rub = {
             "kind": "No kind",
-            "value": 0,
             "text": "qwerty",
             "username": "Liam",
             "question_index": 1,
         }
-
-        with self.assertRaises(serializers.ValidationError):
+        with self.assertRaisesRegex(serializers.ValidationError, "not.*valid kind"):
             RubricService.create_rubric(rub)
 
     def test_no_kind_KeyValidationError(self) -> None:
-        """Test ValidationError in RubricService.create_rubric().
-
-        This test case checks if the RubricService.create_rubric()
-        method raises a serializers.ValidationError when attempting to create a rubric
-        without providing the 'kind' key in the rubric dictionary.
-        """
         rub = {
-            "value": 0,
             "text": "qwerty",
             "username": "Liam",
             "question_index": 1,
         }
+        with self.assertRaisesRegex(serializers.ValidationError, "kind.*required"):
+            RubricService.create_rubric(rub)
 
-        with self.assertRaises(serializers.ValidationError):
+    def test_issue4145_relative_rubric_zero_value_is_ValidationError(self) -> None:
+        rub = {
+            "value": 0,
+            "text": "qwerty",
+            "kind": "relative",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "must not.*zero"):
+            RubricService.create_rubric(rub)
+
+    def test_relative_rubric_missing_value(self) -> None:
+        rub = {
+            "text": "qwerty",
+            "kind": "relative",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "requires value"):
+            RubricService.create_rubric(rub)
+
+    def test_absolute_rubric_missing_value(self) -> None:
+        rub = {
+            "out_of": 2,
+            "text": "qwerty",
+            "kind": "absolute",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "requires value"):
+            RubricService.create_rubric(rub)
+
+    def test_neutral_rubric_nonzero_value_is_ValidationError(self) -> None:
+        rub = {
+            "value": 1,
+            "text": "qwerty",
+            "kind": "neutral",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "must.*zero value"):
+            RubricService.create_rubric(rub)
+
+    def test_neutral_rubric_can_have_missing_value(self) -> None:
+        rub = {
+            "text": "qwerty",
+            "kind": "neutral",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        RubricService.create_rubric(rub)
+
+    def test_absolute_rubric_out_of_missing(self) -> None:
+        rub = {
+            "value": 1,
+            "kind": "absolute",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "out_of"):
+            RubricService.create_rubric(rub)
+
+    def test_neutral_rubric_nonzero_out_of_is_ValidationError(self) -> None:
+        rub = {
+            "out_of": 1,
+            "text": "qwerty",
+            "kind": "neutral",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "must.*zero out_of"):
+            RubricService.create_rubric(rub)
+
+    def test_relative_rubric_nonzero_out_of_is_ValidationError(self) -> None:
+        rub = {
+            "value": 1,
+            "out_of": 1,
+            "text": "qwerty",
+            "kind": "relative",
+            "question_index": 1,
+            "username": "Liam",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "must.*zero out_of"):
             RubricService.create_rubric(rub)
 
     def test_rubric_absolute_out_of_range(self) -> None:
@@ -219,6 +287,36 @@ class RubricServiceTests_exceptions(TestCase):
             "rid": 42,
         }
         with self.assertRaisesRegex(serializers.ValidationError, 'not have a "rid"'):
+            RubricService.create_rubric(rub)
+
+    def test_create_rubric_question_index_out_of_range(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 42,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService.create_rubric(rub)
+
+    def test_create_rubric_question_index_non_integer(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": "eleventy seven",
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "must be integer"):
+            RubricService.create_rubric(rub)
+
+    def test_create_rubric_question_index_missing(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+        }
+        VE = serializers.ValidationError
+        with self.assertRaisesRegex(VE, "question.*index.*required"):
             RubricService.create_rubric(rub)
 
 
@@ -394,6 +492,17 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["value"], data["value"])
         self.assertEqual(r["out_of"], data["out_of"])
         self.assertEqual(r["username"], data["username"])
+
+    def test_modify_no_kind(self) -> None:
+        rid = make_example_absolute_rubric()["rid"]
+        data = {
+            "rid": rid,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "kind.*required"):
+            RubricService.modify_rubric(rid, data)
 
     def test_modify_absolute_rubric_change_value_autogen_display(self) -> None:
         rid = make_example_absolute_rubric()["rid"]
