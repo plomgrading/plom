@@ -334,6 +334,9 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
             Also can happen if there are (unexpectedly) multiple collisions,
             which shouldn't be possible.
     """
+    # A quick check to make sure we have fields such as "text" and "kind"
+    validate_rubric_fields(d, quick=True)
+
     # deal with everything except value first
     queryset = Rubric.objects.filter(
         text=d["text"],
@@ -488,8 +491,6 @@ class RubricService:
                 )
             pass
 
-        # The full validator will run later: just do enough for the collision checker
-        validate_rubric_fields(incoming_data, quick=True)
         # TODO: likely has race conditions consider refactoring into model/serializer
         # or use `get_or_create` later.
         _check_if_rubric_dupes_existing(incoming_data)
