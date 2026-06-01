@@ -5,6 +5,12 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from .id_tasks import IdentifyTaskService
-from .id_reader import IDReaderService, IDBoxProcessorService
+from .id_reader import (
+    HEATMAP_MODE_FRESH,
+    HEATMAP_MODE_RESUME,
+    HEATMAP_MODE_REUSE,
+    IDReaderService,
+    IDBoxProcessorService,
+)
 from .id_progress import IDProgressService
 from .id_direct import IDDirectService
