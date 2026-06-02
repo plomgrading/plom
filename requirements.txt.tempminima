@@ -41,6 +41,7 @@ numpy==1.26.4
 opencv-python-headless==4.7.0.72
 Pillow==10.2.0
 pandas==1.5.0
+pyyaml==6.0.3
 pymupdf==1.24.8
 PyMySQL==1.0.2
 pyOpenSSL==23.2.0
