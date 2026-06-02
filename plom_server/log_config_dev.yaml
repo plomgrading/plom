@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Aidan Murphy
+
+version: 1
+formatters:
+  prepend_time:
+    "()": django.utils.log.ServerFormatter
+    # The process is important for huey
+    format: "%(asctime)s [%(process)d] %(levelname)s %(name)s: %(message)s"
+handlers:
+  console:
+    level: DEBUG
+    class: logging.StreamHandler
+    formatter: prepend_time
+# many built-in options offered by Django
+# https://docs.djangoproject.com/en/6.0/ref/logging/#loggers
+loggers:
+  # show 400/500 code responses and server errors
+  django.request:
+    handlers:
+    - console
+    propagate: true
+    level: DEBUG
+  # show suspicious operations
+  django.security:
+    handlers:
+    - console
+    propagate: true
+    level: DEBUG
+  # show log messages in plom_server applications
+  plom_server:
+    handlers:
+    - console
+    level: DEBUG
+  # show log messages for the "launcher" scripts
+  launcher:
+    handlers:
+    - console
+    level: INFO
+  # This overrides a default logger for huey
+  huey:
+    handlers:
+    - console
+    propagate: true
+    # debug is very spammy
+    level: INFO
+  # django.template flags missing context variables when rendering templates
+  # but it also flags {% if error_variable %} existence checks (pretty prevalent).
+  # This floods the logs, so turn on selectively.
+  # django.template:
+  #   handlers:
+  #   - console
+  #   propagate: true
+  #   level: DEBUG
