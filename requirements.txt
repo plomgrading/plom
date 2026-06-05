@@ -25,8 +25,8 @@ pytest-qt==4.5.0
 
 arrow==1.4.0
 canvasapi==3.4.0
-cryptography==46.0.7
-django==5.2.14
+cryptography==48.0.0
+django==5.2.15
 django-braces==1.17.0
 django-filter==25.2
 django-htmx==1.27.0
@@ -38,19 +38,19 @@ django-tables2==3.0.0
 djangorestframework==3.17.1
 exif==1.6.1
 file-magic==0.4.1
-gunicorn==25.3.0
-huggingface-hub==1.10.1
+gunicorn==26.0.0
+huggingface-hub==1.17.0
 imutils==0.5.4
 matplotlib==3.10.9
 model-bakery==1.23.4
-numpy==2.4.4
+numpy==2.4.6
 onnxruntime==1.26.0
 opencv-python-headless==4.13.0.92
 packaging==26.2
 pandas==2.3.3
 passlib==1.7.4
 Pillow==12.2.0
-plom-common==0.21.2
+plom-common==0.21.3
 psycopg[binary]==3.3.4
 pyyaml==6.0.3
 pydyf==0.12.1
