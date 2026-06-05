@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Django messages are now stored serverside, and respect user authentication.
 
 ### Fixed
+* deployment fixes when using prefixes.
 * misc bug fixes and UI tweaks.
 
 
