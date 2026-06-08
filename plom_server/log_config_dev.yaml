@@ -19,13 +19,13 @@ loggers:
   django.request:
     handlers:
     - console
-    propagate: true
+    propagate: false
     level: DEBUG
   # show suspicious operations
   django.security:
     handlers:
     - console
-    propagate: true
+    propagate: false
     level: DEBUG
   # show log messages in plom_server applications
   plom_server:
