@@ -6,7 +6,13 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpRequest, HttpResponse, HttpResponseNotFound, Http404
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseNotFound,
+    Http404,
+    JsonResponse,
+)
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
@@ -317,6 +323,11 @@ class ClusterGroupsView(ManagerRequiredView):
             question_idx=question_idx, version=version
         )
 
+        # papers removed from user-facing clusters, or never assigned to one
+        unclustered_papers = qcs.get_unclustered_paper_nums(
+            question_idx=question_idx, version=version, page_num=page_num
+        )
+
         context = {
             "question_label": SpecificationService.get_question_label(question_idx),
             "question_idx": question_idx,
@@ -327,6 +338,7 @@ class ClusterGroupsView(ManagerRequiredView):
             "cluster_to_priority": cluster_to_priority,
             "cluster_to_tags": cluster_to_tags,
             "merged_count": merged_component_count,
+            "unclustered_papers": unclustered_papers,
             "top": rects["top"],
             "left": rects["left"],
             "right": rects["right"],
@@ -379,6 +391,63 @@ class ClusterBulkDeleteView(ManagerRequiredView):
         qcs.delete_clusters(question_idx, version, clusterIds)
 
         messages.success(request, f"Deleted {len(clusterIds)} clusters")
+        return redirect(next_url)
+
+
+class AssignUnclusteredPapersView(ManagerRequiredView):
+    """Assign unclustered papers to an existing user-facing cluster."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Assign selected paper numbers to a target cluster."""
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        page_num = int(request.POST["page_num"])
+        clusterId = int(request.POST["target_cluster_id"])
+        next_url = request.POST.get("next") or reverse(
+            "cluster_groups", args=[question_idx, version, page_num]
+        )
+
+        paper_nums = list(map(int, request.POST.getlist("paper_nums")))
+        qcs = QuestionClusteringService()
+        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+        try:
+            member_count = qcs.assign_papers_to_cluster(
+                question_idx=question_idx,
+                version=version,
+                clusterId=clusterId,
+                paper_nums=paper_nums,
+            )
+        except EmptySelectedError as err:
+            if is_ajax:
+                return JsonResponse({"ok": False, "message": str(err)}, status=400)
+            messages.error(request, f"Assign failed: {err}")
+        except ObjectDoesNotExist as err:
+            if is_ajax:
+                return JsonResponse({"ok": False, "message": str(err)}, status=404)
+            messages.error(request, f"Assign failed: {err}")
+        else:
+            if is_ajax:
+                unclustered_count = len(
+                    qcs.get_unclustered_paper_nums(
+                        question_idx=question_idx,
+                        version=version,
+                        page_num=page_num,
+                    )
+                )
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "clusterId": clusterId,
+                        "member_count": member_count,
+                        "unclustered_count": unclustered_count,
+                        "paper_nums": paper_nums,
+                    }
+                )
+            messages.success(
+                request, f"Assigned {len(paper_nums)} papers to cluster {clusterId}"
+            )
+
         return redirect(next_url)
 
 

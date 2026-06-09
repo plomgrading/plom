@@ -409,6 +409,85 @@ class QuestionClusteringService:
 
         return result
 
+    def get_unclustered_paper_nums(
+        self, question_idx: int, version: int, page_num: int
+    ) -> list[int]:
+        """Get scanned paper numbers that are not in any user-facing cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            page_num: the page used in the clustering.
+
+        Returns:
+            A sorted list of scanned paper numbers for the page/version that are not
+            currently linked to a user-facing cluster for the question/version.
+        """
+        scanned_paper_nums = set(
+            PaperInfoService.get_paper_numbers_containing_page(
+                page_num, version=version, scanned=True
+            )
+        )
+        clustered_paper_nums = set(
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            )
+            .values_list("paper__paper_number", flat=True)
+            .distinct()
+        )
+
+        return sorted(scanned_paper_nums - clustered_paper_nums)
+
+    @transaction.atomic
+    def assign_papers_to_cluster(
+        self, question_idx: int, version: int, clusterId: int, paper_nums: list[int]
+    ) -> int:
+        """Assign papers to a user-facing cluster.
+
+        If any selected papers are already in another user-facing cluster for the
+        same question/version, they are moved to the target cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            clusterId: the id of the target cluster.
+            paper_nums: the paper numbers to assign to the target cluster.
+
+        Raises:
+            EmptySelectedError: if no paper numbers are provided.
+            ObjectDoesNotExist: if the target cluster does not exist.
+
+        Returns:
+            The count of members in the target cluster after assignment.
+        """
+        if len(paper_nums) == 0:
+            raise EmptySelectedError("attempting to assign 0 papers to cluster.")
+
+        unique_paper_nums = set(paper_nums)
+        target_cluster = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
+        )
+        papers = Paper.objects.filter(paper_number__in=unique_paper_nums)
+
+        clusters = QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
+        )
+        QVClusterLink.objects.filter(
+            qv_cluster__in=clusters,
+            paper__paper_number__in=unique_paper_nums,
+        ).delete()
+
+        target_cluster.paper.add(*papers)
+
+        return target_cluster.paper.count()
+
     def get_cluster_priority(
         self, question_idx: int, version: int, clusterId: int
     ) -> Optional[float]:

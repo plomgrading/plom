@@ -200,7 +200,9 @@
                     </thead>
                     <tbody x-ref="tbody">
                         {% for clusterId, count in cluster_groups %}
-                            <tr data-cluster-id="{{ clusterId }}"
+                            <tr class="cluster-row"
+                                data-cluster-id="{{ clusterId }}"
+                                data-cluster-drop-target="{{ clusterId }}"
                                 :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
                                 <!-- individual row checkbox -->
                                 <td class="text-center align-middle">
@@ -211,7 +213,8 @@
                                            x-model="selected">
                                 </td>
                                 <!-- Preview img col -->
-                                <td class="align-middle">
+                                <td class="align-middle"
+                                    data-preview-cell="{{ clusterId }}">
                                     {% with papers=cluster_to_paper_map|get_item:clusterId %}
                                         {% if papers %}
                                             {% with pn=papers.0 %}
@@ -230,7 +233,8 @@
                                     {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
                                 </td>
                                 <td class="text-center align-middle">{{ clusterId }}</td>
-                                <td class="text-center align-middle">{{ count }}</td>
+                                <td class="text-center align-middle"
+                                    data-member-count="{{ clusterId }}">{{ count }}</td>
                                 {% with priority=cluster_to_priority|get_item:clusterId %}
                                     <!-- Modify class based on whether the priority is set -->
                                     <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
@@ -259,7 +263,132 @@
                 </table>
             </form>
         </div>
+        {% if unclustered_papers %}
+            <div class="card my-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Unclustered</strong>
+                    <span class="d-inline-flex gap-2 align-items-center">
+                        <span class="badge text-bg-primary d-none"
+                              data-drag-count></span>
+                        <span class="badge text-bg-secondary"
+                              data-unclustered-count>{{ unclustered_papers|length }}</span>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'assign_unclustered_papers' %}"
+                          method="post"
+                          data-unclustered-form>
+                        {% csrf_token %}
+                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="page_num" value="{{ page_num }}">
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3 mb-3"
+                             data-unclustered-grid>
+                            {% for pn in unclustered_papers %}
+                                <div class="col unclustered-paper-card"
+                                     data-paper-number="{{ pn }}"
+                                     draggable="true">
+                                    <div class="border rounded p-2 h-100">
+                                        <span class="d-flex align-items-center gap-1">
+                                            <span class="unclustered-drag-handle"
+                                                  title="Drag to a cluster">
+                                                <i class="bi bi-grip-vertical"></i>
+                                            </span>
+                                            <input type="checkbox"
+                                                   id="unclustered-paper-{{ pn }}"
+                                                   class="form-check-input"
+                                                   name="paper_nums"
+                                                   value="{{ pn }}">
+                                            <label class="small mb-0"
+                                                   for="unclustered-paper-{{ pn }}">Paper {{ pn }}</label>
+                                        </span>
+                                        <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                             class="img-fluid rounded d-block mt-2 mx-auto"
+                                             style="max-height:100px"
+                                             loading="lazy"
+                                             alt="paper {{ pn }}"
+                                             onerror="imgError(this)">
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="d-flex align-items-end gap-2 flex-wrap">
+                            <div>
+                                <label for="target-cluster-id" class="form-label mb-1">Assign selected to</label>
+                                <select id="target-cluster-id"
+                                        class="form-select"
+                                        name="target_cluster_id"
+                                        required>
+                                    {% for clusterId, count in cluster_groups %}
+                                        <option value="{{ clusterId }}"
+                                                data-cluster-option="{{ clusterId }}"
+                                                data-cluster-count="{{ count }}">
+                                            Cluster {{ clusterId }} ({{ count }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Assign</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
     </div>
+    <style>
+        .unclustered-drag-handle {
+            color: var(--bs-secondary-color);
+            cursor: grab;
+            display: inline-flex;
+        }
+
+        .unclustered-paper-card {
+            cursor: grab;
+        }
+
+        .unclustered-paper-card input,
+        .unclustered-paper-card label {
+            cursor: auto;
+        }
+
+        .unclustered-paper-card.sortable-chosen > div {
+            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+        }
+
+        .unclustered-paper-card.is-assigning {
+            opacity: .55;
+            pointer-events: none;
+        }
+
+        .unclustered-paper-card.is-bulk-dragged > div {
+            outline: 2px solid rgba(var(--bs-primary-rgb), .18);
+            outline-offset: 2px;
+        }
+
+        .dragging-unclustered .cluster-row {
+            cursor: copy;
+        }
+
+        .cluster-row.drop-target-hover > td {
+            background-color: rgba(var(--bs-primary-rgb), .08);
+            box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .35);
+            transition: background-color .12s ease, box-shadow .12s ease;
+        }
+
+        .cluster-row.is-assigning > td {
+            background-color: rgba(var(--bs-primary-rgb), .05);
+        }
+
+        .cluster-row.assignment-complete > td {
+            animation: assignmentPulse .55s ease;
+        }
+
+        @keyframes assignmentPulse {
+            0% { background-color: rgba(var(--bs-success-rgb), .10); }
+            100% { background-color: transparent; }
+        }
+    </style>
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('clusterOrdering', () => ({
@@ -337,8 +466,196 @@
                 });
 
 
+            initUnclusteredDragAndDrop();
             });
 
+
+        function initUnclusteredDragAndDrop() {
+            const form = document.querySelector('[data-unclustered-form]');
+            const sourceGrid = document.querySelector('[data-unclustered-grid]');
+            if (!form || !sourceGrid) return;
+
+            const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            const assignUrl = form.getAttribute('action');
+            const baseFields = {
+                question_idx: form.querySelector('input[name="question_idx"]').value,
+                version: form.querySelector('input[name="version"]').value,
+                page_num: form.querySelector('input[name="page_num"]').value,
+                next: form.querySelector('input[name="next"]').value,
+            };
+
+            let draggedCard = null;
+            let draggedCards = [];
+
+            sourceGrid.querySelectorAll('.unclustered-paper-card').forEach(card => {
+                card.addEventListener('dragstart', event => {
+                    draggedCards = getCardsForDrag(card);
+                    draggedCard = draggedCards[0];
+                    draggedCards.forEach(item => item.classList.add('is-bulk-dragged'));
+                    updateDragCount(draggedCards.length);
+                    card.classList.add('sortable-chosen');
+                    document.body.classList.add('dragging-unclustered');
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData(
+                        'text/plain',
+                        draggedCards.map(item => item.dataset.paperNumber).join(',')
+                    );
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('sortable-chosen');
+                    draggedCards.forEach(item => item.classList.remove('is-bulk-dragged'));
+                    updateDragCount(0);
+                    document.body.classList.remove('dragging-unclustered');
+                    document.querySelectorAll('.cluster-row.drop-target-hover').forEach(row => {
+                        row.classList.remove('drop-target-hover');
+                    });
+                    draggedCard = null;
+                    draggedCards = [];
+                });
+            });
+
+            document.querySelectorAll('[data-cluster-drop-target]').forEach(row => {
+                row.addEventListener('dragover', event => {
+                    if (!draggedCard) return;
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                    row.classList.add('drop-target-hover');
+                });
+
+                row.addEventListener('dragleave', event => {
+                    if (!row.contains(event.relatedTarget)) {
+                        row.classList.remove('drop-target-hover');
+                    }
+                });
+
+                row.addEventListener('drop', event => {
+                    if (!draggedCard) return;
+                    event.preventDefault();
+                    row.classList.remove('drop-target-hover');
+                    assignDraggedPaper({
+                        assignUrl,
+                        baseFields,
+                        csrfToken,
+                        items: draggedCards,
+                        row,
+                        targetClusterId: row.dataset.clusterDropTarget,
+                    });
+                });
+            });
+        }
+
+        function getCardsForDrag(card) {
+            const checkbox = card.querySelector('input[name="paper_nums"]');
+            if (!checkbox?.checked) return [card];
+
+            const checkedCards = Array.from(
+                document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
+            )
+                .map(input => input.closest('.unclustered-paper-card'))
+                .filter(Boolean);
+
+            return checkedCards.length ? checkedCards : [card];
+        }
+
+        function updateDragCount(count) {
+            const badge = document.querySelector('[data-drag-count]');
+            if (!badge) return;
+
+            if (count > 1) {
+                badge.textContent = `${count} selected`;
+                badge.classList.remove('d-none');
+            } else {
+                badge.textContent = '';
+                badge.classList.add('d-none');
+            }
+        }
+
+        async function assignDraggedPaper({
+            assignUrl,
+            baseFields,
+            csrfToken,
+            items,
+            row,
+            targetClusterId,
+        }) {
+            const cards = items.length ? items : [];
+            const paperNumbers = cards.map(item => item.dataset.paperNumber);
+            const formData = new FormData();
+            Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
+            formData.append('target_cluster_id', targetClusterId);
+            paperNumbers.forEach(paperNumber => formData.append('paper_nums', paperNumber));
+
+            cards.forEach(item => item.classList.add('is-assigning'));
+            row.classList.add('is-assigning');
+
+            try {
+                const response = await fetch(assignUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch {
+                    throw new Error('Could not assign paper.');
+                }
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.message || 'Could not assign paper.');
+                }
+
+                updateClusterAssignmentUI(data, cards, targetClusterId);
+            } catch (error) {
+                cards.forEach(item => item.classList.remove('is-assigning'));
+                window.alert(error.message);
+            } finally {
+                row.classList.remove('is-assigning');
+            }
+        }
+
+        function updateClusterAssignmentUI(data, items, targetClusterId) {
+            const countCell = document.querySelector(`[data-member-count="${targetClusterId}"]`);
+            if (countCell) countCell.textContent = data.member_count;
+
+            const option = document.querySelector(`[data-cluster-option="${targetClusterId}"]`);
+            if (option) {
+                option.dataset.clusterCount = data.member_count;
+                option.textContent = `Cluster ${targetClusterId} (${data.member_count})`;
+            }
+
+            const unclusteredCount = document.querySelector('[data-unclustered-count]');
+            if (unclusteredCount) unclusteredCount.textContent = data.unclustered_count;
+
+            const previewCell = document.querySelector(`[data-preview-cell="${targetClusterId}"]`);
+            if (previewCell && !previewCell.querySelector('img')) {
+                const item = items[0];
+                const itemImage = item.querySelector('img');
+                if (itemImage) {
+                    const previewImage = itemImage.cloneNode(true);
+                    previewImage.className = 'img-fluid rounded mx-auto d-block';
+                    previewImage.style.maxHeight = '100px';
+                    previewImage.alt = `cluster ${targetClusterId}`;
+                    previewCell.appendChild(previewImage);
+                }
+            }
+
+            const row = document.querySelector(`tr[data-cluster-id="${targetClusterId}"]`);
+            if (row) {
+                row.classList.remove('assignment-complete');
+                void row.offsetWidth;
+                row.classList.add('assignment-complete');
+            }
+
+            const unclusteredCard = document.querySelector('[data-unclustered-form]')?.closest('.card');
+            items.forEach(item => item.remove());
+            if (data.unclustered_count === 0 && unclusteredCard) {
+                unclusteredCard.remove();
+            }
+        }
 
         function imgError(image) {
             const span = document.createElement('span');
