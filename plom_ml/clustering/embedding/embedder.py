@@ -3,6 +3,7 @@
 # Copyright (C) 2026 Colin B. Macdonald
 
 from abc import ABC, abstractmethod
+import os
 
 import numpy as np
 from PIL import Image
@@ -186,7 +187,10 @@ class TrOCREmbedder(Embedder):
     def __init__(self, model_path: str):
         # Load processor for converting images
         self.processor = TrOCRProcessor.from_pretrained(
-            "fhswf/TrOCR_Math_handwritten", use_fast=True
+            "fhswf/TrOCR_Math_handwritten",
+            use_fast=True,
+            local_files_only=os.environ.get("PLOM_CLUSTERING_LOCAL_FILES_ONLY")
+            == "1",
         )
 
         self.model = ort.InferenceSession(

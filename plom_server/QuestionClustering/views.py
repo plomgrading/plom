@@ -14,6 +14,7 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from plom_server.Base.base_group_views import ManagerRequiredView
@@ -449,6 +450,94 @@ class AssignUnclusteredPapersView(ManagerRequiredView):
             )
 
         return redirect(next_url)
+
+
+class CreateClusterFromUnclusteredPapersView(ManagerRequiredView):
+    """Create a new user-facing cluster from selected unclustered papers."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Create a new cluster from selected paper numbers."""
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        page_num = int(request.POST["page_num"])
+        next_url = request.POST.get("next") or reverse(
+            "cluster_groups", args=[question_idx, version, page_num]
+        )
+
+        paper_nums = list(map(int, request.POST.getlist("paper_nums")))
+        qcs = QuestionClusteringService()
+        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+        try:
+            clusterId, member_count = qcs.create_cluster_from_papers(
+                question_idx=question_idx,
+                version=version,
+                page_num=page_num,
+                paper_nums=paper_nums,
+            )
+        except EmptySelectedError as err:
+            if is_ajax:
+                return JsonResponse({"ok": False, "message": str(err)}, status=400)
+            messages.error(request, f"Create cluster failed: {err}")
+        else:
+            if is_ajax:
+                unclustered_count = len(
+                    qcs.get_unclustered_paper_nums(
+                        question_idx=question_idx,
+                        version=version,
+                        page_num=page_num,
+                    )
+                )
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "clusterId": clusterId,
+                        "member_count": member_count,
+                        "unclustered_count": unclustered_count,
+                        "paper_nums": paper_nums,
+                        "view_members_url": reverse(
+                            "clustered_papers",
+                            args=[question_idx, version, page_num, clusterId],
+                        ),
+                        "tag_html": render_to_string(
+                            "QuestionClustering/fragments/clustering_tag_cell.html",
+                            {
+                                "clusterId": clusterId,
+                                "tags": set(),
+                                "question_idx": question_idx,
+                                "version": version,
+                            },
+                            request=request,
+                        ),
+                    }
+                )
+            messages.success(
+                request, f"Created cluster {clusterId} from {len(paper_nums)} papers"
+            )
+
+        return redirect(next_url)
+
+
+class SuggestUnclusteredPapersView(ManagerRequiredView):
+    """Suggest target clusters for currently unclustered papers."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Return suggested cluster assignments without applying them."""
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        page_num = int(request.POST["page_num"])
+
+        qcs = QuestionClusteringService()
+        try:
+            suggestions = qcs.suggest_clusters_for_unclustered_papers(
+                question_idx=question_idx,
+                version=version,
+                page_num=page_num,
+            )
+        except ValueError as err:
+            return JsonResponse({"ok": False, "message": str(err)}, status=400)
+
+        return JsonResponse({"ok": True, "suggestions": suggestions})
 
 
 class ClusterBulkResetView(ManagerRequiredView):

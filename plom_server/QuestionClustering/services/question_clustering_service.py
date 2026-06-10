@@ -3,7 +3,13 @@
 # Copyright (C) 2026 Colin B. Macdonald
 
 from collections import defaultdict
+from importlib import resources
+import os
+from pathlib import Path
 from typing import Any, Mapping, Optional
+
+import numpy as np
+import yaml
 
 # django
 from django.forms.models import model_to_dict
@@ -11,7 +17,7 @@ from django.db import transaction
 from django_huey import db_task
 import huey
 import huey.api
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.db.models import QuerySet
 
 # plom db models
@@ -46,6 +52,7 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
 )
 
 # plom_ml
+import plom_ml.clustering.model
 from plom_ml.clustering.pipeline.clustering_pipeline import ClusteringPipeline
 from plom_ml.clustering.preprocessing.preprocessor import DiffProcessor
 
@@ -487,6 +494,290 @@ class QuestionClusteringService:
         target_cluster.paper.add(*papers)
 
         return target_cluster.paper.count()
+
+    @transaction.atomic
+    def create_cluster_from_papers(
+        self, question_idx: int, version: int, page_num: int, paper_nums: list[int]
+    ) -> tuple[int, int]:
+        """Create a new user-facing cluster from selected papers.
+
+        Args:
+            question_idx: question index of the clustering context.
+            version: version of the clustering context.
+            page_num: page used in the clustering.
+            paper_nums: paper numbers to put in the new cluster.
+
+        Raises:
+            EmptySelectedError: if no paper numbers are provided.
+
+        Returns:
+            A tuple of (new cluster id, member count).
+        """
+        if len(paper_nums) == 0:
+            raise EmptySelectedError("attempting to create cluster from 0 papers.")
+
+        unique_paper_nums = set(paper_nums)
+        next_cluster_id = (
+            QVCluster.objects.filter(question_idx=question_idx, version=version)
+            .aggregate(max_cluster_id=Max("clusterId"))
+            .get("max_cluster_id")
+        )
+        next_cluster_id = 0 if next_cluster_id is None else next_cluster_id + 1
+
+        rect = self.get_corners_used_for_clustering(question_idx, version)
+        new_cluster = QVCluster.objects.create(
+            question_idx=question_idx,
+            version=version,
+            clusterId=next_cluster_id,
+            type=ClusteringGroupType.user_facing,
+            page_num=page_num,
+            top=rect["top"],
+            left=rect["left"],
+            bottom=rect["bottom"],
+            right=rect["right"],
+        )
+        papers = Paper.objects.filter(paper_number__in=unique_paper_nums)
+
+        clusters = QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
+        ).exclude(pk=new_cluster.pk)
+        QVClusterLink.objects.filter(
+            qv_cluster__in=clusters,
+            paper__paper_number__in=unique_paper_nums,
+        ).delete()
+
+        new_cluster.paper.add(*papers)
+
+        return next_cluster_id, new_cluster.paper.count()
+
+    def suggest_clusters_for_unclustered_papers(
+        self, question_idx: int, version: int, page_num: int
+    ) -> list[dict[str, Any]]:
+        """Suggest a target cluster for each currently unclustered paper.
+
+        The suggestion uses the same model embeddings as the original
+        clustering job, comparing each unclustered paper to the centroid
+        embedding for each existing user-facing cluster. The output is advisory
+        only; callers must still explicitly apply the suggested assignments.
+
+        This method does not download model weights. If the relevant model is
+        not already present in ``model_cache``, it raises ValueError so the UI
+        can ask the user to run the clustering job/model setup first.
+
+        Args:
+            question_idx: question index of the clustering context.
+            version: version of the clustering context.
+            page_num: page used in the clustering.
+
+        Returns:
+            A list of suggestions sorted by paper number. Each suggestion has
+            the keys: paper_num, clusterId, confidence, distance, and gap.
+        """
+        unclustered_paper_nums = self.get_unclustered_paper_nums(
+            question_idx=question_idx, version=version, page_num=page_num
+        )
+        if not unclustered_paper_nums:
+            return []
+
+        clustering_model = self.get_clustering_model_type(question_idx, version)
+        missing_weight_paths = self._missing_clustering_model_weight_paths(
+            clustering_model
+        )
+        if missing_weight_paths:
+            missing = ", ".join(str(path) for path in missing_weight_paths)
+            raise ValueError(
+                "Cannot suggest clusters because the clustering model weights "
+                f"are not available locally: {missing}"
+            )
+
+        clusters = (
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            )
+            .prefetch_related("paper")
+            .order_by("clusterId")
+        )
+        if not clusters:
+            return []
+
+        rect = self.get_corners_used_for_clustering(question_idx, version)
+        rex = RectangleExtractor(version, page_num)
+        ref = rex.get_cropped_ref_img(rect)
+        preprocessor = DiffProcessor(
+            dilation_strength=1,
+            invert=clustering_model == ClusteringModelType.HME,
+        )
+        clustering_strategy = self._get_local_clustering_strategy(clustering_model)
+        vector_cache: dict[int, np.ndarray | None] = {}
+
+        def get_vector(paper_num: int) -> np.ndarray | None:
+            if paper_num not in vector_cache:
+                scanned = rex.get_cropped_scanned_img_or_none(paper_num, rect)
+                if scanned is None:
+                    vector_cache[paper_num] = None
+                else:
+                    processed = preprocessor.process({"ref": ref, "scanned": scanned})
+                    vector_cache[paper_num] = clustering_strategy.get_embeddings(
+                        processed
+                    )
+            return vector_cache[paper_num]
+
+        cluster_centroids: list[tuple[int, np.ndarray]] = []
+        for cluster in clusters:
+            member_vectors = [
+                vector
+                for vector in (
+                    get_vector(paper.paper_number) for paper in cluster.paper.all()
+                )
+                if vector is not None
+            ]
+            if member_vectors:
+                cluster_centroids.append(
+                    (cluster.clusterId, np.mean(member_vectors, axis=0))
+                )
+
+        if not cluster_centroids:
+            return []
+
+        suggestions = []
+        for paper_num in unclustered_paper_nums:
+            vector = get_vector(paper_num)
+            if vector is None:
+                continue
+
+            distances = sorted(
+                (
+                    (
+                        clusterId,
+                        self._embedding_distance(vector, centroid, clustering_model),
+                    )
+                    for clusterId, centroid in cluster_centroids
+                ),
+                key=lambda item: item[1],
+            )
+            clusterId, distance = distances[0]
+            next_distance = distances[1][1] if len(distances) > 1 else None
+            gap = self._suggestion_distance_gap(distance, next_distance)
+            suggestions.append(
+                {
+                    "paper_num": paper_num,
+                    "clusterId": clusterId,
+                    "confidence": self._suggestion_confidence(gap),
+                    "distance": round(distance, 4),
+                    "gap": round(gap, 4),
+                }
+            )
+
+        return suggestions
+
+    def get_clustering_model_type(
+        self, question_idx: int, version: int
+    ) -> ClusteringModelType:
+        """Return the clustering model used for a question/version pair."""
+        chore = (
+            QuestionClusteringChore.objects.filter(
+                question_idx=question_idx,
+                version=version,
+            )
+            .order_by("-id")
+            .first()
+        )
+        if chore is None:
+            raise ValueError(
+                f"No clustering job found for question {question_idx}, v{version}."
+            )
+        return ClusteringModelType(chore.clustering_model)
+
+    @staticmethod
+    def _embedding_distance(
+        vector: np.ndarray,
+        centroid: np.ndarray,
+        clustering_model: ClusteringModelType,
+    ) -> float:
+        """Distance metric matching the original clustering strategy."""
+        if clustering_model == ClusteringModelType.MCQ:
+            denominator = np.linalg.norm(vector) * np.linalg.norm(centroid)
+            if denominator == 0:
+                return 1.0
+            cosine_similarity = float(np.dot(vector, centroid) / denominator)
+            return 1.0 - cosine_similarity
+        return float(np.linalg.norm(vector - centroid))
+
+    @staticmethod
+    def _missing_clustering_model_weight_paths(
+        clustering_model: ClusteringModelType,
+    ) -> list[Path]:
+        """Return model weight paths that are required but not available locally."""
+        config_path = resources.files(plom_ml.clustering.model) / "model_config.yaml"
+        with config_path.open("r") as f:
+            config = yaml.safe_load(f)
+
+        if clustering_model == ClusteringModelType.MCQ:
+            filenames = [config["models"]["mcq"]["filename"]]
+        elif clustering_model == ClusteringModelType.HME:
+            filenames = [
+                config["models"]["hme_symbolic"]["filename"],
+                config["models"]["hme_trocr"]["filename"],
+            ]
+        else:
+            raise ValueError(f"Unsupported clustering model: {clustering_model}")
+
+        paths = [Path("model_cache") / filename for filename in filenames]
+        return [path for path in paths if not path.exists()]
+
+    @staticmethod
+    def _get_local_clustering_strategy(clustering_model: ClusteringModelType):
+        """Load a clustering strategy without allowing Hugging Face downloads."""
+        previous_offline_value = os.environ.get("TRANSFORMERS_OFFLINE")
+        previous_hf_offline_value = os.environ.get("HF_HUB_OFFLINE")
+        previous_local_only_value = os.environ.get("PLOM_CLUSTERING_LOCAL_FILES_ONLY")
+        os.environ["TRANSFORMERS_OFFLINE"] = "1"
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ["PLOM_CLUSTERING_LOCAL_FILES_ONLY"] = "1"
+        try:
+            return get_ClusteringStrategy(clustering_model)
+        except Exception as err:
+            raise ValueError(
+                "Cannot suggest clusters because the clustering model assets "
+                "are not available locally."
+            ) from err
+        finally:
+            if previous_offline_value is None:
+                os.environ.pop("TRANSFORMERS_OFFLINE", None)
+            else:
+                os.environ["TRANSFORMERS_OFFLINE"] = previous_offline_value
+            if previous_hf_offline_value is None:
+                os.environ.pop("HF_HUB_OFFLINE", None)
+            else:
+                os.environ["HF_HUB_OFFLINE"] = previous_hf_offline_value
+            if previous_local_only_value is None:
+                os.environ.pop("PLOM_CLUSTERING_LOCAL_FILES_ONLY", None)
+            else:
+                os.environ["PLOM_CLUSTERING_LOCAL_FILES_ONLY"] = (
+                    previous_local_only_value
+                )
+
+    @staticmethod
+    def _suggestion_distance_gap(
+        nearest_distance: float, next_distance: float | None
+    ) -> float:
+        """Return the relative gap between the best and runner-up match."""
+        if next_distance is None or next_distance == 0:
+            return 0.0
+        return max((next_distance - nearest_distance) / next_distance, 0.0)
+
+    @staticmethod
+    def _suggestion_confidence(gap: float) -> str:
+        """Map distance separation to a human-readable confidence level."""
+        if gap >= 0.35:
+            return "high"
+        if gap >= 0.15:
+            return "medium"
+        return "low"
 
     def get_cluster_priority(
         self, question_idx: int, version: int, clusterId: int

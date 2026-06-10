@@ -7,6 +7,7 @@
 import yaml
 from abc import abstractmethod
 from importlib import resources
+import os
 from pathlib import Path
 from typing import Mapping
 
@@ -23,6 +24,11 @@ from plom_ml.clustering.embedding.embedder import (
     MCQEmbedder,
 )
 from plom_ml.clustering.exceptions import MissingEmbedderException, NoThresholdFound
+
+
+def _local_files_only() -> bool:
+    """Whether model asset loading should avoid network access."""
+    return os.environ.get("PLOM_CLUSTERING_LOCAL_FILES_ONLY") == "1"
 
 
 def get_best_clustering(
@@ -214,11 +220,16 @@ class HMEClusteringStrategy(ClusteringStrategy):
         trocr_model_path = Path(f"model_cache/{trocr_model_filename}")
 
         if not symbolic_model_path.exists():
+            if _local_files_only():
+                raise FileNotFoundError(
+                    f"Missing local HME symbolic model: {symbolic_model_path}"
+                )
             print("Downloading HME symbolic weight")
             hf_hub_download(
                 repo_id=config["models"]["hme_symbolic"]["repo_id"],
                 filename=symbolic_model_filename,
                 local_dir=symbolic_model_path.parent,
+                local_files_only=_local_files_only(),
             )
             print(
                 "HME symbolic model has been downloaded, saved at: ",
@@ -226,11 +237,16 @@ class HMEClusteringStrategy(ClusteringStrategy):
             )
 
         if not trocr_model_path.exists():
+            if _local_files_only():
+                raise FileNotFoundError(
+                    f"Missing local HME TrOCR model: {trocr_model_path}"
+                )
             print("Downloading trOCR weight")
             hf_hub_download(
                 repo_id=config["models"]["hme_trocr"]["repo_id"],
                 filename=trocr_model_filename,
                 local_dir=trocr_model_path.parent,
+                local_files_only=_local_files_only(),
             )
             print(
                 "HME symbolic model has been downloaded, saved at: ", trocr_model_path
@@ -319,11 +335,14 @@ class MCQClusteringStrategy(ClusteringStrategy):
 
         # download weight if the weight is not present
         if not Path(weight_path).exists():
+            if _local_files_only():
+                raise FileNotFoundError(f"Missing local MCQ model: {weight_path}")
             print("Downloading MCQ clusterer weight")
             hf_hub_download(
                 repo_id=config["models"]["mcq"]["repo_id"],
                 filename=weight_filename,
                 local_dir=weight_path.parent,
+                local_files_only=_local_files_only(),
             )
             print("Model has been downloaded, saved at: ", weight_path)
 

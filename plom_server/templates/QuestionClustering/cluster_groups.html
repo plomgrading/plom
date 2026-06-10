@@ -277,6 +277,8 @@
                 <div class="card-body">
                     <form action="{% url 'assign_unclustered_papers' %}"
                           method="post"
+                          data-create-url="{% url 'create_cluster_from_unclustered_papers' %}"
+                          data-suggest-url="{% url 'suggest_unclustered_papers' %}"
                           data-unclustered-form>
                         {% csrf_token %}
                         <input type="hidden" name="question_idx" value="{{ question_idx }}">
@@ -330,7 +332,46 @@
                                 </select>
                             </div>
                             <button type="submit" class="btn btn-primary">Assign</button>
+                            <button type="button"
+                                    class="btn btn-outline-success"
+                                    data-create-cluster>
+                                Create new cluster
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-primary"
+                                    data-suggest-clusters>
+                                Suggest clusters
+                            </button>
                         </div>
+                        <div class="mt-3 d-none" data-suggestions-panel>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-2">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" data-sort-method="none">&nbsp;</th>
+                                            <th>Paper</th>
+                                            <th>Cluster</th>
+                                            <th>Confidence</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-suggestions-body></tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button"
+                                        class="btn btn-primary btn-sm"
+                                        data-apply-suggestions>
+                                    Apply selected
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        data-clear-suggestions>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert alert-info py-2 mt-3 mb-0 d-none"
+                             data-suggestions-status></div>
                     </form>
                 </div>
             </div>
@@ -455,10 +496,10 @@
 
             // Master checkbox that selects all checkboxes
             const master = document.querySelector('#master-checkbox');
-            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
 
             master.addEventListener('change', function() {
                     const checked = this.checked;
+                    const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
                     checkboxes.forEach(cb => {
                         cb.checked = checked;
                         cb.dispatchEvent(new Event('change'));
@@ -477,6 +518,8 @@
 
             const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
             const assignUrl = form.getAttribute('action');
+            const createUrl = form.dataset.createUrl;
+            const suggestUrl = form.dataset.suggestUrl;
             const baseFields = {
                 question_idx: form.querySelector('input[name="question_idx"]').value,
                 version: form.querySelector('input[name="version"]').value,
@@ -486,6 +529,39 @@
 
             let draggedCard = null;
             let draggedCards = [];
+
+            const wireClusterDropTarget = row => {
+                if (row.dataset.clusterDropWired) return;
+                row.dataset.clusterDropWired = 'true';
+
+                row.addEventListener('dragover', event => {
+                    if (!draggedCard) return;
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                    row.classList.add('drop-target-hover');
+                });
+
+                row.addEventListener('dragleave', event => {
+                    if (!row.contains(event.relatedTarget)) {
+                        row.classList.remove('drop-target-hover');
+                    }
+                });
+
+                row.addEventListener('drop', event => {
+                    if (!draggedCard) return;
+                    event.preventDefault();
+                    row.classList.remove('drop-target-hover');
+                    assignDraggedPaper({
+                        assignUrl,
+                        baseFields,
+                        csrfToken,
+                        items: draggedCards,
+                        row,
+                        targetClusterId: row.dataset.clusterDropTarget,
+                    });
+                });
+            };
+            window.plomWireClusterDropTarget = wireClusterDropTarget;
 
             sourceGrid.querySelectorAll('.unclustered-paper-card').forEach(card => {
                 card.addEventListener('dragstart', event => {
@@ -515,33 +591,36 @@
                 });
             });
 
+            document.querySelector('[data-suggest-clusters]')?.addEventListener('click', () => {
+                fetchClusterSuggestions({
+                    suggestUrl,
+                    baseFields,
+                    csrfToken,
+                });
+            });
+
+            document.querySelector('[data-apply-suggestions]')?.addEventListener('click', () => {
+                applySelectedSuggestions({
+                    assignUrl,
+                    baseFields,
+                    csrfToken,
+                });
+            });
+
+            document.querySelector('[data-create-cluster]')?.addEventListener('click', () => {
+                createClusterFromSelected({
+                    createUrl,
+                    baseFields,
+                    csrfToken,
+                });
+            });
+
+            document.querySelector('[data-clear-suggestions]')?.addEventListener('click', () => {
+                clearSuggestions();
+            });
+
             document.querySelectorAll('[data-cluster-drop-target]').forEach(row => {
-                row.addEventListener('dragover', event => {
-                    if (!draggedCard) return;
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = 'move';
-                    row.classList.add('drop-target-hover');
-                });
-
-                row.addEventListener('dragleave', event => {
-                    if (!row.contains(event.relatedTarget)) {
-                        row.classList.remove('drop-target-hover');
-                    }
-                });
-
-                row.addEventListener('drop', event => {
-                    if (!draggedCard) return;
-                    event.preventDefault();
-                    row.classList.remove('drop-target-hover');
-                    assignDraggedPaper({
-                        assignUrl,
-                        baseFields,
-                        csrfToken,
-                        items: draggedCards,
-                        row,
-                        targetClusterId: row.dataset.clusterDropTarget,
-                    });
-                });
+                wireClusterDropTarget(row);
             });
         }
 
@@ -569,6 +648,320 @@
                 badge.textContent = '';
                 badge.classList.add('d-none');
             }
+        }
+
+        function getSelectedUnclusteredCards() {
+            return Array.from(
+                document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
+            )
+                .map(input => input.closest('.unclustered-paper-card'))
+                .filter(Boolean);
+        }
+
+        async function createClusterFromSelected({
+            createUrl,
+            baseFields,
+            csrfToken,
+        }) {
+            const button = document.querySelector('[data-create-cluster]');
+            const cards = getSelectedUnclusteredCards();
+            if (cards.length === 0) {
+                showSuggestionStatus('Select at least one unclustered paper.', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
+            cards.forEach(card => formData.append('paper_nums', card.dataset.paperNumber));
+
+            cards.forEach(card => card.classList.add('is-assigning'));
+            showSuggestionStatus('');
+            if (button) button.disabled = true;
+
+            try {
+                const response = await fetch(createUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch {
+                    throw new Error('Could not create cluster.');
+                }
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.message || 'Could not create cluster.');
+                }
+
+                insertClusterRow(data, cards);
+                addClusterOption(data.clusterId, data.member_count);
+                removeUnclusteredItems(data, cards);
+                showSuggestionStatus(`Created cluster ${data.clusterId}.`, 'success');
+            } catch (error) {
+                cards.forEach(card => card.classList.remove('is-assigning'));
+                showSuggestionStatus(error.message, 'danger');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function insertClusterRow(data, items) {
+            const tbody = document.querySelector('[x-ref="tbody"]');
+            if (!tbody || document.querySelector(`tr[data-cluster-id="${data.clusterId}"]`)) return;
+
+            const row = document.createElement('tr');
+            row.className = 'cluster-row';
+            row.dataset.clusterId = data.clusterId;
+            row.dataset.clusterDropTarget = data.clusterId;
+            row.setAttribute(
+                ':class',
+                `{ 'table-primary': selected.includes('${data.clusterId}') }`
+            );
+
+            row.innerHTML = `
+                <td class="text-center align-middle">
+                    <input type="checkbox"
+                           name="selected_clusters"
+                           value="${data.clusterId}"
+                           class="form-check-input"
+                           x-model="selected">
+                </td>
+                <td class="align-middle" data-preview-cell="${data.clusterId}"></td>
+                <td class="text-center align-middle">0</td>
+                <td class="text-center align-middle">${data.clusterId}</td>
+                <td class="text-center align-middle" data-member-count="${data.clusterId}">${data.member_count}</td>
+                <td class="text-center align-middle unset-priority">Unset</td>
+                <td class="text-center align-middle" id="tag-${data.clusterId}"></td>
+                <td class="align-middle text-center">
+                    <a class="btn btn-success btn-sm" href="${data.view_members_url}">
+                        View members
+                    </a>
+                </td>
+                <td class="text-center align-middle drag-handle" style="cursor:move;">
+                    <i class="bi bi-list"></i>
+                </td>
+            `;
+
+            const previewCell = row.querySelector(`[data-preview-cell="${data.clusterId}"]`);
+            const itemImage = items[0]?.querySelector('img');
+            if (previewCell && itemImage) {
+                const previewImage = itemImage.cloneNode(true);
+                previewImage.className = 'img-fluid rounded mx-auto d-block';
+                previewImage.style.maxHeight = '100px';
+                previewImage.alt = `cluster ${data.clusterId}`;
+                previewCell.appendChild(previewImage);
+            }
+
+            row.querySelector(`#tag-${data.clusterId}`).innerHTML = data.tag_html || 'No tags';
+            tbody.appendChild(row);
+            window.plomWireClusterDropTarget?.(row);
+            window.Alpine?.initTree?.(row);
+
+            row.classList.add('assignment-complete');
+        }
+
+        function addClusterOption(clusterId, memberCount) {
+            const select = document.getElementById('target-cluster-id');
+            if (!select || select.querySelector(`[data-cluster-option="${clusterId}"]`)) return;
+
+            const option = document.createElement('option');
+            option.value = clusterId;
+            option.dataset.clusterOption = clusterId;
+            option.dataset.clusterCount = memberCount;
+            option.textContent = `Cluster ${clusterId} (${memberCount})`;
+            select.appendChild(option);
+        }
+
+        async function fetchClusterSuggestions({
+            suggestUrl,
+            baseFields,
+            csrfToken,
+        }) {
+            const button = document.querySelector('[data-suggest-clusters]');
+            const formData = new FormData();
+            Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
+
+            showSuggestionStatus('');
+            if (button) button.disabled = true;
+
+            try {
+                const response = await fetch(suggestUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch {
+                    throw new Error('Could not suggest clusters.');
+                }
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.message || 'Could not suggest clusters.');
+                }
+
+                renderSuggestions(data.suggestions || []);
+            } catch (error) {
+                showSuggestionStatus(error.message, 'danger');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function renderSuggestions(suggestions) {
+            const panel = document.querySelector('[data-suggestions-panel]');
+            const body = document.querySelector('[data-suggestions-body]');
+            if (!panel || !body) return;
+
+            body.replaceChildren();
+            if (suggestions.length === 0) {
+                panel.classList.add('d-none');
+                showSuggestionStatus('No suggestions available.', 'info');
+                return;
+            }
+
+            suggestions.forEach(suggestion => {
+                const row = document.createElement('tr');
+                row.dataset.suggestionRow = suggestion.paper_num;
+
+                const checkCell = document.createElement('td');
+                checkCell.className = 'text-center';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'form-check-input';
+                checkbox.checked = true;
+                checkbox.dataset.suggestionSelected = '';
+                checkbox.setAttribute('aria-label', `Apply suggestion for paper ${suggestion.paper_num}`);
+                checkCell.appendChild(checkbox);
+
+                const paperCell = document.createElement('td');
+                paperCell.textContent = `Paper ${suggestion.paper_num}`;
+
+                const clusterCell = document.createElement('td');
+                clusterCell.appendChild(buildSuggestionClusterSelect(suggestion.clusterId));
+
+                const confidenceCell = document.createElement('td');
+                const badge = document.createElement('span');
+                badge.className = `badge ${confidenceBadgeClass(suggestion.confidence)}`;
+                badge.textContent = suggestion.confidence;
+                badge.title = `gap ${suggestion.gap}`;
+                confidenceCell.appendChild(badge);
+
+                row.append(checkCell, paperCell, clusterCell, confidenceCell);
+                body.appendChild(row);
+            });
+
+            panel.classList.remove('d-none');
+            showSuggestionStatus('');
+        }
+
+        function buildSuggestionClusterSelect(selectedClusterId) {
+            const sourceSelect = document.getElementById('target-cluster-id');
+            const select = document.createElement('select');
+            select.className = 'form-select form-select-sm';
+            select.dataset.suggestionCluster = '';
+
+            if (sourceSelect) {
+                Array.from(sourceSelect.options).forEach(option => {
+                    select.appendChild(option.cloneNode(true));
+                });
+            }
+            select.value = selectedClusterId;
+            return select;
+        }
+
+        function confidenceBadgeClass(confidence) {
+            if (confidence === 'high') return 'text-bg-success';
+            if (confidence === 'medium') return 'text-bg-warning';
+            return 'text-bg-secondary';
+        }
+
+        async function applySelectedSuggestions({
+            assignUrl,
+            baseFields,
+            csrfToken,
+        }) {
+            const button = document.querySelector('[data-apply-suggestions]');
+            const suggestionRows = Array.from(
+                document.querySelectorAll('[data-suggestion-row]')
+            ).filter(row => row.querySelector('[data-suggestion-selected]')?.checked);
+
+            if (suggestionRows.length === 0) {
+                showSuggestionStatus('No selected suggestions.', 'warning');
+                return;
+            }
+
+            const groups = new Map();
+            suggestionRows.forEach(row => {
+                const paperNumber = row.dataset.suggestionRow;
+                const card = document.querySelector(`[data-paper-number="${paperNumber}"]`);
+                const targetClusterId = row.querySelector('[data-suggestion-cluster]')?.value;
+                if (!card || !targetClusterId) {
+                    row.remove();
+                    return;
+                }
+
+                if (!groups.has(targetClusterId)) {
+                    groups.set(targetClusterId, []);
+                }
+                groups.get(targetClusterId).push(card);
+            });
+
+            if (button) button.disabled = true;
+            showSuggestionStatus('');
+
+            try {
+                for (const [targetClusterId, cards] of groups) {
+                    const row = document.querySelector(`tr[data-cluster-id="${targetClusterId}"]`);
+                    if (!row) continue;
+
+                    await assignDraggedPaper({
+                        assignUrl,
+                        baseFields,
+                        csrfToken,
+                        items: cards,
+                        row,
+                        targetClusterId,
+                    });
+                }
+                refreshSuggestionsPanel();
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function clearSuggestions() {
+            const body = document.querySelector('[data-suggestions-body]');
+            if (body) body.replaceChildren();
+            refreshSuggestionsPanel();
+            showSuggestionStatus('');
+        }
+
+        function refreshSuggestionsPanel() {
+            const panel = document.querySelector('[data-suggestions-panel]');
+            const body = document.querySelector('[data-suggestions-body]');
+            if (!panel || !body) return;
+
+            panel.classList.toggle(
+                'd-none',
+                body.querySelectorAll('[data-suggestion-row]').length === 0
+            );
+        }
+
+        function showSuggestionStatus(message, tone = 'info') {
+            const status = document.querySelector('[data-suggestions-status]');
+            if (!status) return;
+
+            status.textContent = message;
+            status.className = `alert alert-${tone} py-2 mt-3 mb-0`;
+            status.classList.toggle('d-none', !message);
         }
 
         async function assignDraggedPaper({
@@ -650,8 +1043,18 @@
                 row.classList.add('assignment-complete');
             }
 
+            removeUnclusteredItems(data, items);
+        }
+
+        function removeUnclusteredItems(data, items) {
             const unclusteredCard = document.querySelector('[data-unclustered-form]')?.closest('.card');
-            items.forEach(item => item.remove());
+            items.forEach(item => {
+                document.querySelector(
+                    `[data-suggestion-row="${item.dataset.paperNumber}"]`
+                )?.remove();
+                item.remove();
+            });
+            refreshSuggestionsPanel();
             if (data.unclustered_count === 0 && unclusteredCard) {
                 unclusteredCard.remove();
             }

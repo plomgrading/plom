@@ -15,6 +15,8 @@ from .views import (
     ClusterMergeView,
     ClusterBulkDeleteView,
     AssignUnclusteredPapersView,
+    CreateClusterFromUnclusteredPapersView,
+    SuggestUnclusteredPapersView,
     ClusterBulkResetView,
     UpdateClusterPriorityView,
     ClusterBulkTaggingView,
@@ -78,6 +80,16 @@ urlpatterns = [
         "assign_unclustered_papers/",
         AssignUnclusteredPapersView.as_view(),
         name="assign_unclustered_papers",
+    ),
+    path(
+        "create_cluster_from_unclustered_papers/",
+        CreateClusterFromUnclusteredPapersView.as_view(),
+        name="create_cluster_from_unclustered_papers",
+    ),
+    path(
+        "suggest_unclustered_papers/",
+        SuggestUnclusteredPapersView.as_view(),
+        name="suggest_unclustered_papers",
     ),
     path(
         "bulk_reset_clusters/",
