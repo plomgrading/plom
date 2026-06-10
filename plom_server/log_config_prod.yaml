@@ -6,7 +6,7 @@ formatters:
   prepend_time:
     "()": django.utils.log.ServerFormatter
     # The process is important for huey
-    format: "[%(asctime)s] [%(process)d] [%(levelname)s] %(name)s: %(message)s"
+    format: "%(asctime)s [%(process)d] %(levelname)s %(name)s: %(message)s"
 handlers:
   console:
     level: INFO
@@ -29,14 +29,14 @@ loggers:
     handlers:
     - console
     - file
-    propagate: true
+    propagate: false
     level: INFO
   # show suspicious operations
   django.security:
     handlers:
     - console
     - file
-    propagate: true
+    propagate: false
     level: INFO
   # show log messages in plom_server applications
   plom_server:
