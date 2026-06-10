@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2025-2026 Colin B. Macdonald
+    Copyright (C) 2026 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -44,8 +45,7 @@
                           method="post"
                           class="d-inline-flex align-items-center">
                         {% csrf_token %}
-                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="task_id" value="{{ task_id }}">
                         <template x-for="id in selected" :key="id">
                             <input type="hidden" name="selected_clusters" :value="id" />
                         </template>
@@ -62,8 +62,7 @@
                           method="post"
                           class="d-inline-flex align-items-center">
                         {% csrf_token %}
-                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="task_id" value="{{ task_id }}">
                         <template x-for="id in selected" :key="id">
                             <input type="hidden" name="selected_clusters" :value="id" />
                         </template>
@@ -80,8 +79,7 @@
                           method="post"
                           class="d-inline-flex align-items-center">
                         {% csrf_token %}
-                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="task_id" value="{{ task_id }}">
                         <template x-for="id in selected" :key="id">
                             <input type="hidden" name="selected_clusters" :value="id" />
                         </template>
@@ -135,8 +133,7 @@
                   method="post"
                   class="d-none">
                 {% csrf_token %}
-                <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="task_id" value="{{ task_id }}">
                 <template x-for="id in selected" :key="id">
                     <input type="hidden" name="selected_clusters" :value="id" />
                 </template>
@@ -155,8 +152,7 @@
                 <template x-for="id in order" :key="id">
                     <input type="hidden" name="cluster_order" :value="id">
                 </template>
-                <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="task_id" value="{{ task_id }}">
                 <!-- Default: sort on descending order of-->
                 <table x-ref="clusterTable"
                        class="table table-striped table-bordered table-sm mx-auto"
@@ -242,11 +238,11 @@
                                     </td>
                                 {% endwith %}
                                 <td class="text-center align-middle" id="tag-{{ clusterId }}">
-                                    {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
+                                    {% include "QuestionClustering/fragments/clustering_tag_cell.html" with task_id=task_id clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
                                 </td>
                                 <td class="align-middle text-center">
                                     <a class="btn btn-success btn-sm"
-                                       href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
+                                       href="{% url 'clustered_papers' task_id clusterId %}">
                                         View members
                                     </a>
                                 </td>

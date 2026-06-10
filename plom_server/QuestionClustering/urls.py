@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Deep Shah
 
 from django.urls import path
 
@@ -62,7 +63,7 @@ urlpatterns = [
     ),
     # === Cluster detail page (# members, priorities, tags, etc) =========
     path(
-        "cluster_groups/<int:question_idx>/<int:version>/<int:page_num>",
+        "cluster_groups/<int:task_id>",
         ClusterGroupsView.as_view(),
         name="cluster_groups",
     ),
@@ -101,7 +102,7 @@ urlpatterns = [
         name="remove_tag_from_cluster",
     ),
     path(
-        "clustered_papers/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
+        "clustered_papers/<int:task_id>/<int:clusterId>",
         ClusteredPapersView.as_view(),
         name="clustered_papers",
     ),

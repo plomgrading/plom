@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2026 Colin B. Macdonald
+    Copyright (C) 2026 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -16,7 +17,7 @@
     {% include "../base/alert_messages.html" with messages=messages %}
     <div class="mb-3">
         <a class="btn btn-success"
-           href="{% url 'cluster_groups' question_idx version page_num %}">
+           href="{% url 'cluster_groups' task_id %}">
             <i class="bi bi-chevron-left"></i>
             Return to cluster groups
         </a>
@@ -26,10 +27,8 @@
             <form method="post" action="{% url 'delete_cluster_member' %}">
                 {% csrf_token %}
                 <!-- Params in request body -->
-                <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="task_id" value="{{ task_id }}">
                 <input type="hidden" name="clusterId" value="{{ clusterId }}">
-                <input type="hidden" name="page_num" value="{{ page_num }}">
                 <div class="row row-cols-3 g-5">
                     {% for pn in papers %}
                         <div class="col">

@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2026 Deep Shah
 -->
 <div id="tasks-table"
      hx-get="{% url 'get_question_clustering_tasks' %}"
@@ -12,6 +13,7 @@
         <table class="table table-sm table-bordered text-center w-100">
             <thead>
                 <tr>
+                    <th>Job ID</th>
                     <th>Question Index</th>
                     <th>Version</th>
                     <th>Status</th>
@@ -21,6 +23,7 @@
             <tbody>
                 {% for task in tasks %}
                     <tr id="task-{{ task.task_id }}">
+                        <td>{{ task.task_id }}</td>
                         <td>{{ task.question_idx }}</td>
                         <td>{{ task.version }}</td>
                         <td>
@@ -44,24 +47,24 @@
                                    hx-delete="{% url 'remove_clustering_job' task.task_id %}"
                                    hx-target="#tasks-table"
                                    hx-swap="outerHTML"
-                                   hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})?">Remove</a>
+                                   hx-confirm="Are you sure about deleting job {{ task.task_id }} for q{{ task.question_idx }} v{{ task.version }} (status: {{ task.status }})?">Remove</a>
                             {% elif task.status == "Complete" %}
                                 <a class="btn btn-success btn-sm"
-                                   href="{% url 'cluster_groups' task.question_idx task.version task.page_num %}">
+                                   href="{% url 'cluster_groups' task.task_id %}">
                                     View
                                 </a>
                                 <a class="btn btn-danger btn-sm"
                                    hx-delete="{% url 'remove_clustering_job' task.task_id %}"
                                    hx-target="#tasks-table"
                                    hx-swap="outerHTML"
-                                   hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})">Remove</a>
+                                   hx-confirm="Are you sure about deleting job {{ task.task_id }} for q{{ task.question_idx }} v{{ task.version }} (status: {{ task.status }})">Remove</a>
                             {% else %}
                                 <i class="bi bi-clock-history text-info"></i>
                                 <a class="btn btn-danger btn-sm"
                                    hx-delete="{% url 'remove_clustering_job' task.task_id %}"
                                    hx-target="#tasks-table"
                                    hx-swap="outerHTML"
-                                   hx-confirm="Are you sure about deleting q{{ task.question_idx }} v{{ task.version }} job (status: {{ task.status }})">Remove</a>
+                                   hx-confirm="Are you sure about deleting job {{ task.task_id }} for q{{ task.question_idx }} v{{ task.version }} (status: {{ task.status }})">Remove</a>
                             {% endif %}
                         </td>
                     </tr>

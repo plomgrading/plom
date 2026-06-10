@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
+    Copyright (C) 2026 Deep Shah
 -->
 {% if tags %}
     {% for tag_pk, tag_text in tags %}
@@ -8,7 +9,7 @@
             {{ tag_text }}
             <button type="button"
                     hx-delete="{% url 'remove_tag_from_cluster' %}"
-                    hx-vals='{ "clusterId": "{{ clusterId }}", "tag_pk": "{{ tag_pk }}", "question_idx": "{{ question_idx }}", "version": "{{ version }}" }'
+                    hx-vals='{ "clusterId": "{{ clusterId }}", "tag_pk": "{{ tag_pk }}", "task_id": "{{ task_id }}" }'
                     hx-target="#tag-{{ clusterId }}"
                     class="btn btn-primary p-0">
                 <i class="bi bi-backspace"></i>

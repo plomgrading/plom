@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 from urllib.parse import urlencode
 
@@ -17,7 +18,6 @@ from plom_server.Rectangles.services import get_reference_qr_coords_for_page
 from .services import QuestionClusteringJobService, QuestionClusteringService
 from .models import QVCluster, QVClusterLink
 from .forms import ClusteringJobForm
-from .exceptions.job_exception import DuplicateClusteringJobError
 from .exceptions.clustering_exception import EmptySelectedError
 
 
@@ -177,24 +177,19 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             qcjs = QuestionClusteringJobService()
 
             rect = {"left": left, "top": top, "right": right, "bottom": bottom}
-            try:
-                qcjs.start_cluster_qv_job(
-                    question_idx=question_idx,
-                    version=version,
-                    page_num=page_num,
-                    rect=rect,
-                    clustering_model=choice,
-                )
+            qcjs.start_cluster_qv_job(
+                question_idx=question_idx,
+                version=version,
+                page_num=page_num,
+                rect=rect,
+                clustering_model=choice,
+            )
 
-                messages.success(
-                    request,
-                    f"Started {choice} clustering for {SpecificationService.get_question_label(question_idx)}, v{version}",
-                )
-                return redirect("question_clustering_jobs_home")
-
-            except DuplicateClusteringJobError as err:
-                messages.error(request, f"Clustering job failed: {err}")
-                return redirect("question_clustering_jobs_home")
+            messages.success(
+                request,
+                f"Started {choice} clustering for {SpecificationService.get_question_label(question_idx)}, v{version}",
+            )
+            return redirect("question_clustering_jobs_home")
 
         else:
             for field, errors in form.errors.items():
@@ -279,45 +274,36 @@ class RemoveJobView(ManagerRequiredView):
 
 # ========= Cluster detail page (# members, priorities, tags, etc) =============
 class ClusterGroupsView(ManagerRequiredView):
-    """Render a page for a summary of all clusters in a (q, v) context."""
+    """Render a page for a summary of all clusters in a clustering job."""
 
-    def get(
-        self, request: HttpRequest, question_idx: int, version: int, page_num: int
-    ) -> HttpResponse:
-        """Render a page for a summary of all clusters in a (q, v) context."""
+    def get(self, request: HttpRequest, task_id: int) -> HttpResponse:
+        """Render a page for a summary of all clusters in a clustering job."""
         qcs = QuestionClusteringService()
+        job = qcs.get_clustering_chore(task_id)
+        question_idx = job.question_idx
+        version = job.version
+        page_num = job.page_num
         # A list of (cluster_id, member_count) sorted by cluster_id
         # NOTE: use a sorted list so the default order is by cluster_id
-        cluster_groups = qcs.get_clusters_and_member_count(
-            question_idx=question_idx, version=version
-        )
+        cluster_groups = qcs.get_clusters_and_member_count(task_id)
 
         # cluster_id to paper mapping used for preview
-        cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )
+        cluster_to_paper_map = qcs.get_paper_nums_in_clusters(task_id)
 
         # corners used for clustering (for preview)
-        rects = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
-        )
+        rects = qcs.get_corners_used_for_clustering(task_id)
 
         # cluster_id to priority mapping
-        cluster_to_priority = qcs.get_cluster_priority_map(
-            question_idx=question_idx, version=version
-        )
+        cluster_to_priority = qcs.get_cluster_priority_map(task_id)
 
         # cluster_id to merged count
-        merged_component_count = qcs.get_merged_component_count(
-            question_idx=question_idx, version=version
-        )
+        merged_component_count = qcs.get_merged_component_count(task_id)
 
         # cluster_id to tags
-        cluster_to_tags = qcs.cluster_ids_to_tags(
-            question_idx=question_idx, version=version
-        )
+        cluster_to_tags = qcs.cluster_ids_to_tags(task_id)
 
         context = {
+            "task_id": task_id,
             "question_label": SpecificationService.get_question_label(question_idx),
             "question_idx": question_idx,
             "version": version,
@@ -338,20 +324,19 @@ class ClusterGroupsView(ManagerRequiredView):
 
 
 class ClusterMergeView(ManagerRequiredView):
-    """Handle merge of multiple clusters in a (q, v) context."""
+    """Handle merge of multiple clusters in a clustering job."""
 
     def post(self, request: HttpRequest):
-        """Handle merge of multiple clusters in a (q, v) context."""
+        """Handle merge of multiple clusters in a clustering job."""
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
 
-        question_idx = int(request.POST["question_idx"])
-        version = int(request.POST["version"])
+        task_id = int(request.POST["task_id"])
         next_url = request.POST.get("next")
 
         qcs = QuestionClusteringService()
         try:
-            merged_cluster = qcs.merge_clusters(question_idx, version, clusterIds)
+            merged_cluster = qcs.merge_clusters(task_id, clusterIds)
 
             messages.success(
                 request,
@@ -363,40 +348,38 @@ class ClusterMergeView(ManagerRequiredView):
 
 
 class ClusterBulkDeleteView(ManagerRequiredView):
-    """Handle deletion of one or multiple clusters in a (q, v) context."""
+    """Handle deletion of one or multiple clusters in a clustering job."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Handle deletion of one or multiple clusters in a (q, v) context."""
+        """Handle deletion of one or multiple clusters in a clustering job."""
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
 
-        question_idx = int(request.POST["question_idx"])
-        version = int(request.POST["version"])
+        task_id = int(request.POST["task_id"])
         next_url = request.POST.get("next")
 
         qcs = QuestionClusteringService()
 
-        qcs.delete_clusters(question_idx, version, clusterIds)
+        qcs.delete_clusters(task_id, clusterIds)
 
         messages.success(request, f"Deleted {len(clusterIds)} clusters")
         return redirect(next_url)
 
 
 class ClusterBulkResetView(ManagerRequiredView):
-    """Handle reset of one or multiple clusters in a (q, v) context."""
+    """Handle reset of one or multiple clusters in a clustering job."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Handle reset of one or multiple clusters in a (q, v) context."""
+        """Handle reset of one or multiple clusters in a clustering job."""
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
 
-        question_idx = int(request.POST["question_idx"])
-        version = int(request.POST["version"])
+        task_id = int(request.POST["task_id"])
         next_url = request.POST.get("next")
 
         qcs = QuestionClusteringService()
 
-        qcs.reset_clusters(question_idx, version, clusterIds)
+        qcs.reset_clusters(task_id, clusterIds)
 
         messages.success(request, f"reset {len(clusterIds)} clusters")
         return redirect(next_url)
@@ -409,12 +392,11 @@ class UpdateClusterPriorityView(ManagerRequiredView):
         """Update cluster priorities."""
         next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
         new_order = request.POST.getlist("cluster_order")
-        question_idx = int(request.POST["question_idx"])
-        version = int(request.POST["version"])
+        task_id = int(request.POST["task_id"])
 
         qcs = QuestionClusteringService()
         new_order_int = list(map(int, new_order))
-        qcs.update_priority_based_on_cluster_order(new_order_int, question_idx, version)
+        qcs.update_priority_based_on_cluster_order(new_order_int, task_id)
 
         messages.success(
             request, "Updated priorities based on cluster order in the table"
@@ -428,12 +410,11 @@ class ClusterBulkTaggingView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         """Tag one or multiple clusters."""
         next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
-        question_idx = int(request.POST["question_idx"])
-        version = int(request.POST["version"])
+        task_id = int(request.POST["task_id"])
         uid = request.user.id
 
         qcs = QuestionClusteringService()
-        qcs.bulk_tagging(question_idx, version, userid=uid)
+        qcs.bulk_tagging(task_id, userid=uid)
 
         messages.success(request, "Bulk tagged")
         return redirect(next_url)
@@ -444,26 +425,24 @@ class RemoveTagFromClusterView(ManagerRequiredView):
 
     def delete(self, request: HttpRequest) -> HttpResponse:
         """Remove tag from a particular cluster."""
-        question_idx = int(request.GET.get("question_idx"))
-        version = int(request.GET.get("version"))
+        task_id = int(request.GET.get("task_id"))
         clusterId = int(request.GET.get("clusterId"))
         tag_pk = int(request.GET.get("tag_pk"))
 
         qcs = QuestionClusteringService()
+        job = qcs.get_clustering_chore(task_id)
         qcs.remove_tag_from_a_cluster(
-            question_idx=question_idx,
-            version=version,
+            task_id=task_id,
             clusterId=clusterId,
             tag_pk=tag_pk,
         )
-        tags = qcs.cluster_ids_to_tags(question_idx=question_idx, version=version)[
-            clusterId
-        ]
+        tags = qcs.cluster_ids_to_tags(task_id)[clusterId]
         context = {
+            "task_id": task_id,
             "clusterId": clusterId,
             "tags": tags,
-            "question_idx": question_idx,
-            "version": version,
+            "question_idx": job.question_idx,
+            "version": job.version,
         }
 
         return render(
@@ -480,26 +459,21 @@ class ClusteredPapersView(ManagerRequiredView):
     def get(
         self,
         request: HttpRequest,
-        question_idx: int,
-        version: int,
-        page_num: int,
+        task_id: int,
         clusterId: int,
     ) -> HttpResponse:
         """Render a page of papers in a particular cluster."""
         qcs = QuestionClusteringService()
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
-        )
-        """Render a page of papers in a particular cluster."""
+        job = qcs.get_clustering_chore(task_id)
+        papers = qcs.get_paper_nums_in_clusters(task_id)[clusterId]
+        corners = qcs.get_corners_used_for_clustering(task_id)
 
         context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
+            "task_id": task_id,
+            "question_label": SpecificationService.get_question_label(job.question_idx),
+            "question_idx": job.question_idx,
+            "version": job.version,
+            "page_num": job.page_num,
             "clusterId": clusterId,
             "papers": papers,
             "top": corners["top"],
@@ -520,32 +494,27 @@ class DeleteClusterMember(ManagerRequiredView):
         request: HttpRequest,
     ) -> HttpResponse:
         """Handle removal of a paper from a cluster."""
-        question_idx = int(request.POST.get("question_idx"))
-        version = int(request.POST.get("version"))
+        task_id = int(request.POST.get("task_id"))
         clusterId = int(request.POST.get("clusterId"))
-        page_num = int(request.POST.get("page_num"))
 
         qcs = QuestionClusteringService()
+        job = qcs.get_clustering_chore(task_id)
         papers_to_delete = request.POST.getlist("delete_ids")
         qcs.bulk_delete_cluster_members(
-            question_idx=question_idx,
-            version=version,
+            task_id=task_id,
             clusterId=clusterId,
             paper_nums=list(map(int, papers_to_delete)),
         )
 
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
-        )
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
+        corners = qcs.get_corners_used_for_clustering(task_id)
+        papers = qcs.get_paper_nums_in_clusters(task_id)[clusterId]
 
         context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
+            "task_id": task_id,
+            "question_label": SpecificationService.get_question_label(job.question_idx),
+            "question_idx": job.question_idx,
+            "version": job.version,
+            "page_num": job.page_num,
             "clusterId": clusterId,
             "papers": papers,
             "top": corners["top"],
