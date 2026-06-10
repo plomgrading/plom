@@ -40,8 +40,7 @@
                           method="post"
                           class="d-inline-flex align-items-center">
                         {% csrf_token %}
-                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="task_id" value="{{ task_id }}">
                         <template x-for="id in selected" :key="id">
                             <input type="hidden" name="selected_clusters" :value="id" />
                         </template>
@@ -58,8 +57,7 @@
                           method="post"
                           class="d-inline-flex align-items-center">
                         {% csrf_token %}
-                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="task_id" value="{{ task_id }}">
                         <template x-for="id in selected" :key="id">
                             <input type="hidden" name="selected_clusters" :value="id" />
                         </template>
@@ -74,8 +72,7 @@
                     <!-- Reset -->
                     <form action="{% url 'reset_clusters' %}" method="post" class="d-none">
                         {% csrf_token %}
-                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="task_id" value="{{ task_id }}">
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <button type="submit"
                                 class="btn btn-warning"
@@ -125,8 +122,7 @@
                   method="post"
                   class="d-none">
                 {% csrf_token %}
-                <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="task_id" value="{{ task_id }}">
                 <template x-for="id in selected" :key="id">
                     <input type="hidden" name="selected_clusters" :value="id" />
                 </template>
@@ -145,8 +141,7 @@
                 <template x-for="id in order" :key="id">
                     <input type="hidden" name="cluster_order" :value="id">
                 </template>
-                <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="task_id" value="{{ task_id }}">
             </form>
             <!-- Default: sort on descending order of-->
             <table x-ref="clusterTable"
@@ -250,8 +245,7 @@
                                           data-cluster-name-form
                                           hidden>
                                         {% csrf_token %}
-                                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                                        <input type="hidden" name="version" value="{{ version }}">
+                                        <input type="hidden" name="task_id" value="{{ task_id }}">
                                         <input type="hidden" name="clusterId" value="{{ clusterId }}">
                                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                         <input type="text"
@@ -291,11 +285,11 @@
                                 </td>
                             {% endwith %}
                             <td class="text-center align-middle" id="tag-{{ clusterId }}">
-                                {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
+                                {% include "QuestionClustering/fragments/clustering_tag_cell.html" with task_id=task_id clusterId=clusterId tags=cluster_to_tags|get_item:clusterId %}
                             </td>
                             <td class="align-middle text-center">
                                 <a class="btn btn-success btn-sm"
-                                   href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
+                                   href="{% url 'clustered_papers' task_id clusterId %}">
                                     View members
                                 </a>
                             </td>
@@ -314,7 +308,7 @@
                     <span class="badge text-bg-secondary">{{ unclustered_papers|length }}</span>
                 </div>
                 <a class="btn btn-primary"
-                   href="{% url 'unclustered_papers' question_idx version page_num %}">
+                   href="{% url 'unclustered_papers' task_id %}">
                     <i class="bi bi-box-arrow-up-right"></i>
                     Review unclustered papers
                 </a>

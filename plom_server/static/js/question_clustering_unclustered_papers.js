@@ -17,9 +17,7 @@
     const assignUrl = form.getAttribute('action');
     const selectAllCheckbox = document.querySelector('[data-select-all-unclustered]');
     const baseFields = {
-      question_idx: form.querySelector('input[name="question_idx"]').value,
-      version: form.querySelector('input[name="version"]').value,
-      page_num: form.querySelector('input[name="page_num"]').value,
+      task_id: form.querySelector('input[name="task_id"]').value,
       next: form.querySelector('input[name="next"]').value,
     };
 
