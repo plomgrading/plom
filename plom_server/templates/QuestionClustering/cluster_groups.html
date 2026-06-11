@@ -26,7 +26,12 @@
     <script src="{% static '/js3rdparty/Sortable.min.js' %}"></script>
     <script src="{% static '/js3rdparty/tablesort.min.js' %}"></script>
     <script src="{% static '/js3rdparty/tablesort.number.min.js' %}"></script>
-    <div x-data="{ selected: [], all: false, openMenu: false, ids: [ {% for cid in cluster_groups.keys %} '{{ cid }}' {% if not forloop.last %},{% endif %} {% endfor %} ] }">
+    <div x-data="{ selected: [], all: false, openMenu: false, ids: [
+        {% for cid in cluster_groups.keys %}
+            '{{ cid }}'
+            {% if not forloop.last %},{% endif %}
+        {% endfor %}
+        ] }">
         <!-- Clustering cleanup toolbar -->
         <div class="fixed top-20 left-1/2 transform -translate-x-1/2 shadow-md rounded p-3 z-50 w-auto">
             <div class="d-flex align-items-center gap-3">
@@ -215,7 +220,9 @@
                                 {% endwith %}
                             </td>
                             <!-- number of merged components -->
-                            <td class="text-center align-middle">{% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}</td>
+                            <td class="text-center align-middle">
+                                {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
+                            </td>
                             <td class="text-center align-middle">
                                 {{ clusterId }}
                                 {% with cluster_label=cluster_id_to_label|get_item:clusterId %}
@@ -289,9 +296,7 @@
                             </td>
                             <td class="align-middle text-center">
                                 <a class="btn btn-success btn-sm"
-                                   href="{% url 'clustered_papers' task_id clusterId %}">
-                                    View members
-                                </a>
+                                   href="{% url 'clustered_papers' task_id clusterId %}">View members</a>
                             </td>
                             <td class="text-center align-middle drag-handle" style="cursor:move;">
                                 <i class="bi bi-list"></i>
@@ -307,8 +312,7 @@
                     <strong>Unclustered papers</strong>
                     <span class="badge text-bg-secondary">{{ unclustered_papers|length }}</span>
                 </div>
-                <a class="btn btn-primary"
-                   href="{% url 'unclustered_papers' task_id %}">
+                <a class="btn btn-primary" href="{% url 'unclustered_papers' task_id %}">
                     <i class="bi bi-box-arrow-up-right"></i>
                     Review unclustered papers
                 </a>

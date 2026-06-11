@@ -50,9 +50,7 @@
                                    hx-confirm="Are you sure about deleting job {{ task.task_id }} for q{{ task.question_idx }} v{{ task.version }} (status: {{ task.status }})?">Remove</a>
                             {% elif task.status == "Complete" %}
                                 <a class="btn btn-success btn-sm"
-                                   href="{% url 'cluster_groups' task.task_id %}">
-                                    View
-                                </a>
+                                   href="{% url 'cluster_groups' task.task_id %}">View</a>
                                 <a class="btn btn-danger btn-sm"
                                    hx-delete="{% url 'remove_clustering_job' task.task_id %}"
                                    hx-target="#tasks-table"
