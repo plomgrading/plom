@@ -46,6 +46,28 @@
                         onclick="populateFields()">
                     <i class="bi bi-plus-circle-fill"></i> Create Rubric
                 </button>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle float-end"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i class="bi bi-box-arrow-right"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'rubric_download' %}?file_type=csv">.csv</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'rubric_download' %}?file_type=toml">.toml</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'rubric_download' %}?file_type=json">.json</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
         {% comment %} Table {% endcomment %}
