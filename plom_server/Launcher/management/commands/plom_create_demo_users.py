@@ -80,6 +80,8 @@ class Command(BaseCommand):
                     f"{username} already exists - updating with demo password."
                 )
                 user_obj.set_password(password)
+                # by default, user objects are inactive
+                user_obj.is_active = True
                 user_obj.email = email
                 user_obj.save()
                 user_passwords[username] = password
