@@ -63,6 +63,7 @@ class QVCluster(models.Model):
     version: the version of the question being clustered.
     page_num: the page number used in the clustering.
     clusterId: the identifier used to differentiate clusters in a (question, version) pair.
+    cluster_name: an optional human-readable name for the cluster.
     type: the type of the grouping, i.e is that originally created cluster or a user-facing cluster.
     user_cluster: If it's an original cluster, where is it used as a user_facing cluster.
         Note that each original cluster must be mapped to exactly one user_facing cluster.
@@ -78,6 +79,7 @@ class QVCluster(models.Model):
     version = models.PositiveIntegerField(null=False)
     page_num = models.PositiveIntegerField(null=False)
     clusterId = models.IntegerField(blank=True, null=False)
+    cluster_name = models.CharField(max_length=100, blank=True, default="")
     type = models.CharField(
         choices=ClusteringGroupType.choices, null=False, max_length=20
     )

@@ -304,6 +304,11 @@ class ClusterGroupsView(ManagerRequiredView):
             question_idx=question_idx, version=version
         )
 
+        # cluster_id to human-readable cluster name
+        cluster_to_name = qcs.get_cluster_name_map(
+            question_idx=question_idx, version=version
+        )
+
         # corners used for clustering (for preview)
         rects = qcs.get_corners_used_for_clustering(
             question_idx=question_idx, version=version
@@ -336,6 +341,7 @@ class ClusterGroupsView(ManagerRequiredView):
             "page_num": page_num,
             "cluster_groups": cluster_groups,
             "cluster_to_paper_map": cluster_to_paper_map,
+            "cluster_to_name": cluster_to_name,
             "cluster_to_priority": cluster_to_priority,
             "cluster_to_tags": cluster_to_tags,
             "merged_count": merged_component_count,
@@ -580,6 +586,32 @@ class UpdateClusterPriorityView(ManagerRequiredView):
         return redirect(next_url)
 
 
+class UpdateClusterNameView(ManagerRequiredView):
+    """Update the human-readable name of a cluster."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Update the human-readable name of a cluster."""
+        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        clusterId = int(request.POST["clusterId"])
+        cluster_name = request.POST.get("cluster_name", "")
+
+        qcs = QuestionClusteringService()
+        try:
+            qcs.update_cluster_name(
+                question_idx=question_idx,
+                version=version,
+                clusterId=clusterId,
+                cluster_name=cluster_name,
+            )
+        except (ObjectDoesNotExist, ValueError) as err:
+            messages.error(request, f"Could not update cluster name: {err}")
+        else:
+            messages.success(request, f"Updated name for cluster {clusterId}")
+        return redirect(next_url)
+
+
 class ClusterBulkTaggingView(ManagerRequiredView):
     """Tag one or multiple clusters."""
 
@@ -632,6 +664,47 @@ class RemoveTagFromClusterView(ManagerRequiredView):
 
 
 # =========== Papers inside a cluster ==============
+def _clustered_papers_context(
+    qcs: QuestionClusteringService,
+    question_idx: int,
+    version: int,
+    page_num: int,
+    clusterId: int,
+) -> dict:
+    """Build context for the clustered papers page."""
+    papers = qcs.get_paper_nums_in_clusters(
+        question_idx=question_idx, version=version
+    )[clusterId]
+    corners = qcs.get_corners_used_for_clustering(
+        question_idx=question_idx, version=version
+    )
+    cluster_groups = qcs.get_clusters_and_member_count(
+        question_idx=question_idx, version=version
+    )
+    target_cluster_groups = [
+        (cid, count) for cid, count in cluster_groups if cid != clusterId
+    ]
+    cluster_to_name = qcs.get_cluster_name_map(
+        question_idx=question_idx, version=version
+    )
+
+    return {
+        "question_label": SpecificationService.get_question_label(question_idx),
+        "question_idx": question_idx,
+        "version": version,
+        "page_num": page_num,
+        "clusterId": clusterId,
+        "papers": papers,
+        "top": corners["top"],
+        "left": corners["left"],
+        "bottom": corners["bottom"],
+        "right": corners["right"],
+        "cluster_groups": cluster_groups,
+        "target_cluster_groups": target_cluster_groups,
+        "cluster_to_name": cluster_to_name,
+    }
+
+
 class ClusteredPapersView(ManagerRequiredView):
     """Render a page of papers in a particular cluster."""
 
@@ -645,26 +718,13 @@ class ClusteredPapersView(ManagerRequiredView):
     ) -> HttpResponse:
         """Render a page of papers in a particular cluster."""
         qcs = QuestionClusteringService()
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
+        context = _clustered_papers_context(
+            qcs=qcs,
+            question_idx=question_idx,
+            version=version,
+            page_num=page_num,
+            clusterId=clusterId,
         )
-        """Render a page of papers in a particular cluster."""
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "clusterId": clusterId,
-            "papers": papers,
-            "top": corners["top"],
-            "left": corners["left"],
-            "bottom": corners["bottom"],
-            "right": corners["right"],
-        }
         return render(
             request, "QuestionClustering/clustered_papers.html", context=context
         )
@@ -684,7 +744,9 @@ class DeleteClusterMember(ManagerRequiredView):
         page_num = int(request.POST.get("page_num"))
 
         qcs = QuestionClusteringService()
-        papers_to_delete = request.POST.getlist("delete_ids")
+        papers_to_delete = request.POST.getlist("delete_ids") or request.POST.getlist(
+            "paper_nums"
+        )
         qcs.bulk_delete_cluster_members(
             question_idx=question_idx,
             version=version,
@@ -692,25 +754,13 @@ class DeleteClusterMember(ManagerRequiredView):
             paper_nums=list(map(int, papers_to_delete)),
         )
 
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
+        context = _clustered_papers_context(
+            qcs=qcs,
+            question_idx=question_idx,
+            version=version,
+            page_num=page_num,
+            clusterId=clusterId,
         )
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "clusterId": clusterId,
-            "papers": papers,
-            "top": corners["top"],
-            "left": corners["left"],
-            "bottom": corners["bottom"],
-            "right": corners["right"],
-        }
         messages.success(
             request, f"Removed {len(papers_to_delete)} papers from cluster {clusterId}"
         )

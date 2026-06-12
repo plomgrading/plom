@@ -19,6 +19,7 @@ from .views import (
     SuggestUnclusteredPapersView,
     ClusterBulkResetView,
     UpdateClusterPriorityView,
+    UpdateClusterNameView,
     ClusterBulkTaggingView,
     RemoveTagFromClusterView,
     ClusteringErrorJobInfoView,
@@ -106,6 +107,11 @@ urlpatterns = [
         "update_cluster_priority/",
         UpdateClusterPriorityView.as_view(),
         name="update_cluster_priority",
+    ),
+    path(
+        "update_cluster_name/",
+        UpdateClusterNameView.as_view(),
+        name="update_cluster_name",
     ),
     path(
         "bulk_cluster_tagging/",

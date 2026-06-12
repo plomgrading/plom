@@ -157,111 +157,165 @@
                 </template>
                 <input type="hidden" name="question_idx" value="{{ question_idx }}">
                 <input type="hidden" name="version" value="{{ version }}">
-                <!-- Default: sort on descending order of-->
-                <table x-ref="clusterTable"
-                       class="table table-striped table-bordered table-sm mx-auto"
-                       data-sort-default-order="desc"
-                       data-sort-default-col="4">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <!-- select/deselect all checkbox -->
-                            <th class="text-center"  data-sort-method="none">
-                                <input id="master-checkbox" type="checkbox">
-                            </th>
-                            <!-- Preview of image header -->
-                            <th class="text-center" data-sort-method="none">Preview</th>
-                            <!-- Merge count header -->
-                            <th class="text-center" data-sort-method="none"># Merged</th>
-                            <!-- ClusterId header (sortable)-->
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    ClusterId
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <!-- Number of members in the cluster header (sortable)-->
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    # Members
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <!-- cluster priority header (sortable)-->
-                            <th id="priority-col" class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    Priority
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <th class="text-center" data-sort-method="none">Tags</th>
-                            <th class="text-center" data-sort-method="none">Actions</th>
-                            <th class="text-center" data-sort-method="none">&nbsp;</th>
-                        </tr>
-                    </thead>
-                    <tbody x-ref="tbody">
-                        {% for clusterId, count in cluster_groups %}
-                            <tr class="cluster-row"
-                                data-cluster-id="{{ clusterId }}"
-                                data-cluster-drop-target="{{ clusterId }}"
-                                :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
-                                <!-- individual row checkbox -->
-                                <td class="text-center align-middle">
-                                    <input type="checkbox"
-                                           name="selected_clusters"
-                                           value="{{ clusterId }}"
-                                           class="form-check-input"
-                                           x-model="selected">
-                                </td>
-                                <!-- Preview img col -->
-                                <td class="align-middle"
-                                    data-preview-cell="{{ clusterId }}">
-                                    {% with papers=cluster_to_paper_map|get_item:clusterId %}
-                                        {% if papers %}
-                                            {% with pn=papers.0 %}
-                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                     class="img-fluid rounded mx-auto d-block"
-                                                     style="max-height:100px"
-                                                     loading="lazy"
-                                                     alt="cluster {{ clusterId }}"
-                                                     onerror="imgError(this)">
-                                            {% endwith %}
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <!-- number of merged components -->
-                                <td class="text-center align-middle">
-                                    {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
-                                </td>
-                                <td class="text-center align-middle">{{ clusterId }}</td>
-                                <td class="text-center align-middle"
-                                    data-member-count="{{ clusterId }}">{{ count }}</td>
-                                {% with priority=cluster_to_priority|get_item:clusterId %}
-                                    <!-- Modify class based on whether the priority is set -->
-                                    <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
-                                        {% if priority %}
-                                            {{ priority }}
-                                        {% else %}
-                                            Unset
-                                        {% endif %}
-                                    </td>
-                                {% endwith %}
-                                <td class="text-center align-middle" id="tag-{{ clusterId }}">
-                                    {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
-                                </td>
-                                <td class="align-middle text-center">
-                                    <a class="btn btn-success btn-sm"
-                                       href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
-                                        View members
-                                    </a>
-                                </td>
-                                <td class="text-center align-middle drag-handle" style="cursor:move;">
-                                    <i class="bi bi-list"></i>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </form>
+            <!-- Default: sort on descending order of-->
+            <table x-ref="clusterTable"
+                   class="table table-striped table-bordered table-sm mx-auto"
+                   data-sort-default-order="desc"
+                   data-sort-default-col="5">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <!-- select/deselect all checkbox -->
+                        <th class="text-center"  data-sort-method="none">
+                            <input id="master-checkbox" type="checkbox">
+                        </th>
+                        <!-- Preview of image header -->
+                        <th class="text-center" data-sort-method="none">Preview</th>
+                        <!-- Merge count header -->
+                        <th class="text-center" data-sort-method="none"># Merged</th>
+                        <!-- ClusterId header (sortable)-->
+                        <th class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                ClusterId
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <th class="text-center" data-sort-method="none">Cluster Name</th>
+                        <!-- Number of members in the cluster header (sortable)-->
+                        <th class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                # Members
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <!-- cluster priority header (sortable)-->
+                        <th id="priority-col" class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                Priority
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <th class="text-center" data-sort-method="none">Tags</th>
+                        <th class="text-center" data-sort-method="none">Actions</th>
+                        <th class="text-center" data-sort-method="none">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody x-ref="tbody">
+                    {% for clusterId, count in cluster_groups %}
+                        <tr class="cluster-row"
+                            data-cluster-id="{{ clusterId }}"
+                            data-cluster-drop-target="{{ clusterId }}"
+                            :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
+                            <!-- individual row checkbox -->
+                            <td class="text-center align-middle">
+                                <input type="checkbox"
+                                       name="selected_clusters"
+                                       value="{{ clusterId }}"
+                                       class="form-check-input"
+                                       x-model="selected">
+                            </td>
+                            <!-- Preview img col -->
+                            <td class="align-middle"
+                                data-preview-cell="{{ clusterId }}">
+                                {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                    {% if papers %}
+                                        {% with pn=papers.0 %}
+                                            <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                 class="img-fluid rounded mx-auto d-block"
+                                                 style="max-height:100px"
+                                                 loading="lazy"
+                                                 alt="cluster {{ clusterId }}"
+                                                 onerror="imgError(this)">
+                                        {% endwith %}
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <!-- number of merged components -->
+                            <td class="text-center align-middle">
+                                {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
+                            </td>
+                            <td class="text-center align-middle">{{ clusterId }}</td>
+                            {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                <td class="align-middle cluster-name-cell"
+                                    data-cluster-name-cell>
+                                    <div class="d-flex align-items-center justify-content-center cluster-name-view"
+                                         data-cluster-name-view>
+                                        {% if cluster_name %}
+                                            <span class="cluster-name-text">{{ cluster_name }}</span>
+                                        {% else %}
+                                            <span class="cluster-name-text text-body-secondary fst-italic">Unnamed</span>
+                                        {% endif %}
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                                title="Edit cluster name"
+                                                aria-label="Edit cluster name"
+                                                data-edit-cluster-name>
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </div>
+                                    <form action="{% url 'update_cluster_name' %}"
+                                          method="post"
+                                          class="cluster-name-form align-items-center justify-content-center gap-1"
+                                          data-cluster-name-form
+                                          hidden>
+                                        {% csrf_token %}
+                                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                                        <input type="hidden" name="version" value="{{ version }}">
+                                        <input type="hidden" name="clusterId" value="{{ clusterId }}">
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <input type="text"
+                                               data-cluster-name-input
+                                               data-original-name="{{ cluster_name }}"
+                                               name="cluster_name"
+                                               value="{{ cluster_name }}"
+                                               maxlength="100"
+                                               class="form-control form-control-sm cluster-name-input"
+                                               aria-label="Cluster name"
+                                               placeholder="Unnamed">
+                                        <button type="submit"
+                                                class="btn btn-primary btn-sm cluster-name-icon-button"
+                                                title="Save cluster name"
+                                                aria-label="Save cluster name">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                                title="Cancel"
+                                                aria-label="Cancel"
+                                                data-cancel-cluster-name>
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            {% endwith %}
+                            <td class="text-center align-middle"
+                                data-member-count="{{ clusterId }}">{{ count }}</td>
+                            {% with priority=cluster_to_priority|get_item:clusterId %}
+                                <!-- Modify class based on whether the priority is set -->
+                                <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
+                                    {% if priority %}
+                                        {{ priority }}
+                                    {% else %}
+                                        Unset
+                                    {% endif %}
+                                </td>
+                            {% endwith %}
+                            <td class="text-center align-middle" id="tag-{{ clusterId }}">
+                                {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
+                            </td>
+                            <td class="align-middle text-center">
+                                <a class="btn btn-success btn-sm"
+                                   href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
+                                    View members
+                                </a>
+                            </td>
+                            <td class="text-center align-middle drag-handle" style="cursor:move;">
+                                <i class="bi bi-list"></i>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% if unclustered_papers %}
             <div class="card my-4">
@@ -323,11 +377,14 @@
                                         name="target_cluster_id"
                                         required>
                                     {% for clusterId, count in cluster_groups %}
-                                        <option value="{{ clusterId }}"
-                                                data-cluster-option="{{ clusterId }}"
-                                                data-cluster-count="{{ count }}">
-                                            Cluster {{ clusterId }} ({{ count }})
-                                        </option>
+                                        {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                            <option value="{{ clusterId }}"
+                                                    data-cluster-option="{{ clusterId }}"
+                                                    data-cluster-name="{{ cluster_name|default:'Unnamed' }}"
+                                                    data-cluster-count="{{ count }}">
+                                                {{ cluster_name|default:"Unnamed" }} - Cluster {{ clusterId }} ({{ count }})
+                                            </option>
+                                        {% endwith %}
                                     {% endfor %}
                                 </select>
                             </div>
@@ -395,6 +452,52 @@
 
         .unclustered-paper-card.sortable-chosen > div {
             box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+        }
+
+        .cluster-name-cell {
+            min-width: 13rem;
+        }
+
+        [data-cluster-name-view][hidden] {
+            display: none !important;
+        }
+
+        .cluster-name-form {
+            display: flex !important;
+            white-space: nowrap;
+        }
+
+        .cluster-name-form[hidden] {
+            display: none !important;
+        }
+
+        .cluster-name-input {
+            flex: 1 1 9rem;
+            max-width: 11rem;
+        }
+
+        .cluster-name-view {
+            column-gap: .55rem;
+        }
+
+        .cluster-name-icon-button {
+            align-items: center;
+            display: inline-flex;
+            height: 1.65rem;
+            justify-content: center;
+            padding: 0;
+            width: 1.65rem;
+        }
+
+        .cluster-name-icon-button .bi {
+            font-size: .9rem;
+        }
+
+        .cluster-name-text {
+            max-width: 9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .unclustered-paper-card.is-assigning {
@@ -508,7 +611,64 @@
 
 
             initUnclusteredDragAndDrop();
+            initClusterNameEditing();
             });
+
+        function initClusterNameEditing() {
+            document.addEventListener('click', event => {
+                const editButton = event.target.closest('[data-edit-cluster-name]');
+                if (editButton) {
+                    showClusterNameEditor(editButton.closest('[data-cluster-name-cell]'));
+                    return;
+                }
+
+                const cancelButton = event.target.closest('[data-cancel-cluster-name]');
+                if (cancelButton) {
+                    const cell = cancelButton.closest('[data-cluster-name-cell]');
+                    resetClusterNameInput(cell);
+                    hideClusterNameEditor(cell);
+                }
+            });
+
+            document.addEventListener('keydown', event => {
+                if (event.key !== 'Escape' || !event.target.matches('[data-cluster-name-input]')) {
+                    return;
+                }
+                event.preventDefault();
+                const cell = event.target.closest('[data-cluster-name-cell]');
+                resetClusterNameInput(cell);
+                hideClusterNameEditor(cell);
+            });
+        }
+
+        function showClusterNameEditor(cell) {
+            if (!cell) return;
+            const view = cell.querySelector('[data-cluster-name-view]');
+            const form = cell.querySelector('[data-cluster-name-form]');
+            const input = cell.querySelector('[data-cluster-name-input]');
+            if (!view || !form || !input) return;
+
+            view.hidden = true;
+            form.hidden = false;
+            input.value = input.dataset.originalName || '';
+            input.focus();
+            input.select();
+        }
+
+        function hideClusterNameEditor(cell) {
+            if (!cell) return;
+            const view = cell.querySelector('[data-cluster-name-view]');
+            const form = cell.querySelector('[data-cluster-name-form]');
+            if (!view || !form) return;
+
+            form.hidden = true;
+            view.hidden = false;
+        }
+
+        function resetClusterNameInput(cell) {
+            const input = cell?.querySelector('[data-cluster-name-input]');
+            if (input) input.value = input.dataset.originalName || '';
+        }
 
 
         function initUnclusteredDragAndDrop() {
@@ -733,6 +893,52 @@
                 <td class="align-middle" data-preview-cell="${data.clusterId}"></td>
                 <td class="text-center align-middle">0</td>
                 <td class="text-center align-middle">${data.clusterId}</td>
+                <td class="align-middle cluster-name-cell" data-cluster-name-cell>
+                    <div class="d-flex align-items-center justify-content-center cluster-name-view"
+                         data-cluster-name-view>
+                        <span class="cluster-name-text text-body-secondary fst-italic">Unnamed</span>
+                        <button type="button"
+                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                title="Edit cluster name"
+                                aria-label="Edit cluster name"
+                                data-edit-cluster-name>
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                    <form action="{% url 'update_cluster_name' %}"
+                          method="post"
+                          class="cluster-name-form align-items-center justify-content-center gap-1"
+                          data-cluster-name-form
+                          hidden>
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                        <input type="hidden" name="question_idx" value="${baseFields.question_idx}">
+                        <input type="hidden" name="version" value="${baseFields.version}">
+                        <input type="hidden" name="clusterId" value="${data.clusterId}">
+                        <input type="hidden" name="next" value="${baseFields.next}">
+                        <input type="text"
+                               data-cluster-name-input
+                               data-original-name=""
+                               name="cluster_name"
+                               value=""
+                               maxlength="100"
+                               class="form-control form-control-sm cluster-name-input"
+                               aria-label="Cluster name"
+                               placeholder="Unnamed">
+                        <button type="submit"
+                                class="btn btn-primary btn-sm cluster-name-icon-button"
+                                title="Save cluster name"
+                                aria-label="Save cluster name">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                title="Cancel"
+                                aria-label="Cancel"
+                                data-cancel-cluster-name>
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </form>
+                </td>
                 <td class="text-center align-middle" data-member-count="${data.clusterId}">${data.member_count}</td>
                 <td class="text-center align-middle unset-priority">Unset</td>
                 <td class="text-center align-middle" id="tag-${data.clusterId}"></td>
@@ -771,9 +977,19 @@
             const option = document.createElement('option');
             option.value = clusterId;
             option.dataset.clusterOption = clusterId;
+            option.dataset.clusterName = 'Unnamed';
             option.dataset.clusterCount = memberCount;
-            option.textContent = `Cluster ${clusterId} (${memberCount})`;
+            option.textContent = formatClusterOptionLabel(
+                clusterId,
+                memberCount,
+                option.dataset.clusterName
+            );
             select.appendChild(option);
+        }
+
+        function formatClusterOptionLabel(clusterId, memberCount, clusterName = '') {
+            const name = clusterName || 'Unnamed';
+            return `${name} - Cluster ${clusterId} (${memberCount})`;
         }
 
         async function fetchClusterSuggestions({
@@ -1017,7 +1233,11 @@
             const option = document.querySelector(`[data-cluster-option="${targetClusterId}"]`);
             if (option) {
                 option.dataset.clusterCount = data.member_count;
-                option.textContent = `Cluster ${targetClusterId} (${data.member_count})`;
+                option.textContent = formatClusterOptionLabel(
+                    targetClusterId,
+                    data.member_count,
+                    option.dataset.clusterName
+                );
             }
 
             const unclusteredCount = document.querySelector('[data-unclustered-count]');

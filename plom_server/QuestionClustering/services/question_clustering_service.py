@@ -164,6 +164,8 @@ class QuestionClusteringJobService:
 class QuestionClusteringService:
     """Service handling clustering and querying of cluster-related models."""
 
+    CLUSTER_NAME_MAX_LENGTH = 100
+
     def _store_clustered_result(
         self,
         paper_to_clusterId: dict[int, int],
@@ -415,6 +417,36 @@ class QuestionClusteringService:
         }
 
         return result
+
+    def get_cluster_name_map(self, question_idx: int, version: int) -> dict[int, str]:
+        """Get a mapping from clusterId to human-readable cluster name."""
+        return dict(
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            ).values_list("clusterId", "cluster_name")
+        )
+
+    def update_cluster_name(
+        self, question_idx: int, version: int, clusterId: int, cluster_name: str
+    ) -> str:
+        """Update the human-readable name of a user-facing cluster."""
+        clean_name = cluster_name.strip()
+        if len(clean_name) > self.CLUSTER_NAME_MAX_LENGTH:
+            raise ValueError(
+                f"Cluster name must be at most {self.CLUSTER_NAME_MAX_LENGTH} characters."
+            )
+
+        cluster = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
+        )
+        cluster.cluster_name = clean_name
+        cluster.save(update_fields=["cluster_name"])
+        return clean_name
 
     def get_unclustered_paper_nums(
         self, question_idx: int, version: int, page_num: int
