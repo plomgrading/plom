@@ -310,9 +310,13 @@ class ClusterGroupsView(ManagerRequiredView):
         )
 
         # corners used for clustering (for preview)
-        rects = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
-        )
+        try:
+            rects = qcs.get_corners_used_for_clustering(
+                question_idx=question_idx, version=version
+            )
+        except ObjectDoesNotExist as err:
+            messages.error(request, err)
+            return redirect("question_clustering_jobs_home")
 
         # cluster_id to priority mapping
         cluster_to_priority = qcs.get_cluster_priority_map(
@@ -559,10 +563,16 @@ class ClusterBulkResetView(ManagerRequiredView):
         next_url = request.POST.get("next")
 
         qcs = QuestionClusteringService()
-
-        qcs.reset_clusters(question_idx, version, clusterIds)
-
-        messages.success(request, f"reset {len(clusterIds)} clusters")
+        try:
+            affected_cluster_ids = qcs.reset_clusters(question_idx, version, clusterIds)
+        except (EmptySelectedError, ObjectDoesNotExist) as err:
+            messages.error(request, f"Reset failed: {err}")
+        else:
+            messages.success(
+                request,
+                f"Reset {len(clusterIds)} selected clusters; "
+                f"updated {len(affected_cluster_ids)} original clusters.",
+            )
         return redirect(next_url)
 
 

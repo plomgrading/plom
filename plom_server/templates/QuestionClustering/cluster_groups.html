@@ -857,7 +857,7 @@
                     throw new Error(data.message || 'Could not create cluster.');
                 }
 
-                insertClusterRow(data, cards);
+                insertClusterRow(data, cards, { baseFields, csrfToken });
                 addClusterOption(data.clusterId, data.member_count);
                 removeUnclusteredItems(data, cards);
                 showSuggestionStatus(`Created cluster ${data.clusterId}.`, 'success');
@@ -869,9 +869,10 @@
             }
         }
 
-        function insertClusterRow(data, items) {
+        function insertClusterRow(data, items, context) {
             const tbody = document.querySelector('[x-ref="tbody"]');
             if (!tbody || document.querySelector(`tr[data-cluster-id="${data.clusterId}"]`)) return;
+            const { baseFields, csrfToken } = context;
 
             const row = document.createElement('tr');
             row.className = 'cluster-row';
