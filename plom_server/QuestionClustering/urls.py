@@ -10,6 +10,7 @@ from .views import (
     QuestionClusteringJobsHome,
     QuestionClusteringJobTable,
     ClusterGroupsView,
+    UnclusteredPapersView,
     ClusteredPapersView,
     DeleteClusterMember,
     ClusterMergeView,
@@ -69,6 +70,11 @@ urlpatterns = [
         "cluster_groups/<int:question_idx>/<int:version>/<int:page_num>",
         ClusterGroupsView.as_view(),
         name="cluster_groups",
+    ),
+    path(
+        "unclustered_papers/<int:question_idx>/<int:version>/<int:page_num>",
+        UnclusteredPapersView.as_view(),
+        name="unclustered_papers",
     ),
     # ======= Clustering-group operation in clustering table page =======
     path("merge_clusters/", ClusterMergeView.as_view(), name="merge_clusters"),

@@ -13,6 +13,474 @@
     Cluster groups for {{ question_label }} v{{ version }} Page {{ page_num }}
 {% endblock page_heading %}
 {% block main_content %}
+    {% if request.GET.unclustered %}
+        {% include "../base/alert_messages.html" with messages=messages %}
+        <div class="mb-3">
+            <a class="btn btn-success"
+               href="{% url 'cluster_groups' question_idx version page_num %}">
+                <i class="bi bi-chevron-left"></i>
+                Return to cluster groups
+            </a>
+        </div>
+        {% if unclustered_papers %}
+            <form action="{% url 'assign_unclustered_papers' %}"
+                  method="post"
+                  data-unclustered-form>
+                {% csrf_token %}
+                <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="page_num" value="{{ page_num }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div class="border rounded bg-light p-3 mb-4 d-flex align-items-end gap-2 flex-wrap">
+                    <div class="cluster-select-control">
+                        <label for="target-cluster-id" class="form-label mb-1">Assign selected to</label>
+                        <select id="target-cluster-id"
+                                class="form-select"
+                                name="target_cluster_id"
+                                {% if not cluster_groups %}disabled{% endif %}>
+                            {% for clusterId, count in cluster_groups %}
+                                {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                    <option value="{{ clusterId }}">
+                                        {{ cluster_name|default:"Unnamed" }} - Cluster {{ clusterId }} ({{ count }})
+                                    </option>
+                                {% endwith %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit"
+                            class="btn btn-primary"
+                            {% if not cluster_groups %}disabled{% endif %}>
+                        Assign selected
+                    </button>
+                    <button type="submit"
+                            class="btn btn-outline-success"
+                            formaction="{% url 'create_cluster_from_unclustered_papers' %}">
+                        Create new cluster
+                    </button>
+                    <span class="badge text-bg-primary d-none"
+                          aria-live="polite"
+                          data-drag-count></span>
+                </div>
+                <div class="row g-4 align-items-start">
+                    <div class="col-12 col-xl-7">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <h2 class="h5 mb-0">Unclustered</h2>
+                            <span class="badge text-bg-secondary"
+                                  data-unclustered-count>{{ unclustered_papers|length }}</span>
+                        </div>
+                        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3"
+                             data-unclustered-grid>
+                            {% for pn in unclustered_papers %}
+                                <div class="col unclustered-paper-card"
+                                     data-paper-number="{{ pn }}"
+                                     draggable="true">
+                                    <div class="unclustered-paper-tile border rounded position-relative h-100 bg-white overflow-hidden">
+                                        <input type="checkbox"
+                                               class="form-check-input position-absolute top-0 opacity-0"
+                                               name="paper_nums"
+                                               value="{{ pn }}"
+                                               id="unclustered-paper-{{ pn }}">
+                                        <label class="form-check-label d-block h-100"
+                                               for="unclustered-paper-{{ pn }}">
+                                            <span class="paper-label badge text-bg-light position-absolute top-0 start-0 m-2">Paper {{ pn }}</span>
+                                            <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                 class="unclustered-paper-image w-100 d-block"
+                                                 loading="lazy"
+                                                 alt="paper {{ pn }}"
+                                                 onerror="imgError(this)">
+                                        </label>
+                                        <span class="selected-cross position-absolute top-50 start-50 translate-middle">
+                                            <i class="bi bi-x-circle-fill fs-1 text-danger"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-5">
+                        <div class="border rounded bg-white p-3 cluster-target-panel">
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h2 class="h5 mb-0">Clusters</h2>
+                                <span class="badge text-bg-secondary">{{ cluster_groups|length }}</span>
+                            </div>
+                            <div class="list-group gap-2">
+                                {% for clusterId, count in cluster_groups %}
+                                    {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                        {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                            <div class="list-group-item list-group-item-action cluster-drop-target"
+                                                 data-cluster-drop-target="{{ clusterId }}">
+                                                <div class="d-flex gap-3">
+                                                    <div class="cluster-target-preview"
+                                                         data-cluster-target-preview="{{ clusterId }}">
+                                                        {% if papers %}
+                                                            {% with pn=papers.0 %}
+                                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                                     alt="cluster {{ clusterId }} preview"
+                                                                     loading="lazy"
+                                                                     onerror="imgError(this)">
+                                                            {% endwith %}
+                                                        {% else %}
+                                                            <span>No preview</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="d-flex align-items-start justify-content-between gap-2">
+                                                            <span class="cluster-target-name">{{ cluster_name|default:"Unnamed" }}</span>
+                                                            <span class="badge text-bg-light">Cluster {{ clusterId }}</span>
+                                                        </div>
+                                                        <div class="small text-body-secondary">
+                                                            <span data-cluster-target-count="{{ clusterId }}">{{ count }}</span>
+                                                            papers
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endwith %}
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                            {% if not cluster_groups %}
+                                <div class="alert alert-secondary mt-3 mb-0">
+                                    Create a new cluster from selected papers first.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <div class="border rounded bg-light p-4 text-center">
+                <strong>No unclustered papers remain.</strong>
+            </div>
+        {% endif %}
+        <style>
+            .cluster-select-control {
+                min-width: min(28rem, 100%);
+            }
+
+            .unclustered-paper-card {
+                cursor: grab;
+            }
+
+            .unclustered-paper-card.is-assigning {
+                opacity: .55;
+                pointer-events: none;
+            }
+
+            .unclustered-paper-card.is-bulk-dragged .unclustered-paper-tile {
+                outline: 2px solid rgba(var(--bs-primary-rgb), .22);
+                outline-offset: 2px;
+            }
+
+            .unclustered-paper-card.is-selected-for-drag .unclustered-paper-tile {
+                box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .18);
+            }
+
+            .unclustered-paper-tile {
+                min-height: 10rem;
+            }
+
+            .unclustered-paper-image {
+                background: #fff;
+                cursor: pointer;
+                height: 11rem;
+                object-fit: contain;
+                padding: 2.25rem .5rem .75rem;
+            }
+
+            .paper-label {
+                z-index: 2;
+            }
+
+            .selected-cross {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity .2s ease;
+                z-index: 2;
+            }
+
+            .unclustered-paper-tile .form-check-input {
+                accent-color: #dc3545;
+                z-index: 3;
+            }
+
+            .unclustered-paper-tile .form-check-input:checked + .form-check-label img {
+                filter: brightness(40%);
+            }
+
+            .unclustered-paper-tile .form-check-input:checked + .form-check-label + .selected-cross {
+                opacity: 1;
+            }
+
+            .cluster-target-panel {
+                position: sticky;
+                top: 1rem;
+            }
+
+            .cluster-drop-target {
+                border: 1px solid var(--bs-border-color) !important;
+                border-radius: .375rem !important;
+                cursor: copy;
+                min-height: 7rem;
+                padding: .85rem;
+            }
+
+            .cluster-target-name {
+                font-weight: 600;
+                overflow-wrap: anywhere;
+            }
+
+            .cluster-target-preview {
+                align-items: center;
+                background: #fff;
+                border: 1px solid var(--bs-border-color);
+                border-radius: .375rem;
+                color: var(--bs-secondary-color);
+                display: flex;
+                flex: 0 0 8rem;
+                font-size: .75rem;
+                height: 6rem;
+                justify-content: center;
+                overflow: hidden;
+                text-align: center;
+            }
+
+            .cluster-target-preview img {
+                height: 100%;
+                object-fit: contain;
+                width: 100%;
+            }
+
+            .dragging-unclustered .cluster-drop-target {
+                box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .2);
+            }
+
+            .cluster-drop-target.drop-target-hover {
+                background-color: rgba(var(--bs-primary-rgb), .08);
+                box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .45);
+            }
+
+            .cluster-drop-target.is-assigning {
+                background-color: rgba(var(--bs-primary-rgb), .05);
+            }
+
+            .cluster-drop-target.assignment-complete {
+                animation: assignmentPulse .55s ease;
+            }
+
+            @keyframes assignmentPulse {
+                0% { background-color: rgba(var(--bs-success-rgb), .12); }
+                100% { background-color: transparent; }
+            }
+
+            @media (max-width: 1199.98px) {
+                .cluster-target-panel {
+                    position: static;
+                }
+            }
+        </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', initUnclusteredDropTargets);
+
+            function initUnclusteredDropTargets() {
+                const form = document.querySelector('[data-unclustered-form]');
+                const sourceGrid = document.querySelector('[data-unclustered-grid]');
+                if (!form || !sourceGrid) return;
+
+                const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+                const assignUrl = form.getAttribute('action');
+                const baseFields = {
+                    question_idx: form.querySelector('input[name="question_idx"]').value,
+                    version: form.querySelector('input[name="version"]').value,
+                    page_num: form.querySelector('input[name="page_num"]').value,
+                    next: form.querySelector('input[name="next"]').value,
+                };
+
+                let draggedCards = [];
+
+                sourceGrid.querySelectorAll('.unclustered-paper-card').forEach(card => {
+                    card.querySelector('input[name="paper_nums"]')?.addEventListener('change', () => {
+                        updateSelectedDragCue();
+                    });
+
+                    card.addEventListener('dragstart', event => {
+                        draggedCards = getCardsForDrag(card);
+                        draggedCards.forEach(item => item.classList.add('is-bulk-dragged'));
+                        updateDragCount(draggedCards.length, true);
+                        document.body.classList.add('dragging-unclustered');
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData(
+                            'text/plain',
+                            draggedCards.map(item => item.dataset.paperNumber).join(',')
+                        );
+                    });
+
+                    card.addEventListener('dragend', () => {
+                        draggedCards.forEach(item => item.classList.remove('is-bulk-dragged'));
+                        document.body.classList.remove('dragging-unclustered');
+                        document.querySelectorAll('.cluster-drop-target.drop-target-hover').forEach(target => {
+                            target.classList.remove('drop-target-hover');
+                        });
+                        draggedCards = [];
+                        updateSelectedDragCue();
+                    });
+                });
+                updateSelectedDragCue();
+
+                document.querySelectorAll('[data-cluster-drop-target]').forEach(target => {
+                    target.addEventListener('dragover', event => {
+                        if (draggedCards.length === 0) return;
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
+                        target.classList.add('drop-target-hover');
+                    });
+
+                    target.addEventListener('dragleave', event => {
+                        if (!target.contains(event.relatedTarget)) {
+                            target.classList.remove('drop-target-hover');
+                        }
+                    });
+
+                    target.addEventListener('drop', event => {
+                        if (draggedCards.length === 0) return;
+                        event.preventDefault();
+                        target.classList.remove('drop-target-hover');
+                        assignDraggedCards({
+                            assignUrl,
+                            baseFields,
+                            csrfToken,
+                            cards: draggedCards,
+                            target,
+                            targetClusterId: target.dataset.clusterDropTarget,
+                        });
+                    });
+                });
+            }
+
+            function getCardsForDrag(card) {
+                const checkbox = card.querySelector('input[name="paper_nums"]');
+                if (!checkbox?.checked) return [card];
+
+                const checkedCards = Array.from(
+                    document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
+                )
+                    .map(input => input.closest('.unclustered-paper-card'))
+                    .filter(Boolean);
+
+                return checkedCards.length ? checkedCards : [card];
+            }
+
+            function getSelectedUnclusteredCards() {
+                return Array.from(
+                    document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
+                )
+                    .map(input => input.closest('.unclustered-paper-card'))
+                    .filter(Boolean);
+            }
+
+            function updateSelectedDragCue() {
+                const selectedCards = getSelectedUnclusteredCards();
+                document.querySelectorAll('.unclustered-paper-card').forEach(card => {
+                    card.classList.toggle(
+                        'is-selected-for-drag',
+                        selectedCards.length > 1 && selectedCards.includes(card)
+                    );
+                });
+                updateDragCount(selectedCards.length, false);
+            }
+
+            function updateDragCount(count, isDragging) {
+                const badge = document.querySelector('[data-drag-count]');
+                if (!badge) return;
+
+                if (count > 1) {
+                    badge.textContent = isDragging
+                        ? `Dragging ${count} selected`
+                        : `${count} selected for drag`;
+                    badge.classList.remove('d-none');
+                } else {
+                    badge.textContent = '';
+                    badge.classList.add('d-none');
+                }
+            }
+
+            async function assignDraggedCards({
+                assignUrl,
+                baseFields,
+                csrfToken,
+                cards,
+                target,
+                targetClusterId,
+            }) {
+                const formData = new FormData();
+                Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
+                formData.append('target_cluster_id', targetClusterId);
+                cards.forEach(card => formData.append('paper_nums', card.dataset.paperNumber));
+
+                cards.forEach(card => card.classList.add('is-assigning'));
+                target.classList.add('is-assigning');
+
+                try {
+                    const response = await fetch(assignUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch {
+                        throw new Error('Could not assign papers.');
+                    }
+                    if (!response.ok || !data.ok) {
+                        throw new Error(data.message || 'Could not assign papers.');
+                    }
+
+                    const targetCount = document.querySelector(
+                        `[data-cluster-target-count="${targetClusterId}"]`
+                    );
+                    if (targetCount) targetCount.textContent = data.member_count;
+
+                    const preview = document.querySelector(
+                        `[data-cluster-target-preview="${targetClusterId}"]`
+                    );
+                    if (preview && !preview.querySelector('img')) {
+                        const itemImage = cards[0]?.querySelector('img');
+                        if (itemImage) {
+                            const previewImage = itemImage.cloneNode(true);
+                            previewImage.alt = `cluster ${targetClusterId} preview`;
+                            preview.replaceChildren(previewImage);
+                        }
+                    }
+
+                    const unclusteredCount = document.querySelector('[data-unclustered-count]');
+                    if (unclusteredCount) unclusteredCount.textContent = data.unclustered_count;
+
+                    cards.forEach(card => card.remove());
+                    updateSelectedDragCue();
+                    target.classList.remove('assignment-complete');
+                    void target.offsetWidth;
+                    target.classList.add('assignment-complete');
+                } catch (error) {
+                    cards.forEach(card => card.classList.remove('is-assigning'));
+                    window.alert(error.message);
+                } finally {
+                    target.classList.remove('is-assigning');
+                }
+            }
+
+            function imgError(image) {
+                const span = document.createElement('span');
+                span.classList.add("alert", "alert-warning", "mx-2", "py-0");
+                span.innerText = "Could not extract rectangle.";
+                image.parentNode.insertBefore(span, image);
+                image.remove();
+            }
+        </script>
+    {% else %}
     <!-- navigation button -->
     <div class="mb-3">
         <a class="btn btn-success"
@@ -318,142 +786,20 @@
             </table>
         </div>
         {% if unclustered_papers %}
-            <div class="card my-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <strong>Unclustered</strong>
-                    <span class="d-inline-flex gap-2 align-items-center">
-                        <span class="badge text-bg-primary d-none"
-                              data-drag-count></span>
-                        <span class="badge text-bg-secondary"
-                              data-unclustered-count>{{ unclustered_papers|length }}</span>
-                    </span>
+            <div class="border rounded bg-light my-4 p-3 d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <strong>Unclustered papers</strong>
+                    <span class="badge text-bg-secondary">{{ unclustered_papers|length }}</span>
                 </div>
-                <div class="card-body">
-                    <form action="{% url 'assign_unclustered_papers' %}"
-                          method="post"
-                          data-create-url="{% url 'create_cluster_from_unclustered_papers' %}"
-                          data-suggest-url="{% url 'suggest_unclustered_papers' %}"
-                          data-unclustered-form>
-                        {% csrf_token %}
-                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                        <input type="hidden" name="version" value="{{ version }}">
-                        <input type="hidden" name="page_num" value="{{ page_num }}">
-                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                        <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3 mb-3"
-                             data-unclustered-grid>
-                            {% for pn in unclustered_papers %}
-                                <div class="col unclustered-paper-card"
-                                     data-paper-number="{{ pn }}"
-                                     draggable="true">
-                                    <div class="border rounded p-2 h-100">
-                                        <span class="d-flex align-items-center gap-1">
-                                            <span class="unclustered-drag-handle"
-                                                  title="Drag to a cluster">
-                                                <i class="bi bi-grip-vertical"></i>
-                                            </span>
-                                            <input type="checkbox"
-                                                   id="unclustered-paper-{{ pn }}"
-                                                   class="form-check-input"
-                                                   name="paper_nums"
-                                                   value="{{ pn }}">
-                                            <label class="small mb-0"
-                                                   for="unclustered-paper-{{ pn }}">Paper {{ pn }}</label>
-                                        </span>
-                                        <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                             class="img-fluid rounded d-block mt-2 mx-auto"
-                                             style="max-height:100px"
-                                             loading="lazy"
-                                             alt="paper {{ pn }}"
-                                             onerror="imgError(this)">
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        <div class="d-flex align-items-end gap-2 flex-wrap">
-                            <div>
-                                <label for="target-cluster-id" class="form-label mb-1">Assign selected to</label>
-                                <select id="target-cluster-id"
-                                        class="form-select"
-                                        name="target_cluster_id"
-                                        required>
-                                    {% for clusterId, count in cluster_groups %}
-                                        {% with cluster_name=cluster_to_name|get_item:clusterId %}
-                                            <option value="{{ clusterId }}"
-                                                    data-cluster-option="{{ clusterId }}"
-                                                    data-cluster-name="{{ cluster_name|default:'Unnamed' }}"
-                                                    data-cluster-count="{{ count }}">
-                                                {{ cluster_name|default:"Unnamed" }} - Cluster {{ clusterId }} ({{ count }})
-                                            </option>
-                                        {% endwith %}
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Assign</button>
-                            <button type="button"
-                                    class="btn btn-outline-success"
-                                    data-create-cluster>
-                                Create new cluster
-                            </button>
-                            <button type="button"
-                                    class="btn btn-outline-primary"
-                                    data-suggest-clusters>
-                                Suggest clusters
-                            </button>
-                        </div>
-                        <div class="mt-3 d-none" data-suggestions-panel>
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle mb-2">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-center" data-sort-method="none">&nbsp;</th>
-                                            <th>Paper</th>
-                                            <th>Cluster</th>
-                                            <th>Confidence</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody data-suggestions-body></tbody>
-                                </table>
-                            </div>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button"
-                                        class="btn btn-primary btn-sm"
-                                        data-apply-suggestions>
-                                    Apply selected
-                                </button>
-                                <button type="button"
-                                        class="btn btn-outline-secondary btn-sm"
-                                        data-clear-suggestions>
-                                    Clear
-                                </button>
-                            </div>
-                        </div>
-                        <div class="alert alert-info py-2 mt-3 mb-0 d-none"
-                             data-suggestions-status></div>
-                    </form>
-                </div>
+                <a class="btn btn-primary"
+                   href="{% url 'cluster_groups' question_idx version page_num %}?unclustered=1">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    Review unclustered papers
+                </a>
             </div>
         {% endif %}
     </div>
     <style>
-        .unclustered-drag-handle {
-            color: var(--bs-secondary-color);
-            cursor: grab;
-            display: inline-flex;
-        }
-
-        .unclustered-paper-card {
-            cursor: grab;
-        }
-
-        .unclustered-paper-card input,
-        .unclustered-paper-card label {
-            cursor: auto;
-        }
-
-        .unclustered-paper-card.sortable-chosen > div {
-            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
-        }
-
         .cluster-name-cell {
             min-width: 13rem;
         }
@@ -500,38 +846,6 @@
             white-space: nowrap;
         }
 
-        .unclustered-paper-card.is-assigning {
-            opacity: .55;
-            pointer-events: none;
-        }
-
-        .unclustered-paper-card.is-bulk-dragged > div {
-            outline: 2px solid rgba(var(--bs-primary-rgb), .18);
-            outline-offset: 2px;
-        }
-
-        .dragging-unclustered .cluster-row {
-            cursor: copy;
-        }
-
-        .cluster-row.drop-target-hover > td {
-            background-color: rgba(var(--bs-primary-rgb), .08);
-            box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .35);
-            transition: background-color .12s ease, box-shadow .12s ease;
-        }
-
-        .cluster-row.is-assigning > td {
-            background-color: rgba(var(--bs-primary-rgb), .05);
-        }
-
-        .cluster-row.assignment-complete > td {
-            animation: assignmentPulse .55s ease;
-        }
-
-        @keyframes assignmentPulse {
-            0% { background-color: rgba(var(--bs-success-rgb), .10); }
-            100% { background-color: transparent; }
-        }
     </style>
     <script>
         document.addEventListener('alpine:init', () => {
@@ -609,8 +923,6 @@
                     });
                 });
 
-
-            initUnclusteredDragAndDrop();
             initClusterNameEditing();
             });
 
@@ -671,622 +983,13 @@
         }
 
 
-        function initUnclusteredDragAndDrop() {
-            const form = document.querySelector('[data-unclustered-form]');
-            const sourceGrid = document.querySelector('[data-unclustered-grid]');
-            if (!form || !sourceGrid) return;
-
-            const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
-            const assignUrl = form.getAttribute('action');
-            const createUrl = form.dataset.createUrl;
-            const suggestUrl = form.dataset.suggestUrl;
-            const baseFields = {
-                question_idx: form.querySelector('input[name="question_idx"]').value,
-                version: form.querySelector('input[name="version"]').value,
-                page_num: form.querySelector('input[name="page_num"]').value,
-                next: form.querySelector('input[name="next"]').value,
-            };
-
-            let draggedCard = null;
-            let draggedCards = [];
-
-            const wireClusterDropTarget = row => {
-                if (row.dataset.clusterDropWired) return;
-                row.dataset.clusterDropWired = 'true';
-
-                row.addEventListener('dragover', event => {
-                    if (!draggedCard) return;
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = 'move';
-                    row.classList.add('drop-target-hover');
-                });
-
-                row.addEventListener('dragleave', event => {
-                    if (!row.contains(event.relatedTarget)) {
-                        row.classList.remove('drop-target-hover');
-                    }
-                });
-
-                row.addEventListener('drop', event => {
-                    if (!draggedCard) return;
-                    event.preventDefault();
-                    row.classList.remove('drop-target-hover');
-                    assignDraggedPaper({
-                        assignUrl,
-                        baseFields,
-                        csrfToken,
-                        items: draggedCards,
-                        row,
-                        targetClusterId: row.dataset.clusterDropTarget,
-                    });
-                });
-            };
-            window.plomWireClusterDropTarget = wireClusterDropTarget;
-
-            sourceGrid.querySelectorAll('.unclustered-paper-card').forEach(card => {
-                card.addEventListener('dragstart', event => {
-                    draggedCards = getCardsForDrag(card);
-                    draggedCard = draggedCards[0];
-                    draggedCards.forEach(item => item.classList.add('is-bulk-dragged'));
-                    updateDragCount(draggedCards.length);
-                    card.classList.add('sortable-chosen');
-                    document.body.classList.add('dragging-unclustered');
-                    event.dataTransfer.effectAllowed = 'move';
-                    event.dataTransfer.setData(
-                        'text/plain',
-                        draggedCards.map(item => item.dataset.paperNumber).join(',')
-                    );
-                });
-
-                card.addEventListener('dragend', () => {
-                    card.classList.remove('sortable-chosen');
-                    draggedCards.forEach(item => item.classList.remove('is-bulk-dragged'));
-                    updateDragCount(0);
-                    document.body.classList.remove('dragging-unclustered');
-                    document.querySelectorAll('.cluster-row.drop-target-hover').forEach(row => {
-                        row.classList.remove('drop-target-hover');
-                    });
-                    draggedCard = null;
-                    draggedCards = [];
-                });
-            });
-
-            document.querySelector('[data-suggest-clusters]')?.addEventListener('click', () => {
-                fetchClusterSuggestions({
-                    suggestUrl,
-                    baseFields,
-                    csrfToken,
-                });
-            });
-
-            document.querySelector('[data-apply-suggestions]')?.addEventListener('click', () => {
-                applySelectedSuggestions({
-                    assignUrl,
-                    baseFields,
-                    csrfToken,
-                });
-            });
-
-            document.querySelector('[data-create-cluster]')?.addEventListener('click', () => {
-                createClusterFromSelected({
-                    createUrl,
-                    baseFields,
-                    csrfToken,
-                });
-            });
-
-            document.querySelector('[data-clear-suggestions]')?.addEventListener('click', () => {
-                clearSuggestions();
-            });
-
-            document.querySelectorAll('[data-cluster-drop-target]').forEach(row => {
-                wireClusterDropTarget(row);
-            });
-        }
-
-        function getCardsForDrag(card) {
-            const checkbox = card.querySelector('input[name="paper_nums"]');
-            if (!checkbox?.checked) return [card];
-
-            const checkedCards = Array.from(
-                document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
-            )
-                .map(input => input.closest('.unclustered-paper-card'))
-                .filter(Boolean);
-
-            return checkedCards.length ? checkedCards : [card];
-        }
-
-        function updateDragCount(count) {
-            const badge = document.querySelector('[data-drag-count]');
-            if (!badge) return;
-
-            if (count > 1) {
-                badge.textContent = `${count} selected`;
-                badge.classList.remove('d-none');
-            } else {
-                badge.textContent = '';
-                badge.classList.add('d-none');
-            }
-        }
-
-        function getSelectedUnclusteredCards() {
-            return Array.from(
-                document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
-            )
-                .map(input => input.closest('.unclustered-paper-card'))
-                .filter(Boolean);
-        }
-
-        async function createClusterFromSelected({
-            createUrl,
-            baseFields,
-            csrfToken,
-        }) {
-            const button = document.querySelector('[data-create-cluster]');
-            const cards = getSelectedUnclusteredCards();
-            if (cards.length === 0) {
-                showSuggestionStatus('Select at least one unclustered paper.', 'warning');
-                return;
-            }
-
-            const formData = new FormData();
-            Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
-            cards.forEach(card => formData.append('paper_nums', card.dataset.paperNumber));
-
-            cards.forEach(card => card.classList.add('is-assigning'));
-            showSuggestionStatus('');
-            if (button) button.disabled = true;
-
-            try {
-                const response = await fetch(createUrl, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                });
-                let data = {};
-                try {
-                    data = await response.json();
-                } catch {
-                    throw new Error('Could not create cluster.');
-                }
-                if (!response.ok || !data.ok) {
-                    throw new Error(data.message || 'Could not create cluster.');
-                }
-
-                insertClusterRow(data, cards, { baseFields, csrfToken });
-                addClusterOption(data.clusterId, data.member_count);
-                removeUnclusteredItems(data, cards);
-                showSuggestionStatus(`Created cluster ${data.clusterId}.`, 'success');
-            } catch (error) {
-                cards.forEach(card => card.classList.remove('is-assigning'));
-                showSuggestionStatus(error.message, 'danger');
-            } finally {
-                if (button) button.disabled = false;
-            }
-        }
-
-        function insertClusterRow(data, items, context) {
-            const tbody = document.querySelector('[x-ref="tbody"]');
-            if (!tbody || document.querySelector(`tr[data-cluster-id="${data.clusterId}"]`)) return;
-            const { baseFields, csrfToken } = context;
-
-            const row = document.createElement('tr');
-            row.className = 'cluster-row';
-            row.dataset.clusterId = data.clusterId;
-            row.dataset.clusterDropTarget = data.clusterId;
-            row.setAttribute(
-                ':class',
-                `{ 'table-primary': selected.includes('${data.clusterId}') }`
-            );
-
-            row.innerHTML = `
-                <td class="text-center align-middle">
-                    <input type="checkbox"
-                           name="selected_clusters"
-                           value="${data.clusterId}"
-                           class="form-check-input"
-                           x-model="selected">
-                </td>
-                <td class="align-middle" data-preview-cell="${data.clusterId}"></td>
-                <td class="text-center align-middle">0</td>
-                <td class="text-center align-middle">${data.clusterId}</td>
-                <td class="align-middle cluster-name-cell" data-cluster-name-cell>
-                    <div class="d-flex align-items-center justify-content-center cluster-name-view"
-                         data-cluster-name-view>
-                        <span class="cluster-name-text text-body-secondary fst-italic">Unnamed</span>
-                        <button type="button"
-                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
-                                title="Edit cluster name"
-                                aria-label="Edit cluster name"
-                                data-edit-cluster-name>
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                    </div>
-                    <form action="{% url 'update_cluster_name' %}"
-                          method="post"
-                          class="cluster-name-form align-items-center justify-content-center gap-1"
-                          data-cluster-name-form
-                          hidden>
-                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
-                        <input type="hidden" name="question_idx" value="${baseFields.question_idx}">
-                        <input type="hidden" name="version" value="${baseFields.version}">
-                        <input type="hidden" name="clusterId" value="${data.clusterId}">
-                        <input type="hidden" name="next" value="${baseFields.next}">
-                        <input type="text"
-                               data-cluster-name-input
-                               data-original-name=""
-                               name="cluster_name"
-                               value=""
-                               maxlength="100"
-                               class="form-control form-control-sm cluster-name-input"
-                               aria-label="Cluster name"
-                               placeholder="Unnamed">
-                        <button type="submit"
-                                class="btn btn-primary btn-sm cluster-name-icon-button"
-                                title="Save cluster name"
-                                aria-label="Save cluster name">
-                            <i class="bi bi-check-lg"></i>
-                        </button>
-                        <button type="button"
-                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
-                                title="Cancel"
-                                aria-label="Cancel"
-                                data-cancel-cluster-name>
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </form>
-                </td>
-                <td class="text-center align-middle" data-member-count="${data.clusterId}">${data.member_count}</td>
-                <td class="text-center align-middle unset-priority">Unset</td>
-                <td class="text-center align-middle" id="tag-${data.clusterId}"></td>
-                <td class="align-middle text-center">
-                    <a class="btn btn-success btn-sm" href="${data.view_members_url}">
-                        View members
-                    </a>
-                </td>
-                <td class="text-center align-middle drag-handle" style="cursor:move;">
-                    <i class="bi bi-list"></i>
-                </td>
-            `;
-
-            const previewCell = row.querySelector(`[data-preview-cell="${data.clusterId}"]`);
-            const itemImage = items[0]?.querySelector('img');
-            if (previewCell && itemImage) {
-                const previewImage = itemImage.cloneNode(true);
-                previewImage.className = 'img-fluid rounded mx-auto d-block';
-                previewImage.style.maxHeight = '100px';
-                previewImage.alt = `cluster ${data.clusterId}`;
-                previewCell.appendChild(previewImage);
-            }
-
-            row.querySelector(`#tag-${data.clusterId}`).innerHTML = data.tag_html || 'No tags';
-            tbody.appendChild(row);
-            window.plomWireClusterDropTarget?.(row);
-            window.Alpine?.initTree?.(row);
-
-            row.classList.add('assignment-complete');
-        }
-
-        function addClusterOption(clusterId, memberCount) {
-            const select = document.getElementById('target-cluster-id');
-            if (!select || select.querySelector(`[data-cluster-option="${clusterId}"]`)) return;
-
-            const option = document.createElement('option');
-            option.value = clusterId;
-            option.dataset.clusterOption = clusterId;
-            option.dataset.clusterName = 'Unnamed';
-            option.dataset.clusterCount = memberCount;
-            option.textContent = formatClusterOptionLabel(
-                clusterId,
-                memberCount,
-                option.dataset.clusterName
-            );
-            select.appendChild(option);
-        }
-
-        function formatClusterOptionLabel(clusterId, memberCount, clusterName = '') {
-            const name = clusterName || 'Unnamed';
-            return `${name} - Cluster ${clusterId} (${memberCount})`;
-        }
-
-        async function fetchClusterSuggestions({
-            suggestUrl,
-            baseFields,
-            csrfToken,
-        }) {
-            const button = document.querySelector('[data-suggest-clusters]');
-            const formData = new FormData();
-            Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
-
-            showSuggestionStatus('');
-            if (button) button.disabled = true;
-
-            try {
-                const response = await fetch(suggestUrl, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                });
-                let data = {};
-                try {
-                    data = await response.json();
-                } catch {
-                    throw new Error('Could not suggest clusters.');
-                }
-                if (!response.ok || !data.ok) {
-                    throw new Error(data.message || 'Could not suggest clusters.');
-                }
-
-                renderSuggestions(data.suggestions || []);
-            } catch (error) {
-                showSuggestionStatus(error.message, 'danger');
-            } finally {
-                if (button) button.disabled = false;
-            }
-        }
-
-        function renderSuggestions(suggestions) {
-            const panel = document.querySelector('[data-suggestions-panel]');
-            const body = document.querySelector('[data-suggestions-body]');
-            if (!panel || !body) return;
-
-            body.replaceChildren();
-            if (suggestions.length === 0) {
-                panel.classList.add('d-none');
-                showSuggestionStatus('No suggestions available.', 'info');
-                return;
-            }
-
-            suggestions.forEach(suggestion => {
-                const row = document.createElement('tr');
-                row.dataset.suggestionRow = suggestion.paper_num;
-
-                const checkCell = document.createElement('td');
-                checkCell.className = 'text-center';
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'form-check-input';
-                checkbox.checked = true;
-                checkbox.dataset.suggestionSelected = '';
-                checkbox.setAttribute('aria-label', `Apply suggestion for paper ${suggestion.paper_num}`);
-                checkCell.appendChild(checkbox);
-
-                const paperCell = document.createElement('td');
-                paperCell.textContent = `Paper ${suggestion.paper_num}`;
-
-                const clusterCell = document.createElement('td');
-                clusterCell.appendChild(buildSuggestionClusterSelect(suggestion.clusterId));
-
-                const confidenceCell = document.createElement('td');
-                const badge = document.createElement('span');
-                badge.className = `badge ${confidenceBadgeClass(suggestion.confidence)}`;
-                badge.textContent = suggestion.confidence;
-                badge.title = `gap ${suggestion.gap}`;
-                confidenceCell.appendChild(badge);
-
-                row.append(checkCell, paperCell, clusterCell, confidenceCell);
-                body.appendChild(row);
-            });
-
-            panel.classList.remove('d-none');
-            showSuggestionStatus('');
-        }
-
-        function buildSuggestionClusterSelect(selectedClusterId) {
-            const sourceSelect = document.getElementById('target-cluster-id');
-            const select = document.createElement('select');
-            select.className = 'form-select form-select-sm';
-            select.dataset.suggestionCluster = '';
-
-            if (sourceSelect) {
-                Array.from(sourceSelect.options).forEach(option => {
-                    select.appendChild(option.cloneNode(true));
-                });
-            }
-            select.value = selectedClusterId;
-            return select;
-        }
-
-        function confidenceBadgeClass(confidence) {
-            if (confidence === 'high') return 'text-bg-success';
-            if (confidence === 'medium') return 'text-bg-warning';
-            return 'text-bg-secondary';
-        }
-
-        async function applySelectedSuggestions({
-            assignUrl,
-            baseFields,
-            csrfToken,
-        }) {
-            const button = document.querySelector('[data-apply-suggestions]');
-            const suggestionRows = Array.from(
-                document.querySelectorAll('[data-suggestion-row]')
-            ).filter(row => row.querySelector('[data-suggestion-selected]')?.checked);
-
-            if (suggestionRows.length === 0) {
-                showSuggestionStatus('No selected suggestions.', 'warning');
-                return;
-            }
-
-            const groups = new Map();
-            suggestionRows.forEach(row => {
-                const paperNumber = row.dataset.suggestionRow;
-                const card = document.querySelector(`[data-paper-number="${paperNumber}"]`);
-                const targetClusterId = row.querySelector('[data-suggestion-cluster]')?.value;
-                if (!card || !targetClusterId) {
-                    row.remove();
-                    return;
-                }
-
-                if (!groups.has(targetClusterId)) {
-                    groups.set(targetClusterId, []);
-                }
-                groups.get(targetClusterId).push(card);
-            });
-
-            if (button) button.disabled = true;
-            showSuggestionStatus('');
-
-            try {
-                for (const [targetClusterId, cards] of groups) {
-                    const row = document.querySelector(`tr[data-cluster-id="${targetClusterId}"]`);
-                    if (!row) continue;
-
-                    await assignDraggedPaper({
-                        assignUrl,
-                        baseFields,
-                        csrfToken,
-                        items: cards,
-                        row,
-                        targetClusterId,
-                    });
-                }
-                refreshSuggestionsPanel();
-            } finally {
-                if (button) button.disabled = false;
-            }
-        }
-
-        function clearSuggestions() {
-            const body = document.querySelector('[data-suggestions-body]');
-            if (body) body.replaceChildren();
-            refreshSuggestionsPanel();
-            showSuggestionStatus('');
-        }
-
-        function refreshSuggestionsPanel() {
-            const panel = document.querySelector('[data-suggestions-panel]');
-            const body = document.querySelector('[data-suggestions-body]');
-            if (!panel || !body) return;
-
-            panel.classList.toggle(
-                'd-none',
-                body.querySelectorAll('[data-suggestion-row]').length === 0
-            );
-        }
-
-        function showSuggestionStatus(message, tone = 'info') {
-            const status = document.querySelector('[data-suggestions-status]');
-            if (!status) return;
-
-            status.textContent = message;
-            status.className = `alert alert-${tone} py-2 mt-3 mb-0`;
-            status.classList.toggle('d-none', !message);
-        }
-
-        async function assignDraggedPaper({
-            assignUrl,
-            baseFields,
-            csrfToken,
-            items,
-            row,
-            targetClusterId,
-        }) {
-            const cards = items.length ? items : [];
-            const paperNumbers = cards.map(item => item.dataset.paperNumber);
-            const formData = new FormData();
-            Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
-            formData.append('target_cluster_id', targetClusterId);
-            paperNumbers.forEach(paperNumber => formData.append('paper_nums', paperNumber));
-
-            cards.forEach(item => item.classList.add('is-assigning'));
-            row.classList.add('is-assigning');
-
-            try {
-                const response = await fetch(assignUrl, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                });
-                let data = {};
-                try {
-                    data = await response.json();
-                } catch {
-                    throw new Error('Could not assign paper.');
-                }
-                if (!response.ok || !data.ok) {
-                    throw new Error(data.message || 'Could not assign paper.');
-                }
-
-                updateClusterAssignmentUI(data, cards, targetClusterId);
-            } catch (error) {
-                cards.forEach(item => item.classList.remove('is-assigning'));
-                window.alert(error.message);
-            } finally {
-                row.classList.remove('is-assigning');
-            }
-        }
-
-        function updateClusterAssignmentUI(data, items, targetClusterId) {
-            const countCell = document.querySelector(`[data-member-count="${targetClusterId}"]`);
-            if (countCell) countCell.textContent = data.member_count;
-
-            const option = document.querySelector(`[data-cluster-option="${targetClusterId}"]`);
-            if (option) {
-                option.dataset.clusterCount = data.member_count;
-                option.textContent = formatClusterOptionLabel(
-                    targetClusterId,
-                    data.member_count,
-                    option.dataset.clusterName
-                );
-            }
-
-            const unclusteredCount = document.querySelector('[data-unclustered-count]');
-            if (unclusteredCount) unclusteredCount.textContent = data.unclustered_count;
-
-            const previewCell = document.querySelector(`[data-preview-cell="${targetClusterId}"]`);
-            if (previewCell && !previewCell.querySelector('img')) {
-                const item = items[0];
-                const itemImage = item.querySelector('img');
-                if (itemImage) {
-                    const previewImage = itemImage.cloneNode(true);
-                    previewImage.className = 'img-fluid rounded mx-auto d-block';
-                    previewImage.style.maxHeight = '100px';
-                    previewImage.alt = `cluster ${targetClusterId}`;
-                    previewCell.appendChild(previewImage);
-                }
-            }
-
-            const row = document.querySelector(`tr[data-cluster-id="${targetClusterId}"]`);
-            if (row) {
-                row.classList.remove('assignment-complete');
-                void row.offsetWidth;
-                row.classList.add('assignment-complete');
-            }
-
-            removeUnclusteredItems(data, items);
-        }
-
-        function removeUnclusteredItems(data, items) {
-            const unclusteredCard = document.querySelector('[data-unclustered-form]')?.closest('.card');
-            items.forEach(item => {
-                document.querySelector(
-                    `[data-suggestion-row="${item.dataset.paperNumber}"]`
-                )?.remove();
-                item.remove();
-            });
-            refreshSuggestionsPanel();
-            if (data.unclustered_count === 0 && unclusteredCard) {
-                unclusteredCard.remove();
-            }
-        }
-
         function imgError(image) {
             const span = document.createElement('span');
             span.classList.add("alert", "alert-warning", "mx-2", "py-0");
             span.innerText = "Could not extract rectangle.";
             image.parentNode.insertBefore(span, image);
             image.remove();
-            }
+        }
     </script>
+    {% endif %}
 {% endblock main_content %}
