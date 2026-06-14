@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2026 Aidan Murphy
 
 import logging
 from pathlib import Path
@@ -13,6 +14,9 @@ from plom_server import __version__, Plom_DB_Version
 
 
 log = logging.getLogger(__name__)
+
+
+DEFAULT_CONNECTION_DB = "postgres"
 
 
 def get_database_engine() -> str:
@@ -160,18 +164,28 @@ def _drop_postgres_database(*, verbose: bool = True) -> None:
     host = settings.DATABASES["postgres"]["HOST"]
     user = settings.DATABASES["postgres"]["USER"]
     password = settings.DATABASES["postgres"]["PASSWORD"]
-    db_name = settings.DATABASES["default"]["NAME"]
-    conn = psycopg.connect(user=user, password=password, host=host)
+    target_db_name = settings.DATABASES["default"]["NAME"]
+    # Note: when connecting to postgres you *must* specify a database to connect to,
+    # this database *must* exist, and the specified user *must* have connection
+    # permission on the database.
+    # If a database name is not specified, postgres will use the "user" as the
+    # database name.
+    # https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-DBNAME
+    # https://stackoverflow.com/questions/2370525/default-database-named-postgres-on-postgresql-server
+    # Specify a database that's guaranteed to exist to initialize the connection with.
+    conn = psycopg.connect(
+        user=user, password=password, host=host, dbname=DEFAULT_CONNECTION_DB
+    )
     conn.autocommit = True
 
     if verbose:
-        log.info(f'Removing old database "{db_name}"')
+        log.info(f'Removing old database "{target_db_name}"')
     try:
         with conn.cursor() as curs:
-            curs.execute(f"DROP DATABASE {db_name};")
+            curs.execute(f"DROP DATABASE {target_db_name};")
     except psycopg.errors.InvalidCatalogName:
         if verbose:
-            log.info(f'There was no database "{db_name}"')
+            log.info(f'There was no database "{target_db_name}"')
     conn.close()
 
 
@@ -196,17 +210,20 @@ def _create_postgres_database(*, verbose: bool = True) -> None:
     host = settings.DATABASES["postgres"]["HOST"]
     user = settings.DATABASES["postgres"]["USER"]
     password = settings.DATABASES["postgres"]["PASSWORD"]
-    db_name = settings.DATABASES["default"]["NAME"]
-    conn = psycopg.connect(user=user, password=password, host=host)
+    target_db_name = settings.DATABASES["default"]["NAME"]
+    # see _drop_postgres_database() for why a default dbname is used
+    conn = psycopg.connect(
+        user=user, password=password, host=host, dbname=DEFAULT_CONNECTION_DB
+    )
     conn.autocommit = True
 
     if verbose:
-        log.info(f'Creating database "{db_name}"')
+        log.info(f'Creating database "{target_db_name}"')
     try:
         with conn.cursor() as curs:
-            curs.execute(f"CREATE DATABASE {db_name};")
+            curs.execute(f"CREATE DATABASE {target_db_name};")
     except psycopg.errors.DuplicateDatabase as e:
-        raise ValueError(f'Failed to create database "{db_name}": {e}') from e
+        raise ValueError(f'Failed to create database "{target_db_name}": {e}') from e
     finally:
         conn.close()
 

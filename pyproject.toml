@@ -68,6 +68,7 @@ dependencies = [
     "passlib",
     "Pillow>=10.2",
     "plom-common>=0.21.2",
+    "pyyaml>=6.0.3",
     "pymupdf>=1.25.3",
     "PyMySQL>=1.0.2",
     "pytest>=7.2.0",
@@ -231,6 +232,7 @@ plom-finish = "plom.finish.__main__:main"
 plom-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-server = "plom_server.scripts.launch_plom_server:main"
 plom-new-demo = "plom_server.scripts.launch_plom_demo_server:main"
+plom-demo = "plom_server.scripts.launch_plom_demo_server:main"
 
 
 # Tooling configuration

@@ -25,7 +25,7 @@ else:
 import tomlkit
 
 import plom
-from plom.tpv_utils import new_magic_code
+from plom.common.tpv_utils import new_magic_code
 
 specdir = Path("specAndDatabase")
 log = logging.getLogger("spec")

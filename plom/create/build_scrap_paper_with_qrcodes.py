@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 import shutil
 import subprocess
@@ -12,8 +12,8 @@ from pathlib import Path
 
 import segno
 
+from plom.common.tpv_utils import encodeScrapPaperCode
 import plom.create
-from plom.tpv_utils import encodeScrapPaperCode
 
 
 def build_scrap_paper_pdf(destination_dir=None, *, latex_papersize: str = "") -> Path:

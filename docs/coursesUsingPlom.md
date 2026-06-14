@@ -186,7 +186,7 @@ Approx: 2070 over 6 courses
   * Approx 95020 papers in 76 courses.
 
 
-## 2023W1 (as of mid Oct)
+## 2023W1
 
 | Course   |  Tasks                           | # students |  Notes                        |
 |----------|----------------------------------|:----------:|-------------------------------|
@@ -194,23 +194,19 @@ Approx: 2070 over 6 courses
 | BIOL331  | midterm                          | 72         |                               |
 | BIOL323  | lab midterm and lecture midterm  | 46         |                               |
 | BIOL155  | midterm                          | 356        |                               |
-| Math200  | midterm 1                        | ~1000      |                               |
-| Math200* | midterm                          |            |                               |
+| Math200  | midterm 1                        | 1020       |                               |
+| Math200M+Math221M | midterm, final          | 80?        |                               |
 | Math215  | 4 quizzes, ...                   | 370        |                               |
-| Math220  | midterm                          |            |                               |
-| Math221* | midterm                          |            |                               |
-| Math317  |                                  |            |                               |
-| Math319  | midterm                          |            |                               |
+| Math220  | midterm, final                   | 350?       |                               |
+| Math317  |                                  | 150?       |                               |
+| Math319  | midterm, final                   | 30?        |                               |
 | Math320  | HW x 12                          | 60         |                               |
-| Math405  |                                  |            |                               |
+| Math405  | midterm, exam                    | 25         |                               |
+| ???      |                                  |            | poor records this term        |
 
-Math220* and Math221*: "10M" sections run independently.
+Approx: 6550 students over 12 courses.  Records not carefully kept that term.
 
-Approx: 7000 over 13 courses
-
-## Totals up to Oct 2023
-
-  * Approx 102000 papers in 82 courses.
+In Oct 2023, we passed 100000 papers marked over 82 courses.
 
 
 ## 2023W2

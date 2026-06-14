@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet, Count, Q, OuterRef, Exists
 
-from plom.tpv_utils import encodePaperPageVersion
+from plom.common.tpv_utils import encodePaperPageVersion
 from plom.common.exceptions import PlomPushCollisionException
 from plom.common.misc_utils import format_int_list_with_runs
 from plom_server.Scan.models import StagingImage, StagingBundle
