@@ -36,10 +36,8 @@ from .forms import (
     RubricCreateHalfMarkForm,
     RubricDiffForm,
     RubricFilterForm,
-    RubricUploadForm,
     RubricDownloadForm,
     RubricItemForm,
-    RubricTemplateDownloadForm,
 )
 from .tables import RubricTable
 
@@ -56,8 +54,6 @@ class RubricAdminPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_admin.html"
         rubric_create_halfmark_form = RubricCreateHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
-        upload_form = RubricUploadForm()
-        template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
         rubric_fractional_options = RubricPermissionsService.get_fractional_settings(
             all_rows=False
@@ -68,8 +64,6 @@ class RubricAdminPageView(ManagerRequiredView):
                 "rubric_fractional_options": rubric_fractional_options,
                 "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,
-                "rubric_upload_form": upload_form,
-                "rubric_template_form": template_form,
             }
         )
         return render(request, template_name, context=context)
