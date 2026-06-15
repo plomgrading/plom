@@ -83,7 +83,7 @@ class Command(BaseCommand):
                 self.create_first_manager(manager_username, password=manager_password)
             else:
                 manager_obj = self.create_first_manager(manager_username)
-                manager_password = AuthService.generate_link(manager_obj)
+                manager_password = AuthService.generate_link(manager_obj, port="8000")
             manager_string += "v" * 40 + "\n"
             manager_string += f"Manager username: {manager_username}\n"
             manager_string += f"Manager password: {manager_password}\n"
@@ -103,7 +103,7 @@ class Command(BaseCommand):
                 self.create_admin(username=admin_username, password=admin_password)
             else:
                 admin_obj = self.create_admin(username=admin_username)
-                admin_password = AuthService.generate_link(admin_obj)
+                admin_password = AuthService.generate_link(admin_obj, port="8000")
             admin_string += "v" * 40 + "\n"
             admin_string += f"Admin username: {admin_username}\n"
             admin_string += f"Admin password: {admin_password}\n"
