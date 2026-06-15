@@ -95,7 +95,6 @@ class Command(BaseCommand):
 
         admin_string = "Make admin user\n"
         if options["admin_login"] is None:
-            self.stdout.write("No admin login details provided: autogenerating...")
             admin_string += "No admin login details provided: autogenerating...\n"
             admin_username = "admin"
             # check if passwords should be generated, or reset links should be provided
