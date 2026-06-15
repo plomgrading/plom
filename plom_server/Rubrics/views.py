@@ -463,7 +463,7 @@ class UploadRubricView(ManagerRequiredView):
             messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
-        return redirect("rubrics_admin")
+        return redirect("rubrics_landing")
 
 
 class DownloadRubricTemplateView(ManagerRequiredView):
