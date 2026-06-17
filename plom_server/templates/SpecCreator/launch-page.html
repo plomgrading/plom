@@ -24,61 +24,66 @@
         {% endif %}
         <div class="card">
             <div class="card-body">
+                <p>
+                    Plom needs a description of your assessment in <a href="https://toml.io/en/" target="_blank">.toml format</a>.
+                    This can be complicated, so there are a few ways to do this:
+                </p>
                 <form enctype="multipart/form-data"
                       hx-post="{% url 'creator_launch' %}"
                       hx-include="[name='spec']"
                       hx-target="#saving-status">
                     {% csrf_token %}
                     <p>
-                        You can use the
+                        If you know what your assessment will look like, you can use the
                         <a class="btn btn-primary" href="{% url 'template_spec_builder' %}">Template
-                        Spec Builder</a>
-                        which helps you describe the structure of your assessment
-                        in <a href="https://toml.io/en/" target="_blank">.toml format</a>.
-                    </p>
-                    <p>
-                        <!-- TODO: moved to a new page: delete this later if we don't move it back
+                            Spec Builder</a>.
+                        </p>
+                        <p>
+                            If you have at least one version of your assessment finalised, you can use the
+                            <a class="btn btn-primary" href="{% url 'gui_spec_builder' %}">GUI Spec Builder</a>.
+                        </p>
+                        <p>
+                            <!-- TODO: moved to a new page: delete this later if we don't move it back
                         Or you can upload a file:
                         <div class="input-group">
                             <input class="form-control" type="file" accept=".toml" name="toml_file" id="toml_file" />
                             <button type="submit" class="btn btn-primary" name="which_action" value="upload_file">Upload</button>
                         </div>
                         -->
-                        Or you can
-                        <a class="btn btn-primary" href="{% url 'spec_upload' %}">Upload
-                        a <tt>.toml</tt> file</a>
-                        that you have prepared elsewhere.
-                    </p>
-                    <p>Or you can edit specification in the box below.</p>
-                    <div>
-                        <label for="spec-toml-input" class="form-label">Assessment specification:</label>
-                        <textarea class="form-control"
-                                  id="spec-toml-input"
-                                  name="spec"
-                                  rows="12"
-                                  spellcheck="false">{{ editable_toml }}</textarea>
-                    </div>
-                    <details class="my-2">
-                        <summary>Advanced settings</summary>
-                        <div class="ms-3 p-2 border rounded">
-                            <p class="mb-2">
-                                Trying to put two questions on a page?  Read
-                                <a href="https://plom.readthedocs.io/en/stable/preparing_an_assessment.html">the documentation</a>
-                                and consider the <tt>allowSharedPages</tt> option.
+                            If you've prepared your &ldquo;specification&rdquo; elsewhere, you can
+                            <a class="btn btn-primary" href="{% url 'spec_upload' %}">Upload
+                                a <tt>.toml</tt> file</a>.
                             </p>
-                        </div>
-                    </details>
-                    <button type="submit" class="btn btn-primary me-1 mt-2">Submit</button>
-                    <!--
+                            <p>Or you can edit specification in the box below.</p>
+                            <div>
+                                <label for="spec-toml-input" class="form-label">Assessment specification:</label>
+                                <textarea class="form-control"
+                                          id="spec-toml-input"
+                                          name="spec"
+                                          rows="12"
+                                          spellcheck="false">{{ editable_toml }}</textarea>
+                            </div>
+                            <details class="my-2">
+                                <summary>Advanced settings</summary>
+                                <div class="ms-3 p-2 border rounded">
+                                    <p class="mb-2">
+                                        Trying to put two questions on a page?  Read
+                                        <a href="https://plom.readthedocs.io/en/stable/preparing_an_assessment.html">the documentation</a>
+                                        and consider the <tt>allowSharedPages</tt> option.
+                                    </p>
+                                </div>
+                            </details>
+                            <button type="submit" class="btn btn-primary me-1 mt-2">Submit</button>
+                            <!--
                         <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
                     -->
-                    <button type="submit"
-                            class="btn btn-secondary mt-2"
-                            name="which_action"
-                            value="validate">Validate</button>
-                    <div class="mt-2" id="saving-status"></div>
-                </form>
+                            <button type="submit"
+                                    class="btn btn-secondary mt-2"
+                                    name="which_action"
+                                    value="validate">Validate</button>
+                            <div class="mt-2" id="saving-status"></div>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-{% endblock main_content %}
+        {% endblock main_content %}

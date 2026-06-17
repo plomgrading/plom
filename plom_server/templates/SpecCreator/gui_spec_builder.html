@@ -1,0 +1,64 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2024 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Build a specification
+{% endblock title %}
+{% block page_heading %}
+    Build a specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-3">
+        <div>
+            <a class="btn btn-primary" href="{% url 'creator_launch' %}">Return to specification page</a>
+        </div>
+        {% include "../base/alert_messages.html" with messages=messages %}
+        <div class="card">
+            <form enctype="multipart/form-data"
+                  action="{% url 'gui_spec_builder' %}"
+                  method="post"
+                  id="source_gui_form">
+                {% csrf_token %}
+                <h4 class="card-header">Start with your assessment .pdf*</h4>
+                <div class="container-fluid">
+                    <div class="row my-2">
+                        <div class="col-12">
+                            <input class="form-control"
+                                   type="file"
+                                   name="source_pdf"
+                                   accept="application/pdf"
+                                   required />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Start wizard</button>
+                    <p>
+                        <small>*You'll need to submit this again later on</small>
+                    </p>
+                </div>
+            </form>
+        </div>
+        {% if pdf_image_dict %}
+            <div class="card">
+                <div class="container-fluid overflow-y-scroll p-2" style="max-height:60vh">
+                    <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
+                        {% for index, image_string in pdf_image_dict.items %}
+                            <div class="col">
+                                <div id="page{{ index }}OuterCard" class="card bg-secondary-subtle">
+                                    <div id="page{{ index }}InnerCard" class="card m-1">
+                                        <img id="page{{ index }}Img"
+                                             src="data:image/png;base64,{{ image_string }}"
+                                             style="width: 40ch" />
+                                    </div>
+                                    <p class="text-center m-1 p-0">{{ index }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock main_content %}

@@ -5,7 +5,7 @@
 
 from .base import SpecBaseView
 from .summary import SpecSummaryView, HTMXDeleteSpec
-from .template_spec_builder import TemplateSpecBuilderView
+from .template_spec_builder import TemplateSpecBuilderView, GUISpecBuilderView
 from .spec_download import SpecDownloadView
 from .spec_editor import SpecEditorView
 from .spec_upload import SpecUploadView

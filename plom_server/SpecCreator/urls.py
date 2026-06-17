@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024, 2026 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2026 Aidan Murphy
 
 from django.urls import path
 
@@ -13,6 +14,11 @@ urlpatterns = [
     path("download", views.SpecDownloadView.as_view(), name="spec_download"),
     path("upload", views.SpecUploadView.as_view(), name="spec_upload"),
     path("summary", views.SpecSummaryView.as_view(), name="spec_summary"),
+    path(
+        "gui",
+        views.GUISpecBuilderView.as_view(),
+        name="gui_spec_builder",
+    ),
     path(
         "template",
         views.TemplateSpecBuilderView.as_view(),
