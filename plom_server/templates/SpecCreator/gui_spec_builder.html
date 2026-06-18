@@ -70,40 +70,39 @@
                                            class="form-control"
                                            type="text"
                                            placeholder="label">
-                                </input>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-12 col-md-8">
-                    <!-- this is the container for the page thumbnails -->
-                    <div class="container-fluid overflow-y-scroll p-2" style="max-height:60vh">
-                        <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
-                            {% for index, image_string in pdf_image_dict.items %}
-                                <div class="col">
-                                    <div id="page{{ index }}OuterCard" class="card bg-secondary-subtle">
-                                        <div id="page{{ index }}InnerCard" class="card m-1">
-                                            <img id="page{{ index }}Img"
-                                                 src="data:image/png;base64,{{ image_string }}"
-                                                 style="width: 30ch" />
+                <div class="row">
+                    <div class="col-sm-12 col-md-8">
+                        <!-- this is the container for the page thumbnails -->
+                        <div class="container-fluid overflow-y-scroll p-2" style="max-height:60vh">
+                            <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
+                                {% for index, image_string in pdf_image_dict.items %}
+                                    <div class="col">
+                                        <div id="page{{ index }}OuterCard" class="card bg-secondary-subtle">
+                                            <div id="page{{ index }}InnerCard" class="card m-1">
+                                                <img id="page{{ index }}Img"
+                                                     src="data:image/png;base64,{{ image_string }}"
+                                                     style="width: 30ch" />
+                                            </div>
+                                            <p class="text-center m-1 p-0">{{ index }}</p>
                                         </div>
-                                        <p class="text-center m-1 p-0">{{ index }}</p>
                                     </div>
-                                </div>
-                            {% endfor %}
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div id="questionExistingList" class="col-sm-12 col-md-4">
-                    <!-- dynamically update this with js -->
+                    <div id="questionExistingList" class="col-sm-12 col-md-4">
+                        <!-- dynamically update this with js -->
+                    </div>
                 </div>
             </div>
-        </div>
-    {% endif %}
-</div>
-<script>
+        {% endif %}
+    </div>
+    <script>
         // Stuff to interact with the "spec"; soaking WET right now with the server.
 	// Ideally the spec validation code could be broken down to allow partial
 	// submission of some elements while keeping the rest incomplete.
@@ -307,5 +306,5 @@ function escapeAttr(str) {
     return String(str).replace(/'/g, "\\'");
 }
 
-</script>
+    </script>
 {% endblock main_content %}
