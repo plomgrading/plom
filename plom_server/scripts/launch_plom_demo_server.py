@@ -5,6 +5,7 @@
 # Copyright (C) 2024-2026 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2026 Deep Shah
 
 """Command line tool to start a Plom demonstration server."""
 

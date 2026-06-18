@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2026 Deep Shah
 
 # Solution spec for 'Midterm Demo using Plom'
 
@@ -11,7 +12,7 @@ pages = [3]
 
 # for question 2
 [[solution]]
-pages = [4,5]
+pages = [4, 5]
 
 # for question 3
 [[solution]]

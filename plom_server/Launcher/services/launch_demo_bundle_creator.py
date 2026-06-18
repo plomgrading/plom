@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2026 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2026 Deep Shah
 
 from collections import defaultdict
 import csv

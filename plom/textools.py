@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
+# Copyright (C) 2026 Deep Shah
 
 """Tools for working with TeX."""
 

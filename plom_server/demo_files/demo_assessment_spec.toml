@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2026 Deep Shah
 
 name = "plomdemo"
 longName = "Midterm Demo using Plom"
@@ -10,7 +11,7 @@ numberOfPages = 10
 totalMarks = 28
 numberOfQuestions = 5
 idPage = 1
-doNotMarkPages = [2,10]
+doNotMarkPages = [2, 10]
 
 [[question]]
 pages = [3]
@@ -18,7 +19,7 @@ mark = 6
 
 [[question]]
 label = "Q(2)"
-pages = [4,5]
+pages = [4, 5]
 mark = 8
 select = 1
 
@@ -26,11 +27,11 @@ select = 1
 label = "Ex.3"
 pages = [6]
 mark = 4
-select = [1,2]
+select = [1, 2]
 
 [[question]]
 label = "LastQ"
-pages = [7,8]
+pages = [7, 8]
 mark = 7
 select = [3]
 

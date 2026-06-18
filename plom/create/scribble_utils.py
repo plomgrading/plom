@@ -7,6 +7,7 @@
 # Copyright (C) 2023 Sarah Oskuei
 # Copyright (C) 2025 Lindsey Daniels
 # Copyright (C) 2025 Negar Harandi
+# Copyright (C) 2026 Deep Shah
 
 """Plom tools for scribbling fake answers on PDF files."""
 
