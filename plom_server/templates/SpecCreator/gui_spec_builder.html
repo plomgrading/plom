@@ -42,23 +42,168 @@
         </div>
         {% if pdf_image_dict %}
             <div class="card">
-                <div class="container-fluid overflow-y-scroll p-2" style="max-height:60vh">
-                    <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
-                        {% for index, image_string in pdf_image_dict.items %}
-                            <div class="col">
-                                <div id="page{{ index }}OuterCard" class="card bg-secondary-subtle">
-                                    <div id="page{{ index }}InnerCard" class="card m-1">
-                                        <img id="page{{ index }}Img"
-                                             src="data:image/png;base64,{{ image_string }}"
-                                             style="width: 40ch" />
-                                    </div>
-                                    <p class="text-center m-1 p-0">{{ index }}</p>
+                <div class="card-header">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-6">
+                                <button class="btn btn-primary">assign as ID page</button>
+                                <button class="btn btn-primary">assign to dnm</button>
+                                <div class="input-group my-2">
+                                    <button class="btn btn-primary">assign to</button>
+                                    <select id="questionAssignmentSelector"
+                                            type="text"
+                                            class="form-select"
+                                            placeholder="">
+                                        <option selected disabled hidden>pick a question</option>
+                                        <option value="Q1">Q1</option>
+                                        <!-- dynamically update this with js(?) -->
+                                    </select>
                                 </div>
                             </div>
-                        {% endfor %}
+                            <div class="col-6">
+                                <div class="input-group my-2">
+                                    <button class="btn btn-primary"
+                                            onclick="createQuestion(document.getElementById('newQuestionLabel').value)">
+                                        New question
+                                    </button>
+                                    <input id="newQuestionLabel"
+                                           class="form-control"
+                                           type="text"
+                                           placeholder="label">
+                                </input>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        {% endif %}
-    </div>
+            <div class="row">
+                <div class="col-sm-12 col-md-8">
+                    <!-- this is the container for the page thumbnails -->
+                    <div class="container-fluid overflow-y-scroll p-2" style="max-height:60vh">
+                        <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
+                            {% for index, image_string in pdf_image_dict.items %}
+                                <div class="col">
+                                    <div id="page{{ index }}OuterCard" class="card bg-secondary-subtle">
+                                        <div id="page{{ index }}InnerCard" class="card m-1">
+                                            <img id="page{{ index }}Img"
+                                                 src="data:image/png;base64,{{ image_string }}"
+                                                 style="width: 40ch" />
+                                        </div>
+                                        <p class="text-center m-1 p-0">{{ index }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div id="questionExistingList" class="col-sm-12 col-md-4">
+                    <!-- dynamically update this with js(?) -->
+                    <div class="card">
+                        <h6 class="card-header">Q1</h6>
+                        <div class="card-body p-2">
+                            <span>marks:
+                                <input type="text" class="form-control" placeholder="">
+                            </span>
+                            <span>pages: 1, 2, 3, 4, 5</span>
+                            <div>
+                                versions:
+                                <div class="form-control">
+                                    <input id="version1" type="checkbox">
+                                    <label for"version1">1</label>
+                                    <input id="version2" type="checkbox">
+                                    <label for"version2">2</label>
+                                    <input id="version3" type="checkbox">
+                                    <label for"version3">3</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger">remove</button>
+                            <button class="btn btn-primary">submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+<script>
+        // Stuff to interact with the "spec"; soaking WET right now with the server.
+	// Ideally the spec validation code could be broken down to allow partial
+	// submission of some elements while keeping the rest incomplete.
+	var statefulSpec = {
+	    name: "",
+	    longName: "",
+	    numberOfVersions: -1,
+	    numberOfPages: -1,
+	    numberOfQuestions: -1,
+	    totalMarks: -1,
+	    idPage: -1,
+	    doNotMarkPages: [],
+	    questions: []
+	};
+	const questionTemplate = {
+	    pages: [],
+	    marks: -1,
+	    select: [],
+	    label: null,
+	    bonus: null
+	};
+
+	// add a question to the spec - first check if there's one with
+	// a similar label.
+	function createQuestion(label) {
+	    statefulSpec.questions.forEach((questionObj) => {
+		if (label === questionObj.label) {
+                    alert("A question using that label already exists");
+		    return;
+		}
+	    });
+	    newQuestion = structuredClone(questionTemplate);
+	    newQuestion.label = label;
+	    statefulSpec.questions.push(newQuestion);
+	    refreshQuestionLists();
+	    return;
+	}
+
+        // remove a question from the spec
+	function removeQuestion(label) {
+	    statefulSpec.questions = statefulSpec.questions.filter(
+	        questionObj => questionObj.label !== label
+	    );
+	    refreshQuestionLists();
+	    return;
+	}
+
+	// check the spec's questions, and update html elements accordingly
+	function refreshQuestionLists() {
+	    let newOptions = [];
+	    // question dropdown node
+	    let qddNode = document.getElementById("questionAssignmentSelector");
+	    let defaultOption = document.createElement("option");
+	    defaultOption.disabled = true;
+	    defaultOption.hidden = true;
+	    defaultOption.selected = true;
+	    newOptions.push(defaultOption);
+
+	    let newQuestionCards = [];
+	    // question container node
+	    let qcNode = document.getElementById("questionExistingList");
+
+	    statefuleSpec.questions.forEach((questionObj) => {
+		let dropdownOption = document.createElement("option");
+                dropdownOption.value = questionObj.label;
+                dropdownOption.innerText = questionObj.label;
+		newOptions.push(dropdownOption);
+
+                let questionCard = document.createElement("div");
+		questionCard.className = "card";
+	    });
+
+
+	    qddNode.innerHTML = "";
+	    questionCardsContainer.innerHTML = "";
+
+	    return;
+	}
+
+</script>
 {% endblock main_content %}
