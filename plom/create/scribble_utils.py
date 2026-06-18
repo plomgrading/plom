@@ -416,7 +416,9 @@ def scribble_mcq_answer_in_box(
     color = (shade, shade, shade)
     line_width = random.uniform(1.2, 2.4)
 
-    answer_rect = pymupdf.Rect(x - mark_size, y - mark_size, x + mark_size, y + mark_size)
+    answer_rect = pymupdf.Rect(
+        x - mark_size, y - mark_size, x + mark_size, y + mark_size
+    )
     if style == "fill":
         page.draw_rect(answer_rect, color=color, fill=color, width=0.5)
     elif style == "tick":
