@@ -45,10 +45,12 @@
                 <div class="card-header">
                     <div class="container-fluid">
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-auto">
                                 <button class="btn btn-primary">assign as ID page</button>
                                 <button class="btn btn-primary">assign to dnm</button>
-                                <div class="input-group my-2">
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
                                     <button class="btn btn-primary">assign to</button>
                                     <select id="questionAssignmentSelector"
                                             type="text"
@@ -60,8 +62,8 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="input-group my-2">
+                            <div class="col-auto">
+                                <div class="input-group">
                                     <button class="btn btn-primary"
                                             onclick="createQuestion(document.getElementById('newQuestionLabel').value)">
                                         New question
@@ -73,23 +75,36 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col">
+                                <span class="text-muted small">Pages selected:</span>
+                                <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-sm-12 col-md-8">
                         <!-- this is the container for the page thumbnails -->
-                        <div class="container-fluid overflow-y-scroll p-2" style="max-height:60vh">
+                        <div class="container-fluid overflow-y-scroll p-2" style="max-height:75vh">
                             <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
                                 {% for index, image_string in pdf_image_dict.items %}
                                     <div class="col">
-                                        <div id="page{{ index }}OuterCard" class="card bg-secondary-subtle">
-                                            <div id="page{{ index }}InnerCard" class="card m-1">
-                                                <img id="page{{ index }}Img"
-                                                     src="data:image/png;base64,{{ image_string }}"
-                                                     style="width: 30ch" />
+                                        <label for="page{{ index }}Checkbox">
+                                            <div id="page{{ index }}OuterCard"
+                                                 class="card bg-secondary-subtle position-relative">
+                                                <div id="page{{ index }}InnerCard" class="card m-1">
+                                                    <img id="page{{ index }}Img"
+                                                         src="data:image/png;base64,{{ image_string }}"
+                                                         style="width: 30ch" />
+                                                </div>
+                                                <p class="text-center m-1 p-0">{{ index }}</p>
+                                                <input id="page{{ index }}Checkbox"
+                                                       class="form-check-input position-absolute"
+                                                       type="checkbox"
+                                                       onchange="updateSelectedPages({{ index }}, this.checked)">
                                             </div>
-                                            <p class="text-center m-1 p-0">{{ index }}</p>
-                                        </div>
+                                        </label>
                                     </div>
                                 {% endfor %}
                             </div>
@@ -97,7 +112,7 @@
                     </div>
                     <div id="questionExistingList"
                          class="col-sm-12 col-md-4 overflow-y-scroll"
-                         style="max-height:60vh">
+                         style="max-height:75vh">
                         <!-- dynamically update this with js -->
                     </div>
                 </div>
@@ -130,6 +145,7 @@
 	    label: null,
 	    bonus: null
 	};
+	var selectedPages = new Set();
 
 	function getNextAvailableQidx() {
 	    let qidxArray = statefulSpec.questions.map(q => q.qidx).sort();
@@ -272,6 +288,23 @@ function setQuestionVersions(qidx, version, checked) {
         q.select = q.select.filter(v => v !== version);
     }
     refreshQuestionLists();
+}
+
+function updateSelectedPages(pageIndex, checked) {
+    if (checked)
+	selectedPages.add(pageIndex);
+    else
+	selectedPages.delete(pageIndex);
+
+    console.log(selectedPages)
+    // convert to array, sort, then back to set
+    const sortedPagesArray = [...selectedPages].sort((a, b) => a - b);
+    selectedPages = new Set(sortedPagesArray);
+
+    // update html elems using sorted array
+    let span = document.getElementById("selectedPagesDisplay");
+    span.innerText = sortedPagesArray.join(", ");
+
 }
 
 function setQuestionMarks(qidx, marks) {
