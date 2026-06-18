@@ -219,6 +219,8 @@
                         <div class="mb-1">
                             <label class="text-muted" for="marks_${q.qidx}">Marks:</label>
                             <input id="marks_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.marks ?? ""}" placeholder="?" oninput="setQuestionMarks(${q.qidx}, this.value)">
+                            <label class="text-muted" for="bonus_${q.qidx}">Bonus:</label>
+			    <input id="bonus_${q.qidx}" type="checkbox" class="form-check-input" ${q.bonus ? "checked" : "" } oninput="setQuestionBonus(${q.qidx}, this.checked)">
                         </div>
                         ${5 > 1 ? `
                         <div>
@@ -279,6 +281,13 @@ function setQuestionMarks(qidx, marks) {
     refreshQuestionLists();
 }
 
+function setQuestionBonus(qidx, bonus) {
+    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    if (!q)
+	return;
+    q.bonus = bonus;
+    refreshQuestionLists();
+}
 
 function setQuestionLabel(qidx, label) {
     const q = statefulSpec.questions.find(q => q.qidx === qidx);
