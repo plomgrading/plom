@@ -87,7 +87,7 @@
                                         <div id="page{{ index }}InnerCard" class="card m-1">
                                             <img id="page{{ index }}Img"
                                                  src="data:image/png;base64,{{ image_string }}"
-                                                 style="width: 40ch" />
+                                                 style="width: 30ch" />
                                         </div>
                                         <p class="text-center m-1 p-0">{{ index }}</p>
                                     </div>
@@ -97,29 +97,7 @@
                     </div>
                 </div>
                 <div id="questionExistingList" class="col-sm-12 col-md-4">
-                    <!-- dynamically update this with js(?) -->
-                    <div class="card">
-                        <h6 class="card-header">Q1</h6>
-                        <div class="card-body p-2">
-                            <span>marks:
-                                <input type="text" class="form-control" placeholder="">
-                            </span>
-                            <span>pages: 1, 2, 3, 4, 5</span>
-                            <div>
-                                versions:
-                                <div class="form-control">
-                                    <input id="version1" type="checkbox">
-                                    <label for"version1">1</label>
-                                    <input id="version2" type="checkbox">
-                                    <label for"version2">2</label>
-                                    <input id="version3" type="checkbox">
-                                    <label for"version3">3</label>
-                                </div>
-                            </div>
-                            <button class="btn btn-danger">remove</button>
-                            <button class="btn btn-primary">submit</button>
-                        </div>
-                    </div>
+                    <!-- dynamically update this with js -->
                 </div>
             </div>
         </div>
@@ -141,6 +119,10 @@
 	    questions: []
 	};
 	const questionTemplate = {
+	    // this isn't in the spec, it's only used locally
+	    // we must remove it before uploading to server.
+	    qidx: 1,
+
 	    pages: [],
 	    marks: -1,
 	    select: [],
@@ -148,26 +130,33 @@
 	    bonus: null
 	};
 
+	function getNextAvailableQidx() {
+	    let qidxArray = statefulSpec.questions.map(q => q.qidx).sort();
+	    if (qidxArray.length === 0)
+	        return 1;
+	    return qidxArray.at(-1) + 1;
+	}
+
 	// add a question to the spec - first check if there's one with
 	// a similar label.
 	function createQuestion(label) {
-	    statefulSpec.questions.forEach((questionObj) => {
-		if (label === questionObj.label) {
-                    alert("A question using that label already exists");
-		    return;
-		}
-	    });
+	    const q = statefulSpec.questions.find(q => q.label === label);
+	    if (q) {
+                alert("A question using that label already exists");
+	        return;
+	    }
 	    newQuestion = structuredClone(questionTemplate);
-	    newQuestion.label = label;
+	    newQuestion.qidx = getNextAvailableQidx();
+	    newQuestion.label = label ? label : `Q${newQuestion.qidx}`;
 	    statefulSpec.questions.push(newQuestion);
 	    refreshQuestionLists();
 	    return;
 	}
 
         // remove a question from the spec
-	function removeQuestion(label) {
+	function removeQuestion(qidx) {
 	    statefulSpec.questions = statefulSpec.questions.filter(
-	        questionObj => questionObj.label !== label
+	        questionObj => questionObj.qidx !== qidx
 	    );
 	    refreshQuestionLists();
 	    return;
@@ -175,35 +164,139 @@
 
 	// check the spec's questions, and update html elements accordingly
 	function refreshQuestionLists() {
-	    let newOptions = [];
+	    refreshQuestionSummary();
+	    refreshQuestionDropdown();
+	    return;
+	}
+	function refreshQuestionSummary() {
+            const container = document.getElementById("questionExistingList");
+	    let questionCardElems = [];
+
+            if (statefulSpec.questions.length === 0) {
+                container.innerHTML = `<p class="text-muted small">No questions yet. Add one above.</p>`;
+                return;
+            }
+
+            statefulSpec.questions.forEach((q, index) => {
+                const pagesText = q.pages.length
+                    ? q.pages.map(p => `p.${p}`).join(", ")
+                    : `<span class="text-muted fst-italic">none</span>`;
+
+                // Build version checkboxes
+                let versionsHtml = "";
+                for (let v = 1; v <= 5; v++) {
+                    const checked = q.select.includes(v) ? "checked" : "";
+                    versionsHtml += `
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="q_${q.qidx}_v${v}"
+                                   ${checked}
+                                   onchange="setQuestionVersions(${q.qidx}, ${v}, this.checked)">
+                            <label class="form-check-label" for="q_${q.qidx}_v${v}">${v}</label>
+                        </div>`;
+                }
+
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <div class="card-header d-flex justify-content-between align-items-center py-1">
+                        <strong>
+                            <input id="label_${q.qidx}" type="text" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${escapeHtml(q.label)}" placeholder="" onchange="setQuestionLabel(${q.qidx}, this.value)">
+                        </strong>
+                        <button class="btn btn-sm btn-outline-danger py-0" onclick="removeQuestion(${q.qidx})">
+                            &times; Remove
+                        </button>
+                    </div>
+                    <div class="card-body p-2 small">
+                        <div class="mb-1">
+                            <label class="text-muted" for="marks_${q.qidx}">DEBUG Qidx:</label>
+                            <input id="idx_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.qidx}" placeholder="?" disabled oninput="setQuestionMarks(${q.qidx}, this.value)">
+                        </div>
+                        <div class="mb-1">
+                            <span class="text-muted">Pages:</span> ${pagesText}
+                        </div>
+                        <div class="mb-1">
+                            <label class="text-muted" for="marks_${q.qidx}">Marks:</label>
+                            <input id="marks_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.marks ?? ""}" placeholder="?" oninput="setQuestionMarks(${q.qidx}, this.value)">
+                        </div>
+                        ${5 > 1 ? `
+                        <div>
+                            <span class="text-muted">Select from versions:</span>
+                            ${versionsHtml}
+                        </div>` : ""}
+                    </div>`;
+                questionCardElems.push(card);
+            });
+	    // do this last so prior errors don't remove everything
+            container.innerHTML = "";
+	    questionCardElems.forEach((elem) => {
+	        container.appendChild(elem);
+	    });
+	}
+	function refreshQuestionDropdown() {
+	    let questionOptionElems = [];
 	    // question dropdown node
-	    let qddNode = document.getElementById("questionAssignmentSelector");
+	    let container = document.getElementById("questionAssignmentSelector");
 	    let defaultOption = document.createElement("option");
 	    defaultOption.disabled = true;
 	    defaultOption.hidden = true;
 	    defaultOption.selected = true;
-	    newOptions.push(defaultOption);
+	    questionOptionElems.push(defaultOption);
 
-	    let newQuestionCards = [];
-	    // question container node
-	    let qcNode = document.getElementById("questionExistingList");
 
-	    statefuleSpec.questions.forEach((questionObj) => {
+	    statefulSpec.questions.forEach((questionObj) => {
 		let dropdownOption = document.createElement("option");
                 dropdownOption.value = questionObj.label;
                 dropdownOption.innerText = questionObj.label;
-		newOptions.push(dropdownOption);
-
-                let questionCard = document.createElement("div");
-		questionCard.className = "card";
+		questionOptionElems.push(dropdownOption);
 	    });
 
-
-	    qddNode.innerHTML = "";
-	    questionCardsContainer.innerHTML = "";
-
-	    return;
+	    // do this last, so prior failures don't remove everything
+	    container.innerHTML = "";
+		questionOptionElems.forEach((elem) => {
+	        container.appendChild(elem);
+	    });
 	}
+
+function setQuestionVersions(qidx, version, checked) {
+    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    if (!q)
+	return;
+    if (checked) {
+        if (!q.select.includes(version)) q.select.push(version);
+    } else {
+        q.select = q.select.filter(v => v !== version);
+    }
+    refreshQuestionLists();
+}
+
+function setQuestionMarks(qidx, marks) {
+    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    if (!q || marks < 0)
+	return;
+    q.marks = parseInt(marks);
+    refreshQuestionLists();
+}
+
+
+function setQuestionLabel(qidx, label) {
+    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    if (!q || !label)
+	return;
+    q.label = label;
+    refreshQuestionLists();
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;").replace(/</g , "&lt;") .replace( />/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function escapeAttr(str) {
+    // Safe for use inside onclick='...' single-quoted attribute values
+    return String(str).replace(/'/g, "\\'");
+}
 
 </script>
 {% endblock main_content %}
