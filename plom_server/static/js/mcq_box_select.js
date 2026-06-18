@@ -1,0 +1,437 @@
+/*
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2026 Deep Shah
+*/
+
+(function () {
+  const optionLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const overlay = document.getElementById('mcq_box_overlay');
+  const controls = document.getElementById('mcq_controls');
+  const detectButton = document.getElementById('mcq_detect_boxes');
+  const addButton = document.getElementById('mcq_add_box');
+  const removeButton = document.getElementById('mcq_remove_box');
+  const clearButton = document.getElementById('mcq_clear_boxes');
+  const optionCountContainer = document.getElementById('mcq_option_count');
+  const optionCountInput = document.getElementById('mcq_num_options');
+  const questionTypeInput = document.getElementById('question_type');
+  const statusElement = document.getElementById('mcq_detection_status');
+  const hiddenInput = document.getElementById('mcq_boxes');
+
+  if (
+    !overlay ||
+    !controls ||
+    !detectButton ||
+    !optionCountContainer ||
+    !questionTypeInput ||
+    !hiddenInput
+  ) {
+    return;
+  }
+
+  let mcqBoxes = [];
+  let activeBoxIndex = -1;
+  let dragState = null;
+
+  function clamp(value, low, high) {
+    return Math.min(Math.max(value, low), high);
+  }
+
+  function roundCoord(value) {
+    return Number(value.toFixed(6));
+  }
+
+  function getReferenceSize() {
+    return {
+      width: bottom_right_coord[0] - top_left_coord[0],
+      height: bottom_right_coord[1] - top_left_coord[1],
+    };
+  }
+
+  function canvasDeltaToPlom(dx, dy) {
+    const referenceSize = getReferenceSize();
+    return {
+      dx: (dx * effective_image_width / canvas.width) / referenceSize.width,
+      dy: (dy * effective_image_height / canvas.height) / referenceSize.height,
+    };
+  }
+
+  function plomBoxToCanvasBox(box) {
+    const referenceSize = getReferenceSize();
+    const absLeft = top_left_coord[0] + box.left * referenceSize.width;
+    const absTop = top_left_coord[1] + box.top * referenceSize.height;
+    const absRight = top_left_coord[0] + box.right * referenceSize.width;
+    const absBottom = top_left_coord[1] + box.bottom * referenceSize.height;
+    return {
+      left: absLeft * canvas.width / effective_image_width,
+      top: absTop * canvas.height / effective_image_height,
+      width: (absRight - absLeft) * canvas.width / effective_image_width,
+      height: (absBottom - absTop) * canvas.height / effective_image_height,
+    };
+  }
+
+  function getSelectedRect() {
+    const selected = {
+      left: parseFloat(document.getElementById('plom_left').value),
+      top: parseFloat(document.getElementById('plom_top').value),
+      right: parseFloat(document.getElementById('plom_right').value),
+      bottom: parseFloat(document.getElementById('plom_bottom').value),
+    };
+    if (
+      !Number.isFinite(selected.left) ||
+      !Number.isFinite(selected.top) ||
+      !Number.isFinite(selected.right) ||
+      !Number.isFinite(selected.bottom)
+    ) {
+      return null;
+    }
+    return {
+      left: Math.min(selected.left, selected.right),
+      top: Math.min(selected.top, selected.bottom),
+      right: Math.max(selected.left, selected.right),
+      bottom: Math.max(selected.top, selected.bottom),
+    };
+  }
+
+  function getNumOptions() {
+    return clamp(parseInt(optionCountInput.value, 10) || 1, 1, optionLabels.length);
+  }
+
+  function isMCQMode() {
+    return questionTypeInput.value === 'MCQ';
+  }
+
+  function setStatus(message, isError) {
+    statusElement.textContent = message;
+    statusElement.classList.toggle('text-danger', Boolean(isError));
+    statusElement.classList.toggle('text-muted', !isError);
+  }
+
+  function syncOverlayToCanvas() {
+    overlay.style.left = canvas.style.left;
+    overlay.style.top = canvas.style.top;
+    overlay.style.width = `${canvas.width}px`;
+    overlay.style.height = `${canvas.height}px`;
+  }
+
+  function serialiseBox(box) {
+    return {
+      label: box.label,
+      left: roundCoord(box.left),
+      top: roundCoord(box.top),
+      right: roundCoord(box.right),
+      bottom: roundCoord(box.bottom),
+    };
+  }
+
+  function updateHiddenInput() {
+    if (!isMCQMode()) {
+      hiddenInput.value = '[]';
+      return;
+    }
+    hiddenInput.value = JSON.stringify({
+      question_type: questionTypeInput.value,
+      num_options: getNumOptions(),
+      boxes: mcqBoxes.map(serialiseBox),
+    });
+  }
+
+  function sortBoxesInReadingOrder(boxes) {
+    const sortedByTop = [...boxes].sort((a, b) => {
+      if (a.top === b.top) {
+        return a.left - b.left;
+      }
+      return a.top - b.top;
+    });
+    if (sortedByTop.length === 0) {
+      return [];
+    }
+
+    const heights = sortedByTop
+      .map((box) => box.bottom - box.top)
+      .sort((a, b) => a - b);
+    const medianHeight = heights[Math.floor(heights.length / 2)];
+    const rowThreshold = Math.max(medianHeight * 0.75, 0.01);
+    const rows = [];
+
+    sortedByTop.forEach((box) => {
+      const centerY = (box.top + box.bottom) / 2;
+      let row = rows.find((candidate) => (
+        Math.abs(centerY - candidate.centerY) <= rowThreshold
+      ));
+      if (!row) {
+        row = { centerY, boxes: [] };
+        rows.push(row);
+      }
+      row.boxes.push(box);
+      row.centerY = row.boxes.reduce(
+        (total, rowBox) => total + (rowBox.top + rowBox.bottom) / 2,
+        0
+      ) / row.boxes.length;
+    });
+
+    return rows
+      .sort((a, b) => a.centerY - b.centerY)
+      .flatMap((row) => row.boxes.sort((a, b) => a.left - b.left));
+  }
+
+  function renumberBoxes() {
+    const activeBox = activeBoxIndex >= 0 ? mcqBoxes[activeBoxIndex] : null;
+    mcqBoxes = sortBoxesInReadingOrder(mcqBoxes);
+    mcqBoxes.forEach((box, index) => {
+      box.label = optionLabels[index] || '?';
+    });
+    activeBoxIndex = activeBox ? mcqBoxes.indexOf(activeBox) : activeBoxIndex;
+  }
+
+  function renderBoxes() {
+    syncOverlayToCanvas();
+    overlay.replaceChildren();
+    if (!isMCQMode()) {
+      updateHiddenInput();
+      return;
+    }
+    mcqBoxes.forEach((box, index) => {
+      const canvasBox = plomBoxToCanvasBox(box);
+      const boxElement = document.createElement('div');
+      boxElement.className = 'mcq-option-box';
+      if (index === activeBoxIndex) {
+        boxElement.classList.add('active');
+      }
+      boxElement.dataset.index = index;
+      boxElement.style.left = `${canvasBox.left}px`;
+      boxElement.style.top = `${canvasBox.top}px`;
+      boxElement.style.width = `${canvasBox.width}px`;
+      boxElement.style.height = `${canvasBox.height}px`;
+      boxElement.title = `Option ${box.label}`;
+
+      const labelElement = document.createElement('span');
+      labelElement.className = 'mcq-option-label';
+      labelElement.textContent = box.label;
+      boxElement.appendChild(labelElement);
+
+      const resizeElement = document.createElement('span');
+      resizeElement.className = 'mcq-option-resize';
+      resizeElement.dataset.resize = 'true';
+      boxElement.appendChild(resizeElement);
+
+      boxElement.addEventListener('pointerdown', startDraggingBox);
+      overlay.appendChild(boxElement);
+    });
+    updateHiddenInput();
+  }
+
+  function startDraggingBox(event) {
+    const boxElement = event.currentTarget;
+    activeBoxIndex = parseInt(boxElement.dataset.index, 10);
+    dragState = {
+      mode: event.target.dataset.resize === 'true' ? 'resize' : 'move',
+      startX: event.clientX,
+      startY: event.clientY,
+      original: { ...mcqBoxes[activeBoxIndex] },
+    };
+    event.preventDefault();
+    event.stopPropagation();
+    renderBoxes();
+  }
+
+  function moveActiveBox(event) {
+    if (!dragState || activeBoxIndex < 0) {
+      return;
+    }
+
+    const delta = canvasDeltaToPlom(
+      event.clientX - dragState.startX,
+      event.clientY - dragState.startY
+    );
+    const original = dragState.original;
+    const minDelta = canvasDeltaToPlom(12, 12);
+    const box = mcqBoxes[activeBoxIndex];
+
+    if (dragState.mode === 'resize') {
+      box.right = clamp(
+        original.right + delta.dx,
+        original.left + minDelta.dx,
+        1
+      );
+      box.bottom = clamp(
+        original.bottom + delta.dy,
+        original.top + minDelta.dy,
+        1
+      );
+    } else {
+      const width = original.right - original.left;
+      const height = original.bottom - original.top;
+      box.left = clamp(original.left + delta.dx, 0, 1 - width);
+      box.top = clamp(original.top + delta.dy, 0, 1 - height);
+      box.right = box.left + width;
+      box.bottom = box.top + height;
+    }
+
+    event.preventDefault();
+    renderBoxes();
+  }
+
+  function finishDraggingBox() {
+    if (!dragState) {
+      return;
+    }
+    dragState = null;
+    renumberBoxes();
+    activeBoxIndex = mcqBoxes.length > 0
+      ? Math.min(activeBoxIndex, mcqBoxes.length - 1)
+      : -1;
+    renderBoxes();
+  }
+
+  function normaliseDetectedBox(box) {
+    return {
+      label: box.label,
+      left: clamp(box.plom.left, 0, 1),
+      top: clamp(box.plom.top, 0, 1),
+      right: clamp(box.plom.right, 0, 1),
+      bottom: clamp(box.plom.bottom, 0, 1),
+    };
+  }
+
+  function detectBoxes() {
+    if (!isMCQMode()) {
+      return;
+    }
+    const selectedRect = getSelectedRect();
+    if (!selectedRect) {
+      setStatus('Select a rectangle before detecting boxes.', true);
+      return;
+    }
+
+    const params = new URLSearchParams({
+      left: selectedRect.left,
+      top: selectedRect.top,
+      right: selectedRect.right,
+      bottom: selectedRect.bottom,
+      num_options: getNumOptions(),
+    });
+
+    setStatus('Detecting boxes...', false);
+    fetch(`${mcq_box_detection_url}?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(text || response.statusText);
+          });
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        mcqBoxes = data.boxes.map(normaliseDetectedBox);
+        activeBoxIndex = mcqBoxes.length > 0 ? 0 : -1;
+        renumberBoxes();
+        renderBoxes();
+        if (mcqBoxes.length === getNumOptions()) {
+          setStatus(`Detected ${mcqBoxes.length} boxes.`, false);
+        } else {
+          setStatus(`Detected ${mcqBoxes.length} of ${getNumOptions()} boxes.`, false);
+        }
+      })
+      .catch((error) => {
+        setStatus(error.message || 'Could not detect boxes.', true);
+      });
+  }
+
+  function getDefaultBoxSize(selectedRect) {
+    if (mcqBoxes.length > 0) {
+      const widths = mcqBoxes
+        .map((box) => box.right - box.left)
+        .sort((a, b) => a - b);
+      const heights = mcqBoxes
+        .map((box) => box.bottom - box.top)
+        .sort((a, b) => a - b);
+      const middle = Math.floor(mcqBoxes.length / 2);
+      return {
+        width: widths[middle],
+        height: heights[middle],
+      };
+    }
+    const selectedHeight = selectedRect.bottom - selectedRect.top;
+    const selectedWidth = selectedRect.right - selectedRect.left;
+    const size = Math.min(selectedHeight * 0.35, selectedWidth * 0.12);
+    return { width: size, height: size };
+  }
+
+  function addBox() {
+    if (!isMCQMode()) {
+      return;
+    }
+    const selectedRect = getSelectedRect();
+    if (!selectedRect) {
+      setStatus('Select a rectangle before adding a box.', true);
+      return;
+    }
+    const size = getDefaultBoxSize(selectedRect);
+    const optionSlot = Math.min(mcqBoxes.length + 1, getNumOptions());
+    const slotGap = (selectedRect.right - selectedRect.left) / (getNumOptions() + 1);
+    const centerX = selectedRect.left + slotGap * optionSlot;
+    const centerY = selectedRect.top + (selectedRect.bottom - selectedRect.top) / 2;
+    const left = clamp(centerX - size.width / 2, 0, 1 - size.width);
+    const top = clamp(centerY - size.height / 2, 0, 1 - size.height);
+    mcqBoxes.push({
+      label: '?',
+      left,
+      top,
+      right: left + size.width,
+      bottom: top + size.height,
+    });
+    renumberBoxes();
+    activeBoxIndex = mcqBoxes.length - 1;
+    renderBoxes();
+    setStatus(`${mcqBoxes.length} boxes selected.`, false);
+  }
+
+  function removeActiveBox() {
+    if (activeBoxIndex < 0 || activeBoxIndex >= mcqBoxes.length) {
+      return;
+    }
+    mcqBoxes.splice(activeBoxIndex, 1);
+    activeBoxIndex = mcqBoxes.length > 0 ? 0 : -1;
+    renumberBoxes();
+    renderBoxes();
+    setStatus(`${mcqBoxes.length} boxes selected.`, false);
+  }
+
+  function clearBoxes() {
+    mcqBoxes = [];
+    activeBoxIndex = -1;
+    renderBoxes();
+    setStatus('No boxes selected.', false);
+  }
+
+  function updateMCQMode() {
+    const enabled = isMCQMode();
+    controls.classList.toggle('d-none', !enabled);
+    optionCountContainer.classList.toggle('d-none', !enabled);
+    overlay.classList.toggle('d-none', !enabled);
+    if (!enabled) {
+      mcqBoxes = [];
+      activeBoxIndex = -1;
+      setStatus('', false);
+    }
+    renderBoxes();
+  }
+
+  detectButton.addEventListener('click', detectBoxes);
+  addButton.addEventListener('click', addBox);
+  removeButton.addEventListener('click', removeActiveBox);
+  clearButton.addEventListener('click', clearBoxes);
+  optionCountInput.addEventListener('change', updateHiddenInput);
+  questionTypeInput.addEventListener('change', updateMCQMode);
+  document.addEventListener('pointermove', moveActiveBox);
+  document.addEventListener('pointerup', finishDraggingBox);
+  window.addEventListener('resize', renderBoxes);
+  window.addEventListener('load', updateMCQMode);
+  hiddenInput.form.addEventListener('submit', updateHiddenInput);
+  updateMCQMode();
+})();

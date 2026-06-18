@@ -8,10 +8,11 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
+    Http404,
     HttpRequest,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseNotFound,
-    Http404,
     JsonResponse,
 )
 from django.shortcuts import render, redirect
@@ -20,8 +21,10 @@ from django.urls import reverse
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Rectangles.services import get_reference_qr_coords_for_page
+from .services.mcq_box_detection import detect_mcq_boxes_for_reference_image
 from .services import QuestionClusteringJobService, QuestionClusteringService
 from .models import QVCluster, QVClusterLink
 from .forms import ClusteringJobForm
@@ -116,8 +119,59 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
             "right": right,
             "bottom": bottom,
         }
+        if request.POST.get("question_type") == "MCQ":
+            params.update(
+                {
+                    "question_type": "MCQ",
+                    "mcq_num_options": request.POST.get("mcq_num_options", "4"),
+                    "mcq_boxes": request.POST.get("mcq_boxes", "[]"),
+                }
+            )
         url = reverse("preview_clustering_region")
         return redirect(f"{url}?{urlencode(params)}")
+
+
+class DetectMCQBoxesView(ManagerRequiredView):
+    """Detect MCQ checkbox positions inside a selected reference-page region."""
+
+    def get(
+        self, request: HttpRequest, version: int, page: int
+    ) -> HttpResponse | JsonResponse:
+        """Return detected MCQ option boxes as JSON."""
+        try:
+            selected_rect = {
+                "left": float(request.GET["left"]),
+                "top": float(request.GET["top"]),
+                "right": float(request.GET["right"]),
+                "bottom": float(request.GET["bottom"]),
+            }
+            num_options = int(request.GET.get("num_options", "4"))
+        except (KeyError, TypeError, ValueError) as err:
+            return HttpResponseBadRequest(f"Invalid MCQ detection request: {err}")
+
+        if num_options < 1:
+            return HttpResponseBadRequest("num_options must be positive.")
+
+        try:
+            reference_image = ReferenceImage.objects.get(
+                version=version, page_number=page
+            )
+            boxes = detect_mcq_boxes_for_reference_image(
+                reference_image, selected_rect, num_options
+            )
+        except ReferenceImage.DoesNotExist as err:
+            raise Http404(
+                f"There is no reference image for v{version} pg{page}."
+            ) from err
+        except ValueError as err:
+            return JsonResponse({"error": str(err)}, status=400)
+
+        return JsonResponse(
+            {
+                "boxes": boxes,
+                "requested_num_options": num_options,
+            }
+        )
 
 
 # ======== Page to preview selected regions ===============
@@ -157,6 +211,14 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             "right": float(params["right"]),
             "bottom": float(params["bottom"]),
         }
+        if params.get("question_type") == "MCQ":
+            initial.update(
+                {
+                    "question_type": "MCQ",
+                    "mcq_num_options": params.get("mcq_num_options", "4"),
+                    "mcq_boxes": params.get("mcq_boxes", "[]"),
+                }
+            )
         form = ClusteringJobForm(initial=initial)
 
         context.update(initial)
