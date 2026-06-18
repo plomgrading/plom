@@ -7,12 +7,9 @@
 
 import subprocess
 import tempfile
-from importlib import resources
 from pathlib import Path
 from textwrap import dedent
 from typing import IO
-
-import plom
 
 
 def texFragmentToPNG(fragment: str, *, dpi: int = 225) -> tuple[bool, bytes | str]:
@@ -159,7 +156,7 @@ def buildLaTeX(src: str, out: IO[bytes]) -> tuple[int, str]:
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(Path(tmpdir) / "idBox4.pdf", "wb") as fh:
-            fh.write((resources.files(plom) / "idBox4.pdf").read_bytes())
+            fh.write((Path(__file__).parent / "idBox4.pdf").read_bytes())
         with open(Path(tmpdir) / "stuff.tex", "w") as fh:
             fh.write(src)
 

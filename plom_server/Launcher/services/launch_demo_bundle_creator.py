@@ -22,6 +22,7 @@ from plom.create.scribble_utils import (
     scribble_name_and_id,
     scribble_pages,
     scribble_answer_in_box,
+    scribble_random_mcq_answers,
 )
 from plom.scan import pdfmucker
 
@@ -566,12 +567,19 @@ class DemoBundleCreationService:
                         )
 
                     # scribble on the pages
-                    scribble_pages(pdf_document)
+                    scribble_pages(pdf_document, exclude=(0, 1, 8, 9))
                     # scribble in the answer boxes on p3 of the current demo
                     # magic numbers - need to be updated if demo assessment is changed
                     scribble_answer_in_box(pdf_document, 3, 0.62, 0.195)
                     scribble_answer_in_box(pdf_document, 3, 0.62, 0.455)
                     scribble_answer_in_box(pdf_document, 3, 0.62, 0.725)
+                    # scribble randomized MCQ choices on p9 of the current demo
+                    scribble_random_mcq_answers(
+                        pdf_document,
+                        9,
+                        correct_choices=[0, 1, 2],
+                        yfs=[0.188, 0.297, 0.406],
+                    )
 
                     # insert a qr-code from a previous page after scribbling
                     if paper_number in duplicate_qr:

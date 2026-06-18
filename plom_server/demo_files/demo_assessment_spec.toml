@@ -6,11 +6,11 @@ name = "plomdemo"
 longName = "Midterm Demo using Plom"
 
 numberOfVersions = 3
-numberOfPages = 8
-totalMarks = 25
-numberOfQuestions = 4
+numberOfPages = 10
+totalMarks = 28
+numberOfQuestions = 5
 idPage = 1
-doNotMarkPages = [2]
+doNotMarkPages = [2,10]
 
 [[question]]
 pages = [3]
@@ -33,3 +33,9 @@ label = "LastQ"
 pages = [7,8]
 mark = 7
 select = [3]
+
+[[question]]
+label = "MCQ"
+pages = [9]
+mark = 3
+select = 1

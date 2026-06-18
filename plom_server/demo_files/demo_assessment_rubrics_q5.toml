@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Colin B. Macdonald
+# Copyright (C) 2026 Andrew Rechnitzer
+
+[[rubric]]
+kind = "relative"
+value = 1
+text = "MCQ 1 correct: A"
+tags = "demo"
+meta = "Student selected A for the first multiple-choice item."
+question_index = 5
+username = "manager"
+
+[[rubric]]
+kind = "relative"
+value = 1
+text = "MCQ 2 correct: B"
+tags = "demo"
+meta = "Student selected B for the second multiple-choice item."
+question_index = 5
+username = "manager"
+
+[[rubric]]
+kind = "relative"
+value = 1
+text = "MCQ 3 correct: C"
+tags = "demo"
+meta = "Student selected C for the third multiple-choice item."
+question_index = 5
+username = "manager"
+
+[[rubric]]
+kind = "neutral"
+text = "incorrect or blank MCQ item"
+tags = "demo"
+meta = "Student selected an incorrect option or left an item blank."
+question_index = 5
+username = "manager"
+
+[[rubric]]
+kind = "relative"
+value = -1
+text = "MCQ item incorrect"
+tags = "demo"
+meta = "Student selected an incorrect option on a multiple-choice item."
+question_index = 5
+username = "manager"

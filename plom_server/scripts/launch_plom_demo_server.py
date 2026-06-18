@@ -752,7 +752,7 @@ def run_the_randomarker(*, port, half_marks=False):
 def push_demo_rubrics(*, multiversion=True):
     """Push demo rubrics from toml."""
     # note - hard coded question range here.
-    for question_idx in (1, 2, 3, 4):
+    for question_idx in (1, 2, 3, 4, 5):
         rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
     if multiversion:
@@ -773,6 +773,7 @@ def create_and_link_question_tags():
         ("derivatives", 3),
         ("applications", 3),
         ("applications", 4),
+        ("arithmetic", 5),
     ]:
         run_django_manage_command(
             f"link_question_with_tag {question_idx} {tag} manager"

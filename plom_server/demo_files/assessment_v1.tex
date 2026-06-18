@@ -122,6 +122,29 @@
 %% for example
 \newcommand{\dee}[1]{{\mathrm{d}#1}}
 \newcommand{\diff}[2]{\dfrac{\dee{#1}}{\dee{#2}}}
+\newcommand{\mcqmark}[5]{%
+  \ifprintanswers
+    \ifnum#3=1
+      \draw[line width=1.2pt, fill=black] (#1,0.4) rectangle (#2,1.1);
+    \else
+      \draw[line width=1.2pt] (#1,0.4) rectangle (#2,1.1);
+    \fi
+  \else
+    \draw[line width=1.2pt] (#1,0.4) rectangle (#2,1.1);
+  \fi
+  \node at (#4,0.75) {\Large #5};
+}
+\newcommand{\choicefourbox}[4]{%
+  \begin{center}
+  \begin{tikzpicture}
+    \draw[line width=1pt] (0,0) rectangle (12,1.5);
+    \mcqmark{0.8}{1.5}{#1}{2.0}{A}
+    \mcqmark{3.5}{4.2}{#2}{4.7}{B}
+    \mcqmark{6.2}{6.9}{#3}{7.4}{C}
+    \mcqmark{8.9}{9.6}{#4}{10.1}{D}
+  \end{tikzpicture}
+  \end{center}
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Time to start the actual test
@@ -349,6 +372,43 @@ You may find the following formulas useful in the questions that follow.
 
   \end{solution}
   \blankpage%
+
+  \ifprintanswers{\newpage}\fi
+  % for demo we label this question as MCQ
+  \renewcommand{\questionlabel}{MCQ}
+  \question[3] Answer each multiple-choice item. Each item is worth 1 mark.
+  \begin{parts}
+    \part What is \(7 + 5\)?
+
+    A) 12 \qquad B) 11 \qquad C) 10 \qquad D) 13
+
+    \choicefourbox{1}{0}{0}{0}
+
+    \part What is \(15 - 8\)?
+
+    A) 6 \qquad B) 7 \qquad C) 8 \qquad D) 9
+
+    \choicefourbox{0}{1}{0}{0}
+
+    \part What is \(4 \times 6\)?
+
+    A) 20 \qquad B) 22 \qquad C) 24 \qquad D) 26
+
+    \choicefourbox{0}{0}{1}{0}
+  \end{parts}
+  \begin{solution}
+    The correct answers are A, B, and C.
+  \end{solution}
+
+  \ifprintanswers{}\else{
+    \newpage
+    \dnm
+    \vfill
+    \begin{center}
+      \emph{This page is intentionally left blank.}
+    \end{center}
+    \vfill
+  }\fi
 
 \end{questions}
 \end{document}
