@@ -162,7 +162,7 @@
 	var selectedPages = new Set();
 
 	function getNextAvailableQidx() {
-	    let qidxArray = statefulSpec.questions.map(q => q.qidx).sort();
+	    let qidxArray = statefulSpec.questions.map(q => q.qidx).sort((a, b) => a - b);
 	    if (qidxArray.length === 0)
 	        return 1;
 	    return qidxArray.at(-1) + 1;
