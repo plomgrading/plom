@@ -89,44 +89,56 @@
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-sm-12 col-md-8">
-                        <!-- this is the container for the page thumbnails -->
-                        <div class="container-fluid overflow-y-scroll p-2" style="max-height:75vh">
-                            <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
-                                {% for index, image_string in pdf_image_dict.items %}
-                                    <div class="col">
-                                        <label for="page{{ index }}Checkbox">
-                                            <div id="page{{ index }}OuterCard"
-                                                 class="card bg-secondary-subtle position-relative">
-                                                <div id="page{{ index }}InnerCard" class="card m-1">
-                                                    <img id="page{{ index }}Img"
-                                                         src="data:image/png;base64,{{ image_string }}"
-                                                         style="width: 30ch" />
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12 col-md-8">
+                            <!-- this is the container for the page thumbnails -->
+                            <div class="container-fluid overflow-y-scroll p-2" style="max-height:75vh">
+                                <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
+                                    {% for index, image_string in pdf_image_dict.items %}
+                                        <div class="col">
+                                            <label for="page{{ index }}Checkbox">
+                                                <div id="page{{ index }}OuterCard"
+                                                     class="card bg-secondary-subtle position-relative">
+                                                    <div id="page{{ index }}InnerCard" class="card m-1">
+                                                        <img id="page{{ index }}Img"
+                                                             src="data:image/png;base64,{{ image_string }}"
+                                                             style="width: 30ch" />
+                                                    </div>
+                                                    <p class="text-center m-1 p-0">{{ index }}</p>
+                                                    <input id="page{{ index }}Checkbox"
+                                                           class="form-check-input position-absolute"
+                                                           type="checkbox"
+                                                           onchange="updateSelectedPages({{ index }}, this.checked)">
                                                 </div>
-                                                <p class="text-center m-1 p-0">{{ index }}</p>
-                                                <input id="page{{ index }}Checkbox"
-                                                       class="form-check-input position-absolute"
-                                                       type="checkbox"
-                                                       onchange="updateSelectedPages({{ index }}, this.checked)">
-                                            </div>
-                                        </label>
-                                    </div>
-                                {% endfor %}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div id="pageBlockColumn"
+                             class="col-sm-12 col-md-4 overflow-y-scroll"
+                             style="max-height:75vh">
+                            <div id="idPageCard">
+                                <!-- dynamically update this with js -->
+                            </div>
+                            <div id="dnmPageCard">
+                                <!-- dynamically update this with js -->
+                            </div>
+                            <div id="questionSummary">
+                                <!-- dynamically update this with js -->
                             </div>
                         </div>
                     </div>
-                    <div id="pageBlockColumn"
-                         class="col-sm-12 col-md-4 overflow-y-scroll"
-                         style="max-height:75vh">
-                        <div id="idPageCard">
-                            <!-- dynamically update this with js -->
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col">
+                            <span>Number of questions:</span> <span id="numberOfQuestions"></span>
                         </div>
-                        <div id="dnmPageCard">
-                            <!-- dynamically update this with js -->
-                        </div>
-                        <div id="questionSummary">
-                            <!-- dynamically update this with js -->
+                        <div class="col">
+                            <span>Total marks</span> <span id="totalMarks"></span>
                         </div>
                     </div>
                 </div>
@@ -141,7 +153,7 @@
 	    name: "",
 	    longName: "",
 	    numberOfVersions: -1,
-	    numberOfPages: -1,
+	    numberOfPages: {{ pdf_image_dict|length }},
 	    numberOfQuestions: -1,
 	    totalMarks: -1,
 	    idPage: null,
@@ -241,6 +253,8 @@
 	function refreshQuestionLists() {
 	    refreshQuestionSummary();
 	    refreshQuestionDropdown();
+	    updateTotalMarks();
+	    updateNumberOfQuestions();
 	    return;
 	}
 	function refreshQuestionSummary() {
@@ -349,7 +363,28 @@ function updateSelectedPages(pageIndex, checked) {
     // update html elems using sorted array
     let span = document.getElementById("selectedPagesDisplay");
     span.innerText = sortedPagesArray.join(", ");
+}
 
+function updateNumberOfQuestions() {
+    statefulSpec.numberOfQuestions = statefulSpec.questions.length;
+    container = document.getElementById("numberOfQuestions");
+    container.innerText = statefulSpec.numberOfQuestions;
+}
+
+
+function updateTotalMarks() {
+    totalMarks = statefulSpec.questions.reduce((sum, q) => {
+	return sum + q.marks
+    }, 0);
+    statefulSpec.totalMarks = totalMarks;
+    container = document.getElementById("totalMarks");
+    container.innerText = statefulSpec.totalMarks;
+}
+
+function setNumberOfVersions(numVersions) {
+    statefulSpec.numberOfVersions = numVersions;
+    // question properties depend on number of exam version
+    refreshQuestionLists();
 }
 
 function setQuestionVersions(qidx, version, checked) {
