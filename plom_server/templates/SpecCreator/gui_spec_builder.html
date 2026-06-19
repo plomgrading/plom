@@ -51,7 +51,10 @@
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
-                                    <button class="btn btn-primary">assign to</button>
+                                    <button class="btn btn-primary"
+                                            onclick="assignSelectedPages('question', parseInt(document.getElementById('questionAssignmentSelector').value))">
+                                        assign to
+                                    </button>
                                     <select id="questionAssignmentSelector"
                                             type="text"
                                             class="form-select"
@@ -61,6 +64,9 @@
                                         <!-- dynamically update this with js(?) -->
                                     </select>
                                 </div>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-danger" onclick="unassignSelectedPages()">unassign</button>
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
@@ -266,7 +272,7 @@
 
 	    statefulSpec.questions.forEach((questionObj) => {
 		let dropdownOption = document.createElement("option");
-                dropdownOption.value = questionObj.label;
+                dropdownOption.value = questionObj.qidx;
                 dropdownOption.innerText = questionObj.label;
 		questionOptionElems.push(dropdownOption);
 	    });
@@ -277,6 +283,22 @@
 	        container.appendChild(elem);
 	    });
 	}
+
+function updateSelectedPages(pageIndex, checked) {
+    if (checked)
+	selectedPages.add(pageIndex);
+    else
+	selectedPages.delete(pageIndex);
+
+    // convert to array, sort, then back to set
+    const sortedPagesArray = [...selectedPages].sort((a, b) => a - b);
+    selectedPages = new Set(sortedPagesArray);
+
+    // update html elems using sorted array
+    let span = document.getElementById("selectedPagesDisplay");
+    span.innerText = sortedPagesArray.join(", ");
+
+}
 
 function setQuestionVersions(qidx, version, checked) {
     const q = statefulSpec.questions.find(q => q.qidx === qidx);
@@ -290,23 +312,6 @@ function setQuestionVersions(qidx, version, checked) {
     refreshQuestionLists();
 }
 
-function updateSelectedPages(pageIndex, checked) {
-    if (checked)
-	selectedPages.add(pageIndex);
-    else
-	selectedPages.delete(pageIndex);
-
-    console.log(selectedPages)
-    // convert to array, sort, then back to set
-    const sortedPagesArray = [...selectedPages].sort((a, b) => a - b);
-    selectedPages = new Set(sortedPagesArray);
-
-    // update html elems using sorted array
-    let span = document.getElementById("selectedPagesDisplay");
-    span.innerText = sortedPagesArray.join(", ");
-
-}
-
 function setQuestionMarks(qidx, marks) {
     const q = statefulSpec.questions.find(q => q.qidx === qidx);
     if (!q || marks < 0)
@@ -315,6 +320,7 @@ function setQuestionMarks(qidx, marks) {
     refreshQuestionLists();
 }
 
+// set 'bonus' for a particular question to true or false
 function setQuestionBonus(qidx, bonus) {
     const q = statefulSpec.questions.find(q => q.qidx === qidx);
     if (!q)
@@ -323,11 +329,69 @@ function setQuestionBonus(qidx, bonus) {
     refreshQuestionLists();
 }
 
+// assign the given pages to a particular question
+function insertQuestionPages(qidx, pageArray) {
+    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    if (!q || !pageArray)
+	return;
+    var pageSet = new Set(q.pages);
+    pageArray.forEach((page) => pageSet.add(page));
+    q.pages = [...pageSet].sort((a, b) => a - b);
+
+    refreshQuestionLists();
+}
+
+// set the label for a particular question
 function setQuestionLabel(qidx, label) {
     const q = statefulSpec.questions.find(q => q.qidx === qidx);
     if (!q || !label)
 	return;
     q.label = label;
+    refreshQuestionLists();
+}
+
+// assign the 'selectedPages' to a particular page type:
+//   "dnm"
+//   "id"
+//   "question" - requires the qidx
+function assignSelectedPages(type, qidx=null) {
+    selectedPagesArray = [...selectedPages];
+    switch(type) {
+        case "dnm": assignDnmPages(selectedPagesArray);break;
+        case "id": assignIdPages(selectedPagesArray);break;
+        case "question":
+	    if (!qidx)
+	        alert("must select a question");
+	    insertQuestionPages(qidx, selectedPagesArray);break;
+    }
+}
+
+// unassign the selected pages from any grouping they are currently in:
+//   DNM
+//   ID pages
+//   any questions
+function unassignSelectedPages() {
+    selectedPagesArray = [...selectedPages];
+    unassignDnmPages(selectedPagesArray);
+    unassignIdPages(selectedPagesArray);
+    unassignQuestionPages(selectedPagesArray);
+}
+
+function unassignDnmPages(pageArray) {
+    statefulSpec.doNotMarkPages = statefulSpec.doNotMarkPages.filter(
+	page => !(pageArray.includes(page))
+    );
+}
+function unassignIdPages(pageArray) {
+    if(pageArray.includes(statefulSpec.idPage))
+        statefulSpec.idPage = -1;
+}
+function unassignQuestionPages(pageArray) {
+    statefulSpec.questions.forEach((q) => {
+	q.pages = q.pages.filter(
+	    page => !(pageArray.includes(page))
+	);
+    });
     refreshQuestionLists();
 }
 
