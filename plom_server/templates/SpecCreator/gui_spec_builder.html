@@ -91,6 +91,7 @@
                         <div class="row">
                             <div class="col-auto">
                                 <div class="input-group">
+                                    <label class="input-group-text" for="numberOfVersions">exam version[s]</label>
                                     <input id="numberOfVersions"
                                            min="1"
                                            type="number"
@@ -98,7 +99,24 @@
                                            onchange="setNumberOfVersions(this.value)"
                                            value="1"
                                            style="width: 6ch">
-                                    <label class="input-group-text" for="numberOfVersions">exam version[s]</label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="longName">assessment long name</label>
+                                    <input id="longName"
+                                           type="text"
+                                           class="form-control"
+                                           oninput="setLongName(this.value)">
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="shortName">assessment short name</label>
+                                    <input id="shortName"
+                                           type="text"
+                                           class="form-control"
+                                           oninput="setShortName(this.value)">
                                 </div>
                             </div>
                         </div>
@@ -167,10 +185,10 @@
 	var statefulSpec = {
 	    name: "",
 	    longName: "",
-	    numberOfVersions: -1,
+	    numberOfVersions: 1,
 	    numberOfPages: {{ pdf_image_dict|length }},
-	    numberOfQuestions: -1,
-	    totalMarks: -1,
+	    numberOfQuestions: 0,
+	    totalMarks: 0,
 	    idPage: null,
 	    doNotMarkPages: [],
 	    questions: []
@@ -184,7 +202,7 @@
 	    marks: -1,
 	    select: [],
 	    label: null,
-	    bonus: null
+	    bonus: false
 	};
 	var selectedPages = new Set();
 
@@ -386,6 +404,13 @@ function updateNumberOfQuestions() {
     container.innerText = statefulSpec.numberOfQuestions;
 }
 
+function setLongName(longName) {
+    statefulSpec.longName = longName;
+}
+
+function setShortName(shortName) {
+    statefulSpec.name = shortName;
+}
 
 function updateTotalMarks() {
     totalMarks = statefulSpec.questions.reduce((sum, q) => {
