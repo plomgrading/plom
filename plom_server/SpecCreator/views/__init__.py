@@ -8,4 +8,4 @@ from .summary import SpecSummaryView, HTMXDeleteSpec
 from .template_spec_builder import TemplateSpecBuilderView, GUISpecBuilderView
 from .spec_download import SpecDownloadView
 from .spec_editor import SpecEditorView
-from .spec_upload import SpecUploadView
+from .spec_upload import SpecUploadView, SpecJsonUploadHTMXView

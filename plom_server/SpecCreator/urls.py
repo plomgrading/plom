@@ -12,6 +12,9 @@ urlpatterns = [
     path("", views.SpecEditorView.as_view(), name="creator_launch"),
     path("delete", views.HTMXDeleteSpec.as_view(), name="spec_delete"),
     path("download", views.SpecDownloadView.as_view(), name="spec_download"),
+    path(
+        "upload/json", views.SpecJsonUploadHTMXView.as_view(), name="spec_json_upload"
+    ),
     path("upload", views.SpecUploadView.as_view(), name="spec_upload"),
     path("summary", views.SpecSummaryView.as_view(), name="spec_summary"),
     path(

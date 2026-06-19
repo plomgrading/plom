@@ -174,6 +174,19 @@
                             <span>Total marks</span> <span id="totalMarks"></span>
                         </div>
                     </div>
+                    <div class="row">
+                        <!-- The spec lives in the client's browser page state.
+			     We use configRequest to move it into the in-flight
+			     htmx request. -->
+                        <!-- see docs: https://htmx.org/events/#htmx:configRequest -->
+                        <form hx-post="{% url 'spec_json_upload' %}"
+                              hx-on:htmx:config-request="event.detail.parameters.spec=getSpecJson()"
+                              hx-target-error="submissionErrors">
+                            <input name="spec" type="text">
+                            <button type="submit" class="btn btn-success">submit</button>
+                        </form>
+                    </div>
+                    <div class="row" id="submissionsErrors"></div>
                 </div>
             </div>
         {% endif %}
@@ -191,7 +204,7 @@
 	    totalMarks: 0,
 	    idPage: null,
 	    doNotMarkPages: [],
-	    questions: []
+	    question: []
 	};
 	const questionTemplate = {
 	    // this isn't in the spec, it's only used locally
@@ -199,15 +212,25 @@
 	    qidx: 1,
 
 	    pages: [],
-	    marks: -1,
+	    mark: -1,
 	    select: [],
 	    label: null,
 	    bonus: false
 	};
 	var selectedPages = new Set();
 
+	// We use this function to retrieve the spec before posting to the server
+	// do not use this function internally.
+	function getSpecJson() {
+	    spec = structuredClone(statefulSpec);
+	    // as above, don't include the qidx in the final submission
+	    spec.question.forEach((q) => {delete q.qidx;});
+	    specInput = document.getElementById("specSubmission");
+	    return JSON.stringify(spec);
+	}
+
 	function getNextAvailableQidx() {
-	    let qidxArray = statefulSpec.questions.map(q => q.qidx).sort((a, b) => a - b);
+	    let qidxArray = statefulSpec.question.map(q => q.qidx).sort((a, b) => a - b);
 	    if (qidxArray.length === 0)
 	        return 1;
 	    return qidxArray.at(-1) + 1;
@@ -216,7 +239,7 @@
 	// add a question to the spec - first check if there's one with
 	// a similar label.
 	function createQuestion(label) {
-	    const q = statefulSpec.questions.find(q => q.label === label);
+	    const q = statefulSpec.question.find(q => q.label === label);
 	    if (q) {
                 alert("A question using that label already exists");
 	        return;
@@ -224,14 +247,14 @@
 	    newQuestion = structuredClone(questionTemplate);
 	    newQuestion.qidx = getNextAvailableQidx();
 	    newQuestion.label = label ? label : `Q${newQuestion.qidx}`;
-	    statefulSpec.questions.push(newQuestion);
+	    statefulSpec.question.push(newQuestion);
 	    refreshQuestionLists();
 	    return;
 	}
 
         // remove a question from the spec
 	function removeQuestion(qidx) {
-	    statefulSpec.questions = statefulSpec.questions.filter(
+	    statefulSpec.question = statefulSpec.question.filter(
 	        questionObj => questionObj.qidx !== qidx
 	    );
 	    refreshQuestionLists();
@@ -294,12 +317,12 @@
             const container = document.getElementById("questionSummary");
 	    let questionCardElems = [];
 
-            if (statefulSpec.questions.length === 0) {
+            if (statefulSpec.question.length === 0) {
                 container.innerHTML = `<p class="text-muted small">No questions yet. Add one above.</p>`;
                 return;
             }
 
-            statefulSpec.questions.forEach((q, index) => {
+            statefulSpec.question.forEach((q, index) => {
                 const pagesText = q.pages.length
                     ? q.pages.map(p => `p.${p}`).join(", ")
                     : `<span class="text-muted fst-italic">none</span>`;
@@ -332,15 +355,15 @@
                     </div>
                     <div class="card-body p-2 small">
                         <div class="mb-1">
-                            <label class="text-muted" for="marks_${q.qidx}">DEBUG Qidx:</label>
+                            <label class="text-muted" for="mark_${q.qidx}">DEBUG Qidx:</label>
                             <input id="idx_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.qidx}" placeholder="?" disabled oninput="setQuestionMarks(${q.qidx}, this.value)">
                         </div>
                         <div class="mb-1">
                             <span class="text-muted">Pages:</span> ${pagesText}
                         </div>
                         <div class="mb-1">
-                            <label class="text-muted" for="marks_${q.qidx}">Marks:</label>
-                            <input id="marks_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.marks ?? ""}" placeholder="?" oninput="setQuestionMarks(${q.qidx}, this.value)">
+                            <label class="text-muted" for="mark_${q.qidx}">Marks:</label>
+                            <input id="mark_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.mark ?? ""}" placeholder="?" oninput="setQuestionMarks(${q.qidx}, this.value)">
                             <label class="text-muted" for="bonus_${q.qidx}">Bonus:</label>
 			    <input id="bonus_${q.qidx}" type="checkbox" class="form-check-input" ${q.bonus ? "checked" : "" } oninput="setQuestionBonus(${q.qidx}, this.checked)">
                         </div>
@@ -369,7 +392,7 @@
 	    questionOptionElems.push(defaultOption);
 
 
-	    statefulSpec.questions.forEach((questionObj) => {
+	    statefulSpec.question.forEach((questionObj) => {
 		let dropdownOption = document.createElement("option");
                 dropdownOption.value = questionObj.qidx;
                 dropdownOption.innerText = questionObj.label;
@@ -399,7 +422,7 @@ function updateSelectedPages(pageIndex, checked) {
 }
 
 function updateNumberOfQuestions() {
-    statefulSpec.numberOfQuestions = statefulSpec.questions.length;
+    statefulSpec.numberOfQuestions = statefulSpec.question.length;
     container = document.getElementById("numberOfQuestions");
     container.innerText = statefulSpec.numberOfQuestions;
 }
@@ -413,8 +436,8 @@ function setShortName(shortName) {
 }
 
 function updateTotalMarks() {
-    totalMarks = statefulSpec.questions.reduce((sum, q) => {
-	return sum + q.marks
+    totalMarks = statefulSpec.question.reduce((sum, q) => {
+	return sum + q.mark
     }, 0);
     statefulSpec.totalMarks = totalMarks;
     container = document.getElementById("totalMarks");
@@ -428,7 +451,7 @@ function setNumberOfVersions(numVersions) {
 }
 
 function setQuestionVersions(qidx, version, checked) {
-    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    const q = statefulSpec.question.find(q => q.qidx === qidx);
     if (!q)
 	return;
     if (checked) {
@@ -439,17 +462,17 @@ function setQuestionVersions(qidx, version, checked) {
     refreshQuestionLists();
 }
 
-function setQuestionMarks(qidx, marks) {
-    const q = statefulSpec.questions.find(q => q.qidx === qidx);
-    if (!q || marks < 0)
+function setQuestionMarks(qidx, mark) {
+    const q = statefulSpec.question.find(q => q.qidx === qidx);
+    if (!q || mark < 0)
 	return;
-    q.marks = parseInt(marks);
+    q.mark = parseInt(mark);
     refreshQuestionLists();
 }
 
 // set 'bonus' for a particular question to true or false
 function setQuestionBonus(qidx, bonus) {
-    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    const q = statefulSpec.question.find(q => q.qidx === qidx);
     if (!q)
 	return;
     q.bonus = bonus;
@@ -458,7 +481,7 @@ function setQuestionBonus(qidx, bonus) {
 
 // assign the given pages to a particular question
 function insertQuestionPages(qidx, pageArray) {
-    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    const q = statefulSpec.question.find(q => q.qidx === qidx);
     if (!q || !pageArray)
 	return;
     var pageSet = new Set(q.pages);
@@ -470,7 +493,7 @@ function insertQuestionPages(qidx, pageArray) {
 
 // set the label for a particular question
 function setQuestionLabel(qidx, label) {
-    const q = statefulSpec.questions.find(q => q.qidx === qidx);
+    const q = statefulSpec.question.find(q => q.qidx === qidx);
     if (!q || !label)
 	return;
     q.label = label;
@@ -534,7 +557,7 @@ function unassignIdPages(pageArray) {
     refreshIdPageLists();
 }
 function unassignQuestionPages(pageArray) {
-    statefulSpec.questions.forEach((q) => {
+    statefulSpec.question.forEach((q) => {
 	q.pages = q.pages.filter(
 	    page => !(pageArray.includes(page))
 	);

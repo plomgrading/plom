@@ -5,7 +5,9 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Aidan Murphy
 
+import json
 import html
 import logging
 import tomllib
@@ -149,6 +151,22 @@ def install_spec_from_toml_string(
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = tomllib.loads(tomlstr)
+    return install_spec_from_dict(data)
+
+
+def install_spec_from_json_string(jsonstr: str) -> Specification:
+    """Load a specification from a string in TOML format and save it to the database.
+
+    Args:
+        jsonstr: a string containing json.
+
+    Raises:
+        json.JSONDecodeError: cannot read json.
+        PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: see :func:`install_spec_from_dict`.
+        serializers.ValidationError: see :func:`install_spec_from_dict`.
+    """
+    data = json.loads(jsonstr)
     return install_spec_from_dict(data)
 
 
