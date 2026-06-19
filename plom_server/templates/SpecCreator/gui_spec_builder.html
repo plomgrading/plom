@@ -121,29 +121,9 @@
                          style="max-height:75vh">
                         <div id="idPageCard">
                             <!-- dynamically update this with js -->
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center py-1">
-                                    <strong>ID</strong>
-                                </div>
-                                <div class="card-body p-2 small">
-                                    <div class="mb-1">
-                                        <span class="text-muted">Pages:</span> <span class="text-muted fst-italic">none</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="dnmPageCard">
                             <!-- dynamically update this with js -->
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center py-1">
-                                    <strong>DNM</strong>
-                                </div>
-                                <div class="card-body p-2 small">
-                                    <div class="mb-1">
-                                        <span class="text-muted">Pages:</span> <span class="text-muted fst-italic">none</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="questionSummary">
                             <!-- dynamically update this with js -->
@@ -242,7 +222,7 @@
 	function refreshDnmPageSummary() {
             const container = document.getElementById("dnmPageCard");
 	    var pagesText = `<span class="text-muted fst-italic">none</span>`;
-	    if (statefulSpec.doNotMarkPages)
+	    if (statefulSpec.doNotMarkPages.length !== 0)
 		pagesText = statefulSpec.doNotMarkPages.join(", ");
             container.innerHTML = `
 	        <div class="card">
@@ -497,5 +477,9 @@ function escapeAttr(str) {
     return String(str).replace(/'/g, "\\'");
 }
 
+// refresh html on load
+refreshQuestionLists();
+refreshDnmPageLists();
+refreshIdPageLists();
     </script>
 {% endblock main_content %}
