@@ -87,6 +87,21 @@
                                 <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
                             </div>
                         </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <input id="numberOfVersions"
+                                           min="1"
+                                           type="number"
+                                           class="form-control"
+                                           onchange="setNumberOfVersions(this.value)"
+                                           value="1"
+                                           style="width: 6ch">
+                                    <label class="input-group-text" for="numberOfVersions">exam version[s]</label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -273,7 +288,7 @@
 
                 // Build version checkboxes
                 let versionsHtml = "";
-                for (let v = 1; v <= 5; v++) {
+                for (let v = 1; v <= statefulSpec.numberOfVersions; v++) {
                     const checked = q.select.includes(v) ? "checked" : "";
                     versionsHtml += `
                         <div class="form-check form-check-inline">
@@ -311,7 +326,7 @@
                             <label class="text-muted" for="bonus_${q.qidx}">Bonus:</label>
 			    <input id="bonus_${q.qidx}" type="checkbox" class="form-check-input" ${q.bonus ? "checked" : "" } oninput="setQuestionBonus(${q.qidx}, this.checked)">
                         </div>
-                        ${5 > 1 ? `
+                        ${statefulSpec.numberOfVersions > 1 ? `
                         <div>
                             <span class="text-muted">Select from versions:</span>
                             ${versionsHtml}
@@ -382,8 +397,8 @@ function updateTotalMarks() {
 }
 
 function setNumberOfVersions(numVersions) {
-    statefulSpec.numberOfVersions = numVersions;
-    // question properties depend on number of exam version
+    statefulSpec.numberOfVersions = parseInt(numVersions);
+    // question properties depend on number of exam versions
     refreshQuestionLists();
 }
 
