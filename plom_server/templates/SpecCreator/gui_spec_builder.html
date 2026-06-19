@@ -46,8 +46,10 @@
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-auto">
-                                <button class="btn btn-primary">assign as ID page</button>
-                                <button class="btn btn-primary">assign to dnm</button>
+                                <button class="btn btn-primary" onclick="assignSelectedPages('id')">assign as ID page</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary" onclick="assignSelectedPages('dnm')">assign to dnm</button>
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
@@ -59,9 +61,7 @@
                                             type="text"
                                             class="form-select"
                                             placeholder="">
-                                        <option selected disabled hidden>pick a question</option>
-                                        <option value="Q1">Q1</option>
-                                        <!-- dynamically update this with js(?) -->
+                                        <!-- dynamically update this with js -->
                                     </select>
                                 </div>
                             </div>
@@ -116,10 +116,38 @@
                             </div>
                         </div>
                     </div>
-                    <div id="questionExistingList"
+                    <div id="pageBlockColumn"
                          class="col-sm-12 col-md-4 overflow-y-scroll"
                          style="max-height:75vh">
-                        <!-- dynamically update this with js -->
+                        <div id="idPageCard">
+                            <!-- dynamically update this with js -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center py-1">
+                                    <strong>ID</strong>
+                                </div>
+                                <div class="card-body p-2 small">
+                                    <div class="mb-1">
+                                        <span class="text-muted">Pages:</span> <span class="text-muted fst-italic">none</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="dnmPageCard">
+                            <!-- dynamically update this with js -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center py-1">
+                                    <strong>DNM</strong>
+                                </div>
+                                <div class="card-body p-2 small">
+                                    <div class="mb-1">
+                                        <span class="text-muted">Pages:</span> <span class="text-muted fst-italic">none</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="questionSummary">
+                            <!-- dynamically update this with js -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -136,7 +164,7 @@
 	    numberOfPages: -1,
 	    numberOfQuestions: -1,
 	    totalMarks: -1,
-	    idPage: -1,
+	    idPage: null,
 	    doNotMarkPages: [],
 	    questions: []
 	};
@@ -185,6 +213,50 @@
 	    return;
 	}
 
+	// check the spec's id page, and update html elements accordingly
+	function refreshIdPageLists() {
+	    refreshIdPageSummary();
+	}
+	function refreshIdPageSummary() {
+            const container = document.getElementById("idPageCard");
+	    var pagesText = `<span class="text-muted fst-italic">none</span>`;
+	    if (statefulSpec.idPage !== null)
+		pagesText = statefulSpec.idPage;
+            container.innerHTML = `
+	        <div class="card">
+	            <div class="card-header d-flex justify-content-between align-items-center py-1">
+	                <strong>ID</strong>
+	            </div>
+	            <div class="card-body p-2 small">
+	                <div class="mb-1">
+	            	<span class="text-muted">Page:</span> ${pagesText}
+	                </div>
+	            </div>
+	        </div>`;
+	}
+
+	// check the spec's id page, and update html elements accordingly
+	function refreshDnmPageLists() {
+	    refreshDnmPageSummary();
+	}
+	function refreshDnmPageSummary() {
+            const container = document.getElementById("dnmPageCard");
+	    var pagesText = `<span class="text-muted fst-italic">none</span>`;
+	    if (statefulSpec.doNotMarkPages)
+		pagesText = statefulSpec.doNotMarkPages.join(", ");
+            container.innerHTML = `
+	        <div class="card">
+	            <div class="card-header d-flex justify-content-between align-items-center py-1">
+	                <strong>DNM</strong>
+	            </div>
+	            <div class="card-body p-2 small">
+	                <div class="mb-1">
+	            	<span class="text-muted">Pages:</span> ${pagesText}
+	                </div>
+	            </div>
+	        </div>`;
+	}
+
 	// check the spec's questions, and update html elements accordingly
 	function refreshQuestionLists() {
 	    refreshQuestionSummary();
@@ -192,7 +264,7 @@
 	    return;
 	}
 	function refreshQuestionSummary() {
-            const container = document.getElementById("questionExistingList");
+            const container = document.getElementById("questionSummary");
 	    let questionCardElems = [];
 
             if (statefulSpec.questions.length === 0) {
@@ -350,6 +422,24 @@ function setQuestionLabel(qidx, label) {
     refreshQuestionLists();
 }
 
+// assign the given pages as DNM pages
+function insertDnmPages(pageArray) {
+    var pageSet = new Set(statefulSpec.doNotMarkPages);
+    pageArray.forEach((page) => pageSet.add(page));
+    statefulSpec.doNotMarkPages = [...pageSet].sort((a, b) => a - b);
+    refreshDnmPageLists();
+}
+
+// assign the given pages as ID pages
+function insertIdPages(pageArray) {
+    if (pageArray.length !== 1) {
+	alert("Only one question at a time");
+	return;
+    }
+    statefulSpec.idPage = pageArray[0];
+    refreshIdPageLists();
+}
+
 // assign the 'selectedPages' to a particular page type:
 //   "dnm"
 //   "id"
@@ -357,8 +447,8 @@ function setQuestionLabel(qidx, label) {
 function assignSelectedPages(type, qidx=null) {
     selectedPagesArray = [...selectedPages];
     switch(type) {
-        case "dnm": assignDnmPages(selectedPagesArray);break;
-        case "id": assignIdPages(selectedPagesArray);break;
+        case "dnm": insertDnmPages(selectedPagesArray);break;
+        case "id": insertIdPages(selectedPagesArray);break;
         case "question":
 	    if (!qidx)
 	        alert("must select a question");
@@ -381,10 +471,12 @@ function unassignDnmPages(pageArray) {
     statefulSpec.doNotMarkPages = statefulSpec.doNotMarkPages.filter(
 	page => !(pageArray.includes(page))
     );
+    refreshDnmPageLists();
 }
 function unassignIdPages(pageArray) {
     if(pageArray.includes(statefulSpec.idPage))
-        statefulSpec.idPage = -1;
+        statefulSpec.idPage = null;
+    refreshIdPageLists();
 }
 function unassignQuestionPages(pageArray) {
     statefulSpec.questions.forEach((q) => {
