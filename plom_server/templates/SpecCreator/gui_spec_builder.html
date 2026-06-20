@@ -160,13 +160,15 @@
                 </div>
                 <div class="card-footer">
                     <div class="row">
-                        <div class="col">
+                        <div class="col-auto">
                             <span>Number of questions:</span> <span id="numberOfQuestions"></span>
                         </div>
-                        <div class="col">
-                            <span>Total marks</span> <span id="totalMarks"></span>
+                        <div class="col-auto">
+                            <span>Total marks:</span> <span id="totalMarks"></span>
                         </div>
+                        <div class="col-auto">TODO: other stuff to check/confirm? number of pages?</div>
                     </div>
+                    <hr />
                     <div class="row">
                         <!-- The spec lives in the client's browser page state.
 			     We use configRequest to move it into the in-flight
@@ -175,6 +177,8 @@
                         <form hx-post="{% url 'spec_json_upload' %}"
                               hx-on:htmx:config-request="event.detail.parameters.spec=getSpecJson()"
                               hx-target-error="#submissionErrors">
+                            <!-- This input represents the spec as a json string
+			         though it doesn't actually need to be here. -->
                             <input name="spec" type="hidden">
                             <button type="submit" class="btn btn-success">submit</button>
                         </form>
@@ -218,10 +222,9 @@
 	// We use this function to retrieve the spec before posting to the server
 	// do not use this function internally.
 	function getSpecJson() {
-	    spec = structuredClone(statefulSpec);
+	    let spec = structuredClone(statefulSpec);
 	    // as above, don't include the qidx in the final submission
 	    spec.question.forEach((q) => {delete q.qidx;});
-	    specInput = document.getElementById("specSubmission");
 	    return JSON.stringify(spec);
 	}
 
@@ -319,7 +322,7 @@
                 return;
             }
 
-            statefulSpec.question.forEach((q, index) => {
+            statefulSpec.question.forEach((q) => {
                 const pagesText = q.pages.length
                     ? q.pages.map(p => `p.${p}`).join(", ")
                     : `<span class="text-muted fst-italic">none</span>`;
@@ -420,7 +423,7 @@ function updateSelectedPages(pageIndex, checked) {
 
 function updateNumberOfQuestions() {
     statefulSpec.numberOfQuestions = statefulSpec.question.length;
-    container = document.getElementById("numberOfQuestions");
+    let container = document.getElementById("numberOfQuestions");
     container.innerText = statefulSpec.numberOfQuestions;
 }
 
@@ -433,11 +436,11 @@ function setShortName(shortName) {
 }
 
 function updateTotalMarks() {
-    totalMarks = statefulSpec.question.reduce((sum, q) => {
+    let totalMarks = statefulSpec.question.reduce((sum, q) => {
 	return sum + q.mark
     }, 0);
     statefulSpec.totalMarks = totalMarks;
-    container = document.getElementById("totalMarks");
+    let container = document.getElementById("totalMarks");
     container.innerText = statefulSpec.totalMarks;
 }
 
@@ -526,7 +529,7 @@ function insertIdPages(pageArray) {
 //   "id"
 //   "question" - requires the qidx
 function assignSelectedPages(type, qidx=null) {
-    selectedPagesArray = [...selectedPages];
+    let selectedPagesArray = [...selectedPages];
     switch(type) {
         case "dnm": insertDnmPages(selectedPagesArray);break;
         case "id": insertIdPages(selectedPagesArray);break;
@@ -544,7 +547,7 @@ function assignSelectedPages(type, qidx=null) {
 //   ID pages
 //   any questions
 function unassignSelectedPages() {
-    selectedPagesArray = [...selectedPages];
+    let selectedPagesArray = [...selectedPages];
     unassignDnmPages(selectedPagesArray);
     unassignIdPages(selectedPagesArray);
     unassignQuestionPages(selectedPagesArray);
