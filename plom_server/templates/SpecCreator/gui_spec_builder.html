@@ -213,6 +213,7 @@
 
 	    pages: [],
 	    mark: -1,
+	    // this will depend on the number of versions, so set dynamically
 	    select: [],
 	    label: null,
 	    bonus: false
@@ -244,7 +245,8 @@
                 alert("A question using that label already exists");
 	        return;
 	    }
-	    newQuestion = structuredClone(questionTemplate);
+	    var newQuestion = structuredClone(questionTemplate);
+	    newQuestion.select = [...Array(statefulSpec.numberOfVersions).keys()].map(x => ++x);
 	    newQuestion.qidx = getNextAvailableQidx();
 	    newQuestion.label = label ? label : `Q${newQuestion.qidx}`;
 	    statefulSpec.question.push(newQuestion);
