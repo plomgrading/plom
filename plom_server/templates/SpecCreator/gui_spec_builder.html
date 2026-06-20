@@ -100,18 +100,6 @@
                             <div class="col-auto">
                                 <button class="btn btn-danger" onclick="unassignSelectedPages()">unassign</button>
                             </div>
-                            <div class="col-auto">
-                                <div class="input-group">
-                                    <button class="btn btn-primary"
-                                            onclick="createQuestion(document.getElementById('newQuestionLabel').value)">
-                                        New question
-                                    </button>
-                                    <input id="newQuestionLabel"
-                                           class="form-control"
-                                           type="text"
-                                           placeholder="label">
-                                </div>
-                            </div>
                         </div>
                         <div class="row">
                             <div class="col">
@@ -157,6 +145,9 @@
                             </div>
                             <div id="dnmPageCard">
                                 <!-- dynamically update this with js -->
+                            </div>
+                            <div id="newQuestionButton" class="mt-1">
+                                <button class="btn btn-primary w-100 btn-sm" onclick="createQuestion()">New question</button>
                             </div>
                             <div id="questionSummary">
                                 <!-- dynamically update this with js -->
@@ -321,7 +312,7 @@
 	    let questionCardElems = [];
 
             if (statefulSpec.question.length === 0) {
-                container.innerHTML = `<p class="text-muted small">No questions yet. Add one above.</p>`;
+                container.innerHTML = `<p class="text-muted small">No questions yet.</p>`;
                 return;
             }
 
