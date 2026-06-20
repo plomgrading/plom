@@ -181,7 +181,7 @@
                         <form hx-post="{% url 'spec_json_upload' %}"
                               hx-on:htmx:config-request="event.detail.parameters.spec=getSpecJson()"
                               hx-target-error="submissionErrors">
-                            <input name="spec" type="text">
+                            <input name="spec" type="hidden">
                             <button type="submit" class="btn btn-success">submit</button>
                         </form>
                     </div>
