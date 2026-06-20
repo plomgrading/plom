@@ -78,6 +78,9 @@
                         <hr />
                         <div class="row">
                             <div class="col-auto">
+                                <button class="btn btn-primary" onclick="assignSelectedPages('newQuestion')">assign to new question</button>
+                            </div>
+                            <div class="col-auto">
                                 <button class="btn btn-primary" onclick="assignSelectedPages('id')">assign as ID page</button>
                             </div>
                             <div class="col-auto">
@@ -243,7 +246,7 @@
 	    newQuestion.label = label ? label : `Q${newQuestion.qidx}`;
 	    statefulSpec.question.push(newQuestion);
 	    refreshQuestionLists();
-	    return;
+	    return newQuestion;
 	}
 
         // remove a question from the spec
@@ -485,6 +488,12 @@ function insertQuestionPages(qidx, pageArray) {
     refreshQuestionLists();
 }
 
+// create a new question, and assign the given pages to it
+function insertPagesIntoNewQuestion(pageArray) {
+    const newQidx = createQuestion().qidx;
+    insertQuestionPages(newQidx, pageArray);
+}
+
 // set the label for a particular question
 function setQuestionLabel(qidx, label) {
     const q = statefulSpec.question.find(q => q.qidx === qidx);
@@ -525,6 +534,8 @@ function assignSelectedPages(type, qidx=null) {
 	    if (!qidx)
 	        alert("must select a question");
 	    insertQuestionPages(qidx, selectedPagesArray);break;
+	case "newQuestion":
+	    insertPagesIntoNewQuestion(selectedPagesArray);break;
     }
 }
 
