@@ -45,6 +45,39 @@
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="numberOfVersions">exam version[s]</label>
+                                    <input id="numberOfVersions"
+                                           min="1"
+                                           type="number"
+                                           class="form-control"
+                                           onchange="setNumberOfVersions(this.value)"
+                                           value="1"
+                                           style="width: 6ch">
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="longName">assessment long name</label>
+                                    <input id="longName"
+                                           type="text"
+                                           class="form-control"
+                                           oninput="setLongName(this.value)">
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="shortName">assessment short name</label>
+                                    <input id="shortName"
+                                           type="text"
+                                           class="form-control"
+                                           oninput="setShortName(this.value)">
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-auto">
                                 <button class="btn btn-primary" onclick="assignSelectedPages('id')">assign as ID page</button>
                             </div>
                             <div class="col-auto">
@@ -84,39 +117,6 @@
                             <div class="col">
                                 <span class="text-muted small">Pages selected:</span>
                                 <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
-                            </div>
-                        </div>
-                        <hr />
-                        <div class="row">
-                            <div class="col-auto">
-                                <div class="input-group">
-                                    <label class="input-group-text" for="numberOfVersions">exam version[s]</label>
-                                    <input id="numberOfVersions"
-                                           min="1"
-                                           type="number"
-                                           class="form-control"
-                                           onchange="setNumberOfVersions(this.value)"
-                                           value="1"
-                                           style="width: 6ch">
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <div class="input-group">
-                                    <label class="input-group-text" for="longName">assessment long name</label>
-                                    <input id="longName"
-                                           type="text"
-                                           class="form-control"
-                                           oninput="setLongName(this.value)">
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <div class="input-group">
-                                    <label class="input-group-text" for="shortName">assessment short name</label>
-                                    <input id="shortName"
-                                           type="text"
-                                           class="form-control"
-                                           oninput="setShortName(this.value)">
-                                </div>
                             </div>
                         </div>
                     </div>
