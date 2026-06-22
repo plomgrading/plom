@@ -20,6 +20,37 @@
     <div class="card m-2">
         <div class="card-body">
             <h5 class="card-title">Preview of extracted rectangles for Version {{ version }} page {{ page_num }}</h5>
+            {% if mcq_crop_preview_error %}
+                <div class="alert alert-warning">{{ mcq_crop_preview_error }}</div>
+            {% endif %}
+            {% if mcq_crop_boxes and papers %}
+                <h6>Preview of extracted MCQ option boxes</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered align-middle text-center">
+                        <thead>
+                            <tr>
+                                <th>Paper</th>
+                                {% for box in mcq_crop_boxes %}<th>{{ box.label }}</th>{% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pn in papers %}
+                                <tr>
+                                    <th scope="row">{{ pn }}</th>
+                                    {% for box in mcq_crop_boxes %}
+                                        <td>
+                                            <img class="img-fluid border bg-white p-1"
+                                                 style="max-height: 96px"
+                                                 src="{% url 'extracted_rectangle' pn version page_num %}?left={{ box.left }}&top={{ box.top }}&right={{ box.right }}&bottom={{ box.bottom }}"
+                                                 onerror="imgError(this)" />
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
             <!-- Button that pops up the clustering model dialog -->
             <button type="submit"
                     class="btn btn-primary"

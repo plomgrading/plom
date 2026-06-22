@@ -56,7 +56,15 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
 # plom_ml
 import plom_ml.clustering.model
 from plom_ml.clustering.pipeline.clustering_pipeline import ClusteringPipeline
+from plom_ml.clustering.preprocessing.image_processing_service import (
+    ImageProcessingService,
+)
 from plom_ml.clustering.preprocessing.preprocessor import DiffProcessor
+
+
+MCQ_BLANK_CLUSTER_ID_OFFSET = 0
+MCQ_MULTIPLE_CLUSTER_ID_OFFSET = 1
+MCQ_AMBIGUOUS_CLUSTER_ID_OFFSET = 2
 
 
 class QuestionClusteringJobService:
@@ -69,6 +77,7 @@ class QuestionClusteringJobService:
         page_num: int,
         rect: dict,
         clustering_model: ClusteringModelType,
+        mcq_metadata: dict[str, Any] | None = None,
     ):
         """Run a background job to cluster papers for a (q, v) for the given page_num and rect.
 
@@ -79,6 +88,8 @@ class QuestionClusteringJobService:
         rect: the coordinates of the four corners of the rectangle used for clustering.
             rect should have these keys: [top, left, bottom, right].
         clustering_model: the model used to cluster the papers.
+        mcq_metadata: optional MCQ checkbox template metadata.  This stores the
+            per-option box coordinates, not cropped checkbox images.
 
         Raises:
             DuplicateClusteringJobError if there is existing non-obsolete clustering job for that question, version.
@@ -98,6 +109,10 @@ class QuestionClusteringJobService:
                     f"clustering job for q{question_idx}, v{version} already exists"
                 )
 
+            is_mcq_model = clustering_model in (
+                ClusteringModelType.MCQ,
+                ClusteringModelType.MCQ.value,
+            )
             x = QuestionClusteringChore.objects.create(
                 question_idx=question_idx,
                 version=version,
@@ -107,6 +122,7 @@ class QuestionClusteringJobService:
                 bottom=rect["bottom"],
                 right=rect["right"],
                 clustering_model=clustering_model,
+                mcq_metadata=mcq_metadata if is_mcq_model else {},
                 status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
@@ -225,8 +241,132 @@ class QuestionClusteringService:
                 base_cluster.paper.add(*papers)
                 user_facing_cluster.paper.add(*papers)
 
+    def _get_mcq_option_boxes(
+        self, mcq_metadata: dict[str, Any] | None
+    ) -> list[dict[str, float | str]]:
+        """Return normalized MCQ option boxes from stored metadata."""
+        if not isinstance(mcq_metadata, dict):
+            return []
+        boxes = mcq_metadata.get("boxes", [])
+        if not isinstance(boxes, list):
+            return []
+
+        normalized_boxes: list[dict[str, float | str]] = []
+        for box in boxes:
+            if not isinstance(box, dict):
+                continue
+            try:
+                normalized_boxes.append(
+                    {
+                        "label": str(box["label"]),
+                        "left": float(box["left"]),
+                        "top": float(box["top"]),
+                        "right": float(box["right"]),
+                        "bottom": float(box["bottom"]),
+                    }
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
+        return normalized_boxes
+
+    def _get_mcq_mark_score(self, ref: np.ndarray, scanned: np.ndarray) -> float:
+        """Score how much extra student marking appears in one option box."""
+        diff = ImageProcessingService().get_diff(ref, scanned, dilation_iteration=1)
+        if diff.size == 0:
+            return 0.0
+        return float(np.count_nonzero(diff)) / float(diff.size)
+
+    def _get_mcq_mark_threshold(self, scores: list[float]) -> float:
+        """Pick an adaptive threshold for checkbox mark scores."""
+        if not scores:
+            return 0.01
+
+        score_array = np.array(scores)
+        median = float(np.median(score_array))
+        mad = float(np.median(np.abs(score_array - median)))
+        return max(0.01, median + 6 * mad)
+
+    def _classify_mcq_papers_by_option_boxes(
+        self,
+        version: int,
+        page_num: int,
+        paper_numbers: list[int],
+        option_boxes: list[dict[str, float | str]],
+    ) -> dict[int, int]:
+        """Classify each paper by which stored MCQ option box is marked."""
+        rex = RectangleExtractor(version, page_num)
+        labels = [str(box["label"]) for box in option_boxes]
+        label_to_cluster_id = {label: idx for idx, label in enumerate(labels)}
+        blank_cluster_id = len(labels) + MCQ_BLANK_CLUSTER_ID_OFFSET
+        multiple_cluster_id = len(labels) + MCQ_MULTIPLE_CLUSTER_ID_OFFSET
+        ambiguous_cluster_id = len(labels) + MCQ_AMBIGUOUS_CLUSTER_ID_OFFSET
+
+        box_rect_by_label = {
+            str(box["label"]): {
+                "left": float(box["left"]),
+                "top": float(box["top"]),
+                "right": float(box["right"]),
+                "bottom": float(box["bottom"]),
+            }
+            for box in option_boxes
+        }
+        ref_by_label = {
+            label: rex.get_cropped_ref_img(box_rect)
+            for label, box_rect in box_rect_by_label.items()
+        }
+        paper_to_scores: dict[int, dict[str, float]] = {}
+        paper_to_cluster_id: dict[int, int] = {}
+        all_scores: list[float] = []
+
+        for paper_number in paper_numbers:
+            option_scores = {}
+            for label, box_rect in box_rect_by_label.items():
+                scanned = rex.get_cropped_scanned_img_or_none(paper_number, box_rect)
+                if scanned is None:
+                    option_scores = {}
+                    break
+
+                score = self._get_mcq_mark_score(ref_by_label[label], scanned)
+                option_scores[label] = score
+                all_scores.append(score)
+
+            if option_scores:
+                paper_to_scores[paper_number] = option_scores
+            else:
+                paper_to_cluster_id[paper_number] = ambiguous_cluster_id
+
+        threshold = self._get_mcq_mark_threshold(all_scores)
+        for paper_number, option_scores in paper_to_scores.items():
+            max_score = max(option_scores.values())
+            if max_score < threshold:
+                paper_to_cluster_id[paper_number] = blank_cluster_id
+                continue
+
+            selected_threshold = max(threshold, max_score * 0.45)
+            selected_labels = [
+                label
+                for label, score in option_scores.items()
+                if score >= selected_threshold
+            ]
+
+            if len(selected_labels) == 1:
+                paper_to_cluster_id[paper_number] = label_to_cluster_id[
+                    selected_labels[0]
+                ]
+            elif len(selected_labels) > 1:
+                paper_to_cluster_id[paper_number] = multiple_cluster_id
+            else:
+                paper_to_cluster_id[paper_number] = ambiguous_cluster_id
+
+        return paper_to_cluster_id
+
     def cluster_mcq(
-        self, question_idx: int, version: int, page_num: int, rect: dict
+        self,
+        question_idx: int,
+        version: int,
+        page_num: int,
+        rect: dict,
+        mcq_metadata: dict[str, Any] | None = None,
     ) -> None:
         """Cluster mcq responses within the given rect for (q, v) context.
 
@@ -235,17 +375,30 @@ class QuestionClusteringService:
             version: version of the clustering context.
             page_num: the page_number used for the clustering.
             rect: the rectangular region used for clustering.
+            mcq_metadata: optional per-option checkbox metadata.
 
         Raises:
             ValueError: problem extracting from reference image.
         """
-        # Get reference image within the rectangle
-        rex = RectangleExtractor(version, page_num)
-        ref = rex.get_cropped_ref_img(rect)
-
+        option_boxes = self._get_mcq_option_boxes(mcq_metadata)
         paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
             page_num, version=version, scanned=True
         )
+        if option_boxes:
+            paper_to_clusterId = self._classify_mcq_papers_by_option_boxes(
+                version, page_num, paper_numbers, option_boxes
+            )
+            if not paper_to_clusterId:
+                raise ValueError("Could not classify ANY MCQ papers")
+
+            self._store_clustered_result(
+                paper_to_clusterId, question_idx, version, page_num, rect
+            )
+            return
+
+        # Get reference image within the rectangle
+        rex = RectangleExtractor(version, page_num)
+        ref = rex.get_cropped_ref_img(rect)
 
         # get paper_num to ref, scanned mapping used for clustering input
         # the key names (ref, scanned) are known from the type of Preprocessor (DiffProcessor)
@@ -333,6 +486,7 @@ class QuestionClusteringService:
         page_num: int,
         rect: dict,
         clustering_model: ClusteringModelType,
+        mcq_metadata: dict[str, Any] | None = None,
     ):
         """Run clustering on a (q, v) in the given rect with the specified clustering model.
 
@@ -342,14 +496,18 @@ class QuestionClusteringService:
             page_num: the page num involved in the clustering.
             rect: the rectangular region used for clustering.
             clustering_model: the model used for clustering.
+            mcq_metadata: optional stored MCQ option-box metadata.
 
         Raises:
             ValueError: extraction from problem reference image.
         """
-        if clustering_model == ClusteringModelType.MCQ:
-            self.cluster_mcq(question_idx, version, page_num, rect)
+        if clustering_model in (ClusteringModelType.MCQ, ClusteringModelType.MCQ.value):
+            self.cluster_mcq(question_idx, version, page_num, rect, mcq_metadata)
 
-        elif clustering_model == ClusteringModelType.HME:
+        elif clustering_model in (
+            ClusteringModelType.HME,
+            ClusteringModelType.HME.value,
+        ):
             self.cluster_hme(question_idx, version, page_num, rect)
 
     def get_question_clustering_tasks(self) -> list[dict]:
@@ -1571,8 +1729,16 @@ def huey_cluster_single_qv(
     assert task is not None
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
+    clustering_job = QuestionClusteringChore.objects.get(pk=tracker_pk)
     qcs = QuestionClusteringService()
-    qcs.cluster_qv(question_idx, version, page_num, rect, clustering_model)
+    qcs.cluster_qv(
+        question_idx,
+        version,
+        page_num,
+        rect,
+        clustering_model,
+        mcq_metadata=clustering_job.mcq_metadata,
+    )
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

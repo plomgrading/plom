@@ -45,6 +45,7 @@ class QuestionClusteringChore(HueyTaskTracker):
         choices=ClusteringModelType.choices,
         null=False,
     )
+    mcq_metadata = models.JSONField(blank=True, default=dict)
 
     def __str__(self):
         """Stringify task using its related question, version number."""
