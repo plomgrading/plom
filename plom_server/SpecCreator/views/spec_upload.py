@@ -49,8 +49,8 @@ class SpecJsonUploadHTMXView(ManagerRequiredView):
         except serializers.ValidationError as e:
             error_list = SpecificationService._flatten_serializer_errors(e)
             pprint_error_list = [f"<li>{err_item}</li>" for err_item in error_list]
-            pprint_error_list = "".join(pprint_error_list)
-            error_msg = f"<ul>{pprint_error_list}</ul>"
+            pprint_error = "".join(pprint_error_list)
+            error_msg = f"<ul>{pprint_error}</ul>"
             return HttpResponse(error_msg, status=400)
 
         return HttpResponseClientRedirect(reverse("spec_summary"))
