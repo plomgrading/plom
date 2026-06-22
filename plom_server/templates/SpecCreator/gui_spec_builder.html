@@ -449,9 +449,26 @@
 
         function setNumberOfVersions(numVersions) {
           statefulSpec.numberOfVersions = parseInt(numVersions);
+	  updateQuestionVersions();
           // question properties depend on number of exam versions
           refreshQuestionLists();
         }
+
+	// Update the 'select' attribute for the spec questions
+	// This is relevant, for example, when the number of versions
+	// decreases, and some elements in 'select' are no longer editable
+	// but still need to be deleted for serverside validation.
+	function updateQuestionVersions() {
+          let numVersions = statefulSpec.numberOfVersions;
+	  statefulSpec.question.forEach((q) => {
+	    // in this case checkboxes are hidden, so we need to manually correct
+	    if (numVersions == 1) {
+	      q.select = [1];
+	    } else {
+	      q.select = q.select.filter(v => v <= numVersions);
+	    }
+	  });
+	}
 
         function setQuestionVersions(qidx, version, checked) {
           const q = statefulSpec.question.find(q => q.qidx === qidx);
