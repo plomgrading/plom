@@ -789,6 +789,8 @@ def create_and_link_question_tags():
     run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
     # link questions to tags as user "manager"
     # WARNING - HARDCODED LIST
+    # TODO: what is the connection between this hardcoded stuff and the contents of the CSV above?
+    # TODO: presumably these "tag" must each appear in the csv above (?)
     for tag, question_idx in [
         ("limits", 1),
         ("derivatives", 2),
