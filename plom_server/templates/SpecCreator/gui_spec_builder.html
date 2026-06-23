@@ -74,6 +74,17 @@
                                            oninput="setShortName(this.value)">
                                 </div>
                             </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="allowSharedPages">allow shared pages</label>
+                                    <div class="input-group-text">
+                                        <input id="allowSharedPages"
+                                               type="checkbox"
+                                               class="form-check-input m-0"
+                                               oninput="setAllowSharedPages(this.checked)">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <hr />
                         <div class="row">
@@ -220,6 +231,7 @@
           idPage: null,
           doNotMarkPages: [],
           question: [],
+	  allowSharedPages: false
         };
         const questionTemplate = {
           // this isn't in the spec, it's only used locally
@@ -456,6 +468,10 @@
         function setShortName(shortName) {
           statefulSpec.name = shortName;
         }
+
+	function setAllowSharedPages(allowed) {
+	  statefulSpec.allowSharedPages = allowed;
+	}
 
         function updateTotalMarks() {
           let totalMarks = statefulSpec.question.reduce((sum, q) => {
