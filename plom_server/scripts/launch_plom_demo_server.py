@@ -287,12 +287,25 @@ def upload_demo_assessment_spec_file(*, multiversion=True) -> None:
         multiversion: if True upload demo soln spec for multiversion assessment,
             else upload spec for a single assessment version.
     """
-    print("Uploading demo assessment spec")
+    spec_file = demo_files / "demo_assessment_spec.toml"
     if multiversion:
-        spec_file = demo_files / "demo_assessment_spec.toml"
-    else:
-        spec_file = demo_files / "demo_assessment_spec_single_version.toml"
-    run_plom_cli_command(f"upload-spec {spec_file}")
+        print("Uploading demo assessment spec")
+        run_plom_cli_command(f"upload-spec {spec_file}")
+        return
+
+    print("Hacking spec for single version...")
+    with spec_file.open("r") as fh:
+        s = fh.read()
+    print(type(s))
+    s = re.sub(r"numberOfVersions = .*", r"numberOfVersions = 1", s)
+    s = re.sub(r"select = .*", r"", s)
+    print(s)
+    with TemporaryDirectory() as tmpdir:
+        spec_file = Path(tmpdir) / "demo_assessment_spec_single_version.toml"
+        with spec_file.open("w") as fh:
+            fh.writelines(s)
+        # TODO: should we autogen this from the above file?
+        run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
