@@ -113,10 +113,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-12 col-md-8">
-                            <!-- this is the container for the page thumbnails -->
-                            <div class="container-fluid overflow-y-scroll p-2" style="max-height:75vh">
+                    <div class="row overflow-y-hidden sticky-bottom"
+                         style="resize: vertical;
+                                height: 75vh">
+                        <div class="col-sm-12 col-md-8 h-100 overflow-y-auto">
+                            <!-- thumbnail container -->
+                            <div class="container-fluid p-2">
                                 <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
                                     {% for index, image_string in pdf_image_dict.items %}
                                         <div class="col">
@@ -128,7 +130,15 @@
                                                              src="data:image/png;base64,{{ image_string }}"
                                                              style="width: 30ch" />
                                                     </div>
-                                                    <p class="text-center m-1 p-0">{{ index }}</p>
+                                                    <div class="row">
+                                                        <div class="col-4"></div>
+                                                        <div class="col-4">
+                                                            <p class="text-center m-1 p-0">{{ index }}</p>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <p class="text-end m-1 p-0" id="page{{ index }}Assignments"></p>
+                                                        </div>
+                                                    </div>
                                                     <input id="page{{ index }}Checkbox"
                                                            class="form-check-input position-absolute"
                                                            type="checkbox"
@@ -140,9 +150,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="pageBlockColumn"
-                             class="col-sm-12 col-md-4 overflow-y-scroll"
-                             style="max-height:75vh">
+                        <div id="pageBlockColumn" class="col-sm-12 col-md-4 h-100 overflow-y-auto">
                             <div id="idPageCard">
                                 <!-- dynamically update this with js -->
                             </div>
@@ -190,6 +198,14 @@
             </div>
         {% endif %}
     </div>
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
     <script>
         // Stuff to interact with the "spec"; soaking WET right now with the server.
         // Ideally the spec validation code could be broken down to allow partial
@@ -266,6 +282,7 @@
         // check the spec's id page, and update html elements accordingly
         function refreshIdPageLists() {
           refreshIdPageSummary();
+	  refreshPageAssignments();
         }
         function refreshIdPageSummary() {
           const container = document.getElementById('idPageCard');
@@ -288,6 +305,7 @@
         // check the spec's id page, and update html elements accordingly
         function refreshDnmPageLists() {
           refreshDnmPageSummary();
+	  refreshPageAssignments();
         }
         function refreshDnmPageSummary() {
           const container = document.getElementById('dnmPageCard');
@@ -309,6 +327,7 @@
 
         // check the spec's questions, and update html elements accordingly
         function refreshQuestionLists() {
+	  refreshPageAssignments()
           refreshQuestionSummary();
           refreshQuestionDropdown();
           updateTotalMarks();
@@ -593,6 +612,38 @@
           });
           refreshQuestionLists();
         }
+
+	function refreshPageAssignments() {
+	  let pageMap = new Map();
+
+	  // initialise map with empty sets
+	  for (let i = 1; i <= statefulSpec.numberOfPages + 1; i++) {
+	    pageMap.set(i, new Set());
+	  }
+
+	  // DNM pages
+	  for (let pageNum of statefulSpec.doNotMarkPages) {
+            pageMap.get(pageNum).add("DNM");
+	  }
+	  // ID page
+	  if (statefulSpec.idPage) {
+            pageMap.get(statefulSpec.idPage).add("ID");
+	  }
+	  // Question pages
+          statefulSpec.question.forEach((q) => {
+	    for (let pageNum of q.pages) {
+	      pageMap.get(pageNum).add(q.label);
+	    }
+          });
+
+
+	  // Use map to update page elements
+	  for (let i = 1; i <= statefulSpec.numberOfPages; i++) {
+            let pageAssignmentsContainer = document.getElementById(`page${i}Assignments`);
+	    let pageAssignmentsString = [...pageMap.get(i)].join(", ");
+            pageAssignmentsContainer.innerText = pageAssignmentsString;
+	  }
+	}
 
         function escapeHtml(str) {
           return String(str)
