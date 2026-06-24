@@ -343,7 +343,7 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
         text=d["text"],
         question_index=d["question_index"],
         kind=d["kind"],
-        out_of=d.get("out_of", 0),
+        out_of=d.get("out_of", 0),  # TODO: what if its None?
         # would two identical rubrics except for versions/parameters be ok?
         versions=d.get("versions", ""),
         parameters=d.get("parameters", []),
