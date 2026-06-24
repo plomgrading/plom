@@ -946,6 +946,6 @@ class RubricServiceTests(TestCase):
             "username": "Liam",
             "question_index": 1,
             "kind": "relative",
-            "value": "1.5",
+            "value": "1.0",
         }
         RubricService.create_rubric(rub)
