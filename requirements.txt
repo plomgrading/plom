@@ -42,7 +42,7 @@ gunicorn==26.0.0
 huggingface-hub==1.17.0
 imutils==0.5.4
 matplotlib==3.10.9
-model-bakery==1.23.4
+model-bakery==1.24.0
 numpy==2.4.6
 onnxruntime==1.26.0
 opencv-python-headless==4.13.0.92
