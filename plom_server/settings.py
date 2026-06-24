@@ -419,6 +419,18 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 MAX_BUNDLE_SIZE = 536870912
 MAX_BUNDLE_PAGES = 2500
 
+# Optional external ML service used for crop-only inference features such as
+# MCQ checkbox classification.  Leave URL blank to use local/fallback logic.
+PLOM_ML_SERVICE_URL = os.environ.get("PLOM_ML_SERVICE_URL", "").strip()
+PLOM_ML_SERVICE_TOKEN = os.environ.get("PLOM_ML_SERVICE_TOKEN", "").strip()
+PLOM_ML_SERVICE_TIMEOUT = float(os.environ.get("PLOM_ML_SERVICE_TIMEOUT", 30))
+PLOM_ML_SERVICE_MCQ_BATCH_SIZE = int(
+    os.environ.get("PLOM_ML_SERVICE_MCQ_BATCH_SIZE", 128)
+)
+PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO = float(
+    os.environ.get("PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO", 0.25)
+)
+
 # User uploaded (non-bundle) files are rejected if they exceed this byte size.
 # TODO: nginx also checks file size, does this serve a purpose?
 MAX_FILE_SIZE = 1024 * 1024

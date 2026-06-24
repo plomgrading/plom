@@ -14,6 +14,7 @@ import numpy as np
 import yaml
 
 # django
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.db import transaction
@@ -44,6 +45,12 @@ from plom_server.Rectangles.services import (
     RectangleExtractor,
 )
 from plom_server.QuestionClustering.services.model_loader import get_ClusteringStrategy
+from plom_server.QuestionClustering.services.mcq_checkbox_ml import (
+    MCQCheckboxCrop,
+    MCQCheckboxMLClient,
+    MCQCheckboxMLServiceError,
+    is_mcq_checkbox_ml_enabled,
+)
 
 # exception
 from plom_server.QuestionClustering.exceptions.clustering_exception import (
@@ -288,6 +295,7 @@ class QuestionClusteringService:
 
     def _classify_mcq_papers_by_option_boxes(
         self,
+        question_idx: int,
         version: int,
         page_num: int,
         paper_numbers: list[int],
@@ -360,6 +368,110 @@ class QuestionClusteringService:
 
         return paper_to_cluster_id
 
+    def _classify_mcq_papers_by_ml_option_boxes(
+        self,
+        question_idx: int,
+        version: int,
+        page_num: int,
+        paper_numbers: list[int],
+        option_boxes: list[dict[str, float | str]],
+    ) -> dict[int, int]:
+        """Classify MCQ papers by sending corrected option-box crops to ML service."""
+        rex = RectangleExtractor(version, page_num)
+        labels = [str(box["label"]) for box in option_boxes]
+        label_to_cluster_id = {label: idx for idx, label in enumerate(labels)}
+        blank_cluster_id = len(labels) + MCQ_BLANK_CLUSTER_ID_OFFSET
+        multiple_cluster_id = len(labels) + MCQ_MULTIPLE_CLUSTER_ID_OFFSET
+        ambiguous_cluster_id = len(labels) + MCQ_AMBIGUOUS_CLUSTER_ID_OFFSET
+
+        box_rect_by_label = {
+            str(box["label"]): {
+                "left": float(box["left"]),
+                "top": float(box["top"]),
+                "right": float(box["right"]),
+                "bottom": float(box["bottom"]),
+            }
+            for box in option_boxes
+        }
+
+        paper_to_cluster_id: dict[int, int] = {}
+        crops: list[MCQCheckboxCrop] = []
+        for paper_number in paper_numbers:
+            paper_crops = []
+            for label, box_rect in box_rect_by_label.items():
+                scanned = rex.get_cropped_scanned_img_or_none(paper_number, box_rect)
+                if scanned is None:
+                    paper_crops = []
+                    break
+                paper_crops.append(
+                    MCQCheckboxCrop(
+                        box_id=(
+                            f"paper{paper_number}-q{question_idx}-v{version}"
+                            f"-p{page_num}-{label}"
+                        ),
+                        label=label,
+                        image=scanned,
+                        paper_number=paper_number,
+                        question_index=question_idx,
+                        page_number=page_num,
+                        version=version,
+                    )
+                )
+
+            if paper_crops:
+                crops.extend(paper_crops)
+            else:
+                paper_to_cluster_id[paper_number] = ambiguous_cluster_id
+
+        predictions = MCQCheckboxMLClient().predict(crops)
+        predictions_by_paper: dict[int, list] = defaultdict(list)
+        for prediction in predictions:
+            if prediction.paper_number is None:
+                continue
+            predictions_by_paper[prediction.paper_number].append(prediction)
+
+        for paper_number in paper_numbers:
+            if paper_number in paper_to_cluster_id:
+                continue
+
+            paper_predictions = predictions_by_paper.get(paper_number, [])
+            prediction_by_label = {
+                prediction.label: prediction for prediction in paper_predictions
+            }
+            if set(prediction_by_label) != set(labels):
+                paper_to_cluster_id[paper_number] = ambiguous_cluster_id
+                continue
+
+            selected_labels = [
+                label for label in labels if prediction_by_label[label].marked
+            ]
+            if len(selected_labels) == 0:
+                suspicious_fill_ratio = float(
+                    getattr(settings, "PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO", 0.25)
+                )
+                suspicious_labels = [
+                    label
+                    for label in labels
+                    if prediction_by_label[label].uncertain
+                    and prediction_by_label[label].fill_ratio >= suspicious_fill_ratio
+                ]
+                if len(suspicious_labels) == 1:
+                    paper_to_cluster_id[paper_number] = label_to_cluster_id[
+                        suspicious_labels[0]
+                    ]
+                elif len(suspicious_labels) > 1:
+                    paper_to_cluster_id[paper_number] = ambiguous_cluster_id
+                else:
+                    paper_to_cluster_id[paper_number] = blank_cluster_id
+            elif len(selected_labels) == 1:
+                paper_to_cluster_id[paper_number] = label_to_cluster_id[
+                    selected_labels[0]
+                ]
+            else:
+                paper_to_cluster_id[paper_number] = multiple_cluster_id
+
+        return paper_to_cluster_id
+
     def cluster_mcq(
         self,
         question_idx: int,
@@ -385,9 +497,17 @@ class QuestionClusteringService:
             page_num, version=version, scanned=True
         )
         if option_boxes:
-            paper_to_clusterId = self._classify_mcq_papers_by_option_boxes(
-                version, page_num, paper_numbers, option_boxes
-            )
+            if is_mcq_checkbox_ml_enabled():
+                try:
+                    paper_to_clusterId = self._classify_mcq_papers_by_ml_option_boxes(
+                        question_idx, version, page_num, paper_numbers, option_boxes
+                    )
+                except MCQCheckboxMLServiceError as err:
+                    raise ValueError(f"MCQ checkbox ML service failed: {err}") from err
+            else:
+                paper_to_clusterId = self._classify_mcq_papers_by_option_boxes(
+                    question_idx, version, page_num, paper_numbers, option_boxes
+                )
             if not paper_to_clusterId:
                 raise ValueError("Could not classify ANY MCQ papers")
 
