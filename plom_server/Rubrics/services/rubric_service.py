@@ -338,12 +338,16 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     # A quick check to make sure we have fields such as "text" and "kind"
     validate_rubric_fields(d, quick=True)
 
+    out_of = d.get("out_of", 0)
+    if out_of is None:
+        out_of = 0
+
     # deal with everything except value first
     queryset = Rubric.objects.filter(
         text=d["text"],
         question_index=d["question_index"],
         kind=d["kind"],
-        out_of=d.get("out_of", 0),  # TODO: what if its None?
+        out_of=out_of,
         # would two identical rubrics except for versions/parameters be ok?
         versions=d.get("versions", ""),
         parameters=d.get("parameters", []),
