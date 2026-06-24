@@ -359,7 +359,7 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
         # None will be converted to zero internally
         queryset = queryset.filter(value=0)
     else:
-        # it could be a string or something but we know if validated and can be made to float
+        # it could be a string, but we know it validated and can be cast to float
         value = float(value)
         # We use an interval to avoid a floating point equality check.
         # Probably the database is IEEE-754 so will store the float the same as we do.
