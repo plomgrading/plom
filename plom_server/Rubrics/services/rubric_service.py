@@ -538,8 +538,6 @@ class RubricService:
 
         data["latest"] = True
         if _bypass_serializer:
-            # TODO: need to be more careful here?  E.g., this is going to
-            # fail if value/out_of are None
             new_rubric = Rubric.objects.create(
                 text=data["text"],
                 question_index=data["question_index"],
