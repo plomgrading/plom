@@ -199,12 +199,6 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             __ = f"{q_index} out of range, must be within [1, {max_q_index}]"
             raise V({"question_index": __})
 
-    _validate_value(data.get("value", 0))
-    if not quick:
-        # check that the "value" lies in [-max_mark, max_mark]
-        max_mark = SpecificationService.get_question_max_mark(q_index)
-        _validate_value_in_range(data.get("value", 0), max_mark)
-
     if "kind" not in data.keys():
         raise V({"kind": "Kind is required."})
 
@@ -213,7 +207,10 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             raise V({"value": "Absolute rubric requires value"})
         if "out_of" not in data:
             raise V({"out_of": "Absolute rubric requires out_of"})
+        _validate_value(data["value"])
         if not quick:
+            max_mark = SpecificationService.get_question_max_mark(q_index)
+            _validate_value_in_range(data["value"], max_mark)
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
     elif data["kind"] == "relative":
@@ -224,6 +221,10 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             raise V({"value": "Relative rubric must not have zero value"})
         if data.get("out_of", 0) != 0:
             raise V({"out_of": "Relative rubric must omit out_of or have zero out_of"})
+        _validate_value(data["value"])
+        if not quick:
+            max_mark = SpecificationService.get_question_max_mark(q_index)
+            _validate_value_in_range(data["value"], max_mark)
 
     elif data["kind"] == "neutral":
         if data.get("value", 0) != 0:
