@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Fix some regressions when creating rubrics via the web UI or from CSV files.
 
 
 
