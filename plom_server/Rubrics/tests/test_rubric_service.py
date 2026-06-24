@@ -902,3 +902,40 @@ class RubricServiceTests(TestCase):
 
         with self.assertRaisesRegex(PlomConflict, f"rid={rid}.*exists"):
             RubricService.create_rubric(rub)
+
+    def test_issue4245_create_neutral_rubric_w_None_value_outof(self) -> None:
+        rub = {
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+            "kind": "neutral",
+            "value": None,
+            "out_of": None,
+        }
+        RubricService.create_rubric(rub)
+
+    def test_issue4245_modify_neutral_rubric_w_None_value_outof(self) -> None:
+        data = make_example_neutral_rubric()
+        rid = data["rid"]
+        data["value"] = None
+        data["out_of"] = None
+        data["text"] = "lalalala"
+        RubricService.modify_rubric(rid, data)
+
+    def test_issue4248_create_relative_rubric_w_None_outof(self) -> None:
+        rub = {
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+            "kind": "relative",
+            "value": -1,
+            "out_of": None,
+        }
+        RubricService.create_rubric(rub)
+
+    def test_issue4248_modify_relative_rubric_w_None_outof(self) -> None:
+        data = make_example_relative_rubric()
+        rid = data["rid"]
+        data["out_of"] = None
+        data["text"] = "lalalala"
+        RubricService.modify_rubric(rid, data)

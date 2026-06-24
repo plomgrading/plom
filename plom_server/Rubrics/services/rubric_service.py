@@ -219,7 +219,7 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
         if data["value"] == 0:
             # Note: Plom disallows +0, -0 rubrics (#4145)
             raise V({"value": "Relative rubric must not have zero value"})
-        if data.get("out_of", 0) != 0:
+        if data.get("out_of", 0) not in (0, None):
             raise V({"out_of": "Relative rubric must omit out_of or have zero out_of"})
         _validate_value(data["value"])
         if not quick:
@@ -227,9 +227,9 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             _validate_value_in_range(data["value"], max_mark)
 
     elif data["kind"] == "neutral":
-        if data.get("value", 0) != 0:
+        if data.get("value", 0) not in (0, None):
             raise V({"value": "Neutral rubric must omit value or have zero value"})
-        if data.get("out_of", 0) != 0:
+        if data.get("out_of", 0) not in (0, None):
             raise V({"out_of": "Neutral rubric must omit out_of or have zero out_of"})
 
     else:
@@ -526,8 +526,16 @@ class RubricService:
                 data["value"]
             )
 
+        # out_of/value cannot be None, but its tolerated earlier and the UI sends None
+        if data.get("value", None) is None:
+            data["value"] = 0
+        if data.get("out_of", None) is None:
+            data["out_of"] = 0
+
         data["latest"] = True
         if _bypass_serializer:
+            # TODO: need to be more careful here?  E.g., this is going to
+            # fail if value/out_of are None
             new_rubric = Rubric.objects.create(
                 text=data["text"],
                 question_index=data["question_index"],
@@ -715,6 +723,12 @@ class RubricService:
             data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
                 data["value"]
             )
+
+        # out_of/value cannot be None, but its tolerated earlier and the UI sends None
+        if data.get("value", None) is None:
+            data["value"] = 0
+        if data.get("out_of", None) is None:
+            data["out_of"] = 0
 
         serializer = RubricSerializer(data=data)
 
