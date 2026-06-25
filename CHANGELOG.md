@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* The format of extra sheets has changed.
 
 ### Fixed
 * Fix some regressions when creating rubrics via the web UI or from CSV files.
