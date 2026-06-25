@@ -939,3 +939,13 @@ class RubricServiceTests(TestCase):
         data["out_of"] = None
         data["text"] = "lalalala"
         RubricService.modify_rubric(rid, data)
+
+    def test_issue4238_create_rubric_w_string_value(self) -> None:
+        rub = {
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+            "kind": "relative",
+            "value": "1.0",
+        }
+        RubricService.create_rubric(rub)
