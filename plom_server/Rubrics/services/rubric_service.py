@@ -1496,9 +1496,6 @@ class RubricService:
                         f'Invalid "parameters" field of type {type(parameters)}: {e}'
                     ) from e
                 r["parameters"] = parameters
-            # See #4238: as above, csv makes strings
-            if r.get("value", ""):
-                r["value"] = float(r["value"])
 
         if requesting_user:
             user = User.objects.get(username=requesting_user)
