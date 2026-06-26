@@ -52,30 +52,8 @@ class Command(BaseCommand):
         self.stdout.write(reset_link)
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--list",
-            action="store_true",
-            help="List users on the system (default behaviour if nothing else specified).",
-        )
-
         sub = parser.add_subparsers(
             title="subcommands", dest="subcommand", required=False
-        )
-
-        import_users = sub.add_parser(
-            "import",
-            help="Create specific users en-masse.",
-            description="""Create users specified in a .csv file,
-            poorly defined or duplicated users will fail the command.
-            """,
-        )
-        import_users.add_argument(
-            "file",
-            help="""
-                A path to the .csv file specifying new users.
-
-                Should contain fields "username", "usergroup".
-            """,
         )
 
         create_password_reset_link = sub.add_parser(
@@ -94,12 +72,36 @@ class Command(BaseCommand):
             """,
         )
 
+        import_users = sub.add_parser(
+            "import",
+            help="Create specific users en-masse.",
+            description="""Create users specified in a .csv file,
+            poorly defined or duplicated users will fail the command.
+            """,
+        )
+        import_users.add_argument(
+            "file",
+            help="""
+                A path to the .csv file specifying new users.
+
+                Should contain fields "username", "usergroup".
+            """,
+        )
+
+        sub.add_parser(
+            "list",
+            help="List users on the system.",
+            description="""User information is taken directly from the database.
+                Some understanding of Plom's internals may be required to parse it.
+            """,
+        )
+
     def handle(self, *args, **options):
         if options["subcommand"] == "import":
             self.handle_import(options["file"])
         elif options["subcommand"] == "create-password-reset-link":
             self.create_password_reset_link(options["uid"])
-        elif options["list"]:
+        elif options["subcommand"] == "list":
             self.list_users()
         else:
-            self.list_users()
+            self.print_help()
