@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 
 import csv
 import io
@@ -9,6 +9,7 @@ from tabulate import tabulate
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
+from django.contrib.auth.models import User
 from django.db import IntegrityError
 
 from plom_server.Authentication.services import AuthService
@@ -44,6 +45,12 @@ class Command(BaseCommand):
             csv_string = iostream.getvalue()
         self.stdout.write(csv_string)
 
+    def create_password_reset_link(self, uid: int) -> None:
+        """Create a password reset link for the specified user, write to stdout."""
+        user_obj = User.objects.get(id=uid)
+        reset_link = AuthService.generate_link(user_obj, port="8000")
+        self.stdout.write(reset_link)
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--list",
@@ -71,9 +78,27 @@ class Command(BaseCommand):
             """,
         )
 
+        create_password_reset_link = sub.add_parser(
+            "create-password-reset-link",
+            help="Create a password reset link for a Plom user account.",
+            description="""Requires the user's database id.
+            """,
+        )
+        create_password_reset_link.add_argument(
+            "uid",
+            type=int,
+            help="""
+                The user's database ID.
+
+                Use --list to find it.
+            """,
+        )
+
     def handle(self, *args, **options):
         if options["subcommand"] == "import":
             self.handle_import(options["file"])
+        elif options["subcommand"] == "create-password-reset-link":
+            self.create_password_reset_link(options["uid"])
         elif options["list"]:
             self.list_users()
         else:
