@@ -4,10 +4,10 @@
 [[rubric]]
 kind = "relative"
 value = 1
-text = "Correct answer (A)"
+text = "Correct answer (C)"
 tags = "demo"
-meta = "Student selected the correct answer, A."
-question_index = 5
+meta = "Student selected the correct answer, C."
+question_index = 7
 username = "manager"
 
 [[rubric]]
@@ -15,7 +15,7 @@ kind = "neutral"
 text = "Incorrect or blank"
 tags = "demo"
 meta = "Student selected an incorrect option or left the answer blank."
-question_index = 5
+question_index = 7
 username = "manager"
 
 [[rubric]]
@@ -24,5 +24,5 @@ value = -1
 text = "Incorrect answer"
 tags = "demo"
 meta = "Student selected an incorrect option."
-question_index = 5
+question_index = 7
 username = "manager"

@@ -745,7 +745,9 @@ def run_the_randomarker(*, port, half_marks=False):
 
     # now a final run to do any remaining tasks
     for X in users[:1]:
-        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100"
+        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100 --download-rubrics"
+        if half_marks:
+            cmd += " --allow-half"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd))
 
@@ -753,7 +755,7 @@ def run_the_randomarker(*, port, half_marks=False):
 def push_demo_rubrics(*, multiversion=True):
     """Push demo rubrics from toml."""
     # note - hard coded question range here.
-    for question_idx in (1, 2, 3, 4, 5):
+    for question_idx in range(1, 8):
         rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
     if multiversion:

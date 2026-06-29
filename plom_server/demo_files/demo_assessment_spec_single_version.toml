@@ -9,9 +9,10 @@ longName = "Midterm Demo using Plom"
 numberOfVersions = 1
 numberOfPages = 10
 totalMarks = 28
-numberOfQuestions = 5
+numberOfQuestions = 7
 idPage = 1
 doNotMarkPages = [2, 10]
+allowSharedPages = true
 
 [[question]]
 pages = [3]
@@ -33,6 +34,16 @@ pages = [7, 8]
 mark = 7
 
 [[question]]
-label = "MCQ"
+label = "Q5"
 pages = [9]
-mark = 3
+mark = 1
+
+[[question]]
+label = "Q6"
+pages = [9]
+mark = 1
+
+[[question]]
+label = "Q7"
+pages = [9]
+mark = 1

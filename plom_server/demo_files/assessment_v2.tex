@@ -338,8 +338,8 @@ You may find the following formulas useful in the questions that follow.
 	\end{parts}
 
 	\newpage
-	% for demo we label this question as LastQ
-	\renewcommand{\questionlabel}{LastQ}
+	% for demo we label this question as DiffEq
+	\renewcommand{\questionlabel}{DiffEq}
 	\question[7] The mass of a sample of Polonium-210, initially 6 grams, decreases at a rate proportional to the mass. After one year, 1 gram remains.
 
 	What is the half-life (the time it takes for the sample to decay to half its original mass)?
@@ -377,30 +377,32 @@ You may find the following formulas useful in the questions that follow.
 	\blankpage%
 
 	\ifprintanswers{\newpage}\fi
-	% for demo we label this question as MCQ
-	\renewcommand{\questionlabel}{MCQ}
-	\question[3] Answer each multiple-choice item. Each item is worth 1 mark.
-	\begin{parts}
-		\part What is \(7 + 5\)?
+	\renewcommand{\questionlabel}{Q\thequestion.}
+	\question[1] What is \(7 + 5\)?
 
-		A) 12 \qquad B) 11 \qquad C) 10 \qquad D) 13
+	A) 12 \qquad B) 11 \qquad C) 10 \qquad D) 13
 
-		\choicefourbox{1}{0}{0}{0}
-
-		\part What is \(15 - 8\)?
-
-		A) 6 \qquad B) 7 \qquad C) 8 \qquad D) 9
-
-		\choicefourbox{0}{1}{0}{0}
-
-		\part What is \(4 \times 6\)?
-
-		A) 20 \qquad B) 22 \qquad C) 24 \qquad D) 26
-
-		\choicefourbox{0}{0}{1}{0}
-	\end{parts}
+	\choicefourbox{1}{0}{0}{0}
 	\begin{solution}
-		The correct answers are A, B, and C.
+		The correct answer is A.
+	\end{solution}
+
+	\question[1] What is \(15 - 8\)?
+
+	A) 6 \qquad B) 7 \qquad C) 8 \qquad D) 9
+
+	\choicefourbox{0}{1}{0}{0}
+	\begin{solution}
+		The correct answer is B.
+	\end{solution}
+
+	\question[1] What is \(4 \times 6\)?
+
+	A) 20 \qquad B) 22 \qquad C) 24 \qquad D) 26
+
+	\choicefourbox{0}{0}{1}{0}
+	\begin{solution}
+		The correct answer is C.
 	\end{solution}
 
 	\ifprintanswers{}\else{
