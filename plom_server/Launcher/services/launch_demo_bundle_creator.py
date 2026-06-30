@@ -579,7 +579,7 @@ class DemoBundleCreationService:
                         pdf_document,
                         9,
                         correct_choices=[0, 1, 2],
-                        yfs=[0.188, 0.297, 0.406],
+                        ycoords=[0.182, 0.329, 0.475],
                     )
 
                     # insert a qr-code from a previous page after scribbling

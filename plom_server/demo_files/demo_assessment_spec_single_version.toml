@@ -29,7 +29,7 @@ pages = [6]
 mark = 4
 
 [[question]]
-label = "LastQ"
+label = "DiffEq"
 pages = [7, 8]
 mark = 7
 
