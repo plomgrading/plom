@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2024-2025 Bryan Tanady
 
 import logging
@@ -338,17 +338,19 @@ class MarkingTaskService:
         )
 
     @staticmethod
+    @transaction.atomic
     def surrender_task(user: User, papernum: int, qidx: int) -> None:
         """Surrender a particular marking task assigned to a user.
 
         Args:
-            user: reference to a User instance.
+            user: reference to a User instance which the task is assigned to.
+                This is used as a concurrency check.
             papernum: which paper?
             qidx: which question?
 
         Raises:
             ValueError: a task for papernum, qidx does not exist.
-            PlomConflict: task exits but it is either not assigned to,
+            PlomConflict: task exists but it is either not assigned to,
                 or not "OUT" with, that user.
         """
         basemsg = f"Cannot surrender paper {papernum} question index {qidx}: "
