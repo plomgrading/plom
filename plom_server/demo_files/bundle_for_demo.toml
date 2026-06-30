@@ -32,7 +32,7 @@ first_paper = 21
 last_paper = 30
 extra_page_papers = [29, 30]
 scrap_page_papers = [29, 30]
-discard_pages = [51, 54, 60, 64]                                        # TODO: does this get used by anything?
+discard_pages = [51, 54, 60, 64]  # TODO: does this get used by anything?
 obscure_qr_papers = [21, 22, 23, 24, 25, 26]
 operations = ["darken", "jam", "stretch", "hide", "corrupt", "obscure"]
 
