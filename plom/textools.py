@@ -13,6 +13,19 @@ from pathlib import Path
 from textwrap import dedent
 from typing import IO
 
+import plom
+
+
+def _read_plom_resource(filename: str) -> bytes:
+    """Read a resource from the top-level plom package."""
+    try:
+        return (resources.files(plom) / filename).read_bytes()
+    except (NotADirectoryError, TypeError):
+        # In editable installs, the top-level namespace package can include
+        # non-directory finder entries.  Anchor on a concrete plom subpackage
+        # while still using importlib.resources.
+        return (resources.files("plom.create").parent / filename).read_bytes()
+
 
 def texFragmentToPNG(fragment: str, *, dpi: int = 225) -> tuple[bool, bytes | str]:
     """Process a fragment of latex and produce a png image.
@@ -158,7 +171,7 @@ def buildLaTeX(src: str, out: IO[bytes]) -> tuple[int, str]:
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(Path(tmpdir) / "idBox4.pdf", "wb") as fh:
-            fh.write((resources.files(__name__) / "idBox4.pdf").read_bytes())
+            fh.write(_read_plom_resource("idBox4.pdf"))
         with open(Path(tmpdir) / "stuff.tex", "w") as fh:
             fh.write(src)
 
