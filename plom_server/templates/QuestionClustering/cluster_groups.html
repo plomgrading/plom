@@ -26,6 +26,7 @@
         {% if unclustered_papers %}
             <form action="{% url 'assign_unclustered_papers' %}"
                   method="post"
+                  data-suggest-url="{% url 'suggest_unclustered_papers' %}"
                   data-unclustered-form>
                 {% csrf_token %}
                 <input type="hidden" name="question_idx" value="{{ question_idx }}">
@@ -52,6 +53,13 @@
                     <button type="submit"
                             class="btn btn-outline-success"
                             formaction="{% url 'create_cluster_from_unclustered_papers' %}">Create new cluster</button>
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            data-suggest-clusters
+                            {% if not cluster_groups %}disabled{% endif %}>
+                        <i class="bi bi-stars"></i>
+                        Suggest clusters
+                    </button>
                     <span class="badge text-bg-primary d-none"
                           aria-live="polite"
                           data-drag-count></span>
@@ -158,7 +166,40 @@
                         </div>
                     </div>
                 </div>
+                <div class="mt-4 d-none" data-suggestions-panel>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-2">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">&nbsp;</th>
+                                    <th>Paper</th>
+                                    <th>Cluster</th>
+                                    <th>Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody data-suggestions-body></tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button"
+                                class="btn btn-primary btn-sm"
+                                data-apply-suggestions>
+                            Apply selected
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-secondary btn-sm"
+                                data-clear-suggestions>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="alert alert-info py-2 mt-3 mb-0 d-none"
+                     data-suggestions-status></div>
             </form>
+            <div class="border rounded bg-light p-4 text-center d-none"
+                 data-empty-state>
+                <strong>No unclustered papers remain.</strong>
+            </div>
         {% else %}
             <div class="border rounded bg-light p-4 text-center">
                 <strong>No unclustered papers remain.</strong>
@@ -311,6 +352,7 @@
 
                 const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
                 const assignUrl = form.getAttribute('action');
+                const suggestUrl = form.dataset.suggestUrl;
                 const baseFields = {
                     question_idx: form.querySelector('input[name="question_idx"]').value,
                     version: form.querySelector('input[name="version"]').value,
@@ -377,6 +419,26 @@
                         });
                     });
                 });
+
+                document.querySelector('[data-suggest-clusters]')?.addEventListener('click', () => {
+                    fetchClusterSuggestions({
+                        suggestUrl,
+                        baseFields,
+                        csrfToken,
+                    });
+                });
+
+                document.querySelector('[data-apply-suggestions]')?.addEventListener('click', () => {
+                    applySelectedSuggestions({
+                        assignUrl,
+                        baseFields,
+                        csrfToken,
+                    });
+                });
+
+                document.querySelector('[data-clear-suggestions]')?.addEventListener('click', () => {
+                    clearSuggestions();
+                });
             }
 
             function getCardsForDrag(card) {
@@ -426,6 +488,194 @@
                 }
             }
 
+            async function fetchClusterSuggestions({
+                suggestUrl,
+                baseFields,
+                csrfToken,
+            }) {
+                const button = document.querySelector('[data-suggest-clusters]');
+                const formData = new FormData();
+                Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
+
+                showSuggestionStatus('');
+                if (button) button.disabled = true;
+
+                try {
+                    const response = await fetch(suggestUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch {
+                        throw new Error('Could not suggest clusters.');
+                    }
+                    if (!response.ok || !data.ok) {
+                        throw new Error(data.message || 'Could not suggest clusters.');
+                    }
+
+                    renderSuggestions(data.suggestions || []);
+                } catch (error) {
+                    showSuggestionStatus(error.message, 'danger');
+                } finally {
+                    if (button) button.disabled = false;
+                }
+            }
+
+            function renderSuggestions(suggestions) {
+                const panel = document.querySelector('[data-suggestions-panel]');
+                const body = document.querySelector('[data-suggestions-body]');
+                if (!panel || !body) return;
+
+                body.replaceChildren();
+                if (suggestions.length === 0) {
+                    panel.classList.add('d-none');
+                    showSuggestionStatus('No suggestions available.', 'info');
+                    return;
+                }
+
+                suggestions.forEach(suggestion => {
+                    const row = document.createElement('tr');
+                    row.dataset.suggestionRow = suggestion.paper_num;
+
+                    const checkCell = document.createElement('td');
+                    checkCell.className = 'text-center';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'form-check-input';
+                    checkbox.checked = true;
+                    checkbox.dataset.suggestionSelected = '';
+                    checkbox.setAttribute('aria-label', `Apply suggestion for paper ${suggestion.paper_num}`);
+                    checkCell.appendChild(checkbox);
+
+                    const paperCell = document.createElement('td');
+                    paperCell.textContent = `Paper ${suggestion.paper_num}`;
+
+                    const clusterCell = document.createElement('td');
+                    clusterCell.appendChild(buildSuggestionClusterSelect(suggestion.clusterId));
+
+                    const confidenceCell = document.createElement('td');
+                    const badge = document.createElement('span');
+                    badge.className = `badge ${confidenceBadgeClass(suggestion.confidence)}`;
+                    badge.textContent = suggestion.confidence;
+                    badge.title = `gap ${suggestion.gap}`;
+                    confidenceCell.appendChild(badge);
+
+                    row.append(checkCell, paperCell, clusterCell, confidenceCell);
+                    body.appendChild(row);
+                });
+
+                panel.classList.remove('d-none');
+                showSuggestionStatus('');
+            }
+
+            function buildSuggestionClusterSelect(selectedClusterId) {
+                const sourceSelect = document.getElementById('target-cluster-id');
+                const select = document.createElement('select');
+                select.className = 'form-select form-select-sm';
+                select.dataset.suggestionCluster = '';
+
+                if (sourceSelect) {
+                    Array.from(sourceSelect.options).forEach(option => {
+                        select.appendChild(option.cloneNode(true));
+                    });
+                }
+                select.value = selectedClusterId;
+                return select;
+            }
+
+            function confidenceBadgeClass(confidence) {
+                if (confidence === 'high') return 'text-bg-success';
+                if (confidence === 'medium') return 'text-bg-warning';
+                return 'text-bg-secondary';
+            }
+
+            async function applySelectedSuggestions({
+                assignUrl,
+                baseFields,
+                csrfToken,
+            }) {
+                const button = document.querySelector('[data-apply-suggestions]');
+                const suggestionRows = Array.from(
+                    document.querySelectorAll('[data-suggestion-row]')
+                ).filter(row => row.querySelector('[data-suggestion-selected]')?.checked);
+
+                if (suggestionRows.length === 0) {
+                    showSuggestionStatus('No selected suggestions.', 'warning');
+                    return;
+                }
+
+                const groups = new Map();
+                suggestionRows.forEach(row => {
+                    const paperNumber = row.dataset.suggestionRow;
+                    const card = document.querySelector(`[data-paper-number="${paperNumber}"]`);
+                    const targetClusterId = row.querySelector('[data-suggestion-cluster]')?.value;
+                    if (!card || !targetClusterId) {
+                        row.remove();
+                        return;
+                    }
+
+                    if (!groups.has(targetClusterId)) {
+                        groups.set(targetClusterId, []);
+                    }
+                    groups.get(targetClusterId).push(card);
+                });
+
+                if (button) button.disabled = true;
+                showSuggestionStatus('');
+
+                try {
+                    for (const [targetClusterId, cards] of groups) {
+                        const target = document.querySelector(
+                            `[data-cluster-drop-target="${targetClusterId}"]`
+                        );
+                        await assignDraggedCards({
+                            assignUrl,
+                            baseFields,
+                            csrfToken,
+                            cards,
+                            target,
+                            targetClusterId,
+                        });
+                    }
+                    refreshSuggestionsPanel();
+                } finally {
+                    if (button) button.disabled = false;
+                }
+            }
+
+            function clearSuggestions() {
+                const body = document.querySelector('[data-suggestions-body]');
+                if (body) body.replaceChildren();
+                refreshSuggestionsPanel();
+                showSuggestionStatus('');
+            }
+
+            function refreshSuggestionsPanel() {
+                const panel = document.querySelector('[data-suggestions-panel]');
+                const body = document.querySelector('[data-suggestions-body]');
+                if (!panel || !body) return;
+
+                panel.classList.toggle(
+                    'd-none',
+                    body.querySelectorAll('[data-suggestion-row]').length === 0
+                );
+            }
+
+            function showSuggestionStatus(message, tone = 'info') {
+                const status = document.querySelector('[data-suggestions-status]');
+                if (!status) return;
+
+                status.textContent = message;
+                status.className = `alert alert-${tone} py-2 mt-3 mb-0`;
+                status.classList.toggle('d-none', !message);
+            }
+
             async function assignDraggedCards({
                 assignUrl,
                 baseFields,
@@ -440,7 +690,7 @@
                 cards.forEach(card => formData.append('paper_nums', card.dataset.paperNumber));
 
                 cards.forEach(card => card.classList.add('is-assigning'));
-                target.classList.add('is-assigning');
+                target?.classList.add('is-assigning');
 
                 try {
                     const response = await fetch(assignUrl, {
@@ -481,16 +731,28 @@
                     const unclusteredCount = document.querySelector('[data-unclustered-count]');
                     if (unclusteredCount) unclusteredCount.textContent = data.unclustered_count;
 
-                    cards.forEach(card => card.remove());
+                    cards.forEach(card => {
+                        document.querySelector(
+                            `[data-suggestion-row="${card.dataset.paperNumber}"]`
+                        )?.remove();
+                        card.remove();
+                    });
                     updateSelectedDragCue();
-                    target.classList.remove('assignment-complete');
-                    void target.offsetWidth;
-                    target.classList.add('assignment-complete');
+                    refreshSuggestionsPanel();
+                    if (data.unclustered_count === 0) {
+                        document.querySelector('[data-unclustered-form]')?.classList.add('d-none');
+                        document.querySelector('[data-empty-state]')?.classList.remove('d-none');
+                    }
+                    if (target) {
+                        target.classList.remove('assignment-complete');
+                        void target.offsetWidth;
+                        target.classList.add('assignment-complete');
+                    }
                 } catch (error) {
                     cards.forEach(card => card.classList.remove('is-assigning'));
-                    window.alert(error.message);
+                    showSuggestionStatus(error.message, 'danger');
                 } finally {
-                    target.classList.remove('is-assigning');
+                    target?.classList.remove('is-assigning');
                 }
             }
 

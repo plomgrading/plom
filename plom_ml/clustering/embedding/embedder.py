@@ -4,7 +4,6 @@
 # Copyright (C) 2026 Deep Shah
 
 from abc import ABC, abstractmethod
-import os
 
 import numpy as np
 from PIL import Image
@@ -190,7 +189,6 @@ class TrOCREmbedder(Embedder):
         self.processor = TrOCRProcessor.from_pretrained(
             "fhswf/TrOCR_Math_handwritten",
             use_fast=True,
-            local_files_only=os.environ.get("PLOM_CLUSTERING_LOCAL_FILES_ONLY") == "1",
         )
 
         self.model = ort.InferenceSession(

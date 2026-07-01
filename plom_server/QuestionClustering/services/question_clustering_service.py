@@ -768,10 +768,8 @@ class QuestionClusteringService:
         """Load a clustering strategy without allowing Hugging Face downloads."""
         previous_offline_value = os.environ.get("TRANSFORMERS_OFFLINE")
         previous_hf_offline_value = os.environ.get("HF_HUB_OFFLINE")
-        previous_local_only_value = os.environ.get("PLOM_CLUSTERING_LOCAL_FILES_ONLY")
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
         os.environ["HF_HUB_OFFLINE"] = "1"
-        os.environ["PLOM_CLUSTERING_LOCAL_FILES_ONLY"] = "1"
         try:
             return get_ClusteringStrategy(clustering_model)
         except Exception as err:
@@ -788,12 +786,6 @@ class QuestionClusteringService:
                 os.environ.pop("HF_HUB_OFFLINE", None)
             else:
                 os.environ["HF_HUB_OFFLINE"] = previous_hf_offline_value
-            if previous_local_only_value is None:
-                os.environ.pop("PLOM_CLUSTERING_LOCAL_FILES_ONLY", None)
-            else:
-                os.environ["PLOM_CLUSTERING_LOCAL_FILES_ONLY"] = (
-                    previous_local_only_value
-                )
 
     @staticmethod
     def _suggestion_distance_gap(
