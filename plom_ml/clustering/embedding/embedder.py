@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 from abc import ABC, abstractmethod
 import os
@@ -189,8 +190,7 @@ class TrOCREmbedder(Embedder):
         self.processor = TrOCRProcessor.from_pretrained(
             "fhswf/TrOCR_Math_handwritten",
             use_fast=True,
-            local_files_only=os.environ.get("PLOM_CLUSTERING_LOCAL_FILES_ONLY")
-            == "1",
+            local_files_only=os.environ.get("PLOM_CLUSTERING_LOCAL_FILES_ONLY") == "1",
         )
 
         self.model = ort.InferenceSession(

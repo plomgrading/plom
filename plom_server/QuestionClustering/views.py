@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 from urllib.parse import urlencode
 
@@ -730,9 +731,9 @@ def _clustered_papers_context(
     clusterId: int,
 ) -> dict:
     """Build context for the clustered papers page."""
-    papers = qcs.get_paper_nums_in_clusters(
-        question_idx=question_idx, version=version
-    )[clusterId]
+    papers = qcs.get_paper_nums_in_clusters(question_idx=question_idx, version=version)[
+        clusterId
+    ]
     corners = qcs.get_corners_used_for_clustering(
         question_idx=question_idx, version=version
     )

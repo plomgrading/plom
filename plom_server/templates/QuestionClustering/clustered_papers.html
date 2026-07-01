@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2026 Colin B. Macdonald
+    Copyright (C) 2026 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -85,9 +86,7 @@
                     {% if target_cluster_groups %}
                         <div>
                             <label for="target-cluster-id" class="form-label mb-1">Assign selected to</label>
-                            <select id="target-cluster-id"
-                                    class="form-select"
-                                    name="target_cluster_id">
+                            <select id="target-cluster-id" class="form-select" name="target_cluster_id">
                                 {% for target_clusterId, count in target_cluster_groups %}
                                     {% with cluster_name=cluster_to_name|get_item:target_clusterId %}
                                         <option value="{{ target_clusterId }}">

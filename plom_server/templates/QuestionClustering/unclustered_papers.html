@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2026 Colin B. Macdonald
+    Copyright (C) 2026 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load custom_tags %}
@@ -78,8 +79,7 @@
                 <div class="col-12 col-xl-7">
                     <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
                         <h2 class="h5 mb-0">Unclustered</h2>
-                        <span class="badge text-bg-secondary"
-                              data-unclustered-count>{{ unclustered_papers|length }}</span>
+                        <span class="badge text-bg-secondary" data-unclustered-count>{{ unclustered_papers|length }}</span>
                     </div>
                     <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3"
                          data-unclustered-grid>
@@ -133,8 +133,7 @@
                     <div class="border rounded bg-white p-3 cluster-target-panel">
                         <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
                             <h2 class="h5 mb-0">Clusters</h2>
-                            <span class="badge text-bg-secondary"
-                                  data-cluster-total>{{ cluster_groups|length }}</span>
+                            <span class="badge text-bg-secondary" data-cluster-total>{{ cluster_groups|length }}</span>
                         </div>
                         <div class="list-group gap-2" data-cluster-target-list>
                             {% for clusterId, count in cluster_groups %}
@@ -174,9 +173,7 @@
                             {% endfor %}
                         </div>
                         <div class="alert alert-secondary mt-3 mb-0 {% if cluster_groups %}d-none{% endif %}"
-                             data-no-cluster-targets>
-                            Create a new cluster from selected papers first.
-                        </div>
+                             data-no-cluster-targets>Create a new cluster from selected papers first.</div>
                     </div>
                 </div>
             </div>
@@ -191,20 +188,15 @@
                                 <th>Confidence</th>
                             </tr>
                         </thead>
-                        <tbody data-suggestions-body></tbody>
+                        <tbody data-suggestions-body>
+                        </tbody>
                     </table>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
-                    <button type="button"
-                            class="btn btn-primary btn-sm"
-                            data-apply-suggestions>
-                        Apply selected
-                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" data-apply-suggestions>Apply selected</button>
                     <button type="button"
                             class="btn btn-outline-secondary btn-sm"
-                            data-clear-suggestions>
-                        Clear
-                    </button>
+                            data-clear-suggestions>Clear</button>
                 </div>
             </div>
             <div class="alert alert-info py-2 mt-3 mb-0 d-none"
