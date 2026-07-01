@@ -11,6 +11,8 @@
   const addButton = document.getElementById('mcq_add_box');
   const removeButton = document.getElementById('mcq_remove_box');
   const clearButton = document.getElementById('mcq_clear_boxes');
+  const autoLabelButton = document.getElementById('mcq_auto_label_boxes');
+  const activeLabelSelect = document.getElementById('mcq_active_label');
   const optionCountContainer = document.getElementById('mcq_option_count');
   const optionCountInput = document.getElementById('mcq_num_options');
   const questionTypeInput = document.getElementById('question_type');
@@ -21,6 +23,8 @@
     !overlay ||
     !controls ||
     !detectButton ||
+    !autoLabelButton ||
+    !activeLabelSelect ||
     !optionCountContainer ||
     !questionTypeInput ||
     !hiddenInput
@@ -84,16 +88,32 @@
     ) {
       return null;
     }
-    return {
+    const selectedRect = {
       left: Math.min(selected.left, selected.right),
       top: Math.min(selected.top, selected.bottom),
       right: Math.max(selected.left, selected.right),
       bottom: Math.max(selected.top, selected.bottom),
     };
+    if (
+      selectedRect.right <= selectedRect.left ||
+      selectedRect.bottom <= selectedRect.top
+    ) {
+      return null;
+    }
+    return selectedRect;
   }
 
   function getNumOptions() {
     return clamp(parseInt(optionCountInput.value, 10) || 1, 1, optionLabels.length);
+  }
+
+  function getAllowedLabels() {
+    return optionLabels.slice(0, getNumOptions()).split('');
+  }
+
+  function getLabelRank(label) {
+    const rank = optionLabels.indexOf(label);
+    return rank >= 0 ? rank : optionLabels.length;
   }
 
   function isMCQMode() {
@@ -104,6 +124,82 @@
     statusElement.textContent = message;
     statusElement.classList.toggle('text-danger', Boolean(isError));
     statusElement.classList.toggle('text-muted', !isError);
+  }
+
+  function selectedRectContainsBox(selectedRect, box) {
+    const tolerance = 0.000001;
+    return (
+      box.left >= selectedRect.left - tolerance &&
+      box.top >= selectedRect.top - tolerance &&
+      box.right <= selectedRect.right + tolerance &&
+      box.bottom <= selectedRect.bottom + tolerance
+    );
+  }
+
+  function getBoxesOutsideSelectedRect(selectedRect) {
+    return mcqBoxes.filter((box) => !selectedRectContainsBox(selectedRect, box));
+  }
+
+  function boxOutsideMessage(boxes) {
+    const labels = boxes.map((box) => box.label).join(', ');
+    const plural = boxes.length === 1 ? '' : 'es';
+    return `Option box${plural} ${labels} must stay inside the selected rectangle.`;
+  }
+
+  function clampBoxToSelectedRect(box, selectedRect) {
+    const selectedWidth = selectedRect.right - selectedRect.left;
+    const selectedHeight = selectedRect.bottom - selectedRect.top;
+    const width = Math.min(box.right - box.left, selectedWidth);
+    const height = Math.min(box.bottom - box.top, selectedHeight);
+    const left = clamp(box.left, selectedRect.left, selectedRect.right - width);
+    const top = clamp(box.top, selectedRect.top, selectedRect.bottom - height);
+    return {
+      ...box,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+    };
+  }
+
+  function validateBoxesInsideSelectedRect() {
+    if (!isMCQMode() || mcqBoxes.length === 0) {
+      return true;
+    }
+    const selectedRect = getSelectedRect();
+    if (!selectedRect) {
+      setStatus('Select a rectangle before submitting MCQ boxes.', true);
+      return false;
+    }
+    const outsideBoxes = getBoxesOutsideSelectedRect(selectedRect);
+    if (outsideBoxes.length > 0) {
+      setStatus(boxOutsideMessage(outsideBoxes), true);
+      return false;
+    }
+    return true;
+  }
+
+  function validateBoxLabels() {
+    if (!isMCQMode() || mcqBoxes.length === 0) {
+      return true;
+    }
+    const allowedLabels = new Set(getAllowedLabels());
+    const seenLabels = new Set();
+    for (const box of mcqBoxes) {
+      if (!allowedLabels.has(box.label)) {
+        setStatus(
+          `Option box ${box.label} is not valid for ${getNumOptions()} options.`,
+          true
+        );
+        return false;
+      }
+      if (seenLabels.has(box.label)) {
+        setStatus(`Option label ${box.label} is used more than once.`, true);
+        return false;
+      }
+      seenLabels.add(box.label);
+    }
+    return true;
   }
 
   function syncOverlayToCanvas() {
@@ -123,6 +219,19 @@
     };
   }
 
+  function getBoxesForSubmission() {
+    return [...mcqBoxes].sort((a, b) => {
+      const labelOrder = getLabelRank(a.label) - getLabelRank(b.label);
+      if (labelOrder !== 0) {
+        return labelOrder;
+      }
+      if (a.top === b.top) {
+        return a.left - b.left;
+      }
+      return a.top - b.top;
+    });
+  }
+
   function updateHiddenInput() {
     if (!isMCQMode()) {
       hiddenInput.value = '[]';
@@ -131,7 +240,7 @@
     hiddenInput.value = JSON.stringify({
       question_type: questionTypeInput.value,
       num_options: getNumOptions(),
-      boxes: mcqBoxes.map(serialiseBox),
+      boxes: getBoxesForSubmission().map(serialiseBox),
     });
   }
 
@@ -174,13 +283,55 @@
       .flatMap((row) => row.boxes.sort((a, b) => a.left - b.left));
   }
 
-  function renumberBoxes() {
+  function autoLabelBoxes() {
     const activeBox = activeBoxIndex >= 0 ? mcqBoxes[activeBoxIndex] : null;
     mcqBoxes = sortBoxesInReadingOrder(mcqBoxes);
     mcqBoxes.forEach((box, index) => {
       box.label = optionLabels[index] || '?';
     });
     activeBoxIndex = activeBox ? mcqBoxes.indexOf(activeBox) : activeBoxIndex;
+  }
+
+  function getFirstUnusedLabel() {
+    const usedLabels = new Set(mcqBoxes.map((box) => box.label));
+    return getAllowedLabels().find((label) => !usedLabels.has(label)) || '?';
+  }
+
+  function updateActiveLabelSelect() {
+    const activeBox = activeBoxIndex >= 0 ? mcqBoxes[activeBoxIndex] : null;
+    activeLabelSelect.replaceChildren();
+
+    const emptyOption = new Option('Select', '');
+    activeLabelSelect.appendChild(emptyOption);
+    getAllowedLabels().forEach((label) => {
+      activeLabelSelect.appendChild(new Option(label, label));
+    });
+
+    activeLabelSelect.disabled = !isMCQMode() || !activeBox;
+    activeLabelSelect.value = activeBox && getAllowedLabels().includes(activeBox.label)
+      ? activeBox.label
+      : '';
+  }
+
+  function setActiveBox(index) {
+    activeBoxIndex = index >= 0 && index < mcqBoxes.length ? index : -1;
+    updateActiveLabelSelect();
+  }
+
+  function setActiveBoxLabel(label) {
+    if (activeBoxIndex < 0 || activeBoxIndex >= mcqBoxes.length || !label) {
+      return;
+    }
+    const activeBox = mcqBoxes[activeBoxIndex];
+    const previousLabel = activeBox.label;
+    const otherIndex = mcqBoxes.findIndex(
+      (box, index) => index !== activeBoxIndex && box.label === label
+    );
+    activeBox.label = label;
+    if (otherIndex >= 0 && previousLabel !== '?') {
+      mcqBoxes[otherIndex].label = previousLabel;
+    }
+    renderBoxes();
   }
 
   function renderBoxes() {
@@ -217,20 +368,31 @@
       boxElement.addEventListener('pointerdown', startDraggingBox);
       overlay.appendChild(boxElement);
     });
+    updateActiveLabelSelect();
     updateHiddenInput();
   }
 
   function startDraggingBox(event) {
     const boxElement = event.currentTarget;
-    activeBoxIndex = parseInt(boxElement.dataset.index, 10);
+    setActiveBox(parseInt(boxElement.dataset.index, 10));
+    event.preventDefault();
+    event.stopPropagation();
+    const selectedRect = getSelectedRect();
+    if (!selectedRect) {
+      setStatus('Select a rectangle before moving option boxes.', true);
+      return;
+    }
+    mcqBoxes[activeBoxIndex] = clampBoxToSelectedRect(
+      mcqBoxes[activeBoxIndex],
+      selectedRect
+    );
     dragState = {
       mode: event.target.dataset.resize === 'true' ? 'resize' : 'move',
       startX: event.clientX,
       startY: event.clientY,
       original: { ...mcqBoxes[activeBoxIndex] },
+      selectedRect,
     };
-    event.preventDefault();
-    event.stopPropagation();
     renderBoxes();
   }
 
@@ -246,23 +408,36 @@
     const original = dragState.original;
     const minDelta = canvasDeltaToPlom(12, 12);
     const box = mcqBoxes[activeBoxIndex];
+    const selectedRect = dragState.selectedRect;
 
     if (dragState.mode === 'resize') {
+      const maxWidth = selectedRect.right - original.left;
+      const maxHeight = selectedRect.bottom - original.top;
+      const minWidth = Math.min(minDelta.dx, maxWidth);
+      const minHeight = Math.min(minDelta.dy, maxHeight);
       box.right = clamp(
         original.right + delta.dx,
-        original.left + minDelta.dx,
-        1
+        original.left + minWidth,
+        selectedRect.right
       );
       box.bottom = clamp(
         original.bottom + delta.dy,
-        original.top + minDelta.dy,
-        1
+        original.top + minHeight,
+        selectedRect.bottom
       );
     } else {
       const width = original.right - original.left;
       const height = original.bottom - original.top;
-      box.left = clamp(original.left + delta.dx, 0, 1 - width);
-      box.top = clamp(original.top + delta.dy, 0, 1 - height);
+      box.left = clamp(
+        original.left + delta.dx,
+        selectedRect.left,
+        selectedRect.right - width
+      );
+      box.top = clamp(
+        original.top + delta.dy,
+        selectedRect.top,
+        selectedRect.bottom - height
+      );
       box.right = box.left + width;
       box.bottom = box.top + height;
     }
@@ -276,21 +451,20 @@
       return;
     }
     dragState = null;
-    renumberBoxes();
-    activeBoxIndex = mcqBoxes.length > 0
-      ? Math.min(activeBoxIndex, mcqBoxes.length - 1)
-      : -1;
+    setActiveBox(
+      mcqBoxes.length > 0 ? Math.min(activeBoxIndex, mcqBoxes.length - 1) : -1
+    );
     renderBoxes();
   }
 
-  function normaliseDetectedBox(box) {
-    return {
+  function normaliseDetectedBox(box, selectedRect) {
+    return clampBoxToSelectedRect({
       label: box.label,
       left: clamp(box.plom.left, 0, 1),
       top: clamp(box.plom.top, 0, 1),
       right: clamp(box.plom.right, 0, 1),
       bottom: clamp(box.plom.bottom, 0, 1),
-    };
+    }, selectedRect);
   }
 
   function detectBoxes() {
@@ -327,9 +501,9 @@
         if (data.error) {
           throw new Error(data.error);
         }
-        mcqBoxes = data.boxes.map(normaliseDetectedBox);
-        activeBoxIndex = mcqBoxes.length > 0 ? 0 : -1;
-        renumberBoxes();
+        mcqBoxes = data.boxes.map((box) => normaliseDetectedBox(box, selectedRect));
+        setActiveBox(mcqBoxes.length > 0 ? 0 : -1);
+        autoLabelBoxes();
         renderBoxes();
         if (mcqBoxes.length === getNumOptions()) {
           setStatus(`Detected ${mcqBoxes.length} boxes.`, false);
@@ -371,22 +545,35 @@
       setStatus('Select a rectangle before adding a box.', true);
       return;
     }
+    if (mcqBoxes.length >= getNumOptions()) {
+      setStatus('Increase the option count before adding another box.', true);
+      return;
+    }
     const size = getDefaultBoxSize(selectedRect);
+    const boxWidth = Math.min(size.width, selectedRect.right - selectedRect.left);
+    const boxHeight = Math.min(size.height, selectedRect.bottom - selectedRect.top);
     const optionSlot = Math.min(mcqBoxes.length + 1, getNumOptions());
     const slotGap = (selectedRect.right - selectedRect.left) / (getNumOptions() + 1);
     const centerX = selectedRect.left + slotGap * optionSlot;
     const centerY = selectedRect.top + (selectedRect.bottom - selectedRect.top) / 2;
-    const left = clamp(centerX - size.width / 2, 0, 1 - size.width);
-    const top = clamp(centerY - size.height / 2, 0, 1 - size.height);
+    const left = clamp(
+      centerX - boxWidth / 2,
+      selectedRect.left,
+      selectedRect.right - boxWidth
+    );
+    const top = clamp(
+      centerY - boxHeight / 2,
+      selectedRect.top,
+      selectedRect.bottom - boxHeight
+    );
     mcqBoxes.push({
-      label: '?',
+      label: getFirstUnusedLabel(),
       left,
       top,
-      right: left + size.width,
-      bottom: top + size.height,
+      right: left + boxWidth,
+      bottom: top + boxHeight,
     });
-    renumberBoxes();
-    activeBoxIndex = mcqBoxes.length - 1;
+    setActiveBox(mcqBoxes.length - 1);
     renderBoxes();
     setStatus(`${mcqBoxes.length} boxes selected.`, false);
   }
@@ -396,15 +583,14 @@
       return;
     }
     mcqBoxes.splice(activeBoxIndex, 1);
-    activeBoxIndex = mcqBoxes.length > 0 ? 0 : -1;
-    renumberBoxes();
+    setActiveBox(mcqBoxes.length > 0 ? 0 : -1);
     renderBoxes();
     setStatus(`${mcqBoxes.length} boxes selected.`, false);
   }
 
   function clearBoxes() {
     mcqBoxes = [];
-    activeBoxIndex = -1;
+    setActiveBox(-1);
     renderBoxes();
     setStatus('No boxes selected.', false);
   }
@@ -416,7 +602,7 @@
     overlay.classList.toggle('d-none', !enabled);
     if (!enabled) {
       mcqBoxes = [];
-      activeBoxIndex = -1;
+      setActiveBox(-1);
       setStatus('', false);
     }
     renderBoxes();
@@ -426,12 +612,33 @@
   addButton.addEventListener('click', addBox);
   removeButton.addEventListener('click', removeActiveBox);
   clearButton.addEventListener('click', clearBoxes);
-  optionCountInput.addEventListener('change', updateHiddenInput);
+  autoLabelButton.addEventListener('click', () => {
+    autoLabelBoxes();
+    renderBoxes();
+    setStatus(`${mcqBoxes.length} boxes labelled in reading order.`, false);
+  });
+  activeLabelSelect.addEventListener('change', () => {
+    setActiveBoxLabel(activeLabelSelect.value);
+  });
+  optionCountInput.addEventListener('change', () => {
+    updateActiveLabelSelect();
+    updateHiddenInput();
+  });
   questionTypeInput.addEventListener('change', updateMCQMode);
   document.addEventListener('pointermove', moveActiveBox);
   document.addEventListener('pointerup', finishDraggingBox);
   window.addEventListener('resize', renderBoxes);
   window.addEventListener('load', updateMCQMode);
-  hiddenInput.form.addEventListener('submit', updateHiddenInput);
+  hiddenInput.form.addEventListener('submit', (event) => {
+    if (!validateBoxesInsideSelectedRect()) {
+      event.preventDefault();
+      return;
+    }
+    if (!validateBoxLabels()) {
+      event.preventDefault();
+      return;
+    }
+    updateHiddenInput();
+  });
   updateMCQMode();
 })();

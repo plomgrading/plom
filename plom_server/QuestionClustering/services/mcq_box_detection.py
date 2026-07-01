@@ -8,6 +8,15 @@ from typing import TYPE_CHECKING, Any
 import cv2 as cv
 import numpy as np
 
+from plom_server.Rectangles.contour_detection import (
+    adaptive_threshold_foreground,
+    approximate_contour,
+    contour_bounding_rect,
+    deduplicate_boxes,
+    find_sorted_contours,
+    sort_boxes_reading_order,
+)
+
 if TYPE_CHECKING:
     from plom_server.Papers.models import ReferenceImage
 
@@ -53,78 +62,11 @@ def _absolute_to_reference(
     }
 
 
-def _deduplicate_boxes(boxes: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    kept: list[dict[str, Any]] = []
-    for box in sorted(boxes, key=lambda b: b["score"], reverse=True):
-        center_x = (box["left"] + box["right"]) / 2
-        center_y = (box["top"] + box["bottom"]) / 2
-        too_close = False
-        for other in kept:
-            other_center_x = (other["left"] + other["right"]) / 2
-            other_center_y = (other["top"] + other["bottom"]) / 2
-            side = max(box["right"] - box["left"], box["bottom"] - box["top"])
-            other_side = max(
-                other["right"] - other["left"], other["bottom"] - other["top"]
-            )
-            if (
-                abs(center_x - other_center_x) < max(side, other_side) * 0.55
-                and abs(center_y - other_center_y) < max(side, other_side) * 0.55
-            ):
-                too_close = True
-                break
-        if not too_close:
-            kept.append(box)
-    return sorted(kept, key=lambda b: (b["left"], b["top"]))
-
-
-def _sort_boxes_in_reading_order(boxes: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    if not boxes:
-        return []
-
-    heights = sorted(box["bottom"] - box["top"] for box in boxes)
-    median_height = heights[len(heights) // 2]
-    row_threshold = max(median_height * 0.75, 4)
-    rows: list[dict[str, Any]] = []
-
-    for box in sorted(boxes, key=lambda b: (b["top"], b["left"])):
-        center_y = (box["top"] + box["bottom"]) / 2
-        row = next(
-            (
-                candidate
-                for candidate in rows
-                if abs(center_y - candidate["center_y"]) <= row_threshold
-            ),
-            None,
-        )
-        if row is None:
-            row = {"center_y": center_y, "boxes": []}
-            rows.append(row)
-
-        row["boxes"].append(box)
-        row["center_y"] = sum(
-            (row_box["top"] + row_box["bottom"]) / 2 for row_box in row["boxes"]
-        ) / len(row["boxes"])
-
-    sorted_boxes: list[dict[str, Any]] = []
-    for row in sorted(rows, key=lambda r: r["center_y"]):
-        sorted_boxes.extend(sorted(row["boxes"], key=lambda b: b["left"]))
-    return sorted_boxes
-
-
 def _candidate_boxes(crop: np.ndarray) -> list[dict[str, Any]]:
-    blurred = cv.GaussianBlur(crop, (3, 3), 0)
-    thresholded = cv.adaptiveThreshold(
-        blurred,
-        255,
-        cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv.THRESH_BINARY_INV,
-        35,
-        15,
+    thresholded = adaptive_threshold_foreground(
+        crop, block_size=35, c=15, blur_kernel=(3, 3), close_kernel=(2, 2)
     )
-    thresholded = cv.morphologyEx(
-        thresholded, cv.MORPH_CLOSE, np.ones((2, 2), dtype=np.uint8)
-    )
-    contours, _ = cv.findContours(thresholded, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    contours = find_sorted_contours(thresholded, cv.RETR_TREE)
 
     crop_height, crop_width = crop.shape[:2]
     min_side = max(8, round(crop_height * 0.10))
@@ -132,7 +74,7 @@ def _candidate_boxes(crop: np.ndarray) -> list[dict[str, Any]]:
 
     boxes: list[dict[str, Any]] = []
     for contour in contours:
-        x, y, w, h = cv.boundingRect(contour)
+        x, y, w, h = contour_bounding_rect(contour)
         if w < min_side or h < min_side:
             continue
         if w > max_side or h > max_side:
@@ -144,10 +86,9 @@ def _candidate_boxes(crop: np.ndarray) -> list[dict[str, Any]]:
         if not 0.65 <= aspect <= 1.35:
             continue
 
-        perimeter = cv.arcLength(contour, True)
-        if perimeter <= 0:
+        approx = approximate_contour(contour, 0.04)
+        if approx is None:
             continue
-        approx = cv.approxPolyDP(contour, 0.04 * perimeter, True)
         if not 4 <= len(approx) <= 8:
             continue
 
@@ -169,7 +110,7 @@ def _candidate_boxes(crop: np.ndarray) -> list[dict[str, Any]]:
             }
         )
 
-    return _deduplicate_boxes(boxes)
+    return deduplicate_boxes(boxes)
 
 
 def detect_mcq_boxes_in_image(
@@ -210,7 +151,7 @@ def detect_mcq_boxes_in_image(
     ]
     boxes = _candidate_boxes(crop)
     boxes = sorted(boxes, key=lambda b: b["score"], reverse=True)[:num_options]
-    boxes = _sort_boxes_in_reading_order(boxes)
+    boxes = sort_boxes_reading_order(boxes)
 
     detected = []
     for idx, box in enumerate(boxes):
