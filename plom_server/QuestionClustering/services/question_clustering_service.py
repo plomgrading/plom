@@ -405,16 +405,10 @@ class QuestionClusteringService:
                     break
                 paper_crops.append(
                     MCQCheckboxCrop(
-                        box_id=(
-                            f"paper{paper_number}-q{question_idx}-v{version}"
-                            f"-p{page_num}-{label}"
-                        ),
+                        box_id=f"mcq-{len(crops) + len(paper_crops)}",
                         label=label,
                         image=scanned,
                         paper_number=paper_number,
-                        question_index=question_idx,
-                        page_number=page_num,
-                        version=version,
                     )
                 )
 

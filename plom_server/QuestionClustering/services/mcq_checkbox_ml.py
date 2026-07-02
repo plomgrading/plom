@@ -26,15 +26,12 @@ class MCQCheckboxMLServiceError(RuntimeError):
 
 @dataclass(frozen=True)
 class MCQCheckboxCrop:
-    """One already-cropped checkbox image and its Plom metadata."""
+    """One already-cropped checkbox image plus local-only Plom metadata."""
 
     box_id: str
     label: str
     image: np.ndarray
     paper_number: int
-    question_index: int
-    page_number: int
-    version: int
 
 
 @dataclass(frozen=True)
@@ -102,15 +99,14 @@ class MCQCheckboxMLClient:
     def _predict_batch(
         self, crops: list[MCQCheckboxCrop]
     ) -> list[MCQCheckboxPrediction]:
+        crop_by_id = {crop.box_id: crop for crop in crops}
+        if len(crop_by_id) != len(crops):
+            raise MCQCheckboxMLServiceError("Checkbox ML request ids must be unique.")
+
         payload = {
             "items": [
                 {
-                    "box_id": crop.box_id,
-                    "label": crop.label,
-                    "paper_number": crop.paper_number,
-                    "question_index": crop.question_index,
-                    "page_number": crop.page_number,
-                    "version": crop.version,
+                    "id": crop.box_id,
                     "image": _image_to_base64_png(crop.image),
                 }
                 for crop in crops
@@ -157,28 +153,17 @@ class MCQCheckboxMLClient:
                     "Checkbox ML service returned a malformed prediction."
                 )
             try:
-                box_id = str(raw["box_id"])
-                label = str(raw["label"])
+                box_id = str(raw["id"])
+                crop = crop_by_id[box_id]
                 marked = _read_bool(raw, "marked")
                 uncertain = _read_bool(raw, "uncertain", default=False)
                 confidence = float(raw.get("confidence", 0.0))
                 prob_fill = float(raw.get("prob_fill", 0.0))
                 fill_ratio = float(raw.get("fill_ratio", 0.0))
-                paper_number = (
-                    int(raw["paper_number"])
-                    if raw.get("paper_number") is not None
-                    else None
-                )
                 log.info(
-                    "MCQ checkbox ML prediction paper=%s question=%s page=%s "
-                    "version=%s box_id=%s label=%s marked=%s uncertain=%s "
+                    "MCQ checkbox ML prediction id=%s marked=%s uncertain=%s "
                     "confidence=%.3f prob_fill=%.3f prob_empty=%s fill_ratio=%s",
-                    paper_number,
-                    raw.get("question_index"),
-                    raw.get("page_number"),
-                    raw.get("version"),
                     box_id,
-                    label,
                     marked,
                     uncertain,
                     confidence,
@@ -189,13 +174,13 @@ class MCQCheckboxMLClient:
                 predictions.append(
                     MCQCheckboxPrediction(
                         box_id=box_id,
-                        label=label,
+                        label=crop.label,
                         marked=marked,
                         uncertain=uncertain,
                         confidence=confidence,
                         prob_fill=prob_fill,
                         fill_ratio=fill_ratio,
-                        paper_number=paper_number,
+                        paper_number=crop.paper_number,
                     )
                 )
             except (KeyError, TypeError, ValueError) as err:
