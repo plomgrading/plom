@@ -65,11 +65,7 @@ class Command(BaseCommand):
         create_password_reset_link.add_argument(
             "uid",
             type=int,
-            help="""
-                The user's database ID.
-
-                Use --list to find it.
-            """,
+            help="The user's database ID.",
         )
 
         import_users = sub.add_parser(
