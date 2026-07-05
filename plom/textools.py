@@ -21,9 +21,9 @@ def _read_plom_resource(filename: str) -> bytes:
     try:
         return (resources.files(plom) / filename).read_bytes()
     except (NotADirectoryError, TypeError):
-        # In editable installs, the top-level namespace package can include
-        # non-directory finder entries.  Anchor on a concrete plom subpackage
-        # while still using importlib.resources.
+        # In editable installs (`pip install -e .`), the top-level namespace package
+        # can include non-directory finder entries.  Anchor on a concrete plom subpackage
+        # while still using importlib.resources.  See Issue #4252 for longer-term fix.
         with resources.as_file(resources.files("plom.create")) as create_path:
             return (create_path.parent / filename).read_bytes()
 
