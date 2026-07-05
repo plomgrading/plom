@@ -133,77 +133,83 @@
                         </div>
                     </div>
                     <div class="col-12 col-xl-5">
-                        <div class="border rounded bg-white p-3 cluster-target-panel">
-                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                                <h2 class="h5 mb-0">Clusters</h2>
-                                <span class="badge text-bg-secondary">{{ cluster_groups|length }}</span>
+                        <div class="cluster-side-panel">
+                            <div class="border rounded bg-light p-3 mb-3 suggestions-panel d-none"
+                                 data-suggestions-panel>
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                    <h2 class="h6 mb-0">Suggested assignments</h2>
+                                    <span class="badge text-bg-secondary d-none" data-suggestions-count></span>
+                                </div>
+                                <div class="alert alert-info py-2 mb-2 d-none" data-suggestions-status></div>
+                                <div class="table-responsive d-none" data-suggestions-table>
+                                    <table class="table table-sm align-middle mb-2">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">&nbsp;</th>
+                                                <th>Paper</th>
+                                                <th>Cluster</th>
+                                                <th>Confidence</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody data-suggestions-body>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap d-none" data-suggestions-actions>
+                                    <button type="button" class="btn btn-primary btn-sm" data-apply-suggestions>Apply selected</button>
+                                    <button type="button"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            data-clear-suggestions>Clear</button>
+                                </div>
                             </div>
-                            <div class="list-group gap-2">
-                                {% for clusterId, count in cluster_groups %}
-                                    {% with cluster_name=cluster_to_name|get_item:clusterId %}
-                                        {% with papers=cluster_to_paper_map|get_item:clusterId %}
-                                            <div class="list-group-item list-group-item-action cluster-drop-target"
-                                                 data-cluster-drop-target="{{ clusterId }}">
-                                                <div class="d-flex gap-3">
-                                                    <div class="cluster-target-preview"
-                                                         data-cluster-target-preview="{{ clusterId }}">
-                                                        {% if papers %}
-                                                            {% with pn=papers.0 %}
-                                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                                     alt="cluster {{ clusterId }} preview"
-                                                                     loading="lazy"
-                                                                     onerror="imgError(this)">
-                                                            {% endwith %}
-                                                        {% else %}
-                                                            <span>No preview</span>
-                                                        {% endif %}
-                                                    </div>
-                                                    <div class="flex-fill">
-                                                        <div class="d-flex align-items-start justify-content-between gap-2">
-                                                            <span class="cluster-target-name">{{ cluster_name|default:"Unnamed" }}</span>
-                                                            <span class="badge text-bg-light">Cluster {{ clusterId }}</span>
+                            <div class="border rounded bg-white p-3 cluster-target-panel">
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                    <h2 class="h5 mb-0">Clusters</h2>
+                                    <span class="badge text-bg-secondary">{{ cluster_groups|length }}</span>
+                                </div>
+                                <div class="list-group gap-2">
+                                    {% for clusterId, count in cluster_groups %}
+                                        {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                            {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                                <div class="list-group-item list-group-item-action cluster-drop-target"
+                                                     data-cluster-drop-target="{{ clusterId }}">
+                                                    <div class="d-flex gap-3">
+                                                        <div class="cluster-target-preview"
+                                                             data-cluster-target-preview="{{ clusterId }}">
+                                                            {% if papers %}
+                                                                {% with pn=papers.0 %}
+                                                                    <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                                         alt="cluster {{ clusterId }} preview"
+                                                                         loading="lazy"
+                                                                         onerror="imgError(this)">
+                                                                {% endwith %}
+                                                            {% else %}
+                                                                <span>No preview</span>
+                                                            {% endif %}
                                                         </div>
-                                                        <div class="small text-body-secondary">
-                                                            <span data-cluster-target-count="{{ clusterId }}">{{ count }}</span>
-                                                            papers
+                                                        <div class="flex-fill">
+                                                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                                                <span class="cluster-target-name">{{ cluster_name|default:"Unnamed" }}</span>
+                                                                <span class="badge text-bg-light">Cluster {{ clusterId }}</span>
+                                                            </div>
+                                                            <div class="small text-body-secondary">
+                                                                <span data-cluster-target-count="{{ clusterId }}">{{ count }}</span>
+                                                                papers
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            {% endwith %}
                                         {% endwith %}
-                                    {% endwith %}
-                                {% endfor %}
+                                    {% endfor %}
+                                </div>
+                                {% if not cluster_groups %}
+                                    <div class="alert alert-secondary mt-3 mb-0">Create a new cluster from selected papers first.</div>
+                                {% endif %}
                             </div>
-                            {% if not cluster_groups %}
-                                <div class="alert alert-secondary mt-3 mb-0">Create a new cluster from selected papers first.</div>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
-                <div class="mt-4 d-none" data-suggestions-panel>
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-2">
-                            <thead>
-                                <tr>
-                                    <th class="text-center">&nbsp;</th>
-                                    <th>Paper</th>
-                                    <th>Cluster</th>
-                                    <th>Confidence</th>
-                                </tr>
-                            </thead>
-                            <tbody data-suggestions-body>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-primary btn-sm" data-apply-suggestions>Apply selected</button>
-                        <button type="button"
-                                class="btn btn-outline-secondary btn-sm"
-                                data-clear-suggestions>Clear</button>
-                    </div>
-                </div>
-                <div class="alert alert-info py-2 mt-3 mb-0 d-none"
-                     data-suggestions-status></div>
             </form>
             <div class="border rounded bg-light p-4 text-center d-none"
                  data-empty-state>
@@ -284,9 +290,17 @@
                 z-index: 4;
             }
 
-            .cluster-target-panel {
+            .cluster-side-panel {
                 position: sticky;
                 top: 1rem;
+            }
+
+            .suggestions-panel .table {
+                font-size: .875rem;
+            }
+
+            .suggestions-panel .alert {
+                font-size: .875rem;
             }
 
             .cluster-drop-target {
@@ -346,7 +360,7 @@
             }
 
             @media (max-width: 1199.98px) {
-                .cluster-target-panel {
+                .cluster-side-panel {
                     position: static;
                 }
             }
@@ -537,7 +551,8 @@
                 const formData = new FormData();
                 Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
 
-                showSuggestionStatus('');
+                resetSuggestionsPanel({ showPanel: true });
+                showSuggestionStatus('Finding suggestions...', 'info');
                 if (button) button.disabled = true;
 
                 try {
@@ -572,9 +587,8 @@
                 const body = document.querySelector('[data-suggestions-body]');
                 if (!panel || !body) return;
 
-                body.replaceChildren();
+                resetSuggestionsPanel({ showPanel: true });
                 if (suggestions.length === 0) {
-                    panel.classList.add('d-none');
                     showSuggestionStatus('No suggestions available.', 'info');
                     return;
                 }
@@ -611,6 +625,9 @@
                 });
 
                 panel.classList.remove('d-none');
+                document.querySelector('[data-suggestions-table]')?.classList.remove('d-none');
+                document.querySelector('[data-suggestions-actions]')?.classList.remove('d-none');
+                updateSuggestionsCount(suggestions.length);
                 showSuggestionStatus('');
             }
 
@@ -690,10 +707,7 @@
             }
 
             function clearSuggestions() {
-                const body = document.querySelector('[data-suggestions-body]');
-                if (body) body.replaceChildren();
-                refreshSuggestionsPanel();
-                showSuggestionStatus('');
+                resetSuggestionsPanel();
             }
 
             function refreshSuggestionsPanel() {
@@ -701,19 +715,58 @@
                 const body = document.querySelector('[data-suggestions-body]');
                 if (!panel || !body) return;
 
-                panel.classList.toggle(
-                    'd-none',
-                    body.querySelectorAll('[data-suggestion-row]').length === 0
-                );
+                const remaining = body.querySelectorAll('[data-suggestion-row]').length;
+                if (remaining === 0) {
+                    resetSuggestionsPanel();
+                    return;
+                }
+
+                panel.classList.remove('d-none');
+                document.querySelector('[data-suggestions-table]')?.classList.remove('d-none');
+                document.querySelector('[data-suggestions-actions]')?.classList.remove('d-none');
+                updateSuggestionsCount(remaining);
             }
 
             function showSuggestionStatus(message, tone = 'info') {
+                const panel = document.querySelector('[data-suggestions-panel]');
                 const status = document.querySelector('[data-suggestions-status]');
                 if (!status) return;
 
                 status.textContent = message;
-                status.className = `alert alert-${tone} py-2 mt-3 mb-0`;
+                status.className = `alert alert-${tone} py-2 mb-2`;
                 status.classList.toggle('d-none', !message);
+                if (message) panel?.classList.remove('d-none');
+            }
+
+            function resetSuggestionsPanel({ showPanel = false } = {}) {
+                const panel = document.querySelector('[data-suggestions-panel]');
+                const body = document.querySelector('[data-suggestions-body]');
+                const table = document.querySelector('[data-suggestions-table]');
+                const actions = document.querySelector('[data-suggestions-actions]');
+                const status = document.querySelector('[data-suggestions-status]');
+
+                if (body) body.replaceChildren();
+                table?.classList.add('d-none');
+                actions?.classList.add('d-none');
+                updateSuggestionsCount(0);
+                if (status) {
+                    status.textContent = '';
+                    status.className = 'alert alert-info py-2 mb-2 d-none';
+                }
+                panel?.classList.toggle('d-none', !showPanel);
+            }
+
+            function updateSuggestionsCount(count) {
+                const countBadge = document.querySelector('[data-suggestions-count]');
+                if (!countBadge) return;
+
+                if (count > 0) {
+                    countBadge.textContent = count;
+                    countBadge.classList.remove('d-none');
+                } else {
+                    countBadge.textContent = '';
+                    countBadge.classList.add('d-none');
+                }
             }
 
             async function assignDraggedCards({
