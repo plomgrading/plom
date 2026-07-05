@@ -93,6 +93,8 @@ class Command(BaseCommand):
         else:
             manager_username, manager_password = options["manager_login"]
             self.create_first_manager(manager_username, password=manager_password)
+            manager_string += f"Manager username: {manager_username}\n"
+            manager_string += "Manager password: [as provided on command line]\n"
         self.stdout.write(manager_string)
 
         admin_string = "Make admin user\n"
@@ -113,4 +115,6 @@ class Command(BaseCommand):
         else:
             admin_username, admin_password = options["admin_login"]
             self.create_admin(username=admin_username, password=admin_password)
+            manager_string += f"Admin username: {admin_username}\n"
+            manager_string += "Admin password: [as provided on command line]\n"
         self.stdout.write(admin_string)
