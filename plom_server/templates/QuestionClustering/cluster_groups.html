@@ -191,20 +191,15 @@
                                     <th>Confidence</th>
                                 </tr>
                             </thead>
-                            <tbody data-suggestions-body></tbody>
+                            <tbody data-suggestions-body>
+                            </tbody>
                         </table>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
-                        <button type="button"
-                                class="btn btn-primary btn-sm"
-                                data-apply-suggestions>
-                            Apply selected
-                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" data-apply-suggestions>Apply selected</button>
                         <button type="button"
                                 class="btn btn-outline-secondary btn-sm"
-                                data-clear-suggestions>
-                            Clear
-                        </button>
+                                data-clear-suggestions>Clear</button>
                     </div>
                 </div>
                 <div class="alert alert-info py-2 mt-3 mb-0 d-none"
@@ -825,7 +820,9 @@
         <div x-data="{ selected: [], all: false, openMenu: false, ids: [
             {% for cid in cluster_groups.keys %}
                 '{{ cid }}'
-                {% if not forloop.last %},{% endif %}
+                {% if not forloop.last %}
+                    ,
+                {% endif %}
             {% endfor %}
             ] }">
             <!-- Clustering cleanup toolbar -->
