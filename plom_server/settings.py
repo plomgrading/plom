@@ -12,7 +12,6 @@
 """Django settings for Plom project."""
 
 import os
-import platform
 import warnings
 from pathlib import Path
 from typing import Any
