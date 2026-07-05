@@ -1377,18 +1377,12 @@ class QuestionClusteringService:
         return member_count
 
     @transaction.atomic
-    def reset_clusters(
-        self, question_idx: int, version: int, clusterIds: list[int] | None = None
-    ) -> list[int]:
+    def reset_clusters(self, question_idx: int, version: int) -> list[int]:
         """Reset all clusters for a question/version back to the original clustering.
-
-        ``clusterIds`` is accepted for older callers, but a reset now restores
-        the full original clustering for the question/version.
 
         Args:
             question_idx: question_index of the clustering context.
             version: version of the clustering context.
-            clusterIds: Ignored. Retained for compatibility with older callers.
 
         Raises:
             ObjectDoesNotExist: if there is no original clustering to restore.

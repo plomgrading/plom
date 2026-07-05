@@ -551,7 +551,7 @@ class SuggestUnclusteredPapersView(ManagerRequiredView):
         return JsonResponse({"ok": True, "suggestions": suggestions})
 
 
-class ClusterBulkResetView(ManagerRequiredView):
+class ClusterResetView(ManagerRequiredView):
     """Handle full reset of clusters in a (q, v) context."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
