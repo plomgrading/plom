@@ -14,1352 +14,505 @@
     Cluster groups for {{ question_label }} v{{ version }} Page {{ page_num }}
 {% endblock page_heading %}
 {% block main_content %}
-    {% if request.GET.unclustered %}
-        {% include "../base/alert_messages.html" with messages=messages %}
-        <div class="mb-3">
-            <a class="btn btn-success"
-               href="{% url 'cluster_groups' question_idx version page_num %}">
-                <i class="bi bi-chevron-left"></i>
-                Return to cluster groups
-            </a>
-        </div>
-        {% if unclustered_papers %}
-            <form action="{% url 'assign_unclustered_papers' %}"
+    <!-- navigation button -->
+    <div class="mb-3">
+        <a class="btn btn-success"
+           href="{% url 'question_clustering_jobs_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to question clustering jobs page
+        </a>
+    </div>
+    <!-- Include SortableJS + Tablesort; Alpine is in base.html -->
+    <script src="{% static '/js3rdparty/Sortable.min.js' %}"></script>
+    <script src="{% static '/js3rdparty/tablesort.min.js' %}"></script>
+    <script src="{% static '/js3rdparty/tablesort.number.min.js' %}"></script>
+    <div x-data="{ selected: [], all: false, openMenu: false, ids: [
+        {% for cid in cluster_groups.keys %}
+            '{{ cid }}'
+            {% if not forloop.last %},{% endif %}
+        {% endfor %}
+        ] }">
+        <!-- Clustering cleanup toolbar -->
+        <div class="fixed top-20 left-1/2 transform -translate-x-1/2 shadow-md rounded p-3 z-50 w-auto">
+            <div class="d-flex align-items-center gap-3">
+                <span class="font-medium text-gray-700">
+                    <strong x-text="selected.length"></strong> selected
+                </span>
+                <!-- Left side: main actions -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <!-- Merge -->
+                    <form action="{% url 'merge_clusters' %}"
+                          method="post"
+                          class="d-inline-flex align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                        <input type="hidden" name="version" value="{{ version }}">
+                        <template x-for="id in selected" :key="id">
+                            <input type="hidden" name="selected_clusters" :value="id" />
+                        </template>
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="btn btn-primary"
+                                :disabled="selected.length < 2"
+                                onclick="return confirm('Are you sure you want to merge the selected clusters?');">
+                            Merge
+                        </button>
+                    </form>
+                    <!-- Delete -->
+                    <form action="{% url 'bulk_delete_clusters' %}"
+                          method="post"
+                          class="d-inline-flex align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                        <input type="hidden" name="version" value="{{ version }}">
+                        <template x-for="id in selected" :key="id">
+                            <input type="hidden" name="selected_clusters" :value="id" />
+                        </template>
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="btn btn-danger"
+                                :disabled="selected.length == 0"
+                                onclick="return confirm('Are you sure you want to delete the selected clusters?');">
+                            Delete
+                        </button>
+                    </form>
+                    <!-- Reset -->
+                    <form action="{% url 'reset_clusters' %}" method="post" class="d-none">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                        <input type="hidden" name="version" value="{{ version }}">
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="btn btn-warning"
+                                onclick="return confirm('Are you sure you want to restore the original clustering for all clusters?');">
+                            Reset all
+                        </button>
+                    </form>
+                </div>
+                <div class="ms-auto"></div>
+                <!-- Right side dropdown -->
+                <div class="position-relative" @click.away="openMenu=false">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            @click.stop="openMenu = !openMenu"
+                            :aria-expanded="openMenu">
+                        <i class="bi bi-three-dots-vertical fs-7"></i>
+                        More actions
+                    </button>
+                    <div x-show="openMenu"
+                         x-transition.opacity.scale.50.origin.top.right
+                         x-cloak
+                         class="dropdown-menu dropdown-menu-end show"
+                         style="display:block;
+                                position:absolute;
+                                right:0;
+                                top:100%;
+                                z-index:2000;
+                                min-width:12rem">
+                        <!-- djlint:off H037 -->
+                        <a class="dropdown-item"
+                           href="#"
+                           title="Set priorities based on table order, higher row has higher priority"
+                           @click.prevent="$dispatch('update-priority'); openMenu=false;">Update priority</a>
+                        <!-- djlint:on -->
+                        <a class="dropdown-item"
+                           href="#"
+                           title="Tag each cluster"
+                           @click.prevent="document.getElementById('bulk-tag-form').submit(); openMenu=false;">
+                            Bulk tagging
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Hidden Bulk Tagging form -->
+            <form id="bulk-tag-form"
+                  action="{% url 'bulk_cluster_tagging' %}"
                   method="post"
-                  data-suggest-url="{% url 'suggest_unclustered_papers' %}"
-                  data-unclustered-form>
+                  class="d-none">
                 {% csrf_token %}
                 <input type="hidden" name="question_idx" value="{{ question_idx }}">
                 <input type="hidden" name="version" value="{{ version }}">
-                <input type="hidden" name="page_num" value="{{ page_num }}">
+                <template x-for="id in selected" :key="id">
+                    <input type="hidden" name="selected_clusters" :value="id" />
+                </template>
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <div class="border rounded bg-light p-3 mb-4 d-flex align-items-end gap-2 flex-wrap">
-                    <div class="cluster-select-control">
-                        <label for="target-cluster-id" class="form-label mb-1">Assign selected to</label>
-                        <select id="target-cluster-id"
-                                class="form-select"
-                                name="target_cluster_id"
-                                {% if not cluster_groups %}disabled{% endif %}>
-                            {% for clusterId, count in cluster_groups %}
-                                {% with cluster_name=cluster_to_name|get_item:clusterId %}
-                                    <option value="{{ clusterId }}">{{ cluster_name|default:"Unnamed" }} - Cluster {{ clusterId }} ({{ count }})</option>
-                                {% endwith %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit"
-                            class="btn btn-primary"
-                            {% if not cluster_groups %}disabled{% endif %}>Assign selected</button>
-                    <button type="submit"
-                            class="btn btn-outline-success"
-                            formaction="{% url 'create_cluster_from_unclustered_papers' %}">Create new cluster</button>
-                    <button type="button"
-                            class="btn btn-outline-primary"
-                            data-suggest-clusters
-                            {% if not cluster_groups %}disabled{% endif %}>
-                        <i class="bi bi-stars"></i>
-                        Suggest clusters
-                    </button>
-                    <span class="badge text-bg-primary d-none"
-                          aria-live="polite"
-                          data-drag-count></span>
-                </div>
-                <div class="row g-4 align-items-start">
-                    <div class="col-12 col-xl-7">
-                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                            <div class="d-flex align-items-center gap-3 flex-wrap">
-                                <h2 class="h5 mb-0">Unclustered</h2>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="select-all-unclustered"
-                                           data-select-all-unclustered>
-                                    <label class="form-check-label" for="select-all-unclustered">Select all</label>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge text-bg-primary d-none"
-                                      aria-live="polite"
-                                      data-selected-count></span>
-                                <span class="badge text-bg-secondary" data-unclustered-count>{{ unclustered_papers|length }}</span>
-                            </div>
-                        </div>
-                        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3"
-                             data-unclustered-grid>
-                            {% for pn in unclustered_papers %}
-                                <div class="col unclustered-paper-card"
-                                     data-paper-number="{{ pn }}"
-                                     draggable="true">
-                                    <div class="unclustered-paper-tile border rounded position-relative h-100 bg-white overflow-hidden">
-                                        <input type="checkbox"
-                                               class="form-check-input position-absolute top-0 opacity-0"
-                                               name="paper_nums"
-                                               value="{{ pn }}"
-                                               id="unclustered-paper-{{ pn }}">
-                                        <label class="form-check-label d-block h-100"
-                                               for="unclustered-paper-{{ pn }}">
-                                            <span class="paper-label badge text-bg-light position-absolute top-0 start-0 m-2">Paper {{ pn }}</span>
+            </form>
+        </div>
+        <!-- form for cluster ordering (priority)  -->
+        {% include "../base/alert_messages.html" with messages=messages %}
+        <div x-data="clusterOrdering()"
+             x-init="init() "
+             @update-priority.window="submit()">
+            <form x-ref="form"
+                  method="post"
+                  action="{% url 'update_cluster_priority' %}">
+                {% csrf_token %}
+                <template x-for="id in order" :key="id">
+                    <input type="hidden" name="cluster_order" :value="id">
+                </template>
+                <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                <input type="hidden" name="version" value="{{ version }}">
+            </form>
+            <!-- Default: sort on descending order of-->
+            <table x-ref="clusterTable"
+                   class="table table-striped table-bordered table-sm mx-auto"
+                   data-sort-default-order="desc"
+                   data-sort-default-col="5">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <!-- select/deselect all checkbox -->
+                        <th class="text-center"  data-sort-method="none">
+                            <input id="master-checkbox" type="checkbox">
+                        </th>
+                        <!-- Preview of image header -->
+                        <th class="text-center" data-sort-method="none">Preview</th>
+                        <!-- Merge count header -->
+                        <th class="text-center" data-sort-method="none"># Merged</th>
+                        <!-- ClusterId header (sortable)-->
+                        <th class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                ClusterId
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <th class="text-center" data-sort-method="none">Cluster Name</th>
+                        <!-- Number of members in the cluster header (sortable)-->
+                        <th class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                # Members
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <!-- cluster priority header (sortable)-->
+                        <th id="priority-col" class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                Priority
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <th class="text-center" data-sort-method="none">Tags</th>
+                        <th class="text-center" data-sort-method="none">Actions</th>
+                        <th class="text-center" data-sort-method="none">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody x-ref="tbody">
+                    {% for clusterId, count in cluster_groups %}
+                        <tr class="cluster-row"
+                            data-cluster-id="{{ clusterId }}"
+                            data-cluster-drop-target="{{ clusterId }}"
+                            :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
+                            <!-- individual row checkbox -->
+                            <td class="text-center align-middle">
+                                <input type="checkbox"
+                                       name="selected_clusters"
+                                       value="{{ clusterId }}"
+                                       class="form-check-input"
+                                       x-model="selected">
+                            </td>
+                            <!-- Preview img col -->
+                            <td class="align-middle" data-preview-cell="{{ clusterId }}">
+                                {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                    {% if papers %}
+                                        {% with pn=papers.0 %}
                                             <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                 class="unclustered-paper-image w-100 d-block"
+                                                 class="img-fluid rounded mx-auto d-block"
+                                                 style="max-height:100px"
                                                  loading="lazy"
-                                                 alt="paper {{ pn }}"
+                                                 alt="cluster {{ clusterId }}"
                                                  onerror="imgError(this)">
-                                        </label>
-                                        <span class="selected-cross position-absolute top-50 start-50 translate-middle">
-                                            <i class="bi bi-x-circle-fill fs-1 text-danger"></i>
-                                        </span>
+                                        {% endwith %}
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <!-- number of merged components -->
+                            <td class="text-center align-middle">
+                                {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
+                            </td>
+                            <td class="text-center align-middle">{{ clusterId }}</td>
+                            {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                <td class="align-middle cluster-name-cell" data-cluster-name-cell>
+                                    <div class="d-flex align-items-center justify-content-center cluster-name-view"
+                                         data-cluster-name-view>
+                                        {% if cluster_name %}
+                                            <span class="cluster-name-text">{{ cluster_name }}</span>
+                                        {% else %}
+                                            <span class="cluster-name-text text-body-secondary fst-italic">Unnamed</span>
+                                        {% endif %}
                                         <button type="button"
-                                                class="btn btn-primary btn-sm position-absolute top-0 end-0 m-2 zoom-circle"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#modal-unclustered-{{ pn }}"
-                                                aria-label="Zoom paper {{ pn }}">
-                                            <i class="bi bi-arrows-angle-expand"></i>
+                                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                                title="Edit cluster name"
+                                                aria-label="Edit cluster name"
+                                                data-edit-cluster-name>
+                                            <i class="bi bi-pencil"></i>
                                         </button>
                                     </div>
-                                </div>
-                                <div class="modal fade"
-                                     id="modal-unclustered-{{ pn }}"
-                                     tabindex="-1"
-                                     aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                                        <div class="modal-content border-0 bg-transparent">
-                                            <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                 class="w-100 rounded"
-                                                 alt="paper {{ pn }}">
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <div class="col-12 col-xl-5">
-                        <div class="cluster-side-panel">
-                            <div class="border rounded bg-light p-3 mb-3 suggestions-panel d-none"
-                                 data-suggestions-panel>
-                                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                                    <h2 class="h6 mb-0">Suggested assignments</h2>
-                                    <span class="badge text-bg-secondary d-none" data-suggestions-count></span>
-                                </div>
-                                <div class="alert alert-info py-2 mb-2 d-none" data-suggestions-status></div>
-                                <div class="table-responsive d-none" data-suggestions-table>
-                                    <table class="table table-sm align-middle mb-2">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-center">&nbsp;</th>
-                                                <th>Paper</th>
-                                                <th>Cluster</th>
-                                                <th>Confidence</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody data-suggestions-body>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="d-flex gap-2 flex-wrap d-none" data-suggestions-actions>
-                                    <button type="button" class="btn btn-primary btn-sm" data-apply-suggestions>Apply selected</button>
-                                    <button type="button"
-                                            class="btn btn-outline-secondary btn-sm"
-                                            data-clear-suggestions>Clear</button>
-                                </div>
-                            </div>
-                            <div class="border rounded bg-white p-3 cluster-target-panel">
-                                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                                    <h2 class="h5 mb-0">Clusters</h2>
-                                    <span class="badge text-bg-secondary">{{ cluster_groups|length }}</span>
-                                </div>
-                                <div class="list-group gap-2">
-                                    {% for clusterId, count in cluster_groups %}
-                                        {% with cluster_name=cluster_to_name|get_item:clusterId %}
-                                            {% with papers=cluster_to_paper_map|get_item:clusterId %}
-                                                <div class="list-group-item list-group-item-action cluster-drop-target"
-                                                     data-cluster-drop-target="{{ clusterId }}">
-                                                    <div class="d-flex gap-3">
-                                                        <div class="cluster-target-preview"
-                                                             data-cluster-target-preview="{{ clusterId }}">
-                                                            {% if papers %}
-                                                                {% with pn=papers.0 %}
-                                                                    <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                                         alt="cluster {{ clusterId }} preview"
-                                                                         loading="lazy"
-                                                                         onerror="imgError(this)">
-                                                                {% endwith %}
-                                                            {% else %}
-                                                                <span>No preview</span>
-                                                            {% endif %}
-                                                        </div>
-                                                        <div class="flex-fill">
-                                                            <div class="d-flex align-items-start justify-content-between gap-2">
-                                                                <span class="cluster-target-name">{{ cluster_name|default:"Unnamed" }}</span>
-                                                                <span class="badge text-bg-light">Cluster {{ clusterId }}</span>
-                                                            </div>
-                                                            <div class="small text-body-secondary">
-                                                                <span data-cluster-target-count="{{ clusterId }}">{{ count }}</span>
-                                                                papers
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            {% endwith %}
-                                        {% endwith %}
-                                    {% endfor %}
-                                </div>
-                                {% if not cluster_groups %}
-                                    <div class="alert alert-secondary mt-3 mb-0">Create a new cluster from selected papers first.</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+                                    <form action="{% url 'update_cluster_name' %}"
+                                          method="post"
+                                          class="cluster-name-form align-items-center justify-content-center gap-1"
+                                          data-cluster-name-form
+                                          hidden>
+                                        {% csrf_token %}
+                                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                                        <input type="hidden" name="version" value="{{ version }}">
+                                        <input type="hidden" name="clusterId" value="{{ clusterId }}">
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <input type="text"
+                                               data-cluster-name-input
+                                               data-original-name="{{ cluster_name }}"
+                                               name="cluster_name"
+                                               value="{{ cluster_name }}"
+                                               maxlength="100"
+                                               class="form-control form-control-sm cluster-name-input"
+                                               aria-label="Cluster name"
+                                               placeholder="Unnamed">
+                                        <button type="submit"
+                                                class="btn btn-primary btn-sm cluster-name-icon-button"
+                                                title="Save cluster name"
+                                                aria-label="Save cluster name">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                                title="Cancel"
+                                                aria-label="Cancel"
+                                                data-cancel-cluster-name>
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            {% endwith %}
+                            <td class="text-center align-middle" data-member-count="{{ clusterId }}">{{ count }}</td>
+                            {% with priority=cluster_to_priority|get_item:clusterId %}
+                                <!-- Modify class based on whether the priority is set -->
+                                <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
+                                    {% if priority %}
+                                        {{ priority }}
+                                    {% else %}
+                                        Unset
+                                    {% endif %}
+                                </td>
+                            {% endwith %}
+                            <td class="text-center align-middle" id="tag-{{ clusterId }}">
+                                {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
+                            </td>
+                            <td class="align-middle text-center">
+                                <a class="btn btn-success btn-sm"
+                                   href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
+                                    View members
+                                </a>
+                            </td>
+                            <td class="text-center align-middle drag-handle" style="cursor:move;">
+                                <i class="bi bi-list"></i>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if unclustered_papers %}
+            <div class="border rounded bg-light my-4 p-3 d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <strong>Unclustered papers</strong>
+                    <span class="badge text-bg-secondary">{{ unclustered_papers|length }}</span>
                 </div>
-            </form>
-            <div class="border rounded bg-light p-4 text-center d-none"
-                 data-empty-state>
-                <strong>No unclustered papers remain.</strong>
-            </div>
-        {% else %}
-            <div class="border rounded bg-light p-4 text-center">
-                <strong>No unclustered papers remain.</strong>
+                <a class="btn btn-primary"
+                   href="{% url 'unclustered_papers' question_idx version page_num %}">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    Review unclustered papers
+                </a>
             </div>
         {% endif %}
-        <style>
-            .cluster-select-control {
-                min-width: min(28rem, 100%);
-            }
-
-            .unclustered-paper-card {
-                cursor: grab;
-            }
-
-            .unclustered-paper-card.is-assigning {
-                opacity: .55;
-                pointer-events: none;
-            }
-
-            .unclustered-paper-card.is-bulk-dragged .unclustered-paper-tile {
-                outline: 2px solid rgba(var(--bs-primary-rgb), .22);
-                outline-offset: 2px;
-            }
-
-            .unclustered-paper-card.is-selected-for-drag .unclustered-paper-tile {
-                box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .18);
-            }
-
-            .unclustered-paper-tile {
-                min-height: 10rem;
-            }
-
-            .unclustered-paper-image {
-                background: #fff;
-                cursor: pointer;
-                height: 11rem;
-                object-fit: contain;
-                padding: 2.25rem .5rem .75rem;
-            }
-
-            .paper-label {
-                z-index: 2;
-            }
-
-            .selected-cross {
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity .2s ease;
-                z-index: 2;
-            }
-
-            .unclustered-paper-tile .form-check-input {
-                accent-color: #dc3545;
-                z-index: 3;
-            }
-
-            .unclustered-paper-tile .form-check-input:checked + .form-check-label img {
-                filter: brightness(40%);
-            }
-
-            .unclustered-paper-tile .form-check-input:checked + .form-check-label + .selected-cross {
-                opacity: 1;
-            }
-
-            .zoom-circle {
-                align-items: center;
-                border-radius: 50%;
-                display: flex;
-                height: 30px;
-                justify-content: center;
-                padding: 10px;
-                width: 30px;
-                z-index: 4;
-            }
-
-            .cluster-side-panel {
-                position: sticky;
-                top: 1rem;
-            }
-
-            .suggestions-panel .table {
-                font-size: .875rem;
-            }
-
-            .suggestions-panel .alert {
-                font-size: .875rem;
-            }
-
-            .cluster-drop-target {
-                border: 1px solid var(--bs-border-color) !important;
-                border-radius: .375rem !important;
-                cursor: copy;
-                min-height: 7rem;
-                padding: .85rem;
-            }
-
-            .cluster-target-name {
-                font-weight: 600;
-                overflow-wrap: anywhere;
-            }
-
-            .cluster-target-preview {
-                align-items: center;
-                background: #fff;
-                border: 1px solid var(--bs-border-color);
-                border-radius: .375rem;
-                color: var(--bs-secondary-color);
-                display: flex;
-                flex: 0 0 8rem;
-                font-size: .75rem;
-                height: 6rem;
-                justify-content: center;
-                overflow: hidden;
-                text-align: center;
-            }
-
-            .cluster-target-preview img {
-                height: 100%;
-                object-fit: contain;
-                width: 100%;
-            }
-
-            .dragging-unclustered .cluster-drop-target {
-                box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .2);
-            }
-
-            .cluster-drop-target.drop-target-hover {
-                background-color: rgba(var(--bs-primary-rgb), .08);
-                box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .45);
-            }
-
-            .cluster-drop-target.is-assigning {
-                background-color: rgba(var(--bs-primary-rgb), .05);
-            }
-
-            .cluster-drop-target.assignment-complete {
-                animation: assignmentPulse .55s ease;
-            }
-
-            @keyframes assignmentPulse {
-                0% { background-color: rgba(var(--bs-success-rgb), .12); }
-                100% { background-color: transparent; }
-            }
-
-            @media (max-width: 1199.98px) {
-                .cluster-side-panel {
-                    position: static;
-                }
-            }
-        </style>
-        <script>
-            document.addEventListener('DOMContentLoaded', initUnclusteredDropTargets);
-
-            function initUnclusteredDropTargets() {
-                const form = document.querySelector('[data-unclustered-form]');
-                const sourceGrid = document.querySelector('[data-unclustered-grid]');
-                if (!form || !sourceGrid) return;
-
-                const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
-                const assignUrl = form.getAttribute('action');
-                const suggestUrl = form.dataset.suggestUrl;
-                const selectAllCheckbox = document.querySelector('[data-select-all-unclustered]');
-                const baseFields = {
-                    question_idx: form.querySelector('input[name="question_idx"]').value,
-                    version: form.querySelector('input[name="version"]').value,
-                    page_num: form.querySelector('input[name="page_num"]').value,
-                    next: form.querySelector('input[name="next"]').value,
-                };
-
-                let draggedCards = [];
-
-                sourceGrid.querySelectorAll('.unclustered-paper-card').forEach(card => {
-                    card.querySelector('input[name="paper_nums"]')?.addEventListener('change', () => {
-                        updateSelectedDragCue();
-                    });
-
-                    card.addEventListener('dragstart', event => {
-                        draggedCards = getCardsForDrag(card);
-                        draggedCards.forEach(item => item.classList.add('is-bulk-dragged'));
-                        updateDragCount(draggedCards.length, true);
-                        document.body.classList.add('dragging-unclustered');
-                        event.dataTransfer.effectAllowed = 'move';
-                        event.dataTransfer.setData(
-                            'text/plain',
-                            draggedCards.map(item => item.dataset.paperNumber).join(',')
-                        );
-                    });
-
-                    card.addEventListener('dragend', () => {
-                        draggedCards.forEach(item => item.classList.remove('is-bulk-dragged'));
-                        document.body.classList.remove('dragging-unclustered');
-                        document.querySelectorAll('.cluster-drop-target.drop-target-hover').forEach(target => {
-                            target.classList.remove('drop-target-hover');
-                        });
-                        draggedCards = [];
-                        updateSelectedDragCue();
-                    });
-                });
-
-                selectAllCheckbox?.addEventListener('change', () => {
-                    const checked = selectAllCheckbox.checked;
-                    sourceGrid.querySelectorAll('input[name="paper_nums"]').forEach(checkbox => {
-                        checkbox.checked = checked;
-                    });
-                    updateSelectedDragCue();
-                });
-
-                updateSelectedDragCue();
-
-                document.querySelectorAll('[data-cluster-drop-target]').forEach(target => {
-                    target.addEventListener('dragover', event => {
-                        if (draggedCards.length === 0) return;
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = 'move';
-                        target.classList.add('drop-target-hover');
-                    });
-
-                    target.addEventListener('dragleave', event => {
-                        if (!target.contains(event.relatedTarget)) {
-                            target.classList.remove('drop-target-hover');
-                        }
-                    });
-
-                    target.addEventListener('drop', event => {
-                        if (draggedCards.length === 0) return;
-                        event.preventDefault();
-                        target.classList.remove('drop-target-hover');
-                        assignDraggedCards({
-                            assignUrl,
-                            baseFields,
-                            csrfToken,
-                            cards: draggedCards,
-                            target,
-                            targetClusterId: target.dataset.clusterDropTarget,
-                        });
-                    });
-                });
-
-                document.querySelector('[data-suggest-clusters]')?.addEventListener('click', () => {
-                    fetchClusterSuggestions({
-                        suggestUrl,
-                        baseFields,
-                        csrfToken,
-                    });
-                });
-
-                document.querySelector('[data-apply-suggestions]')?.addEventListener('click', () => {
-                    applySelectedSuggestions({
-                        assignUrl,
-                        baseFields,
-                        csrfToken,
-                    });
-                });
-
-                document.querySelector('[data-clear-suggestions]')?.addEventListener('click', () => {
-                    clearSuggestions();
-                });
-            }
-
-            function getCardsForDrag(card) {
-                const checkbox = card.querySelector('input[name="paper_nums"]');
-                if (!checkbox?.checked) return [card];
-
-                const checkedCards = Array.from(
-                    document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
-                )
-                    .map(input => input.closest('.unclustered-paper-card'))
-                    .filter(Boolean);
-
-                return checkedCards.length ? checkedCards : [card];
-            }
-
-            function getSelectedUnclusteredCards() {
-                return Array.from(
-                    document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
-                )
-                    .map(input => input.closest('.unclustered-paper-card'))
-                    .filter(Boolean);
-            }
-
-            function updateSelectedDragCue() {
-                const selectedCards = getSelectedUnclusteredCards();
-                const allCards = Array.from(document.querySelectorAll('.unclustered-paper-card'));
-                allCards.forEach(card => {
-                    card.classList.toggle(
-                        'is-selected-for-drag',
-                        selectedCards.length > 1 && selectedCards.includes(card)
-                    );
-                });
-                updateSelectAllControl(selectedCards.length, allCards.length);
-                updateDragCount(selectedCards.length, false);
-            }
-
-            function updateSelectAllControl(selectedCount, totalCount) {
-                const checkbox = document.querySelector('[data-select-all-unclustered]');
-                const selectedBadge = document.querySelector('[data-selected-count]');
-                if (checkbox) {
-                    checkbox.checked = totalCount > 0 && selectedCount === totalCount;
-                    checkbox.indeterminate = selectedCount > 0 && selectedCount < totalCount;
-                    checkbox.disabled = totalCount === 0;
-                }
-                if (!selectedBadge) return;
-
-                if (selectedCount > 0) {
-                    selectedBadge.textContent = `${selectedCount} selected`;
-                    selectedBadge.classList.remove('d-none');
-                } else {
-                    selectedBadge.textContent = '';
-                    selectedBadge.classList.add('d-none');
-                }
-            }
-
-            function updateDragCount(count, isDragging) {
-                const badge = document.querySelector('[data-drag-count]');
-                if (!badge) return;
-
-                if (count > 1) {
-                    badge.textContent = isDragging
-                        ? `Dragging ${count} selected`
-                        : `${count} selected for drag`;
-                    badge.classList.remove('d-none');
-                } else {
-                    badge.textContent = '';
-                    badge.classList.add('d-none');
-                }
-            }
-
-            async function fetchClusterSuggestions({
-                suggestUrl,
-                baseFields,
-                csrfToken,
-            }) {
-                const button = document.querySelector('[data-suggest-clusters]');
-                const formData = new FormData();
-                Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
-
-                resetSuggestionsPanel({ showPanel: true });
-                showSuggestionStatus('Finding suggestions...', 'info');
-                if (button) button.disabled = true;
-
-                try {
-                    const response = await fetch(suggestUrl, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRFToken': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    });
-                    let data = {};
-                    try {
-                        data = await response.json();
-                    } catch {
-                        throw new Error('Could not suggest clusters.');
-                    }
-                    if (!response.ok || !data.ok) {
-                        throw new Error(data.message || 'Could not suggest clusters.');
-                    }
-
-                    renderSuggestions(data.suggestions || []);
-                } catch (error) {
-                    showSuggestionStatus(error.message, 'danger');
-                } finally {
-                    if (button) button.disabled = false;
-                }
-            }
-
-            function renderSuggestions(suggestions) {
-                const panel = document.querySelector('[data-suggestions-panel]');
-                const body = document.querySelector('[data-suggestions-body]');
-                if (!panel || !body) return;
-
-                resetSuggestionsPanel({ showPanel: true });
-                if (suggestions.length === 0) {
-                    showSuggestionStatus('No suggestions available.', 'info');
-                    return;
-                }
-
-                suggestions.forEach(suggestion => {
-                    const row = document.createElement('tr');
-                    row.dataset.suggestionRow = suggestion.paper_num;
-
-                    const checkCell = document.createElement('td');
-                    checkCell.className = 'text-center';
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.className = 'form-check-input';
-                    checkbox.checked = true;
-                    checkbox.dataset.suggestionSelected = '';
-                    checkbox.setAttribute('aria-label', `Apply suggestion for paper ${suggestion.paper_num}`);
-                    checkCell.appendChild(checkbox);
-
-                    const paperCell = document.createElement('td');
-                    paperCell.textContent = `Paper ${suggestion.paper_num}`;
-
-                    const clusterCell = document.createElement('td');
-                    clusterCell.appendChild(buildSuggestionClusterSelect(suggestion.clusterId));
-
-                    const confidenceCell = document.createElement('td');
-                    const badge = document.createElement('span');
-                    badge.className = `badge ${confidenceBadgeClass(suggestion.confidence)}`;
-                    badge.textContent = suggestion.confidence;
-                    badge.title = `gap ${suggestion.gap}`;
-                    confidenceCell.appendChild(badge);
-
-                    row.append(checkCell, paperCell, clusterCell, confidenceCell);
-                    body.appendChild(row);
-                });
-
-                panel.classList.remove('d-none');
-                document.querySelector('[data-suggestions-table]')?.classList.remove('d-none');
-                document.querySelector('[data-suggestions-actions]')?.classList.remove('d-none');
-                updateSuggestionsCount(suggestions.length);
-                showSuggestionStatus('');
-            }
-
-            function buildSuggestionClusterSelect(selectedClusterId) {
-                const sourceSelect = document.getElementById('target-cluster-id');
-                const select = document.createElement('select');
-                select.className = 'form-select form-select-sm';
-                select.dataset.suggestionCluster = '';
-
-                if (sourceSelect) {
-                    Array.from(sourceSelect.options).forEach(option => {
-                        select.appendChild(option.cloneNode(true));
-                    });
-                }
-                select.value = selectedClusterId;
-                return select;
-            }
-
-            function confidenceBadgeClass(confidence) {
-                if (confidence === 'high') return 'text-bg-success';
-                if (confidence === 'medium') return 'text-bg-warning';
-                return 'text-bg-secondary';
-            }
-
-            async function applySelectedSuggestions({
-                assignUrl,
-                baseFields,
-                csrfToken,
-            }) {
-                const button = document.querySelector('[data-apply-suggestions]');
-                const suggestionRows = Array.from(
-                    document.querySelectorAll('[data-suggestion-row]')
-                ).filter(row => row.querySelector('[data-suggestion-selected]')?.checked);
-
-                if (suggestionRows.length === 0) {
-                    showSuggestionStatus('No selected suggestions.', 'warning');
-                    return;
-                }
-
-                const groups = new Map();
-                suggestionRows.forEach(row => {
-                    const paperNumber = row.dataset.suggestionRow;
-                    const card = document.querySelector(`[data-paper-number="${paperNumber}"]`);
-                    const targetClusterId = row.querySelector('[data-suggestion-cluster]')?.value;
-                    if (!card || !targetClusterId) {
-                        row.remove();
-                        return;
-                    }
-
-                    if (!groups.has(targetClusterId)) {
-                        groups.set(targetClusterId, []);
-                    }
-                    groups.get(targetClusterId).push(card);
-                });
-
-                if (button) button.disabled = true;
-                showSuggestionStatus('');
-
-                try {
-                    for (const [targetClusterId, cards] of groups) {
-                        const target = document.querySelector(
-                            `[data-cluster-drop-target="${targetClusterId}"]`
-                        );
-                        await assignDraggedCards({
-                            assignUrl,
-                            baseFields,
-                            csrfToken,
-                            cards,
-                            target,
-                            targetClusterId,
-                        });
-                    }
-                    refreshSuggestionsPanel();
-                } finally {
-                    if (button) button.disabled = false;
-                }
-            }
-
-            function clearSuggestions() {
-                resetSuggestionsPanel();
-            }
-
-            function refreshSuggestionsPanel() {
-                const panel = document.querySelector('[data-suggestions-panel]');
-                const body = document.querySelector('[data-suggestions-body]');
-                if (!panel || !body) return;
-
-                const remaining = body.querySelectorAll('[data-suggestion-row]').length;
-                if (remaining === 0) {
-                    resetSuggestionsPanel();
-                    return;
-                }
-
-                panel.classList.remove('d-none');
-                document.querySelector('[data-suggestions-table]')?.classList.remove('d-none');
-                document.querySelector('[data-suggestions-actions]')?.classList.remove('d-none');
-                updateSuggestionsCount(remaining);
-            }
-
-            function showSuggestionStatus(message, tone = 'info') {
-                const panel = document.querySelector('[data-suggestions-panel]');
-                const status = document.querySelector('[data-suggestions-status]');
-                if (!status) return;
-
-                status.textContent = message;
-                status.className = `alert alert-${tone} py-2 mb-2`;
-                status.classList.toggle('d-none', !message);
-                if (message) panel?.classList.remove('d-none');
-            }
-
-            function resetSuggestionsPanel({ showPanel = false } = {}) {
-                const panel = document.querySelector('[data-suggestions-panel]');
-                const body = document.querySelector('[data-suggestions-body]');
-                const table = document.querySelector('[data-suggestions-table]');
-                const actions = document.querySelector('[data-suggestions-actions]');
-                const status = document.querySelector('[data-suggestions-status]');
-
-                if (body) body.replaceChildren();
-                table?.classList.add('d-none');
-                actions?.classList.add('d-none');
-                updateSuggestionsCount(0);
-                if (status) {
-                    status.textContent = '';
-                    status.className = 'alert alert-info py-2 mb-2 d-none';
-                }
-                panel?.classList.toggle('d-none', !showPanel);
-            }
-
-            function updateSuggestionsCount(count) {
-                const countBadge = document.querySelector('[data-suggestions-count]');
-                if (!countBadge) return;
-
-                if (count > 0) {
-                    countBadge.textContent = count;
-                    countBadge.classList.remove('d-none');
-                } else {
-                    countBadge.textContent = '';
-                    countBadge.classList.add('d-none');
-                }
-            }
-
-            async function assignDraggedCards({
-                assignUrl,
-                baseFields,
-                csrfToken,
-                cards,
-                target,
-                targetClusterId,
-            }) {
-                const formData = new FormData();
-                Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
-                formData.append('target_cluster_id', targetClusterId);
-                cards.forEach(card => formData.append('paper_nums', card.dataset.paperNumber));
-
-                cards.forEach(card => card.classList.add('is-assigning'));
-                target?.classList.add('is-assigning');
-
-                try {
-                    const response = await fetch(assignUrl, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRFToken': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    });
-                    let data = {};
-                    try {
-                        data = await response.json();
-                    } catch {
-                        throw new Error('Could not assign papers.');
-                    }
-                    if (!response.ok || !data.ok) {
-                        throw new Error(data.message || 'Could not assign papers.');
-                    }
-
-                    const targetCount = document.querySelector(
-                        `[data-cluster-target-count="${targetClusterId}"]`
-                    );
-                    if (targetCount) targetCount.textContent = data.member_count;
-
-                    const preview = document.querySelector(
-                        `[data-cluster-target-preview="${targetClusterId}"]`
-                    );
-                    if (preview && !preview.querySelector('img')) {
-                        const itemImage = cards[0]?.querySelector('img');
-                        if (itemImage) {
-                            const previewImage = itemImage.cloneNode(true);
-                            previewImage.alt = `cluster ${targetClusterId} preview`;
-                            preview.replaceChildren(previewImage);
-                        }
-                    }
-
-                    const unclusteredCount = document.querySelector('[data-unclustered-count]');
-                    if (unclusteredCount) unclusteredCount.textContent = data.unclustered_count;
-
-                    cards.forEach(card => {
-                        document.querySelector(
-                            `[data-suggestion-row="${card.dataset.paperNumber}"]`
-                        )?.remove();
-                        card.remove();
-                    });
-                    updateSelectedDragCue();
-                    refreshSuggestionsPanel();
-                    if (data.unclustered_count === 0) {
-                        document.querySelector('[data-unclustered-form]')?.classList.add('d-none');
-                        document.querySelector('[data-empty-state]')?.classList.remove('d-none');
-                    }
-                    if (target) {
-                        target.classList.remove('assignment-complete');
-                        void target.offsetWidth;
-                        target.classList.add('assignment-complete');
-                    }
-                } catch (error) {
-                    cards.forEach(card => card.classList.remove('is-assigning'));
-                    showSuggestionStatus(error.message, 'danger');
-                } finally {
-                    target?.classList.remove('is-assigning');
-                }
-            }
-
-            function imgError(image) {
-                const span = document.createElement('span');
-                span.classList.add("alert", "alert-warning", "mx-2", "py-0");
-                span.innerText = "Could not extract rectangle.";
-                image.parentNode.insertBefore(span, image);
-                image.remove();
-            }
-        </script>
-    {% else %}
-        <!-- navigation button -->
-        <div class="mb-3">
-            <a class="btn btn-success"
-               href="{% url 'question_clustering_jobs_home' %}">
-                <i class="bi bi-chevron-left"></i>
-                Return to question clustering jobs page
-            </a>
-        </div>
-        <!-- Include SortableJS + Tablesort; Alpine is in base.html -->
-        <script src="{% static '/js3rdparty/Sortable.min.js' %}"></script>
-        <script src="{% static '/js3rdparty/tablesort.min.js' %}"></script>
-        <script src="{% static '/js3rdparty/tablesort.number.min.js' %}"></script>
-        <div x-data="{ selected: [], all: false, openMenu: false, ids: [
-            {% for cid in cluster_groups.keys %}
-                '{{ cid }}'
-                {% if not forloop.last %}
-                    ,
-                {% endif %}
-            {% endfor %}
-            ] }">
-            <!-- Clustering cleanup toolbar -->
-            <div class="fixed top-20 left-1/2 transform -translate-x-1/2 shadow-md rounded p-3 z-50 w-auto">
-                <div class="d-flex align-items-center gap-3">
-                    <span class="font-medium text-gray-700">
-                        <strong x-text="selected.length"></strong> selected
-                    </span>
-                    <!-- Left side: main actions -->
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <!-- Merge -->
-                        <form action="{% url 'merge_clusters' %}"
-                              method="post"
-                              class="d-inline-flex align-items-center">
-                            {% csrf_token %}
-                            <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                            <input type="hidden" name="version" value="{{ version }}">
-                            <template x-for="id in selected" :key="id">
-                                <input type="hidden" name="selected_clusters" :value="id" />
-                            </template>
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <button type="submit"
-                                    class="btn btn-primary"
-                                    :disabled="selected.length < 2"
-                                    onclick="return confirm('Are you sure you want to merge the selected clusters?');">
-                                Merge
-                            </button>
-                        </form>
-                        <!-- Delete -->
-                        <form action="{% url 'bulk_delete_clusters' %}"
-                              method="post"
-                              class="d-inline-flex align-items-center">
-                            {% csrf_token %}
-                            <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                            <input type="hidden" name="version" value="{{ version }}">
-                            <template x-for="id in selected" :key="id">
-                                <input type="hidden" name="selected_clusters" :value="id" />
-                            </template>
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <button type="submit"
-                                    class="btn btn-danger"
-                                    :disabled="selected.length == 0"
-                                    onclick="return confirm('Are you sure you want to delete the selected clusters?');">
-                                Delete
-                            </button>
-                        </form>
-                        <!-- Reset -->
-                        <form action="{% url 'bulk_reset_clusters' %}" method="post" class="d-none">
-                            {% csrf_token %}
-                            <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                            <input type="hidden" name="version" value="{{ version }}">
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <button type="submit"
-                                    class="btn btn-warning"
-                                    onclick="return confirm('Are you sure you want to restore the original clustering for all clusters?');">
-                                Reset all
-                            </button>
-                        </form>
-                    </div>
-                    <div class="ms-auto"></div>
-                    <!-- Right side dropdown -->
-                    <div class="position-relative" @click.away="openMenu=false">
-                        <button class="btn btn-secondary"
-                                type="button"
-                                @click.stop="openMenu = !openMenu"
-                                :aria-expanded="openMenu">
-                            <i class="bi bi-three-dots-vertical fs-7"></i>
-                            More actions
-                        </button>
-                        <div x-show="openMenu"
-                             x-transition.opacity.scale.50.origin.top.right
-                             x-cloak
-                             class="dropdown-menu dropdown-menu-end show"
-                             style="display:block;
-                                    position:absolute;
-                                    right:0;
-                                    top:100%;
-                                    z-index:2000;
-                                    min-width:12rem">
-                            <!-- djlint:off H037 -->
-                            <a class="dropdown-item"
-                               href="#"
-                               title="Set priorities based on table order, higher row has higher priority"
-                               @click.prevent="$dispatch('update-priority'); openMenu=false;">Update priority</a>
-                            <!-- djlint:on -->
-                            <a class="dropdown-item"
-                               href="#"
-                               title="Tag each cluster"
-                               @click.prevent="document.getElementById('bulk-tag-form').submit(); openMenu=false;">
-                                Bulk tagging
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <!-- Hidden Bulk Tagging form -->
-                <form id="bulk-tag-form"
-                      action="{% url 'bulk_cluster_tagging' %}"
-                      method="post"
-                      class="d-none">
-                    {% csrf_token %}
-                    <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                    <input type="hidden" name="version" value="{{ version }}">
-                    <template x-for="id in selected" :key="id">
-                        <input type="hidden" name="selected_clusters" :value="id" />
-                    </template>
-                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                </form>
-            </div>
-            <!-- form for cluster ordering (priority)  -->
-            {% include "../base/alert_messages.html" with messages=messages %}
-            <div x-data="clusterOrdering()"
-                 x-init="init() "
-                 @update-priority.window="submit()">
-                <form x-ref="form"
-                      method="post"
-                      action="{% url 'update_cluster_priority' %}">
-                    {% csrf_token %}
-                    <template x-for="id in order" :key="id">
-                        <input type="hidden" name="cluster_order" :value="id">
-                    </template>
-                    <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                    <input type="hidden" name="version" value="{{ version }}">
-                </form>
-                <!-- Default: sort on descending order of-->
-                <table x-ref="clusterTable"
-                       class="table table-striped table-bordered table-sm mx-auto"
-                       data-sort-default-order="desc"
-                       data-sort-default-col="5">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <!-- select/deselect all checkbox -->
-                            <th class="text-center"  data-sort-method="none">
-                                <input id="master-checkbox" type="checkbox">
-                            </th>
-                            <!-- Preview of image header -->
-                            <th class="text-center" data-sort-method="none">Preview</th>
-                            <!-- Merge count header -->
-                            <th class="text-center" data-sort-method="none"># Merged</th>
-                            <!-- ClusterId header (sortable)-->
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    ClusterId
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <th class="text-center" data-sort-method="none">Cluster Name</th>
-                            <!-- Number of members in the cluster header (sortable)-->
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    # Members
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <!-- cluster priority header (sortable)-->
-                            <th id="priority-col" class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    Priority
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <th class="text-center" data-sort-method="none">Tags</th>
-                            <th class="text-center" data-sort-method="none">Actions</th>
-                            <th class="text-center" data-sort-method="none">&nbsp;</th>
-                        </tr>
-                    </thead>
-                    <tbody x-ref="tbody">
-                        {% for clusterId, count in cluster_groups %}
-                            <tr class="cluster-row"
-                                data-cluster-id="{{ clusterId }}"
-                                data-cluster-drop-target="{{ clusterId }}"
-                                :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
-                                <!-- individual row checkbox -->
-                                <td class="text-center align-middle">
-                                    <input type="checkbox"
-                                           name="selected_clusters"
-                                           value="{{ clusterId }}"
-                                           class="form-check-input"
-                                           x-model="selected">
-                                </td>
-                                <!-- Preview img col -->
-                                <td class="align-middle" data-preview-cell="{{ clusterId }}">
-                                    {% with papers=cluster_to_paper_map|get_item:clusterId %}
-                                        {% if papers %}
-                                            {% with pn=papers.0 %}
-                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                     class="img-fluid rounded mx-auto d-block"
-                                                     style="max-height:100px"
-                                                     loading="lazy"
-                                                     alt="cluster {{ clusterId }}"
-                                                     onerror="imgError(this)">
-                                            {% endwith %}
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <!-- number of merged components -->
-                                <td class="text-center align-middle">
-                                    {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
-                                </td>
-                                <td class="text-center align-middle">{{ clusterId }}</td>
-                                {% with cluster_name=cluster_to_name|get_item:clusterId %}
-                                    <td class="align-middle cluster-name-cell" data-cluster-name-cell>
-                                        <div class="d-flex align-items-center justify-content-center cluster-name-view"
-                                             data-cluster-name-view>
-                                            {% if cluster_name %}
-                                                <span class="cluster-name-text">{{ cluster_name }}</span>
-                                            {% else %}
-                                                <span class="cluster-name-text text-body-secondary fst-italic">Unnamed</span>
-                                            {% endif %}
-                                            <button type="button"
-                                                    class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
-                                                    title="Edit cluster name"
-                                                    aria-label="Edit cluster name"
-                                                    data-edit-cluster-name>
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        </div>
-                                        <form action="{% url 'update_cluster_name' %}"
-                                              method="post"
-                                              class="cluster-name-form align-items-center justify-content-center gap-1"
-                                              data-cluster-name-form
-                                              hidden>
-                                            {% csrf_token %}
-                                            <input type="hidden" name="question_idx" value="{{ question_idx }}">
-                                            <input type="hidden" name="version" value="{{ version }}">
-                                            <input type="hidden" name="clusterId" value="{{ clusterId }}">
-                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                            <input type="text"
-                                                   data-cluster-name-input
-                                                   data-original-name="{{ cluster_name }}"
-                                                   name="cluster_name"
-                                                   value="{{ cluster_name }}"
-                                                   maxlength="100"
-                                                   class="form-control form-control-sm cluster-name-input"
-                                                   aria-label="Cluster name"
-                                                   placeholder="Unnamed">
-                                            <button type="submit"
-                                                    class="btn btn-primary btn-sm cluster-name-icon-button"
-                                                    title="Save cluster name"
-                                                    aria-label="Save cluster name">
-                                                <i class="bi bi-check-lg"></i>
-                                            </button>
-                                            <button type="button"
-                                                    class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
-                                                    title="Cancel"
-                                                    aria-label="Cancel"
-                                                    data-cancel-cluster-name>
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                {% endwith %}
-                                <td class="text-center align-middle" data-member-count="{{ clusterId }}">{{ count }}</td>
-                                {% with priority=cluster_to_priority|get_item:clusterId %}
-                                    <!-- Modify class based on whether the priority is set -->
-                                    <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
-                                        {% if priority %}
-                                            {{ priority }}
-                                        {% else %}
-                                            Unset
-                                        {% endif %}
-                                    </td>
-                                {% endwith %}
-                                <td class="text-center align-middle" id="tag-{{ clusterId }}">
-                                    {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
-                                </td>
-                                <td class="align-middle text-center">
-                                    <a class="btn btn-success btn-sm"
-                                       href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
-                                        View members
-                                    </a>
-                                </td>
-                                <td class="text-center align-middle drag-handle" style="cursor:move;">
-                                    <i class="bi bi-list"></i>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% if unclustered_papers %}
-                <div class="border rounded bg-light my-4 p-3 d-flex align-items-center justify-content-between gap-3 flex-wrap">
-                    <div class="d-flex align-items-center gap-2">
-                        <strong>Unclustered papers</strong>
-                        <span class="badge text-bg-secondary">{{ unclustered_papers|length }}</span>
-                    </div>
-                    <a class="btn btn-primary"
-                       href="{% url 'cluster_groups' question_idx version page_num %}?unclustered=1">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                        Review unclustered papers
-                    </a>
-                </div>
-            {% endif %}
-        </div>
-        <style>
-        .cluster-name-cell {
-            min-width: 13rem;
+    </div>
+    <style>
+    .cluster-name-cell {
+        min-width: 13rem;
+    }
+
+    [data-cluster-name-view][hidden] {
+        display: none !important;
+    }
+
+    .cluster-name-form {
+        display: flex !important;
+        white-space: nowrap;
+    }
+
+    .cluster-name-form[hidden] {
+        display: none !important;
+    }
+
+    .cluster-name-input {
+        flex: 1 1 9rem;
+        max-width: 11rem;
+    }
+
+    .cluster-name-view {
+        column-gap: .55rem;
+    }
+
+    .cluster-name-icon-button {
+        align-items: center;
+        display: inline-flex;
+        height: 1.65rem;
+        justify-content: center;
+        padding: 0;
+        width: 1.65rem;
+    }
+
+    .cluster-name-icon-button .bi {
+        font-size: .9rem;
+    }
+
+    .cluster-name-text {
+        max-width: 9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    </style>
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('clusterOrdering', () => ({
+        order: [],
+
+        init() {
+            // kick off Sortable
+            const s = Sortable.create(this.$refs.tbody, {
+            handle: '.drag-handle',
+            animation: 150,
+            draggable: 'tr',
+            dataIdAttr: 'data-cluster-id',
+            onEnd: () => this.order = s.toArray(),
+            });
+            this.order = s.toArray();
+        },
+
+
+        submit() {
+            this.order = Array.from(this.$refs.tbody.children)
+                    .map(tr => tr.dataset.clusterId);
+             // Wait for Alpine to update the x‑for inputs, then submit
+            this.$nextTick(() => {
+                this.$refs.form.submit();
+            });
         }
+        }));
+    });
 
-        [data-cluster-name-view][hidden] {
-            display: none !important;
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+        const table = document.querySelector('[x-ref="clusterTable"]');
+        const ts = new Tablesort(table);
 
-        .cluster-name-form {
-            display: flex !important;
-            white-space: nowrap;
-        }
-
-        .cluster-name-form[hidden] {
-            display: none !important;
-        }
-
-        .cluster-name-input {
-            flex: 1 1 9rem;
-            max-width: 11rem;
-        }
-
-        .cluster-name-view {
-            column-gap: .55rem;
-        }
-
-        .cluster-name-icon-button {
-            align-items: center;
-            display: inline-flex;
-            height: 1.65rem;
-            justify-content: center;
-            padding: 0;
-            width: 1.65rem;
-        }
-
-        .cluster-name-icon-button .bi {
-            font-size: .9rem;
-        }
-
-        .cluster-name-text {
-            max-width: 9rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        </style>
-        <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('clusterOrdering', () => ({
-            order: [],
-
-            init() {
-                // kick off Sortable
-                const s = Sortable.create(this.$refs.tbody, {
-                handle: '.drag-handle',
-                animation: 150,
-                draggable: 'tr',
-                dataIdAttr: 'data-cluster-id',
-                onEnd: () => this.order = s.toArray(),
-                });
-                this.order = s.toArray();
-            },
-
-
-            submit() {
-                this.order = Array.from(this.$refs.tbody.children)
-                        .map(tr => tr.dataset.clusterId);
-                 // Wait for Alpine to update the x‑for inputs, then submit
-                this.$nextTick(() => {
-                    this.$refs.form.submit();
-                });
-            }
-            }));
+        // Make header icons responsive
+        table.addEventListener('afterSort', () => {
+            table.querySelectorAll('th').forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (!icon) return;
+            icon.classList.remove('bi-chevron-up','bi-chevron-down','bi-chevron-expand');
+            const dir = th.getAttribute('aria-sort');
+            icon.classList.add(
+                dir === 'ascending'  ? 'bi-chevron-up' :
+                dir === 'descending' ? 'bi-chevron-down' :
+                                    'bi-chevron-expand'
+            );
+            });
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const table = document.querySelector('[x-ref="clusterTable"]');
-            const ts = new Tablesort(table);
+        // Sort by priority if there are unset priorities
+        const unset_count = document.querySelectorAll(".unset-priority").length;
 
-            // Make header icons responsive
-            table.addEventListener('afterSort', () => {
-                table.querySelectorAll('th').forEach(th => {
-                const icon = th.querySelector('.sort-icon');
-                if (!icon) return;
-                icon.classList.remove('bi-chevron-up','bi-chevron-down','bi-chevron-expand');
-                const dir = th.getAttribute('aria-sort');
-                icon.classList.add(
-                    dir === 'ascending'  ? 'bi-chevron-up' :
-                    dir === 'descending' ? 'bi-chevron-down' :
-                                        'bi-chevron-expand'
-                );
-                });
-            });
-
-            // Sort by priority if there are unset priorities
-            const unset_count = document.querySelectorAll(".unset-priority").length;
-
-            if (unset_count == 0){
-                const priorityHeader = document.getElementById('priority-col');
-                // Click it to trigger the default sort
-                if (priorityHeader) {
-                    for (let count = 1; count <= 2; count ++) {
-                        if (priorityHeader.getAttribute("aria-sort") == "descending"){
-                            break;
-                        }
-                        priorityHeader.click()
+        if (unset_count == 0){
+            const priorityHeader = document.getElementById('priority-col');
+            // Click it to trigger the default sort
+            if (priorityHeader) {
+                for (let count = 1; count <= 2; count ++) {
+                    if (priorityHeader.getAttribute("aria-sort") == "descending"){
+                        break;
                     }
+                    priorityHeader.click()
                 }
             }
+        }
 
-            // Master checkbox that selects all checkboxes
-            const master = document.querySelector('#master-checkbox');
+        // Master checkbox that selects all checkboxes
+        const master = document.querySelector('#master-checkbox');
 
-            master.addEventListener('change', function() {
-                    const checked = this.checked;
-                    const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
-                    checkboxes.forEach(cb => {
-                        cb.checked = checked;
-                        cb.dispatchEvent(new Event('change'));
-                    });
+        master.addEventListener('change', function() {
+                const checked = this.checked;
+                const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = checked;
+                    cb.dispatchEvent(new Event('change'));
                 });
-
-            initClusterNameEditing();
             });
 
-        function initClusterNameEditing() {
-            document.addEventListener('click', event => {
-                const editButton = event.target.closest('[data-edit-cluster-name]');
-                if (editButton) {
-                    showClusterNameEditor(editButton.closest('[data-cluster-name-cell]'));
-                    return;
-                }
+        initClusterNameEditing();
+        });
 
-                const cancelButton = event.target.closest('[data-cancel-cluster-name]');
-                if (cancelButton) {
-                    const cell = cancelButton.closest('[data-cluster-name-cell]');
-                    resetClusterNameInput(cell);
-                    hideClusterNameEditor(cell);
-                }
-            });
+    function initClusterNameEditing() {
+        document.addEventListener('click', event => {
+            const editButton = event.target.closest('[data-edit-cluster-name]');
+            if (editButton) {
+                showClusterNameEditor(editButton.closest('[data-cluster-name-cell]'));
+                return;
+            }
 
-            document.addEventListener('keydown', event => {
-                if (event.key !== 'Escape' || !event.target.matches('[data-cluster-name-input]')) {
-                    return;
-                }
-                event.preventDefault();
-                const cell = event.target.closest('[data-cluster-name-cell]');
+            const cancelButton = event.target.closest('[data-cancel-cluster-name]');
+            if (cancelButton) {
+                const cell = cancelButton.closest('[data-cluster-name-cell]');
                 resetClusterNameInput(cell);
                 hideClusterNameEditor(cell);
-            });
-        }
+            }
+        });
 
-        function showClusterNameEditor(cell) {
-            if (!cell) return;
-            const view = cell.querySelector('[data-cluster-name-view]');
-            const form = cell.querySelector('[data-cluster-name-form]');
-            const input = cell.querySelector('[data-cluster-name-input]');
-            if (!view || !form || !input) return;
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Escape' || !event.target.matches('[data-cluster-name-input]')) {
+                return;
+            }
+            event.preventDefault();
+            const cell = event.target.closest('[data-cluster-name-cell]');
+            resetClusterNameInput(cell);
+            hideClusterNameEditor(cell);
+        });
+    }
 
-            view.hidden = true;
-            form.hidden = false;
-            input.value = input.dataset.originalName || '';
-            input.focus();
-            input.select();
-        }
+    function showClusterNameEditor(cell) {
+        if (!cell) return;
+        const view = cell.querySelector('[data-cluster-name-view]');
+        const form = cell.querySelector('[data-cluster-name-form]');
+        const input = cell.querySelector('[data-cluster-name-input]');
+        if (!view || !form || !input) return;
 
-        function hideClusterNameEditor(cell) {
-            if (!cell) return;
-            const view = cell.querySelector('[data-cluster-name-view]');
-            const form = cell.querySelector('[data-cluster-name-form]');
-            if (!view || !form) return;
+        view.hidden = true;
+        form.hidden = false;
+        input.value = input.dataset.originalName || '';
+        input.focus();
+        input.select();
+    }
 
-            form.hidden = true;
-            view.hidden = false;
-        }
+    function hideClusterNameEditor(cell) {
+        if (!cell) return;
+        const view = cell.querySelector('[data-cluster-name-view]');
+        const form = cell.querySelector('[data-cluster-name-form]');
+        if (!view || !form) return;
 
-        function resetClusterNameInput(cell) {
-            const input = cell?.querySelector('[data-cluster-name-input]');
-            if (input) input.value = input.dataset.originalName || '';
-        }
+        form.hidden = true;
+        view.hidden = false;
+    }
+
+    function resetClusterNameInput(cell) {
+        const input = cell?.querySelector('[data-cluster-name-input]');
+        if (input) input.value = input.dataset.originalName || '';
+    }
 
 
-        function imgError(image) {
-            const span = document.createElement('span');
-            span.classList.add("alert", "alert-warning", "mx-2", "py-0");
-            span.innerText = "Could not extract rectangle.";
-            image.parentNode.insertBefore(span, image);
-            image.remove();
-        }
-        </script>
-    {% endif %}
+    function imgError(image) {
+        const span = document.createElement('span');
+        span.classList.add("alert", "alert-warning", "mx-2", "py-0");
+        span.innerText = "Could not extract rectangle.";
+        image.parentNode.insertBefore(span, image);
+        image.remove();
+    }
+    </script>
 {% endblock main_content %}

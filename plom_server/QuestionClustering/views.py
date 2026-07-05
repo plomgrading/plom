@@ -286,6 +286,64 @@ class RemoveJobView(ManagerRequiredView):
 
 
 # ========= Cluster detail page (# members, priorities, tags, etc) =============
+def _get_cluster_groups_context(
+    question_idx: int,
+    version: int,
+    page_num: int,
+    *,
+    include_table_context: bool,
+):
+    """Build shared context for cluster table and unclustered review pages."""
+    qcs = QuestionClusteringService()
+    cluster_groups = qcs.get_clusters_and_member_count(
+        question_idx=question_idx, version=version
+    )
+    cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
+        question_idx=question_idx, version=version
+    )
+    cluster_to_name = qcs.get_cluster_name_map(
+        question_idx=question_idx, version=version
+    )
+    rects = qcs.get_corners_used_for_clustering(
+        question_idx=question_idx, version=version
+    )
+    unclustered_papers = qcs.get_unclustered_paper_nums(
+        question_idx=question_idx, version=version, page_num=page_num
+    )
+
+    context = {
+        "question_label": SpecificationService.get_question_label(question_idx),
+        "question_idx": question_idx,
+        "version": version,
+        "page_num": page_num,
+        "cluster_groups": cluster_groups,
+        "cluster_to_paper_map": cluster_to_paper_map,
+        "cluster_to_name": cluster_to_name,
+        "unclustered_papers": unclustered_papers,
+        "top": rects["top"],
+        "left": rects["left"],
+        "right": rects["right"],
+        "bottom": rects["bottom"],
+    }
+
+    if include_table_context:
+        context.update(
+            {
+                "cluster_to_priority": qcs.get_cluster_priority_map(
+                    question_idx=question_idx, version=version
+                ),
+                "cluster_to_tags": qcs.cluster_ids_to_tags(
+                    question_idx=question_idx, version=version
+                ),
+                "merged_count": qcs.get_merged_component_count(
+                    question_idx=question_idx, version=version
+                ),
+            }
+        )
+
+    return context
+
+
 class ClusterGroupsView(ManagerRequiredView):
     """Render a page for a summary of all clusters in a (q, v) context."""
 
@@ -293,71 +351,45 @@ class ClusterGroupsView(ManagerRequiredView):
         self, request: HttpRequest, question_idx: int, version: int, page_num: int
     ) -> HttpResponse:
         """Render a page for a summary of all clusters in a (q, v) context."""
-        qcs = QuestionClusteringService()
-        # A list of (cluster_id, member_count) sorted by cluster_id
-        # NOTE: use a sorted list so the default order is by cluster_id
-        cluster_groups = qcs.get_clusters_and_member_count(
-            question_idx=question_idx, version=version
-        )
+        if request.GET.get("unclustered"):
+            return redirect("unclustered_papers", question_idx, version, page_num)
 
-        # cluster_id to paper mapping used for preview
-        cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )
-
-        # cluster_id to human-readable cluster name
-        cluster_to_name = qcs.get_cluster_name_map(
-            question_idx=question_idx, version=version
-        )
-
-        # corners used for clustering (for preview)
         try:
-            rects = qcs.get_corners_used_for_clustering(
-                question_idx=question_idx, version=version
+            context = _get_cluster_groups_context(
+                question_idx,
+                version,
+                page_num,
+                include_table_context=True,
             )
         except ObjectDoesNotExist as err:
             messages.error(request, err)
             return redirect("question_clustering_jobs_home")
 
-        # cluster_id to priority mapping
-        cluster_to_priority = qcs.get_cluster_priority_map(
-            question_idx=question_idx, version=version
-        )
-
-        # cluster_id to merged count
-        merged_component_count = qcs.get_merged_component_count(
-            question_idx=question_idx, version=version
-        )
-
-        # cluster_id to tags
-        cluster_to_tags = qcs.cluster_ids_to_tags(
-            question_idx=question_idx, version=version
-        )
-
-        # papers removed from user-facing clusters, or never assigned to one
-        unclustered_papers = qcs.get_unclustered_paper_nums(
-            question_idx=question_idx, version=version, page_num=page_num
-        )
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "cluster_groups": cluster_groups,
-            "cluster_to_paper_map": cluster_to_paper_map,
-            "cluster_to_name": cluster_to_name,
-            "cluster_to_priority": cluster_to_priority,
-            "cluster_to_tags": cluster_to_tags,
-            "merged_count": merged_component_count,
-            "unclustered_papers": unclustered_papers,
-            "top": rects["top"],
-            "left": rects["left"],
-            "right": rects["right"],
-            "bottom": rects["bottom"],
-        }
         return render(
             request, "QuestionClustering/cluster_groups.html", context=context
+        )
+
+
+class UnclusteredPapersView(ManagerRequiredView):
+    """Render unclustered paper review for a (q, v) context."""
+
+    def get(
+        self, request: HttpRequest, question_idx: int, version: int, page_num: int
+    ) -> HttpResponse:
+        """Render unclustered paper review for a (q, v) context."""
+        try:
+            context = _get_cluster_groups_context(
+                question_idx,
+                version,
+                page_num,
+                include_table_context=False,
+            )
+        except ObjectDoesNotExist as err:
+            messages.error(request, err)
+            return redirect("question_clustering_jobs_home")
+
+        return render(
+            request, "QuestionClustering/unclustered_papers.html", context=context
         )
 
 
