@@ -67,8 +67,22 @@
                 <div class="row g-4 align-items-start">
                     <div class="col-12 col-xl-7">
                         <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                            <h2 class="h5 mb-0">Unclustered</h2>
-                            <span class="badge text-bg-secondary" data-unclustered-count>{{ unclustered_papers|length }}</span>
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                <h2 class="h5 mb-0">Unclustered</h2>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="select-all-unclustered"
+                                           data-select-all-unclustered>
+                                    <label class="form-check-label" for="select-all-unclustered">Select all</label>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge text-bg-primary d-none"
+                                      aria-live="polite"
+                                      data-selected-count></span>
+                                <span class="badge text-bg-secondary" data-unclustered-count>{{ unclustered_papers|length }}</span>
+                            </div>
                         </div>
                         <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3"
                              data-unclustered-grid>
@@ -353,6 +367,7 @@
                 const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
                 const assignUrl = form.getAttribute('action');
                 const suggestUrl = form.dataset.suggestUrl;
+                const selectAllCheckbox = document.querySelector('[data-select-all-unclustered]');
                 const baseFields = {
                     question_idx: form.querySelector('input[name="question_idx"]').value,
                     version: form.querySelector('input[name="version"]').value,
@@ -389,6 +404,15 @@
                         updateSelectedDragCue();
                     });
                 });
+
+                selectAllCheckbox?.addEventListener('change', () => {
+                    const checked = selectAllCheckbox.checked;
+                    sourceGrid.querySelectorAll('input[name="paper_nums"]').forEach(checkbox => {
+                        checkbox.checked = checked;
+                    });
+                    updateSelectedDragCue();
+                });
+
                 updateSelectedDragCue();
 
                 document.querySelectorAll('[data-cluster-drop-target]').forEach(target => {
@@ -464,13 +488,34 @@
 
             function updateSelectedDragCue() {
                 const selectedCards = getSelectedUnclusteredCards();
-                document.querySelectorAll('.unclustered-paper-card').forEach(card => {
+                const allCards = Array.from(document.querySelectorAll('.unclustered-paper-card'));
+                allCards.forEach(card => {
                     card.classList.toggle(
                         'is-selected-for-drag',
                         selectedCards.length > 1 && selectedCards.includes(card)
                     );
                 });
+                updateSelectAllControl(selectedCards.length, allCards.length);
                 updateDragCount(selectedCards.length, false);
+            }
+
+            function updateSelectAllControl(selectedCount, totalCount) {
+                const checkbox = document.querySelector('[data-select-all-unclustered]');
+                const selectedBadge = document.querySelector('[data-selected-count]');
+                if (checkbox) {
+                    checkbox.checked = totalCount > 0 && selectedCount === totalCount;
+                    checkbox.indeterminate = selectedCount > 0 && selectedCount < totalCount;
+                    checkbox.disabled = totalCount === 0;
+                }
+                if (!selectedBadge) return;
+
+                if (selectedCount > 0) {
+                    selectedBadge.textContent = `${selectedCount} selected`;
+                    selectedBadge.classList.remove('d-none');
+                } else {
+                    selectedBadge.textContent = '';
+                    selectedBadge.classList.add('d-none');
+                }
             }
 
             function updateDragCount(count, isDragging) {

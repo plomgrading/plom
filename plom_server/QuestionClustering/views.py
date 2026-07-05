@@ -361,54 +361,6 @@ class ClusterGroupsView(ManagerRequiredView):
         )
 
 
-class UnclusteredPapersView(ManagerRequiredView):
-    """Render the workspace for assigning currently unclustered papers."""
-
-    def get(
-        self, request: HttpRequest, question_idx: int, version: int, page_num: int
-    ) -> HttpResponse:
-        """Render unclustered papers with assignment controls."""
-        qcs = QuestionClusteringService()
-        cluster_groups = qcs.get_clusters_and_member_count(
-            question_idx=question_idx, version=version
-        )
-        cluster_to_name = qcs.get_cluster_name_map(
-            question_idx=question_idx, version=version
-        )
-        cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )
-        unclustered_papers = qcs.get_unclustered_paper_nums(
-            question_idx=question_idx, version=version, page_num=page_num
-        )
-
-        try:
-            rects = qcs.get_corners_used_for_clustering(
-                question_idx=question_idx, version=version
-            )
-        except ObjectDoesNotExist as err:
-            messages.error(request, err)
-            return redirect("question_clustering_jobs_home")
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "cluster_groups": cluster_groups,
-            "cluster_to_name": cluster_to_name,
-            "cluster_to_paper_map": cluster_to_paper_map,
-            "unclustered_papers": unclustered_papers,
-            "top": rects["top"],
-            "left": rects["left"],
-            "right": rects["right"],
-            "bottom": rects["bottom"],
-        }
-        return render(
-            request, "QuestionClustering/unclustered_papers.html", context=context
-        )
-
-
 class ClusterMergeView(ManagerRequiredView):
     """Handle merge of multiple clusters in a (q, v) context."""
 
