@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
 from django.core.management import call_command
@@ -107,7 +107,7 @@ class Command(BaseCommand):
             admin_string += "v" * 40 + "\n"
             admin_string += f"Admin username: {admin_username}\n"
             admin_string += f"Admin password: {admin_password}\n"
-            manager_string += "^" * 40 + "\n"
+            admin_string += "^" * 40 + "\n"
         else:
             admin_username, admin_password = options["admin_login"]
             self.create_admin(username=admin_username, password=admin_password)
