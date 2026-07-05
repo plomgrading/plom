@@ -21,12 +21,14 @@ class Command(BaseCommand):
         parser.add_argument(
             "--admin-login",
             nargs=2,
-            help="Login details for the admin. Format: --admin-login USERNAME PASSWORD",
+            metavar=("USERNAME", "PASSWORD"),
+            help="Login details for the admin.",
         )
         parser.add_argument(
             "--manager-login",
             nargs=2,
-            help="Login details for the manager. Format: --manager-login USERNAME PASSWORD",
+            metavar=("USERNAME", "PASSWORD"),
+            help="Login details for the manager.",
         )
         parser.add_argument(
             "--force-passwords",
