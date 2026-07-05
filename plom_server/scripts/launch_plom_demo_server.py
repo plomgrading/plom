@@ -902,7 +902,7 @@ def main():
 
     # build the user-groups and the admin and manager users
     run_django_manage_command(
-        "plom_make_groups_and_first_users --manager-login manager 1234"
+        f"plom_make_groups_and_first_users --manager-login manager 1234 --port {args.port}"
     )
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")

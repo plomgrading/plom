@@ -38,6 +38,16 @@ class Command(BaseCommand):
                 password reset links.
             """,
         )
+        parser.add_argument(
+            "--port",
+            help="""
+                If password links are to be generated, you can specify the
+                port number to appear in the links.  Generally the internal
+                code will check environment variables or other configuration
+                which will override this option.  Still, maybe its useful in
+                some cases, such as the demo.
+            """,
+        )
 
     def create_admin(self, username: str, password: str | None = None) -> User:
         """Create an admin user."""
@@ -74,6 +84,7 @@ class Command(BaseCommand):
         self.stdout.write("Make user groups")
         call_command("plom_create_groups")
 
+        port = options["port"] or ""
         # generate passwords if no info is provided via the commandline
         manager_string = "Make manager user\n"
         if options["manager_login"] is None:
@@ -85,7 +96,7 @@ class Command(BaseCommand):
                 self.create_first_manager(manager_username, password=manager_password)
             else:
                 manager_obj = self.create_first_manager(manager_username)
-                manager_password = AuthService.generate_link(manager_obj, port="8000")
+                manager_password = AuthService.generate_link(manager_obj, port=port)
             manager_string += "v" * 40 + "\n"
             manager_string += f"Manager username: {manager_username}\n"
             manager_string += f"Manager password: {manager_password}\n"
@@ -107,7 +118,7 @@ class Command(BaseCommand):
                 self.create_admin(username=admin_username, password=admin_password)
             else:
                 admin_obj = self.create_admin(username=admin_username)
-                admin_password = AuthService.generate_link(admin_obj, port="8000")
+                admin_password = AuthService.generate_link(admin_obj, port=port)
             admin_string += "v" * 40 + "\n"
             admin_string += f"Admin username: {admin_username}\n"
             admin_string += f"Admin password: {admin_password}\n"
