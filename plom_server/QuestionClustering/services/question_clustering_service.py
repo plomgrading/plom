@@ -7,6 +7,7 @@ from collections import defaultdict
 from importlib import resources
 import os
 from pathlib import Path
+import re
 from typing import Any, Mapping, Optional
 
 import numpy as np
@@ -167,6 +168,8 @@ class QuestionClusteringService:
     """Service handling clustering and querying of cluster-related models."""
 
     CLUSTER_NAME_MAX_LENGTH = 100
+    _CLUSTER_TAG_RE = re.compile(r"^cluster_qi\d+v\d+_(\d+)(?:_.*)?$")
+    _INVALID_CLUSTER_TAG_NAME_CHARS_RE = re.compile(r"[^\w\-\+\:\;\.\@]+")
 
     def _store_clustered_result(
         self,
@@ -941,7 +944,8 @@ class QuestionClusteringService:
     def bulk_tagging(self, qidx: int, version: int, *, userid: int) -> None:
         """Bulk tag all clusters with default cluster tag.
 
-        NOTE: current default cluster tag is cluster_qi{idx}v{version}_{clusterId}.
+        NOTE: current default cluster tag is cluster_qi{idx}v{version}_{clusterId},
+        optionally followed by _{cluster_name} when a cluster has a name.
 
         Args:
             qidx: question_index of the clustering context.
@@ -954,10 +958,14 @@ class QuestionClusteringService:
 
         # get cluster_id to paper mapping
         clusterid_to_papers = self.get_clusterid_to_paper_mapping(qidx, version)
+        clusterid_to_name = self.get_cluster_name_map(qidx, version)
 
         # get tag_texts
         tag_texts = [
-            f"cluster_qi{qidx}v{version}_{cid}" for cid in clusterid_to_papers.keys()
+            self._format_cluster_tag_text(
+                qidx, version, cid, clusterid_to_name.get(cid, "")
+            )
+            for cid in clusterid_to_papers.keys()
         ]
 
         # get/create tags
@@ -972,6 +980,12 @@ class QuestionClusteringService:
             for cid, papers in clusterid_to_papers.items()
             for paper in papers
         }
+
+        self._remove_cluster_tag_links(
+            qidx,
+            version,
+            {paper.pk for papers in clusterid_to_papers.values() for paper in papers},
+        )
 
         # fetch all tasks
         task_tuples = MarkingTask.objects.filter(
@@ -989,6 +1003,27 @@ class QuestionClusteringService:
 
         # Insert once
         Through.objects.bulk_create(rows, ignore_conflicts=True)
+
+    @classmethod
+    def _format_cluster_tag_text(
+        cls, qidx: int, version: int, clusterId: int, cluster_name: str
+    ) -> str:
+        """Build the generated tag text for a cluster."""
+        tag_text = f"cluster_qi{qidx}v{version}_{clusterId}"
+        clean_name = cls._cluster_name_to_tag_suffix(cluster_name)
+        if clean_name:
+            tag_text = f"{tag_text}_{clean_name}"
+        return tag_text
+
+    @classmethod
+    def _cluster_name_to_tag_suffix(cls, cluster_name: str) -> str:
+        """Convert a cluster name to a valid tag suffix."""
+        clean_name = cluster_name.strip()
+        if not clean_name:
+            return ""
+
+        clean_name = cls._INVALID_CLUSTER_TAG_NAME_CHARS_RE.sub("_", clean_name)
+        return clean_name.strip("_")
 
     def remove_tag_from_a_cluster(
         self, question_idx: int, version: int, clusterId: int, tag_pk: int
@@ -1019,7 +1054,10 @@ class QuestionClusteringService:
         Returns:
             the clusterId parsed from the cluster tag text.
         """
-        return int(cluster_tag_text.rsplit("_", 1)[-1])
+        match = self._CLUSTER_TAG_RE.match(cluster_tag_text)
+        if not match:
+            raise ValueError(f"Invalid cluster tag text: {cluster_tag_text}")
+        return int(match.group(1))
 
     def get_all_tasks_in_a_cluster(
         self, question_idx: int, version: int, clusterId: int
