@@ -923,21 +923,15 @@
                             </button>
                         </form>
                         <!-- Reset -->
-                        <form action="{% url 'bulk_reset_clusters' %}"
-                              method="post"
-                              class="d-inline-flex align-items-center">
+                        <form action="{% url 'bulk_reset_clusters' %}" method="post" class="d-none">
                             {% csrf_token %}
                             <input type="hidden" name="question_idx" value="{{ question_idx }}">
                             <input type="hidden" name="version" value="{{ version }}">
-                            <template x-for="id in selected" :key="id">
-                                <input type="hidden" name="selected_clusters" :value="id" />
-                            </template>
                             <input type="hidden" name="next" value="{{ request.get_full_path }}">
                             <button type="submit"
                                     class="btn btn-warning"
-                                    :disabled="selected.length == 0"
-                                    onclick="return confirm('Are you sure you want to reset the selected clusters?');">
-                                Reset
+                                    onclick="return confirm('Are you sure you want to restore the original clustering for all clusters?');">
+                                Reset all
                             </button>
                         </form>
                     </div>

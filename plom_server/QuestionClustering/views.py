@@ -552,26 +552,23 @@ class SuggestUnclusteredPapersView(ManagerRequiredView):
 
 
 class ClusterBulkResetView(ManagerRequiredView):
-    """Handle reset of one or multiple clusters in a (q, v) context."""
+    """Handle full reset of clusters in a (q, v) context."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Handle reset of one or multiple clusters in a (q, v) context."""
-        clusterIds = request.POST.getlist("selected_clusters")
-        clusterIds = list(map(int, clusterIds))
-
+        """Handle reset of all clusters in a (q, v) context."""
         question_idx = int(request.POST["question_idx"])
         version = int(request.POST["version"])
         next_url = request.POST.get("next")
 
         qcs = QuestionClusteringService()
         try:
-            affected_cluster_ids = qcs.reset_clusters(question_idx, version, clusterIds)
+            affected_cluster_ids = qcs.reset_clusters(question_idx, version)
         except (EmptySelectedError, ObjectDoesNotExist) as err:
             messages.error(request, f"Reset failed: {err}")
         else:
             messages.success(
                 request,
-                f"Reset {len(clusterIds)} selected clusters; "
+                "Restored the original clustering for all clusters; "
                 f"updated {len(affected_cluster_ids)} original clusters.",
             )
         return redirect(next_url)
