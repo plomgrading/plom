@@ -338,7 +338,6 @@ class MarkingTaskService:
         )
 
     @staticmethod
-    @transaction.atomic
     def surrender_task(user: User, papernum: int, qidx: int) -> None:
         """Surrender a particular marking task assigned to a user.
 
@@ -354,21 +353,23 @@ class MarkingTaskService:
                 or not "OUT" with, that user.
         """
         basemsg = f"Cannot surrender paper {papernum} question index {qidx}: "
-        try:
-            t = MarkingTask.objects.select_for_update().get(
-                paper__paper_number=papernum, question_index=qidx
-            )
-        except MarkingTask.DoesNotExist as e:
-            raise ValueError(basemsg + "task does not exist") from e
-        if t.assigned_user != user or t.status != MarkingTask.OUT:
-            raise PlomConflict(
-                basemsg + f'task not "Out" with "{user}"; currently assigned'
-                f' to "{t.assigned_user}" status "{t.get_status_display()}";'
-                " perhaps someone reassigned or reset the task?"
-            )
-        t.assigned_user = None
-        t.status = MarkingTask.TO_DO
-        t.save()
+        # not clear this has to be atomic but it must be a transaction, Issue #4251
+        with transaction.atomic():
+            try:
+                t = MarkingTask.objects.select_for_update().get(
+                    paper__paper_number=papernum, question_index=qidx
+                )
+            except MarkingTask.DoesNotExist as e:
+                raise ValueError(basemsg + "task does not exist") from e
+            if t.assigned_user != user or t.status != MarkingTask.OUT:
+                raise PlomConflict(
+                    basemsg + f'task not "Out" with "{user}"; currently assigned'
+                    f' to "{t.assigned_user}" status "{t.get_status_display()}";'
+                    " perhaps someone reassigned or reset the task?"
+                )
+            t.assigned_user = None
+            t.status = MarkingTask.TO_DO
+            t.save()
 
     @staticmethod
     def get_n_marked_tasks() -> int:
