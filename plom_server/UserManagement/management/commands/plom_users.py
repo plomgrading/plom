@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024-2026 Colin B. Macdonald
+# Copyright (C) 2024, 2026 Aidan Murphy
 
 import csv
 import io
 from pathlib import Path
-from tabulate import tabulate
+from pprint import pformat
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
+from django.contrib.auth.models import User
 from django.db import IntegrityError
 
 from plom_server.Authentication.services import AuthService
@@ -21,11 +22,7 @@ class Command(BaseCommand):
     def list_users(self) -> None:
         user_list = UsersService.get_list_of_user_info()
 
-        if not user_list:
-            self.stdout.write("no users found.")
-            return
-
-        self.stdout.write(str(tabulate(user_list, headers="keys")))
+        self.stdout.write(pformat(user_list, compact=True))
 
     def handle_import(self, file_path: Path, *, set_password: bool = False) -> None:
         """Imports users from a csv file and display to stdout."""
@@ -44,15 +41,38 @@ class Command(BaseCommand):
             csv_string = iostream.getvalue()
         self.stdout.write(csv_string)
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--list",
-            action="store_true",
-            help="List users on the system (default behaviour if nothing else specified).",
-        )
+    def create_password_reset_link(self, uid: int, port: str = "") -> None:
+        """Create a password reset link for the specified user, write to stdout."""
+        user_obj = User.objects.get(id=uid)
+        reset_link = AuthService.generate_link(user_obj, port=port)
+        self.stdout.write(reset_link)
 
+    def add_arguments(self, parser):
         sub = parser.add_subparsers(
             title="subcommands", dest="subcommand", required=False
+        )
+
+        create_password_reset_link = sub.add_parser(
+            "create-password-reset-link",
+            help="Create a password reset link for a Plom user account.",
+            description="""Requires the user's database id.
+            """,
+        )
+        create_password_reset_link.add_argument(
+            "uid",
+            type=int,
+            help="The user's database ID.",
+        )
+        create_password_reset_link.add_argument(
+            "--port",
+            help="""
+                If password links are to be generated, you can specify the
+                port number to appear in the links.  Generally the internal
+                code will check environment variables or other configuration
+                which will override this option.  Probably you should not
+                mess with this: however, maybe its useful in some cases,
+                such as the demo.
+            """,
         )
 
         import_users = sub.add_parser(
@@ -71,10 +91,20 @@ class Command(BaseCommand):
             """,
         )
 
+        sub.add_parser(
+            "list",
+            help="List users on the system.",
+            description="""User information is taken directly from the database.
+                Some understanding of Plom's internals may be required to parse it.
+            """,
+        )
+
     def handle(self, *args, **options):
         if options["subcommand"] == "import":
             self.handle_import(options["file"])
-        elif options["list"]:
+        elif options["subcommand"] == "create-password-reset-link":
+            self.create_password_reset_link(options["uid"], options["port"] or "")
+        elif options["subcommand"] == "list":
             self.list_users()
         else:
-            self.list_users()
+            self.print_help()
