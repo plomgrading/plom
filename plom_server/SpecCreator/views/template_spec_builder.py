@@ -3,15 +3,19 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
+from io import BytesIO
+
 import pymupdf
 
 from django.contrib import messages
+from django.core.files import File
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 
 from ..services import TemplateSpecBuilderService, GUISpecBuilderService
+from plom_server.Preparation.services.SourceService import take_source_from_upload
 
 
 class TemplateSpecBuilderView(ManagerRequiredView):
@@ -82,6 +86,13 @@ class GUISpecBuilderView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         source_pdf = request.FILES["source_pdf"]
+
+        # make an internal copy of this file
+        with source_pdf.open("rb") as fh:
+            file_bytes = fh.read()
+        pdf_file = File(BytesIO(file_bytes), name="random_name.pdf")
+        # WIP: we get "Version 1 is out of range"
+        take_source_from_upload(1, pdf_file)
 
         try:
             image_bytes_list = GUISpecBuilderService.extract_images_from_django_pdf(
