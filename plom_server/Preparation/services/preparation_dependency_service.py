@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
@@ -10,8 +10,8 @@ from plom.common.exceptions import PlomDependencyConflict
 # to avoid circular-dependency hell
 
 # preparation steps are
-# 1 = spec
-# 2 = source pdfs
+# 1/2 = spec
+# 1/2 = source pdfs
 # 3 = classlist and prenaming
 # 4 = qv-mapping and db-populate
 # 5 = build paper pdfs
@@ -20,7 +20,7 @@ from plom.common.exceptions import PlomDependencyConflict
 # give assert raising tests followed by true/false returning functions
 
 
-# 1 = the spec depends on nothing, but sources and QVMap depend on the spec
+# 1/2 = the spec depends on nothing, but QVMap depends on the spec
 def assert_can_modify_spec():
     from plom_server.Papers.services import PaperInfoService
     from . import PapersPrinted, SourceService
@@ -45,19 +45,14 @@ def assert_can_modify_spec():
         )
 
 
-# 2 = the sources depend on the spec, and built-papers depend on the sources
+# 1/2 = the sources depend on nothing, and built-papers depend on the sources
 def assert_can_modify_sources(*, deleting: bool = False) -> None:
     from . import PapersPrinted
-    from plom_server.Papers.services import SpecificationService
     from plom_server.BuildPaperPDF.services import BuildPapersService
 
     # cannot modify sources if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
-    # if there is no spec, then cannot modify sources (unless deleting)
-    if not deleting:
-        if not SpecificationService.is_there_a_spec():
-            raise PlomDependencyConflict("There is no specification.")
     # cannot modify sources if any papers have been produced
     if BuildPapersService().are_any_papers_built():
         raise PlomDependencyConflict(
