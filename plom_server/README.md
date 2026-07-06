@@ -34,16 +34,10 @@ This takes two steps. Enter these commands at the shell prompt.
 These commands are non-interactive. Just hope they complete successfully.
 
 ## Setting up groups and users
-Django wants a "super user" to do administrative stuff - they can
-access everything. Plom then requires several different groups of
-users - admin, manager, marker and scanner. So we need to create those
-groups and add the super-user into the admin group.
 
-1. Run `python3 manage.py createsuperuser` to create an admin account (email address is optional). Remember the username defined here.
-2. Run `python3 manage.py plom_create_groups` to automatically create the various user account groups. Then, any superusers will be added to the admin group.
-3. (Optional) Run `python3 manage.py plom_create_demo_users` to automatically create demo users such as manager, scanners, and markers. The default password for `manager` is `1234`. For the other demo users (`demoAdmin`, `demoScanner1`, etc.), the default password is identical to the username.
+1. Run `python3 manage.py plom_make_groups_and_first_users` to automatically create the various user account groups.
+2. (Optional) Run `python3 manage.py plom_create_demo_users` to automatically create demo users such as manager, scanners, and markers.
 
-Note that if you accidentally do (2) before (1) then you can just run (2) again and it will skip the create-groups bit and just add the superuser to the admin group.
 
 ## Misc other setup
 
@@ -67,10 +61,8 @@ Take note of the address that it tells you the website is running at.
 
 Earlier steps should have created a user named manager and other demo users. If you skipped those, here is an alternative approach.
 
-Start at the url noted under Running the Server, typically `http://localhost:8000/users`. Then ...
-
 1. Log in as the admin user (superuser)
-2. Click "create new users"
+2. Go to "Users" and click "create new users"
 3. Use the form to create a new account named "manager".
 4. Copy the generated link and logout of the admin account.
 5. Paste the link in the browser's URL bar, or email it to a friend, etc.
