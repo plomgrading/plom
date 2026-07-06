@@ -104,8 +104,7 @@ def get_parser():
         "webpage",
         help="Create HTML page for digital return",
         description="Prepare HTML page for return using out-of-band per-student secret codes.",
-        epilog=dedent(
-            """
+        epilog=dedent("""
             The webpage will be in `codedReturn` and the secret codes in
             `return_codes.csv`.
 
@@ -113,8 +112,7 @@ def get_parser():
             distributing the secret codes.
 
             This command must have access to the results of `reassemble`.
-        """
-        ),
+        """),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     spCodedReturn.add_argument(
