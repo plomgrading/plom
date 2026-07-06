@@ -442,11 +442,25 @@
           });
         }
 
+        function clearAllSelectedPages() {
+	  // get elements with IDs = "page...Checkbox"
+	  var pageCheckboxes = document.querySelectorAll('[id ^= "page"][id $= "Checkbox"]');
+	  pageCheckboxes.forEach((checkbox) => {
+	    // replace all alphabet chars with ""
+	    let pageNumString = checkbox.id.replace(RegExp("[a-zA-Z]*"), "");
+	    let pageNumInt = parseInt(pageNumString);
+	    checkbox.checked = false;
+	    updateSelectedPages(pageNumInt, checkbox.checked);
+	  });
+
+	}
+
         function updateSelectedPages(pageIndex, checked) {
-          if (checked)
+	  if (checked) {
             selectedPages.add(pageIndex);
-          else
+	  } else {
             selectedPages.delete(pageIndex);
+	  }
 
           // convert to array, sort, then back to set
           const sortedPagesArray = [...selectedPages].sort((a, b) => a - b);
@@ -598,6 +612,7 @@
             case 'newQuestion':
               insertPagesIntoNewQuestion(selectedPagesArray); break;
           }
+	  clearAllSelectedPages();
         }
 
         // unassign the selected pages from any grouping they are currently in:
@@ -609,6 +624,7 @@
           unassignDnmPages(selectedPagesArray);
           unassignIdPages(selectedPagesArray);
           unassignQuestionPages(selectedPagesArray);
+	  clearAllSelectedPages();
         }
 
         function unassignDnmPages(pageArray) {
