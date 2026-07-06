@@ -9,7 +9,6 @@ from typing import Any
 from plom_server.Base.services import Settings
 from .utils import pin_to_fractional_nth
 
-
 log = logging.getLogger(__name__)
 
 

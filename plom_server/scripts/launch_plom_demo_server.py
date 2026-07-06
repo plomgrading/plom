@@ -32,7 +32,6 @@ from plom_server.scripts.launch_plom_server import (
     launch_django_dev_server_process,
 )
 
-
 # TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
 # so temporarily set it to "."; we'll fix it in main()
@@ -294,7 +293,7 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - skipping build of {no_soln_pdf_filename} b/c it already exists")
     else:
         with open(no_soln_pdf_filename, "wb") as f:
-            (r, stdouterr) = buildLaTeX(no_soln_data, f)
+            r, stdouterr = buildLaTeX(no_soln_data, f)
         if r != 0:
             print(stdouterr)
             raise RuntimeError(
@@ -310,7 +309,7 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - skipping build of {yes_soln_pdf_filename} b/c it already exists")
     else:
         with open(yes_soln_pdf_filename, "wb") as f:
-            (r, stdouterr) = buildLaTeX(yes_soln_data, f)
+            r, stdouterr = buildLaTeX(yes_soln_data, f)
         if r != 0:
             print(stdouterr)
             raise RuntimeError(

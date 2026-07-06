@@ -10,7 +10,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from ...services import StagingStudentService, PapersPrinted
 
-
 DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_classlist (Issue #3981).
     Consider using plom-cli subcommands to manipulate the class list.
     This suite of Django management commands is no longer being maintained."""

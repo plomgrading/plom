@@ -17,7 +17,6 @@ from typing import Any
 
 from ..models import Rubric
 
-
 _frac_value_tolerance = 1e-7
 
 

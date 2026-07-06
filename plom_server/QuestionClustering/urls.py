@@ -23,7 +23,6 @@ from .views import (
     Debug,
 )
 
-
 urlpatterns = [
     # ====== Clustering Home Page (choose q, v, page) ========
     path("", QuestionClusteringHomeView.as_view(), name="question_clustering_home"),

@@ -6,7 +6,6 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
     path("", views.ReportLandingPageView.as_view(), name="reports_landing"),
     path(

@@ -10,7 +10,6 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
     path("users", view=views.UserPage.as_view(), name="users"),
     path("users/<str:username>", views.UserPage.as_view(), name="modify_user"),

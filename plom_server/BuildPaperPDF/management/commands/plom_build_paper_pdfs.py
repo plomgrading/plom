@@ -138,7 +138,7 @@ class Command(BaseCommand):
 
     def download_specific_paper(self, paper_number: int) -> None:
         try:
-            (name, b) = BuildPapersService.get_paper_recommended_name_and_bytes(
+            name, b = BuildPapersService.get_paper_recommended_name_and_bytes(
                 paper_number
             )
         except ValueError as err:

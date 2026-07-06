@@ -48,7 +48,6 @@ from ..models import RubricPane
 from .rubric_permissions import RubricPermissionsService
 from .utils import _generate_display_delta, _Rubric_to_dict
 
-
 log = logging.getLogger(__name__)
 
 
