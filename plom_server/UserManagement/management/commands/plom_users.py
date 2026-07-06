@@ -5,7 +5,7 @@
 import csv
 import io
 from pathlib import Path
-from tabulate import tabulate
+from pprint import pformat
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
@@ -22,11 +22,7 @@ class Command(BaseCommand):
     def list_users(self) -> None:
         user_list = UsersService.get_list_of_user_info()
 
-        if not user_list:
-            self.stdout.write("no users found.")
-            return
-
-        self.stdout.write(str(tabulate(user_list, headers="keys")))
+        self.stdout.write(pformat(user_list, compact=True))
 
     def handle_import(self, file_path: Path, *, set_password: bool = False) -> None:
         """Imports users from a csv file and display to stdout."""
