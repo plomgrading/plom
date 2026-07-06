@@ -29,7 +29,6 @@ from math import nan
 
 import pandas as pd
 
-
 where_csv = Path(".")
 canvas_csv = where_csv / "Canvas_classlist_01_cleaned.csv"
 out_csv = where_csv / "Canvas_classlist_02_with_rooms.csv"
