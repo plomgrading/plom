@@ -133,7 +133,7 @@
                     <div class="row overflow-y-hidden sticky-bottom"
                          style="resize: vertical;
                                 height: 75vh">
-                        <div class="col-md-8 h-100 overflow-y-auto">
+                        <div class="col-8 h-100 overflow-y-auto">
                             <!-- thumbnail container -->
                             <div class="container-fluid p-2">
                                 <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
@@ -145,7 +145,7 @@
                                                     <div id="page{{ index }}InnerCard" class="card m-1">
                                                         <img id="page{{ index }}Img"
                                                              src="data:image/png;base64,{{ image_string }}"
-                                                             style="width: 30ch" />
+                                                             style="width: 40ch" />
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-4"></div>
@@ -167,7 +167,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="pageBlockColumn" class="col-md-4 h-100 overflow-y-auto">
+                        <div id="pageBlockColumn" class="col-4 h-100 overflow-y-auto">
                             <div id="idPageCard">
                                 <!-- dynamically update this with js -->
                             </div>
@@ -395,14 +395,14 @@
                             <div class="card-body p-2 small">
                                 <div class="mb-1">
                                     <label class="text-muted" for="mark_${q.qidx}">DEBUG Qidx:</label>
-                                    <input id="idx_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.qidx}" placeholder="?" disabled oninput="setQuestionMarks(${q.qidx}, this.value)">
+                                    <input id="idx_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.qidx}" placeholder="?" disabled>
                                 </div>
                                 <div class="mb-1">
                                     <span class="text-muted">Pages:</span> ${pagesText}
                                 </div>
                                 <div class="mb-1">
                                     <label class="text-muted" for="mark_${q.qidx}">Marks:</label>
-                                    <input id="mark_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.mark ?? ''}" placeholder="?" oninput="setQuestionMarks(${q.qidx}, this.value)">
+                                    <input id="mark_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.mark ?? ''}" placeholder="?" onchange="setQuestionMarks(${q.qidx}, this.value)">
                                     <label class="text-muted" for="bonus_${q.qidx}">Bonus:</label>
                                     <input id="bonus_${q.qidx}" type="checkbox" class="form-check-input" ${q.bonus ? 'checked' : ''} oninput="setQuestionBonus(${q.qidx}, this.checked)">
                                 </div>
