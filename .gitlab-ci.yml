@@ -54,37 +54,13 @@ stages:
   - release
 
 
-# Attention maintainers: if you start to see errors in the CI runs like:
-#   E: Failed to fetch http://security.ubuntu.com... 404 Not Found [IP: 91...]
-# Run with DOCKER_USE_CACHE set to 0, under Pipeline -> Run pipeline
 container-image:
   stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - echo $DOCKER_USE_CACHE
-    - >
-      if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker pull $IM_LATEST || true
-      fi
-    - >
-      if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile
-      else
-        docker build --tag $IM . -f Containerfile
-      fi
+    - docker build --tag $IM . -f Containerfile
     - docker push $IM
-
-
-# Get fast results by running tests in a copy-pasta of the container-image job
-# TODO: why is this failing?  check if client-building works by commenting out
-# quick-pytests:
-#   stage: build
-#   needs: []
-#   script:
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#     - docker pull $IM_LATEST || true
-#     - docker build --cache-from $IM_LATEST --tag $IM .
-#     - docker run $IM pytest-3 -l --pyargs plom
 
 
 codespell:
