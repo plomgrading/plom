@@ -444,8 +444,10 @@ class UploadRubricView(ManagerRequiredView):
             RubricService.create_rubrics_from_file_data(
                 data_string, suffix, requesting_user=username
             )
-        except (ValueError, tomllib.TOMLDecodeError, PlomConflict) as e:
-            messages.error(request, f"Error: {e}")
+        except (ValueError, tomllib.TOMLDecodeError) as e:
+            messages.error(request, f"File error: {e}")
+        except PlomConflict as e:
+            messages.error(request, f"Rubric error: {e}")
         except serializers.ValidationError as e:
             # Not sure the "right way" to render a ValidationError:
             # If we use {e} like for ValueError above, it renders like this:
@@ -454,7 +456,7 @@ class UploadRubricView(ManagerRequiredView):
             #    Error: invalid row in "parameters"...
             # See also API/views/utils.py which does a similar hack.
             (nicer_err_msgs,) = e.args
-            messages.error(request, f"Error: {nicer_err_msgs}")
+            messages.error(request, f"Rubric error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_landing")
