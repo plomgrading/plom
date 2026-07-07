@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pymupdf
-from django.core.exceptions import SuspiciousFileOperation
+from django.core.exceptions import SuspiciousFileOperation, ObjectDoesNotExist
 from django.core.files import File
 from django.core.files.utils import validate_file_name
 from django.db import transaction
@@ -246,9 +246,13 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
     # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
-    if version not in SpecificationService.get_list_of_versions():
+    # always accept version 1, otherwise check spec
+    # TODO: probably put this in preparation dependency service, per circular imports
+    version_one = version == 1
+    # this is lazy, won't evaluate if version is 1
+    version_in_spec = version in SpecificationService.get_list_of_versions()
+    if not version_one and not version_in_spec:
         raise ValueError(f"Version {version} is out of range")
-    required_pages = SpecificationService.get_n_pages()
     # save the file to a temp directory
     # TODO - size limits please
     with tempfile.TemporaryDirectory() as td:
@@ -259,10 +263,21 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
         # now check it has correct number of pages
         with pymupdf.open(tmp_pdf) as doc:
             page_count = doc.page_count
-            if page_count != int(required_pages):
+            # TODO: this definitely should go in prep dependency service
+            # spec may not have been uploaded, confirm that we have an even number of pages
+            if page_count % 2 != 0:
                 raise ValueError(
-                    f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}"
+                    f"Uploaded pdf has {page_count} pages, but source files must have an even number of pages"
                 )
+            try:
+                required_pages = SpecificationService.get_n_pages()
+                if page_count != int(required_pages):
+                    raise ValueError(
+                        f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}"
+                    )
+            except ObjectDoesNotExist:
+                # If no spec, then accept any number of pages
+                pass
             # keep the first page's size in full float precision
             w_float, h_float = doc[0].rect.width, doc[0].rect.height
             # collect all page sizes using "set" to combine any rounding to the same int
@@ -335,6 +350,9 @@ def store_reference_images(source_version: int):
     Uses the exam mocker to put qr codes stamps in correct pages.
     Then stores the images with that qr-code information.
     """
+    # I think we just need to stamp the QR codes on the pages
+    # this function doesn't (necessarily) need the spec
+    # TODO: "spec=False" flag to prevent spec checking
     mock_exam_pdf_bytes = ExamMockerService.mock_exam(source_version)
     doc = pymupdf.Document(stream=mock_exam_pdf_bytes)
 
