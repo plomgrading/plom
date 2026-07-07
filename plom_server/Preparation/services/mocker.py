@@ -31,17 +31,21 @@ class ExamMockerService:
     """Take an uploaded source file and stamp dummy QR codes/text."""
 
     @staticmethod
-    def mock_exam(version: int) -> bytes:
+    def mock_exam(version: int, *, use_spec: bool = True) -> bytes:
         """Create the mock exam.
 
         Args:
             version: which version to mock.
 
+        Keyword Args:
+            use_spec: whether to use the actual spec when generating the
+                mock exam. For example, if True the spec's question labels will be
+                placed on the corresponding pages. If False, a generic spec will
+                be used instead.
+
         Returns:
             A bytes object containing the document.
         """
-        spec = SpecificationService.get_the_spec()
-        num_questions = SpecificationService.get_n_questions()
         example_code = _make_example_public_code()
 
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
@@ -50,6 +54,16 @@ class ExamMockerService:
         # TODO: Issue #3888 this does direct file access, fails for remote storage?
         __, abstract_django_file = _get_source_file(version)
         source_path = Path(abstract_django_file.path)
+
+        if use_spec:
+            spec = SpecificationService.get_the_spec()
+            num_questions = SpecificationService.get_n_questions()
+        else:
+            with pymupdf.open(abstract_django_file) as django_f:
+                num_pages = django_f.page_count
+            # TODO: This function doesn't exist yet
+            spec = SpecificationService.get_example_spec(n_pages=num_pages)
+            num_questions = SpecificationService.get_n_example_questions()
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)
