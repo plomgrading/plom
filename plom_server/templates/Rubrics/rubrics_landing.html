@@ -18,13 +18,57 @@
 {% endblock page_heading %}
 {% block main_content %}
     {% include "../base/alert_messages.html" with messages=messages %}
-    <div>
-        <a class="btn btn-primary dinline-block"
-           href="{% url 'rubrics_admin' %}">Rubric management&hellip;</a>
-        <a class="btn btn-primary dinline-block ms-2"
-           href="{% url 'rubrics_access' %}">Rubric access controls&hellip;</a>
-        <a class="btn btn-primary dinline-block ms-2"
-           href="{% url 'feedback_rules' %}">Feedback rules&hellip;</a>
+    <div class="row">
+        <div class="col-10">
+            <a class="btn btn-primary dinline-block"
+               href="{% url 'rubrics_admin' %}">Rubric management&hellip;</a>
+            <a class="btn btn-primary dinline-block ms-2"
+               href="{% url 'rubrics_access' %}">Rubric access controls&hellip;</a>
+            <a class="btn btn-primary dinline-block ms-2"
+               href="{% url 'feedback_rules' %}">Feedback rules&hellip;</a>
+        </div>
+        <div class="col-2 text-end">
+            <div class="d-inline-block">
+                <form method="post"
+                      action="{% url 'rubric_upload' %}"
+                      enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input id="rubricImport"
+                           name="rubric_file"
+                           type="file"
+                           accept=".csv,.json,.toml"
+                           class="d-none"
+                           oninput="this.form.submit()" />
+                    <button class="btn btn-secondary"
+                            type="button"
+                            onclick="document.getElementById('rubricImport').click()">
+                        <i class="bi bi-box-arrow-in-left"></i> Import
+                    </button>
+                </form>
+            </div>
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-secondary dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    <i class="bi bi-box-arrow-right"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item"
+                           href="{% url 'rubric_download' %}?file_type=csv">.csv</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item"
+                           href="{% url 'rubric_download' %}?file_type=toml">.toml</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item"
+                           href="{% url 'rubric_download' %}?file_type=json">.json</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
     <div class="card my-2">
         <div class="row my-2 mx-2">
