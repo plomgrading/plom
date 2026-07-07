@@ -44,8 +44,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print('Salt string is "{}"'.format(args.salt))
     print('Number of digits is "{}"'.format(args.digits))
-    print(
-        """
+    print("""
     *** Warning: this script is "pre-alpha" software ***
 
     This script looks for "{0}", which you should
@@ -57,10 +56,7 @@ if __name__ == "__main__":
         return codes will be checked to confirm correctness.
 
     Read "docs/returning_papers.md" before using this.
-    """.format(
-            canvas_fromfile, canvas_return_tofile
-        )
-    )
+    """.format(canvas_fromfile, canvas_return_tofile))
     input("Press Enter to continue...")
 
     print()

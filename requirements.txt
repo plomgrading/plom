@@ -25,7 +25,7 @@ pytest-qt==4.5.0
 
 arrow==1.4.0
 canvasapi==3.4.0
-cryptography==48.0.1
+cryptography==48.0.1  # see comments in client about keeping this only 48 for now
 django==5.2.15
 django-braces==1.17.0
 django-filter==25.2
@@ -49,11 +49,11 @@ opencv-python-headless==4.13.0.92
 packaging==26.2
 pandas==2.3.3
 passlib==1.7.4
-Pillow==12.2.0
+Pillow==12.3.0
 plom-common==0.21.3
 psycopg[binary]==3.3.4
 pydyf==0.12.1
-pymupdf==1.27.2.3
+pymupdf==1.28.0
 PyMySQL==1.2.0
 pyyaml==6.0.3
 random-username==1.0.2

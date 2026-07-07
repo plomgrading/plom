@@ -12,7 +12,6 @@ from plom_server.Papers.services import SpecificationService
 
 from ...services import SourceService, PapersPrinted
 
-
 DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_source (Issue #3981).
     Consider using plom-cli subcommands to manipulate sources.
     This suite of Django management commands is no longer being maintained."""

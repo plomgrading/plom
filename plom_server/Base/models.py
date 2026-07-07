@@ -16,7 +16,6 @@ from django.db import models, transaction
 from django.utils import timezone
 from django_huey import get_queue
 
-
 log = logging.getLogger(__name__)
 
 

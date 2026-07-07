@@ -16,7 +16,6 @@ from plom.scan.scansToImages import (
     processFileToBitmaps,
 )
 
-
 white = (255, 255, 255)
 
 

@@ -14,7 +14,6 @@ import pymupdf
 from plom.finish import __version__
 from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
 
-
 # hardcoded for letter, https://gitlab.com/plom/plom/issues/276
 papersize_portrait = (612, 792)
 papersize_landscape = (792, 612)

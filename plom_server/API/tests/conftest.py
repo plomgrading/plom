@@ -19,7 +19,6 @@ from plom_server.Base.models import User
 from plom_server.Papers.models import Paper
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plom_server.settings")
 django.setup()
 

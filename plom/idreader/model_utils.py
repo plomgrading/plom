@@ -15,7 +15,6 @@ import shutil
 from huggingface_hub import hf_hub_download  # type: ignore
 import onnxruntime as ort  # type: ignore
 
-
 CNN_MODEL_FILENAME = "mnist_emnist_blank_cnn_v1.onnx"
 
 HF_REPO_ID = "deepshah23/digit-blank-classifier-cnn"

@@ -39,7 +39,6 @@ from plom_server.Scan.services import ManageScanService
 from ..models import ReassemblePaperChore
 from .student_marks_service import StudentMarkService
 
-
 log = logging.getLogger(__name__)
 
 

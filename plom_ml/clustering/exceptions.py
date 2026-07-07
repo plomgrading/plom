@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 """Exceptions for clustering module."""
+
 from plom_ml.exceptions import PlomMLException
 
 

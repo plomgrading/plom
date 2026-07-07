@@ -110,9 +110,7 @@
                             {% for paper_number, info in pqv_table.items %}
                                 <tr>
                                     <td>{{ paper_number }}</td>
-                                    <td>
-                                        {% if info.prename %}{{ info.prename.0 }}: {{ info.prename.1 }}{% endif %}
-                                    </td>
+                                    <td>{% if info.prename %}{{ info.prename.0 }}: {{ info.prename.1 }}{% endif %}</td>
                                     <td>{{ info.id_ver }}</td>
                                     {% for x in info.qvlist %}<td>{{ x }}</td>{% endfor %}
                                 </tr>

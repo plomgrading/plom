@@ -112,7 +112,7 @@ class UpdatePDFTable(PDFTableView):
 class GetPDFFile(ManagerRequiredView):
     def get(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         try:
-            (pdf_filename, pdf_bytes) = (
+            pdf_filename, pdf_bytes = (
                 BuildPapersService.get_paper_recommended_name_and_bytes(paper_number)
             )
         except ValueError:

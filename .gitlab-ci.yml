@@ -172,7 +172,7 @@ djlint:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.36.4
+    - pip install djlint~=1.40.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -181,7 +181,7 @@ djlint-check:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.36.4
+    - pip install djlint~=1.40.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
@@ -315,7 +315,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=25.12.0"
+    - pip3 install "black~=26.5.1"
   script:
     - black --check --diff .
   allow_failure: true
@@ -336,7 +336,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.13.4
+    - pip install pytest pytest-cov coverage[toml]~=7.15.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -393,7 +393,7 @@ pylint:
   image: $IM
   before_script:
     - pip install astroid~=4.1.2  # codespell:ignore astroid
-    - pip install pylint~=4.0.5
+    - pip install pylint~=4.0.6
   script:
     - pylint plom
     - pylint plom_server
@@ -426,7 +426,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.408
+    - pip install pyright~=1.1.411
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -450,7 +450,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.10
+    - pip install ruff~=0.15.20
   script:
     - ruff check .
     # ruff format .
@@ -461,7 +461,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.15.10
+    - pip install ruff~=0.15.20
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -471,7 +471,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 635 ]]"
+    - bash -c "[[ $HOWMANY -le 575 ]]"
   allow_failure: true
 
 
@@ -528,7 +528,7 @@ eslint:
   image: node:24
   stage: static_analysis
   script:
-    - npm install eslint@10.2.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
+    - npm install eslint@10.6.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
     - npx eslint plom_server/**/*.js
 
 
@@ -537,7 +537,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.13.5
+    - pip install coverage~=7.15.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -561,7 +561,7 @@ webplom_api_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.13.5
+    - pip install coverage~=7.15.0
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD

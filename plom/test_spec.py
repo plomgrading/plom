@@ -16,7 +16,6 @@ else:
 
 from plom.spec_verifier import SpecVerifier, get_question_label
 
-
 raw = SpecVerifier.demo().spec
 
 
