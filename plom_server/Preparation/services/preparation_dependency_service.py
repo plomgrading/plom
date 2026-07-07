@@ -23,18 +23,12 @@ from plom.common.exceptions import PlomDependencyConflict
 # 1/2 = the spec depends on nothing, but QVMap depends on the spec
 def assert_can_modify_spec():
     from plom_server.Papers.services import PaperInfoService
-    from . import PapersPrinted, SourceService
+    from . import PapersPrinted
 
     # cannot modify spec if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict(
             "Cannot modify spec because papers have been printed."
-        )
-    # if any sources uploaded, then cannot modify spec.
-    if SourceService.how_many_source_versions_uploaded() > 0:
-        raise PlomDependencyConflict(
-            "Cannot modify spec because source PDFs "
-            "for your assessment have been uploaded."
         )
     # cannot modify spec if there is a QVmap (e.g., change number of questions)
     # TODO: in theory, we could allow finer-grained edits, such as points.
