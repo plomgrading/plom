@@ -350,9 +350,6 @@ def store_reference_images(source_version: int):
     Uses the exam mocker to put qr codes stamps in correct pages.
     Then stores the images with that qr-code information.
     """
-    # I think we just need to stamp the QR codes on the pages
-    # this function doesn't (necessarily) need the spec
-    # TODO: "spec=False" flag to prevent spec checking
     mock_exam_pdf_bytes = ExamMockerService.mock_exam(source_version)
     doc = pymupdf.Document(stream=mock_exam_pdf_bytes)
 
