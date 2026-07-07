@@ -444,7 +444,7 @@ class UploadRubricView(ManagerRequiredView):
             RubricService.create_rubrics_from_file_data(
                 data_string, suffix, requesting_user=username
             )
-        except (ValueError, tomllib.TOMLDecodeError) as e:
+        except (ValueError, tomllib.TOMLDecodeError, PlomConflict) as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:
             # Not sure the "right way" to render a ValidationError:

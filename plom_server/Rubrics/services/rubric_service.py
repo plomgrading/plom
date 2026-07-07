@@ -1462,6 +1462,8 @@ class RubricService:
             tomllib.TOMLDecodeError: invalid toml.
             PermissionDenied: username not allowed to make rubrics.
             serializers.ValidationError: rubric data is invalid.
+            PlomConflict: one or more of the rubrics collided with
+                Rubrics already in the system.
             KeyError: TODO, what should happen if no user specified?
                 See also TODO in the create code.
         """
