@@ -393,7 +393,14 @@ class FeedbackRulesView(ManagerRequiredView):
 
 
 class DownloadRubricView(ManagerRequiredView):
+    """Handles the downloading of files full of rubrics."""
+
     def get(self, request: HttpRequest):
+        """Get to download a file containing all or some of the rubrics.
+
+        Query parameters in the URL control what file type we would like
+        and whether to filter on a specific question index.
+        """
         service = RubricService()
         question = request.GET.get("question_filter")
         filetype = request.GET.get("file_type")
@@ -472,7 +479,13 @@ class UploadRubricView(ManagerRequiredView):
 
 
 class DownloadRubricTemplateView(ManagerRequiredView):
+    """Handles downloading an example template of what a file of rubrics should look like.
+
+    Currently unused but the UI used to offer such a download to help users.
+    """
+
     def get(self, request: HttpRequest):
+        """Get downloads an example template of what a file of rubrics should look like."""
         service = RubricService()
         question = request.GET.get("question_filter")
         filetype = request.GET.get("file_type")
