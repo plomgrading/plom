@@ -466,7 +466,7 @@ class RubricService:
             # could potentially allow blank rid...
             raise serializers.ValidationError(
                 'Data for creating a new rubric must not have a "rid" column,'
-                f' but this has {incoming_data.get("rid")}'
+                f' but this has rid={incoming_data.get("rid")}'
             )
 
         # some mangling because client still uses "question"
