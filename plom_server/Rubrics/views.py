@@ -20,7 +20,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.utils.translation import ngettext as _n
+from django.utils.translation import ngettext
 from django.views.generic.edit import UpdateView
 from rest_framework import serializers
 
@@ -462,12 +462,11 @@ class UploadRubricView(ManagerRequiredView):
             N = len(rubrics)
             messages.success(
                 request,
-                _n(
-                    "Successfully uploaded %d rubric from file",
-                    "Successfully uploaded %d rubrics from file",
+                ngettext(
+                    "Successfully uploaded {count} rubric from file",
+                    "Successfully uploaded {count} rubrics from file",
                     N,
-                )
-                % N,
+                ).format(count=N),
             )
         return redirect("rubrics_landing")
 
