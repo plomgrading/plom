@@ -387,3 +387,22 @@ def _get_reference_image_file(source_version: int, page_number: int) -> File:
     return ReferenceImage.objects.get(
         version=source_version, page_number=page_number
     ).image_file
+
+
+def get_reference_images_as_list(source_version: int) -> list[File]:
+    """Return the reference images for a particular version as Django-files.
+
+    Args:
+        source_version: which source version.
+
+    Returns:
+        A list of file abstractions, not for use outside Django.
+
+    Raises:
+        ObjectDoesNotExist: not yet uploaded or out of range.
+    """
+    reference_images_queryset = ReferenceImage.objects.filter(
+        version=source_version
+    ).order_by("page_number")
+    # values_list doesn't work on imagefield, so we iterate normally
+    return [ref.image_file for ref in reference_images_queryset]

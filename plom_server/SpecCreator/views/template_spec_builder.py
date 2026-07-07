@@ -5,9 +5,6 @@
 
 from io import BytesIO
 
-import pymupdf
-
-from django.contrib import messages
 from django.core.files import File
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -15,7 +12,10 @@ from django.shortcuts import render, redirect
 from plom_server.Base.base_group_views import ManagerRequiredView
 
 from ..services import TemplateSpecBuilderService, GUISpecBuilderService
-from plom_server.Preparation.services.SourceService import take_source_from_upload
+from plom_server.Preparation.services.SourceService import (
+    take_source_from_upload,
+    delete_source_pdf,
+)
 
 
 class TemplateSpecBuilderView(ManagerRequiredView):
@@ -77,7 +77,7 @@ class TemplateSpecBuilderView(ManagerRequiredView):
 
 
 class GUISpecBuilderView(ManagerRequiredView):
-    """Create a test specification toml via a GUI."""
+    """Create a test specification via a GUI."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
@@ -91,22 +91,16 @@ class GUISpecBuilderView(ManagerRequiredView):
         with source_pdf.open("rb") as fh:
             file_bytes = fh.read()
         pdf_file = File(BytesIO(file_bytes), name="random_name.pdf")
-        # WIP: we get "Version 1 is out of range"
+
+        # TODO: don't just delete the source every time
+        delete_source_pdf(1)
         take_source_from_upload(1, pdf_file)
 
-        try:
-            image_bytes_list = GUISpecBuilderService.extract_images_from_django_pdf(
-                source_pdf
-            )
-        except pymupdf.FileDataError:
-            err_msg = f"Couldn't open '{source_pdf._name}' as a .pdf file"
-            messages.add_message(request, messages.ERROR, err_msg)
-            return render(request, "SpecCreator/gui_spec_builder.html", context)
+        image_bytes_list = GUISpecBuilderService.get_source_file_images_as_base64_str(1)
 
         image_b64_dict = {}
-        for index, img in enumerate(image_bytes_list):
-            image_b64 = GUISpecBuilderService.convert_png_bytes_to_base64_str(img)
-            image_b64_dict.update({index + 1: image_b64})
+        for index, img_b64 in enumerate(image_bytes_list):
+            image_b64_dict.update({index + 1: img_b64})
         context.update(
             {
                 "pdf_image_dict": image_b64_dict,
