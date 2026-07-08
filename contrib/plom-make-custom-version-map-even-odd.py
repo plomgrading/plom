@@ -19,7 +19,6 @@ from math import remainder
 
 from plom.version_maps import version_map_to_csv
 
-
 if __name__ == "__main__":
     num_questions = 5
 

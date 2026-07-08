@@ -46,8 +46,7 @@ def texFragmentToPNG(fragment: str, *, dpi: int = 225) -> tuple[bool, bytes | st
     Raises:
         Not expected to raise any exceptions.
     """
-    head = dedent(
-        r"""
+    head = dedent(r"""
         \documentclass[12pt]{article}
         \usepackage[letterpaper, textwidth=5in]{geometry}
         \usepackage{amsmath, amsfonts}
@@ -57,16 +56,13 @@ def texFragmentToPNG(fragment: str, *, dpi: int = 225) -> tuple[bool, bytes | st
         \begin{preview}
         \color{red}
         %
-        """
-    ).lstrip()
+        """).lstrip()
 
-    foot = dedent(
-        r"""
+    foot = dedent(r"""
         %
         \end{preview}
         \end{document}
-        """
-    ).lstrip()
+        """).lstrip()
 
     tex = head + fragment + "\n" + foot
 

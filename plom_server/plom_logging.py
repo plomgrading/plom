@@ -10,7 +10,6 @@ import plom_server as _plom_server_base
 
 import yaml
 
-
 # The locations of the .yaml config files relative to this file
 PROD_CONFIG_FILE = "log_config_prod.yaml"
 DEV_CONFIG_FILE = "log_config_dev.yaml"

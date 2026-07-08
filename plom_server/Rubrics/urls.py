@@ -11,7 +11,6 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
     path("", views.RubricLandingPageView.as_view(), name="rubrics_landing"),
     path("admin/", views.RubricAdminPageView.as_view(), name="rubrics_admin"),

@@ -6,7 +6,6 @@
 Contains all services related to question clustering app.
 """
 
-
 from .question_clustering_service import (
     QuestionClusteringJobService,
     QuestionClusteringService,

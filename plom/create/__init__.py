@@ -15,7 +15,6 @@ from pathlib import Path
 from plom.common import Default_Port
 from plom.misc_version import __version__
 
-
 paperdir = Path("papersToPrint")
 
 from .start_messenger import start_messenger, with_manager_messenger
@@ -40,7 +39,6 @@ from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_fil
 
 from .scribble_utils import make_scribbles
 from .scribble_hw_utils import make_hw_scribbles
-
 
 # what you get from "from plom.create import *"
 __all__ = [

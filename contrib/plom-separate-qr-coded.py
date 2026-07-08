@@ -28,7 +28,6 @@ from zxingcpp import read_barcodes, BarcodeFormat
 
 from plom.scan.scansToImages import processFileToBitmaps
 
-
 try:
     micro = BarcodeFormat.MicroQRCode
 except AttributeError:

@@ -106,13 +106,11 @@ def test_csv_cantfind_return_code():
 
 def test_csv_studentnum_too_long():
     # UBC specific?
-    infile = StringIO(
-        """Student,SIS User ID,Return Code ()
+    infile = StringIO("""Student,SIS User ID,Return Code ()
 ,,
 ,,
 John Smith,12345678910,
-"""
-    )
+""")
     outfile = StringIO("")
     raises(
         AssertionError,
@@ -121,14 +119,12 @@ John Smith,12345678910,
 
 
 def test_csv_empty_student_name():
-    infile = StringIO(
-        """Student,SIS User ID,Return Code ()
+    infile = StringIO("""Student,SIS User ID,Return Code ()
 ,,
 ,,
 John Smith,12345678,
 ,12348888,
-"""
-    )
+""")
     outfile = StringIO("")
     raises(
         AssertionError,
@@ -137,11 +133,9 @@ John Smith,12345678,
 
 
 def test_csv_missing_header_rows():
-    infile = StringIO(
-        """Student,SIS User ID,Return Code ()
+    infile = StringIO("""Student,SIS User ID,Return Code ()
 John Smith,12345678,
-"""
-    )
+""")
     outfile = StringIO("")
     raises(
         AssertionError,

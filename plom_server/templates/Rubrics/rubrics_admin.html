@@ -92,7 +92,7 @@
     </div>
     <div class="card m-2">
         <div class="card-header">
-            <h5 class="card-title">Upload and download rubrics</h5>
+            <h5 class="card-title">Download rubrics</h5>
         </div>
         <div class="card-body">
             <form method="get" action={% url 'rubric_download' %} class="form-inline">
@@ -103,55 +103,6 @@
                 </div>
             </form>
             <p>Download current rubrics into a file.</p>
-            <form method="post"
-                  action="{% url 'rubric_upload' %}"
-                  class="form-inline"
-                  enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="form-group mr-2">
-                    <button type="submit" class="btn btn-success mt-1" name="rubric_upload">Upload rubrics</button>
-                    {{ rubric_upload_form }}
-                </div>
-            </form>
-            <p>
-                Upload rubrics from .csv, .toml, or .json file (beta!). <a href="#"
-    class="text-primary"
-    data-bs-toggle="modal"
-    data-bs-target="#rubricTemplateModal">Download template</a>
-            </p>
-            <div class="modal fade"
-                 id="rubricTemplateModal"
-                 tabindex="-1"
-                 role="dialog"
-                 aria-labelledby="rubricTemplateModalLabel"
-                 aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="rubricTemplateModalLabel">Download Template Rubric</h5>
-                            <button type="button"
-                                    class="btn-close"
-                                    data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="get" action="{% url 'rubric_template_download' %}">
-                                <div class="form-group mb-2">
-                                    {{ rubric_template_form.question_filter.label_tag }}
-                                    {{ rubric_template_form.question_filter }}
-                                </div>
-                                <div class="form-group mb-3">
-                                    {{ rubric_template_form.file_type.label_tag }}
-                                    {{ rubric_template_form.file_type }}
-                                </div>
-                                <div class="d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-success me-2">Download</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 {% endblock main_content %}

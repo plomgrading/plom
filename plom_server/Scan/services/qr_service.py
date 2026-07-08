@@ -136,7 +136,7 @@ class QRService:
                     # this indicates a collision, and so handled by error-images
                     continue
                 img = StagingImage.objects.get(pk=img_list[0])
-                (papernum, page_number, version) = parse_paper_page_version(tpv)
+                papernum, page_number, version = parse_paper_page_version(tpv)
                 img.paper_number = papernum
                 img.page_number = page_number
                 img.version = version

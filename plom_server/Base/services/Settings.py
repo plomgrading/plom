@@ -11,7 +11,6 @@ from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 from ..models import SettingsModel
 
-
 # If no value is set in the database, we use defaults recorded here
 default_settings = {
     "task_order_strategy": "paper_number",

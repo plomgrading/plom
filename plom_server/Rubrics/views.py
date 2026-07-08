@@ -20,6 +20,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.utils.translation import ngettext
 from django.views.generic.edit import UpdateView
 from rest_framework import serializers
 
@@ -36,10 +37,8 @@ from .forms import (
     RubricCreateHalfMarkForm,
     RubricDiffForm,
     RubricFilterForm,
-    RubricUploadForm,
     RubricDownloadForm,
     RubricItemForm,
-    RubricTemplateDownloadForm,
 )
 from .tables import RubricTable
 
@@ -56,8 +55,6 @@ class RubricAdminPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_admin.html"
         rubric_create_halfmark_form = RubricCreateHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
-        upload_form = RubricUploadForm()
-        template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
         rubric_fractional_options = RubricPermissionsService.get_fractional_settings(
             all_rows=False
@@ -68,8 +65,6 @@ class RubricAdminPageView(ManagerRequiredView):
                 "rubric_fractional_options": rubric_fractional_options,
                 "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,
-                "rubric_upload_form": upload_form,
-                "rubric_template_form": template_form,
             }
         )
         return render(request, template_name, context=context)
@@ -398,7 +393,14 @@ class FeedbackRulesView(ManagerRequiredView):
 
 
 class DownloadRubricView(ManagerRequiredView):
+    """Handles the downloading of files full of rubrics."""
+
     def get(self, request: HttpRequest):
+        """Get to download a file containing all or some of the rubrics.
+
+        Query parameters in the URL control what file type we would like
+        and whether to filter on a specific question index.
+        """
         service = RubricService()
         question = request.GET.get("question_filter")
         filetype = request.GET.get("file_type")
@@ -447,11 +449,13 @@ class UploadRubricView(ManagerRequiredView):
         try:
             # TODO: note that this overrides whatever users are in the file
             # with the calling user.  Is that intentional?
-            RubricService.create_rubrics_from_file_data(
+            rubrics = RubricService.create_rubrics_from_file_data(
                 data_string, suffix, requesting_user=username
             )
         except (ValueError, tomllib.TOMLDecodeError) as e:
-            messages.error(request, f"Error: {e}")
+            messages.error(request, f"File error: {e}")
+        except PlomConflict as e:
+            messages.error(request, f"Rubric error: {e}")
         except serializers.ValidationError as e:
             # Not sure the "right way" to render a ValidationError:
             # If we use {e} like for ValueError above, it renders like this:
@@ -460,14 +464,28 @@ class UploadRubricView(ManagerRequiredView):
             #    Error: invalid row in "parameters"...
             # See also API/views/utils.py which does a similar hack.
             (nicer_err_msgs,) = e.args
-            messages.error(request, f"Error: {nicer_err_msgs}")
+            messages.error(request, f"Rubric error: {nicer_err_msgs}")
         else:
-            messages.success(request, "Rubric file uploaded successfully.")
-        return redirect("rubrics_admin")
+            N = len(rubrics)
+            messages.success(
+                request,
+                ngettext(
+                    "Successfully uploaded {count} rubric from file",
+                    "Successfully uploaded {count} rubrics from file",
+                    N,
+                ).format(count=N),
+            )
+        return redirect("rubrics_landing")
 
 
 class DownloadRubricTemplateView(ManagerRequiredView):
+    """Handles downloading an example template of what a file of rubrics should look like.
+
+    Currently unused but the UI used to offer such a download to help users.
+    """
+
     def get(self, request: HttpRequest):
+        """Get downloads an example template of what a file of rubrics should look like."""
         service = RubricService()
         question = request.GET.get("question_filter")
         filetype = request.GET.get("file_type")

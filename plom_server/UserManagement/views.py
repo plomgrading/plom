@@ -33,7 +33,6 @@ from .services import QuotaService
 from .services.UsersService import delete_user, get_list_of_user_info
 from .models import Quota
 
-
 log = logging.getLogger(__name__)
 
 

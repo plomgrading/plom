@@ -20,7 +20,6 @@ from plom_server.Papers.models import Paper, FixedPage
 from plom_server.Papers.services import PaperInfoService
 from plom.scan import rotate
 
-
 log = logging.getLogger(__name__)
 
 

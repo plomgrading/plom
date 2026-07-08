@@ -42,7 +42,6 @@ from plom_server.Rectangles.services import RectangleExtractor
 from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
 
-
 # the default certainty of prenaming predictions
 _default_prenaming_prediction_confidence = 0.9
 

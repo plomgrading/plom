@@ -80,7 +80,6 @@ from plom.common import (
 from plom.cli import start_messenger
 from plom.common.exceptions import PlomException
 
-
 # bump this a bit if you change this script
 __script_version__ = "0.6.4"
 __DEBUG__ = True

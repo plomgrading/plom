@@ -27,7 +27,6 @@ from plom_server.Papers.models import Paper
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.QuestionClustering.models import ClusteringModelType
 
-
 # plom_server services
 from plom_server.Mark.services.marking_task_service import MarkingTaskService
 from plom_server.Mark.services import MarkingPriorityService

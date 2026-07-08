@@ -130,10 +130,17 @@
 			  }
         </style>
         <script>
-				// https://getbootstrap.com/docs/5.3/components/tooltips
+			// https://getbootstrap.com/docs/5.3/components/tooltips
 			// create all tooltips when page is initially loaded
 				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 				const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+		        // do stuff after all the content on the page has loaded (not necessarily rendered)
+			document.addEventListener("DOMContentLoaded", (event) => {
+				let sliderValue = localStorage.getItem("thumbnailSizeSliderValue");
+				if (sliderValue !== null)
+					setSlider(sliderValue);
+			});
 
 			// iterate over the thumbnail containers and decide which to show/hide
 			// important to keep track of different None/none/null references between html, js, py
@@ -205,15 +212,22 @@
 				thumbnailImages.forEach(img => {
 					img.style.width = newWidth*0.7 + "ch";
 				})
+				localStorage.setItem("thumbnailSizeSliderValue", newWidth);
 			}
 			function resizeThumbnailContainer(index) {
 				var thumbnailImage = document.getElementById("thumbnailimg-" + index);
 				var slider = document.getElementById('thumbnailResizeSlider');
 				thumbnailImage.style.width = slider.value*0.7 + "ch";
+				localStorage.setItem("thumbnailSizeSliderValue", slider.value);
 			}
 			function tickSlider(valueChange) {
 				var slider = document.getElementById('thumbnailResizeSlider');
 				slider.value = parseFloat(slider.value) + parseFloat(slider.step)*valueChange;
+				resizeThumbnailContainers(slider.value);
+			}
+			function setSlider(sliderValue) {
+				var slider = document.getElementById('thumbnailResizeSlider');
+				slider.value = sliderValue;
 				resizeThumbnailContainers(slider.value);
 			}
         </script>

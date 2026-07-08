@@ -26,7 +26,6 @@ from .views import (
     CancelQueuedBuildSoln,
 )
 
-
 urlpatterns = [
     path(
         "marking_info/marks_download/",
