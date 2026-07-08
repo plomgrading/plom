@@ -25,9 +25,10 @@ include plom/create/extra_pages_src.tex
 include plom/create/scrap_paper_src.tex
 include plom/scan/test_zbar_fails.png
 include plom/scan/test_rgb.png
-include plom/test*.png
-include plom/latexTemplate.tex
-include plom/latexTemplatev2.tex
+include plom/textools/test*.png
+include plom/textools/latexTemplate.tex
+include plom/textools/latexTemplatev2.tex
+include plom/textools/idBox4.pdf
 include plom/idBox2.pdf
 include plom/idBox4.pdf
 
