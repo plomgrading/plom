@@ -62,6 +62,14 @@ class SourceServiceTests(TestCase):
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 0)
 
+    def test_list_source_pdfs_without_spec(self) -> None:
+        """The source list should always include version 1."""
+        # notice that we haven't uploaded a spec for this test
+        source_list = SourceService.get_list_of_sources()
+        self.assertEqual(1, len(source_list))
+        self.assertEqual(1, source_list[0]["version"])
+        self.assertFalse(source_list[0]["uploaded"])
+
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_checks(self) -> None:
         # we explicitly **unset** papers-printed for testing purposes
@@ -173,6 +181,48 @@ class SourceServiceTests(TestCase):
         with self.assertRaises(ValueError):
             SourceService.get_source_as_bytes(2)
         SourceService.delete_source_pdf(1)
+
+    def test_upload_source_version1_in_range_before_spec(self) -> None:
+        """If there's no spec, source version 1 should be upload-able."""
+        pdf = resources.files(useful_files) / "test_version1.pdf"
+        with pdf.open("rb") as f:
+            # using f directly will fail - f.name includes path elements
+            django_file = SimpleUploadedFile(
+                name="test_version1.pdf",
+                content=f.read(),
+                content_type="application/pdf",
+            )
+            SourceService.take_source_from_upload(1, django_file)
+        source_info = SourceService.get_source_info(1)
+        self.assertTrue(source_info["uploaded"])
+
+    def test_upload_source_version2_out_of_range_before_spec(self) -> None:
+        """If there's no spec, source version 2 shouldn't be upload-able."""
+        pdf = resources.files(useful_files) / "test_version2.pdf"
+        with pdf.open("rb") as f:
+            # using f directly will fail - f.name includes path elements
+            django_file = SimpleUploadedFile(
+                name="test_version1.pdf",
+                content=f.read(),
+                content_type="application/pdf",
+            )
+            with self.assertRaisesRegex(ValueError, "out of range"):
+                SourceService.take_source_from_upload(2, django_file)
+        source_info = SourceService.get_source_info(2)
+        self.assertFalse(source_info["uploaded"])
+
+    def test_upload_source_odd_pages_fails(self) -> None:
+        """The server shouldn't accept source with an odd page count."""
+        pdf = resources.files(useful_files) / "test_version1_5pages.pdf"
+        with pdf.open("rb") as f:
+            # using f directly will fail - f.name includes path elements
+            django_file = SimpleUploadedFile(
+                name="test_version1_5pages.pdf",
+                content=f.read(),
+                content_type="application/pdf",
+            )
+            with self.assertRaisesRegex(ValueError, "must have an even"):
+                SourceService.take_source_from_upload(1, django_file)
 
     def test_source_check_duplicates(self) -> None:
         duplicates = SourceService.check_pdf_duplication()
