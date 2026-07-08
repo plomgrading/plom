@@ -196,16 +196,6 @@ def get_the_spec() -> dict:
     return data
 
 
-def get_example_spec(*, n_pages: int) -> dict:
-    """Return an example assessment specification.
-
-    Keyword Args:
-        n_pages: the number of pages in the assessment.
-    """
-    raise NotImplementedError("TODO - get_example_spec hasn't been implemented yet")
-    return {}
-
-
 def get_the_spec_as_toml(*, _include_private_seed: bool = False) -> str:
     """Return the specification from the database.
 
