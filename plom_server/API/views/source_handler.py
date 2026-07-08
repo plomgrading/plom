@@ -87,7 +87,7 @@ class SourceDetail(APIView):
 
     # POST /api/v0/source/<int:version>
     def post(self, request: Request, *, version: int) -> Response:
-        """Create, replace, or delete a source version.
+        """Create, or replace a source version.
 
         Args:
             request: An HTTP request in which the numbered spec is embedded in the FILES dict.
@@ -122,13 +122,7 @@ class SourceDetail(APIView):
                 "No source PDF supplied.", status.HTTP_400_BAD_REQUEST
             )
 
-        n_versions = SpecificationService.get_n_versions()
-        if version < 1 or version > n_versions:
-            return _error_response(
-                f"Source version number {version} is out of range [1, {n_versions}].",
-                status.HTTP_409_CONFLICT,
-            )
-
+        # TODO: POST vs PUT ? I think POST shouldn't overwrite(?)
         SourceService.delete_source_pdf(version)
 
         source_pdf = request.FILES["source_pdf"]

@@ -254,9 +254,12 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
     # TODO: probably put this in preparation dependency service, per circular imports
     version_one = version == 1
     # this is lazy, won't evaluate if version is 1
-    version_in_spec = version in SpecificationService.get_list_of_versions()
+    versions_list = SpecificationService.get_list_of_versions()
+    version_in_spec = version in versions_list
     if not version_one and not version_in_spec:
-        raise ValueError(f"Version {version} is out of range")
+        raise ValueError(
+            f"Version {version} is out of range. Acceptable versions are: {versions_list or [1]}"
+        )
     # save the file to a temp directory
     # TODO - size limits please
     with tempfile.TemporaryDirectory() as td:
