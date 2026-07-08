@@ -665,20 +665,25 @@ def run_the_auto_id_reader():
 def _ensure_client_available():
     try:
         # tell MyPy to ignore this for testing
-        import plomclient  # type: ignore[import-not-found]
-        from plomclient.client import __version__ as clientversion  # type: ignore
+        from plom.client import __version__ as clientversion  # type: ignore
     except ImportError as err:
-        print("*" * 64)
-        print()
+        # We should be able to delete this "plomclient" try-except-else in say 2027 or so
+        try:
+            from plomclient.client import __version__ as clientversion  # type: ignore
+        except ImportError:
+            pass
+        else:
+            raise RuntimeError(
+                "The randoiding and randomarking utilities depend on plom-client,"
+                f" which is installed but is too old: {clientversion}\n"
+                "Either upgrade plom-client, or stop the demo earlier."
+            ) from None
         raise RuntimeError(
             "The randoiding and randomarking utilities depend on plom-client, "
             f"which is not installed:\n  {err}.\n"
             "Either install plom-client, or stop the demo earlier."
         ) from None
-    print(
-        f"Good we have plom-client installed, version {clientversion},"
-        f" found at {plomclient}"
-    )
+    print(f"Good, we have plom-client installed, version {clientversion}")
 
 
 def run_the_randoider(*, port):
@@ -695,7 +700,7 @@ def run_the_randoider(*, port):
         ("demoMarker1", "demoMarker1"),
     ]
 
-    cmd = f"python3 -m plomclient.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
+    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
     print(f"RandoIDing!  calling: {cmd}")
     subprocess.check_call(split(cmd))
 
@@ -720,7 +725,7 @@ def run_the_randomarker(*, port, half_marks=False):
 
     randomarker_processes = []
     for X in users[1:]:
-        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
         if half_marks:
             cmd += " --allow-half"
         print(f"RandoMarking!  calling: {cmd}")
@@ -743,7 +748,7 @@ def run_the_randomarker(*, port, half_marks=False):
 
     # now a final run to do any remaining tasks
     for X in users[:1]:
-        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100"
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd))
 
