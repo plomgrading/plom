@@ -3,20 +3,14 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
-from io import BytesIO
-
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 
 from ..services import TemplateSpecBuilderService, GUISpecBuilderService
-from plom_server.Preparation.services.SourceService import (
-    take_source_from_upload,
-    delete_source_pdf,
-)
+from plom_server.Preparation.services.SourceService import get_source_info
 
 
 class TemplateSpecBuilderView(ManagerRequiredView):
@@ -84,6 +78,8 @@ class GUISpecBuilderView(ManagerRequiredView):
         context = self.build_context()
         SOURCE_VERSION = 1
 
+        source = get_source_info(SOURCE_VERSION)
+
         image_b64_dict = {}
         try:
             image_bytes_list = (
@@ -97,38 +93,9 @@ class GUISpecBuilderView(ManagerRequiredView):
             pass
         context.update(
             {
+                "source": source,
                 "pdf_image_dict": image_b64_dict,
             }
         )
 
-        return render(request, "SpecCreator/gui_spec_builder.html", context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        source_pdf = request.FILES["source_pdf"]
-        original_filename = source_pdf.name
-        SOURCE_VERSION = 1
-
-        # We can only read the user provided file once, so make an internal
-        # copy of this file for various services to read through.
-        with source_pdf.open("rb") as fh:
-            file_bytes = fh.read()
-        pdf_file = File(BytesIO(file_bytes), name=original_filename)
-
-        # TODO: don't just delete the source every time
-        delete_source_pdf(SOURCE_VERSION)
-        take_source_from_upload(SOURCE_VERSION, pdf_file)
-
-        image_bytes_list = GUISpecBuilderService.get_source_file_images_as_base64_str(
-            SOURCE_VERSION
-        )
-
-        image_b64_dict = {}
-        for index, img_b64 in enumerate(image_bytes_list):
-            image_b64_dict.update({index + 1: img_b64})
-        context.update(
-            {
-                "pdf_image_dict": image_b64_dict,
-            }
-        )
         return render(request, "SpecCreator/gui_spec_builder.html", context)
