@@ -667,8 +667,17 @@ def _ensure_client_available():
         # tell MyPy to ignore this for testing
         from plom.client import __version__ as clientversion  # type: ignore
     except ImportError as err:
-        print("*" * 64)
-        print()
+        # We should be able to delete this "plomclient" try-except-else in say 2027 or so
+        try:
+            from plomclient.client import __version__ as clientversion  # type: ignore
+        except ImportError:
+            pass
+        else:
+            raise RuntimeError(
+                "The randoiding and randomarking utilities depend on plom-client,"
+                f" which is installed but is too old: {clientversion}\n"
+                "Either upgrade plom-client, or stop the demo earlier."
+            ) from None
         raise RuntimeError(
             "The randoiding and randomarking utilities depend on plom-client, "
             f"which is not installed:\n  {err}.\n"
