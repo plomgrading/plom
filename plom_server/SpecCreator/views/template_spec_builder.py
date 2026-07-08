@@ -106,12 +106,14 @@ class GUISpecBuilderView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         source_pdf = request.FILES["source_pdf"]
+        original_filename = source_pdf.name
         SOURCE_VERSION = 1
 
-        # make an internal copy of this file
+        # We can only read the user provided file once, so make an internal
+        # copy of this file for various services to read through.
         with source_pdf.open("rb") as fh:
             file_bytes = fh.read()
-        pdf_file = File(BytesIO(file_bytes), name="random_name.pdf")
+        pdf_file = File(BytesIO(file_bytes), name=original_filename)
 
         # TODO: don't just delete the source every time
         delete_source_pdf(SOURCE_VERSION)
