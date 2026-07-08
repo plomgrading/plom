@@ -16,8 +16,6 @@
 include CONTRIBUTORS CHANGELOG.md Containerfile LICENSE.md doc
 include requirements.txt
 
-include plom/templateTestSpec.toml
-include plom/templateSolutionSpec.toml
 include plom/create/digits.json
 include plom/demo_rubrics.toml
 include plom/create/extra_pages_src.tex
