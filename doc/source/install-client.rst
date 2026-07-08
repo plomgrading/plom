@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2021-2023, 2025 Colin B. Macdonald
+   Copyright (C) 2021-2023, 2025-2026 Colin B. Macdonald
    Copyright (C) 2024 Bryan
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -107,4 +107,4 @@ To launch Plom Client, open the terminal and type::
 
 or::
 
-  python3 -m plomclient.client
+  python3 -m plom.client

@@ -110,11 +110,9 @@ class ScannerReassignView(ManagerRequiredView):
                         """<span class="alert alert-danger">At least one question</span>"""
                     )
             else:
-                return HttpResponse(
-                    """<span class="alert alert-danger">
+                return HttpResponse("""<span class="alert alert-danger">
                         Unexpected radio choice: this is a bug; please file an issue!
-                    </span>"""
-                )
+                    </span>""")
 
             try:
                 ManageDiscardService()._assign_discard_page_to_mobile_page(

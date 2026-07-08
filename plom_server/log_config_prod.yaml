@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Aidan Murphy
+
+version: 1
+formatters:
+  prepend_time:
+    "()": django.utils.log.ServerFormatter
+    # The process is important for huey
+    format: "%(asctime)s [%(process)d] %(levelname)s %(name)s: %(message)s"
+handlers:
+  console:
+    level: INFO
+    class: logging.StreamHandler
+    formatter: prepend_time
+  file:
+    level: INFO
+    # This isn't thread safe, i.e., logs will overwrite each other under
+    # if gunicorn has a heavy request load
+    class: logging.handlers.RotatingFileHandler
+    filename: TO_BE_REPLACED
+    formatter: prepend_time
+    maxBytes: 10485760
+    backupCount: 3
+# many built-in options offered by Django
+# https://docs.djangoproject.com/en/6.0/ref/logging/#loggers
+loggers:
+  # show 400/500 code responses and server errors
+  django.request:
+    handlers:
+    - console
+    - file
+    propagate: false
+    level: INFO
+  # show suspicious operations
+  django.security:
+    handlers:
+    - console
+    - file
+    propagate: false
+    level: INFO
+  # show log messages in plom_server applications
+  plom_server:
+    handlers:
+    - console
+    - file
+    level: INFO
+  # show log messages for the "launcher" scripts
+  launcher:
+    handlers:
+    - console
+    - file
+    level: INFO
+  # This overrides a default logger for huey
+  huey:
+    handlers:
+    - console
+    - file
+    propagate: true
+    level: INFO

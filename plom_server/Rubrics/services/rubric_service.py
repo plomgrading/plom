@@ -48,7 +48,6 @@ from ..models import RubricPane
 from .rubric_permissions import RubricPermissionsService
 from .utils import _generate_display_delta, _Rubric_to_dict
 
-
 log = logging.getLogger(__name__)
 
 
@@ -199,12 +198,6 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             __ = f"{q_index} out of range, must be within [1, {max_q_index}]"
             raise V({"question_index": __})
 
-    _validate_value(data.get("value", 0))
-    if not quick:
-        # check that the "value" lies in [-max_mark, max_mark]
-        max_mark = SpecificationService.get_question_max_mark(q_index)
-        _validate_value_in_range(data.get("value", 0), max_mark)
-
     if "kind" not in data.keys():
         raise V({"kind": "Kind is required."})
 
@@ -213,7 +206,10 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
             raise V({"value": "Absolute rubric requires value"})
         if "out_of" not in data:
             raise V({"out_of": "Absolute rubric requires out_of"})
+        _validate_value(data["value"])
         if not quick:
+            max_mark = SpecificationService.get_question_max_mark(q_index)
+            _validate_value_in_range(data["value"], max_mark)
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
     elif data["kind"] == "relative":
@@ -222,13 +218,17 @@ def validate_rubric_fields(data: dict[str, Any], *, quick: bool = False) -> None
         if data["value"] == 0:
             # Note: Plom disallows +0, -0 rubrics (#4145)
             raise V({"value": "Relative rubric must not have zero value"})
-        if data.get("out_of", 0) != 0:
+        if data.get("out_of", 0) not in (0, None):
             raise V({"out_of": "Relative rubric must omit out_of or have zero out_of"})
+        _validate_value(data["value"])
+        if not quick:
+            max_mark = SpecificationService.get_question_max_mark(q_index)
+            _validate_value_in_range(data["value"], max_mark)
 
     elif data["kind"] == "neutral":
-        if data.get("value", 0) != 0:
+        if data.get("value", 0) not in (0, None):
             raise V({"value": "Neutral rubric must omit value or have zero value"})
-        if data.get("out_of", 0) != 0:
+        if data.get("out_of", 0) not in (0, None):
             raise V({"out_of": "Neutral rubric must omit out_of or have zero out_of"})
 
     else:
@@ -337,12 +337,16 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     # A quick check to make sure we have fields such as "text" and "kind"
     validate_rubric_fields(d, quick=True)
 
+    out_of = d.get("out_of", 0)
+    if out_of is None:
+        out_of = 0
+
     # deal with everything except value first
     queryset = Rubric.objects.filter(
         text=d["text"],
         question_index=d["question_index"],
         kind=d["kind"],
-        out_of=d.get("out_of", 0),
+        out_of=out_of,
         # would two identical rubrics except for versions/parameters be ok?
         versions=d.get("versions", ""),
         parameters=d.get("parameters", []),
@@ -354,6 +358,8 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
         # None will be converted to zero internally
         queryset = queryset.filter(value=0)
     else:
+        # it could be a string, but we know it validated and can be cast to float
+        value = float(value)
         # We use an interval to avoid a floating point equality check.
         # Probably the database is IEEE-754 so will store the float the same as we do.
         # Somewhat more likely is two clients (say arm versus amd64) which do
@@ -459,7 +465,7 @@ class RubricService:
             # could potentially allow blank rid...
             raise serializers.ValidationError(
                 'Data for creating a new rubric must not have a "rid" column,'
-                f' but this has {incoming_data.get("rid")}'
+                f' but this has rid={incoming_data.get("rid")}'
             )
 
         # some mangling because client still uses "question"
@@ -524,6 +530,12 @@ class RubricService:
             data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
                 data["value"]
             )
+
+        # out_of/value cannot be None, but its tolerated earlier and the UI sends None
+        if data.get("value", None) is None:
+            data["value"] = 0
+        if data.get("out_of", None) is None:
+            data["out_of"] = 0
 
         data["latest"] = True
         if _bypass_serializer:
@@ -714,6 +726,12 @@ class RubricService:
             data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
                 data["value"]
             )
+
+        # out_of/value cannot be None, but its tolerated earlier and the UI sends None
+        if data.get("value", None) is None:
+            data["value"] = 0
+        if data.get("out_of", None) is None:
+            data["out_of"] = 0
 
         serializer = RubricSerializer(data=data)
 
@@ -1443,6 +1461,8 @@ class RubricService:
             tomllib.TOMLDecodeError: invalid toml.
             PermissionDenied: username not allowed to make rubrics.
             serializers.ValidationError: rubric data is invalid.
+            PlomConflict: one or more of the rubrics collided with
+                Rubrics already in the system.
             KeyError: TODO, what should happen if no user specified?
                 See also TODO in the create code.
         """

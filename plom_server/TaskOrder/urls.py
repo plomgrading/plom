@@ -5,7 +5,6 @@ from django.urls import path
 
 from .views import TaskOrderPageView
 
-
 urlpatterns = [
     path("", TaskOrderPageView.as_view(), name="task_order_landing"),
     path(

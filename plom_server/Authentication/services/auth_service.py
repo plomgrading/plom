@@ -207,7 +207,7 @@ class AuthService:
     @classmethod
     def create_manager_user(
         cls, username: str, *, password: str | None = None, email: str | None = None
-    ) -> None:
+    ) -> User:
         """Create a manager user.
 
         Args:
@@ -216,6 +216,9 @@ class AuthService:
         Keywords:
             password: if omitted, the user will be inactive.
             email: optionally, an email contact address.
+
+        Returns:
+            A Django User object.
 
         Note: If a password is supplied, the user will be set active.
         """
@@ -236,6 +239,7 @@ class AuthService:
                 user.is_active = False
             user.groups.add(*groups)
             user.save()
+        return user
 
     @classmethod
     def create_users_from_csv(cls, f: Path | str | bytes) -> list[dict[str, str]]:

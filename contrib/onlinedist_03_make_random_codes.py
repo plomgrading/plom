@@ -27,7 +27,6 @@ import pandas as pd
 
 from plom.finish import salted_hex_hash_from_str, rand_hex
 
-
 where_csv = Path(".")
 in_csv = where_csv / "produced_papers.csv"
 out_csv = where_csv / "random_codes.csv"

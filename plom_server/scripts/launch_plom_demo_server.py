@@ -5,6 +5,7 @@
 # Copyright (C) 2024-2026 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2026 Deep Shah
 
 """Command line tool to start a Plom demonstration server."""
 
@@ -31,7 +32,6 @@ from plom_server.scripts.launch_plom_server import (
     launch_gunicorn_production_server_process,
     launch_django_dev_server_process,
 )
-
 
 # TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
@@ -294,7 +294,7 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - skipping build of {no_soln_pdf_filename} b/c it already exists")
     else:
         with open(no_soln_pdf_filename, "wb") as f:
-            (r, stdouterr) = buildLaTeX(no_soln_data, f)
+            r, stdouterr = buildLaTeX(no_soln_data, f)
         if r != 0:
             print(stdouterr)
             raise RuntimeError(
@@ -310,7 +310,7 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - skipping build of {yes_soln_pdf_filename} b/c it already exists")
     else:
         with open(yes_soln_pdf_filename, "wb") as f:
-            (r, stdouterr) = buildLaTeX(yes_soln_data, f)
+            r, stdouterr = buildLaTeX(yes_soln_data, f)
         if r != 0:
             print(stdouterr)
             raise RuntimeError(
@@ -666,20 +666,25 @@ def run_the_auto_id_reader():
 def _ensure_client_available():
     try:
         # tell MyPy to ignore this for testing
-        import plomclient  # type: ignore[import-not-found]
-        from plomclient.client import __version__ as clientversion  # type: ignore
+        from plom.client import __version__ as clientversion  # type: ignore
     except ImportError as err:
-        print("*" * 64)
-        print()
+        # We should be able to delete this "plomclient" try-except-else in say 2027 or so
+        try:
+            from plomclient.client import __version__ as clientversion  # type: ignore
+        except ImportError:
+            pass
+        else:
+            raise RuntimeError(
+                "The randoiding and randomarking utilities depend on plom-client,"
+                f" which is installed but is too old: {clientversion}\n"
+                "Either upgrade plom-client, or stop the demo earlier."
+            ) from None
         raise RuntimeError(
             "The randoiding and randomarking utilities depend on plom-client, "
             f"which is not installed:\n  {err}.\n"
             "Either install plom-client, or stop the demo earlier."
         ) from None
-    print(
-        f"Good we have plom-client installed, version {clientversion},"
-        f" found at {plomclient}"
-    )
+    print(f"Good, we have plom-client installed, version {clientversion}")
 
 
 def run_the_randoider(*, port):
@@ -696,7 +701,7 @@ def run_the_randoider(*, port):
         ("demoMarker1", "demoMarker1"),
     ]
 
-    cmd = f"python3 -m plomclient.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
+    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
     print(f"RandoIDing!  calling: {cmd}")
     subprocess.check_call(split(cmd))
 
@@ -721,7 +726,7 @@ def run_the_randomarker(*, port, half_marks=False):
 
     randomarker_processes = []
     for X in users[1:]:
-        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
         if half_marks:
             cmd += " --allow-half"
         print(f"RandoMarking!  calling: {cmd}")
@@ -744,7 +749,9 @@ def run_the_randomarker(*, port, half_marks=False):
 
     # now a final run to do any remaining tasks
     for X in users[:1]:
-        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100"
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100 --download-rubrics"
+        if half_marks:
+            cmd += " --allow-half"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd))
 
@@ -752,7 +759,7 @@ def run_the_randomarker(*, port, half_marks=False):
 def push_demo_rubrics(*, multiversion=True):
     """Push demo rubrics from toml."""
     # note - hard coded question range here.
-    for question_idx in (1, 2, 3, 4):
+    for question_idx in range(1, 8):
         rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
     if multiversion:
@@ -773,6 +780,7 @@ def create_and_link_question_tags():
         ("derivatives", 3),
         ("applications", 3),
         ("applications", 4),
+        ("arithmetic", 5),
     ]:
         run_django_manage_command(
             f"link_question_with_tag {question_idx} {tag} manager"
@@ -901,7 +909,9 @@ def main():
     saytime("Finished refreshing the database.")
 
     # build the user-groups and the admin and manager users
-    run_django_manage_command("plom_make_groups_and_first_users")
+    run_django_manage_command(
+        f"plom_make_groups_and_first_users --manager-login manager 1234 --port {args.port}"
+    )
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 

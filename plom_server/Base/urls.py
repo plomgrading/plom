@@ -6,7 +6,6 @@ from django.urls import path
 from .views import TroublesAfootGenericErrorView
 from .views import Home, ServerStatusView, ResetView
 
-
 urlpatterns = [
     path("", Home.as_view(), name="home"),
     path(

@@ -29,7 +29,6 @@ from plom_server.Progress.services import UserInfoService
 from plom_server.Papers.services import PaperInfoService
 from .utils import _error_response
 
-
 # Limit how many bytes of client non-image data we're willing to store,
 # larger values could effect database performance
 user_data_limit = 256 * 1024

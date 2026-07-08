@@ -74,7 +74,6 @@ from plom.canvas import (
     interactively_get_section,
 )
 
-
 # bump this a bit if you change this script
 __script_version__ = "0.6.2"
 
@@ -465,9 +464,7 @@ if __name__ == "__main__":
                 timeouts.append((mark, sis_id, name))
             time.sleep(random.uniform(0.1, 0.2))
 
-    print(
-        dedent(
-            """
+    print(dedent("""
 
             ## Viewing the PDF files as an instructor
 
@@ -475,9 +472,7 @@ if __name__ == "__main__":
             attachments directly in Canvas -> Grades.  There are two workarounds noted
             in https://github.com/instructure/canvas-lms/issues/1886
             (Students have no such problem; they will be able to see the attachment).
-            """
-        )
-    )
+            """))
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")

@@ -33,7 +33,6 @@ from .student_marks_service import StudentMarkService
 from .soln_source import SolnSourceService
 from .reassemble_service import ReassembleService
 
-
 log = logging.getLogger(__name__)
 
 

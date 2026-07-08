@@ -44,8 +44,7 @@ if __name__ == "__main__":
     else:
         canvas_test_name = args.p
 
-    print(
-        """
+    print("""
     *** Warning: this script is "pre-alpha" software ***
 
     This scripts reads in `marks.csv` created by `plom-finish`.
@@ -61,10 +60,7 @@ if __name__ == "__main__":
     "{}"
 
     Read "docs/returning_papers.md" before using this.
-    """.format(
-            canvas_fromfile, canvas_test_name, canvas_grades_tofile
-        )
-    )
+    """.format(canvas_fromfile, canvas_test_name, canvas_grades_tofile))
     input("Press Enter to continue...")
 
     print()

@@ -23,7 +23,6 @@ from plom_server.Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
 from .. import services as _finish_services
 
-
 log = logging.getLogger(__name__)
 
 
@@ -86,9 +85,7 @@ def pdf_builder(
 
     if verbose:
         log.info("Building report.")
-        log.debug(
-            dedent(
-                """
+        log.debug(dedent("""
                 Graphs to generate:
                     1. Histogram of total marks
                     2. Histogram of marks by question
@@ -99,9 +96,7 @@ def pdf_builder(
                     7. Box plots of marks given by marker by question
                     8. Line graph of average mark by question
 
-                Generating..."""
-            )
-        )
+                Generating..."""))
 
     des = DataExtractionService()
     mts = MarkingTaskService()
@@ -286,16 +281,11 @@ def pdf_builder(
 
     def _html_for_big_graphs(list_of_graphs: list[Any]) -> str:
         """Generate HTML for a list of large graphs."""
-        return "".join(
-            [
-                f"""
+        return "".join([f"""
             <div class="col" style="margin-left:0mm;">
             <img src="data:image/png;base64,{graph}" width="100%" height="100%" />
             </div>
-            """
-                for graph in list_of_graphs
-            ]
-        )
+            """ for graph in list_of_graphs])
 
     html = f"""
     <body>

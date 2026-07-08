@@ -7,7 +7,6 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
     path("", views.SpecEditorView.as_view(), name="creator_launch"),
     path("delete", views.HTMXDeleteSpec.as_view(), name="spec_delete"),

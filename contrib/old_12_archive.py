@@ -32,7 +32,6 @@ import shutil
 from plom.spec_verifier import SpecVerifier
 from plom.finish import CSVFilename
 
-
 archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 
 
@@ -53,18 +52,14 @@ if __name__ == "__main__":
     archivename = archivename.replace("{YEAR}", sys.argv[2])
     archivename = archivename.replace("{TERM}", sys.argv[3])
 
-    print(
-        """
+    print("""
 This script tries to produce a minimal archive of your test:
     "{0}.zip"
 This is intended for archival purposes.  Note it would not be easy to
 regrade a question within Plom using this archive.  If you ever
 anticipate revisiting the grading of this test, you should backup the
 entire directory structure.
-    """.format(
-            archivename
-        )
-    )
+    """.format(archivename))
     # input('Press Enter to continue...')
 
     all_ok = True
@@ -146,8 +141,7 @@ entire directory structure.
     # TODO: information about grading times?
 
     with open(os.path.join(archivename, "README.txt"), "w") as file:
-        file.write(
-            """Plom Archive File
+        file.write("""Plom Archive File
 =================
 
 Explanations:
@@ -163,8 +157,7 @@ Explanations:
 
   * The various .json files can be used to find students' papers in the raw
     scans.
-"""
-        )
+""")
 
     print("Creating zip file")
     fn = shutil.make_archive(archivename, "zip", base_dir=archivename)

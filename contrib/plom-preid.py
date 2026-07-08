@@ -28,7 +28,6 @@ from plom.common import __version__ as __plom_version__
 
 from plom.create import start_messenger
 
-
 __script_version__ = "0.1.0"
 
 

@@ -60,9 +60,7 @@
                         {% if incomplete_papers %}<i class="bi bi-exclamation-diamond-fill text-warning"></i>{% endif %}
                     </p>
                     {% if incomplete_papers %}
-                        <p>
-                            {% if user_is_manager %}&mdash; A manager can repair incomplete papers.{% endif %}
-                        </p>
+                        <p>{% if user_is_manager %}&mdash; A manager can repair incomplete papers.{% endif %}</p>
                     {% endif %}
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"

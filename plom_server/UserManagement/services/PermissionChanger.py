@@ -13,7 +13,6 @@ from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
 from plom_server.Authentication.services import AuthService
 
-
 log = logging.getLogger(__name__)
 
 

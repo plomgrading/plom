@@ -24,7 +24,6 @@ from plom.scan import DefaultPixelHeight
 from plom.scan import __version__
 from plom.scan.rotate import pil_load_with_jpeg_exif_rot_applied
 
-
 log = logging.getLogger("scan")
 
 

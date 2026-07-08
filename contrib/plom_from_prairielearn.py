@@ -43,7 +43,6 @@ import plom.scan
 # pylint: disable=no-name-in-module
 from plom.server import PlomServer  # type: ignore[attr-defined]
 
-
 ########################################################################
 # STUFF YOU'LL NEED TO CHANGE
 manual_grading_csv = "COURSE_NAME_foo_submissions_for_manual_grading.csv"

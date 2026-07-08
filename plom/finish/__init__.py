@@ -13,7 +13,6 @@ from plom.misc_version import __version__
 from .utils import rand_integer_code, salted_int_hash_from_str
 from .utils import rand_hex, salted_hex_hash_from_str
 
-
 CSVFilename = "marks.csv"
 
 # largely legacy stuff
@@ -31,7 +30,6 @@ from .return_tools import make_canvas_gradefile
 # stuff plom_server uses
 from .coverPageBuilder import make_cover, make_cover_page
 from .examReassembler import reassemble
-
 
 # what you get from "from plom.finish import *"
 __all__ = []

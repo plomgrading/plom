@@ -9,7 +9,6 @@ from plom.create import with_manager_messenger
 from plom.common.exceptions import PlomServerNotReady, PlomNoClasslist
 from plom.common.misc_utils import format_int_list_with_runs
 
-
 # support for colour checkmarks
 ansi_green = "\033[92m"
 ansi_yellow = "\033[93m"

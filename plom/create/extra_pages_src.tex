@@ -3,6 +3,7 @@
 %% Copyright (C) 2023 Andrew Rechnitzer
 %% Copyright (C) 2023, 2025 Colin B. Macdonald
 %% Copyright (C) 2024 Forest Kobayashi
+%% Copyright (C) 2026 Aidan Murphy
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[12pt,letterpaper]{article}
@@ -12,33 +13,49 @@
 \usepackage{amsmath}
 \usepackage{tikz}
 
+%% use helvetica as the font
+\usepackage[T1]{fontenc}
+\usepackage[scaled]{helvet}    % Loads Helvetica as the sans-serif font
+\renewcommand{\familydefault}{\sfdefault}   % set default font to sans-serif
+
 %%%%%%%%%%%%%
 
 \newcommand{\digitbox}{%
   \fbox{
-  \rule[-1.5ex]{0pt}{4ex}
+  \rule[-1.1ex]{0pt}{4ex}
   \hspace{1.8ex}}}
+
+\newcommand{\Qbox}{%
+  \fbox{
+  \rule[-1.1ex]{0pt}{4ex}
+  \hspace{10.1ex}}}
 
 \pagestyle{empty}
 
 \newcommand{\extraextra}[4]{
 \begin{center}
-  \textbf{Only 1 question on this side!} \\[2ex]
-
   \centerline{%
-  \begin{tabular}{lll}
-    Paper \#  &
-    Q.\#  &
-    Student \#  \\
-    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
-    \hspace{1ex} &
-    \fbox{\digitbox\,\digitbox}
-    \hspace{7ex} &
-    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
-      \digitbox\,\digitbox\,\digitbox\,\digitbox}
+  \begin{tabular}{l}
+
+    \setlength{\fboxrule}{0.8pt}
+    \fbox{%
+    \setlength{\fboxrule}{0.2pt}
+      {\LARGE Paper} \ \ \digitbox\,\digitbox\,\digitbox\,\digitbox
+      \hspace{2ex}
+      {\LARGE Q} \ \ \Qbox
+    }\\
+    {} \\ % vertical space
+    \setlength{\fboxrule}{0.2pt}
+    \fbox{%
+      {\large Student ID } \ \
+      \digitbox\,\digitbox\,\digitbox\,\digitbox\,%
+        \digitbox\,\digitbox\,\digitbox\,\digitbox
+    }
+
   \end{tabular}%
   }
-
+  \vspace{2ex}
+  \textbf{This sheet will be marked. Please fill in the details above.} \\[2ex]
 \end{center}
 
 \hrule
@@ -47,7 +64,7 @@
 
 \hrule
 \begin{center}
-        \textbf{Complete the ID section on \emph{every side of every sheet} you use!}
+        %\textbf{Complete the ID section on \emph{every side of every sheet} you use!}
 \end{center}
 
 

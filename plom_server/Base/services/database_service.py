@@ -12,7 +12,6 @@ from django.conf import settings
 
 from plom_server import __version__, Plom_DB_Version
 
-
 log = logging.getLogger(__name__)
 
 

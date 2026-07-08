@@ -9,7 +9,6 @@ from pathlib import Path
 import exif
 from PIL import Image
 
-
 log = logging.getLogger("scan")
 
 

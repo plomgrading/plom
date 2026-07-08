@@ -5,7 +5,6 @@ from django.urls import path
 
 from .views import TagLandingPageView, TagItemView
 
-
 urlpatterns = [
     path("", TagLandingPageView.as_view(), name="tags_landing"),
     path("tag_filter/", TagLandingPageView.tag_filter, name="tag_filter"),

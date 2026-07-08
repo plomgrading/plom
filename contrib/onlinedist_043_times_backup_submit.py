@@ -19,7 +19,6 @@ New/modified columns:
 from pathlib import Path
 import pandas as pd
 
-
 where_csv = Path(".")
 in_csv = where_csv / "Canvas_classlist_042_urls.csv"
 out_csv = where_csv / "Canvas_classlist_043_ready.csv"

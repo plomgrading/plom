@@ -43,7 +43,6 @@ from plom_server.Preparation.services.preparation_dependency_service import (
 
 from ..models import BuildPaperPDFChore
 
-
 log = logging.getLogger(__name__)
 
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2026 Aidan Murphy
 
@@ -66,26 +66,8 @@ class Command(BaseCommand):
             raise CommandError(err)
 
         # create managers
-        for username, password in (
-            ("demoManager1", "demoManager1"),
-            ("manager", "1234"),
-        ):
+        for username, password in (("demoManager1", "demoManager1"),):
             email = f"{username}@example.com"
-            # check if manager-user already exists, new demo launch
-            # workflow may create one already. If it does exist
-            # then change the password.
-            try:
-                user_obj = User.objects.get(username=username)
-                self.stdout.write(
-                    f"{username} already exists - updating with demo password."
-                )
-                user_obj.set_password(password)
-                user_obj.email = email
-                user_obj.save()
-                user_passwords[username] = password
-                continue
-            except User.DoesNotExist:
-                pass
             try:
                 AuthService.create_manager_user(
                     username, email=email, password=password

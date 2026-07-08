@@ -49,7 +49,6 @@ from .views import (
     GeneratePaperPDFView,
 )
 
-
 urlpatterns = [
     path("overview", ScannerOverview.as_view(), name="scan_overview"),
     path("upload", ScannerUploadView.as_view(), name="scan_upload"),

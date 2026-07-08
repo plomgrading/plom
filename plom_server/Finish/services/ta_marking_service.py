@@ -56,7 +56,7 @@ class TaMarkingService:
         csv_data = []
         for task in complete_marking_tasks:
             assert task.latest_annotation.user is not None
-            assert task.latest_annotation.annotation_data is not None
+            assert task.latest_annotation._get_annotation_data() is not None
             csv_data.append(
                 {
                     "user": task.latest_annotation.user.username,
