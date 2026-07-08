@@ -30,9 +30,9 @@ from pathlib import Path
 
 from stdiomask import getpass
 
+from plom.common.spec_verifier import SpecVerifier
 import plom.create
 from plom.create import __version__, Default_Port
-from plom.spec_verifier import SpecVerifier
 from plom.create import start_messenger
 from plom.create import build_extra_page_pdf
 from plom.create.demotools import buildDemoSourceFiles

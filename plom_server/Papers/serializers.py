@@ -12,7 +12,7 @@ from rest_framework import serializers
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
-from plom.spec_verifier import SpecVerifier
+from plom.common.spec_verifier import SpecVerifier
 
 from .models import SpecQuestion, Specification, SolnSpecification, SolnSpecQuestion
 
