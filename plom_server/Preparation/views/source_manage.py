@@ -13,9 +13,7 @@ from django.http import (
     Http404,
     HttpResponseBadRequest,
 )
-from django.urls import reverse
-from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.shortcuts import render
 
 from plom.common.exceptions import PlomDependencyConflict
 from plom_server.Base.base_group_views import ManagerRequiredView
@@ -45,8 +43,16 @@ class SourceManageView(ManagerRequiredView):
                 f"Inconsistent paper sizes between versions: {set(sizes)}"
             )
 
+        try:
+            number_of_pages = SpecificationService.get_n_pages()
+            has_spec = True
+        except ObjectDoesNotExist:
+            number_of_pages = None
+            has_spec = False
+
         return {
-            "number_of_pages": SpecificationService.get_n_pages(),
+            "has_spec": has_spec,
+            "number_of_pages": number_of_pages,
             "sources": sources,
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": SourceService.check_pdf_duplication(),
@@ -56,15 +62,6 @@ class SourceManageView(ManagerRequiredView):
 
     def get(self, request: HttpRequest, *, version: int | None = None) -> HttpResponse:
         """Get to render the sources management page or specify a version to download a PDF."""
-        # if no spec then redirect to the dependency conflict page
-        if not SpecificationService.is_there_a_spec():
-            messages.add_message(
-                request,
-                messages.ERROR,
-                "You cannot upload source pdfs until there is an assessment specification.",
-            )
-            return redirect(reverse("prep_conflict"))
-
         if version is not None:
             try:
                 original_filename, abstract_django_file = (
