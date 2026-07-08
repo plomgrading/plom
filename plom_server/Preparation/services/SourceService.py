@@ -158,9 +158,13 @@ def get_source_info(version: int) -> dict[str, Any]:
 def get_list_of_sources() -> list[dict[str, Any]]:
     """Return a list of sources, indicating if each is uploaded or not along with other info.
 
-    The list is sorted by the version.
+    The list is sorted by the version.  In the special case
+    where there is not yet a spec, we report as if there is
+    a single version.
     """
     vers = SpecificationService.get_list_of_versions()
+    if not vers:
+        return [get_source_info(1)]
     return [get_source_info(v) for v in vers]
 
 
