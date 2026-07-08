@@ -133,6 +133,7 @@ packages = [
     "plom.create.fonts",
     "plom.scan",
     "plom.finish",
+    "plom.textools",
     "plom.idreader",
     "plom.canvas",
     "plom_server",
