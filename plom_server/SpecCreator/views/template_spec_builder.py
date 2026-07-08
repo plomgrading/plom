@@ -82,11 +82,14 @@ class GUISpecBuilderView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
+        SOURCE_VERSION = 1
 
         image_b64_dict = {}
         try:
             image_bytes_list = (
-                GUISpecBuilderService.get_source_file_images_as_base64_str(1)
+                GUISpecBuilderService.get_source_file_images_as_base64_str(
+                    SOURCE_VERSION
+                )
             )
             for index, img_b64 in enumerate(image_bytes_list):
                 image_b64_dict.update({index + 1: img_b64})
@@ -103,6 +106,7 @@ class GUISpecBuilderView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         source_pdf = request.FILES["source_pdf"]
+        SOURCE_VERSION = 1
 
         # make an internal copy of this file
         with source_pdf.open("rb") as fh:
@@ -110,10 +114,12 @@ class GUISpecBuilderView(ManagerRequiredView):
         pdf_file = File(BytesIO(file_bytes), name="random_name.pdf")
 
         # TODO: don't just delete the source every time
-        delete_source_pdf(1)
-        take_source_from_upload(1, pdf_file)
+        delete_source_pdf(SOURCE_VERSION)
+        take_source_from_upload(SOURCE_VERSION, pdf_file)
 
-        image_bytes_list = GUISpecBuilderService.get_source_file_images_as_base64_str(1)
+        image_bytes_list = GUISpecBuilderService.get_source_file_images_as_base64_str(
+            SOURCE_VERSION
+        )
 
         image_b64_dict = {}
         for index, img_b64 in enumerate(image_bytes_list):
