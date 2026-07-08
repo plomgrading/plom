@@ -409,4 +409,10 @@ def get_reference_images_as_list(source_version: int) -> list[File]:
         version=source_version
     ).order_by("page_number")
     # values_list doesn't work on imagefield, so we iterate normally
-    return [ref.image_file for ref in reference_images_queryset]
+    reference_images_list = [ref.image_file for ref in reference_images_queryset]
+    if not reference_images_list:
+        raise ObjectDoesNotExist(
+            f'Reference images for source version "{source_version}"'
+            " couldn't be found. Probably the source file hasn't been uploaded."
+        )
+    return reference_images_list
