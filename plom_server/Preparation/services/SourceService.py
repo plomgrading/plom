@@ -69,13 +69,26 @@ def are_all_sources_uploaded() -> bool:
 def delete_source_pdf(version: int) -> None:
     """Delete a particular version of the source PDF files.
 
-    If no such version exists (either out of range or never uploaded)
-    then silently return (no error is raised).
+    If no such source file exists for that version (never uploaded)
+    then silently return (no error is raised). Note that this is
+    different to an out-of-range version, which does raise an error.
 
     Raises:
         PlomDependencyException: sources cannot be modified.
+        ValueError: version is out of range.
     """
     assert_can_modify_sources()
+
+    # always accept version 1, otherwise check spec
+    # TODO: probably put this in preparation dependency service, per circular imports
+    version_one = version == 1
+    # this is lazy, won't evaluate if version is 1
+    versions_list = SpecificationService.get_list_of_versions()
+    version_in_spec = version in versions_list
+    if not version_one and not version_in_spec:
+        raise ValueError(
+            f"Version {version} is out of range. Acceptable versions are: {versions_list or [1]}"
+        )
 
     with transaction.atomic(durable=True):
         # delete the DB entry and *then* the file: the order is important
