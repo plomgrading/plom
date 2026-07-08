@@ -29,8 +29,6 @@ include plom/textools/test*.png
 include plom/textools/latexTemplate.tex
 include plom/textools/latexTemplatev2.tex
 include plom/textools/idBox4.pdf
-include plom/idBox2.pdf
-include plom/idBox4.pdf
 
 include plom/create/fonts/*.ttf
 
