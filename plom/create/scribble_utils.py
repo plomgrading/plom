@@ -7,10 +7,12 @@
 # Copyright (C) 2023 Sarah Oskuei
 # Copyright (C) 2025 Lindsey Daniels
 # Copyright (C) 2025 Negar Harandi
+# Copyright (C) 2026 Deep Shah
 
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
+from collections.abc import Sequence
 import json
 import random
 from importlib import resources
@@ -31,6 +33,9 @@ possible_fontnames_ttfs = [
     ("nh", "nh_handwriting.ttf"),
     ("pdl", "pdl_handwriting.ttf"),
 ]
+
+# Page-width fractions for the A-D checkbox centers in the demo assessment.
+_MCQ_CHOICE_XFS = (0.292, 0.417, 0.542, 0.668)
 
 possible_answers = [
     "I am so sorry, I really did study this... :(",
@@ -377,6 +382,125 @@ def scribble_answer_in_box(pdf_doc, page_number, xf, yf):
         fontname=fontname,
         fontfile=fontres,
     )
+
+
+def scribble_mcq_answer_in_box(
+    pdf_doc, page_number, choice_index, yf, *, style="fill", shade=None
+):
+    """Mark one multiple-choice question (MCQ) checkbox on a fake exam PDF page.
+
+    Args:
+        pdf_doc: a PyMuPDF document to modify.
+        page_number: 1-based page number containing the MCQ row.
+        choice_index: choice box to mark, where 0 means A, 1 means B, etc.
+        yf: y-position as a fraction of the page height, where 0.0 is the
+            top edge of the page and 1.0 is the bottom edge.
+        style: one of "fill", "tick", "cross", "circle".
+        shade: optional gray value from 0.0 (black) to 1.0 (white).
+    """
+    if choice_index not in range(len(_MCQ_CHOICE_XFS)):
+        raise ValueError("choice_index must refer to one of the MCQ choice boxes")
+    if style not in ("fill", "tick", "cross", "circle"):
+        raise ValueError('style must be one of "fill", "tick", "cross", or "circle"')
+
+    page = pdf_doc[page_number - 1]
+    bounding_rect = page.rect
+    jiggle_factor = 0.002 if style == "fill" else 0.010
+    jiggle = min(bounding_rect.width, bounding_rect.height) * jiggle_factor
+    x = _MCQ_CHOICE_XFS[choice_index] * bounding_rect.width
+    x += (random.random() - 0.5) * jiggle
+    y = yf * bounding_rect.height
+    y += (random.random() - 0.5) * jiggle
+    mark_size = min(bounding_rect.width, bounding_rect.height)
+    if style == "fill":
+        mark_size *= random.uniform(0.0085, 0.011)
+    else:
+        mark_size *= random.uniform(0.012, 0.020)
+    shade = random.choice([0.08, 0.18, 0.30, 0.45, 0.58]) if shade is None else shade
+    color = (shade, shade, shade)
+    line_width = random.uniform(1.2, 2.4)
+
+    answer_rect = pymupdf.Rect(
+        x - mark_size, y - mark_size, x + mark_size, y + mark_size
+    )
+    if style == "fill":
+        page.draw_rect(answer_rect, color=color, fill=color, width=0.5)
+    elif style == "tick":
+        page.draw_line(
+            pymupdf.Point(x - mark_size * 0.85, y),
+            pymupdf.Point(x - mark_size * 0.25, y + mark_size * 0.65),
+            color=color,
+            width=line_width,
+        )
+        page.draw_line(
+            pymupdf.Point(x - mark_size * 0.25, y + mark_size * 0.65),
+            pymupdf.Point(x + mark_size * 0.90, y - mark_size * 0.80),
+            color=color,
+            width=line_width,
+        )
+    elif style == "cross":
+        page.draw_line(
+            pymupdf.Point(x - mark_size, y - mark_size),
+            pymupdf.Point(x + mark_size, y + mark_size),
+            color=color,
+            width=line_width,
+        )
+        page.draw_line(
+            pymupdf.Point(x - mark_size, y + mark_size),
+            pymupdf.Point(x + mark_size, y - mark_size),
+            color=color,
+            width=line_width,
+        )
+    else:
+        page.draw_oval(answer_rect, color=color, width=line_width)
+
+
+def scribble_random_mcq_answers(
+    pdf_doc: pymupdf.Document,
+    page_number: int,
+    correct_choices: Sequence[int],
+    ycoords: Sequence[float],
+) -> None:
+    """Randomly mark multiple-choice question (MCQ) responses on a fake exam PDF.
+
+    Each item may be correct, incorrect, or blank.  Nonblank responses use a
+    random visual style: filled square, tick, cross, or circle.
+
+    Args:
+        pdf_doc: a PyMuPDF document to modify.
+        page_number: 1-based page number containing the MCQ rows.
+        correct_choices: zero-based correct choice index for each MCQ row.
+        ycoords: y-positions for the MCQ rows, in the same order as
+            ``correct_choices``.  These are page-height fractions, where 0.0 is
+            the top edge of the page and 1.0 is the bottom edge; this is not
+            the QR-code coordinate system.
+    """
+    styles = ["fill", "tick", "cross", "circle"]
+    style_weights = [5, 3, 2, 2]
+    num_choices = len(_MCQ_CHOICE_XFS)
+    if len(correct_choices) != len(ycoords):
+        raise ValueError("correct_choices and ycoords must have the same length")
+    for correct_choice, yf in zip(correct_choices, ycoords):
+        if correct_choice not in range(num_choices):
+            raise ValueError(
+                "correct_choices must refer to one of the MCQ choice boxes"
+            )
+        roll = random.random()
+        if roll < 0.12:
+            continue
+        if roll < 0.72:
+            choice = correct_choice
+        else:
+            choice = random.choice(
+                [k for k in range(num_choices) if k != correct_choice]
+            )
+        scribble_mcq_answer_in_box(
+            pdf_doc,
+            page_number,
+            choice,
+            yf,
+            style=random.choices(styles, weights=style_weights)[0],
+        )
 
 
 def scribble_pages(pdf_doc, exclude=(0, 1)):

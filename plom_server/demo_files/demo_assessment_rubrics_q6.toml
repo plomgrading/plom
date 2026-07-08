@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Deep Shah
+
+[[rubric]]
+kind = "relative"
+value = 1
+text = "Correct answer (B)"
+tags = "demo"
+meta = "Student selected the correct answer, B."
+question_index = 6
+username = "manager"
+
+[[rubric]]
+kind = "neutral"
+text = "Incorrect or blank"
+tags = "demo"
+meta = "Student selected an incorrect option or left the answer blank."
+question_index = 6
+username = "manager"
+
+[[rubric]]
+kind = "relative"
+value = -1
+text = "Incorrect answer"
+tags = "demo"
+meta = "Student selected an incorrect option."
+question_index = 6
+username = "manager"
