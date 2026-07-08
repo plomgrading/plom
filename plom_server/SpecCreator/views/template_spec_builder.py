@@ -5,6 +5,7 @@
 
 from io import BytesIO
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -81,6 +82,22 @@ class GUISpecBuilderView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
+
+        image_b64_dict = {}
+        try:
+            image_bytes_list = (
+                GUISpecBuilderService.get_source_file_images_as_base64_str(1)
+            )
+            for index, img_b64 in enumerate(image_bytes_list):
+                image_b64_dict.update({index + 1: img_b64})
+        except ObjectDoesNotExist:
+            pass
+        context.update(
+            {
+                "pdf_image_dict": image_b64_dict,
+            }
+        )
+
         return render(request, "SpecCreator/gui_spec_builder.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
