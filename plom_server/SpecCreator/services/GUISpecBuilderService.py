@@ -7,6 +7,10 @@ from plom_server.Preparation.services import SourceService
 
 
 def get_source_file_images_as_base64_str(version: int) -> list[str]:
+    """Get source file reference images, and encode them as b64 strings.
+
+    This format is convenient for Django's template rendering.
+    """
     djangofile_list = SourceService.get_reference_images_as_list(version)
     b64_image_list = []
     for abstract_django_file in djangofile_list:

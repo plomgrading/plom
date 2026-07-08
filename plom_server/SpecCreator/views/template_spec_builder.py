@@ -17,6 +17,7 @@ class TemplateSpecBuilderView(ManagerRequiredView):
     """Create a template test specification toml."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the input form for the spec template."""
         context = self.build_context()
         # Supply some reasonable defaults for the template build form.
         context.update(
@@ -32,6 +33,7 @@ class TemplateSpecBuilderView(ManagerRequiredView):
         return render(request, "SpecCreator/template_spec_builder.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """After receiving user inputs, render the page with a spec template."""
         context = self.build_context()
 
         longName = request.POST.get("longName", "A long name for my test")
@@ -75,6 +77,7 @@ class GUISpecBuilderView(ManagerRequiredView):
     """Create a test specification via a GUI."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the GUI spec builder."""
         context = self.build_context()
         SOURCE_VERSION = 1
 
