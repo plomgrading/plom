@@ -396,6 +396,8 @@ def _get_reference_image_file(source_version: int, page_number: int) -> File:
 def get_reference_images_as_list(source_version: int) -> list[File]:
     """Return the reference images for a particular version as Django-files.
 
+    The reference images are sorted by page number.
+
     Args:
         source_version: which source version.
 

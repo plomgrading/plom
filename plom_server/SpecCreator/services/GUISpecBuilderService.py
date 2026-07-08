@@ -10,7 +10,6 @@ def get_source_file_images_as_base64_str(version: int) -> list[str]:
     djangofile_list = SourceService.get_reference_images_as_list(version)
     b64_image_list = []
     for abstract_django_file in djangofile_list:
-        print(abstract_django_file)
         with abstract_django_file.open("rb") as f:
             f.seek(0)
             image_bytes = f.read()
