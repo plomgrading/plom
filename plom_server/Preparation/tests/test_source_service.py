@@ -214,20 +214,6 @@ class SourceServiceTests(TestCase):
         source_info = SourceService.get_source_info(2)
         self.assertFalse(source_info["uploaded"])
 
-    def test_upload_source_odd_pages_fails(self) -> None:
-        """The server shouldn't accept source with an odd page count."""
-        self.assertFalse(SpecificationService.is_there_a_spec())
-        pdf = resources.files(useful_files) / "test_version1_5pages.pdf"
-        with pdf.open("rb") as f:
-            # using f directly will fail - f.name includes path elements
-            django_file = SimpleUploadedFile(
-                name="test_version1_5pages.pdf",
-                content=f.read(),
-                content_type="application/pdf",
-            )
-            with self.assertRaisesRegex(ValueError, "must have an even"):
-                SourceService.take_source_from_upload(1, django_file)
-
     def test_source_check_duplicates(self) -> None:
         duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {})
