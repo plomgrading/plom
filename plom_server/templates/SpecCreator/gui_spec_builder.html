@@ -21,7 +21,7 @@
             <div hx-on:htmx:after-request="location.reload()">
                 <div id="card_ver{{ source.version }}">
                     <!-- HTMX calls may re-render this content -->
-                    {% include "Preparation/source_item_view.html" with src=source refresh=True %}
+                    {% include "Preparation/source_item_view.html" with src=source %}
                 </div>
             </div>
         </div>
