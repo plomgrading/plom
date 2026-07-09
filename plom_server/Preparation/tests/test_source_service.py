@@ -64,7 +64,8 @@ class SourceServiceTests(TestCase):
 
     def test_list_source_pdfs_without_spec(self) -> None:
         """The source list should always include version 1."""
-        # notice that we haven't uploaded a spec for this test
+        self.assertFalse(SpecificationService.is_there_a_spec())
+
         source_list = SourceService.get_list_of_sources()
         self.assertEqual(1, len(source_list))
         self.assertEqual(1, source_list[0]["version"])
@@ -184,6 +185,7 @@ class SourceServiceTests(TestCase):
 
     def test_upload_source_version1_in_range_before_spec(self) -> None:
         """If there's no spec, source version 1 should be upload-able."""
+        self.assertFalse(SpecificationService.is_there_a_spec())
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with pdf.open("rb") as f:
             # using f directly will fail - f.name includes path elements
@@ -198,6 +200,7 @@ class SourceServiceTests(TestCase):
 
     def test_upload_source_version2_out_of_range_before_spec(self) -> None:
         """If there's no spec, source version 2 shouldn't be upload-able."""
+        self.assertFalse(SpecificationService.is_there_a_spec())
         pdf = resources.files(useful_files) / "test_version2.pdf"
         with pdf.open("rb") as f:
             # using f directly will fail - f.name includes path elements
@@ -213,6 +216,7 @@ class SourceServiceTests(TestCase):
 
     def test_upload_source_odd_pages_fails(self) -> None:
         """The server shouldn't accept source with an odd page count."""
+        self.assertFalse(SpecificationService.is_there_a_spec())
         pdf = resources.files(useful_files) / "test_version1_5pages.pdf"
         with pdf.open("rb") as f:
             # using f directly will fail - f.name includes path elements
