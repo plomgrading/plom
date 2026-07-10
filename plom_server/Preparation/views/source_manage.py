@@ -122,6 +122,8 @@ class SourceManageView(ManagerRequiredView):
         context = self.build_context()
         try:
             SourceService.delete_source_pdf(version)
+        except ValueError as err:
+            return HttpResponse(err, status=400)
         except PlomDependencyConflict as err:
             return HttpResponse(err, status=409)
         context.update({"src": SourceService.get_source_info(version)})

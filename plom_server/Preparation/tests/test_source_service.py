@@ -152,11 +152,20 @@ class SourceServiceTests(TestCase):
         self.assertEqual(n_sources, 1)
         SourceService.delete_source_pdf(1)
 
-    # def test_delete_non_existing_source_pdf(self) -> None:
-    #     # explicitly **unset** papers-printed for testing purposes
-    #     PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
-    #     # documented as a non-error
-    #     SourceService.delete_source_pdf(1)
+    def test_delete_non_existing_source_pdf_in_range(self) -> None:
+        """The service could hold the source pdf for this version, but doesn't."""
+        # explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+        # documented as a non-error
+        SourceService.delete_source_pdf(1)
+
+    def test_delete_non_existing_source_pdf_out_of_range(self) -> None:
+        """The service can't hold the source pdf for this version."""
+        # explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
+        with self.assertRaisesRegex(ValueError, "out of range"):
+            SourceService.delete_source_pdf(0)
 
     @config_test({"test_spec": "demo"})
     def test_source_pdf_list_has_hash(self) -> None:

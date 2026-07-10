@@ -360,6 +360,8 @@ def get_list_of_versions() -> list[int]:
         return [v + 1 for v in range(get_n_versions())]
     except ObjectDoesNotExist:
         return []
+        # TODO: Per Source/Spec dependency updates, change to this
+        # return [1]
 
 
 def get_question_indices() -> list[int]:
