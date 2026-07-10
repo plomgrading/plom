@@ -17,7 +17,6 @@ include CONTRIBUTORS CHANGELOG.md Containerfile LICENSE.md doc
 include requirements.txt
 
 include plom/create/digits.json
-include plom/demo_rubrics.toml
 include plom/create/extra_pages_src.tex
 include plom/create/scrap_paper_src.tex
 include plom/scan/test_zbar_fails.png

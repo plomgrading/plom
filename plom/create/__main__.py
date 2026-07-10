@@ -37,7 +37,6 @@ from plom.create import start_messenger
 from plom.create import build_extra_page_pdf
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
-from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
 
 
@@ -215,12 +214,6 @@ def get_parser():
             Upload a pre-build list of rubrics from this file.
             This can be a .json, .toml or .csv file.""",
     )
-    group.add_argument(
-        "--demo",
-        action="store_true",
-        help="Upload an auto-generated rubric list for demos.",
-    )
-
     sp_clear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
@@ -341,10 +334,7 @@ def main():
     elif args.command == "rubric":
         msgr = start_messenger(args.server, args.password)
         try:
-            if args.demo:
-                N = upload_demo_rubrics(msgr=msgr)
-                print(f"Uploaded {N} demo rubrics")
-            elif args.dump:
+            if args.dump:
                 download_rubrics_to_file(Path(args.dump), msgr=msgr)
             else:
                 upload_rubrics_from_file(Path(args.rubric_file), msgr=msgr)

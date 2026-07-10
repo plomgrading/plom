@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 
 """Tools for upload/downloading rubrics from Plom servers."""
 
 import json
 import sys
-from importlib import resources
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -129,51 +128,3 @@ def upload_rubrics(rubrics, *, msgr) -> None:
         if rub["kind"] not in ("neutral", "relative"):
             continue
         msgr.McreateRubric(rub)
-
-
-@with_manager_messenger
-def upload_demo_rubrics(*, msgr, numquestions: int = 3) -> int:
-    """Load some demo rubrics and upload to server.
-
-    Keyword Args:
-        msgr (plom.Messenger/tuple): either a connected Messenger or a
-            tuple appropriate for credientials.
-        numquestions (int): how many questions should we build for.
-            TODO: get number of questions from the server spec if
-            omitted.
-
-    Returns:
-        How many rubrics were created.
-
-    The demo data is a bit sparse: we fill in missing pieces and
-    multiply over questions.
-    """
-    with (resources.files("plom") / "demo_rubrics.toml").open("rb") as f:
-        # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
-        _rubrics_in = tomllib.load(f)  # type: ignore[arg-type]
-    rubrics_in = _rubrics_in["rubric"]
-    rubrics = []
-    for rub in rubrics_in:
-        if not rub.get("kind"):
-            if rub["delta"] == ".":
-                rub["kind"] = "neutral"
-                rub["value"] = 0
-                rub["out_of"] = 0
-            elif rub["delta"].startswith("+") or rub["delta"].startswith("-"):
-                rub["kind"] = "relative"
-                rub["value"] = int(rub["delta"])
-                rub["out_of"] = 0  # unused for relative
-            else:
-                raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
-        rub["display_delta"] = rub["delta"]
-        rub.pop("delta")
-        # Multiply rubrics w/o question numbers, avoids repetition in demo file
-        if rub.get("question") is None:
-            for q in range(1, numquestions + 1):
-                r = rub.copy()
-                r["question"] = q
-                rubrics.append(r)
-        else:
-            rubrics.append(rub)
-    upload_rubrics(rubrics, msgr=msgr)
-    return len(rubrics)
