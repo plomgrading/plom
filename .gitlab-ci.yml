@@ -347,19 +347,6 @@ coverage:
         coverage_format: cobertura
         path: coverage.xml
 
-# Notes:
-# masked out some stuff that deps on tensorflow
-doctests:
-  stage: test
-  needs: ["container-image"]
-  image: $IM
-  before_script:
-    - pip install --ignore-installed -U pytest
-  script:
-    # TODO how to run only doctests?  here we just ignore-glib on "test_*"
-    - pytest --version
-    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
-
 
 # Ensure the migrations have been updated
 # needs full dependencies, cannot easily run with other early static analysis
