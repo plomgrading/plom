@@ -26,6 +26,12 @@
                             According to the specification, each PDF must
                             have exactly {{ number_of_pages }} pages.
                         </p>
+                        {% if not number_of_pages|divisibleby:2 %}
+                            <p class="alert alert-danger">
+                                Assessments with odd page counts will yield pages without QR codes when printed.
+                                (<a href="https://plom.readthedocs.io/en/latest/preparing_an_assessment.html#page-parity-physical-exams-accommodating-scanning-workflows">Why is this an issue?</a>)
+                            </p>
+                        {% endif %}
                     {% else %}
                         <p>
                             This server does not have a specification yet.
