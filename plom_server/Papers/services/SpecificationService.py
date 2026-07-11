@@ -18,7 +18,7 @@ from django.utils.text import slugify
 from django.db import transaction
 from django.db.models import Max, Sum
 
-from plom.spec_verifier import SpecVerifier
+from plom.common.spec_verifier import SpecVerifier
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (

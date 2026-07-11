@@ -1,23 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2025 Colin B. Macdonald
+# Copyright (C) 2020-2026 Colin B. Macdonald
 
 import tempfile
 from importlib import resources
 
-import plom
-
+import plom.textools
 from plom.textools import buildLaTeX
 
 
 def test_latex_exam_template() -> None:
-    content = (resources.files(plom) / "latexTemplate.tex").read_text()
+    content = (resources.files(plom.textools) / "latexTemplate.tex").read_text()
     with tempfile.NamedTemporaryFile() as f:
         r, out = buildLaTeX(content, f)
         assert r == 0
 
 
 def test_latex_exam_templatev2() -> None:
-    content = (resources.files(plom) / "latexTemplatev2.tex").read_text()
+    content = (resources.files(plom.textools) / "latexTemplatev2.tex").read_text()
     with tempfile.NamedTemporaryFile() as f:
         r, out = buildLaTeX(content, f)
         assert r == 0

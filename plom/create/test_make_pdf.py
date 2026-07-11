@@ -7,9 +7,9 @@ from pytest import raises
 import pymupdf
 
 from plom.common.tpv_utils import new_magic_code
+from plom.common.spec_verifier import SpecVerifier
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import make_PDF
-from plom.spec_verifier import SpecVerifier
 
 
 def test_make_pdf_shared_pages(tmp_path) -> None:
