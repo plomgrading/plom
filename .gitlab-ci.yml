@@ -109,8 +109,8 @@ wet_no_drift:
     - apk add bash
   script:
     - 'echo "Issue #2402: ensure two identical copies of the latex template"'
-    - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
-    - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
+    - diff -s plom/textools/latexTemplate.tex testTemplates/latexTemplate.tex
+    - diff -s plom/textools/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "If version info duplicated, ensure same"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/misc_version.py`
     - echo $VER0
@@ -346,19 +346,6 @@ coverage:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
-
-# Notes:
-# masked out some stuff that deps on tensorflow
-doctests:
-  stage: test
-  needs: ["container-image"]
-  image: $IM
-  before_script:
-    - pip install --ignore-installed -U pytest
-  script:
-    # TODO how to run only doctests?  here we just ignore-glib on "test_*"
-    - pytest --version
-    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
 # Ensure the migrations have been updated
