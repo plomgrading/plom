@@ -86,7 +86,7 @@ class MCQCheckboxMLClient:
         base_url = getattr(settings, "PLOM_ML_SERVICE_URL", "").strip()
         if not base_url:
             raise MCQCheckboxMLServiceError("PLOM_ML_SERVICE_URL is not configured.")
-        self.predict_url = base_url.rstrip("/") + "/v1/mcq/checkboxes/predict"
+        self.predict_url = base_url.rstrip("/") + "/omr/infer"
         self.timeout = float(getattr(settings, "PLOM_ML_SERVICE_TIMEOUT", 30.0))
         self.batch_size = int(getattr(settings, "PLOM_ML_SERVICE_MCQ_BATCH_SIZE", 128))
         self.token = getattr(settings, "PLOM_ML_SERVICE_TOKEN", "").strip()
