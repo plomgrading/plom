@@ -133,6 +133,7 @@ packages = [
     "plom.create.fonts",
     "plom.scan",
     "plom.finish",
+    "plom.textools",
     "plom.idreader",
     "plom.canvas",
     "plom_server",
@@ -205,10 +206,6 @@ packages = [
 # https://blog.raek.se/2022/10/31/os-integration-files-in-python-packages/u
 [tool.setuptools.data-files]
 "share/plom" = [
-    "plom/templateTestSpec.toml",
-    "plom/templateSolutionSpec.toml",
-    "plom/templateUserList.csv",
-    "plom/demo_rubrics.toml",
     "plom/create/extra_pages_src.tex",
     "plom/create/scrap_paper_src.tex",
     "plom/create/bundle_separator_src.tex"

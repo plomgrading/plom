@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2025 Colin B. Macdonald
+# Copyright (C) 2020-2026 Colin B. Macdonald
 
 import tempfile
 from importlib import resources
@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-import plom
+import plom.textools
 from plom.textools import texFragmentToPNG as processFragment
 
 # TODO: this too: pageNotSubmitted
@@ -34,7 +34,7 @@ def test_frag_broken_tex() -> None:
 
 
 def test_frag_image_size() -> None:
-    res = resources.files(plom) / "test_target_latex.png"
+    res = resources.files(plom.textools) / "test_target_latex.png"
     # mypy stumbling over resource Traversables?
     imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
@@ -93,14 +93,20 @@ def test_frag_image() -> None:
 
         target_img = Path(td) / "target.png"
         with target_img.open("wb") as f:
-            f.write((resources.files(plom) / "test_target_latex.png").read_bytes())
+            f.write(
+                (resources.files(plom.textools) / "test_target_latex.png").read_bytes()
+            )
 
         assert percent_error_between_images(img, target_img) < 0.1
 
         # older image with poor quality white-tinged antialiasing
         target_old = Path(td) / "target_old.png"
         with target_old.open("wb") as f:
-            f.write((resources.files(plom) / "test_target_latex_old.png").read_bytes())
+            f.write(
+                (
+                    resources.files(plom.textools) / "test_target_latex_old.png"
+                ).read_bytes()
+            )
         # somewhat close
         assert percent_error_between_images(img, target_old) < 10
         # but not too close
