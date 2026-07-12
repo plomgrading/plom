@@ -49,13 +49,13 @@ After uploading PDF files to your server, you likely have some
 
 - Pages without readable QR codes are classed as **unknown pages**..
 - Plom **extra pages** need assignment to specific papers and questions.
-- **Error pages** have readable qr codes, but Plom won't process them
+- **Error pages** have readable QR codes, but Plom won't process them
   for marking.
 
 **These require manual intervention using the web interface**. Scanner users can
 manually reclassify the "pages that need your attention", or rescan and upload
 relevant pages or bundles if there are issues with the scanned images (e.g., a
-folded page obscuring an examinee's work or QR codes).
+folded page obscuring an examinee's work).
 
 
 Collisions
