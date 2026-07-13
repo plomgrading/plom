@@ -50,9 +50,20 @@
                             {{ spec.numberOfVersions }}
                         </dd>
                         <dt class="col-sm-2">Pages</dt>
-                        <dd class="col-sm-10">
-                            {{ spec.numberOfPages }}
-                        </dd>
+                        {% if spec.numberOfPages|divisibleby:2 %}
+                            <dd class="col-sm-10">
+                                {{ spec.numberOfPages }}
+                            </dd>
+                        {% else %}
+                            <dd class="col-sm-2 fw-bolder">
+                                {{ spec.numberOfPages }}
+                            </dd>
+                            <dd class="col-sm-8 alert alert-danger fw-bolder">
+                                <!-- TODO: write docs and link here -->
+                                Assessments with odd page counts will yield pages without QR codes when printed.
+                                (<a href="https://plom.readthedocs.io/en/latest/preparing_an_assessment.html#page-parity-physical-exams-accommodating-scanning-workflows">Why is this an issue?</a>)
+                            </dd>
+                        {% endif %}
                         <dt class="col-sm-2">ID page</dt>
                         <dd class="col-sm-10">
                             {{ spec.idPage }}

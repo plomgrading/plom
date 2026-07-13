@@ -1,13 +1,14 @@
 .. Plom documentation
    Copyright (C) 2018-2022 Andrew Rechnitzer
    Copyright (C) 2022-2026 Colin B. Macdonald
+   Copyright (C) 2026 Aidan Murphy
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
 Scanning and uploading
 ======================
 
-At this point we assume that you have printed that papers, fed them to
+At this point we assume that you have printed exam papers, fed them to
 your students (or the other way around), and collected the completed
 tests.
 
@@ -43,16 +44,18 @@ Follow the instructions to upload bundles of papers as PDF files.
 Dealing with unknown pages, extra pages, error pages, etc
 .........................................................
 
-After scanning, you likely have some "Pages that need your attention",
-such as folded pages, pages without readable QR codes due to
-printing/scanning troubles, extra pages using our template or even
-adhoc pages such as looseleaf.
+After uploading PDF files to your server, you likely have some
+"Pages that need your attention":
 
-These can all be handling using the web interface.
+- Pages without readable QR codes are classed as **unknown pages**..
+- Plom **extra pages** need assignment to specific papers and questions.
+- **Error pages** have readable QR codes, but Plom won't process them
+  for marking.
 
-Occasionally, you may see pages where the QR-reader has failed (hopefully
-these are rare).  Folded pages are one possibility: you may
-need to re-scan a page.
+**These require manual intervention using the web interface**. Scanner users can
+manually reclassify the "pages that need your attention", or rescan and upload
+relevant pages or bundles if there are issues with the scanned images (e.g., a
+folded page obscuring an examinee's work).
 
 
 Collisions

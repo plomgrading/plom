@@ -283,12 +283,6 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
         # now check it has correct number of pages
         with pymupdf.open(tmp_pdf) as doc:
             page_count = doc.page_count
-            # TODO: this definitely should go in prep dependency service
-            # spec may not have been uploaded, confirm that we have an even number of pages
-            if page_count % 2 != 0:
-                raise ValueError(
-                    f"Uploaded pdf has {page_count} pages, but source files must have an even number of pages"
-                )
             try:
                 required_pages = SpecificationService.get_n_pages()
                 if page_count != int(required_pages):
