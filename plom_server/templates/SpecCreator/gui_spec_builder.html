@@ -13,7 +13,7 @@
     Experimental features on this page
 {% endblock page_subheading %}
 {% block main_content %}
-{% load static %}
+    {% load static %}
     <div class="d-grid gap-3">
         <div>
             <a class="btn btn-primary" href="{% url 'creator_launch' %}">Return to specification page</a>
@@ -195,7 +195,7 @@
                         <div class="col-auto">
                             <span>Total marks:</span> <span id="totalMarks"></span>
                         </div>
-			<div class="col-auto">Number of Pages:<span id="numberOfPages" data-number-of-pages="{{ pdf_image_dict|length }}">{{ pdf_image_dict|length }}</span></div>
+                        <div class="col-auto">Number of Pages:<span id="numberOfPages" data-number-of-pages="{{ pdf_image_dict|length }}">{{ pdf_image_dict|length }}</span></div>
                     </div>
                     <hr />
                     <div class="row">
@@ -227,5 +227,5 @@
     <br />
     <br />
     <br />
-	<script src="{% static 'js/SpecCreator/gui_spec_builder.js' %}"></script>
+    <script src="{% static 'js/SpecCreator/gui_spec_builder.js' %}"></script>
 {% endblock main_content %}
