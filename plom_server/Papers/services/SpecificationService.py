@@ -155,7 +155,7 @@ def install_spec_from_toml_string(
 
 
 def install_spec_from_json_string(jsonstr: str) -> Specification:
-    """Load a specification from a string in TOML format and save it to the database.
+    """Load a specification from a string in JSON format and save it to the database.
 
     Args:
         jsonstr: a string containing json.
