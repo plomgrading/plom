@@ -30,16 +30,16 @@ window.insertRandomUsername = function (textInputId) {
 };
 /* *********************************************************** */
 
-// copy password reset link
-/* *********************************************************** */
-// Call this function on a button with the intended content
-// in the "data-copyText" attribute.
-// For example:
-// <button id="myElementId"
-//         data-copyText="https://www.examplewebsite.com/"
-//         onclick="copyToClipboard(this)">
-//     Copy Link
-// </button>
+/**
+ * Copy content to to a user's clipboard.
+ * @param {HTMLElement} buttonElement - a button element with content in data-copyText.
+ *   For example:
+ *   <button id="myElementId"
+ *           data-copyText="https://www.examplewebsite.com/"
+ *           onclick="copyToClipboard(this)">
+ *       Copy Link
+ *   </button>
+ */
 window.copyToClipboard = function (buttonElement) {
   const copyText = buttonElement.dataset.copytext;
   navigator.clipboard.writeText(copyText);
