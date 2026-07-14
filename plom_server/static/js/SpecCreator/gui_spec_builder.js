@@ -178,10 +178,12 @@ function refreshQuestionSummary() {
                                 </button>
                             </div>
                             <div class="card-body p-2 small">
+                                <!-- for debugging
                                 <div class="mb-1">
                                     <label class="text-muted" for="mark_${q.qidx}">DEBUG Qidx:</label>
                                     <input id="idx_${q.qidx}" type="number" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width: 5rem;" value="${q.qidx}" placeholder="?" disabled>
                                 </div>
+                                -->
                                 <div class="mb-1">
                                     <span class="text-muted">Pages:</span> ${pagesText}
                                 </div>
