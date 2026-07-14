@@ -5,6 +5,9 @@
 
 /* eslint-disable no-unused-vars */
 
+// Strongly coupled with SpecCreator/gui_spec_builder.html,
+// check there for WET stuff.
+
 let numberOfPagesSpan = document.getElementById('numberOfPages');
 const numberOfPages = parseInt(numberOfPagesSpan.dataset.numberOfPages);
 
@@ -48,6 +51,7 @@ function getSpecJson() {
   return JSON.stringify(spec);
 }
 
+// Find an unused Qidx
 function getNextAvailableQidx() {
   let qidxArray = statefulSpec.question.map(q => q.qidx).sort((a, b) => a - b);
   if (qidxArray.length === 0)
@@ -105,7 +109,7 @@ function refreshIdPageSummary() {
                         </div>`;
 }
 
-// check the spec's id page, and update html elements accordingly
+// check the spec's DNM pages, and update html elements accordingly
 function refreshDnmPageLists() {
   refreshDnmPageSummary();
   refreshPageAssignments();
@@ -233,6 +237,7 @@ function refreshQuestionDropdown() {
   });
 }
 
+// unselect all selected pages
 function clearAllSelectedPages() {
   // get elements with IDs = "page...Checkbox"
   var pageCheckboxes = document.querySelectorAll('[id ^= "page"][id $= "Checkbox"]');
@@ -245,6 +250,8 @@ function clearAllSelectedPages() {
   });
 }
 
+// whenever a page is un/selected, this function should be called
+// to update the list of selected pages.
 function updateSelectedPages(pageIndex, checked) {
   if (checked) {
     selectedPages.add(pageIndex);
@@ -425,17 +432,20 @@ function unassignSelectedPages() {
   clearAllSelectedPages();
 }
 
+// remove the listed pages from the DNM pages in the spec
 function unassignDnmPages(pageArray) {
   statefulSpec.doNotMarkPages = statefulSpec.doNotMarkPages.filter(
     page => !(pageArray.includes(page)),
   );
   refreshDnmPageLists();
 }
+// remove the listed pages from the ID pages in the spec
 function unassignIdPages(pageArray) {
   if (pageArray.includes(statefulSpec.idPage))
     statefulSpec.idPage = null;
   refreshIdPageLists();
 }
+// remove the listed pages from any questions in the spec
 function unassignQuestionPages(pageArray) {
   statefulSpec.question.forEach((q) => {
     q.pages = q.pages.filter(
@@ -445,6 +455,7 @@ function unassignQuestionPages(pageArray) {
   refreshQuestionLists();
 }
 
+// update the details on each page specifying where it's assigned
 function refreshPageAssignments() {
   let pageMap = new Map();
 
@@ -476,11 +487,13 @@ function refreshPageAssignments() {
   }
 }
 
+// represent a string in html
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// represent a string in html attributes
 function escapeAttr(str) {
   // Safe for use inside onclick='...' single-quoted attribute values
   return String(str).replace(/'/g, '\\\'');
