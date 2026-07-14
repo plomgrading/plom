@@ -1,13 +1,15 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later
-* Copyright (C) 2025 Aidan Murphy
+* Copyright (C) 2025-2026 Aidan Murphy
 */
 
 // these must be listed in the pre-commit config .yaml under additional_dependencies
 const globals = require('globals');
 const js = require('@eslint/js');
 const stylistic = require('@stylistic/eslint-plugin');
+const jsdoc = require('eslint-plugin-jsdoc');
 
 module.exports = [
+  jsdoc.configs['flat/recommended'],
   // ignore vendored files
   { ignores: ['plom_server/plom_extra_static/js3rdparty/**'] },
   {

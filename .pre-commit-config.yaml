@@ -75,3 +75,4 @@ repos:
         - '@stylistic/eslint-plugin'
         - globals
         - '@eslint/js'
+        - eslint-plugin-jsdoc@63.0
