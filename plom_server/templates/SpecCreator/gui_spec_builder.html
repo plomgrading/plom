@@ -95,6 +95,14 @@
                         <hr />
                         <div class="row">
                             <div class="col-auto">
+                                <span class="text-muted small">Pages selected:</span>
+                                <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
+                                <button class="btn btn-sm btn-secondary p-1"
+                                        onclick="clearAllSelectedPages()">
+                                    <i class="bi bi-eraser"></i>
+                                </button>
+                            </div>
+                            <div class="col-auto">
                                 <button class="btn btn-primary" onclick="assignSelectedPages('newQuestion')">assign to new question</button>
                             </div>
                             <div class="col-auto">
@@ -119,16 +127,6 @@
                             </div>
                             <div class="col-auto">
                                 <button class="btn btn-danger" onclick="unassignSelectedPages()">unassign</button>
-                            </div>
-                        </div>
-                        <div class="row mt-1">
-                            <div class="col">
-                                <span class="text-muted small">Pages selected:</span>
-                                <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
-                                <button class="btn btn-sm btn-secondary p-1"
-                                        onclick="clearAllSelectedPages()">
-                                    <i class="bi bi-eraser"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
