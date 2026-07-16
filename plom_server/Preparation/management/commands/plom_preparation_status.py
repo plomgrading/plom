@@ -14,7 +14,7 @@ from ...services.preparation_dependency_service import (
 
 
 class Command(BaseCommand):
-    help = "Get the status of assessment prepartaion, and mark preparation as either finished or in progress."
+    help = "Get the status of assessment preparation, and mark preparation as either finished or in progress."
 
     def add_arguments(self, parser):
         grp = parser.add_mutually_exclusive_group(required=True)
