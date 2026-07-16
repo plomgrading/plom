@@ -189,7 +189,7 @@ class IDBoxParentView(ManagerRequiredView):
         id_version_counts = fixedpage_version_count(id_page_number)
         unused_id_versions = []
         the_idpages = []
-        for v in range(1, SpecificationService.get_n_versions() + 1):
+        for v in SpecificationService.get_list_of_versions():
             if v in id_version_counts.keys():
                 ref_rect = get_reference_rectangle_for_page(id_page_number, version=v)
                 ref_tl = [ref_rect["left"], ref_rect["top"]]
