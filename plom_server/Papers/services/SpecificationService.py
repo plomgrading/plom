@@ -353,15 +353,13 @@ def get_n_versions() -> int:
 def get_list_of_versions() -> list[int]:
     """Get a list of the versions.
 
-    If there is no spec, an empty list.
+    If there is no spec, you'll get a list of just one version.
     """
-    # get n versions throws an ObjectDoesNotExist when no spec
     try:
         return [v + 1 for v in range(get_n_versions())]
     except ObjectDoesNotExist:
-        return []
-        # TODO: Per Source/Spec dependency updates, change to this
-        # return [1]
+        # no spec
+        return [1]
 
 
 def get_question_indices() -> list[int]:

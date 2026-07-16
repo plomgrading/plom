@@ -79,15 +79,10 @@ def delete_source_pdf(version: int) -> None:
     """
     assert_can_modify_sources()
 
-    # always accept version 1, otherwise check spec
-    # TODO: probably put this in preparation dependency service, per circular imports
-    version_one = version == 1
-    # this is lazy, won't evaluate if version is 1
     versions_list = SpecificationService.get_list_of_versions()
-    version_in_spec = version in versions_list
-    if not version_one and not version_in_spec:
+    if version not in versions_list:
         raise ValueError(
-            f"Version {version} is out of range. Acceptable versions are: {versions_list or [1]}"
+            f"Version {version} is out of range. Acceptable versions: {versions_list}"
         )
 
     with transaction.atomic(durable=True):
@@ -176,8 +171,6 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     a single version.
     """
     vers = SpecificationService.get_list_of_versions()
-    if not vers:
-        return [get_source_info(1)]
     return [get_source_info(v) for v in vers]
 
 
@@ -263,15 +256,10 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
     # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
-    # always accept version 1, otherwise check spec
-    # TODO: probably put this in preparation dependency service, per circular imports
-    version_one = version == 1
-    # this is lazy, won't evaluate if version is 1
     versions_list = SpecificationService.get_list_of_versions()
-    version_in_spec = version in versions_list
-    if not version_one and not version_in_spec:
+    if version not in versions_list:
         raise ValueError(
-            f"Version {version} is out of range. Acceptable versions are: {versions_list or [1]}"
+            f"Version {version} is out of range. Acceptable versions: {versions_list}"
         )
     # save the file to a temp directory
     # TODO - size limits please
