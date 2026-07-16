@@ -33,9 +33,8 @@ class SolnSourceService:
 
     def are_all_solution_pdf_present(self) -> bool:
         """Returns true if all required solution pdf have been uploaded."""
-        return (
-            SolutionSourcePDF.objects.all().count()
-            == SpecificationService.get_n_versions()
+        return SolutionSourcePDF.objects.all().count() == len(
+            SpecificationService.get_list_of_versions()
         )
 
     @staticmethod
