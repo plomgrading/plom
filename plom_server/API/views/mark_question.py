@@ -57,6 +57,7 @@ class MarkTaskNextAvailable(APIView):
         Returns:
             200: An available task exists, returns the task code as a string.
             204: There are no available tasks.
+            400: malformed options
         """
         data = request.query_params
 
@@ -69,7 +70,7 @@ class MarkTaskNextAvailable(APIView):
             min_paper_num = int_or_None(data.get("min_paper_num"))
             max_paper_num = int_or_None(data.get("max_paper_num"))
         except ValueError as e:
-            return _error_response(e, status.HTTP_423_LOCKED)
+            return _400(e)
 
         _tag: str | None = data.get("tags")
         if _tag:
