@@ -53,7 +53,7 @@ Pillow==12.3.0
 plom-common==0.21.3
 psycopg[binary]==3.3.4
 pydyf==0.12.1
-pymupdf==1.28.0
+pymupdf==1.27.2.2  # waiting on https://gitlab.com/plom/plom/-/work_items/4260
 PyMySQL==1.2.0
 pyyaml==6.0.3
 random-username==1.0.2
