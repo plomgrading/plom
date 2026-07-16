@@ -36,7 +36,7 @@ class Command(BaseCommand):
             spec_status = SpecificationService.is_there_a_spec()
             self.stdout.write(f"Specification present: {spec_status}")
 
-            sources_total = SpecificationService.get_n_versions()
+            sources_total = len(SpecificationService.get_list_of_versions())
             num_sources_present = SourceService.how_many_source_versions_uploaded()
             self.stdout.write(
                 f"{num_sources_present} of {sources_total} PDF source(s) present"
