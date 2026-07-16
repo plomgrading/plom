@@ -156,11 +156,28 @@
                                                     </div>
                                                 </div>
                                                 <input id="page{{ index }}Checkbox"
-                                                       class="form-check-input position-absolute"
+                                                       class="form-check-input position-absolute start-0"
                                                        type="checkbox"
                                                        onchange="updateSelectedPages({{ index }}, this.checked)">
+                                                <button id="page{{ index }}Blowup"
+                                                        class="btn btn-secondary bg-secondary position-absolute end-0 bg-opacity-10 m-1 p-1 border-0"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#page{{ index }}Modal">
+                                                    <i class="bi bi-arrows-angle-expand link-body-emphasis"></i>
+                                                </button>
                                             </div>
                                         </label>
+                                    </div>
+                                    <!-- modal for the above Blowup button -->
+                                    <div class="modal fade" id="page{{ index }}Modal" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content bg-transparent border-0">
+                                                <div class="modal-body p-0">
+                                                    <img src="data:image/png;base64,{{ image_string }}"
+                                                         class="img-fluid rounded">
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 {% endfor %}
                             </div>
