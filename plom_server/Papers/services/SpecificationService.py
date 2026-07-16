@@ -358,7 +358,7 @@ def get_list_of_versions() -> list[int]:
     try:
         return [v + 1 for v in range(get_n_versions())]
     except ObjectDoesNotExist:
-        # no spec
+        # no spec case: implicitly there is one version
         return [1]
 
 
