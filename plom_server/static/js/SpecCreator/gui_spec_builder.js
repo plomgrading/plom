@@ -93,7 +93,7 @@ function refreshIdPageSummary() {
   if (statefulSpec.idPage !== null)
     pagesText = statefulSpec.idPage;
   container.innerHTML = `
-                        <div class="card">
+                        <div class="card my-1">
                             <div class="card-header d-flex justify-content-between align-items-center py-1">
                                 <strong>ID</strong>
                             </div>
@@ -116,7 +116,7 @@ function refreshDnmPageSummary() {
   if (statefulSpec.doNotMarkPages.length !== 0)
     pagesText = statefulSpec.doNotMarkPages.join(', ');
   container.innerHTML = `
-                        <div class="card">
+                        <div class="card my-1">
                             <div class="card-header d-flex justify-content-between align-items-center py-1">
                                 <strong>DNM</strong>
                             </div>
@@ -167,7 +167,7 @@ function refreshQuestionSummary() {
     }
 
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className = 'card my-1';
     card.innerHTML = `
                             <div class="card-header d-flex justify-content-between align-items-center py-1">
                                 <strong>
