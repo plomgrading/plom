@@ -339,29 +339,25 @@ def get_n_questions() -> int:
     return spec.numberOfQuestions
 
 
-@transaction.atomic
 def get_n_versions() -> int:
-    """Get the number of test versions.
+    """Get the number of assessment versions, which is always at least one.
 
-    Exceptions:
-        ObjectDoesNotExist: no exam specification yet.
+    If there is no spec, return 1, because there is implicitly always going
+    to be at least one version.
     """
-    spec = Specification.objects.get()
-    return spec.numberOfVersions
+    try:
+        spec = Specification.objects.get()
+        return spec.numberOfVersions
+    except ObjectDoesNotExist:
+        return 1
 
 
 def get_list_of_versions() -> list[int]:
     """Get a list of the versions.
 
-    If there is no spec, an empty list.
+    If there is no spec, you'll get a list of just one version.
     """
-    # get n versions throws an ObjectDoesNotExist when no spec
-    try:
-        return [v + 1 for v in range(get_n_versions())]
-    except ObjectDoesNotExist:
-        return []
-        # TODO: Per Source/Spec dependency updates, change to this
-        # return [1]
+    return [v + 1 for v in range(get_n_versions())]
 
 
 def get_question_indices() -> list[int]:
