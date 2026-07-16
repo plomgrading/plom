@@ -132,44 +132,40 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="row overflow-y-hidden sticky-bottom"
-                         style="resize: vertical;
-                                height: 75vh">
-                        <div class="col-8 h-100 overflow-y-auto">
+                    <div class="row">
+                        <div class="col-8">
                             <!-- thumbnail container -->
-                            <div class="container-fluid p-2">
-                                <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
-                                    {% for index, image_string in pdf_image_dict.items %}
-                                        <div class="col">
-                                            <label for="page{{ index }}Checkbox">
-                                                <div id="page{{ index }}OuterCard"
-                                                     class="card bg-secondary-subtle position-relative">
-                                                    <div id="page{{ index }}InnerCard" class="card m-1">
-                                                        <img id="page{{ index }}Img"
-                                                             src="data:image/png;base64,{{ image_string }}"
-                                                             style="width: 40ch" />
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-4"></div>
-                                                        <div class="col-4">
-                                                            <p class="text-center m-1 p-0">{{ index }}</p>
-                                                        </div>
-                                                        <div class="col-4">
-                                                            <p class="text-end m-1 p-0 fw-bold" id="page{{ index }}Assignments"></p>
-                                                        </div>
-                                                    </div>
-                                                    <input id="page{{ index }}Checkbox"
-                                                           class="form-check-input position-absolute"
-                                                           type="checkbox"
-                                                           onchange="updateSelectedPages({{ index }}, this.checked)">
+                            <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
+                                {% for index, image_string in pdf_image_dict.items %}
+                                    <div class="col">
+                                        <label for="page{{ index }}Checkbox">
+                                            <div id="page{{ index }}OuterCard"
+                                                 class="card bg-secondary-subtle position-relative">
+                                                <div id="page{{ index }}InnerCard" class="card m-1">
+                                                    <img id="page{{ index }}Img"
+                                                         src="data:image/png;base64,{{ image_string }}"
+                                                         style="width: 15ch" />
                                                 </div>
-                                            </label>
-                                        </div>
-                                    {% endfor %}
-                                </div>
+                                                <div class="row">
+                                                    <div class="col-5 pe-0"></div>
+                                                    <div class="col-2 p-0">
+                                                        <p class="text-center m-1 p-0">{{ index }}</p>
+                                                    </div>
+                                                    <div class="col-5 ps-0">
+                                                        <p class="text-end m-1 p-0 fw-bold" id="page{{ index }}Assignments"></p>
+                                                    </div>
+                                                </div>
+                                                <input id="page{{ index }}Checkbox"
+                                                       class="form-check-input position-absolute"
+                                                       type="checkbox"
+                                                       onchange="updateSelectedPages({{ index }}, this.checked)">
+                                            </div>
+                                        </label>
+                                    </div>
+                                {% endfor %}
                             </div>
                         </div>
-                        <div id="pageBlockColumn" class="col-4 h-100 overflow-y-auto">
+                        <div id="pageBlockColumn" class="col-4">
                             <div id="idPageCard">
                                 <!-- dynamically update this with js -->
                             </div>
