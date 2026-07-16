@@ -81,7 +81,7 @@ class SpecificationServiceMiscNoSpecTests(TestCase):
         assert s.get_question_indices() == []
 
     def test_get_list_of_versions(self) -> None:
-        assert s.get_list_of_versions() == []
+        assert s.get_list_of_versions() == [1]
 
     def test_get_short_and_long_names_or_empty(self) -> None:
         assert s.get_short_and_long_names_or_empty() == ("", "")
