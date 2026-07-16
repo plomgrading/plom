@@ -50,13 +50,32 @@ class MarkTaskNextAvailable(APIView):
         We are not holding it for you: the server may tell two users
         the same task is available.
 
-        The behaviour is influenced by various options.  A confusing case is
-        ``tag`` which is a *preference* and not a *requiremennt*.
-        You can still receive tasks that do not match the tag.
+        The behaviour is influenced by various options specified as
+        query parameters.  ``q`` and ``v`` determine which question
+        index and version.  ``min_paper_num`` and ``max_paper_num``
+        restrict to a (possibly open-ended) range of paper numbers.
+
+        Query parameter ``tags`` states a *preferences* for tasks that
+        match ANY of the included tags in a comma-separated list.
+        Note its not a *requirement*: you can still receive tasks that
+        do not match the tags.  E.g., if user "carla" asks for tasks
+        tagged for ``@carla``, they can still get untagged tasks, or
+        tasks with other tags.  However, papers tagged for *other
+        users* will generally be EXCLUDED: "carla" will not get tasks
+        tagged ``@darren`` (unless she was to specifically ask for
+        them).  This exclusion behaviour is changeable at the service
+        level (via `exclude_tagged_for_others`) but not currently
+        exposed by this API).
+
+        In addition to query parameters, which tasks are returned is
+        influenced by there "marking priority" which can be controlled
+        elsewhere.
 
         Returns:
             200: An available task exists, returns the task code as a string.
             204: There are no available tasks.
+            400: malformed options
+
         """
         data = request.query_params
 
@@ -69,7 +88,7 @@ class MarkTaskNextAvailable(APIView):
             min_paper_num = int_or_None(data.get("min_paper_num"))
             max_paper_num = int_or_None(data.get("max_paper_num"))
         except ValueError as e:
-            return _error_response(e, status.HTTP_423_LOCKED)
+            return _400(e)
 
         _tag: str | None = data.get("tags")
         if _tag:
