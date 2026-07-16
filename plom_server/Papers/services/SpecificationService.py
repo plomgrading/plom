@@ -340,7 +340,11 @@ def get_n_questions() -> int:
 
 
 def get_n_versions() -> int:
-    """Get the number of assessment versions, which is always at least one."""
+    """Get the number of assessment versions, which is always at least one.
+
+    If there is no spec, return 1, because there is implicitly always going
+    to be at least one version.
+    """
     try:
         spec = Specification.objects.get()
         return spec.numberOfVersions
