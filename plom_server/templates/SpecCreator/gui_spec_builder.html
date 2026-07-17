@@ -20,7 +20,7 @@
         </div>
         {% include "../base/alert_messages.html" with messages=messages %}
         <div class="card">
-            <h4 class="card-header">Start with your assessment .pdf*</h4>
+            <h4 class="card-header">Start with your assessment .pdf</h4>
             <!-- this triggers a page refresh after a child element sends an htmx request -->
             <div hx-on:htmx:after-request="location.reload()">
                 <div id="card_ver{{ source.version }}">
