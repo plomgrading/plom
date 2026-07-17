@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 import random
 from copy import deepcopy
@@ -77,8 +77,30 @@ class SpecSerializer(serializers.ModelSerializer):
             serializers.ValidationError: in this case the ``.detail``
                 field will contain a list of what is wrong.
         """
+        # TODO: circular imports
+        from plom_server.Preparation.services.SourceService import get_source_info
+
         if not super().is_valid(raise_exception=raise_exception):
             return False
+
+        # This is usually ill advised, but we query the db to see if source
+        # version 1 has been uploaded. If yes, we need to confirm numberOfPages
+        # matches the uploaded file.
+        SOURCE_VERSION = 1
+        version_one = get_source_info(SOURCE_VERSION)
+        try:
+            page_count = version_one["page_count"]
+            if self.data["numberOfPages"] != page_count:
+                if raise_exception:
+                    raise ValueError(
+                        f'Spec numberOfPages: "{self.data["numberOfPages"]}" doesn\'t'
+                        f' match page count for source file version 1: "{page_count}"'
+                    )
+                return False
+        # if "page_count" is missing, we assume the source file hasn't been uploaded
+        # and don't need to check it.
+        except KeyError:
+            pass
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
         try:
