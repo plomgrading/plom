@@ -17,12 +17,6 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-# Not server deps
-PyQt6==6.7.1
-PyQt6-Qt6==6.7.3
-PyQt6-sip==13.8.0
-pytest-qt==4.5.0
-
 arrow==1.4.0
 canvasapi==3.4.0
 cryptography==48.0.1  # 49 breaks plom-client macOS x86_64, plom-client Issue #5139
