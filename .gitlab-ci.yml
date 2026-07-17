@@ -91,7 +91,7 @@ codespell:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install codespell~=2.4.2
+    - pip install codespell~=2.4.3
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
     - codespell
@@ -336,7 +336,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.15.0
+    - pip install pytest pytest-cov coverage[toml]~=7.15.2
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -398,7 +398,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.20.1
+    - pip install mypy~=1.20.2
   script:
     - mypy --version
     - mypy plom plom_server --python-ver 3.12 --install-types --non-interactive || true
@@ -524,7 +524,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.15.0
+    - pip install coverage~=7.15.2
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
@@ -548,7 +548,7 @@ webplom_api_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.15.0
+    - pip install coverage~=7.15.2
     - pip install pytest pytest-mock pytest-django
   script:
     - export PYTHONPATH=$PWD
