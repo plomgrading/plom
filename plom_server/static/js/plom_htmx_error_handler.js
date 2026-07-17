@@ -9,22 +9,26 @@
  You must have bootstrap loaded to use this.
 */
 
-// listens for htmx responses with 400 and 500 code errors
+/** Listens for htmx responses with 400 and 500 code errors. */
 document.body.addEventListener('htmx:responseError', (event) => {
   // there's probably more debug info in this event that might be helpful
   const response_payload = event.detail.xhr.response;
   displayDismissableAlert(response_payload, 'alert-danger');
 });
 
-// listens for htmx requests that can't reach the server
+/** Listens for htmx requests that can't reach the server. */
 document.body.addEventListener('htmx:sendError', (event) => {
   const target_url = event.detail.xhr.responseURL;
   const alert_text = `Unsuccessful htmx request addressed to ${target_url}.<br /><b>The server couldn't be reached</b>.`;
   displayDismissableAlert(alert_text, 'alert-secondary');
 });
 
-// display a dismissable alert with html_content nested inside.
-// alert_type is a bootstrap alert class to style the alert.
+/**
+ * Display a dismissable alert on screen using bootstrap.
+ * @param {string} html_content - An html string to display in the alert.
+ * @param {string} alert_type - A bootstrap class for the alert style. It
+ *   should be something like "primary", "secondary", "danger" etc.
+ */
 function displayDismissableAlert(html_content, alert_type = 'alert-danger') {
   const outer_div = document.createElement('div');
   outer_div.className = `alert ${alert_type} alert-dismissible fade show m-1 p-1 shadow`;
@@ -40,7 +44,11 @@ function displayDismissableAlert(html_content, alert_type = 'alert-danger') {
   getOrCreateStickyDiv().prepend(outer_div);
 }
 
-// fetch a sticky div (or create one if it doesn't exist)
+/**
+ * Fetch a sticky div (or create one if it doesn't exist).
+ * @param {HTMLElement} div_id - The id of the stickydiv to fetch/create.
+ * @returns {HTMLElement} - A sticky div.
+ */
 function getOrCreateStickyDiv(div_id = 'plomHtmxErrorHandler') {
   var sticky_div = document.getElementById(div_id);
   if (sticky_div !== null)

@@ -10,8 +10,12 @@ const jsdoc = require('eslint-plugin-jsdoc');
 
 module.exports = [
   jsdoc.configs['flat/recommended'],
-  // ignore vendored files
-  { ignores: ['plom_server/plom_extra_static/js3rdparty/**'] },
+  { ignores: [
+    // ignore vendored files
+    'plom_server/plom_extra_static/js3rdparty/**',
+    // This file isn't from Plom
+    'plom_server/static/js/bootstrap_lightdark_mode.js',
+  ] },
   {
     files: ['**/*.js', '**/*.cjs', '**/*.jsx', '**/*.ts', '**/*.tsx'],
 
