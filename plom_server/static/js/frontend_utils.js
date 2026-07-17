@@ -10,17 +10,20 @@
 const firstWordList = ['adorable', 'adventurous', 'aggressive', 'agreeable', 'alert', 'alive', 'amused', 'angry', 'annoyed', 'anxious', 'attractive', 'average', 'bad', 'beautiful', 'better', 'bewildered', 'blue', 'blushing', 'bored', 'brainy', 'brave', 'breakable', 'bright', 'busy', 'calm', 'careful', 'cautious', 'charming', 'cheerful', 'clean', 'clear', 'clever', 'cloudy', 'clumsy', 'colourful', 'combative', 'comfortable', 'concerned', 'confused', 'cooperative', 'crazy', 'curious', 'cute', 'dangerous', 'delightful', 'determined', 'different', 'distinct', 'dizzy', 'eager', 'easy', 'elated', 'elegant', 'energetic', 'enthusiastic', 'excited', 'expensive', 'exuberant', 'fair', 'faithful', 'famous', 'fancy', 'fantastic', 'fine', 'friendly', 'funny', 'gentle', 'gifted', 'glamorous', 'gleaming', 'glorious', 'good', 'gorgeous', 'handsome', 'happy', 'healthy', 'helpful', 'hilarious', 'hungry', 'important', 'innocent', 'jolly', 'kind', 'light', 'lively', 'lovely', 'lucky', 'magnificent', 'misty', 'muddy', 'mushy', 'mysterious', 'naughty', 'nice', 'oldfashioned', 'outstanding', 'perfect', 'powerful', 'precious', 'real', 'relieved', 'rich', 'shiny', 'smiling', 'sparkling', 'successful', 'super', 'thoughtful', 'wandering', 'young'];
 const secondWordList = ['actor', 'actress', 'advertisement', 'airport', 'animal', 'answer', 'apple', 'balloon', 'banana', 'battery', 'bears', 'bird', 'bison', 'breakfast', 'camera', 'candle', 'car', 'cartoon', 'cat', 'chicken', 'computer', 'deer', 'dog', 'dolphin', 'eagle', 'fire', 'fish', 'food', 'ghost', 'gold', 'gorilla', 'grass', 'guitar', 'hamburger', 'helicopter', 'horse', 'ice', 'jackal', 'jelly', 'juice', 'kangaroo', 'king', 'lawyer', 'lion', 'lizard', 'llama', 'lobster', 'machine', 'magician', 'monkey', 'mosquito', 'panda', 'parrot', 'pig', 'pizza', 'planet', 'pony', 'potato', 'queen', 'rabbit', 'rainbow', 'shark', 'snake', 'tiger', 'tomato', 'train', 'truck', 'turkey', 'whale', 'wolf'];
 
-// toggle password visibility
-/* *********************************************************** */
+/**
+ * Toggle obscuring on a text input.
+ * @param {string} passwordInputId - The id of a text input element.
+ */
 window.toggleVisibility = function (passwordInputId) {
   let passwordInput = document.getElementById(passwordInputId);
   const newType = passwordInput.getAttribute('type') == 'password' ? 'text' : 'password';
   passwordInput.setAttribute('type', newType);
 };
-/* *********************************************************** */
 
-// generate a random username
-/* *********************************************************** */
+/**
+ * Insert a random username into the given text input element.
+ * @param {HTMLElement} textInputId - An html text input element.
+ */
 window.insertRandomUsername = function (textInputId) {
   const firstUserWord = firstWordList[Math.floor(Math.random() * firstWordList.length)].split(' ').join('');
   const secondUserWord = secondWordList[Math.floor(Math.random() * secondWordList.length)].split(' ').join('');
@@ -28,17 +31,16 @@ window.insertRandomUsername = function (textInputId) {
   let textInput = document.getElementById(textInputId);
   textInput.value = firstUserWord + secondUserWord + randomNumAsString;
 };
-/* *********************************************************** */
 
 /**
  * Copy content to to a user's clipboard.
- * @param {HTMLElement} buttonElement - a button element with content in data-copyText.
+ * @param {HTMLElement} buttonElement - A button element with content in data-copyText.
  *   For example:
  *   <button id="myElementId"
  *           data-copyText="https://www.examplewebsite.com/"
  *           onclick="copyToClipboard(this)">
  *       Copy Link
- *   </button>
+ *   </button>.
  */
 window.copyToClipboard = function (buttonElement) {
   const copyText = buttonElement.dataset.copytext;
@@ -54,4 +56,3 @@ window.copyToClipboard = function (buttonElement) {
     tickIcon.remove();
   }, 500);
 };
-/* *********************************************************** */
