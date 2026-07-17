@@ -96,9 +96,6 @@ codespell:
     - echo "Need an exception?  See the .codespell-ignore* files"
     - codespell
   allow_failure: true
-  artifacts:
-    reports:
-      dotenv: release_info.env
 
 
 # sometimes we write everything twice: this job ensures dupe file/info stay same
