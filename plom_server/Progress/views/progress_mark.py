@@ -93,7 +93,7 @@ class ProgressMarkHome(MarkerOrManagerView):
         return render(request, "Progress/Mark/mark_overview.html", context)
 
 
-class ProgressMarkStartMarking(IdentifierOrMarkerOrManagerView):
+class ProgressStartMarkingIdentifying(IdentifierOrMarkerOrManagerView):
     """Display a page telling users how to get the client and get started."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
@@ -103,7 +103,7 @@ class ProgressMarkStartMarking(IdentifierOrMarkerOrManagerView):
             default_host=get_current_site(request).domain
         )
         context.update({"server_link": server_link})
-        return render(request, "Progress/Mark/mark_papers.html", context)
+        return render(request, "Progress/start_marking_identifying.html", context)
 
 
 # TODO: move this to MarkingStatsService?

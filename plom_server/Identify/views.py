@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.http import HttpRequest, HttpResponse, Http404
@@ -9,7 +10,10 @@ from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
 from plom_server.Papers.services import SpecificationService, fixedpage_version_count
-from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Base.base_group_views import (
+    IdentifierOrManagerView,
+    ManagerRequiredView,
+)
 from plom_server.Rectangles.services import (
     get_reference_qr_coords_for_page,
     get_reference_rectangle_for_page,
@@ -21,7 +25,7 @@ from plom_server.Rectangles.services import (
 from .services import IDReaderService, IDProgressService
 
 
-class IDPredictionView(ManagerRequiredView):
+class IDPredictionView(IdentifierOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         id_reader_task_status = IDReaderService.get_id_reader_background_chore_status()
