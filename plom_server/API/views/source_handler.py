@@ -87,7 +87,7 @@ class SourceDetail(APIView):
 
     # POST /api/v0/source/<int:version>
     def post(self, request: Request, *, version: int) -> Response:
-        """Create, replace, or delete a source version.
+        """Create, or replace a source version.
 
         Args:
             request: An HTTP request in which the numbered spec is embedded in the FILES dict.
@@ -122,18 +122,11 @@ class SourceDetail(APIView):
                 "No source PDF supplied.", status.HTTP_400_BAD_REQUEST
             )
 
-        n_versions = SpecificationService.get_n_versions()
-        if version < 1 or version > n_versions:
-            return _error_response(
-                f"Source version number {version} is out of range [1, {n_versions}].",
-                status.HTTP_409_CONFLICT,
-            )
-
-        SourceService.delete_source_pdf(version)
-
         source_pdf = request.FILES["source_pdf"]
         if source_pdf.size > 0:
             try:
+                # TODO: POST vs PUT ? I think POST shouldn't overwrite(?)
+                SourceService.delete_source_pdf(version)
                 SourceService.take_source_from_upload(version, source_pdf)
             except PlomDependencyConflict as e:
                 return _error_response(
@@ -160,6 +153,7 @@ class SourceDetail(APIView):
             HTTP response 200 with the updated list of dicts as described
             in :class:`SourceOverview`.  200 is returned even in the case
             where no such source version exists (that's not an error).
+            400 is returned if the "version" isn't in an acceptable range.
             Only managers can do this; others get a 403.
             409 is returned if the source is "in use", typically b/c
             server configuration has progressed further.
@@ -171,16 +165,11 @@ class SourceDetail(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        n_versions = SpecificationService.get_n_versions()
-        if version < 1 or version > n_versions:
-            return _error_response(
-                f"Source version number {version} is out of range [1, {n_versions}]",
-                status.HTTP_400_BAD_REQUEST,
-            )
-
         try:
             # note: no error if that source version does not exist
             SourceService.delete_source_pdf(version)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomDependencyConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 

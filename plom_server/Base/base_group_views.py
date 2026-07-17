@@ -90,6 +90,12 @@ class IdentifierOrManagerView(RoleRequiredView):
     group_required = ("identifier", "manager")
 
 
+class IdentifierOrLeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for identifiers, lead markers, or managers."""
+
+    group_required = ("identifier", "lead_marker", "manager")
+
+
 class IdentifierOrMarkerOrManagerView(RoleRequiredView):
     """A base class view for identifiers, markers, or managers."""
 
@@ -112,3 +118,9 @@ class ScannerLeadMarkerOrManagerView(RoleRequiredView):
     """A base class view for scanners, lead markers and managers."""
 
     group_required = ("scanner", "lead_marker", "manager")
+
+
+class IdentifierScannerLeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for identifiers, scanners, lead markers and managers."""
+
+    group_required = ("identifier", "scanner", "lead_marker", "manager")

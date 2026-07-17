@@ -2,9 +2,10 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024, 2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2026 Aidan Murphy
 
 from django.http import HttpResponse, HttpRequest
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
@@ -19,12 +20,11 @@ class SpecSummaryView(ManagerRequiredView):
     """Display a read-only summary of the test specification in the browser."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        if SpecificationService.is_there_a_spec():
-            context = {
-                "spec": SpecificationService.get_the_spec(),
-            }
-        else:
-            context = {"spec": None}
+        """Display a summary of the test spec, or redirect to the creation screen."""
+        if not SpecificationService.is_there_a_spec():
+            return redirect(reverse("creator_launch"))
+
+        context = {"spec": SpecificationService.get_the_spec()}
         return render(request, "SpecCreator/summary-page.html", context)
 
 

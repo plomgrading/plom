@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pymupdf
-from django.core.exceptions import SuspiciousFileOperation
+from django.core.exceptions import SuspiciousFileOperation, ObjectDoesNotExist
 from django.core.files import File
 from django.core.files.utils import validate_file_name
 from django.db import transaction
@@ -69,13 +69,21 @@ def are_all_sources_uploaded() -> bool:
 def delete_source_pdf(version: int) -> None:
     """Delete a particular version of the source PDF files.
 
-    If no such version exists (either out of range or never uploaded)
-    then silently return (no error is raised).
+    If no such source file exists for that version (never uploaded)
+    then silently return (no error is raised). Note that this is
+    different to an out-of-range version, which does raise an error.
 
     Raises:
         PlomDependencyException: sources cannot be modified.
+        ValueError: version is out of range.
     """
     assert_can_modify_sources()
+
+    versions_list = SpecificationService.get_list_of_versions()
+    if version not in versions_list:
+        raise ValueError(
+            f"Version {version} is out of range. Acceptable versions: {versions_list}"
+        )
 
     with transaction.atomic(durable=True):
         # delete the DB entry and *then* the file: the order is important
@@ -158,7 +166,9 @@ def get_source_info(version: int) -> dict[str, Any]:
 def get_list_of_sources() -> list[dict[str, Any]]:
     """Return a list of sources, indicating if each is uploaded or not along with other info.
 
-    The list is sorted by the version.
+    The list is sorted by the version.  In the special case
+    where there is not yet a spec, we report as if there is
+    a single version.
     """
     vers = SpecificationService.get_list_of_versions()
     return [get_source_info(v) for v in vers]
@@ -246,9 +256,11 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
     # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
-    if version not in SpecificationService.get_list_of_versions():
-        raise ValueError(f"Version {version} is out of range")
-    required_pages = SpecificationService.get_n_pages()
+    versions_list = SpecificationService.get_list_of_versions()
+    if version not in versions_list:
+        raise ValueError(
+            f"Version {version} is out of range. Acceptable versions: {versions_list}"
+        )
     # save the file to a temp directory
     # TODO - size limits please
     with tempfile.TemporaryDirectory() as td:
@@ -259,10 +271,15 @@ def take_source_from_upload(version: int, in_memory_file: File) -> None:
         # now check it has correct number of pages
         with pymupdf.open(tmp_pdf) as doc:
             page_count = doc.page_count
-            if page_count != int(required_pages):
-                raise ValueError(
-                    f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}"
-                )
+            try:
+                required_pages = SpecificationService.get_n_pages()
+                if page_count != int(required_pages):
+                    raise ValueError(
+                        f"Uploaded pdf has {page_count} pages, but spec requires {required_pages}"
+                    )
+            except ObjectDoesNotExist:
+                # If no spec, then accept any number of pages
+                pass
             # keep the first page's size in full float precision
             w_float, h_float = doc[0].rect.width, doc[0].rect.height
             # collect all page sizes using "set" to combine any rounding to the same int
@@ -372,3 +389,30 @@ def _get_reference_image_file(source_version: int, page_number: int) -> File:
     return ReferenceImage.objects.get(
         version=source_version, page_number=page_number
     ).image_file
+
+
+def get_reference_images_as_list(source_version: int) -> list[File]:
+    """Return the reference images for a particular version as Django-files.
+
+    The reference images are sorted by page number.
+
+    Args:
+        source_version: which source version.
+
+    Returns:
+        A list of file abstractions, not for use outside Django.
+
+    Raises:
+        ObjectDoesNotExist: not yet uploaded or out of range.
+    """
+    reference_images_queryset = ReferenceImage.objects.filter(
+        version=source_version
+    ).order_by("page_number")
+    # values_list doesn't work on imagefield, so we iterate normally
+    reference_images_list = [ref.image_file for ref in reference_images_queryset]
+    if not reference_images_list:
+        raise ObjectDoesNotExist(
+            f'Reference images for source version "{source_version}"'
+            " couldn't be found. Probably the source file hasn't been uploaded."
+        )
+    return reference_images_list

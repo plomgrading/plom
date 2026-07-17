@@ -71,11 +71,12 @@ class Command(BaseCommand):
             )
 
         # zero has special meaning here
-        v_range = range(0, SpecificationService.get_n_versions() + 1)
-        if question_version not in v_range:
-            raise CommandError(
-                f"Version {question_version} out of valid range. Valid range: {list(v_range)}."
-            )
+        if question_version != 0:
+            verlist = SpecificationService.get_list_of_versions()
+            if question_version not in verlist:
+                raise CommandError(
+                    f"Version {question_version} out of range. Valid versions: {verlist}."
+                )
 
         pages = FixedPage.objects.filter(
             page_type=FixedPage.QUESTIONPAGE, question_index=question_index

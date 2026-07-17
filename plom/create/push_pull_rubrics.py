@@ -4,12 +4,7 @@
 """Tools for upload/downloading rubrics from Plom servers."""
 
 import json
-import sys
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
+import tomllib
 import tomlkit
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
