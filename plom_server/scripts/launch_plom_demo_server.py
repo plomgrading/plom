@@ -296,15 +296,12 @@ def upload_demo_assessment_spec_file(*, multiversion=True) -> None:
     print("Hacking spec for single version...")
     with spec_file.open("r") as fh:
         s = fh.read()
-    print(type(s))
     s = re.sub(r"numberOfVersions = .*", r"numberOfVersions = 1", s)
     s = re.sub(r"select = .*", r"", s)
-    print(s)
     with TemporaryDirectory() as tmpdir:
         spec_file = Path(tmpdir) / "demo_assessment_spec_single_version.toml"
         with spec_file.open("w") as fh:
             fh.writelines(s)
-        # TODO: should we autogen this from the above file?
         run_plom_cli_command(f"upload-spec {spec_file}")
 
 
