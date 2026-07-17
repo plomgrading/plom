@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
@@ -10,6 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh
 from django.contrib import messages
 
 from plom_server.Base.base_group_views import (
+    IdentifierScannerLeadMarkerOrManagerView,
     ScannerLeadMarkerOrManagerView,
     ManagerRequiredView,
 )
@@ -59,7 +60,7 @@ class WholePaperView(ScannerLeadMarkerOrManagerView):
         return HttpResponseClientRefresh()
 
 
-class PushedImageRotatedView(ScannerLeadMarkerOrManagerView):
+class PushedImageRotatedView(IdentifierScannerLeadMarkerOrManagerView):
     """Return a pushed image given by its pk, pass back hard rotated image."""
 
     def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:

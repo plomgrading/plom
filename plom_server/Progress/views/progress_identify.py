@@ -8,13 +8,13 @@ from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, FileResponse
 from django_htmx.http import HttpResponseClientRefresh
 
-from plom_server.Base.base_group_views import LeadMarkerOrManagerView
+from plom_server.Base.base_group_views import IdentifierOrManagerView
 
 from plom_server.Identify.services import IDProgressService
 from ..services import ProgressOverviewService
 
 
-class ProgressAllIdentifyTasks(LeadMarkerOrManagerView):
+class ProgressAllIdentifyTasks(IdentifierOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
@@ -29,7 +29,7 @@ class ProgressAllIdentifyTasks(LeadMarkerOrManagerView):
         return render(request, "Progress/Identify/all_identify_tasks.html", context)
 
 
-class IDImageWrapView(LeadMarkerOrManagerView):
+class IDImageWrapView(IdentifierOrManagerView):
     def get(self, request: HttpRequest, *, image_pk: int) -> HttpResponse:
         id_img = IDProgressService().get_id_image_object(image_pk=image_pk)
         # pass -angle to template since css uses clockwise not anti-clockwise.
@@ -37,13 +37,13 @@ class IDImageWrapView(LeadMarkerOrManagerView):
         return render(request, "Progress/Identify/id_image_wrap_fragment.html", context)
 
 
-class IDImageView(LeadMarkerOrManagerView):
+class IDImageView(IdentifierOrManagerView):
     def get(self, request: HttpRequest, *, image_pk: int) -> FileResponse:
         id_img = IDProgressService().get_id_image_object(image_pk=image_pk)
         return FileResponse(id_img.baseimage.image_file)
 
 
-class ClearID(LeadMarkerOrManagerView):
+class ClearID(IdentifierOrManagerView):
     def delete(self, request: HttpRequest, *, paper_number: int) -> HttpResponse:
         IDProgressService().clear_id_from_paper(paper_number)
         return HttpResponseClientRefresh()
