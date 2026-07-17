@@ -272,7 +272,7 @@ def _get_demo_num_questions() -> int:
     return spec["numberOfQuestions"]
 
 
-def _get_demo_num_verions() -> int:
+def _get_demo_num_versions() -> int:
     """Helper to grab the default spec and report how many versions it has."""
     spec_file = demo_files / "demo_assessment_spec.toml"
     with spec_file.open("rb") as f:
@@ -360,7 +360,7 @@ def build_demo_assessment_source_pdfs(*, multiversion=True) -> None:
             the version-1 source pdf.
     """
     print("Building assessment / solution source pdfs from tex in temp dirs")
-    num_versions = _get_demo_num_verions() if multiversion else 1
+    num_versions = _get_demo_num_versions() if multiversion else 1
     for v in range(1, num_versions + 1):
         filename = f"assessment_v{v}"
         _build_with_and_without_soln(demo_files / filename)
@@ -374,7 +374,7 @@ def upload_demo_assessment_source_files(*, multiversion=True):
             the version-1 source pdf.
     """
     print("Uploading demo assessment source pdfs")
-    num_versions = _get_demo_num_verions() if multiversion else 1
+    num_versions = _get_demo_num_versions() if multiversion else 1
     for v in range(1, num_versions + 1):
         source_pdf = f"assessment_v{v}.pdf"
         # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
@@ -392,7 +392,7 @@ def upload_demo_solution_files(*, multiversion=True):
     soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
-    num_versions = _get_demo_num_verions() if multiversion else 1
+    num_versions = _get_demo_num_versions() if multiversion else 1
     for v in range(1, num_versions + 1):
         soln_pdf_path = f"assessment_v{v}_solutions.pdf"
         run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
@@ -446,7 +446,7 @@ def read_hack_and_resave_qvmap(filepath: Path):
 
     Note - we do not use version 3 id page at all.
     """
-    num_versions = _get_demo_num_verions()
+    num_versions = _get_demo_num_versions()
     assert num_versions >= 2
 
     with open(filepath) as fh:
