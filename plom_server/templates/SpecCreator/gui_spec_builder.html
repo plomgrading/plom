@@ -1,0 +1,227 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2026 Aidan Murphy
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    [BETA] Build a specification
+{% endblock title %}
+{% block page_heading %}
+    [BETA] Build a specification
+{% endblock page_heading %}
+{% block page_subheading %}
+    Experimental features on this page
+{% endblock page_subheading %}
+{% block main_content %}
+    {% load static %}
+    <div class="d-grid gap-3">
+        <div>
+            <a class="btn btn-primary" href="{% url 'creator_launch' %}">Return to specification page</a>
+        </div>
+        {% include "../base/alert_messages.html" with messages=messages %}
+        <div class="card">
+            <h4 class="card-header">Start with your assessment .pdf</h4>
+            <!-- this triggers a page refresh after a child element sends an htmx request -->
+            <div hx-on:htmx:after-request="location.reload()">
+                <div id="card_ver{{ source.version }}">
+                    <!-- HTMX calls may re-render this content -->
+                    {% include "Preparation/source_item_view.html" with src=source %}
+                </div>
+            </div>
+        </div>
+        {% if pdf_image_dict %}
+            <div class="card">
+                <div class="card-header">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="numberOfVersions">exam version(s)</label>
+                                    <input id="numberOfVersions"
+                                           min="1"
+                                           type="number"
+                                           class="form-control"
+                                           oninput="setNumberOfVersions(this.value)"
+                                           value="1"
+                                           style="width: 6ch">
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="longName">assessment long name</label>
+                                    <input id="longName"
+                                           type="text"
+                                           class="form-control"
+                                           oninput="setLongName(this.value)">
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="shortName">assessment short name</label>
+                                    <input id="shortName"
+                                           type="text"
+                                           class="form-control"
+                                           oninput="setShortName(this.value)">
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="allowSharedPages">
+                                        allow shared pages (<a href="https://plom.readthedocs.io/en/latest/preparing_an_assessment.html#what-should-each-question-be">what's this?</a>)
+                                    </label>
+                                    <div class="input-group-text">
+                                        <input id="allowSharedPages"
+                                               type="checkbox"
+                                               class="form-check-input m-0"
+                                               oninput="setAllowSharedPages(this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-4">
+                                <span class="text-muted small">Pages selected:</span>
+                                <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
+                                <button class="btn btn-sm btn-secondary p-1"
+                                        onclick="clearAllSelectedPages()">
+                                    <i class="bi bi-eraser"></i>
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary" onclick="assignSelectedPages('newQuestion')">assign to new question</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary" onclick="assignSelectedPages('id')">assign as ID page</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary" onclick="assignSelectedPages('dnm')">assign to dnm</button>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <button class="btn btn-primary"
+                                            onclick="assignSelectedPages('question', parseInt(document.getElementById('questionAssignmentSelector').value))">
+                                        assign to
+                                    </button>
+                                    <select id="questionAssignmentSelector"
+                                            type="text"
+                                            class="form-select"
+                                            placeholder="">
+                                        <!-- dynamically update this with js -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-danger" onclick="unassignSelectedPages()">unassign</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-8">
+                            <!-- thumbnail container -->
+                            <div class="row row-cols-auto gy-1 gx-1 justify-content-evenly">
+                                {% for index, image_string in pdf_image_dict.items %}
+                                    <div class="col">
+                                        <label for="page{{ index }}Checkbox">
+                                            <div id="page{{ index }}OuterCard"
+                                                 class="card bg-secondary-subtle position-relative">
+                                                <div id="page{{ index }}InnerCard" class="card m-1">
+                                                    <img id="page{{ index }}Img"
+                                                         src="data:image/png;base64,{{ image_string }}"
+                                                         style="width: 15ch" />
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-5 pe-0"></div>
+                                                    <div class="col-2 p-0">
+                                                        <p class="text-center m-1 p-0">{{ index }}</p>
+                                                    </div>
+                                                    <div class="col-5 ps-0">
+                                                        <p class="text-end m-1 p-0 fw-bold" id="page{{ index }}Assignments"></p>
+                                                    </div>
+                                                </div>
+                                                <input id="page{{ index }}Checkbox"
+                                                       class="form-check-input position-absolute start-0"
+                                                       type="checkbox"
+                                                       onchange="updateSelectedPages({{ index }}, this.checked)">
+                                                <button id="page{{ index }}Blowup"
+                                                        class="btn btn-secondary bg-secondary position-absolute end-0 bg-opacity-10 m-1 p-1 border-0"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#page{{ index }}Modal">
+                                                    <i class="bi bi-arrows-angle-expand link-body-emphasis"></i>
+                                                </button>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <!-- modal for the above Blowup button -->
+                                    <div class="modal fade" id="page{{ index }}Modal" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content bg-transparent border-0">
+                                                <div class="modal-body p-0">
+                                                    <img src="data:image/png;base64,{{ image_string }}" class="img-fluid">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div id="pageBlockColumn" class="col-4">
+                            <div id="idPageCard">
+                                <!-- dynamically update this with js -->
+                            </div>
+                            <div id="dnmPageCard">
+                                <!-- dynamically update this with js -->
+                            </div>
+                            <div id="newQuestionButton" class="mt-1">
+                                <button class="btn btn-primary w-100 btn-sm" onclick="createQuestion()">New question</button>
+                            </div>
+                            <div id="questionSummary">
+                                <!-- dynamically update this with js -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-auto">
+                            <span>Number of questions:</span> <span id="numberOfQuestions"></span>
+                        </div>
+                        <div class="col-auto">
+                            <span>Total marks:</span> <span id="totalMarks"></span>
+                        </div>
+                        <div class="col-auto">Number of Pages:<span id="numberOfPages" data-number-of-pages="{{ pdf_image_dict|length }}">{{ pdf_image_dict|length }}</span></div>
+                    </div>
+                    <hr />
+                    <div class="row">
+                        <!-- The spec lives in the client's browser page state.
+			     We use configRequest to move it into the in-flight
+			     htmx request. -->
+                        <!-- see docs: https://htmx.org/events/#htmx:configRequest -->
+                        <form hx-post="{% url 'spec_json_upload' %}"
+                              hx-on:htmx:config-request="event.detail.parameters.spec=getSpecJson()"
+                              hx-target-error="#submissionErrors">
+                            <!-- This input represents the spec as a json string
+			         though it doesn't actually need to be here. -->
+                            <input name="spec" type="hidden">
+                            <button type="submit" class="btn btn-success">submit</button>
+                        </form>
+                    </div>
+                    <div class="row pt-2">
+                        <div class="alert alert-danger p-0 border-0" id="submissionErrors"></div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <script src="{% static 'js/SpecCreator/gui_spec_builder.js' %}"></script>
+{% endblock main_content %}

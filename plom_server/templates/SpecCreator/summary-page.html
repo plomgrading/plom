@@ -4,6 +4,7 @@
     Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2025 Philip D. Loewen
+    Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -18,84 +19,88 @@
             <a type="button"
                class="btn btn-primary me-2"
                href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
-            {% if spec %}
-                <a type="button"
-                   class="btn btn-secondary"
-                   href="{% url 'spec_download' %}">
-                    Download <tt>.toml</tt>
-                    <icon class="bi bi-file-earmark-arrow-down"></icon>
-                </a>
-                <button class="btn btn-danger"
-                        hx-confirm="Are you sure?"
-                        hx-delete="{% url 'spec_delete' %}">Delete specification</button>
-                <a class="btn btn-warning" href="{% url 'creator_launch' %}">Modify specification</a>
-            {% endif %}
+            <a type="button"
+               class="btn btn-secondary"
+               href="{% url 'spec_download' %}">
+                Download <tt>.toml</tt>
+                <icon class="bi bi-file-earmark-arrow-down"></icon>
+            </a>
+            <button class="btn btn-danger"
+                    hx-confirm="Are you sure?"
+                    hx-delete="{% url 'spec_delete' %}">Delete specification</button>
+            <a class="btn btn-warning" href="{% url 'creator_launch' %}">Modify specification</a>
         </div>
         <div class="card">
             <div class="card-body">
-                {% if spec %}
-                    <h4 class="card-title">Assessment specification</h4>
-                    <p class="card-subtitle">The following will be used to generate papers:</p>
-                    <dl class="row">
-                        <dt class="col-sm-2">Name</dt>
-                        <dd class="col-sm-10">
-                            {{ spec.name }}
-                        </dd>
-                        <dt class="col-sm-2">Long name</dt>
-                        <dd class="col-sm-10">
-                            {{ spec.longName }}
-                        </dd>
-                        <dt class="col-sm-2">Versions</dt>
-                        <dd class="col-sm-10">
-                            {{ spec.numberOfVersions }}
-                        </dd>
-                        <dt class="col-sm-2">Pages</dt>
+                <h4 class="card-title">Assessment specification</h4>
+                <p class="card-subtitle">The following will be used to generate papers:</p>
+                <dl class="row">
+                    <dt class="col-sm-2">Name</dt>
+                    <dd class="col-sm-10">
+                        {{ spec.name }}
+                    </dd>
+                    <dt class="col-sm-2">Long name</dt>
+                    <dd class="col-sm-10">
+                        {{ spec.longName }}
+                    </dd>
+                    <dt class="col-sm-2">Versions</dt>
+                    <dd class="col-sm-10">
+                        {{ spec.numberOfVersions }}
+                    </dd>
+                    <dt class="col-sm-2">Pages</dt>
+                    {% if spec.numberOfPages|divisibleby:2 %}
                         <dd class="col-sm-10">
                             {{ spec.numberOfPages }}
                         </dd>
-                        <dt class="col-sm-2">ID page</dt>
-                        <dd class="col-sm-10">
-                            {{ spec.idPage }}
+                    {% else %}
+                        <dd class="col-sm-2 fw-bolder">
+                            {{ spec.numberOfPages }}
                         </dd>
-                        <dt class="col-sm-2">Do-not-mark pages</dt>
-                        <dd class="col-sm-10">
-                            {% if spec.doNotMarkPages %}
-                                {{ spec.doNotMarkPages }}
-                            {% else %}
-                                None
-                            {% endif %}
+                        <dd class="col-sm-8 alert alert-danger fw-bolder">
+                            <!-- TODO: write docs and link here -->
+                            Assessments with odd page counts will yield pages without QR codes when printed.
+                            (<a href="https://plom.readthedocs.io/en/latest/preparing_an_assessment.html#page-parity-physical-exams-accommodating-scanning-workflows">Why is this an issue?</a>)
                         </dd>
-                        <dt class="col-sm-2">Questions</dt>
-                        <dd class="col-sm-10">
-                            {{ spec.numberOfQuestions }}
-                        </dd>
-                        <dt class="col-sm-2">Total marks</dt>
-                        <dd class="col-sm-10">
-                            {{ spec.totalMarks }}
-                        </dd>
-                        {% if spec.allowSharedPages %}
-                            <dt class="col-sm-2">allowSharedPages</dt>
-                            <dd class="col-sm-10">
-                                {{ spec.allowSharedPages }}
-                            </dd>
+                    {% endif %}
+                    <dt class="col-sm-2">ID page</dt>
+                    <dd class="col-sm-10">
+                        {{ spec.idPage }}
+                    </dd>
+                    <dt class="col-sm-2">Do-not-mark pages</dt>
+                    <dd class="col-sm-10">
+                        {% if spec.doNotMarkPages %}
+                            {{ spec.doNotMarkPages }}
+                        {% else %}
+                            None
                         {% endif %}
-                        {% for qidx, question in spec.question.items %}
-                            <dt class="col-sm-2">Question index {{ qidx }}</dt>
-                            <dd class="col-sm-10">
-                                <ul class="list-unstyled mb-0">
-                                    <li>Pages: {{ question.pages }}</li>
-                                    <li>Label: {{ question.label }}</li>
-                                    <li>Mark: {{ question.mark }}</li>
-                                    <li>Select: {{ question.select }}</li>
-                                    <li>Bonus: {{ bonus }}</li>
-                                </ul>
-                            </dd>
-                        {% endfor %}
-                    </dl>
-                {% else %}
-                    <h4 class="card-title">There is no assessment specification</h4>
-                    <a class="btn btn-primary" href="{% url 'creator_launch' %}">Create specification</a>
-                {% endif %}
+                    </dd>
+                    <dt class="col-sm-2">Questions</dt>
+                    <dd class="col-sm-10">
+                        {{ spec.numberOfQuestions }}
+                    </dd>
+                    <dt class="col-sm-2">Total marks</dt>
+                    <dd class="col-sm-10">
+                        {{ spec.totalMarks }}
+                    </dd>
+                    {% if spec.allowSharedPages %}
+                        <dt class="col-sm-2">allowSharedPages</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.allowSharedPages }}
+                        </dd>
+                    {% endif %}
+                    {% for qidx, question in spec.question.items %}
+                        <dt class="col-sm-2">Question index {{ qidx }}</dt>
+                        <dd class="col-sm-10">
+                            <ul class="list-unstyled mb-0">
+                                <li>Pages: {{ question.pages }}</li>
+                                <li>Label: {{ question.label }}</li>
+                                <li>Mark: {{ question.mark }}</li>
+                                <li>Select: {{ question.select }}</li>
+                                <li>Bonus: {{ bonus }}</li>
+                            </ul>
+                        </dd>
+                    {% endfor %}
+                </dl>
             </div>
         </div>
     </div>

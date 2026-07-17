@@ -21,7 +21,18 @@
         <div class="card">
             <div class="card-body pb-0">
                 <div class="card-text">
-                    {% if not all_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages.</p>{% endif %}
+                    {% if has_spec %}
+                        <p>
+                            According to the specification, each PDF must
+                            have exactly {{ number_of_pages }} pages.
+                        </p>
+                    {% else %}
+                        <p>
+                            This server does not have a specification yet.
+                            If you wish to upload more than one version you
+                            must first complete the specification.
+                        </p>
+                    {% endif %}
                     {% if duplicates %}
                         <div class="alert alert-warning pb-0" role="alert">
                             Some of the source PDFs are duplicates:

@@ -14,7 +14,7 @@ from ...services.preparation_dependency_service import (
 
 
 class Command(BaseCommand):
-    help = "Get the status of assessment prepartaion, and mark preparation as either finished or in progress."
+    help = "Get the status of assessment preparation, and mark preparation as either finished or in progress."
 
     def add_arguments(self, parser):
         grp = parser.add_mutually_exclusive_group(required=True)
@@ -36,7 +36,7 @@ class Command(BaseCommand):
             spec_status = SpecificationService.is_there_a_spec()
             self.stdout.write(f"Specification present: {spec_status}")
 
-            sources_total = SpecificationService.get_n_versions()
+            sources_total = len(SpecificationService.get_list_of_versions())
             num_sources_present = SourceService.how_many_source_versions_uploaded()
             self.stdout.write(
                 f"{num_sources_present} of {sources_total} PDF source(s) present"

@@ -5,7 +5,9 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Aidan Murphy
 
+import json
 import html
 import logging
 import tomllib
@@ -149,6 +151,22 @@ def install_spec_from_toml_string(
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = tomllib.loads(tomlstr)
+    return install_spec_from_dict(data)
+
+
+def install_spec_from_json_string(jsonstr: str) -> Specification:
+    """Load a specification from a string in JSON format and save it to the database.
+
+    Args:
+        jsonstr: a string containing json.
+
+    Raises:
+        json.JSONDecodeError: cannot read json.
+        PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: see :func:`install_spec_from_dict`.
+        serializers.ValidationError: see :func:`install_spec_from_dict`.
+    """
+    data = json.loads(jsonstr)
     return install_spec_from_dict(data)
 
 
@@ -321,27 +339,25 @@ def get_n_questions() -> int:
     return spec.numberOfQuestions
 
 
-@transaction.atomic
 def get_n_versions() -> int:
-    """Get the number of test versions.
+    """Get the number of assessment versions, which is always at least one.
 
-    Exceptions:
-        ObjectDoesNotExist: no exam specification yet.
+    If there is no spec, return 1, because there is implicitly always going
+    to be at least one version.
     """
-    spec = Specification.objects.get()
-    return spec.numberOfVersions
+    try:
+        spec = Specification.objects.get()
+        return spec.numberOfVersions
+    except ObjectDoesNotExist:
+        return 1
 
 
 def get_list_of_versions() -> list[int]:
     """Get a list of the versions.
 
-    If there is no spec, an empty list.
+    If there is no spec, you'll get a list of just one version.
     """
-    # get n versions throws an ObjectDoesNotExist when no spec
-    try:
-        return [v + 1 for v in range(get_n_versions())]
-    except ObjectDoesNotExist:
-        return []
+    return [v + 1 for v in range(get_n_versions())]
 
 
 def get_question_indices() -> list[int]:

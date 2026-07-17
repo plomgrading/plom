@@ -3,6 +3,7 @@
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2026 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -20,34 +21,30 @@
         {% if is_there_a_spec %}
             <span class="alert alert-warning my-2" role="alert">There is a specification in the database. You may not be able to modify it if you have gone further preparing your assessment.</span>
         {% else %}
-            <div class="alert alert-primary" role="alert">There is no assessment specification</div>
+            <span class="alert alert-primary" role="alert">There is no assessment specification</span>
         {% endif %}
         <div class="card">
             <div class="card-body">
+                <p>
+                    Plom needs a description of your assessment in <a href="https://toml.io/en/" target="_blank">.toml format</a>.
+                    This can be complicated, so there are a few ways to do this:
+                </p>
                 <form enctype="multipart/form-data"
                       hx-post="{% url 'creator_launch' %}"
                       hx-include="[name='spec']"
                       hx-target="#saving-status">
                     {% csrf_token %}
                     <p>
-                        You can use the
-                        <a class="btn btn-primary" href="{% url 'template_spec_builder' %}">Template
-                        Spec Builder</a>
-                        which helps you describe the structure of your assessment
-                        in <a href="https://toml.io/en/" target="_blank">.toml format</a>.
+                        If you know what your assessment will look like, you can use the
+                        <a class="btn btn-primary" href="{% url 'template_spec_builder' %}">Template Spec Builder</a>.
                     </p>
                     <p>
-                        <!-- TODO: moved to a new page: delete this later if we don't move it back
-                        Or you can upload a file:
-                        <div class="input-group">
-                            <input class="form-control" type="file" accept=".toml" name="toml_file" id="toml_file" />
-                            <button type="submit" class="btn btn-primary" name="which_action" value="upload_file">Upload</button>
-                        </div>
-                        -->
-                        Or you can
-                        <a class="btn btn-primary" href="{% url 'spec_upload' %}">Upload
-                        a <tt>.toml</tt> file</a>
-                        that you have prepared elsewhere.
+                        If you have at least one version of your assessment finalised, you can use the
+                        <a class="btn btn-primary" href="{% url 'gui_spec_builder' %}">GUI Spec Builder</a>.
+                    </p>
+                    <p>
+                        If you've prepared your &ldquo;specification&rdquo; elsewhere, you can
+                        <a class="btn btn-primary" href="{% url 'spec_upload' %}">Upload a <tt>.toml</tt> file</a>.
                     </p>
                     <p>Or you can edit specification in the box below.</p>
                     <div>
@@ -69,9 +66,6 @@
                         </div>
                     </details>
                     <button type="submit" class="btn btn-primary me-1 mt-2">Submit</button>
-                    <!--
-                        <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
-                    -->
                     <button type="submit"
                             class="btn btn-secondary mt-2"
                             name="which_action"
