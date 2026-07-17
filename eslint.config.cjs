@@ -15,7 +15,7 @@ module.exports = [
   {
     files: ['**/*.js', '**/*.cjs', '**/*.jsx', '**/*.ts', '**/*.tsx'],
 
-    plugins: { '@stylistic': stylistic },
+    plugins: { '@stylistic': stylistic, 'jsdoc': jsdoc },
     // Source - https://stackoverflow.com/questions/59644872/how-to-specify-my-environment-in-eslint
     // Posted by papillon
     // Retrieved 2025-11-19, License - CC BY-SA 4.0
@@ -29,6 +29,20 @@ module.exports = [
     rules: {
       ...js.configs.recommended.rules,
       ...stylistic.configs.recommended.rules,
+
+      // jsdoc rules here: https://github.com/gajus/eslint-plugin-jsdoc/tree/HEAD/docs/rules
+      'jsdoc/require-jsdoc': ['error', {
+        require: {
+          FunctionDeclaration: true,
+          FunctionExpression: true,
+          MethodDefinition: true,
+        },
+      }],
+      'jsdoc/require-description': 'error',
+      'jsdoc/require-description-complete-sentence': 'error',
+      'jsdoc/require-hyphen-before-param-description': ['error', 'always'],
+      // 'jsdoc/require-params': 'off',
+
       'no-console': 'error',
       '@stylistic/semi': ['error', 'always'],
     },
