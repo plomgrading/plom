@@ -3,20 +3,15 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2026 Colin B. Macdonald
 
-from pathlib import Path
+import segno
 import shutil
 import subprocess
-import sys
 import tempfile
-import segno
+from pathlib import Path
+from importlib import resources
 
 from plom.common.tpv_utils import encodeBundleSeparatorPaperCode
 import plom.create
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 
 def build_bundle_separator_paper_pdf(
