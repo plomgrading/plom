@@ -25,6 +25,8 @@ from shlex import split
 from tempfile import TemporaryDirectory
 from time import sleep
 
+import tomllib
+
 from plom.textools import buildLaTeX
 from plom_server import __version__
 
@@ -262,18 +264,45 @@ def launch_huey_processes() -> list[subprocess.Popen]:
     ]
 
 
+def _get_demo_num_questions() -> int:
+    """Helper to grab the default spec and report how many questions it has."""
+    spec_file = demo_files / "demo_assessment_spec.toml"
+    with spec_file.open("rb") as f:
+        spec = tomllib.load(f)
+    return spec["numberOfQuestions"]
+
+
+def _get_demo_num_versions() -> int:
+    """Helper to grab the default spec and report how many versions it has."""
+    spec_file = demo_files / "demo_assessment_spec.toml"
+    with spec_file.open("rb") as f:
+        spec = tomllib.load(f)
+    return spec["numberOfVersions"]
+
+
 def upload_demo_assessment_spec_file(*, multiversion=True) -> None:
     """Upload a demo assessment spec.
 
-    KWargs:
-        multiversion= if True upload demo soln spec for 3 version assessment, else upload spec for a single assessment version.
+    Keyword Args:
+        multiversion: if True upload demo soln spec for multiversion assessment,
+            else upload spec for a single assessment version.
     """
-    print("Uploading demo assessment spec")
+    spec_file = demo_files / "demo_assessment_spec.toml"
     if multiversion:
-        spec_file = demo_files / "demo_assessment_spec.toml"
-    else:
-        spec_file = demo_files / "demo_assessment_spec_single_version.toml"
-    run_plom_cli_command(f"upload-spec {spec_file}")
+        print("Uploading demo assessment spec")
+        run_plom_cli_command(f"upload-spec {spec_file}")
+        return
+
+    print("Hacking spec for single version...")
+    with spec_file.open("r") as fh:
+        s = fh.read()
+    s = re.sub(r"numberOfVersions = .*", r"numberOfVersions = 1", s)
+    s = re.sub(r"select = .*", r"", s)
+    with TemporaryDirectory() as tmpdir:
+        spec_file = Path(tmpdir) / "demo_assessment_spec_single_version.toml"
+        with spec_file.open("w") as fh:
+            fh.writelines(s)
+        run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
@@ -323,54 +352,47 @@ def _build_with_and_without_soln(source_path: Path) -> None:
 def build_demo_assessment_source_pdfs(*, multiversion=True) -> None:
     """Build the demo source PDF files.
 
-    KWargs:
-        multiversion = if True build 3 versions, else only build the version-1 source pdf
+    Keyword Args:
+        multiversion: if True build multiple sources, else only build
+            the version-1 source pdf.
     """
     print("Building assessment / solution source pdfs from tex in temp dirs")
-    if multiversion:
-        for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
-            _build_with_and_without_soln(demo_files / filename)
-    else:
-        _build_with_and_without_soln(demo_files / "assessment_v1")
+    num_versions = _get_demo_num_versions() if multiversion else 1
+    for v in range(1, num_versions + 1):
+        filename = f"assessment_v{v}"
+        _build_with_and_without_soln(demo_files / filename)
 
 
 def upload_demo_assessment_source_files(*, multiversion=True):
     """Upload demo assessment source pdfs.
 
-    KWargs:
-        multiversion = if True upload 3 source pdfs, else only upload the version-1 source pdf
+    Keyword Args:
+        multiversion: if True upload multiple source pdfs, else only upload
+            the version-1 source pdf.
     """
     print("Uploading demo assessment source pdfs")
-    if multiversion:
-        for v in (1, 2, 3):
-            source_pdf = f"assessment_v{v}.pdf"
-            # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
-            run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
-    else:
-        run_plom_cli_command("upload-source assessment_v1.pdf -v 1")
+    num_versions = _get_demo_num_versions() if multiversion else 1
+    for v in range(1, num_versions + 1):
+        source_pdf = f"assessment_v{v}.pdf"
+        # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+        run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
 
 
 def upload_demo_solution_files(*, multiversion=True):
     """Upload demo solution spec and solution pdfs.
 
-    KWargs:
-        multiversion = if True upload 3 soln pdfs, else only upload the version-1 solution pdf
-
+    Keyword Args:
+        multiversion: if True upload multiple soln pdfs, else only upload
+            the version-1 solution pdf.
     """
     print("Uploading demo solution spec")
     soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
-    if multiversion:
-        for v in [1, 2, 3]:
-            soln_pdf_path = f"assessment_v{v}_solutions.pdf"
-            run_django_manage_command(
-                f"plom_soln_sources upload -v {v} {soln_pdf_path}"
-            )
-    else:
-        run_django_manage_command(
-            "plom_soln_sources upload -v 1 assessment_v1_solutions.pdf"
-        )
+    num_versions = _get_demo_num_versions() if multiversion else 1
+    for v in range(1, num_versions + 1):
+        soln_pdf_path = f"assessment_v{v}_solutions.pdf"
+        run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
 
 
 def upload_demo_classlist(length="normal"):
@@ -421,6 +443,9 @@ def read_hack_and_resave_qvmap(filepath: Path):
 
     Note - we do not use version 3 id page at all.
     """
+    num_versions = _get_demo_num_versions()
+    assert num_versions >= 2
+
     with open(filepath) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
@@ -536,7 +561,6 @@ def run_demo_preparation_commands(
             tmp_qv_path = Path(tdir) / "tmp_qv_filename.csv"
             download_the_qvmap(tmp_qv_path)
             depopulate_the_database()
-            # hard-coded to use 3 versions
             read_hack_and_resave_qvmap(tmp_qv_path)
             upload_the_qvmap(tmp_qv_path)
 
@@ -758,8 +782,8 @@ def run_the_randomarker(*, port, half_marks=False):
 
 def push_demo_rubrics(*, multiversion=True):
     """Push demo rubrics from toml."""
-    # note - hard coded question range here.
-    for question_idx in range(1, 8):
+    num_questions = _get_demo_num_questions()
+    for question_idx in range(1, num_questions + 1):
         rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
     if multiversion:
@@ -769,11 +793,14 @@ def push_demo_rubrics(*, multiversion=True):
 
 def create_and_link_question_tags():
     """Create the demo question tags and link them to some questions."""
+    num_questions = _get_demo_num_questions()
     qtags_csv = demo_files / "demo_assessment_qtags.csv"
     # upload question-tags as user "manager"
     run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
     # link questions to tags as user "manager"
     # WARNING - HARDCODED LIST
+    # TODO: what is the connection between this hardcoded stuff and the contents of the CSV above?
+    # TODO: presumably these "tag" must each appear in the csv above (?)
     for tag, question_idx in [
         ("limits", 1),
         ("derivatives", 2),
@@ -782,6 +809,7 @@ def create_and_link_question_tags():
         ("applications", 4),
         ("arithmetic", 5),
     ]:
+        assert question_idx in range(1, num_questions + 1)
         run_django_manage_command(
             f"link_question_with_tag {question_idx} {tag} manager"
         )
