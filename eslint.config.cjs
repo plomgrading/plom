@@ -46,6 +46,10 @@ module.exports = [
       'jsdoc/require-description-complete-sentence': 'error',
       'jsdoc/require-hyphen-before-param-description': ['error', 'always'],
       // 'jsdoc/require-params': 'off',
+      'jsdoc/multiline-blocks': ['error', {
+        noMultilineBlocks: true,
+        minimumLengthForMultiline: 80,
+      }],
 
       'no-console': 'error',
       '@stylistic/semi': ['error', 'always'],

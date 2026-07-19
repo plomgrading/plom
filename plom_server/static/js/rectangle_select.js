@@ -91,9 +91,7 @@ image.onload = function () {
   th_height = th_bottom - th_top;
 };
 
-/**
- * Supports drawRectInCanvas(). TODO: what does this actually do?
- */
+/** Supports drawRectInCanvas(). TODO: what does this actually do? */
 function updateHiddenInputs() {
   var inverse_ratio_w = effective_image_width / canvas.width;
   var inverse_ratio_h = effective_image_height / canvas.height;
@@ -125,9 +123,7 @@ function drawCircle(x, y, radius) {
   ctx.fill();
 }
 
-/**
- * Draw circles on the corners of the rectangle.
- */
+/** Draw circles on the corners of the rectangle. */
 function drawHandles() {
   drawCircle(rect.left, rect.top, handleRadius);
   drawCircle(rect.left + rect.width, rect.top, handleRadius);
@@ -159,9 +155,7 @@ function drawPlomBits() {
   ctx.rect(top_left_coord[0] * ratio_w, top_left_coord[1] * ratio_h, (bottom_right_coord[0] - top_left_coord[0]) * ratio_w, (bottom_right_coord[1] - top_left_coord[1]) * ratio_h);
   ctx.stroke();
 }
-/**
- * Draw the rectangle.
- */
+/** Draw the rectangle. */
 function drawRectInCanvas() {
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -179,9 +173,7 @@ function drawRectInCanvas() {
 }
 // drawRectInCanvas() connected functions -- END
 
-/**
- * Sets global vars when the mouse button is lifted.
- */
+/** Sets global vars when the mouse button is lifted. */
 function mouseUp() {
   dragTL = dragTR = dragBL = dragBR = false;
   dragWholeRect = false;
@@ -341,9 +333,7 @@ function mouseMove(e) {
   drawRectInCanvas();
 }
 
-/**
- * Update global variables relating to the rectangle.
- */
+/** Update global variables relating to the rectangle. */
 function updateCurrentCanvasRect() {
   current_canvas_rect.height = canvas.height;
   current_canvas_rect.width = canvas.width;
@@ -351,9 +341,7 @@ function updateCurrentCanvasRect() {
   current_canvas_rect.left = image.offsetLeft;
 }
 
-/**
- * Make the canvas match the reference image, and update the rectangle.
- */
+/** Make the canvas match the reference image, and update the rectangle. */
 function repositionCanvas() {
   // make canvas same as image, which may have changed size and position
   canvas.height = image.height;
@@ -372,9 +360,7 @@ function repositionCanvas() {
   drawRectInCanvas();
 }
 
-/**
- * Initialise the Canvas.
- */
+/** Initialise the Canvas. */
 function initCanvas() {
   canvas.height = image.height;
   canvas.width = image.width;
@@ -383,9 +369,7 @@ function initCanvas() {
   updateCurrentCanvasRect();
 }
 
-/**
- * Initialise the rectangle.
- */
+/** Initialise the rectangle. */
 function initRect() {
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
@@ -396,9 +380,7 @@ function initRect() {
   rect.left = th_left * ratio_w;
 }
 
-/**
- * Call various initialisers, and add event listeners to the canvas.
- */
+/** Call various initialisers, and add event listeners to the canvas. */
 function init() {
   canvas.addEventListener('mousedown', mouseDown, false);
   canvas.addEventListener('mouseup', mouseUp, false);

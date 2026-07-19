@@ -96,17 +96,13 @@ function removeQuestion(qidx) {
   return;
 }
 
-/**
- * Check the spec's ID pages, and update html elements accordingly.
- */
+/** Check the spec's ID pages, and update html elements accordingly. */
 function refreshIdPageLists() {
   refreshIdPageSummary();
   refreshPageAssignments();
 }
 
-/**
- * Update The Id Page summary html element according to the spec.
- */
+/** Update The Id Page summary html element according to the spec. */
 function refreshIdPageSummary() {
   const container = document.getElementById('idPageCard');
   var pagesText = `<span class="text-muted fst-italic">none</span>`;
@@ -126,16 +122,12 @@ function refreshIdPageSummary() {
 }
 
 //
-/**
- * Check the spec's DNM pages, and update html elements accordingly.
- */
+/** Check the spec's DNM pages, and update html elements accordingly. */
 function refreshDnmPageLists() {
   refreshDnmPageSummary();
   refreshPageAssignments();
 }
-/**
- * Update The DNM Page summary html element according to the spec.
- */
+/** Update The DNM Page summary html element according to the spec. */
 function refreshDnmPageSummary() {
   const container = document.getElementById('dnmPageCard');
   var pagesText = `<span class="text-muted fst-italic">none</span>`;
@@ -154,9 +146,7 @@ function refreshDnmPageSummary() {
                         </div>`;
 }
 
-/**
- *  Check the spec's questions, and update html elements accordingly.
- */
+/** Check the spec's questions, and update html elements accordingly. */
 function refreshQuestionLists() {
   refreshPageAssignments();
   refreshQuestionSummary();
@@ -165,9 +155,7 @@ function refreshQuestionLists() {
   updateNumberOfQuestions();
   return;
 }
-/**
- * Update The Question summary html elements according to the spec.
- */
+/** Update The Question summary html elements according to the spec. */
 function refreshQuestionSummary() {
   const container = document.getElementById('questionSummary');
   let questionCardElems = [];
@@ -240,9 +228,7 @@ function refreshQuestionSummary() {
     container.appendChild(elem);
   });
 }
-/**
- * Update the dropdown for the "assign page to <question>" button.
- */
+/** Update the dropdown for the "assign page to <question>" button. */
 function refreshQuestionDropdown() {
   let questionOptionElems = [];
   // question dropdown node
@@ -267,9 +253,7 @@ function refreshQuestionDropdown() {
   });
 }
 
-/**
- * Unselect all selected pages.
- */
+/** Unselect all selected pages. */
 function clearAllSelectedPages() {
   // get elements with IDs = "page...Checkbox"
   var pageCheckboxes = document.querySelectorAll('[id ^= "page"][id $= "Checkbox"]');
