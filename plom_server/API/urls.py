@@ -46,6 +46,7 @@ from .views import (
     PublicCodeAPIView,
     RectangleExtractorView,
     PQVmap,
+    QuestionRegionsView,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -184,6 +185,11 @@ urlpatterns = [
         "api/beta/pqvmap",
         PQVmap.as_view(),
         name="pqvmapper",
+    ),
+    path(
+        "api/beta/regions",
+        QuestionRegionsView.as_view(),
+        name="api_question_regions",
     ),
 ]
 

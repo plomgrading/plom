@@ -1,0 +1,38 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2026 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Adjust question regions
+{% endblock title %}
+{% block page_heading %}
+    Adjust question regions
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
+        <div class="card">
+            <div class="card-body pb-0">
+                {% if allowSharedPages %}
+                    <p>
+                        Because <tt>allowSharedPages</tt> is enabled,
+                        it is recommended that you define
+                        &ldquo;regions&rdquo; of any shared pages
+                        where the answer to each question is expected.
+                        This will help Plom present the most relevant
+                        parts of the page for marking and for other
+                        question-specific tasks.
+                    </p>
+                {% endif %}
+                <p>Page {{ info.page }} is shared by questions {{ info.questions_that_share }}</p>
+                <h3>Raw region data</h3>
+                {% for qidx, stuff in regions.items %}
+                    <p>{{ qidx }}: {{ stuff }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

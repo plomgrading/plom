@@ -10,6 +10,7 @@ from .views import (
     PreparationLandingView,
     PreparationDependencyConflictView,
     PreparationFinishedView,
+    QuestionRegionsView,
     SourceManageView,
     PrenamingConfigView,
     ClasslistView,
@@ -39,6 +40,7 @@ urlpatterns = [
     path(
         "prename/configure", PrenamingConfigView.as_view(), name="configure_prenaming"
     ),
+    path("question_regions", QuestionRegionsView.as_view(), name="question_regions"),
     path("classlist/", ClasslistView.as_view(), name="prep_classlist"),
     path(
         "classlist/download",
