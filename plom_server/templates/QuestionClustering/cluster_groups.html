@@ -26,12 +26,7 @@
     <script src="{% static '/js3rdparty/Sortable.min.js' %}"></script>
     <script src="{% static '/js3rdparty/tablesort.min.js' %}"></script>
     <script src="{% static '/js3rdparty/tablesort.number.min.js' %}"></script>
-    <div x-data="{ selected: [], all: false, openMenu: false, ids: [
-        {% for cid in cluster_groups.keys %}
-            '{{ cid }}'
-            {% if not forloop.last %},{% endif %}
-        {% endfor %}
-        ] }">
+    <div x-data="{ selected: [], all: false, openMenu: false, ids: [ {% for cid in cluster_groups.keys %} '{{ cid }}' {% if not forloop.last %},{% endif %} {% endfor %} ] }">
         <!-- Clustering cleanup toolbar -->
         <div class="fixed top-20 left-1/2 transform -translate-x-1/2 shadow-md rounded p-3 z-50 w-auto">
             <div class="d-flex align-items-center gap-3">
@@ -225,9 +220,7 @@
                                 {% endwith %}
                             </td>
                             <!-- number of merged components -->
-                            <td class="text-center align-middle">
-                                {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
-                            </td>
+                            <td class="text-center align-middle">{% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}</td>
                             <td class="text-center align-middle">{{ clusterId }}</td>
                             {% with cluster_name=cluster_to_name|get_item:clusterId %}
                                 <td class="align-middle cluster-name-cell" data-cluster-name-cell>

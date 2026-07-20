@@ -4,9 +4,7 @@
     <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
         <h2 class="h6 mb-0">Suggested assignments</h2>
         <span class="badge text-bg-secondary {% if not suggestions %}d-none{% endif %}"
-              data-suggestions-count>
-            {% if suggestions %}{{ suggestions|length }}{% endif %}
-        </span>
+              data-suggestions-count>{% if suggestions %}{{ suggestions|length }}{% endif %}</span>
     </div>
     <div class="alert alert-{{ suggestion_status_tone|default:'info' }} py-2 mb-2 {% if not suggestion_status %}d-none{% endif %}"
          data-suggestions-status>{{ suggestion_status }}</div>
