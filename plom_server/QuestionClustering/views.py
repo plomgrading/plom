@@ -442,7 +442,19 @@ class AssignUnclusteredPapersView(ManagerRequiredView):
     """Assign unclustered papers to an existing user-facing cluster."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Assign selected paper numbers to a target cluster."""
+        """Assign selected paper numbers to a target cluster.
+
+        This endpoint is used by ordinary form posts from the clustered and
+        unclustered paper pages.  Those callers get a redirect and Django
+        message.  The unclustered review page also calls this endpoint with
+        htmx for drag/drop assignment and suggested-assignment application;
+        htmx callers get JSON with updated counts.
+        The caller updates several existing page elements after a successful
+        assignment, including count badges, card removal, and cluster previews.
+
+        Cluster suggestions are read-only and handled by
+        ``SuggestUnclusteredPapersView``.
+        """
         question_idx = int(request.POST["question_idx"])
         version = int(request.POST["version"])
         page_num = int(request.POST["page_num"])
@@ -453,7 +465,7 @@ class AssignUnclusteredPapersView(ManagerRequiredView):
 
         paper_nums = list(map(int, request.POST.getlist("paper_nums")))
         qcs = QuestionClusteringService()
-        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+        is_htmx = request.htmx
 
         try:
             member_count = qcs.assign_papers_to_cluster(
@@ -463,15 +475,15 @@ class AssignUnclusteredPapersView(ManagerRequiredView):
                 paper_nums=paper_nums,
             )
         except EmptySelectedError as err:
-            if is_ajax:
+            if is_htmx:
                 return JsonResponse({"ok": False, "message": str(err)}, status=400)
             messages.error(request, f"Assign failed: {err}")
         except ObjectDoesNotExist as err:
-            if is_ajax:
+            if is_htmx:
                 return JsonResponse({"ok": False, "message": str(err)}, status=404)
             messages.error(request, f"Assign failed: {err}")
         else:
-            if is_ajax:
+            if is_htmx:
                 unclustered_count = len(
                     qcs.get_unclustered_paper_nums(
                         question_idx=question_idx,
@@ -499,7 +511,12 @@ class CreateClusterFromUnclusteredPapersView(ManagerRequiredView):
     """Create a new user-facing cluster from selected unclustered papers."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Create a new cluster from selected paper numbers."""
+        """Create a new cluster from selected paper numbers.
+
+        The current template uses this as a normal form action and expects a
+        redirect with a Django message.  The JSON response is kept for callers
+        that create clusters without a full page reload.
+        """
         question_idx = int(request.POST["question_idx"])
         version = int(request.POST["version"])
         page_num = int(request.POST["page_num"])
@@ -509,7 +526,7 @@ class CreateClusterFromUnclusteredPapersView(ManagerRequiredView):
 
         paper_nums = list(map(int, request.POST.getlist("paper_nums")))
         qcs = QuestionClusteringService()
-        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+        is_htmx = request.htmx
 
         try:
             clusterId, member_count = qcs.create_cluster_from_papers(
@@ -519,11 +536,11 @@ class CreateClusterFromUnclusteredPapersView(ManagerRequiredView):
                 paper_nums=paper_nums,
             )
         except EmptySelectedError as err:
-            if is_ajax:
+            if is_htmx:
                 return JsonResponse({"ok": False, "message": str(err)}, status=400)
             messages.error(request, f"Create cluster failed: {err}")
         else:
-            if is_ajax:
+            if is_htmx:
                 unclustered_count = len(
                     qcs.get_unclustered_paper_nums(
                         question_idx=question_idx,
@@ -565,7 +582,12 @@ class SuggestUnclusteredPapersView(ManagerRequiredView):
     """Suggest target clusters for currently unclustered papers."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Return suggested cluster assignments without applying them."""
+        """Return suggested cluster assignments without applying them.
+
+        The unclustered review page calls this with htmx and receives a
+        server-rendered suggestions panel.  Applying a suggestion is a separate
+        htmx POST to ``AssignUnclusteredPapersView``.
+        """
         question_idx = int(request.POST["question_idx"])
         version = int(request.POST["version"])
         page_num = int(request.POST["page_num"])
@@ -578,7 +600,47 @@ class SuggestUnclusteredPapersView(ManagerRequiredView):
                 page_num=page_num,
             )
         except ValueError as err:
+            if request.htmx:
+                context = _get_cluster_groups_context(
+                    question_idx,
+                    version,
+                    page_num,
+                    include_table_context=False,
+                )
+                context.update(
+                    {
+                        "suggestions": [],
+                        "suggestion_status": str(err),
+                        "suggestion_status_tone": "danger",
+                    }
+                )
+                return render(
+                    request,
+                    "QuestionClustering/fragments/unclustered_suggestions_panel.html",
+                    context=context,
+                )
             return JsonResponse({"ok": False, "message": str(err)}, status=400)
+
+        if request.htmx:
+            context = _get_cluster_groups_context(
+                question_idx,
+                version,
+                page_num,
+                include_table_context=False,
+            )
+            context["suggestions"] = suggestions
+            if not suggestions:
+                context.update(
+                    {
+                        "suggestion_status": "No suggestions available.",
+                        "suggestion_status_tone": "info",
+                    }
+                )
+            return render(
+                request,
+                "QuestionClustering/fragments/unclustered_suggestions_panel.html",
+                context=context,
+            )
 
         return JsonResponse({"ok": True, "suggestions": suggestions})
 
