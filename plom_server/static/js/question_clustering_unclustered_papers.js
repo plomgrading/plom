@@ -25,14 +25,14 @@
     let draggedCards = [];
 
     // Checkbox state drives both normal bulk form submission and bulk dragging.
-    sourceGrid.querySelectorAll('.unclustered-paper-card').forEach(card => {
+    sourceGrid.querySelectorAll('.unclustered-paper-card').forEach((card) => {
       card.querySelector('input[name="paper_nums"]')?.addEventListener('change', () => {
         updateSelectedDragCue();
       });
 
       // Native drag/drop is not a form submit; keep the selected cards in memory
       // until a cluster target receives the drop and can post the assignment.
-      card.addEventListener('dragstart', event => {
+      card.addEventListener('dragstart', (event) => {
         draggedCards = getCardsForDrag(card);
         draggedCards.forEach(item => item.classList.add('is-bulk-dragged'));
         updateDragCount(draggedCards.length, true);
@@ -40,14 +40,14 @@
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData(
           'text/plain',
-          draggedCards.map(item => item.dataset.paperNumber).join(',')
+          draggedCards.map(item => item.dataset.paperNumber).join(','),
         );
       });
 
       card.addEventListener('dragend', () => {
         draggedCards.forEach(item => item.classList.remove('is-bulk-dragged'));
         document.body.classList.remove('dragging-unclustered');
-        document.querySelectorAll('.cluster-drop-target.drop-target-hover').forEach(target => {
+        document.querySelectorAll('.cluster-drop-target.drop-target-hover').forEach((target) => {
           target.classList.remove('drop-target-hover');
         });
         draggedCards = [];
@@ -57,7 +57,7 @@
 
     selectAllCheckbox?.addEventListener('change', () => {
       const checked = selectAllCheckbox.checked;
-      sourceGrid.querySelectorAll('input[name="paper_nums"]').forEach(checkbox => {
+      sourceGrid.querySelectorAll('input[name="paper_nums"]').forEach((checkbox) => {
         checkbox.checked = checked;
       });
       updateSelectedDragCue();
@@ -67,21 +67,21 @@
 
     // Dropping onto a cluster is the mutating action.  The DOM is updated only
     // after the server confirms the assignment.
-    document.querySelectorAll('[data-cluster-drop-target]').forEach(target => {
-      target.addEventListener('dragover', event => {
+    document.querySelectorAll('[data-cluster-drop-target]').forEach((target) => {
+      target.addEventListener('dragover', (event) => {
         if (draggedCards.length === 0) return;
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
         target.classList.add('drop-target-hover');
       });
 
-      target.addEventListener('dragleave', event => {
+      target.addEventListener('dragleave', (event) => {
         if (!target.contains(event.relatedTarget)) {
           target.classList.remove('drop-target-hover');
         }
       });
 
-      target.addEventListener('drop', event => {
+      target.addEventListener('drop', (event) => {
         if (draggedCards.length === 0) return;
         event.preventDefault();
         target.classList.remove('drop-target-hover');
@@ -97,7 +97,7 @@
 
     // htmx replaces the suggestions panel, so delegate panel button clicks
     // instead of binding listeners to elements that may be swapped out.
-    document.addEventListener('click', event => {
+    document.addEventListener('click', (event) => {
       if (!(event.target instanceof Element)) return;
 
       const applyButton = event.target.closest('[data-apply-suggestions]');
@@ -127,7 +127,7 @@
 
   function getSelectedUnclusteredCards() {
     return Array.from(
-      document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked')
+      document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked'),
     )
       .map(input => input.closest('.unclustered-paper-card'))
       .filter(Boolean);
@@ -136,10 +136,10 @@
   function updateSelectedDragCue() {
     const selectedCards = getSelectedUnclusteredCards();
     const allCards = Array.from(document.querySelectorAll('.unclustered-paper-card'));
-    allCards.forEach(card => {
+    allCards.forEach((card) => {
       card.classList.toggle(
         'is-selected-for-drag',
-        selectedCards.length > 1 && selectedCards.includes(card)
+        selectedCards.length > 1 && selectedCards.includes(card),
       );
     });
     updateSelectAllControl(selectedCards.length, allCards.length);
@@ -159,7 +159,8 @@
     if (selectedCount > 0) {
       selectedBadge.textContent = `${selectedCount} selected`;
       selectedBadge.classList.remove('d-none');
-    } else {
+    }
+    else {
       selectedBadge.textContent = '';
       selectedBadge.classList.add('d-none');
     }
@@ -174,7 +175,8 @@
         ? `Dragging ${count} selected`
         : `${count} selected for drag`;
       badge.classList.remove('d-none');
-    } else {
+    }
+    else {
       badge.textContent = '';
       badge.classList.add('d-none');
     }
@@ -187,10 +189,11 @@
   }
 
   function parseJsonResponse(xhr, fallbackMessage) {
-    let data = {};
+    let data;
     try {
       data = JSON.parse(xhr.responseText || '{}');
-    } catch {
+    }
+    catch {
       throw new Error(fallbackMessage);
     }
     if (xhr.status < 200 || xhr.status >= 300 || !data.ok) {
@@ -218,7 +221,8 @@
         handler: (_elt, responseInfo) => {
           try {
             resolve(parseJsonResponse(responseInfo.xhr, errorMessage));
-          } catch (error) {
+          }
+          catch (error) {
             reject(error);
           }
         },
@@ -235,7 +239,7 @@
     button,
   }) {
     const suggestionRows = Array.from(
-      document.querySelectorAll('[data-suggestion-row]')
+      document.querySelectorAll('[data-suggestion-row]'),
     ).filter(row => row.querySelector('[data-suggestion-selected]')?.checked);
 
     if (suggestionRows.length === 0) {
@@ -244,7 +248,7 @@
     }
 
     const groups = new Map();
-    suggestionRows.forEach(row => {
+    suggestionRows.forEach((row) => {
       const paperNumber = row.dataset.suggestionRow;
       const card = document.querySelector(`[data-paper-number="${paperNumber}"]`);
       const targetClusterId = row.querySelector('[data-suggestion-cluster]')?.value;
@@ -265,7 +269,7 @@
     try {
       for (const [targetClusterId, cards] of groups) {
         const target = document.querySelector(
-          `[data-cluster-drop-target="${targetClusterId}"]`
+          `[data-cluster-drop-target="${targetClusterId}"]`,
         );
         await assignDraggedCards({
           assignUrl,
@@ -276,7 +280,8 @@
         });
       }
       refreshSuggestionsPanel();
-    } finally {
+    }
+    finally {
       if (button) button.disabled = false;
     }
   }
@@ -338,7 +343,8 @@
     if (count > 0) {
       countBadge.textContent = count;
       countBadge.classList.remove('d-none');
-    } else {
+    }
+    else {
       countBadge.textContent = '';
       countBadge.classList.add('d-none');
     }
@@ -370,12 +376,12 @@
       });
 
       const targetCount = document.querySelector(
-        `[data-cluster-target-count="${targetClusterId}"]`
+        `[data-cluster-target-count="${targetClusterId}"]`,
       );
       if (targetCount) targetCount.textContent = data.member_count;
 
       const preview = document.querySelector(
-        `[data-cluster-target-preview="${targetClusterId}"]`
+        `[data-cluster-target-preview="${targetClusterId}"]`,
       );
       if (preview && !preview.querySelector('img')) {
         const itemImage = cards[0]?.querySelector('img');
@@ -389,9 +395,9 @@
       const unclusteredCount = document.querySelector('[data-unclustered-count]');
       if (unclusteredCount) unclusteredCount.textContent = data.unclustered_count;
 
-      cards.forEach(card => {
+      cards.forEach((card) => {
         document.querySelector(
-          `[data-suggestion-row="${card.dataset.paperNumber}"]`
+          `[data-suggestion-row="${card.dataset.paperNumber}"]`,
         )?.remove();
         card.remove();
       });
@@ -406,10 +412,12 @@
         void target.offsetWidth;
         target.classList.add('assignment-complete');
       }
-    } catch (error) {
+    }
+    catch (error) {
       cards.forEach(card => card.classList.remove('is-assigning'));
       showSuggestionStatus(error.message, 'danger');
-    } finally {
+    }
+    finally {
       target?.classList.remove('is-assigning');
     }
   }
