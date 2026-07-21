@@ -7,7 +7,7 @@
 
 """Utils concerning rules about data, like valid student numbers."""
 
-StudentIDLength = 8
+StudentIDLength = 8  # maybe we're not using this anymore
 
 
 def testValidUBCStudentID(n):
