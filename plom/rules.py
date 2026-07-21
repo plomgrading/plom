@@ -3,6 +3,7 @@
 # Copyright (C) 2021-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Philip Loewen
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2026 Ryan Harry
 
 """Utils concerning rules about data, like valid student numbers."""
 
