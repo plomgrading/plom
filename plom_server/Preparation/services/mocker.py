@@ -42,20 +42,16 @@ class ExamMockerService:
         Returns:
             A bytes object containing the document.
         """
-        # TODO: refactor to delocalize this import, SourceService and mocker are circular
-        from .SourceService import _get_source_file
-
-        # TODO: Issue #3888 this does direct file access, fails for remote storage?
-        __, abstract_django_file = _get_source_file(version)
-        source_path = Path(abstract_django_file.path)
-
         try:
-            return cls._mock_exam_with_spec(source_path, version)
+            pdf_doc = cls._mock_exam_with_spec(version)
         except ObjectDoesNotExist:
-            return cls._mock_exam_without_spec(source_path, version)
+            pdf_doc = cls._mock_exam_without_spec(version)
+        b = pdf_doc.tobytes()
+        pdf_doc.close()
+        return b
 
     @staticmethod
-    def _mock_exam_with_spec(source_path: Path, version: int) -> bytes:
+    def _mock_exam_with_spec(version: int) -> pymupdf.Document:
         """Fetch the exam spec and create the mock exam.
 
         Args:
@@ -63,8 +59,15 @@ class ExamMockerService:
             version: the version to mock
 
         Returns:
-            A bytes object containing the document.
+            An open PDF document: careful, you must close it.
         """
+        # TODO: refactor to delocalize this import, SourceService and mocker are circular
+        from .SourceService import _get_source_file
+
+        # TODO: Issue #3888 this does direct file access, fails for remote storage?
+        __, abstract_django_file = _get_source_file(version)
+        source_path = Path(abstract_django_file.path)
+
         example_code = _make_example_public_code()
         spec = SpecificationService.get_the_spec()
         num_questions = SpecificationService.get_n_questions()
@@ -85,11 +88,10 @@ class ExamMockerService:
                 paperstr="<Mock>",
                 qr_code_size=settings.PLOM_QR_CODE_SIZE,
             )
-            with pymupdf.open(f) as pdf_doc:
-                return pdf_doc.tobytes()
+            return pymupdf.open(f)
 
     @staticmethod
-    def _mock_exam_without_spec(source_path: Path, version: int) -> bytes:
+    def _mock_exam_without_spec(source_path: Path, version: int) -> pymupdf.Document:
         """Create a mock exam without the spec.
 
         This is a bit lower-level than the preferred
@@ -100,13 +102,21 @@ class ExamMockerService:
             version: the version to mock.
 
         Returns:
-            A bytes object containing the document.
+            An open PDF document: careful, you must close it.
         """
+        # TODO: refactor to delocalize this import, SourceService and mocker are circular
+        from .SourceService import _get_source_file
+
+        # TODO: Issue #3888 this does direct file access, fails for remote storage?
+        __, abstract_django_file = _get_source_file(version)
+        source_path = Path(abstract_django_file.path)
+
         example_code = _make_example_public_code()
         papernum = 1
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            with pymupdf.open(source_path) as pdf_doc:
+            pdf_doc = pymupdf.open(source_path)
+            if True:
                 for index, page in enumerate(pdf_doc):
                     qr_codes = create_QR_codes(
                         papernum, index + 1, version, example_code, Path(tmpdirname)
@@ -120,8 +130,7 @@ class ExamMockerService:
                         qr_codes,
                         odd=odd,
                     )
-
-                return pdf_doc.tobytes()
+                return pdf_doc
 
     @staticmethod
     def mock_ID_page(
