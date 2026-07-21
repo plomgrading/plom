@@ -3,6 +3,15 @@
     Copyright (C) 2026 Deep Shah
 */
 
+/* global
+    bottom_right_coord,
+    top_left_coord,
+    effective_image_width,
+    effective_image_height,
+    canvas,
+    mcq_box_detection_url
+*/
+
 (function () {
   const optionLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const overlay = document.getElementById('mcq_box_overlay');
@@ -20,14 +29,14 @@
   const hiddenInput = document.getElementById('mcq_boxes');
 
   if (
-    !overlay ||
-    !controls ||
-    !detectButton ||
-    !autoLabelButton ||
-    !activeLabelSelect ||
-    !optionCountContainer ||
-    !questionTypeInput ||
-    !hiddenInput
+    !overlay
+    || !controls
+    || !detectButton
+    || !autoLabelButton
+    || !activeLabelSelect
+    || !optionCountContainer
+    || !questionTypeInput
+    || !hiddenInput
   ) {
     return;
   }
@@ -81,10 +90,10 @@
       bottom: parseFloat(document.getElementById('plom_bottom').value),
     };
     if (
-      !Number.isFinite(selected.left) ||
-      !Number.isFinite(selected.top) ||
-      !Number.isFinite(selected.right) ||
-      !Number.isFinite(selected.bottom)
+      !Number.isFinite(selected.left)
+      || !Number.isFinite(selected.top)
+      || !Number.isFinite(selected.right)
+      || !Number.isFinite(selected.bottom)
     ) {
       return null;
     }
@@ -95,8 +104,8 @@
       bottom: Math.max(selected.top, selected.bottom),
     };
     if (
-      selectedRect.right <= selectedRect.left ||
-      selectedRect.bottom <= selectedRect.top
+      selectedRect.right <= selectedRect.left
+      || selectedRect.bottom <= selectedRect.top
     ) {
       return null;
     }
@@ -129,19 +138,19 @@
   function selectedRectContainsBox(selectedRect, box) {
     const tolerance = 0.000001;
     return (
-      box.left >= selectedRect.left - tolerance &&
-      box.top >= selectedRect.top - tolerance &&
-      box.right <= selectedRect.right + tolerance &&
-      box.bottom <= selectedRect.bottom + tolerance
+      box.left >= selectedRect.left - tolerance
+      && box.top >= selectedRect.top - tolerance
+      && box.right <= selectedRect.right + tolerance
+      && box.bottom <= selectedRect.bottom + tolerance
     );
   }
 
   function getBoxesOutsideSelectedRect(selectedRect) {
-    return mcqBoxes.filter((box) => !selectedRectContainsBox(selectedRect, box));
+    return mcqBoxes.filter(box => !selectedRectContainsBox(selectedRect, box));
   }
 
   function boxOutsideMessage(boxes) {
-    const labels = boxes.map((box) => box.label).join(', ');
+    const labels = boxes.map(box => box.label).join(', ');
     const plural = boxes.length === 1 ? '' : 'es';
     return `Option box${plural} ${labels} must stay inside the selected rectangle.`;
   }
@@ -189,7 +198,7 @@
       if (!allowedLabels.has(box.label)) {
         setStatus(
           `Option box ${box.label} is not valid for ${getNumOptions()} options.`,
-          true
+          true,
         );
         return false;
       }
@@ -256,7 +265,7 @@
     }
 
     const heights = sortedByTop
-      .map((box) => box.bottom - box.top)
+      .map(box => box.bottom - box.top)
       .sort((a, b) => a - b);
     const medianHeight = heights[Math.floor(heights.length / 2)];
     const rowThreshold = Math.max(medianHeight * 0.75, 0.01);
@@ -264,7 +273,7 @@
 
     sortedByTop.forEach((box) => {
       const centerY = (box.top + box.bottom) / 2;
-      let row = rows.find((candidate) => (
+      let row = rows.find(candidate => (
         Math.abs(centerY - candidate.centerY) <= rowThreshold
       ));
       if (!row) {
@@ -274,13 +283,13 @@
       row.boxes.push(box);
       row.centerY = row.boxes.reduce(
         (total, rowBox) => total + (rowBox.top + rowBox.bottom) / 2,
-        0
+        0,
       ) / row.boxes.length;
     });
 
     return rows
       .sort((a, b) => a.centerY - b.centerY)
-      .flatMap((row) => row.boxes.sort((a, b) => a.left - b.left));
+      .flatMap(row => row.boxes.sort((a, b) => a.left - b.left));
   }
 
   function autoLabelBoxes() {
@@ -293,8 +302,8 @@
   }
 
   function getFirstUnusedLabel() {
-    const usedLabels = new Set(mcqBoxes.map((box) => box.label));
-    return getAllowedLabels().find((label) => !usedLabels.has(label)) || '?';
+    const usedLabels = new Set(mcqBoxes.map(box => box.label));
+    return getAllowedLabels().find(label => !usedLabels.has(label)) || '?';
   }
 
   function updateActiveLabelSelect() {
@@ -325,7 +334,7 @@
     const activeBox = mcqBoxes[activeBoxIndex];
     const previousLabel = activeBox.label;
     const otherIndex = mcqBoxes.findIndex(
-      (box, index) => index !== activeBoxIndex && box.label === label
+      (box, index) => index !== activeBoxIndex && box.label === label,
     );
     activeBox.label = label;
     if (otherIndex >= 0 && previousLabel !== '?') {
@@ -384,7 +393,7 @@
     }
     mcqBoxes[activeBoxIndex] = clampBoxToSelectedRect(
       mcqBoxes[activeBoxIndex],
-      selectedRect
+      selectedRect,
     );
     dragState = {
       mode: event.target.dataset.resize === 'true' ? 'resize' : 'move',
@@ -403,7 +412,7 @@
 
     const delta = canvasDeltaToPlom(
       event.clientX - dragState.startX,
-      event.clientY - dragState.startY
+      event.clientY - dragState.startY,
     );
     const original = dragState.original;
     const minDelta = canvasDeltaToPlom(12, 12);
@@ -418,25 +427,26 @@
       box.right = clamp(
         original.right + delta.dx,
         original.left + minWidth,
-        selectedRect.right
+        selectedRect.right,
       );
       box.bottom = clamp(
         original.bottom + delta.dy,
         original.top + minHeight,
-        selectedRect.bottom
+        selectedRect.bottom,
       );
-    } else {
+    }
+    else {
       const width = original.right - original.left;
       const height = original.bottom - original.top;
       box.left = clamp(
         original.left + delta.dx,
         selectedRect.left,
-        selectedRect.right - width
+        selectedRect.right - width,
       );
       box.top = clamp(
         original.top + delta.dy,
         selectedRect.top,
-        selectedRect.bottom - height
+        selectedRect.bottom - height,
       );
       box.right = box.left + width;
       box.bottom = box.top + height;
@@ -452,7 +462,7 @@
     }
     dragState = null;
     setActiveBox(
-      mcqBoxes.length > 0 ? Math.min(activeBoxIndex, mcqBoxes.length - 1) : -1
+      mcqBoxes.length > 0 ? Math.min(activeBoxIndex, mcqBoxes.length - 1) : -1,
     );
     renderBoxes();
   }
@@ -501,13 +511,14 @@
         if (data.error) {
           throw new Error(data.error);
         }
-        mcqBoxes = data.boxes.map((box) => normaliseDetectedBox(box, selectedRect));
+        mcqBoxes = data.boxes.map(box => normaliseDetectedBox(box, selectedRect));
         setActiveBox(mcqBoxes.length > 0 ? 0 : -1);
         autoLabelBoxes();
         renderBoxes();
         if (mcqBoxes.length === getNumOptions()) {
           setStatus(`Detected ${mcqBoxes.length} boxes.`, false);
-        } else {
+        }
+        else {
           setStatus(`Detected ${mcqBoxes.length} of ${getNumOptions()} boxes.`, false);
         }
       })
@@ -519,10 +530,10 @@
   function getDefaultBoxSize(selectedRect) {
     if (mcqBoxes.length > 0) {
       const widths = mcqBoxes
-        .map((box) => box.right - box.left)
+        .map(box => box.right - box.left)
         .sort((a, b) => a - b);
       const heights = mcqBoxes
-        .map((box) => box.bottom - box.top)
+        .map(box => box.bottom - box.top)
         .sort((a, b) => a - b);
       const middle = Math.floor(mcqBoxes.length / 2);
       return {
@@ -559,12 +570,12 @@
     const left = clamp(
       centerX - boxWidth / 2,
       selectedRect.left,
-      selectedRect.right - boxWidth
+      selectedRect.right - boxWidth,
     );
     const top = clamp(
       centerY - boxHeight / 2,
       selectedRect.top,
-      selectedRect.bottom - boxHeight
+      selectedRect.bottom - boxHeight,
     );
     mcqBoxes.push({
       label: getFirstUnusedLabel(),

@@ -68,7 +68,6 @@ from plom_ml.clustering.preprocessing.image_processing_service import (
 )
 from plom_ml.clustering.preprocessing.preprocessor import DiffProcessor
 
-
 MCQ_BLANK_CLUSTER_ID_OFFSET = 0
 MCQ_MULTIPLE_CLUSTER_ID_OFFSET = 1
 MCQ_AMBIGUOUS_CLUSTER_ID_OFFSET = 2

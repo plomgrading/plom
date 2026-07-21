@@ -16,7 +16,6 @@ import numpy as np
 from PIL import Image
 import requests
 
-
 log = logging.getLogger(__name__)
 
 

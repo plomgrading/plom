@@ -224,9 +224,7 @@
                             <td class="text-center align-middle">
                                 {{ clusterId }}
                                 {% with cluster_label=cluster_id_to_label|get_item:clusterId %}
-                                    {% if cluster_label %}
-                                        <span class="badge bg-secondary ms-1">{{ cluster_label }}</span>
-                                    {% endif %}
+                                    {% if cluster_label %}<span class="badge bg-secondary ms-1">{{ cluster_label }}</span>{% endif %}
                                 {% endwith %}
                             </td>
                             {% with cluster_name=cluster_to_name|get_item:clusterId %}
