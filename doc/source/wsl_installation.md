@@ -21,11 +21,21 @@ can be used on Microsoft Windows using Windows Subsystem for Linux (WSL).
 Go to [https://learn.microsoft.com/en-us/windows/wsl/install](https://learn.microsoft.com/en-us/windows/wsl/install)
 for detailed information.
 
+Note administrative access is needed, at least for the initial install.
+
+
+## Getting the Plom source code
+
+Within WSL, use `git clone` to get the source code from
+[https://gitlab.com/plom/plom](the GitLab repo).  You may also want
+`plom-client` and `plom-common`.
+
 
 ## Installing Plom dependencies
 
 These instructions assume you are running Ubuntu 22.04 on WSL,
 and were last tested in March 2023.
+TODO: these should be updated for current Django-based Plom Server.
 
 1.  First install some dependencies from the package manager
     ```
@@ -51,3 +61,36 @@ and were last tested in March 2023.
         `bash` startup file... something like adding
         `export PATH=$PATH:~/.local/bin` to the file `.bash_profile`,
         (You might need to create that file, e.g., with `nano .bash_profile`.)
+
+
+## Installing VSCode
+
+Install VSCode as per instructions elsewhere.  On the host OS (Windows) *not inside WSL*.
+
+Install the "WSL Extension" in VSCode.
+
+Now start WSL.  Go to the Plom source code (typically the directory
+called `plom`) and type `code .`.
+The first time this will install some server that is used to connect
+VSCode to WSL (similar to developing on a remote machine).
+
+
+## Installing and configuring Postgres
+
+TODO: instructions needed.
+
+
+## Launching the demo
+
+The code for launching the Plom demo is changing but generally you
+should be able to launch it from within the terminal built-in to
+VSCode.  Alternatively, you can launch it from inside WSL.
+
+
+
+## Questions
+
+* Do we need Git installed on the Windows host or can we just use the WSL git?
+  Probably WSL, but haven't checked.  In summer 2026, we had trouble/confusion
+  about which `git` VSCode was running.
+* Do we need Python installed on the Windows host?  Probably not.
