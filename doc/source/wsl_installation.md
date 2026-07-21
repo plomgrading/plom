@@ -33,8 +33,9 @@ Within WSL, use `git clone` to get the source code from
 
 ## Installing Plom dependencies
 
-These instructions assume you are running Ubuntu 22.04 on WSL,
-and were last tested in March 2023.
+These instructions assume you are running Ubuntu 26.04 on WSL,
+and were last tested roughly in summer 2026.
+
 TODO: these should be updated for current Django-based Plom Server.
 
 1.  First install some dependencies from the package manager
@@ -49,10 +50,11 @@ TODO: these should be updated for current Django-based Plom Server.
             latexmk texlive-fonts-recommended python3-pillow
     ```
     (These may be out of date: compare to the instructions for Ubuntu elsewhere).
-2.  `python3 -m pip install --upgrade --user pip`
-3.  `pip install --user plom` (or `pip install --user .` from inside
+2.  `python3 -m pip install --upgrade --user pip` (unlikely needed in 2026).
+3.  `pip install --break-system-packages -e .` from inside
     the Plom source tree) should pull in the remaining dependencies.
-4.  Like regular Ubuntu, this seems to lack `~/.local/bin` in the path so
+4.  [This bit unconfirmed in 2026]
+    Like regular Ubuntu, this seems to lack `~/.local/bin` in the path so
     you may not be able to run `plom-client`.
       - You can try `~/.local/bin/plom-client` to see if things are working
         without messing around with such config files.
