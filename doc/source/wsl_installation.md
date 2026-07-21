@@ -75,9 +75,24 @@ The first time this will install some server that is used to connect
 VSCode to WSL (similar to developing on a remote machine).
 
 
+
 ## Installing and configuring Postgres
 
-TODO: instructions needed.
+TODO: Probably this was a standard postgres install on Ubuntu, via `apt`...  To be confirmed.
+
+#### Configure the postgres server:
+
+Open WSL, then type `psql postgres`.  At the prompt do:
+```
+ALTER USER postgres WITH PASSWORD 'postgres';
+CREATE DATABASE plom_db;
+GRANT ALL PRIVILEGES ON DATABASE plom_db to postgres;
+QUIT
+```
+Not sure why the database is `plom_db` is created here: the demo is supposed to do that.
+Colin suspects the `ALTER USER` is the important part of this.
+No idea is this is good security practice or not: use this only for the demo.
+
 
 
 ## Launching the demo
