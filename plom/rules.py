@@ -10,7 +10,7 @@
 StudentIDLength = 8  # maybe we're not using this anymore
 
 
-def _test_validUBCStudentID(n) -> tuple[bool, str]:
+def _test_valid_student_id(n) -> tuple[bool, str]:
     """Check if input is a valid student number and an explanation.
 
     Input must be a string or string like or convertible by str().
@@ -88,7 +88,7 @@ def validateStudentID(n):
         # is valid SID.
         return s, msg1
     else:  # Could still be z-padded int
-        s, msg2 = test_z_padded_integer(n)
+        s, msg2 = _test_z_padded_integer(n)
         if s:
             return (s, msg1)
         else:
