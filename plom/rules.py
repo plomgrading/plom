@@ -10,8 +10,8 @@
 StudentIDLength = 8  # maybe we're not using this anymore
 
 
-def testValidUBCStudentID(n):
-    """Check if input is a valid student number for UBC and an explanation.
+def _test_validUBCStudentID(n) -> tuple[bool, str]:
+    """Check if input is a valid student number and an explanation.
 
     Input must be a string or string like or convertible by str().
     """
@@ -26,13 +26,13 @@ def testValidUBCStudentID(n):
     return (True, "")
 
 
-def isValidUBCStudentID(n):
-    """Is this a valid student number for UBC?"""
-    ok, _ = testValidUBCStudentID(n)
+def _is_valid_student_id(n) -> bool:
+    """Is this a valid student number?"""
+    ok, _ = _test_valid_student_id(n)
     return ok
 
 
-def test_z_padded_integer(n):
+def _test_z_padded_integer(n):
     """Is this string a z-padded integer, and an explanation.
 
     Input must be a string that when z's (or Z's) are removed gives a non-negative integer. We may require this for debugging with 'fake' student numbers which are constructed from some other id by padding with z's. Must have correct length - as per StudentIDLength
@@ -55,7 +55,7 @@ def test_z_padded_integer(n):
 
 def is_z_padded_integer(n):
     """Is this string a z-padded integer?"""
-    ok, _ = test_z_padded_integer(n)
+    ok, _ = _test_z_padded_integer(n)
     return ok
 
 
@@ -82,10 +82,10 @@ def censorStudentName(s):
 
 
 def validateStudentID(n):
-    """Check if is either a valid UBC SID or a z-padded int of correct length, and return any errors."""
-    s, msg1 = testValidUBCStudentID(n)
+    """Check if is either a valid SID or a z-padded int of correct length, and return any errors."""
+    s, msg1 = isValidStudentID(n)
     if s:
-        # is valid UBC SID.
+        # is valid SID.
         return s, msg1
     else:  # Could still be z-padded int
         s, msg2 = test_z_padded_integer(n)
@@ -95,6 +95,6 @@ def validateStudentID(n):
             return (s, msg1 + ", " + msg2)
 
 
-def isValidStudentID(n):
+def isValidStudentID(n) -> bool:
     """Check if is either a valid UBC SID or a z-padded int of correct length. Ignores any error messages."""
-    return isValidUBCStudentID(n) or is_z_padded_integer(n)
+    return _is_valid_student_id(n) or is_z_padded_integer(n)
