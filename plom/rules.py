@@ -83,7 +83,7 @@ def censorStudentName(s):
 
 def validateStudentID(n):
     """Check if is either a valid SID or a z-padded int of correct length, and return any errors."""
-    s, msg1 = isValidStudentID(n)
+    s, msg1 = _test_valid_student_id(n)
     if s:
         # is valid SID.
         return s, msg1
