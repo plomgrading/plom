@@ -733,7 +733,7 @@ fedora-django-tests:
     - echo $LD_LIBRARY_PATH
     - echo $PYTHONPATH
     - pip install .
-    - 'export PYTHONPATH="$PYTHONPATH:.'
+    - 'export PYTHONPATH="$PYTHONPATH:."'
     - echo $PYTHONPATH
     - ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - python3 manage.py test
