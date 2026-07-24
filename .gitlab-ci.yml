@@ -726,6 +726,7 @@ fedora-django-tests:
           python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
+          git
     - pip --version
     - pip install git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
