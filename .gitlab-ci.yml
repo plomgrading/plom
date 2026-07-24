@@ -640,6 +640,8 @@ out-of-tree-scratch:
   script:
     - pwd
     - ls
+    - # pip installs stuff in /usr/local/lib b/c run as root, but Fedora doesn't search there
+    - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
     # install twice, first for dependencies
     - pip install .
     - pwd
@@ -724,6 +726,9 @@ fedora-django-tests:
           iproute
     - pip --version
   script:
+    - # pip installs stuff in /usr/local/lib b/c run as root, but Fedora doesn't search there
+    - echo $LD_LIBRARY_PATH
+    - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
     - pip install .
     - PYTHONPATH="." ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - python3 manage.py test
