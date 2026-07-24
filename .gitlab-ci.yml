@@ -640,8 +640,9 @@ out-of-tree-scratch:
   script:
     - pwd
     - ls
-    # pip installs stuff in /usr/local/lib b/c run as root, but Fedora doesn't search there
+    # pip installs stuff in /usr/local/lib b/c run as root, but django-admin cannot find it
     - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages/"'
     # install twice, first for dependencies
     - pip install .
     - pwd
@@ -726,11 +727,13 @@ fedora-django-tests:
           iproute
     - pip --version
   script:
-    # pip installs stuff in /usr/local/lib b/c run as root, but Fedora doesn't search there
-    - echo $LD_LIBRARY_PATH
+    # pip installs stuff in /usr/local/lib b/c run as root, but django-admin cannot find it
     - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages/"'
+    - echo $LD_LIBRARY_PATH
+    - echo $PYTHONPATH
     - pip install .
-    - PYTHONPATH="." ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
+    - ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - python3 manage.py test
 
 
