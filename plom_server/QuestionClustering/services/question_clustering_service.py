@@ -166,7 +166,7 @@ class QuestionClusteringJobService:
 class QuestionClusteringService:
     """Service handling clustering and querying of cluster-related models."""
 
-    CLUSTER_NAME_MAX_LENGTH = 100
+    CLUSTER_NAME_MAX_LENGTH = 100  # must not exceed DB model field size
     _CLUSTER_TAG_RE = re.compile(r"^cluster_qi\d+v\d+_(\d+)(?:_.*)?$")
     _INVALID_CLUSTER_TAG_NAME_CHARS_RE = re.compile(r"[^\w\-\+\:\;\.\@]+")
 
