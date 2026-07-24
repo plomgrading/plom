@@ -636,15 +636,15 @@ out-of-tree-scratch:
           iproute
           git
     - pip --version
-    - pip install --user git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
+    - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
     - pwd
     - ls
-    # pip installs stuff in /usr/local/lib b/c run as root, but django-admin cannot find it
-    # (trying --user instead, still as root)
-    # 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
-    # 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages/"'
-    - pip install --user .
+    # pip installs stuff in /usr/local/lib b/c run as root, but django-admin cannot find
+    # that, which is strange b/c python3 does, maybe a Fedora bug?
+    - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
+    - pip install .
     - pwd
     - cd ${HOME}
     - mkdir somewhere
@@ -728,12 +728,11 @@ fedora-django-tests:
     - pip --version
   script:
     # pip installs stuff in /usr/local/lib b/c run as root, but django-admin cannot find it
-    # (trying --user instead, still as root)
-    # 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
-    # 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages/"'
+    - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
     - echo $LD_LIBRARY_PATH
     - echo $PYTHONPATH
-    - pip install --user .
+    - pip install .
     - 'export PYTHONPATH="$PYTHONPATH:."'
     - echo $PYTHONPATH
     - ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
