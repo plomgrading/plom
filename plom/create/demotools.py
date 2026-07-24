@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023, 2025 Colin B. Macdonald
+# Copyright (C) 2020-2023, 2025-2026 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2022 Joey Shi
 
@@ -9,7 +9,7 @@
 from importlib import resources
 from pathlib import Path
 
-import plom
+import plom.textools
 from plom.textools import buildLaTeX
 
 
@@ -27,8 +27,8 @@ def buildDemoSourceFiles(basedir=Path("."), solutions=False):
     src_dir = basedir / "sourceVersions"
     src_dir.mkdir(exist_ok=True)
 
-    resv1 = resources.files(plom) / "latexTemplate.tex"
-    resv2 = resources.files(plom) / "latexTemplatev2.tex"
+    resv1 = resources.files(plom.textools) / "latexTemplate.tex"
+    resv2 = resources.files(plom.textools) / "latexTemplatev2.tex"
 
     print("LaTeXing example exam file: latexTemplate.tex -> version1.pdf")
     content = resv1.read_text()

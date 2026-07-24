@@ -1,6 +1,7 @@
 .. Plom documentation
    Copyright (C) 2022-2026 Colin B. Macdonald
    Copyright (C) 2018 Andrew Rechnitzer
+   Copyright (C) 2026 Aidan Murphy
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -53,6 +54,23 @@ gap in the middle of the page for general information.
 One way to check your margins is to upload your PDF file(s) to Plom,
 and use the "Mock" feature to quickly mock-up how your paper will look
 with QR codes.
+
+
+Page parity - physical exams & accommodating scanning workflows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Plom's scanning/upload workflow relies on having QR codes on each page
+of the PDF files uploaded for marking. Pages without QR codes can be
+tedious to deal with, see :doc:`scanning`.
+
+If your assessment is to be printed and physically given to examinees
+(e.g., as an in-person exam) it's recommended to design your exam PDF
+file(s) to have an even number of pages and print them double-sided;
+this guarantees each side of each sheet of paper has a QR code on it.
+
+If you don't expect your exam papers to ever be printed (perhaps your
+examinees will complete and return them online somehow), an odd page
+count may not be an issue.
 
 
 A template assessment

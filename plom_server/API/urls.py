@@ -100,7 +100,7 @@ urlpatterns = [
     path(
         "api/beta/scan/bundle/<int:bundle_id>",
         ScanBundleActions.as_view(),
-        name="api_can_bundle_actions",
+        name="api_Scan_bundle_actions",
     ),
     # "api/beta/scan/bundle/<int:bundle_id>/map/<int:papernum>/<str:questions>",
     path(

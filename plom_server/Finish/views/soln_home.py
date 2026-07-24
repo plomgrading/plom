@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024, 2026 Colin B. Macdonald
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -20,7 +20,7 @@ class SolnHomeView(ManagerRequiredView):
             {
                 "is_there_a_spec": SpecificationService.is_there_a_spec(),
                 "is_there_a_soln_spec": SolnSpecService.is_there_a_soln_spec(),
-                "versions": SpecificationService.get_n_versions(),
+                "num_versions": SpecificationService.get_n_versions(),
                 "number_of_soln_source_pdfs": SolnSourceService().get_number_of_solution_pdf(),
                 "all_soln_pdf_present": all_soln_pdf_present,
             }

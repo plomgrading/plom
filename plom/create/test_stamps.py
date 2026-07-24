@@ -8,12 +8,12 @@ from pytest import raises
 import pymupdf
 
 from plom.common.tpv_utils import new_magic_code
+from plom.common.spec_verifier import SpecVerifier
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import make_PDF
 from plom.scan import QRextract_legacy
 from plom.scan import processFileToBitmaps
-from plom.spec_verifier import SpecVerifier
 
 
 def test_staple_marker_diagname_very_long(tmp_path) -> None:

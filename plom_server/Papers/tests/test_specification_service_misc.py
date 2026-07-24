@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
@@ -81,7 +81,7 @@ class SpecificationServiceMiscNoSpecTests(TestCase):
         assert s.get_question_indices() == []
 
     def test_get_list_of_versions(self) -> None:
-        assert s.get_list_of_versions() == []
+        assert s.get_list_of_versions() == [1]
 
     def test_get_short_and_long_names_or_empty(self) -> None:
         assert s.get_short_and_long_names_or_empty() == ("", "")

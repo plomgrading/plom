@@ -1,7 +1,7 @@
 
 <!--
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2025 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2026 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
 __copyright__ = "Copyright (C) 2023 Natalie Balashov"
 __copyright__ = "Copyright (C) 2023 Julian Lapenna"
@@ -20,11 +20,11 @@ read :doc:`install-client`.
 Fedora
 ------
 
-Tested on Fedora 43.  Some stuff from the package manager:
+Tested on Fedora 44.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         gcc gcc-c++ cmake \
-        python3-passlib python3-qt5 \
+        python3-passlib \
         python3-jsmin python3-defusedxml python3-yaml \
         python3-more-itertools python3-chardet \
         python3-seaborn python3-cairosvg \
@@ -35,16 +35,20 @@ Tested on Fedora 43.  Some stuff from the package manager:
         python3-pip python3-wheel python3-setuptools \
         python3-tomlkit python3-tqdm python3-urllib3 \
         python3-psycopg3 python3-pytest python3-PyMySQL \
-        python3-django python3-django-filter \
+        python3-django python3-django-filter python3-django-tables2 \
         python3-zxing-cpp \
         python3-gunicorn python3-whitenoise \
-        python3-weasyprint python3-pyqt6 \
+        python3-weasyprint \
         python3-huggingface-hub python3-onnxruntime \
+        python3-pyqt6 \
+        python3-pytest-qt python3-pyspellchecker \
         latexmk tex-dvipng texlive-scheme-basic \
-        tex-preview tex-charter tex-exam tex-preprint \
+        tex-preview texlive-charter texlive-exam texlive-preprint \
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme \
         python3-sphinx-argparse
 ```
+Note: these dependencies also include what is needed for `plom-client`.
+
 At this point `pip install plom` (or `pip install .` from inside
 the Plom source tree) should pull in the remaining dependencies.
 

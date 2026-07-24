@@ -156,7 +156,7 @@
                             <div class="my-2"
                                  hx-target="this"
                                  hx-target-error="this"
-                                 hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
+                                 hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }});">
                                 <a class="btn btn-outline-danger text-center w-100"
                                    hx-post="{% url 'discard_image' bundle_id index %}">Discard</a>
                             </div>
@@ -165,7 +165,7 @@
                             <div class="my-2"
                                  hx-target="this"
                                  hx-target-error="this"
-                                 hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
+                                 hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }});">
                                 <a class="btn btn-outline-secondary text-center w-100"
                                    hx-put="{% url 'extralise_image' bundle_id index %}">Cast to extra page</a>
                             </div>
@@ -188,7 +188,7 @@
                             <div class="my-2"
                                  hx-target="this"
                                  hx-target-error="this"
-                                 hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
+                                 hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }});">
                                 <a class="btn btn-outline-secondary text-center w-100"
                                    hx-post="{% url 'unknowify_image' bundle_id index %}">Cast to unknown page</a>
                             </div>
@@ -227,7 +227,7 @@
                                 <div class="my-2"
                                      hx-target="this"
                                      hx-target-error="this"
-                                     hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }});">
+                                     hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }});">
                                     <a class="btn btn-outline-secondary text-center w-100"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}">Clear information</a>
                                 </div>
@@ -236,7 +236,7 @@
                                     <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' bundle_id index %}"
                                           hx-target-error="#error_msg_for_set_extra"
-                                          hx-on:htmx:after-request="on_status_200_refresh(event, {{ index }})">
+                                          hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }})">
                                         <!--
                                             This Alpine.js block manages interactivity for assigning an extra page to a specific paper.
 
@@ -395,13 +395,11 @@
     </div>
 </div>
 <script>
-  function on_status_200_refresh(event, index) {
-    const xhr = event.detail.xhr;
-    if (xhr.status === 200) {
-      // console.log("Success! Running hx-on action");
-      refreshThumbnailContainer(index);
-      clickThumbnail(index);
+  function onSuccessRefresh(event, index) {
+    if (event.detail.failed) {
+      return;
     }
-    // Do nothing on error, hope its handled elsewhere, e.g., by hx-target-error
+    refreshThumbnailContainer(index);
+    clickThumbnail(index);
   }
 </script>

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2025 Colin B. Macdonald
+# Copyright (C) 2022-2026 Colin B. Macdonald
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
 from textwrap import wrap
 
-from plom.spec_verifier import SpecVerifier
-from plom.create import with_manager_messenger
+from plom.common.spec_verifier import SpecVerifier
 from plom.common.exceptions import PlomServerNotReady, PlomNoClasslist
 from plom.common.misc_utils import format_int_list_with_runs
+from plom.create import with_manager_messenger
 
 # support for colour checkmarks
 ansi_green = "\033[92m"

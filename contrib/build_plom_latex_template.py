@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 import argparse
@@ -13,14 +13,14 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 # we get the idBox template from Plom's resources
-import plom
+import plom.textools
 
 
 def _actually_compile_tex(filepath: Path) -> None:
     # make sure the idbox file is in place
     idbox_filepath = filepath.parent / "idBox4.pdf"
     if not idbox_filepath.exists():
-        idbox_bytes = (resources.files(plom) / "idBox4.pdf").read_bytes()
+        idbox_bytes = (resources.files(plom.textools) / "idBox4.pdf").read_bytes()
         with idbox_filepath.open("wb") as fh:
             fh.write(idbox_bytes)
     # now get on with building the .tex

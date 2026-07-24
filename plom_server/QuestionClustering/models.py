@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Colin B. Macdonald
 # Copyright (C) 2026 Deep Shah
 
 
@@ -111,7 +112,7 @@ class QVCluster(models.Model):
         unique_together = ("question_idx", "version", "clusterId", "type")
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     Q(type=ClusteringGroupType.user_facing, user_cluster__isnull=True)
                     | ~Q(type=ClusteringGroupType.user_facing)
                 ),

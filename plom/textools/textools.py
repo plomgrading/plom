@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 # Copyright (C) 2026 Deep Shah
 
@@ -13,19 +13,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import IO
 
-import plom
-
-
-def _read_plom_resource(filename: str) -> bytes:
-    """Read a resource from the top-level plom package."""
-    try:
-        return (resources.files(plom) / filename).read_bytes()
-    except (NotADirectoryError, TypeError):
-        # In editable installs (`pip install -e .`), the top-level namespace package
-        # can include non-directory finder entries.  Anchor on a concrete plom subpackage
-        # while still using importlib.resources.  See Issue #4252 for longer-term fix.
-        with resources.as_file(resources.files("plom.create")) as create_path:
-            return (create_path.parent / filename).read_bytes()
+import plom.textools
 
 
 def texFragmentToPNG(fragment: str, *, dpi: int = 225) -> tuple[bool, bytes | str]:
@@ -168,7 +156,7 @@ def buildLaTeX(src: str, out: IO[bytes]) -> tuple[int, str]:
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(Path(tmpdir) / "idBox4.pdf", "wb") as fh:
-            fh.write(_read_plom_resource("idBox4.pdf"))
+            fh.write((resources.files(plom.textools) / "idBox4.pdf").read_bytes())
         with open(Path(tmpdir) / "stuff.tex", "w") as fh:
             fh.write(src)
 

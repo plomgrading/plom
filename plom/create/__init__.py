@@ -34,7 +34,6 @@ from .classlistValidator import PlomClasslistValidator
 from .status import status
 
 from .push_pull_rubrics import upload_rubrics, download_rubrics
-from .push_pull_rubrics import upload_demo_rubrics
 from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_file
 
 from .scribble_utils import make_scribbles
