@@ -612,7 +612,7 @@ out-of-tree-scratch:
     - dnf install -y --setopt=install_weak_deps=False
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
-          tex-preview tex-charter tex-exam tex-preprint
+          tex-preview texlive-charter texlive-exam texlive-preprint
           python3-devel
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
