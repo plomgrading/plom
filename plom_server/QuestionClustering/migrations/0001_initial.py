@@ -63,6 +63,10 @@ class Migration(migrations.Migration):
                 ("page_num", models.PositiveIntegerField()),
                 ("clusterId", models.IntegerField(blank=True)),
                 (
+                    "cluster_name",
+                    models.CharField(blank=True, default="", max_length=100),
+                ),
+                (
                     "type",
                     models.CharField(
                         choices=[

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 from abc import ABC, abstractmethod
 
@@ -186,7 +187,8 @@ class TrOCREmbedder(Embedder):
     def __init__(self, model_path: str):
         # Load processor for converting images
         self.processor = TrOCRProcessor.from_pretrained(
-            "fhswf/TrOCR_Math_handwritten", use_fast=True
+            "fhswf/TrOCR_Math_handwritten",
+            use_fast=True,
         )
 
         self.model = ort.InferenceSession(

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 """This is an abstracted inference for https://github.com/BryanTanady/plom_ml_clustering."""
 
