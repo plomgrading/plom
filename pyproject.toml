@@ -53,7 +53,6 @@ dependencies = [
     "django-htmx>=1.14.0",
     "django-mathfilters>=1.0.0",
     "django-huey>=1.1.1",
-    "django-reset-migrations>=0.4.0",
     "djangorestframework>=3.14.0",
     "django-tables2>=2.4.0",
     "exif>=1.6.1",

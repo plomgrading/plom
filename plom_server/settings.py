@@ -124,8 +124,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # for more sophisticated mathematics in templates (eg progressbars)
     "mathfilters",
-    # for 'fun' with migrations - see #77
-    "reset_migrations",
     "django_huey",
     "django_htmx",
     # REST framework
