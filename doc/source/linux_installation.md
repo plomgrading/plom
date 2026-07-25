@@ -34,12 +34,13 @@ Tested on Fedora 44.  Some stuff from the package manager:
         python3-requests-toolbelt \
         python3-pip python3-wheel python3-setuptools \
         python3-tomlkit python3-tqdm python3-urllib3 \
-        python3-psycopg3 python3-pytest python3-PyMySQL \
+        python3-psycopg3 python3-PyMySQL \
         python3-django python3-django-filter python3-django-tables2 \
-        python3-zxing-cpp \
         python3-gunicorn python3-whitenoise \
+        python3-zxing-cpp \
         python3-weasyprint \
         python3-huggingface-hub python3-onnxruntime \
+        python3-pytest \
         python3-pyqt6 \
         python3-pytest-qt python3-pyspellchecker \
         latexmk tex-dvipng texlive-scheme-basic \

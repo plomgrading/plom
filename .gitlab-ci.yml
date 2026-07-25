@@ -105,7 +105,7 @@ wet_css_js_3rd_party:
 # By default we assume the target is origin/main but if a MR is open,
 # we try to determine the target branch and use that instead.
 copyright_year:
-  image: fedora:43
+  image: fedora:44
   stage: static_analysis
   rules:
     # Tags don't have this defined and non-empty. This job doesn't run on releases
@@ -606,13 +606,13 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:43
+  image: fedora:44
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
-          tex-preview tex-charter tex-exam tex-preprint
+          tex-preview texlive-charter texlive-exam texlive-preprint
           python3-devel
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
@@ -620,13 +620,14 @@ out-of-tree-scratch:
           python3-seaborn python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
-          python3-appdirs python3-arrow
+          python3-psycopg3 python3-PyMySQL
+          python3-django python3-django-filter python3-django-tables2
+          python3-gunicorn python3-whitenoise
+          python3-arrow
           python3-cryptography
           python3-zxing-cpp
-          python3-psycopg3
-          python3-pytest
+          python3-pytest python3-pytest-qt
           python3-PyMuPDF
-          python3-PyMySQL
           python3-scikit-learn python3-scikit-image
           python3-numpy python3-scipy
           python3-weasyprint python3-whitenoise
@@ -635,15 +636,13 @@ out-of-tree-scratch:
           iproute
           git
     - pip --version
+    - pip install git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
-    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
-    - pip install --ignore-installed -U pytest
-    # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
-    - pip install django
     - pwd
     - ls
-    # install twice, first for dependencies
+    # workaround django can't find stuff in /usr/local https://bugzilla.redhat.com/show_bug.cgi?id=2506986
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
     - pip install .
     - pwd
     - cd ${HOME}
@@ -699,39 +698,44 @@ fedora-django-tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:43
+  image: fedora:44
   when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
-          tex-preview tex-charter tex-exam tex-preprint
+          tex-preview texlive-charter texlive-exam texlive-preprint
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
           python3-seaborn python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
-          python3-appdirs python3-arrow
+          python3-psycopg3 python3-PyMySQL
+          python3-django python3-django-filter python3-django-tables2
+          python3-gunicorn python3-whitenoise
+          python3-arrow
           python3-cryptography
           python3-zxing-cpp
-          python3-psycopg3
-          python3-pytest
+          python3-pytest python3-pytest-qt
           python3-PyMuPDF
-          python3-PyMySQL
           python3-scikit-learn python3-scikit-image
           python3-weasyprint python3-whitenoise
           python3-huggingface-hub python3-onnxruntime
           file python3-file-magic
           iproute
+          git
     - pip --version
+    - pip install git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
+    - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
-    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
-    - pip install -U pytest
-    # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
-    - pip install django
+    # workaround django can't find stuff in /usr/local https://bugzilla.redhat.com/show_bug.cgi?id=2506986
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
+    - echo $PYTHONPATH
     - pip install .
-    - PYTHONPATH="." ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
+    - 'export PYTHONPATH="$PYTHONPATH:."'
+    - echo $PYTHONPATH
+    - ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - python3 manage.py test
 
 
