@@ -641,9 +641,7 @@ out-of-tree-scratch:
   script:
     - pwd
     - ls
-    # pip installs stuff in /usr/local/lib b/c run as root, but django-admin cannot find
-    # that, which is strange b/c python3 does, maybe a Fedora bug?
-    - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
+    # workaround django can't find stuff in /usr/local https://bugzilla.redhat.com/show_bug.cgi?id=2506986
     - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
     - pip install .
     - pwd
@@ -731,10 +729,8 @@ fedora-django-tests:
     - pip install git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
-    # pip installs stuff in /usr/local/lib b/c run as root, but django-admin cannot find it
-    - 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"'
+    # workaround django can't find stuff in /usr/local https://bugzilla.redhat.com/show_bug.cgi?id=2506986
     - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
-    - echo $LD_LIBRARY_PATH
     - echo $PYTHONPATH
     - pip install .
     - 'export PYTHONPATH="$PYTHONPATH:."'
