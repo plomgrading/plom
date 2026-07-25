@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Colin B. Macdonald
 
-# import base64
+import base64
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -9,6 +9,7 @@ from django.shortcuts import render
 from plom_server.Base.services import Settings
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
+from ..services import ExamMockerService
 
 
 class QuestionRegionsView(ManagerRequiredView):
@@ -58,6 +59,12 @@ class QuestionRegionsView(ManagerRequiredView):
 
         print(info)
         print(regions)
+
+        png_bytes = ExamMockerService.get_temp_rendered_regions_page(
+            pg, version, regions
+        )
+        png_as_string = base64.b64encode(png_bytes).decode("ascii")
+
         context.update(
             {
                 # "prename_config": prenaming_config,
@@ -65,6 +72,7 @@ class QuestionRegionsView(ManagerRequiredView):
                 "allowSharedPages": spec["allowSharedPages"],
                 "info": info,
                 "regions": regions,
+                "page_region_image": png_as_string,
             }
         )
         return render(request, "Preparation/question_regions.html", context)
