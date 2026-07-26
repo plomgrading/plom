@@ -27,11 +27,21 @@
                         question-specific tasks.
                     </p>
                 {% endif %}
-                <p>Page {{ info.page }} is shared by questions {{ info.questions_that_share }}</p>
+                <h3>Pages shared by more than one question</h3>
+                {% if info %}
+                    {% for x in info %}
+                        <p>Page {{ x.page }} is shared by questions {{ x.question_labels_that_share }}</p>
+                    {% endfor %}
+                {% else %}
+                    <p>No shared pages.</p>
+                {% endif %}
                 <h3>Raw region data</h3>
-                {% for qidx, stuff in regions.items %}
-                    <p>{{ qidx }}: {{ stuff }}</p>
-                {% endfor %}
+                <!-- TODO: format may change to not be keys by integer-strings -->
+                <p>
+                    {% for qidx, stuff in regions.items %}
+                        Qidx {{ qidx }}: <tt>{{ stuff }}</tt>
+                    {% endfor %}
+                </p>
                 <img src="data:image/png;base64,{{ page_region_image }}" />
             </div>
         </div>

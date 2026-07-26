@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 # from plom.common.exceptions import PlomDependencyConflict
-from plom_server.Base.services import Settings
+from plom_server.Preparation.services import QuestionRegionsService
 from .utils import _error_response
 
 
@@ -36,7 +36,7 @@ class QuestionRegionsView(APIView):
 
         # TODO: question_index input?
         # regions = Settings.key_value_store_get_or_none("question_regions")
-        Settings.key_value_store_reset("question_regions")
+        QuestionRegionsService.reset_question_regions()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # GET /api/beta/regions
@@ -50,11 +50,7 @@ class QuestionRegionsView(APIView):
             A Response object containing the regions as a dict, with status 200,
             on success.
         """
-        # TODO: refactor to a service
-        regions = Settings.key_value_store_get_or_none("question_regions")
-        if not regions:
-            regions = {}
-        return Response(regions)
+        return Response(QuestionRegionsService.get_question_regions())
 
     # POST /api/beta/regions/{qidx}/{ver}/{page}
     def post(self, request: Request) -> Response:
@@ -96,9 +92,9 @@ class QuestionRegionsView(APIView):
         # ntp = request.POST.get("number_to_produce", ntp_default)
         # number_to_produce = int(ntp)
 
-        regions = Settings.key_value_store_get_or_none("question_regions")
-        print(regions)
-
         # TODO: set stuff
+        return _error_response(
+            "POST regions not built yet!", status.HTTP_501_NOT_IMPLEMENTED
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
