@@ -216,7 +216,6 @@ class ExamMockerService:
 
         i = 0
         for qidx_str, region in regions.items():
-            print(region)
             if not region:
                 continue
             if len(region) != 1:
@@ -232,10 +231,22 @@ class ExamMockerService:
                 (rect[0] + rect[2]) * w - s / 2,
                 (rect[1] + rect[3]) * h - s / 2,
             ]
-            # clarify overly by offset even/odd horizontally (maybe distracting?)
+            # clarify overlap w/ horizontal even/odd offset (maybe distracting?)
             pg_unit_rect[0] += (i % 2) * s
             pg_unit_rect[2] -= ((i + 1) % 2) * s
             i += 1
+            qlabel = "Q" + qidx_str  # TODO need question label
+
+            # draw text twice, once underneigh in white to oclude some of the page
+            page.insert_text(
+                (pg_unit_rect[0] + 1.5 * s, (pg_unit_rect[1] + pg_unit_rect[3]) / 2),
+                qlabel,
+                fontsize=24,
+                color=(1, 1, 1),
+                fill=colour,
+                border_width=0.2,  # not sure what units this is
+                render_mode=2,
+            )
             page.draw_rect(
                 pg_unit_rect,
                 color=colour,
@@ -246,7 +257,7 @@ class ExamMockerService:
             )
             page.insert_text(
                 (pg_unit_rect[0] + 1.5 * s, (pg_unit_rect[1] + pg_unit_rect[3]) / 2),
-                "Q" + qidx_str,  # TODO need question label
+                qlabel,
                 fontsize=24,
                 color=colour,
             )
