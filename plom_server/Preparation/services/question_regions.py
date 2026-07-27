@@ -54,8 +54,9 @@ class QuestionRegionsService:
             if r["qidx"] == qidx and r["page"] == pagenum:
                 if version is None:
                     regions.remove(r)
-                elif r["version"] == version:
-                    regions.remove(r)
+                else:
+                    if r["version"] == version or r["version"] is None:
+                        regions.remove(r)
         Settings.key_value_store_set("question_regions", regions)
 
     @staticmethod
