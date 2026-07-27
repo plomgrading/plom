@@ -215,12 +215,10 @@ class ExamMockerService:
         )
 
         i = 0
-        for qidx_str, region in regions.items():
-            if not region:
+        for region in regions:
+            if region["page"] != pg:
                 continue
-            if len(region) != 1:
-                raise NotImplementedError("multiple regions per question")
-            rect = region[0]["rect"]
+            rect = region["rect"]
             colour = colour_choices[i % len(colour_choices)]
             w = page.rect.width
             h = page.rect.height
@@ -235,12 +233,10 @@ class ExamMockerService:
             pg_unit_rect[0] += (i % 2) * s
             pg_unit_rect[2] -= ((i + 1) % 2) * s
             i += 1
-            qlabel = "Q" + qidx_str  # TODO need question label
-
             # draw text twice, once underneigh in white to oclude some of the page
             page.insert_text(
                 (pg_unit_rect[0] + 1.5 * s, (pg_unit_rect[1] + pg_unit_rect[3]) / 2),
-                qlabel,
+                region["qlabel"],
                 fontsize=24,
                 color=(1, 1, 1),
                 fill=colour,
@@ -257,7 +253,7 @@ class ExamMockerService:
             )
             page.insert_text(
                 (pg_unit_rect[0] + 1.5 * s, (pg_unit_rect[1] + pg_unit_rect[3]) / 2),
-                qlabel,
+                region["qlabel"],
                 fontsize=24,
                 color=colour,
             )

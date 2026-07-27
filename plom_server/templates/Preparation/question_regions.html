@@ -38,8 +38,8 @@
                 <h3>Raw region data</h3>
                 <!-- TODO: format may change to not be keys by integer-strings -->
                 <p>
-                    {% for qidx, stuff in regions.items %}
-                        Qidx {{ qidx }}: <tt>{{ stuff }}</tt>
+                    {% for region in regions %}
+                        <tt>{{ region }}</tt>
                         <br />
                     {% endfor %}
                 </p>

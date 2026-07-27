@@ -12,14 +12,11 @@ class QuestionRegionsService:
 
     @staticmethod
     def reset_question_regions() -> None:
-        # TODO: colin hates these string keys, but json...
-        regions = {
-            str(qidx): [] for qidx in SpecificationService.get_question_indices()
-        }
+        regions = []
         Settings.key_value_store_set("question_regions", regions)
 
     @classmethod
-    def get_question_regions(cls) -> dict:
+    def get_question_regions(cls) -> list[dict[str, Any]]:
         # perhaps in DB someday but for now use the general key-value store
         regions = Settings.key_value_store_get_or_none("question_regions")
 
@@ -70,17 +67,14 @@ class QuestionRegionsService:
         # the question indices that share this page
         qindices = [k for k, v in question_pages.items() if pagenum in v]
 
-        # meh = SpecificationService.get_question_index_label_pairs()
-        # meh = [b for (a, b) in meh if a in qindices]
-        # info = {"page": pg, "questions_that_share": meh}
-
         assert len(div) == len(qindices) - 1
         div = [0, *div, 100]
 
         regions = cls.get_question_regions()
 
+        m = SpecificationService.get_question_labels_str_and_html_map()
+
         for i, qidx in enumerate(qindices):
-            # TODO: or maybe append
             # TODO: someday will need to think about multiple pages per question...
             overlap = 0.02
             top = (div[i] / 100.0) - overlap
@@ -88,5 +82,16 @@ class QuestionRegionsService:
             top = max(0, top)
             bottom = min(1, bottom)
             height = bottom - top
-            regions[str(qidx)] = [{"page": pagenum, "rect": [0, top, 1, height]}]
+            qlabel_str, qlabel_html = m[qidx]
+            # TODO: need to deal with overwriting, when data exists already?
+            regions.append(
+                {
+                    "qidx": qidx,
+                    "qlabel": qlabel_str,
+                    "qlabel_html": qlabel_html,
+                    "version": version,
+                    "page": pagenum,
+                    "rect": [0, top, 1, height],
+                }
+            )
         Settings.key_value_store_set("question_regions", regions)

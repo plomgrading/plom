@@ -22,6 +22,7 @@ class QuestionRegionsView(ManagerRequiredView):
         spec = SpecificationService.get_the_spec()
 
         # TODO: move to demo!
+        regions = QuestionRegionsService.reset_question_regions()
         QuestionRegionsService.subdivide_page(9, 1, [23.5, 38.5])
 
         shared_pages_info = QuestionRegionsService.get_shared_pages()
