@@ -30,7 +30,10 @@
                 <h3>Pages shared by more than one question</h3>
                 {% if info %}
                     {% for x in info %}
-                        <p>Page {{ x.page }} is shared by questions {{ x.question_labels_that_share }}</p>
+                        <p>
+                            Page {{ x.page }} is shared by questions:
+                            {{ x.question_labels_that_share_html|join:", "|safe }}
+                        </p>
                     {% endfor %}
                 {% else %}
                     <p>No shared pages.</p>

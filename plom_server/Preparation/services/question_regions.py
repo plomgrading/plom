@@ -27,24 +27,26 @@ class QuestionRegionsService:
 
     @staticmethod
     def get_shared_pages() -> list[dict[str, Any]]:
+        """Produce a list pages that are shared by one or more questions."""
         # TODO: doc how this fails if no spec
         # spec = SpecificationService.get_the_spec()
 
         question_pages = SpecificationService.get_question_pages()
-
-        qidx_label_pairs = SpecificationService.get_question_index_label_pairs()
+        qidx_labels = SpecificationService.get_question_html_label_triples()
 
         info = []
         for pg in range(1, 1 + SpecificationService.get_n_pages()):
             # the question indices that share this page
             qindices = [k for k, v in question_pages.items() if pg in v]
             if len(qindices) > 1:
-                qlabels = [b for (a, b) in qidx_label_pairs if a in qindices]
+                qlabels = [b for (a, b, c) in qidx_labels if a in qindices]
+                qlabels_html = [c for (a, b, c) in qidx_labels if a in qindices]
                 info.append(
                     {
                         "page": pg,
                         "question_indicies_that_share": qindices,
                         "question_labels_that_share": qlabels,
+                        "question_labels_that_share_html": qlabels_html,
                     }
                 )
         return info
