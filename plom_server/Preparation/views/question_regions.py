@@ -16,19 +16,18 @@ class QuestionRegionsView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        version = 1
         pg = 9
+        version = 1
 
         spec = SpecificationService.get_the_spec()
 
         # TODO: move to demo!
-        regions = QuestionRegionsService.reset_question_regions()
-        QuestionRegionsService.subdivide_page(9, 1, [23.5, 38.5])
+        # regions = QuestionRegionsService.reset_question_regions()
+        QuestionRegionsService.subdivide_page(pg, [23.5, 38.5], version=version)
 
         shared_pages_info = QuestionRegionsService.get_shared_pages()
 
         regions = QuestionRegionsService.get_question_regions()
-        print(regions)
 
         png_bytes = ExamMockerService.get_temp_rendered_regions_page(
             pg, version, regions

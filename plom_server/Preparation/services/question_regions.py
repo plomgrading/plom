@@ -25,6 +25,39 @@ class QuestionRegionsService:
             regions = Settings.key_value_store_get_or_none("question_regions")
         return regions
 
+    @classmethod
+    def set_question_regions(
+        cls, qidx: int, pagenum: int, rect, *, version: int | None = None
+    ) -> None:
+        """Set the crop region of a particular question to page, optionally with a version."""
+        cls._remove_question_regions(qidx, pagenum, version=version)
+        regions = cls.get_question_regions()
+        qlabel, qlabel_html = SpecificationService.get_question_label_str_and_html(qidx)
+        regions.append(
+            {
+                "qidx": qidx,
+                "qlabel": qlabel,
+                "qlabel_html": qlabel_html,
+                "version": version,
+                "page": pagenum,
+                "rect": rect,
+            }
+        )
+        Settings.key_value_store_set("question_regions", regions)
+
+    @classmethod
+    def _remove_question_regions(
+        cls, qidx: int, pagenum: int, *, version: int | None = None
+    ) -> None:
+        regions = cls.get_question_regions()
+        for r in regions:
+            if r["qidx"] == qidx and r["page"] == pagenum:
+                if version is None:
+                    regions.remove(r)
+                elif r["version"] == version:
+                    regions.remove(r)
+        Settings.key_value_store_set("question_regions", regions)
+
     @staticmethod
     def get_shared_pages() -> list[dict[str, Any]]:
         """Produce a list pages that are shared by one or more questions."""
@@ -52,14 +85,22 @@ class QuestionRegionsService:
         return info
 
     @classmethod
-    def subdivide_page(cls, pagenum: int, version: int, div: list[float]) -> None:
+    def subdivide_page(
+        cls,
+        pagenum: int,
+        div: list[float],
+        *,
+        version: int | None,
+    ) -> None:
         """Convenience function to subdivide a page amongst the questions that share it.
 
         Args:
             pagenum: which page, indexed from 1.
-            version: which version.
             div: a list of the interior divisions of a page, for example
                 ``[0.4]`` or ``[0.33, 0.66]``.
+
+        Keyword Args:
+            version: optionally do this subdivision for this version only.
         """
         # TODO: doc how this fails if no spec
         # spec = SpecificationService.get_the_spec()
@@ -72,10 +113,6 @@ class QuestionRegionsService:
         assert len(div) == len(qindices) - 1
         div = [0, *div, 100]
 
-        regions = cls.get_question_regions()
-
-        m = SpecificationService.get_question_labels_str_and_html_map()
-
         for i, qidx in enumerate(qindices):
             # TODO: someday will need to think about multiple pages per question...
             overlap = 0.02
@@ -84,16 +121,6 @@ class QuestionRegionsService:
             top = max(0, top)
             bottom = min(1, bottom)
             height = bottom - top
-            qlabel_str, qlabel_html = m[qidx]
-            # TODO: need to deal with overwriting, when data exists already?
-            regions.append(
-                {
-                    "qidx": qidx,
-                    "qlabel": qlabel_str,
-                    "qlabel_html": qlabel_html,
-                    "version": version,
-                    "page": pagenum,
-                    "rect": [0, top, 1, height],
-                }
+            QuestionRegionsService.set_question_regions(
+                qidx, pagenum, [0, top, 1, height], version=version
             )
-        Settings.key_value_store_set("question_regions", regions)
