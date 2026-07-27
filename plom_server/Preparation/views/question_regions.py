@@ -16,30 +16,49 @@ class QuestionRegionsView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        pg = 9
-        version = 1
 
         spec = SpecificationService.get_the_spec()
 
         # TODO: move to demo!
-        # regions = QuestionRegionsService.reset_question_regions()
-        QuestionRegionsService.subdivide_page(pg, [23.5, 38.5], version=version)
+        regions = QuestionRegionsService.reset_question_regions()
+        QuestionRegionsService.subdivide_page(9, [23.5, 38.5], version=None)
+        # Just testing
+        QuestionRegionsService.set_question_regions(1, 3, [0.1, 0.2, 0.85, 0.7])
 
         shared_pages_info = QuestionRegionsService.get_shared_pages()
 
         regions = QuestionRegionsService.get_question_regions()
 
-        png_bytes = ExamMockerService.get_temp_rendered_regions_page(
-            pg, version, regions
-        )
-        png_as_string = base64.b64encode(png_bytes).decode("ascii")
+        # SpecificationService.get_
+
+        pages_with_regions = sorted(list(set([r["page"] for r in regions])))
+        meh = []
+        for pg in pages_with_regions:
+            x = {}
+            x["page"] = pg
+            # TODO: version hardcoded to 1
+            png_bytes = ExamMockerService.get_temp_rendered_regions_page(
+                x["page"], 1, regions
+            )
+            png_as_string = base64.b64encode(png_bytes).decode("ascii")
+            x["page_region_image"] = png_as_string
+            # TODO: too complicated, just get lists of questions on each page...
+            for y in shared_pages_info:
+                if y["page"] == pg:
+                    x["question_labels_that_share_html"] = y[
+                        "question_labels_that_share_html"
+                    ]
+            meh.append(x)
+
+        shared_pages_info = shared_pages_info * 3
 
         context.update(
             {
                 "allowSharedPages": spec["allowSharedPages"],
-                "info": shared_pages_info,
+                "shared_page_info": shared_pages_info,
                 "regions": regions,
-                "page_region_image": png_as_string,
+                "pages_with_regions": meh,
+                # "page_region_image": png_as_string,
             }
         )
         return render(request, "Preparation/question_regions.html", context)

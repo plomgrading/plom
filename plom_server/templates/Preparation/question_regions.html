@@ -28,8 +28,8 @@
                     </p>
                 {% endif %}
                 <h3>Pages shared by more than one question</h3>
-                {% if info %}
-                    {% for x in info %}
+                {% if shared_page_info %}
+                    {% for x in shared_page_info %}
                         <p>
                             Page {{ x.page }} is shared by questions:
                             {{ x.question_labels_that_share_html|join:", "|safe }}
@@ -38,15 +38,31 @@
                 {% else %}
                     <p>No shared pages.</p>
                 {% endif %}
+                <h3>Pages</h3>
+                <div class="mb-2">
+                    {% for x in pages_with_regions %}
+                        <details open>
+                            <!--  TODO: if any regions exist that aren't on shared pages... -->
+                            <summary>
+                                <b>Page {{ x.page }}</b>
+                                {% if x.question_labels_that_share_html %}
+                                    (shared by {{ x.question_labels_that_share_html|join:", "|safe }})
+                                {% endif %}
+                            </summary>
+                            <!-- TODO: maybe a setter form here -->
+                            <div class="ms-4 mb-2">
+                                <img class="shadow" src="data:image/png;base64,{{ x.page_region_image }}" />
+                            </div>
+                        </details>
+                    {% endfor %}
+                </div>
                 <h3>Raw region data</h3>
-                <!-- TODO: format may change to not be keys by integer-strings -->
                 <p>
                     {% for region in regions %}
                         <tt>{{ region }}</tt>
                         <br />
                     {% endfor %}
                 </p>
-                <img src="data:image/png;base64,{{ page_region_image }}" />
             </div>
         </div>
     </div>
