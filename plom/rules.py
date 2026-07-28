@@ -5,9 +5,17 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2026 Ryan Harry
 
-"""Utils concerning rules about data, like valid student numbers."""
+import os
 
-StudentIDLength = 8  # maybe we're not using this anymore
+"""Utils concerning rules about data, like valid student numbers."""
+try:
+    StudentIDLength = int(os.environ.get("PLOM_STUDENT_ID_LENGTH", "8"))
+except ValueError:
+    raise ValueError(
+        f"PLOM_STUDENT_ID_LENGTH must be be positive integer,got '{os.environ.get('PLOM_STUDENT_ID_LENGTH')}'"
+    )
+if StudentIDLength <= 0:
+    raise ValueError(F"PLOM_STUDENT_ID_LENGTH must be positive, got {StudentIDLength}")
 
 
 def _test_valid_student_id(n) -> tuple[bool, str]:
@@ -23,6 +31,11 @@ def _test_valid_student_id(n) -> tuple[bool, str]:
         return (False, f"SID '{n}' is not an integer")
     if sid < 0:
         return (False, f"SID '{n}' is negative")
+    if len(str(n)) != StudentIDLength:
+        return (
+            False,
+            f"SID '{n}' has incorrect length -expecting {StudentIDLength} digits",
+        )
     return (True, "")
 
 
