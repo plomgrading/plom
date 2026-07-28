@@ -316,7 +316,9 @@ def get_question_pages() -> dict[int, list[int]]:
     """Get the pages of each question, indexed from one.
 
     Returns:
-        A dictionary of question indices giving a list of the corresponding pages {question_index: question_pages}.
+        A dictionary of question indices giving a list of the corresponding
+        pages {question_index: question_pages}.
+
     Exceptions:
         ObjectDoesNotExist: no exam specification yet.
     """

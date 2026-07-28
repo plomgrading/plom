@@ -129,7 +129,7 @@ class QuestionRegionsService:
         pagenum: int,
         div: list[float],
         *,
-        version: int | None,
+        version: int | None = None,
     ) -> None:
         """Convenience function to subdivide a page amongst the questions that share it.
 
@@ -140,16 +140,22 @@ class QuestionRegionsService:
 
         Keyword Args:
             version: optionally do this subdivision for this version only.
-        """
-        # TODO: doc how this fails if no spec
-        # spec = SpecificationService.get_the_spec()
 
+        Raises:
+            ValueError: number of divisions does not correspond to questions.
+            ObjectDoesNotExist: no spec yet.
+        """
         question_pages = SpecificationService.get_question_pages()
 
         # the question indices that share this page
         qindices = [k for k, v in question_pages.items() if pagenum in v]
 
-        assert len(div) == len(qindices) - 1
+        if len(div) != len(qindices) - 1:
+            raise ValueError(
+                f"Page {pagenum} is shared by {len(qindices)} questions:"
+                f" wrong number of divisions provided: {len(div)}"
+                f" but the expected number is {len(qindices) - 1}"
+            )
         div = [0, *div, 100]
 
         for i, qidx in enumerate(qindices):

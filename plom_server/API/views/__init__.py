@@ -30,7 +30,7 @@ from .spec_handler import SpecificationAPIView
 from .public_code import PublicCodeAPIView
 from .classlist import Classlist
 from .pqvmap import PQVmap
-from .question_regions import QuestionRegionsView
+from .regions import RegionsView, RegionsSubdivideView
 
 from .identify import (
     GetClasslist,
