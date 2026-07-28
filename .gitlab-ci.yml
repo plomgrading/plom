@@ -42,7 +42,7 @@ variables:
   PLOM_NO_SSL_VERIFY: 1
   QT_QPA_PLATFORM: offscreen
   PLOMCLIENT_BRANCHNAME: main
-  PLOMCOMMON_BRANCHNAME: region  # TODO: revert to main before merging!!!
+  PLOMCOMMON_BRANCHNAME: regions  # TODO: revert to main before merging!!!
 
 stages:
   - static_analysis
