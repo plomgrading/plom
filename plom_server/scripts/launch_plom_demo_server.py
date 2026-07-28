@@ -545,6 +545,8 @@ def run_demo_preparation_commands(
     if solutions:
         upload_demo_solution_files(multiversion=multiversion)
     upload_demo_classlist(length)
+    run_plom_cli_command("region-subdivide-page 9 23.5 38.5")
+    run_plom_cli_command("get-region")
 
     saytime("Finished uploading assessment sources and classlist.")
 
