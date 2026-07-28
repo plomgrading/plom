@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Colin B. Macdonald
 
+import base64
 from typing import Any
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
+from .mocker import ExamMockerService
 
 
 class QuestionRegionsService:
@@ -81,6 +83,42 @@ class QuestionRegionsService:
                         "question_indicies_that_share": qindices,
                         "question_labels_that_share": qlabels,
                         "question_labels_that_share_html": qlabels_html,
+                    }
+                )
+        return info
+
+    @classmethod
+    def get_region_mockups(cls) -> list:
+        question_pages = SpecificationService.get_question_pages()
+        qidx_labels = SpecificationService.get_question_html_label_triples()
+
+        regions = cls.get_question_regions()
+
+        info = []
+        for pg in range(1, 1 + SpecificationService.get_n_pages()):
+            # the question indices that share this page
+            qindices = [k for k, v in question_pages.items() if pg in v]
+            qlabels = [b for (a, b, c) in qidx_labels if a in qindices]
+            qlabels_html = [c for (a, b, c) in qidx_labels if a in qindices]
+            if any([r["page"] == pg for r in regions]):
+                has_regions = True
+                # TODO: version hardcoded to 1
+                png_bytes = ExamMockerService.get_temp_rendered_regions_page(
+                    pg, 1, regions
+                )
+                png_as_string = base64.b64encode(png_bytes).decode("ascii")
+            else:
+                has_regions = False
+                png_as_string = ""
+            if has_regions:
+                info.append(
+                    {
+                        "page": pg,
+                        "question_indicies": qindices,
+                        "question_labels": qlabels,
+                        "question_labels_html": qlabels_html,
+                        "has_regions": has_regions,
+                        "page_region_image": png_as_string,
                     }
                 )
         return info

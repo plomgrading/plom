@@ -42,12 +42,9 @@
                 <div class="mb-2">
                     {% for x in pages_with_regions %}
                         <details open>
-                            <!--  TODO: if any regions exist that aren't on shared pages... -->
                             <summary>
-                                <b>Page {{ x.page }}</b>
-                                {% if x.question_labels_that_share_html %}
-                                    (shared by {{ x.question_labels_that_share_html|join:", "|safe }})
-                                {% endif %}
+                                <b>Page {{ x.page }}</b>:
+                                {{ x.question_labels_html|join:", "|safe }}
                             </summary>
                             <!-- TODO: maybe a setter form here -->
                             <div class="ms-4 mb-2">
