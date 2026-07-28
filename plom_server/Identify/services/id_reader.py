@@ -768,9 +768,9 @@ class IDBoxProcessorService:
         """
         if not is_model_present(where=settings.PLOM_MODEL_CACHE):
             ensure_model_available(where=settings.PLOM_MODEL_CACHE)
-        student_id_length = 8
+
         heatmap = cls._compute_probability_heatmap_for_idbox_images(
-            id_box_files, student_id_length
+            id_box_files, settings.PLOM_STUDENT_ID_LENGTH
         )
 
         # probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
