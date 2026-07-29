@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2023, 2026 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 # Copyright (C) 2024 Aidan Murphy
@@ -37,12 +37,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
 
 # Installer logs
 pip-log.txt
@@ -186,3 +180,8 @@ media
 # vendored library files
 plom_server/plom_extra_static/js3rdparty/
 plom_server/plom_extra_static/css3rdparty/
+plom_extra_static/js3rdparty/
+plom_extra_static/css3rdparty/
+
+# files created during demo
+plomdemo.zip

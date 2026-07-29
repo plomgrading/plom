@@ -31,7 +31,6 @@ django-braces==1.15.0
 django-filter==23.2
 django-htmx==1.14.0
 django-huey==1.1.1
-django-reset-migrations==0.4.0
 djangorestframework==3.14.0
 django-tables2==2.7.0
 exif==1.6.1

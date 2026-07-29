@@ -124,8 +124,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # for more sophisticated mathematics in templates (eg progressbars)
     "mathfilters",
-    # for 'fun' with migrations - see #77
-    "reset_migrations",
     "django_huey",
     "django_htmx",
     # REST framework
@@ -347,6 +345,7 @@ else:
 # a bundle and reading the QR codes.
 _huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
 _huey_parent_workers = int(os.environ.get("PLOM_HUEY_PARENT_WORKERS", 2))
+
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
     "default": "chores",

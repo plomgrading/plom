@@ -1,0 +1,65 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2026 Deep Shah
+-->
+{% load custom_tags %}
+<div class="border rounded bg-light p-3 mb-3 suggestions-panel {% if not suggestions and not suggestion_status %}d-none{% endif %}"
+     data-suggestions-panel>
+    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+        <h2 class="h6 mb-0">Suggested assignments</h2>
+        <span class="badge text-bg-secondary {% if not suggestions %}d-none{% endif %}"
+              data-suggestions-count>{% if suggestions %}{{ suggestions|length }}{% endif %}</span>
+    </div>
+    <div class="alert alert-{{ suggestion_status_tone|default:'info' }} py-2 mb-2 {% if not suggestion_status %}d-none{% endif %}"
+         data-suggestions-status>{{ suggestion_status }}</div>
+    <div class="table-responsive {% if not suggestions %}d-none{% endif %}"
+         data-suggestions-table>
+        <table class="table table-sm align-middle mb-2">
+            <thead>
+                <tr>
+                    <th class="text-center">&nbsp;</th>
+                    <th>Paper</th>
+                    <th>Cluster</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody data-suggestions-body>
+                {% for suggestion in suggestions %}
+                    <tr data-suggestion-row="{{ suggestion.paper_num }}">
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   checked
+                                   data-suggestion-selected
+                                   aria-label="Apply suggestion for paper {{ suggestion.paper_num }}">
+                        </td>
+                        <td>Paper {{ suggestion.paper_num }}</td>
+                        <td>
+                            <select class="form-select form-select-sm" data-suggestion-cluster>
+                                {% for clusterId, count in cluster_groups %}
+                                    {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                        <option value="{{ clusterId }}"
+                                                {% if clusterId == suggestion.clusterId %}selected{% endif %}>
+                                            {{ cluster_name|default:"Unnamed" }} - Cluster {{ clusterId }} ({{ count }})
+                                        </option>
+                                    {% endwith %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <span class="badge {% if suggestion.confidence == 'high' %}text-bg-success{% elif suggestion.confidence == 'medium' %}text-bg-warning{% else %}text-bg-secondary{% endif %}"
+                                  title="gap {{ suggestion.gap }}">{{ suggestion.confidence }}</span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="d-flex gap-2 flex-wrap {% if not suggestions %}d-none{% endif %}"
+         data-suggestions-actions>
+        <button type="button" class="btn btn-primary btn-sm" data-apply-suggestions>Apply selected</button>
+        <button type="button"
+                class="btn btn-outline-secondary btn-sm"
+                data-clear-suggestions>Clear</button>
+    </div>
+</div>

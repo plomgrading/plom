@@ -1,17 +1,26 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 from collections import defaultdict
+from importlib import resources
+import os
+from pathlib import Path
+import re
 from typing import Any, Mapping, Optional
 
+import numpy as np
+import yaml
+
 # django
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.db import transaction
 from django_huey import db_task
 import huey
 import huey.api
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.db.models import QuerySet
 
 # plom db models
@@ -45,6 +54,7 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
 )
 
 # plom_ml
+import plom_ml.clustering.model
 from plom_ml.clustering.pipeline.clustering_pipeline import ClusteringPipeline
 from plom_ml.clustering.preprocessing.preprocessor import DiffProcessor
 
@@ -155,6 +165,10 @@ class QuestionClusteringJobService:
 
 class QuestionClusteringService:
     """Service handling clustering and querying of cluster-related models."""
+
+    CLUSTER_NAME_MAX_LENGTH = 100  # must not exceed DB model field size
+    _CLUSTER_TAG_RE = re.compile(r"^cluster_qi\d+v\d+_(\d+)(?:_.*)?$")
+    _INVALID_CLUSTER_TAG_NAME_CHARS_RE = re.compile(r"[^\w\-\+\:\;\.\@]+")
 
     def _store_clustered_result(
         self,
@@ -408,6 +422,391 @@ class QuestionClusteringService:
 
         return result
 
+    def get_cluster_name_map(self, question_idx: int, version: int) -> dict[int, str]:
+        """Get a mapping from clusterId to human-readable cluster name."""
+        return dict(
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            ).values_list("clusterId", "cluster_name")
+        )
+
+    def update_cluster_name(
+        self, question_idx: int, version: int, clusterId: int, cluster_name: str
+    ) -> str:
+        """Update the human-readable name of a user-facing cluster."""
+        clean_name = cluster_name.strip()
+        if len(clean_name) > self.CLUSTER_NAME_MAX_LENGTH:
+            raise ValueError(
+                f"Cluster name must be at most {self.CLUSTER_NAME_MAX_LENGTH} characters."
+            )
+
+        cluster = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
+        )
+        cluster.cluster_name = clean_name
+        cluster.save(update_fields=["cluster_name"])
+        return clean_name
+
+    def get_unclustered_paper_nums(
+        self, question_idx: int, version: int, page_num: int
+    ) -> list[int]:
+        """Get scanned paper numbers that are not in any user-facing cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            page_num: the page used in the clustering.
+
+        Returns:
+            A sorted list of scanned paper numbers for the page/version that are not
+            currently linked to a user-facing cluster for the question/version.
+        """
+        scanned_paper_nums = set(
+            PaperInfoService.get_paper_numbers_containing_page(
+                page_num, version=version, scanned=True
+            )
+        )
+        clustered_paper_nums = set(
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            )
+            .values_list("paper__paper_number", flat=True)
+            .distinct()
+        )
+
+        return sorted(scanned_paper_nums - clustered_paper_nums)
+
+    @transaction.atomic
+    def assign_papers_to_cluster(
+        self, question_idx: int, version: int, clusterId: int, paper_nums: list[int]
+    ) -> int:
+        """Assign papers to a user-facing cluster.
+
+        If any selected papers are already in another user-facing cluster for the
+        same question/version, they are moved to the target cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            clusterId: the id of the target cluster.
+            paper_nums: the paper numbers to assign to the target cluster.
+
+        Raises:
+            EmptySelectedError: if no paper numbers are provided.
+            ObjectDoesNotExist: if the target cluster does not exist.
+
+        Returns:
+            The count of members in the target cluster after assignment.
+        """
+        if len(paper_nums) == 0:
+            raise EmptySelectedError("attempting to assign 0 papers to cluster.")
+
+        unique_paper_nums = set(paper_nums)
+        target_cluster = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
+        )
+        papers = Paper.objects.filter(paper_number__in=unique_paper_nums)
+
+        clusters = QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
+        )
+        QVClusterLink.objects.filter(
+            qv_cluster__in=clusters,
+            paper__paper_number__in=unique_paper_nums,
+        ).delete()
+
+        target_cluster.paper.add(*papers)
+
+        return target_cluster.paper.count()
+
+    @transaction.atomic
+    def create_cluster_from_papers(
+        self, question_idx: int, version: int, page_num: int, paper_nums: list[int]
+    ) -> tuple[int, int]:
+        """Create a new user-facing cluster from selected papers.
+
+        Args:
+            question_idx: question index of the clustering context.
+            version: version of the clustering context.
+            page_num: page used in the clustering.
+            paper_nums: paper numbers to put in the new cluster.
+
+        Raises:
+            EmptySelectedError: if no paper numbers are provided.
+
+        Returns:
+            A tuple of (new cluster id, member count).
+        """
+        if len(paper_nums) == 0:
+            raise EmptySelectedError("attempting to create cluster from 0 papers.")
+
+        unique_paper_nums = set(paper_nums)
+        next_cluster_id = (
+            QVCluster.objects.filter(question_idx=question_idx, version=version)
+            .aggregate(max_cluster_id=Max("clusterId"))
+            .get("max_cluster_id")
+        )
+        next_cluster_id = 0 if next_cluster_id is None else next_cluster_id + 1
+
+        rect = self.get_corners_used_for_clustering(question_idx, version)
+        new_cluster = QVCluster.objects.create(
+            question_idx=question_idx,
+            version=version,
+            clusterId=next_cluster_id,
+            type=ClusteringGroupType.user_facing,
+            page_num=page_num,
+            top=rect["top"],
+            left=rect["left"],
+            bottom=rect["bottom"],
+            right=rect["right"],
+        )
+        papers = Paper.objects.filter(paper_number__in=unique_paper_nums)
+
+        clusters = QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
+        ).exclude(pk=new_cluster.pk)
+        QVClusterLink.objects.filter(
+            qv_cluster__in=clusters,
+            paper__paper_number__in=unique_paper_nums,
+        ).delete()
+
+        new_cluster.paper.add(*papers)
+
+        return next_cluster_id, new_cluster.paper.count()
+
+    def suggest_clusters_for_unclustered_papers(
+        self, question_idx: int, version: int, page_num: int
+    ) -> list[dict[str, Any]]:
+        """Suggest a target cluster for each currently unclustered paper.
+
+        The suggestion uses the same model embeddings as the original
+        clustering job, comparing each unclustered paper to the centroid
+        embedding for each existing user-facing cluster. The output is advisory
+        only; callers must still explicitly apply the suggested assignments.
+
+        This method does not download model weights. If the relevant model is
+        not already present in ``model_cache``, it raises ValueError so the UI
+        can ask the user to run the clustering job/model setup first.
+
+        Args:
+            question_idx: question index of the clustering context.
+            version: version of the clustering context.
+            page_num: page used in the clustering.
+
+        Returns:
+            A list of suggestions sorted by paper number. Each suggestion has
+            the keys: paper_num, clusterId, confidence, distance, and gap.
+        """
+        unclustered_paper_nums = self.get_unclustered_paper_nums(
+            question_idx=question_idx, version=version, page_num=page_num
+        )
+        if not unclustered_paper_nums:
+            return []
+
+        clustering_model = self.get_clustering_model_type(question_idx, version)
+        missing_weight_paths = self._missing_clustering_model_weight_paths(
+            clustering_model
+        )
+        if missing_weight_paths:
+            missing = ", ".join(str(path) for path in missing_weight_paths)
+            raise ValueError(
+                "Cannot suggest clusters because the clustering model weights "
+                f"are not available locally: {missing}"
+            )
+
+        clusters = (
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            )
+            .prefetch_related("paper")
+            .order_by("clusterId")
+        )
+        if not clusters:
+            return []
+
+        rect = self.get_corners_used_for_clustering(question_idx, version)
+        rex = RectangleExtractor(version, page_num)
+        ref = rex.get_cropped_ref_img(rect)
+        preprocessor = DiffProcessor(
+            dilation_strength=1,
+            invert=clustering_model == ClusteringModelType.HME,
+        )
+        clustering_strategy = self._get_local_clustering_strategy(clustering_model)
+        vector_cache: dict[int, np.ndarray | None] = {}
+
+        def get_vector(paper_num: int) -> np.ndarray | None:
+            if paper_num not in vector_cache:
+                scanned = rex.get_cropped_scanned_img_or_none(paper_num, rect)
+                if scanned is None:
+                    vector_cache[paper_num] = None
+                else:
+                    processed = preprocessor.process({"ref": ref, "scanned": scanned})
+                    vector_cache[paper_num] = clustering_strategy.get_embeddings(
+                        processed
+                    )
+            return vector_cache[paper_num]
+
+        cluster_centroids: list[tuple[int, np.ndarray]] = []
+        for cluster in clusters:
+            member_vectors = [
+                vector
+                for vector in (
+                    get_vector(paper.paper_number) for paper in cluster.paper.all()
+                )
+                if vector is not None
+            ]
+            if member_vectors:
+                cluster_centroids.append(
+                    (cluster.clusterId, np.mean(member_vectors, axis=0))
+                )
+
+        if not cluster_centroids:
+            return []
+
+        suggestions = []
+        for paper_num in unclustered_paper_nums:
+            vector = get_vector(paper_num)
+            if vector is None:
+                continue
+
+            distances = sorted(
+                (
+                    (
+                        clusterId,
+                        self._embedding_distance(vector, centroid, clustering_model),
+                    )
+                    for clusterId, centroid in cluster_centroids
+                ),
+                key=lambda item: item[1],
+            )
+            clusterId, distance = distances[0]
+            next_distance = distances[1][1] if len(distances) > 1 else None
+            gap = self._suggestion_distance_gap(distance, next_distance)
+            suggestions.append(
+                {
+                    "paper_num": paper_num,
+                    "clusterId": clusterId,
+                    "confidence": self._suggestion_confidence(gap),
+                    "distance": round(distance, 4),
+                    "gap": round(gap, 4),
+                }
+            )
+
+        return suggestions
+
+    def get_clustering_model_type(
+        self, question_idx: int, version: int
+    ) -> ClusteringModelType:
+        """Return the clustering model used for a question/version pair."""
+        chore = (
+            QuestionClusteringChore.objects.filter(
+                question_idx=question_idx,
+                version=version,
+            )
+            .order_by("-id")
+            .first()
+        )
+        if chore is None:
+            raise ValueError(
+                f"No clustering job found for question {question_idx}, v{version}."
+            )
+        return ClusteringModelType(chore.clustering_model)
+
+    @staticmethod
+    def _embedding_distance(
+        vector: np.ndarray,
+        centroid: np.ndarray,
+        clustering_model: ClusteringModelType,
+    ) -> float:
+        """Distance metric matching the original clustering strategy."""
+        if clustering_model == ClusteringModelType.MCQ:
+            denominator = np.linalg.norm(vector) * np.linalg.norm(centroid)
+            if denominator == 0:
+                return 1.0
+            cosine_similarity = float(np.dot(vector, centroid) / denominator)
+            return 1.0 - cosine_similarity
+        return float(np.linalg.norm(vector - centroid))
+
+    @staticmethod
+    def _missing_clustering_model_weight_paths(
+        clustering_model: ClusteringModelType,
+    ) -> list[Path]:
+        """Return model weight paths that are required but not available locally."""
+        config_path = resources.files(plom_ml.clustering.model) / "model_config.yaml"
+        with config_path.open("r") as f:
+            config = yaml.safe_load(f)
+
+        if clustering_model == ClusteringModelType.MCQ:
+            filenames = [config["models"]["mcq"]["filename"]]
+        elif clustering_model == ClusteringModelType.HME:
+            filenames = [
+                config["models"]["hme_symbolic"]["filename"],
+                config["models"]["hme_trocr"]["filename"],
+            ]
+        else:
+            raise ValueError(f"Unsupported clustering model: {clustering_model}")
+
+        paths = [Path("model_cache") / filename for filename in filenames]
+        return [path for path in paths if not path.exists()]
+
+    @staticmethod
+    def _get_local_clustering_strategy(clustering_model: ClusteringModelType):
+        """Load a clustering strategy without allowing Hugging Face downloads."""
+        previous_offline_value = os.environ.get("TRANSFORMERS_OFFLINE")
+        previous_hf_offline_value = os.environ.get("HF_HUB_OFFLINE")
+        os.environ["TRANSFORMERS_OFFLINE"] = "1"
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        try:
+            return get_ClusteringStrategy(clustering_model)
+        except Exception as err:
+            raise ValueError(
+                "Cannot suggest clusters because the clustering model assets "
+                "are not available locally."
+            ) from err
+        finally:
+            if previous_offline_value is None:
+                os.environ.pop("TRANSFORMERS_OFFLINE", None)
+            else:
+                os.environ["TRANSFORMERS_OFFLINE"] = previous_offline_value
+            if previous_hf_offline_value is None:
+                os.environ.pop("HF_HUB_OFFLINE", None)
+            else:
+                os.environ["HF_HUB_OFFLINE"] = previous_hf_offline_value
+
+    @staticmethod
+    def _suggestion_distance_gap(
+        nearest_distance: float, next_distance: float | None
+    ) -> float:
+        """Return the relative gap between the best and runner-up match."""
+        if next_distance is None or next_distance == 0:
+            return 0.0
+        return max((next_distance - nearest_distance) / next_distance, 0.0)
+
+    @staticmethod
+    def _suggestion_confidence(gap: float) -> str:
+        """Map distance separation to a human-readable confidence level."""
+        if gap >= 0.35:
+            return "high"
+        if gap >= 0.15:
+            return "medium"
+        return "low"
+
     def get_cluster_priority(
         self, question_idx: int, version: int, clusterId: int
     ) -> Optional[float]:
@@ -544,7 +943,8 @@ class QuestionClusteringService:
     def bulk_tagging(self, qidx: int, version: int, *, userid: int) -> None:
         """Bulk tag all clusters with default cluster tag.
 
-        NOTE: current default cluster tag is cluster_qi{idx}v{version}_{clusterId}.
+        NOTE: current default cluster tag is cluster_qi{idx}v{version}_{clusterId},
+        optionally followed by _{cluster_name} when a cluster has a name.
 
         Args:
             qidx: question_index of the clustering context.
@@ -557,10 +957,14 @@ class QuestionClusteringService:
 
         # get cluster_id to paper mapping
         clusterid_to_papers = self.get_clusterid_to_paper_mapping(qidx, version)
+        clusterid_to_name = self.get_cluster_name_map(qidx, version)
 
         # get tag_texts
         tag_texts = [
-            f"cluster_qi{qidx}v{version}_{cid}" for cid in clusterid_to_papers.keys()
+            self._format_cluster_tag_text(
+                qidx, version, cid, clusterid_to_name.get(cid, "")
+            )
+            for cid in clusterid_to_papers.keys()
         ]
 
         # get/create tags
@@ -575,6 +979,12 @@ class QuestionClusteringService:
             for cid, papers in clusterid_to_papers.items()
             for paper in papers
         }
+
+        self._remove_cluster_tag_links(
+            qidx,
+            version,
+            {paper.pk for papers in clusterid_to_papers.values() for paper in papers},
+        )
 
         # fetch all tasks
         task_tuples = MarkingTask.objects.filter(
@@ -592,6 +1002,27 @@ class QuestionClusteringService:
 
         # Insert once
         Through.objects.bulk_create(rows, ignore_conflicts=True)
+
+    @classmethod
+    def _format_cluster_tag_text(
+        cls, qidx: int, version: int, clusterId: int, cluster_name: str
+    ) -> str:
+        """Build the generated tag text for a cluster."""
+        tag_text = f"cluster_qi{qidx}v{version}_{clusterId}"
+        clean_name = cls._cluster_name_to_tag_suffix(cluster_name)
+        if clean_name:
+            tag_text = f"{tag_text}_{clean_name}"
+        return tag_text
+
+    @classmethod
+    def _cluster_name_to_tag_suffix(cls, cluster_name: str) -> str:
+        """Convert a cluster name to a valid tag suffix."""
+        clean_name = cluster_name.strip()
+        if not clean_name:
+            return ""
+
+        clean_name = cls._INVALID_CLUSTER_TAG_NAME_CHARS_RE.sub("_", clean_name)
+        return clean_name.strip("_")
 
     def remove_tag_from_a_cluster(
         self, question_idx: int, version: int, clusterId: int, tag_pk: int
@@ -622,7 +1053,10 @@ class QuestionClusteringService:
         Returns:
             the clusterId parsed from the cluster tag text.
         """
-        return int(cluster_tag_text.rsplit("_", 1)[-1])
+        match = self._CLUSTER_TAG_RE.match(cluster_tag_text)
+        if not match:
+            raise ValueError(f"Invalid cluster tag text: {cluster_tag_text}")
+        return int(match.group(1))
 
     def get_all_tasks_in_a_cluster(
         self, question_idx: int, version: int, clusterId: int
@@ -721,15 +1155,36 @@ class QuestionClusteringService:
         Returns:
             A dict representing the rectangular region and has these
             keys: [top, left, bottom, right].
+
+        Raises:
+            ObjectDoesNotExist: if there is no clustering data or job for the
+                question/version.
         """
         qvc = QVCluster.objects.filter(
             question_idx=question_idx, version=version
         ).first()
+        if qvc is not None:
+            return {
+                "top": qvc.top,
+                "left": qvc.left,
+                "bottom": qvc.bottom,
+                "right": qvc.right,
+            }
+
+        task = QuestionClusteringChore.objects.filter(
+            question_idx=question_idx, version=version, obsolete=False
+        ).first()
+        if task is None:
+            raise ObjectDoesNotExist(
+                f"No clustering data found for question {question_idx}, "
+                f"version {version}."
+            )
+
         return {
-            "top": qvc.top,
-            "left": qvc.left,
-            "bottom": qvc.bottom,
-            "right": qvc.right,
+            "top": task.top,
+            "left": task.left,
+            "bottom": task.bottom,
+            "right": task.right,
         }
 
     def _get_merged_component(self, question_idx: int, version: int, clusterId: int):
@@ -920,83 +1375,161 @@ class QuestionClusteringService:
 
         return member_count
 
-    def reset_clusters(
-        self, question_idx: int, version: int, clusterIds: list[int]
-    ) -> None:
-        """Reset all cluster in clusterIds to their original state.
-
-        NOTE: This also resets the state of the papers in the clusters and cluster tag.
+    @transaction.atomic
+    def reset_clusters(self, question_idx: int, version: int) -> list[int]:
+        """Reset all clusters for a question/version back to the original clustering.
 
         Args:
             question_idx: question_index of the clustering context.
             version: version of the clustering context.
-            clusterIds: the list of Ids of clusters to be reset.
 
         Raises:
-            EmptySelectedError: attempts to reset 0 cluster.
+            ObjectDoesNotExist: if there is no original clustering to restore.
+
+        Returns:
+            Sorted list of affected original cluster ids restored by the reset.
         """
-        if not clusterIds:
-            raise EmptySelectedError("attempting to reset 0 cluster.")
-
-        for cid in clusterIds:
-            self._reset_cluster(question_idx, version, cid)
-
-    def _reset_cluster(self, qidx: int, version: int, clusterId: int) -> None:
-        """Reset the cluster identified by the (q, v, clusterId).
-
-        NOTE: This also resets the state of the papers in the cluster and remove cluster tag.
-
-        Args:
-            qidx: question_index of the clustering context.
-            version: version of the clustering context.
-            clusterId: the identifier of the cluster to be reset.
-        """
-        user_facing_cluster = QVCluster.objects.get(
-            question_idx=qidx,
-            version=version,
-            clusterId=clusterId,
-            type=ClusteringGroupType.user_facing,
+        original_clusters = list(
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.original,
+            ).prefetch_related("paper")
         )
-        # grab base clusters that pointed at this user_facing (UF) cluster
-        originals = list(user_facing_cluster.original_cluster.all())
 
-        with transaction.atomic():
-            # reset tags
-            tasks = self.get_all_tasks_in_a_cluster(qidx, version, clusterId)
-            MarkingTaskTag.objects.filter(
-                task__in=tasks, text__startswith=f"cluster_qi{qidx}v{version}_"
-            ).delete()
+        if not original_clusters:
+            raise ObjectDoesNotExist(
+                "No original clustering exists for this question/version."
+            )
 
-            # delete the old UF cluster
-            user_facing_cluster.delete()
+        user_cluster_by_cluster_id = {
+            cluster.clusterId: cluster
+            for cluster in QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            )
+        }
+        target_cluster_by_original_pk: dict[int, QVCluster] = {}
+        clusters_to_restore_metadata = []
 
-            # create new UF clusters and collect them
-            new_clusters = []
-            for oc in originals:
-                new = QVCluster.objects.create(
-                    question_idx=oc.question_idx,
-                    version=oc.version,
-                    clusterId=oc.clusterId,
+        for original in original_clusters:
+            target_cluster = user_cluster_by_cluster_id.get(original.clusterId)
+            if target_cluster is None:
+                target_cluster = QVCluster.objects.create(
+                    question_idx=original.question_idx,
+                    version=original.version,
+                    clusterId=original.clusterId,
                     type=ClusteringGroupType.user_facing,
-                    page_num=oc.page_num,
-                    top=oc.top,
-                    left=oc.left,
-                    bottom=oc.bottom,
-                    right=oc.right,
+                    page_num=original.page_num,
+                    top=original.top,
+                    left=original.left,
+                    bottom=original.bottom,
+                    right=original.right,
                 )
-                new_clusters.append(new)
+                user_cluster_by_cluster_id[original.clusterId] = target_cluster
+            else:
+                target_cluster.cluster_name = ""
+                target_cluster.page_num = original.page_num
+                target_cluster.top = original.top
+                target_cluster.left = original.left
+                target_cluster.bottom = original.bottom
+                target_cluster.right = original.right
+                clusters_to_restore_metadata.append(target_cluster)
 
-            # copy M2M links in bulk via the through‐model
-            links = []
-            for new, oc in zip(new_clusters, originals):
-                for paper in oc.paper.all():
-                    links.append(QVClusterLink(paper=paper, qv_cluster=new))
+            target_cluster_by_original_pk[original.pk] = target_cluster
+
+        if clusters_to_restore_metadata:
+            QVCluster.objects.bulk_update(
+                clusters_to_restore_metadata,
+                ["cluster_name", "page_num", "top", "left", "bottom", "right"],
+            )
+
+        current_user_paper_ids = set(
+            QVClusterLink.objects.filter(
+                qv_cluster__question_idx=question_idx,
+                qv_cluster__version=version,
+                qv_cluster__type=ClusteringGroupType.user_facing,
+            ).values_list("paper_id", flat=True)
+        )
+
+        original_paper_ids_by_original_pk = {
+            original.pk: {paper.pk for paper in original.paper.all()}
+            for original in original_clusters
+        }
+        affected_paper_ids = set(current_user_paper_ids)
+        for paper_ids in original_paper_ids_by_original_pk.values():
+            affected_paper_ids.update(paper_ids)
+
+        self._remove_cluster_tag_links(question_idx, version, affected_paper_ids)
+
+        QVClusterLink.objects.filter(
+            qv_cluster__question_idx=question_idx,
+            qv_cluster__version=version,
+            qv_cluster__type=ClusteringGroupType.user_facing,
+        ).delete()
+
+        links = []
+        for original in original_clusters:
+            target_cluster = target_cluster_by_original_pk[original.pk]
+            for paper_id in original_paper_ids_by_original_pk[original.pk]:
+                links.append(
+                    QVClusterLink(paper_id=paper_id, qv_cluster=target_cluster)
+                )
+        if links:
             QVClusterLink.objects.bulk_create(links)
 
-            # point each original at its matching new UF cluster
-            for oc, new in zip(originals, new_clusters):
-                oc.user_cluster = new
-            QVCluster.objects.bulk_update(originals, ["user_cluster"])
+        originals_to_update = []
+        for original in original_clusters:
+            target_cluster = target_cluster_by_original_pk[original.pk]
+            if original.user_cluster_id != target_cluster.pk:
+                original.user_cluster = target_cluster
+                originals_to_update.append(original)
+        if originals_to_update:
+            QVCluster.objects.bulk_update(originals_to_update, ["user_cluster"])
+
+        original_cluster_ids = {original.clusterId for original in original_clusters}
+        QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
+        ).exclude(clusterId__in=original_cluster_ids).delete()
+
+        self._delete_empty_manual_clusters(question_idx, version)
+
+        return sorted(original_cluster_ids)
+
+    def _delete_empty_manual_clusters(self, question_idx: int, version: int) -> None:
+        """Delete empty user-facing clusters that no original cluster points to."""
+        QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
+        ).annotate(
+            paper_count=Count("paper"),
+            original_count=Count("original_cluster"),
+        ).filter(
+            paper_count=0,
+            original_count=0,
+        ).delete()
+
+    def _remove_cluster_tag_links(
+        self, question_idx: int, version: int, paper_ids: set[int]
+    ) -> None:
+        """Remove generated cluster tag links from affected marking tasks."""
+        if not paper_ids:
+            return
+
+        tasks = MarkingTask.objects.filter(
+            question_index=question_idx,
+            question_version=version,
+            paper_id__in=paper_ids,
+        )
+        Through = MarkingTaskTag.task.through
+        Through.objects.filter(
+            markingtask__in=tasks,
+            markingtasktag__text__startswith=f"cluster_qi{question_idx}v{version}_",
+        ).delete()
 
 
 # The decorated function returns a ``huey.api.Result``

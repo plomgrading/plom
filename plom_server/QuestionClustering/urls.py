@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Deep Shah
 
 from django.urls import path
 
@@ -10,12 +11,17 @@ from .views import (
     QuestionClusteringJobsHome,
     QuestionClusteringJobTable,
     ClusterGroupsView,
+    UnclusteredPapersView,
     ClusteredPapersView,
     DeleteClusterMember,
     ClusterMergeView,
     ClusterBulkDeleteView,
-    ClusterBulkResetView,
+    AssignUnclusteredPapersView,
+    CreateClusterFromUnclusteredPapersView,
+    SuggestUnclusteredPapersView,
+    ClusterResetView,
     UpdateClusterPriorityView,
+    UpdateClusterNameView,
     ClusterBulkTaggingView,
     RemoveTagFromClusterView,
     ClusteringErrorJobInfoView,
@@ -65,6 +71,11 @@ urlpatterns = [
         ClusterGroupsView.as_view(),
         name="cluster_groups",
     ),
+    path(
+        "cluster_groups/<int:question_idx>/<int:version>/<int:page_num>/unclustered",
+        UnclusteredPapersView.as_view(),
+        name="unclustered_papers",
+    ),
     # ======= Clustering-group operation in clustering table page =======
     path("merge_clusters/", ClusterMergeView.as_view(), name="merge_clusters"),
     path(
@@ -73,9 +84,24 @@ urlpatterns = [
         name="bulk_delete_clusters",
     ),
     path(
-        "bulk_reset_clusters/",
-        ClusterBulkResetView.as_view(),
-        name="bulk_reset_clusters",
+        "assign_unclustered_papers/",
+        AssignUnclusteredPapersView.as_view(),
+        name="assign_unclustered_papers",
+    ),
+    path(
+        "create_cluster_from_unclustered_papers/",
+        CreateClusterFromUnclusteredPapersView.as_view(),
+        name="create_cluster_from_unclustered_papers",
+    ),
+    path(
+        "suggest_unclustered_papers/",
+        SuggestUnclusteredPapersView.as_view(),
+        name="suggest_unclustered_papers",
+    ),
+    path(
+        "reset_clusters/",
+        ClusterResetView.as_view(),
+        name="reset_clusters",
     ),
     path(
         "delete_cluster_member",
@@ -87,6 +113,11 @@ urlpatterns = [
         "update_cluster_priority/",
         UpdateClusterPriorityView.as_view(),
         name="update_cluster_priority",
+    ),
+    path(
+        "update_cluster_name/",
+        UpdateClusterNameView.as_view(),
+        name="update_cluster_name",
     ),
     path(
         "bulk_cluster_tagging/",

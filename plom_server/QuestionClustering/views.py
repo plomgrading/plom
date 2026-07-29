@@ -1,13 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpRequest, HttpResponse, HttpResponseNotFound, Http404
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseNotFound,
+    Http404,
+    JsonResponse,
+)
 from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from plom_server.Base.base_group_views import ManagerRequiredView
@@ -278,6 +286,64 @@ class RemoveJobView(ManagerRequiredView):
 
 
 # ========= Cluster detail page (# members, priorities, tags, etc) =============
+def _get_cluster_groups_context(
+    question_idx: int,
+    version: int,
+    page_num: int,
+    *,
+    include_table_context: bool,
+):
+    """Build shared context for cluster table and unclustered review pages."""
+    qcs = QuestionClusteringService()
+    cluster_groups = qcs.get_clusters_and_member_count(
+        question_idx=question_idx, version=version
+    )
+    cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
+        question_idx=question_idx, version=version
+    )
+    cluster_to_name = qcs.get_cluster_name_map(
+        question_idx=question_idx, version=version
+    )
+    rects = qcs.get_corners_used_for_clustering(
+        question_idx=question_idx, version=version
+    )
+    unclustered_papers = qcs.get_unclustered_paper_nums(
+        question_idx=question_idx, version=version, page_num=page_num
+    )
+
+    context = {
+        "question_label": SpecificationService.get_question_label(question_idx),
+        "question_idx": question_idx,
+        "version": version,
+        "page_num": page_num,
+        "cluster_groups": cluster_groups,
+        "cluster_to_paper_map": cluster_to_paper_map,
+        "cluster_to_name": cluster_to_name,
+        "unclustered_papers": unclustered_papers,
+        "top": rects["top"],
+        "left": rects["left"],
+        "right": rects["right"],
+        "bottom": rects["bottom"],
+    }
+
+    if include_table_context:
+        context.update(
+            {
+                "cluster_to_priority": qcs.get_cluster_priority_map(
+                    question_idx=question_idx, version=version
+                ),
+                "cluster_to_tags": qcs.cluster_ids_to_tags(
+                    question_idx=question_idx, version=version
+                ),
+                "merged_count": qcs.get_merged_component_count(
+                    question_idx=question_idx, version=version
+                ),
+            }
+        )
+
+    return context
+
+
 class ClusterGroupsView(ManagerRequiredView):
     """Render a page for a summary of all clusters in a (q, v) context."""
 
@@ -285,55 +351,45 @@ class ClusterGroupsView(ManagerRequiredView):
         self, request: HttpRequest, question_idx: int, version: int, page_num: int
     ) -> HttpResponse:
         """Render a page for a summary of all clusters in a (q, v) context."""
-        qcs = QuestionClusteringService()
-        # A list of (cluster_id, member_count) sorted by cluster_id
-        # NOTE: use a sorted list so the default order is by cluster_id
-        cluster_groups = qcs.get_clusters_and_member_count(
-            question_idx=question_idx, version=version
-        )
+        if request.GET.get("unclustered"):
+            return redirect("unclustered_papers", question_idx, version, page_num)
 
-        # cluster_id to paper mapping used for preview
-        cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )
+        try:
+            context = _get_cluster_groups_context(
+                question_idx,
+                version,
+                page_num,
+                include_table_context=True,
+            )
+        except ObjectDoesNotExist as err:
+            messages.error(request, err)
+            return redirect("question_clustering_jobs_home")
 
-        # corners used for clustering (for preview)
-        rects = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
-        )
-
-        # cluster_id to priority mapping
-        cluster_to_priority = qcs.get_cluster_priority_map(
-            question_idx=question_idx, version=version
-        )
-
-        # cluster_id to merged count
-        merged_component_count = qcs.get_merged_component_count(
-            question_idx=question_idx, version=version
-        )
-
-        # cluster_id to tags
-        cluster_to_tags = qcs.cluster_ids_to_tags(
-            question_idx=question_idx, version=version
-        )
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "cluster_groups": cluster_groups,
-            "cluster_to_paper_map": cluster_to_paper_map,
-            "cluster_to_priority": cluster_to_priority,
-            "cluster_to_tags": cluster_to_tags,
-            "merged_count": merged_component_count,
-            "top": rects["top"],
-            "left": rects["left"],
-            "right": rects["right"],
-            "bottom": rects["bottom"],
-        }
         return render(
             request, "QuestionClustering/cluster_groups.html", context=context
+        )
+
+
+class UnclusteredPapersView(ManagerRequiredView):
+    """Render unclustered paper review for a (q, v) context."""
+
+    def get(
+        self, request: HttpRequest, question_idx: int, version: int, page_num: int
+    ) -> HttpResponse:
+        """Render unclustered paper review for a (q, v) context."""
+        try:
+            context = _get_cluster_groups_context(
+                question_idx,
+                version,
+                page_num,
+                include_table_context=False,
+            )
+        except ObjectDoesNotExist as err:
+            messages.error(request, err)
+            return redirect("question_clustering_jobs_home")
+
+        return render(
+            request, "QuestionClustering/unclustered_papers.html", context=context
         )
 
 
@@ -382,23 +438,233 @@ class ClusterBulkDeleteView(ManagerRequiredView):
         return redirect(next_url)
 
 
-class ClusterBulkResetView(ManagerRequiredView):
-    """Handle reset of one or multiple clusters in a (q, v) context."""
+class AssignUnclusteredPapersView(ManagerRequiredView):
+    """Assign unclustered papers to an existing user-facing cluster."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Handle reset of one or multiple clusters in a (q, v) context."""
-        clusterIds = request.POST.getlist("selected_clusters")
-        clusterIds = list(map(int, clusterIds))
+        """Assign selected paper numbers to a target cluster.
 
+        This endpoint is used by ordinary form posts from the clustered and
+        unclustered paper pages.  Those callers get a redirect and Django
+        message.  The unclustered review page also calls this endpoint with
+        htmx for drag/drop assignment and suggested-assignment application;
+        htmx callers get JSON with updated counts.
+        The caller updates several existing page elements after a successful
+        assignment, including count badges, card removal, and cluster previews.
+
+        Cluster suggestions are read-only and handled by
+        ``SuggestUnclusteredPapersView``.
+        """
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        page_num = int(request.POST["page_num"])
+        clusterId = int(request.POST["target_cluster_id"])
+        next_url = request.POST.get("next") or reverse(
+            "cluster_groups", args=[question_idx, version, page_num]
+        )
+
+        paper_nums = list(map(int, request.POST.getlist("paper_nums")))
+        qcs = QuestionClusteringService()
+        is_htmx = request.htmx
+
+        try:
+            member_count = qcs.assign_papers_to_cluster(
+                question_idx=question_idx,
+                version=version,
+                clusterId=clusterId,
+                paper_nums=paper_nums,
+            )
+        except EmptySelectedError as err:
+            if is_htmx:
+                return JsonResponse({"ok": False, "message": str(err)}, status=400)
+            messages.error(request, f"Assign failed: {err}")
+        except ObjectDoesNotExist as err:
+            if is_htmx:
+                return JsonResponse({"ok": False, "message": str(err)}, status=404)
+            messages.error(request, f"Assign failed: {err}")
+        else:
+            if is_htmx:
+                unclustered_count = len(
+                    qcs.get_unclustered_paper_nums(
+                        question_idx=question_idx,
+                        version=version,
+                        page_num=page_num,
+                    )
+                )
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "clusterId": clusterId,
+                        "member_count": member_count,
+                        "unclustered_count": unclustered_count,
+                        "paper_nums": paper_nums,
+                    }
+                )
+            messages.success(
+                request, f"Assigned {len(paper_nums)} papers to cluster {clusterId}"
+            )
+
+        return redirect(next_url)
+
+
+class CreateClusterFromUnclusteredPapersView(ManagerRequiredView):
+    """Create a new user-facing cluster from selected unclustered papers."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Create a new cluster from selected paper numbers.
+
+        The current template uses this as a normal form action and expects a
+        redirect with a Django message.  The JSON response is kept for callers
+        that create clusters without a full page reload.
+        """
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        page_num = int(request.POST["page_num"])
+        next_url = request.POST.get("next") or reverse(
+            "cluster_groups", args=[question_idx, version, page_num]
+        )
+
+        paper_nums = list(map(int, request.POST.getlist("paper_nums")))
+        qcs = QuestionClusteringService()
+        is_htmx = request.htmx
+
+        try:
+            clusterId, member_count = qcs.create_cluster_from_papers(
+                question_idx=question_idx,
+                version=version,
+                page_num=page_num,
+                paper_nums=paper_nums,
+            )
+        except EmptySelectedError as err:
+            if is_htmx:
+                return JsonResponse({"ok": False, "message": str(err)}, status=400)
+            messages.error(request, f"Create cluster failed: {err}")
+        else:
+            if is_htmx:
+                unclustered_count = len(
+                    qcs.get_unclustered_paper_nums(
+                        question_idx=question_idx,
+                        version=version,
+                        page_num=page_num,
+                    )
+                )
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "clusterId": clusterId,
+                        "member_count": member_count,
+                        "unclustered_count": unclustered_count,
+                        "paper_nums": paper_nums,
+                        "view_members_url": reverse(
+                            "clustered_papers",
+                            args=[question_idx, version, page_num, clusterId],
+                        ),
+                        "tag_html": render_to_string(
+                            "QuestionClustering/fragments/clustering_tag_cell.html",
+                            {
+                                "clusterId": clusterId,
+                                "tags": set(),
+                                "question_idx": question_idx,
+                                "version": version,
+                            },
+                            request=request,
+                        ),
+                    }
+                )
+            messages.success(
+                request, f"Created cluster {clusterId} from {len(paper_nums)} papers"
+            )
+
+        return redirect(next_url)
+
+
+class SuggestUnclusteredPapersView(ManagerRequiredView):
+    """Suggest target clusters for currently unclustered papers."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Return suggested cluster assignments without applying them.
+
+        The unclustered review page calls this with htmx and receives a
+        server-rendered suggestions panel.  Applying a suggestion is a separate
+        htmx POST to ``AssignUnclusteredPapersView``.
+        """
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        page_num = int(request.POST["page_num"])
+
+        qcs = QuestionClusteringService()
+        try:
+            suggestions = qcs.suggest_clusters_for_unclustered_papers(
+                question_idx=question_idx,
+                version=version,
+                page_num=page_num,
+            )
+        except ValueError as err:
+            if request.htmx:
+                context = _get_cluster_groups_context(
+                    question_idx,
+                    version,
+                    page_num,
+                    include_table_context=False,
+                )
+                context.update(
+                    {
+                        "suggestions": [],
+                        "suggestion_status": str(err),
+                        "suggestion_status_tone": "danger",
+                    }
+                )
+                return render(
+                    request,
+                    "QuestionClustering/fragments/unclustered_suggestions_panel.html",
+                    context=context,
+                )
+            return JsonResponse({"ok": False, "message": str(err)}, status=400)
+
+        if request.htmx:
+            context = _get_cluster_groups_context(
+                question_idx,
+                version,
+                page_num,
+                include_table_context=False,
+            )
+            context["suggestions"] = suggestions
+            if not suggestions:
+                context.update(
+                    {
+                        "suggestion_status": "No suggestions available.",
+                        "suggestion_status_tone": "info",
+                    }
+                )
+            return render(
+                request,
+                "QuestionClustering/fragments/unclustered_suggestions_panel.html",
+                context=context,
+            )
+
+        return JsonResponse({"ok": True, "suggestions": suggestions})
+
+
+class ClusterResetView(ManagerRequiredView):
+    """Handle full reset of clusters in a (q, v) context."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Handle reset of all clusters in a (q, v) context."""
         question_idx = int(request.POST["question_idx"])
         version = int(request.POST["version"])
         next_url = request.POST.get("next")
 
         qcs = QuestionClusteringService()
-
-        qcs.reset_clusters(question_idx, version, clusterIds)
-
-        messages.success(request, f"reset {len(clusterIds)} clusters")
+        try:
+            affected_cluster_ids = qcs.reset_clusters(question_idx, version)
+        except (EmptySelectedError, ObjectDoesNotExist) as err:
+            messages.error(request, f"Reset failed: {err}")
+        else:
+            messages.success(
+                request,
+                "Restored the original clustering for all clusters; "
+                f"updated {len(affected_cluster_ids)} original clusters.",
+            )
         return redirect(next_url)
 
 
@@ -419,6 +685,32 @@ class UpdateClusterPriorityView(ManagerRequiredView):
         messages.success(
             request, "Updated priorities based on cluster order in the table"
         )
+        return redirect(next_url)
+
+
+class UpdateClusterNameView(ManagerRequiredView):
+    """Update the human-readable name of a cluster."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Update the human-readable name of a cluster."""
+        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        clusterId = int(request.POST["clusterId"])
+        cluster_name = request.POST.get("cluster_name", "")
+
+        qcs = QuestionClusteringService()
+        try:
+            qcs.update_cluster_name(
+                question_idx=question_idx,
+                version=version,
+                clusterId=clusterId,
+                cluster_name=cluster_name,
+            )
+        except (ObjectDoesNotExist, ValueError) as err:
+            messages.error(request, f"Could not update cluster name: {err}")
+        else:
+            messages.success(request, f"Updated name for cluster {clusterId}")
         return redirect(next_url)
 
 
@@ -474,6 +766,47 @@ class RemoveTagFromClusterView(ManagerRequiredView):
 
 
 # =========== Papers inside a cluster ==============
+def _clustered_papers_context(
+    qcs: QuestionClusteringService,
+    question_idx: int,
+    version: int,
+    page_num: int,
+    clusterId: int,
+) -> dict:
+    """Build context for the clustered papers page."""
+    papers = qcs.get_paper_nums_in_clusters(question_idx=question_idx, version=version)[
+        clusterId
+    ]
+    corners = qcs.get_corners_used_for_clustering(
+        question_idx=question_idx, version=version
+    )
+    cluster_groups = qcs.get_clusters_and_member_count(
+        question_idx=question_idx, version=version
+    )
+    target_cluster_groups = [
+        (cid, count) for cid, count in cluster_groups if cid != clusterId
+    ]
+    cluster_to_name = qcs.get_cluster_name_map(
+        question_idx=question_idx, version=version
+    )
+
+    return {
+        "question_label": SpecificationService.get_question_label(question_idx),
+        "question_idx": question_idx,
+        "version": version,
+        "page_num": page_num,
+        "clusterId": clusterId,
+        "papers": papers,
+        "top": corners["top"],
+        "left": corners["left"],
+        "bottom": corners["bottom"],
+        "right": corners["right"],
+        "cluster_groups": cluster_groups,
+        "target_cluster_groups": target_cluster_groups,
+        "cluster_to_name": cluster_to_name,
+    }
+
+
 class ClusteredPapersView(ManagerRequiredView):
     """Render a page of papers in a particular cluster."""
 
@@ -487,26 +820,13 @@ class ClusteredPapersView(ManagerRequiredView):
     ) -> HttpResponse:
         """Render a page of papers in a particular cluster."""
         qcs = QuestionClusteringService()
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
+        context = _clustered_papers_context(
+            qcs=qcs,
+            question_idx=question_idx,
+            version=version,
+            page_num=page_num,
+            clusterId=clusterId,
         )
-        """Render a page of papers in a particular cluster."""
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "clusterId": clusterId,
-            "papers": papers,
-            "top": corners["top"],
-            "left": corners["left"],
-            "bottom": corners["bottom"],
-            "right": corners["right"],
-        }
         return render(
             request, "QuestionClustering/clustered_papers.html", context=context
         )
@@ -526,7 +846,9 @@ class DeleteClusterMember(ManagerRequiredView):
         page_num = int(request.POST.get("page_num"))
 
         qcs = QuestionClusteringService()
-        papers_to_delete = request.POST.getlist("delete_ids")
+        papers_to_delete = request.POST.getlist("delete_ids") or request.POST.getlist(
+            "paper_nums"
+        )
         qcs.bulk_delete_cluster_members(
             question_idx=question_idx,
             version=version,
@@ -534,25 +856,13 @@ class DeleteClusterMember(ManagerRequiredView):
             paper_nums=list(map(int, papers_to_delete)),
         )
 
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
+        context = _clustered_papers_context(
+            qcs=qcs,
+            question_idx=question_idx,
+            version=version,
+            page_num=page_num,
+            clusterId=clusterId,
         )
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "clusterId": clusterId,
-            "papers": papers,
-            "top": corners["top"],
-            "left": corners["left"],
-            "bottom": corners["bottom"],
-            "right": corners["right"],
-        }
         messages.success(
             request, f"Removed {len(papers_to_delete)} papers from cluster {clusterId}"
         )

@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Colin B. Macdonald
+# Copyright (C) 2026 Deep Shah
 
 
 from django.db import models
@@ -63,6 +65,7 @@ class QVCluster(models.Model):
     version: the version of the question being clustered.
     page_num: the page number used in the clustering.
     clusterId: the identifier used to differentiate clusters in a (question, version) pair.
+    cluster_name: an optional human-readable name for the cluster.
     type: the type of the grouping, i.e is that originally created cluster or a user-facing cluster.
     user_cluster: If it's an original cluster, where is it used as a user_facing cluster.
         Note that each original cluster must be mapped to exactly one user_facing cluster.
@@ -78,6 +81,7 @@ class QVCluster(models.Model):
     version = models.PositiveIntegerField(null=False)
     page_num = models.PositiveIntegerField(null=False)
     clusterId = models.IntegerField(blank=True, null=False)
+    cluster_name = models.CharField(max_length=100, blank=True, default="")
     type = models.CharField(
         choices=ClusteringGroupType.choices, null=False, max_length=20
     )
@@ -108,7 +112,7 @@ class QVCluster(models.Model):
         unique_together = ("question_idx", "version", "clusterId", "type")
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     Q(type=ClusteringGroupType.user_facing, user_cluster__isnull=True)
                     | ~Q(type=ClusteringGroupType.user_facing)
                 ),

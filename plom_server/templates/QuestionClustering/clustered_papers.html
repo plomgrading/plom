@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2026 Colin B. Macdonald
+    Copyright (C) 2026 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -30,6 +31,7 @@
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="clusterId" value="{{ clusterId }}">
                 <input type="hidden" name="page_num" value="{{ page_num }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
                 <div class="row row-cols-3 g-5">
                     {% for pn in papers %}
                         <div class="col">
@@ -37,7 +39,7 @@
                                 {# checkbox keeping track of clicked item #}
                                 <input type="checkbox"
                                        class="form-check-input position-absolute top-0 opacity-0"
-                                       name="delete_ids"
+                                       name="paper_nums"
                                        value="{{ pn }}"
                                        id="chk-{{ pn }}">
                                 {# Thumbnail label toggles the checkbox only #}
@@ -74,11 +76,34 @@
                         </div>
                     {% endfor %}
                 </div>
-                <button type="submit"
-                        class="btn btn-danger mt-4"
-                        onclick="return confirm('Really remove the selected images from this cluster?');">
-                    Remove selected
-                </button>
+                <div class="d-flex align-items-end gap-2 flex-wrap mt-4">
+                    <button type="submit"
+                            class="btn btn-danger"
+                            formnovalidate
+                            onclick="return confirm('Really remove the selected images from this cluster?');">
+                        Remove selected
+                    </button>
+                    {% if target_cluster_groups %}
+                        <div>
+                            <label for="target-cluster-id" class="form-label mb-1">Assign selected to</label>
+                            <select id="target-cluster-id" class="form-select" name="target_cluster_id">
+                                {% for target_clusterId, count in target_cluster_groups %}
+                                    {% with cluster_name=cluster_to_name|get_item:target_clusterId %}
+                                        <option value="{{ target_clusterId }}">
+                                            {{ cluster_name|default:"Unnamed" }} - Cluster {{ target_clusterId }} ({{ count }})
+                                        </option>
+                                    {% endwith %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit"
+                                class="btn btn-primary"
+                                formaction="{% url 'assign_unclustered_papers' %}"
+                                onclick="return confirm('Really assign the selected images to another cluster?');">
+                            Assign selected
+                        </button>
+                    {% endif %}
+                </div>
             </form>
         {% else %}
             There are no papers in this cluster. Consider delete or reset this cluster.

@@ -1,0 +1,341 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2026 Deep Shah
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}
+    Review unclustered papers for {{ question_label }} v{{ version }} Page {{ page_num }}
+{% endblock title %}
+{% block page_heading %}
+    Review unclustered papers for {{ question_label }} v{{ version }} Page {{ page_num }}
+{% endblock page_heading %}
+{% block main_content %}
+    {% include "../base/alert_messages.html" with messages=messages %}
+    <div class="mb-3">
+        <a class="btn btn-success"
+           href="{% url 'cluster_groups' question_idx version page_num %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to cluster groups
+        </a>
+    </div>
+    {% if unclustered_papers %}
+        <form action="{% url 'assign_unclustered_papers' %}"
+              method="post"
+              data-unclustered-form>
+            {% csrf_token %}
+            <input type="hidden" name="question_idx" value="{{ question_idx }}">
+            <input type="hidden" name="version" value="{{ version }}">
+            <input type="hidden" name="page_num" value="{{ page_num }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div class="border rounded bg-light p-3 mb-4 d-flex align-items-end gap-2 flex-wrap">
+                <div class="cluster-select-control">
+                    <label for="target-cluster-id" class="form-label mb-1">Assign selected to</label>
+                    <select id="target-cluster-id"
+                            class="form-select"
+                            name="target_cluster_id"
+                            {% if not cluster_groups %}disabled{% endif %}>
+                        {% for clusterId, count in cluster_groups %}
+                            {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                <option value="{{ clusterId }}">{{ cluster_name|default:"Unnamed" }} - Cluster {{ clusterId }} ({{ count }})</option>
+                            {% endwith %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit"
+                        class="btn btn-primary"
+                        {% if not cluster_groups %}disabled{% endif %}>Assign selected</button>
+                <button type="submit"
+                        class="btn btn-outline-success"
+                        formaction="{% url 'create_cluster_from_unclustered_papers' %}">Create new cluster</button>
+                <button type="button"
+                        class="btn btn-outline-primary"
+                        hx-post="{% url 'suggest_unclustered_papers' %}"
+                        hx-target="[data-suggestions-panel]"
+                        hx-swap="outerHTML"
+                        hx-indicator="#suggest-clusters-indicator"
+                        hx-disabled-elt="self"
+                        data-suggest-clusters
+                        {% if not cluster_groups %}disabled{% endif %}>
+                    <i class="bi bi-stars"></i>
+                    Suggest clusters
+                    <span id="suggest-clusters-indicator"
+                          class="htmx-indicator spinner-border spinner-border-sm ms-1"
+                          role="status"
+                          aria-hidden="true"></span>
+                </button>
+                <span class="badge text-bg-primary d-none"
+                      aria-live="polite"
+                      data-drag-count></span>
+            </div>
+            <div class="row g-4 align-items-start">
+                <div class="col-12 col-xl-7">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <h2 class="h5 mb-0">Unclustered</h2>
+                            <div class="form-check mb-0">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="select-all-unclustered"
+                                       data-select-all-unclustered>
+                                <label class="form-check-label" for="select-all-unclustered">Select all</label>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge text-bg-primary d-none"
+                                  aria-live="polite"
+                                  data-selected-count></span>
+                            <span class="badge text-bg-secondary" data-unclustered-count>{{ unclustered_papers|length }}</span>
+                        </div>
+                    </div>
+                    <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3"
+                         data-unclustered-grid>
+                        {% for pn in unclustered_papers %}
+                            <div class="col unclustered-paper-card"
+                                 data-paper-number="{{ pn }}"
+                                 draggable="true">
+                                <div class="unclustered-paper-tile border rounded position-relative h-100 bg-white overflow-hidden">
+                                    <input type="checkbox"
+                                           class="form-check-input position-absolute top-0 opacity-0"
+                                           name="paper_nums"
+                                           value="{{ pn }}"
+                                           id="unclustered-paper-{{ pn }}">
+                                    <label class="form-check-label d-block h-100"
+                                           for="unclustered-paper-{{ pn }}">
+                                        <span class="paper-label badge text-bg-light position-absolute top-0 start-0 m-2">Paper {{ pn }}</span>
+                                        <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                             class="unclustered-paper-image w-100 d-block"
+                                             loading="lazy"
+                                             alt="paper {{ pn }}"
+                                             onerror="imgError(this)">
+                                    </label>
+                                    <span class="selected-cross position-absolute top-50 start-50 translate-middle">
+                                        <i class="bi bi-x-circle-fill fs-1 text-danger"></i>
+                                    </span>
+                                    <button type="button"
+                                            class="btn btn-primary btn-sm position-absolute top-0 end-0 m-2 zoom-circle"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modal-unclustered-{{ pn }}"
+                                            aria-label="Zoom paper {{ pn }}">
+                                        <i class="bi bi-arrows-angle-expand"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="modal fade"
+                                 id="modal-unclustered-{{ pn }}"
+                                 tabindex="-1"
+                                 aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-content border-0 bg-transparent">
+                                        <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                             class="w-100 rounded"
+                                             alt="paper {{ pn }}">
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-12 col-xl-5">
+                    <div class="cluster-side-panel sticky-xl-top">
+                        {% include "QuestionClustering/fragments/unclustered_suggestions_panel.html" %}
+                        <div class="border rounded bg-white p-3 cluster-target-panel">
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h2 class="h5 mb-0">Clusters</h2>
+                                <span class="badge text-bg-secondary">{{ cluster_groups|length }}</span>
+                            </div>
+                            <div class="list-group gap-2">
+                                {% for clusterId, count in cluster_groups %}
+                                    {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                        {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                            <div class="list-group-item list-group-item-action cluster-drop-target"
+                                                 data-cluster-drop-target="{{ clusterId }}">
+                                                <div class="d-flex gap-3">
+                                                    <div class="cluster-target-preview"
+                                                         data-cluster-target-preview="{{ clusterId }}">
+                                                        {% if papers %}
+                                                            {% with pn=papers.0 %}
+                                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                                     alt="cluster {{ clusterId }} preview"
+                                                                     loading="lazy"
+                                                                     onerror="imgError(this)">
+                                                            {% endwith %}
+                                                        {% else %}
+                                                            <span>No preview</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="d-flex align-items-start justify-content-between gap-2">
+                                                            <span class="cluster-target-name">{{ cluster_name|default:"Unnamed" }}</span>
+                                                            <span class="badge text-bg-light">Cluster {{ clusterId }}</span>
+                                                        </div>
+                                                        <div class="small text-body-secondary">
+                                                            <span data-cluster-target-count="{{ clusterId }}">{{ count }}</span>
+                                                            papers
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endwith %}
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                            {% if not cluster_groups %}
+                                <div class="alert alert-secondary mt-3 mb-0">Create a new cluster from selected papers first.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div class="border rounded bg-light p-4 text-center d-none"
+             data-empty-state>
+            <strong>No unclustered papers remain.</strong>
+        </div>
+    {% else %}
+        <div class="border rounded bg-light p-4 text-center">
+            <strong>No unclustered papers remain.</strong>
+        </div>
+    {% endif %}
+    <style>
+        .cluster-select-control {
+            min-width: min(28rem, 100%);
+        }
+
+        .unclustered-paper-card {
+            cursor: grab;
+        }
+
+        .unclustered-paper-card.is-assigning {
+            opacity: .55;
+            pointer-events: none;
+        }
+
+        .unclustered-paper-card.is-bulk-dragged .unclustered-paper-tile {
+            outline: 2px solid rgba(var(--bs-primary-rgb), .22);
+            outline-offset: 2px;
+        }
+
+        .unclustered-paper-card.is-selected-for-drag .unclustered-paper-tile {
+            box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .18);
+        }
+
+        .unclustered-paper-tile {
+            min-height: 10rem;
+        }
+
+        .unclustered-paper-image {
+            background: #fff;
+            cursor: pointer;
+            height: 11rem;
+            object-fit: contain;
+            padding: 2.25rem .5rem .75rem;
+        }
+
+        .paper-label {
+            z-index: 2;
+        }
+
+        .selected-cross {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease;
+            z-index: 2;
+        }
+
+        .unclustered-paper-tile .form-check-input {
+            accent-color: #dc3545;
+            z-index: 3;
+        }
+
+        .unclustered-paper-tile .form-check-input:checked + .form-check-label img {
+            filter: brightness(40%);
+        }
+
+        .unclustered-paper-tile .form-check-input:checked + .form-check-label + .selected-cross {
+            opacity: 1;
+        }
+
+        .zoom-circle {
+            align-items: center;
+            border-radius: 50%;
+            display: flex;
+            height: 30px;
+            justify-content: center;
+            padding: 10px;
+            width: 30px;
+            z-index: 4;
+        }
+
+        .cluster-side-panel {
+            top: 1rem;
+        }
+
+        .suggestions-panel .table {
+            font-size: .875rem;
+        }
+
+        .suggestions-panel .alert {
+            font-size: .875rem;
+        }
+
+        .cluster-drop-target {
+            border: 1px solid var(--bs-border-color) !important;
+            border-radius: .375rem !important;
+            cursor: copy;
+            min-height: 7rem;
+            padding: .85rem;
+        }
+
+        .cluster-target-name {
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .cluster-target-preview {
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--bs-border-color);
+            border-radius: .375rem;
+            color: var(--bs-secondary-color);
+            display: flex;
+            flex: 0 0 8rem;
+            font-size: .75rem;
+            height: 6rem;
+            justify-content: center;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .cluster-target-preview img {
+            height: 100%;
+            object-fit: contain;
+            width: 100%;
+        }
+
+        .dragging-unclustered .cluster-drop-target {
+            box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .2);
+        }
+
+        .cluster-drop-target.drop-target-hover {
+            background-color: rgba(var(--bs-primary-rgb), .08);
+            box-shadow: inset 3px 0 0 rgba(var(--bs-primary-rgb), .45);
+        }
+
+        .cluster-drop-target.is-assigning {
+            background-color: rgba(var(--bs-primary-rgb), .05);
+        }
+
+        .cluster-drop-target.assignment-complete {
+            animation: assignmentPulse .55s ease;
+        }
+
+        @keyframes assignmentPulse {
+            0% { background-color: rgba(var(--bs-success-rgb), .12); }
+            100% { background-color: transparent; }
+        }
+
+    </style>
+    <script src="{% static '/js/question_clustering_unclustered_papers.js' %}"></script>
+{% endblock main_content %}

@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2025-2026 Colin B. Macdonald
+    Copyright (C) 2026 Deep Shah
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -71,21 +72,15 @@
                         </button>
                     </form>
                     <!-- Reset -->
-                    <form action="{% url 'bulk_reset_clusters' %}"
-                          method="post"
-                          class="d-inline-flex align-items-center">
+                    <form action="{% url 'reset_clusters' %}" method="post" class="d-none">
                         {% csrf_token %}
                         <input type="hidden" name="question_idx" value="{{ question_idx }}">
                         <input type="hidden" name="version" value="{{ version }}">
-                        <template x-for="id in selected" :key="id">
-                            <input type="hidden" name="selected_clusters" :value="id" />
-                        </template>
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <button type="submit"
                                 class="btn btn-warning"
-                                :disabled="selected.length == 0"
-                                onclick="return confirm('Are you sure you want to reset the selected clusters?');">
-                            Reset
+                                onclick="return confirm('Are you sure you want to restore the original clustering for all clusters?');">
+                            Reset all
                         </button>
                     </form>
                 </div>
@@ -152,193 +147,365 @@
                 </template>
                 <input type="hidden" name="question_idx" value="{{ question_idx }}">
                 <input type="hidden" name="version" value="{{ version }}">
-                <!-- Default: sort on descending order of-->
-                <table x-ref="clusterTable"
-                       class="table table-striped table-bordered table-sm mx-auto"
-                       data-sort-default-order="desc"
-                       data-sort-default-col="4">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <!-- select/deselect all checkbox -->
-                            <th class="text-center"  data-sort-method="none">
-                                <input id="master-checkbox" type="checkbox">
-                            </th>
-                            <!-- Preview of image header -->
-                            <th class="text-center" data-sort-method="none">Preview</th>
-                            <!-- Merge count header -->
-                            <th class="text-center" data-sort-method="none"># Merged</th>
-                            <!-- ClusterId header (sortable)-->
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    ClusterId
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <!-- Number of members in the cluster header (sortable)-->
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    # Members
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <!-- cluster priority header (sortable)-->
-                            <th id="priority-col" class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    Priority
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <th class="text-center" data-sort-method="none">Tags</th>
-                            <th class="text-center" data-sort-method="none">Actions</th>
-                            <th class="text-center" data-sort-method="none">&nbsp;</th>
-                        </tr>
-                    </thead>
-                    <tbody x-ref="tbody">
-                        {% for clusterId, count in cluster_groups %}
-                            <tr data-cluster-id="{{ clusterId }}"
-                                :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
-                                <!-- individual row checkbox -->
-                                <td class="text-center align-middle">
-                                    <input type="checkbox"
-                                           name="selected_clusters"
-                                           value="{{ clusterId }}"
-                                           class="form-check-input"
-                                           x-model="selected">
-                                </td>
-                                <!-- Preview img col -->
-                                <td class="align-middle">
-                                    {% with papers=cluster_to_paper_map|get_item:clusterId %}
-                                        {% if papers %}
-                                            {% with pn=papers.0 %}
-                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                     class="img-fluid rounded mx-auto d-block"
-                                                     style="max-height:100px"
-                                                     loading="lazy"
-                                                     alt="cluster {{ clusterId }}"
-                                                     onerror="imgError(this)">
-                                            {% endwith %}
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <!-- number of merged components -->
-                                <td class="text-center align-middle">{% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}</td>
-                                <td class="text-center align-middle">{{ clusterId }}</td>
-                                <td class="text-center align-middle">{{ count }}</td>
-                                {% with priority=cluster_to_priority|get_item:clusterId %}
-                                    <!-- Modify class based on whether the priority is set -->
-                                    <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
-                                        {% if priority %}
-                                            {{ priority }}
-                                        {% else %}
-                                            Unset
-                                        {% endif %}
-                                    </td>
-                                {% endwith %}
-                                <td class="text-center align-middle" id="tag-{{ clusterId }}">
-                                    {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
-                                </td>
-                                <td class="align-middle text-center">
-                                    <a class="btn btn-success btn-sm"
-                                       href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
-                                        View members
-                                    </a>
-                                </td>
-                                <td class="text-center align-middle drag-handle" style="cursor:move;">
-                                    <i class="bi bi-list"></i>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </form>
+            <!-- Default: sort on descending order of-->
+            <table x-ref="clusterTable"
+                   class="table table-striped table-bordered table-sm mx-auto"
+                   data-sort-default-order="desc"
+                   data-sort-default-col="5">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <!-- select/deselect all checkbox -->
+                        <th class="text-center"  data-sort-method="none">
+                            <input id="master-checkbox" type="checkbox">
+                        </th>
+                        <!-- Preview of image header -->
+                        <th class="text-center" data-sort-method="none">Preview</th>
+                        <!-- Merge count header -->
+                        <th class="text-center" data-sort-method="none"># Merged</th>
+                        <!-- ClusterId header (sortable)-->
+                        <th class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                ClusterId
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <th class="text-center" data-sort-method="none">Cluster Name</th>
+                        <!-- Number of members in the cluster header (sortable)-->
+                        <th class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                # Members
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <!-- cluster priority header (sortable)-->
+                        <th id="priority-col" class="text-center" data-sort-method="number">
+                            <span class="d-flex justify-content-center align-items-center gap-1">
+                                Priority
+                                <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                            </span>
+                        </th>
+                        <th class="text-center" data-sort-method="none">Tags</th>
+                        <th class="text-center" data-sort-method="none">Actions</th>
+                        <th class="text-center" data-sort-method="none">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody x-ref="tbody">
+                    {% for clusterId, count in cluster_groups %}
+                        <tr class="cluster-row"
+                            data-cluster-id="{{ clusterId }}"
+                            data-cluster-drop-target="{{ clusterId }}"
+                            :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
+                            <!-- individual row checkbox -->
+                            <td class="text-center align-middle">
+                                <input type="checkbox"
+                                       name="selected_clusters"
+                                       value="{{ clusterId }}"
+                                       class="form-check-input"
+                                       x-model="selected">
+                            </td>
+                            <!-- Preview img col -->
+                            <td class="align-middle" data-preview-cell="{{ clusterId }}">
+                                {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                    {% if papers %}
+                                        {% with pn=papers.0 %}
+                                            <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                 class="img-fluid rounded mx-auto d-block"
+                                                 style="max-height:100px"
+                                                 loading="lazy"
+                                                 alt="cluster {{ clusterId }}"
+                                                 onerror="imgError(this)">
+                                        {% endwith %}
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <!-- number of merged components -->
+                            <td class="text-center align-middle">{% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}</td>
+                            <td class="text-center align-middle">{{ clusterId }}</td>
+                            {% with cluster_name=cluster_to_name|get_item:clusterId %}
+                                <td class="align-middle cluster-name-cell" data-cluster-name-cell>
+                                    <div class="d-flex align-items-center justify-content-center cluster-name-view"
+                                         data-cluster-name-view>
+                                        {% if cluster_name %}
+                                            <span class="cluster-name-text">{{ cluster_name }}</span>
+                                        {% else %}
+                                            <span class="cluster-name-text text-body-secondary fst-italic">Unnamed</span>
+                                        {% endif %}
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                                title="Edit cluster name"
+                                                aria-label="Edit cluster name"
+                                                data-edit-cluster-name>
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </div>
+                                    <form action="{% url 'update_cluster_name' %}"
+                                          method="post"
+                                          class="cluster-name-form align-items-center justify-content-center gap-1"
+                                          data-cluster-name-form
+                                          hidden>
+                                        {% csrf_token %}
+                                        <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                                        <input type="hidden" name="version" value="{{ version }}">
+                                        <input type="hidden" name="clusterId" value="{{ clusterId }}">
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <input type="text"
+                                               data-cluster-name-input
+                                               data-original-name="{{ cluster_name }}"
+                                               name="cluster_name"
+                                               value="{{ cluster_name }}"
+                                               maxlength="100"
+                                               class="form-control form-control-sm cluster-name-input"
+                                               aria-label="Cluster name"
+                                               placeholder="Unnamed">
+                                        <button type="submit"
+                                                class="btn btn-primary btn-sm cluster-name-icon-button"
+                                                title="Save cluster name"
+                                                aria-label="Save cluster name">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm cluster-name-icon-button"
+                                                title="Cancel"
+                                                aria-label="Cancel"
+                                                data-cancel-cluster-name>
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            {% endwith %}
+                            <td class="text-center align-middle" data-member-count="{{ clusterId }}">{{ count }}</td>
+                            {% with priority=cluster_to_priority|get_item:clusterId %}
+                                <!-- Modify class based on whether the priority is set -->
+                                <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
+                                    {% if priority %}
+                                        {{ priority }}
+                                    {% else %}
+                                        Unset
+                                    {% endif %}
+                                </td>
+                            {% endwith %}
+                            <td class="text-center align-middle" id="tag-{{ clusterId }}">
+                                {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
+                            </td>
+                            <td class="align-middle text-center">
+                                <a class="btn btn-success btn-sm"
+                                   href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
+                                    View members
+                                </a>
+                            </td>
+                            <td class="text-center align-middle drag-handle" style="cursor:move;">
+                                <i class="bi bi-list"></i>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% if unclustered_papers %}
+            <div class="border rounded bg-light my-4 p-3 d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <strong>Unclustered papers</strong>
+                    <span class="badge text-bg-secondary">{{ unclustered_papers|length }}</span>
+                </div>
+                <a class="btn btn-primary"
+                   href="{% url 'unclustered_papers' question_idx version page_num %}">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    Review unclustered papers
+                </a>
+            </div>
+        {% endif %}
     </div>
+    <style>
+    .cluster-name-cell {
+        min-width: 13rem;
+    }
+
+    [data-cluster-name-view][hidden] {
+        display: none !important;
+    }
+
+    .cluster-name-form {
+        display: flex !important;
+        white-space: nowrap;
+    }
+
+    .cluster-name-form[hidden] {
+        display: none !important;
+    }
+
+    .cluster-name-input {
+        flex: 1 1 9rem;
+        max-width: 11rem;
+    }
+
+    .cluster-name-view {
+        column-gap: .55rem;
+    }
+
+    .cluster-name-icon-button {
+        align-items: center;
+        display: inline-flex;
+        height: 1.65rem;
+        justify-content: center;
+        padding: 0;
+        width: 1.65rem;
+    }
+
+    .cluster-name-icon-button .bi {
+        font-size: .9rem;
+    }
+
+    .cluster-name-text {
+        max-width: 9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    </style>
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('clusterOrdering', () => ({
-            order: [],
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('clusterOrdering', () => ({
+        order: [],
 
-            init() {
-                // kick off Sortable
-                const s = Sortable.create(this.$refs.tbody, {
-                handle: '.drag-handle',
-                animation: 150,
-                draggable: 'tr',
-                dataIdAttr: 'data-cluster-id',
-                onEnd: () => this.order = s.toArray(),
-                });
-                this.order = s.toArray();
-            },
+        init() {
+            // kick off Sortable
+            const s = Sortable.create(this.$refs.tbody, {
+            handle: '.drag-handle',
+            animation: 150,
+            draggable: 'tr',
+            dataIdAttr: 'data-cluster-id',
+            onEnd: () => this.order = s.toArray(),
+            });
+            this.order = s.toArray();
+        },
 
 
-            submit() {
-                this.order = Array.from(this.$refs.tbody.children)
-                        .map(tr => tr.dataset.clusterId);
-                 // Wait for Alpine to update the x‑for inputs, then submit
-                this.$nextTick(() => {
-                    this.$refs.form.submit();
-                });
-            }
-            }));
+        submit() {
+            this.order = Array.from(this.$refs.tbody.children)
+                    .map(tr => tr.dataset.clusterId);
+             // Wait for Alpine to update the x‑for inputs, then submit
+            this.$nextTick(() => {
+                this.$refs.form.submit();
+            });
+        }
+        }));
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const table = document.querySelector('[x-ref="clusterTable"]');
+        const ts = new Tablesort(table);
+
+        // Make header icons responsive
+        table.addEventListener('afterSort', () => {
+            table.querySelectorAll('th').forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (!icon) return;
+            icon.classList.remove('bi-chevron-up','bi-chevron-down','bi-chevron-expand');
+            const dir = th.getAttribute('aria-sort');
+            icon.classList.add(
+                dir === 'ascending'  ? 'bi-chevron-up' :
+                dir === 'descending' ? 'bi-chevron-down' :
+                                    'bi-chevron-expand'
+            );
+            });
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const table = document.querySelector('[x-ref="clusterTable"]');
-            const ts = new Tablesort(table);
+        // Sort by priority if there are unset priorities
+        const unset_count = document.querySelectorAll(".unset-priority").length;
 
-            // Make header icons responsive
-            table.addEventListener('afterSort', () => {
-                table.querySelectorAll('th').forEach(th => {
-                const icon = th.querySelector('.sort-icon');
-                if (!icon) return;
-                icon.classList.remove('bi-chevron-up','bi-chevron-down','bi-chevron-expand');
-                const dir = th.getAttribute('aria-sort');
-                icon.classList.add(
-                    dir === 'ascending'  ? 'bi-chevron-up' :
-                    dir === 'descending' ? 'bi-chevron-down' :
-                                        'bi-chevron-expand'
-                );
-                });
-            });
-
-            // Sort by priority if there are unset priorities
-            const unset_count = document.querySelectorAll(".unset-priority").length;
-
-            if (unset_count == 0){
-                const priorityHeader = document.getElementById('priority-col');
-                // Click it to trigger the default sort
-                if (priorityHeader) {
-                    for (let count = 1; count <= 2; count ++) {
-                        if (priorityHeader.getAttribute("aria-sort") == "descending"){
-                            break;
-                        }
-                        priorityHeader.click()
+        if (unset_count == 0){
+            const priorityHeader = document.getElementById('priority-col');
+            // Click it to trigger the default sort
+            if (priorityHeader) {
+                for (let count = 1; count <= 2; count ++) {
+                    if (priorityHeader.getAttribute("aria-sort") == "descending"){
+                        break;
                     }
+                    priorityHeader.click()
                 }
             }
+        }
 
-            // Master checkbox that selects all checkboxes
-            const master = document.querySelector('#master-checkbox');
-            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
+        // Master checkbox that selects all checkboxes
+        const master = document.querySelector('#master-checkbox');
 
-            master.addEventListener('change', function() {
-                    const checked = this.checked;
-                    checkboxes.forEach(cb => {
-                        cb.checked = checked;
-                        cb.dispatchEvent(new Event('change'));
-                    });
+        master.addEventListener('change', function() {
+                const checked = this.checked;
+                const checkboxes = document.querySelectorAll('tbody input[type="checkbox"][name="selected_clusters"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = checked;
+                    cb.dispatchEvent(new Event('change'));
                 });
-
-
             });
 
+        initClusterNameEditing();
+        });
 
-        function imgError(image) {
-            const span = document.createElement('span');
-            span.classList.add("alert", "alert-warning", "mx-2", "py-0");
-            span.innerText = "Could not extract rectangle.";
-            image.parentNode.insertBefore(span, image);
-            image.remove();
+    function initClusterNameEditing() {
+        document.addEventListener('click', event => {
+            const editButton = event.target.closest('[data-edit-cluster-name]');
+            if (editButton) {
+                showClusterNameEditor(editButton.closest('[data-cluster-name-cell]'));
+                return;
             }
+
+            const cancelButton = event.target.closest('[data-cancel-cluster-name]');
+            if (cancelButton) {
+                const cell = cancelButton.closest('[data-cluster-name-cell]');
+                resetClusterNameInput(cell);
+                hideClusterNameEditor(cell);
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Escape' || !event.target.matches('[data-cluster-name-input]')) {
+                return;
+            }
+            event.preventDefault();
+            const cell = event.target.closest('[data-cluster-name-cell]');
+            resetClusterNameInput(cell);
+            hideClusterNameEditor(cell);
+        });
+    }
+
+    function showClusterNameEditor(cell) {
+        if (!cell) return;
+        const view = cell.querySelector('[data-cluster-name-view]');
+        const form = cell.querySelector('[data-cluster-name-form]');
+        const input = cell.querySelector('[data-cluster-name-input]');
+        if (!view || !form || !input) return;
+
+        view.hidden = true;
+        form.hidden = false;
+        input.value = input.dataset.originalName || '';
+        input.focus();
+        input.select();
+    }
+
+    function hideClusterNameEditor(cell) {
+        if (!cell) return;
+        const view = cell.querySelector('[data-cluster-name-view]');
+        const form = cell.querySelector('[data-cluster-name-form]');
+        if (!view || !form) return;
+
+        form.hidden = true;
+        view.hidden = false;
+    }
+
+    function resetClusterNameInput(cell) {
+        const input = cell?.querySelector('[data-cluster-name-input]');
+        if (input) input.value = input.dataset.originalName || '';
+    }
+
+
+    function imgError(image) {
+        const span = document.createElement('span');
+        span.classList.add("alert", "alert-warning", "mx-2", "py-0");
+        span.innerText = "Could not extract rectangle.";
+        image.parentNode.insertBefore(span, image);
+        image.remove();
+    }
     </script>
 {% endblock main_content %}
