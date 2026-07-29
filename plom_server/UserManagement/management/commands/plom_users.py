@@ -87,7 +87,7 @@ class Command(BaseCommand):
             help="""
                 A path to the .csv file specifying new users.
 
-                Should contain fields "username", "usergroup".
+                Should contain fields "username", "usergroups".
             """,
         )
 
