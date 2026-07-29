@@ -26,7 +26,7 @@ document.body.addEventListener('htmx:sendError', (event) => {
 /**
  * Display a dismissable alert on screen using bootstrap.
  * @param {string} html_content - An html string to display in the alert.
- * @param {string} alert_type - A bootstrap class for the alert style. It
+ * @param {string} [alert_type] - A bootstrap class for the alert style. It
  *   should be something like "primary", "secondary", "danger" etc.
  */
 function displayDismissableAlert(html_content, alert_type = 'alert-danger') {
@@ -46,7 +46,7 @@ function displayDismissableAlert(html_content, alert_type = 'alert-danger') {
 
 /**
  * Fetch a sticky div (or create one if it doesn't exist).
- * @param {HTMLElement} div_id - The id of the stickydiv to fetch/create.
+ * @param {HTMLElement} [div_id] - The id of the stickydiv to fetch/create.
  * @returns {HTMLElement} - A sticky div.
  */
 function getOrCreateStickyDiv(div_id = 'plomHtmxErrorHandler') {

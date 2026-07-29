@@ -378,7 +378,7 @@
   /**
    * Remove all cluster suggestions.
    * @param root0
-   * @param {boolean} root0.showPanel  - Whether to show the panel.
+   * @param {boolean} [root0.showPanel]  - Whether to show the panel.
    */
   function resetSuggestionsPanel({ showPanel = false } = {}) {
     const panel = document.querySelector('[data-suggestions-panel]');
