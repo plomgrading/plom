@@ -8,14 +8,18 @@
 import os
 
 """Utils concerning rules about data, like valid student numbers."""
+_SUPPORTED_ID_LENGTHS = (7, 8, 9)
 try:
     StudentIDLength = int(os.environ.get("PLOM_STUDENT_ID_LENGTH", "8"))
 except ValueError:
     raise ValueError(
-        f"PLOM_STUDENT_ID_LENGTH must be be positive integer,got '{os.environ.get('PLOM_STUDENT_ID_LENGTH')}'"
+        f"PLOM_STUDENT_ID_LENGTH must be an integer, got '{os.environ.get('PLOM_STUDENT_ID_LENGTH')}'"
     )
-if StudentIDLength <= 0:
-    raise ValueError(F"PLOM_STUDENT_ID_LENGTH must be positive, got {StudentIDLength}")
+if StudentIDLength not in _SUPPORTED_ID_LENGTHS:
+    raise ValueError(
+        f"PLOM_STUDENT_ID_LENGTH must be one of {_SUPPORTED_ID_LENGTHS},"
+        f" got {StudentIDLength}"
+    )
 
 
 def _test_valid_student_id(n) -> tuple[bool, str]:
