@@ -487,7 +487,7 @@ eslint:
   image: node:24
   stage: static_analysis
   script:
-    - npm install eslint@10.7.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin
+    - npm install eslint@10.7.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin eslint-plugin-jsdoc@63.0
     - npx eslint plom_server/**/*.js
 
 

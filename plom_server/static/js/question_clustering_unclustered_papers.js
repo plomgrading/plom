@@ -8,6 +8,7 @@
 (function () {
   document.addEventListener('DOMContentLoaded', initUnclusteredDropTargets);
 
+  /** Initialise functions for drag/drop targets. */
   function initUnclusteredDropTargets() {
     const form = document.querySelector('[data-unclustered-form]');
     const sourceGrid = document.querySelector('[data-unclustered-grid]');
@@ -116,8 +117,12 @@
     });
   }
 
-  // Dragging an unchecked card moves just that card.  Dragging a checked card
-  // moves the current checked selection as one batch.
+  /**
+   * Dragging an unchecked card moves just that card.  Dragging a checked card
+   * moves the current checked selection as one batch.
+   * @param {HTMLElement} card - An html element representing an unclustered item.
+   * @returns {HTMLElement[]} - An array of the card elements.
+   */
   function getCardsForDrag(card) {
     const checkbox = card.querySelector('input[name="paper_nums"]');
     if (!checkbox?.checked) return [card];
@@ -125,6 +130,10 @@
     return getSelectedUnclusteredCards();
   }
 
+  /**
+   * Return all cards that are "selected" (have checkboxes checked).
+   * @returns {HTMLElement[]} - The selected unclustered cards.
+   */
   function getSelectedUnclusteredCards() {
     return Array.from(
       document.querySelectorAll('[data-unclustered-grid] input[name="paper_nums"]:checked'),
@@ -133,6 +142,7 @@
       .filter(Boolean);
   }
 
+  /** Update visuals and behaviour for draggable elements. */
   function updateSelectedDragCue() {
     const selectedCards = getSelectedUnclusteredCards();
     const allCards = Array.from(document.querySelectorAll('.unclustered-paper-card'));
@@ -146,6 +156,12 @@
     updateDragCount(selectedCards.length, false);
   }
 
+  /**
+   * Change the display showing the total number of cards, and the
+   * number of selected cards.
+   * @param {number} selectedCount - Number of selected cards.
+   * @param {number} totalCount - Total number of cards.
+   */
   function updateSelectAllControl(selectedCount, totalCount) {
     const checkbox = document.querySelector('[data-select-all-unclustered]');
     const selectedBadge = document.querySelector('[data-selected-count]');
@@ -166,6 +182,12 @@
     }
   }
 
+  /**
+   * Update visuals showing the number of draggable cards, and whether
+   * they are being dragged.
+   * @param {number} count - Number of draggable cards.
+   * @param {boolean} isDragging - Whether cards are currently being dragged.
+   */
   function updateDragCount(count, isDragging) {
     const badge = document.querySelector('[data-drag-count]');
     if (!badge) return;
@@ -182,12 +204,23 @@
     }
   }
 
+  /**
+   * Convert a javascript object of key value pairs to a FormData object.
+   * @param {object} baseFields - An object containing key value pairs.
+   * @returns {FormData} - The object's key value pairs as FormData.
+   */
   function buildFormData(baseFields) {
     const formData = new FormData();
     Object.entries(baseFields).forEach(([key, value]) => formData.append(key, value));
     return formData;
   }
 
+  /**
+   * Retrieve the data from a JSON response.
+   * @param {XMLHttpRequest} xhr - The updated xhr received in the response.
+   * @param {string} fallbackMessage - Logging message if the updated xhr doesn't contain a msg.
+   * @returns {unknown} - The payload from the response.
+   */
   function parseJsonResponse(xhr, fallbackMessage) {
     let data;
     try {
@@ -202,6 +235,16 @@
     return data;
   }
 
+  /**
+   * Send a POST request via htmx.
+   * @param {object} root0
+   * @param {string} root0.url - The url to POST to.
+   * @param {object} root0.values - An object containing key value pairs.
+   * @param {HTMLElement} root0.target - The htmx target.
+   * @param {string} root0.errorMessage - A fallback error message if the server
+   *   doesn't provide one.
+   * @returns {unknown} - Data returned in the response.
+   */
   function htmxJsonPost({
     url,
     values,
@@ -230,9 +273,15 @@
     });
   }
 
-  // Group selected server-rendered suggestions by target cluster.  The assignments are awaited
-  // sequentially so count badges, removed cards, and previews reflect each
-  // completed server mutation before the next one starts.
+  /**
+   * Group selected server-rendered suggestions by target cluster.  The assignments are awaited
+   * sequentially so count badges, removed cards, and previews reflect each
+   * completed server mutation before the next one starts.
+   * @param root0
+   * @param {string} root0.assignUrl - The URL to eventually post to.
+   * @param {object} root0.baseFields - Key value pairs relevant to the eventual POST.
+   * @param {HTMLElement} root0.button - The button which triggered this function.
+   */
   async function applySelectedSuggestions({
     assignUrl,
     baseFields,
@@ -286,10 +335,12 @@
     }
   }
 
+  /** Remove server provided cluster suggestions from the UI. */
   function clearSuggestions() {
     resetSuggestionsPanel();
   }
 
+  /** Refresh UI elements in the suggestions panel.  */
   function refreshSuggestionsPanel() {
     const panel = document.querySelector('[data-suggestions-panel]');
     const body = document.querySelector('[data-suggestions-body]');
@@ -307,6 +358,12 @@
     updateSuggestionsCount(remaining);
   }
 
+  /**
+   * Update UI for cluster suggestions status.
+   * @param {string} message - A message to show in the UI, it should be plain text.
+   * @param {string} tone - A bootstrap colour to apply to the alert (e.g., "primary",
+   *   "success", "danger", etc.).
+   */
   function showSuggestionStatus(message, tone = 'info') {
     const panel = document.querySelector('[data-suggestions-panel]');
     const status = document.querySelector('[data-suggestions-status]');
@@ -318,6 +375,11 @@
     if (message) panel?.classList.remove('d-none');
   }
 
+  /**
+   * Remove all cluster suggestions.
+   * @param root0
+   * @param {boolean} [root0.showPanel]  - Whether to show the panel.
+   */
   function resetSuggestionsPanel({ showPanel = false } = {}) {
     const panel = document.querySelector('[data-suggestions-panel]');
     const body = document.querySelector('[data-suggestions-body]');
@@ -336,6 +398,10 @@
     panel?.classList.toggle('d-none', !showPanel);
   }
 
+  /**
+   * Change the total count of the suggestions displayed in the UI.
+   * @param {number} count - The number of suggestions.
+   */
   function updateSuggestionsCount(count) {
     const countBadge = document.querySelector('[data-suggestions-count]');
     if (!countBadge) return;
@@ -350,9 +416,17 @@
     }
   }
 
-  // Shared mutating assignment path for drag/drop and suggestion application.
-  // It posts selected paper numbers, then updates the visible cards and counts
-  // from the JSON response after the server accepts the change.
+  /**
+   * Shared mutating assignment path for drag/drop and suggestion application.
+   * It posts selected paper numbers, then updates the visible cards and counts
+   * from the JSON response after the server accepts the change.
+   * @param root0
+   * @param {string} root0.assignUrl - The url to eventually POST to.
+   * @param {object} root0.baseFields - Key value pairs to include in the eventual POST.
+   * @param {HTMLElement[]} root0.cards - The cards to assign.
+   * @param {HTMLElement} root0.target - Where to assign the cards.
+   * @param {number} root0.targetClusterId - The cluster to assign the cards to.
+   */
   async function assignDraggedCards({
     assignUrl,
     baseFields,
@@ -422,6 +496,11 @@
     }
   }
 
+  /**
+   * Custom replacement for img tags if the image can't be displayed. You
+   * should use this as the "onerror" attribute of such an img tag.
+   * @param {HTMLElement} image - The image element whose image failed to load.
+   */
   window.imgError = function (image) {
     const span = document.createElement('span');
     span.classList.add('alert', 'alert-warning', 'mx-2', 'py-0');

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2022-2026 Colin B. Macdonald
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -69,9 +69,10 @@ repos:
     - id: eslint
       language: node
       files: \.(js|jsx|ts|tsx|cjs)$
-      args: [ --fix ]
+      args: [ --fix, --no-warn-ignored ]
       additional_dependencies:
         - eslint@9.39.1
         - '@stylistic/eslint-plugin'
         - globals
         - '@eslint/js'
+        - eslint-plugin-jsdoc@63.0

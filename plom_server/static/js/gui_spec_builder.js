@@ -40,8 +40,10 @@ const questionTemplate = {
 };
 var selectedPages = new Set();
 
-// We use this function to retrieve the spec before posting to the server
-// do not use this function internally.
+/**
+ * Get the global "spec" and return it as a JSON string.
+ * @returns {string} - A string containing the spec in JSON.
+ */
 function getSpecJson() {
   let spec = structuredClone(statefulSpec);
   // as above, don't include the qidx in the final submission
@@ -51,7 +53,10 @@ function getSpecJson() {
   return JSON.stringify(spec);
 }
 
-// Find an unused Qidx
+/**
+ * Parse existing questions, and return an unused Question index.
+ * @returns {number} - An integer which isn't yet used as a question index.
+ */
 function getNextAvailableQidx() {
   let qidxArray = statefulSpec.question.map(q => q.qidx).sort((a, b) => a - b);
   if (qidxArray.length === 0)
@@ -59,8 +64,10 @@ function getNextAvailableQidx() {
   return qidxArray.at(-1) + 1;
 }
 
-// add a question to the spec - first check if there's one with
-// a similar label.
+/**
+ * Add a question to the spec, but first check if there's one with a similar label.
+ * @param {string} label - The label for the new question.
+ */
 function createQuestion(label) {
   const q = statefulSpec.question.find(q => q.label === label);
   if (q) {
@@ -77,7 +84,10 @@ function createQuestion(label) {
   return newQuestion;
 }
 
-// remove a question from the spec
+/**
+ * Remove a question from the spec.
+ * @param {number} qidx - The question index of the question to remove.
+ */
 function removeQuestion(qidx) {
   statefulSpec.question = statefulSpec.question.filter(
     questionObj => questionObj.qidx !== qidx,
@@ -86,11 +96,13 @@ function removeQuestion(qidx) {
   return;
 }
 
-// check the spec's id page, and update html elements accordingly
+/** Check the spec's ID pages, and update html elements accordingly. */
 function refreshIdPageLists() {
   refreshIdPageSummary();
   refreshPageAssignments();
 }
+
+/** Update The Id Page summary html element according to the spec. */
 function refreshIdPageSummary() {
   const container = document.getElementById('idPageCard');
   var pagesText = `<span class="text-muted fst-italic">none</span>`;
@@ -109,11 +121,12 @@ function refreshIdPageSummary() {
                         </div>`;
 }
 
-// check the spec's DNM pages, and update html elements accordingly
+/** Check the spec's DNM pages, and update html elements accordingly. */
 function refreshDnmPageLists() {
   refreshDnmPageSummary();
   refreshPageAssignments();
 }
+/** Update The DNM Page summary html element according to the spec. */
 function refreshDnmPageSummary() {
   const container = document.getElementById('dnmPageCard');
   var pagesText = `<span class="text-muted fst-italic">none</span>`;
@@ -132,7 +145,7 @@ function refreshDnmPageSummary() {
                         </div>`;
 }
 
-// check the spec's questions, and update html elements accordingly
+/** Check the spec's questions, and update html elements accordingly. */
 function refreshQuestionLists() {
   refreshPageAssignments();
   refreshQuestionSummary();
@@ -141,6 +154,7 @@ function refreshQuestionLists() {
   updateNumberOfQuestions();
   return;
 }
+/** Update The Question summary html elements according to the spec. */
 function refreshQuestionSummary() {
   const container = document.getElementById('questionSummary');
   let questionCardElems = [];
@@ -213,6 +227,7 @@ function refreshQuestionSummary() {
     container.appendChild(elem);
   });
 }
+/** Update the dropdown for the "assign page to <question>" button. */
 function refreshQuestionDropdown() {
   let questionOptionElems = [];
   // question dropdown node
@@ -237,7 +252,7 @@ function refreshQuestionDropdown() {
   });
 }
 
-// unselect all selected pages
+/** Unselect all selected pages. */
 function clearAllSelectedPages() {
   // get elements with IDs = "page...Checkbox"
   var pageCheckboxes = document.querySelectorAll('[id ^= "page"][id $= "Checkbox"]');
@@ -250,8 +265,11 @@ function clearAllSelectedPages() {
   });
 }
 
-// whenever a page is un/selected, this function should be called
-// to update the list of selected pages.
+/**
+ * Update the array of selected pages.
+ * @param {number} pageIndex - The page whose selection "status" should be updated.
+ * @param {boolean} checked - - whether the page is selected.
+ */
 function updateSelectedPages(pageIndex, checked) {
   if (checked) {
     selectedPages.add(pageIndex);
@@ -269,24 +287,46 @@ function updateSelectedPages(pageIndex, checked) {
   span.innerText = sortedPagesArray.join(', ');
 }
 
+/**
+ * Update the spec's "numberOfQuestions" property value.
+ * There is no input, the update is based on the "question"
+ * property array in the spec.
+ */
 function updateNumberOfQuestions() {
   statefulSpec.numberOfQuestions = statefulSpec.question.length;
   let container = document.getElementById('numberOfQuestions');
   container.innerText = statefulSpec.numberOfQuestions;
 }
 
+/**
+ * Set the spec's "longName" property value.
+ * @param {string} longName - The new value.
+ */
 function setLongName(longName) {
   statefulSpec.longName = longName;
 }
 
+/**
+ * Set the spec's "shortName" property value.
+ * @param {string} shortName - The new value.
+ */
 function setShortName(shortName) {
   statefulSpec.name = shortName;
 }
 
+/**
+ * Set the spec's "allowSharedPages" property value.
+ * @param {boolean} allowed - The new value.
+ */
 function setAllowSharedPages(allowed) {
   statefulSpec.allowSharedPages = allowed;
 }
 
+/**
+ * Update the spec's "totalMarks" property value.
+ * There is no input, the update is based on the "question"
+ * property array in the spec.
+ */
 function updateTotalMarks() {
   let totalMarks = statefulSpec.question.reduce((sum, q) => {
     return sum + q.mark;
@@ -296,6 +336,10 @@ function updateTotalMarks() {
   container.innerText = statefulSpec.totalMarks;
 }
 
+/**
+ * Set the spec's "numberOfVersions" property value.
+ * @param {number} numVersions - The new value.
+ */
 function setNumberOfVersions(numVersions) {
   statefulSpec.numberOfVersions = parseInt(numVersions);
   updateQuestionVersions();
@@ -303,10 +347,12 @@ function setNumberOfVersions(numVersions) {
   refreshQuestionLists();
 }
 
-// Update the 'select' attribute for the spec questions
-// This is relevant, for example, when the number of versions
-// decreases, and some elements in 'select' are no longer editable
-// but still need to be deleted for serverside validation.
+/**
+ * Update the 'select' attribute in each spec question.
+ * This is relevant, for example, when the number of versions
+ * decreases, and some elements in 'select' are no longer editable
+ * but still need to be deleted for serverside validation.
+ */
 function updateQuestionVersions() {
   let numVersions = statefulSpec.numberOfVersions;
   statefulSpec.question.forEach((q) => {
@@ -320,6 +366,13 @@ function updateQuestionVersions() {
   });
 }
 
+/**
+ * Add or remove a version for a given question.
+ * @param {number} qidx - The index for the given question.
+ * @param {number} version - The version.
+ * @param {boolean} checked - If true, add this version to the question,
+ *   otherwise remove the version.
+ */
 function setQuestionVersions(qidx, version, checked) {
   const q = statefulSpec.question.find(q => q.qidx === qidx);
   if (!q)
@@ -333,6 +386,11 @@ function setQuestionVersions(qidx, version, checked) {
   refreshQuestionLists();
 }
 
+/**
+ * Set the number of marks for a given question.
+ * @param {number} qidx - The index for the question.
+ * @param {number} mark - The marks for that question.
+ */
 function setQuestionMarks(qidx, mark) {
   const q = statefulSpec.question.find(q => q.qidx === qidx);
   if (!q || mark < 0)
@@ -341,7 +399,11 @@ function setQuestionMarks(qidx, mark) {
   refreshQuestionLists();
 }
 
-// set 'bonus' for a particular question to true or false
+/**
+ * Change whether a question is a "bonus" question.
+ * @param {number} qidx - The index for the question.
+ * @param {boolean} bonus - Whether the question should be a bonus.
+ */
 function setQuestionBonus(qidx, bonus) {
   const q = statefulSpec.question.find(q => q.qidx === qidx);
   if (!q)
@@ -350,7 +412,11 @@ function setQuestionBonus(qidx, bonus) {
   refreshQuestionLists();
 }
 
-// assign the given pages to a particular question
+/**
+ * Assign the provided pages to a particular question.
+ * @param {number} qidx - Which question to assign the pages to.
+ * @param {number[]} pageArray - An array of pages to assign.
+ */
 function insertQuestionPages(qidx, pageArray) {
   const q = statefulSpec.question.find(q => q.qidx === qidx);
   if (!q || !pageArray)
@@ -362,13 +428,20 @@ function insertQuestionPages(qidx, pageArray) {
   refreshQuestionLists();
 }
 
-// create a new question, and assign the given pages to it
+/**
+ * Create a new question, and assign the provided pages to it.
+ * @param {number[]} pageArray - An array of pages to assign.
+ */
 function insertPagesIntoNewQuestion(pageArray) {
   const newQidx = createQuestion().qidx;
   insertQuestionPages(newQidx, pageArray);
 }
 
-// set the label for a particular question
+/**
+ * Set the label for a particular question.
+ * @param {number} qidx - The question's index.
+ * @param {string} label - The new label for the question.
+ */
 function setQuestionLabel(qidx, label) {
   const q = statefulSpec.question.find(q => q.qidx === qidx);
   if (!q || !label)
@@ -377,7 +450,10 @@ function setQuestionLabel(qidx, label) {
   refreshQuestionLists();
 }
 
-// assign the given pages as DNM pages
+/**
+ * Assign the given pages as DNM pages.
+ * @param {number[]} pageArray - The pages to assign.
+ */
 function insertDnmPages(pageArray) {
   var pageSet = new Set(statefulSpec.doNotMarkPages);
   pageArray.forEach(page => pageSet.add(page));
@@ -385,7 +461,10 @@ function insertDnmPages(pageArray) {
   refreshDnmPageLists();
 }
 
-// assign the given pages as ID pages
+/**
+ * Assign the given pages as ID pages.
+ * @param {number[]} pageArray - The pages to assign.
+ */
 function insertIdPages(pageArray) {
   if (pageArray.length !== 1) {
     alert('Only one question at a time');
@@ -395,10 +474,11 @@ function insertIdPages(pageArray) {
   refreshIdPageLists();
 }
 
-// assign the 'selectedPages' to a particular page type:
-//   "dnm"
-//   "id"
-//   "question" - requires the qidx
+/**
+ * Assign the "selectedPages".
+ * @param {string} type - One of "dnm", "id", "question".
+ * @param {number} qidx - If type is "question" assign to this question.
+ */
 function assignSelectedPages(type, qidx = null) {
   let selectedPagesArray = [...selectedPages];
   switch (type) {
@@ -420,10 +500,7 @@ function assignSelectedPages(type, qidx = null) {
   clearAllSelectedPages();
 }
 
-// unassign the selected pages from any grouping they are currently in:
-//   DNM
-//   ID pages
-//   any questions
+/** Unassign the "selectedPages" from any grouping they are currently in. */
 function unassignSelectedPages() {
   let selectedPagesArray = [...selectedPages];
   unassignDnmPages(selectedPagesArray);
@@ -432,20 +509,29 @@ function unassignSelectedPages() {
   clearAllSelectedPages();
 }
 
-// remove the listed pages from the DNM pages in the spec
+/**
+ * Remove the provided pages from the DNM pages in the spec.
+ * @param {number[]} pageArray - The pages to assign.
+ */
 function unassignDnmPages(pageArray) {
   statefulSpec.doNotMarkPages = statefulSpec.doNotMarkPages.filter(
     page => !(pageArray.includes(page)),
   );
   refreshDnmPageLists();
 }
-// remove the listed pages from the ID pages in the spec
+/**
+ * Remove the provided pages from the ID pages in the spec.
+ * @param {number[]} pageArray - The pages to assign.
+ */
 function unassignIdPages(pageArray) {
   if (pageArray.includes(statefulSpec.idPage))
     statefulSpec.idPage = null;
   refreshIdPageLists();
 }
-// remove the listed pages from any questions in the spec
+/**
+ * Remove the provided pages from any questions in the spec.
+ * @param {number[]} pageArray - The pages to assign.
+ */
 function unassignQuestionPages(pageArray) {
   statefulSpec.question.forEach((q) => {
     q.pages = q.pages.filter(
@@ -455,7 +541,7 @@ function unassignQuestionPages(pageArray) {
   refreshQuestionLists();
 }
 
-// update the details on each page specifying where it's assigned
+/** Update the details on each HTML page card specifying where it's assigned. */
 function refreshPageAssignments() {
   let pageMap = new Map();
 
@@ -487,13 +573,21 @@ function refreshPageAssignments() {
   }
 }
 
-// represent a string in html
+/**
+ * Represent a string in html. Escapes a few things like "<".
+ * @param {string} str - The string to represent.
+ * @returns {string} - A string that's safe to use in html.
+ */
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// represent a string in html attributes
+/**
+ * Represent a string in html attributes.
+ * @param {string} str - The string to represent.
+ * @returns {string} - A string that's safe to use in html attributes.
+ */
 function escapeAttr(str) {
   // Safe for use inside onclick='...' single-quoted attribute values
   return String(str).replace(/'/g, '\\\'');

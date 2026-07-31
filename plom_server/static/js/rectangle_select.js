@@ -3,8 +3,10 @@
     Copyright (C) 2024-2025 Andrew Rechnitze
     Copyright (C) 2024-2025 Bryan Tanady
     Copyright (C) 2025-2026 Colin B. Macdonald
-    Copyright (C) 2025 Aidan Murphy
+    Copyright (C) 2025-2026 Aidan Murphy
 */
+
+/* eslint-disable no-unused-vars */
 
 // Code idea copied from
 // https://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
@@ -40,7 +42,11 @@ var startX, startY;
 var initial_rect = [0.1, 0.1, 0.1 + 0.2, 0.1 + 0.1];
 /* exported setInitialIDBoxRectangle */
 // above is the correct way, but not working :(
-// eslint-disable-next-line no-unused-vars
+
+/**
+ * Set a variable with the initial rectangle.
+ * @param id_box_rect
+ */
 function setInitialIDBoxRectangle(id_box_rect) {
   initial_rect = id_box_rect;
 }
@@ -63,7 +69,12 @@ var th_height = th_bottom - th_top;
 // some starting values
 var effective_image_width = 1700;
 var effective_image_height = 2200;
-// update these values after the image has loaded
+//
+/**
+ * Overwrite the onload function for our reference image.
+ *  It updates global values after the image has
+ *  loaded; so we can establish an effective coord system.
+ */
 image.onload = function () {
   effective_image_width = image.naturalWidth;
   effective_image_height = image.naturalHeight;
@@ -80,7 +91,7 @@ image.onload = function () {
   th_height = th_bottom - th_top;
 };
 
-// drawRectInCanvas() connected functions -- START
+/** Supports drawRectInCanvas(). TODO: what does this actually do? */
 function updateHiddenInputs() {
   var inverse_ratio_w = effective_image_width / canvas.width;
   var inverse_ratio_h = effective_image_height / canvas.height;
@@ -98,6 +109,12 @@ function updateHiddenInputs() {
   h_plom_br_y.value = (h_th_bottom.value - top_left_coord[1]) / h;
 }
 
+/**
+ * Draws a circle.
+ * @param {number} x - X coordinate of circle's centre.
+ * @param {number} y - Y coordinate of circle's centre.
+ * @param {number} radius - Circle's radius.
+ */
 function drawCircle(x, y, radius) {
   var ctx = canvas.getContext('2d');
   ctx.fillStyle = '#008080';
@@ -106,6 +123,7 @@ function drawCircle(x, y, radius) {
   ctx.fill();
 }
 
+/** Draw circles on the corners of the rectangle. */
 function drawHandles() {
   drawCircle(rect.left, rect.top, handleRadius);
   drawCircle(rect.left + rect.width, rect.top, handleRadius);
@@ -113,6 +131,11 @@ function drawHandles() {
   drawCircle(rect.left, rect.top + rect.height, handleRadius);
 }
 
+/**
+ * Draw Plom related things on screen.
+ *   Supports drawRectInCanvas().
+ *   TODO: What are Plom related things?
+ */
 function drawPlomBits() {
   // draw plom coordinate system
   var ctx = canvas.getContext('2d');
@@ -132,6 +155,7 @@ function drawPlomBits() {
   ctx.rect(top_left_coord[0] * ratio_w, top_left_coord[1] * ratio_h, (bottom_right_coord[0] - top_left_coord[0]) * ratio_w, (bottom_right_coord[1] - top_left_coord[1]) * ratio_h);
   ctx.stroke();
 }
+/** Draw the rectangle. */
 function drawRectInCanvas() {
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -149,20 +173,40 @@ function drawRectInCanvas() {
 }
 // drawRectInCanvas() connected functions -- END
 
+/** Sets global vars when the mouse button is lifted. */
 function mouseUp() {
   dragTL = dragTR = dragBL = dragBR = false;
   dragWholeRect = false;
 }
 
 // mousedown connected functions -- START
+/**
+ * Check if a certain coordinate is in a given rectangle.
+ * @param {number} x - The X coord.
+ * @param {number} y - The Y coord.
+ * @param r - The rectangle to check.
+ * @returns {boolean} - `true` if the coords are in the rectangle.
+ */
 function checkInRect(x, y, r) {
   return (x > r.left && x < (r.width + r.left)) && (y > r.top && y < (r.top + r.height));
 }
 
+/**
+ * Are the given points close enough for Plom's liking?
+ * @param p1
+ * @param p2
+ * @returns {boolean} - `true` if the points are close enough.
+ */
 function checkCloseEnough(p1, p2) {
   return Math.abs(p1 - p2) < handleRadius;
 }
 
+/**
+ * Get the position of the user's mouse, relative to the rectangle.
+ * @param {HTMLCanvasElement} canvas
+ * @param {Event} evt
+ * @returns {{x: number, y: number}} - A point object indicating where the cursor is.
+ */
 function getMousePos(canvas, evt) {
   var clx, cly;
   if (evt.type == 'touchstart' || evt.type == 'touchmove') {
@@ -180,7 +224,13 @@ function getMousePos(canvas, evt) {
   };
 }
 
+/**
+ * Resize rectangle, or drag it, depending on the mouse position. It's
+ * assumed that this function is attached to an event listener on a Canvas object.
+ * @param {Event} e
+ */
 function mouseDown(e) {
+  // we assume `this` is a Canvas object.
   var pos = getMousePos(this, e);
   mouseX = pos.x;
   mouseY = pos.y;
@@ -213,6 +263,11 @@ function mouseDown(e) {
 }
 // mousedown connected functions -- END
 
+/**
+ * What to do when the mouse moves. Again, it's assumed that this is
+ * part of an event listener attached to a Canvas object.
+ * @param {Event} e
+ */
 function mouseMove(e) {
   var pos = getMousePos(this, e);
   mouseX = pos.x;
@@ -278,6 +333,7 @@ function mouseMove(e) {
   drawRectInCanvas();
 }
 
+/** Update global variables relating to the rectangle. */
 function updateCurrentCanvasRect() {
   current_canvas_rect.height = canvas.height;
   current_canvas_rect.width = canvas.width;
@@ -285,6 +341,7 @@ function updateCurrentCanvasRect() {
   current_canvas_rect.left = image.offsetLeft;
 }
 
+/** Make the canvas match the reference image, and update the rectangle. */
 function repositionCanvas() {
   // make canvas same as image, which may have changed size and position
   canvas.height = image.height;
@@ -303,6 +360,7 @@ function repositionCanvas() {
   drawRectInCanvas();
 }
 
+/** Initialise the Canvas. */
 function initCanvas() {
   canvas.height = image.height;
   canvas.width = image.width;
@@ -311,6 +369,7 @@ function initCanvas() {
   updateCurrentCanvasRect();
 }
 
+/** Initialise the rectangle. */
 function initRect() {
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
@@ -321,6 +380,7 @@ function initRect() {
   rect.left = th_left * ratio_w;
 }
 
+/** Call various initialisers, and add event listeners to the canvas. */
 function init() {
   canvas.addEventListener('mousedown', mouseDown, false);
   canvas.addEventListener('mouseup', mouseUp, false);
@@ -335,5 +395,3 @@ function init() {
 
 window.addEventListener('load', init);
 window.addEventListener('resize', repositionCanvas);
-
-//
