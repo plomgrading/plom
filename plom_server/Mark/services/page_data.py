@@ -32,13 +32,13 @@ def get_question_pages_list(papernum: int, question_index: int) -> list[dict[str
         .order_by("page_number")
         .prefetch_related("image", "image__baseimage")
     )
-    # Papers/models/structure.py claims MobilePages have no order so sort by id
-    # which is their creation order
+    # Papers/models/paper_structure.py claims MobilePages have no order,
+    # so sort by id, which is their creation order.
     mobile_pages = (
         MobilePage.objects.filter(
             paper__paper_number=papernum, question_index=question_index
         )
-        .order_by("pk")
+        .order_by("pk")  # TODO: or order_by("image__bundle_order")?
         .prefetch_related("image", "image__baseimage")
     )
 
@@ -172,7 +172,7 @@ class PageDataService:
         # mobile-pages in id order (which is their creation order)
         mobile_pages = (
             MobilePage.objects.filter(paper__paper_number=papernum)
-            .order_by("pk")
+            .order_by("pk")  # TODO: or order_by("image__bundle_order")?
             .prefetch_related("image", "image__baseimage")
         )
 

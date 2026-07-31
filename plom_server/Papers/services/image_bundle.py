@@ -91,9 +91,15 @@ class ImageBundleService:
         if not PapersPrinted.have_papers_been_printed():
             raise RuntimeError("Papers have not yet been printed.")
 
-        bundle_images = StagingImage.objects.filter(
-            bundle=staged_bundle
-        ).prefetch_related("baseimage")
+        # MobilePage ordering is effected by the order they are created, so visit
+        # these in bundle order, as the bulk_create code below will be influenced
+        # by whatever we choose here.  That is at least predictable.  See #3659
+        # and the comments in paper_structure.py.
+        bundle_images = (
+            StagingImage.objects.filter(bundle=staged_bundle)
+            .order_by("bundle_order")
+            .prefetch_related("baseimage")
+        )
 
         # Staging has checked this - but we check again here to be very sure
         if not cls.all_staged_imgs_valid(bundle_images):
