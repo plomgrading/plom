@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 
 from plom_server.Papers.services import SpecificationService
-from plom_server.Papers.models import FixedPage, Image, MobilePage, Paper
+from plom_server.Papers.models import FixedPage, Image, MobilePage
 
 
 @transaction.atomic
@@ -21,10 +21,9 @@ def get_question_pages_list(papernum: int, question_index: int) -> list[dict[str
         papernum: paper number.
         question_index: which question.
     """
-    paper_obj = Paper.objects.get(paper_number=papernum)
     question_pages = (
         FixedPage.objects.filter(
-            paper=paper_obj,
+            paper__paper_number=papernum,
             question_index=question_index,
             page_type=FixedPage.QUESTIONPAGE,
         )
@@ -33,7 +32,9 @@ def get_question_pages_list(papernum: int, question_index: int) -> list[dict[str
     )
     # Papers/models/structure.py claims MobilePages have no order so sort by id
     mobile_pages = (
-        MobilePage.objects.filter(paper=paper_obj, question_index=question_index)
+        MobilePage.objects.filter(
+            paper__paper_number=papernum, question_index=question_index
+        )
         .order_by("pk")
         .prefetch_related("image", "image__baseimage")
     )
@@ -144,7 +145,6 @@ class PageDataService:
         Raises:
             ObjectDoesNotExist: paper does not exist or question is out of range.
         """
-        paper_obj = Paper.objects.get(paper_number=papernum)
         pages_metadata = []
 
         # loops below do not actually check if the question is valid: do that first
@@ -157,7 +157,7 @@ class PageDataService:
 
         # get all the fixed pages of the test that have images - prefetch the related image
         fixed_pages = (
-            FixedPage.objects.filter(paper=paper_obj, image__isnull=False)
+            FixedPage.objects.filter(paper__paper_number=papernum, image__isnull=False)
             .order_by("page_number")
             .prefetch_related("image", "image__baseimage")
         )
@@ -210,7 +210,7 @@ class PageDataService:
 
         # add mobile-pages in id order (is creation order)
         for page in (
-            MobilePage.objects.filter(paper=paper_obj)
+            MobilePage.objects.filter(paper__paper_number=papernum)
             .order_by("pk")
             .prefetch_related("image", "image__baseimage")
         ):
