@@ -91,15 +91,12 @@ class ImageBundleService:
         if not PapersPrinted.have_papers_been_printed():
             raise RuntimeError("Papers have not yet been printed.")
 
-        # MobilePage ordering is effected by the order they are created, so visit
-        # these in bundle order, as the bulk_create code below will be influenced
-        # by whatever we choose here.  That is at least predictable.  See #3659
-        # and the comments in paper_structure.py.
-        bundle_images = (
-            StagingImage.objects.filter(bundle=staged_bundle)
-            .order_by("bundle_order")
-            .prefetch_related("baseimage")
-        )
+        # Note: in arbitrary order, got confusing errors when I sorted here:
+        # "ORDER BY not allowed in subqueries of compound statements."
+        # Shall sort later..., probably less efficient that sorting here.
+        bundle_images = StagingImage.objects.filter(
+            bundle=staged_bundle
+        ).prefetch_related("baseimage")
 
         # Staging has checked this - but we check again here to be very sure
         if not cls.all_staged_imgs_valid(bundle_images):
@@ -157,7 +154,11 @@ class ImageBundleService:
             key = (fp.paper.paper_number, fp.page_number)
             fixedpage_by_pn_pg.setdefault(key, []).append(fp)
 
-        for staged in bundle_images:
+        # MobilePage ordering is effected by the order they are created, so loop
+        # these in bundle order, and hope the bulk_create code below will be
+        # actually respect that.  That is at least predictable.  See #3659 and
+        # the comments in paper_structure.py.
+        for staged in bundle_images.order_by("bundle_order"):
             # ensure that a pushed image has a defined rotation
             # hard-coded to set rotation=0 if no staging image rotation exists
             # the use of rotation=None for StagingImages is currently unused,
