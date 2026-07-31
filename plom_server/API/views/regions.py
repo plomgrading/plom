@@ -37,7 +37,6 @@ class RegionsView(APIView):
             )
 
         # TODO: question_index input?
-        # regions = Settings.key_value_store_get_or_none("question_regions")
         QuestionRegionsService.reset_question_regions()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
