@@ -106,7 +106,7 @@ class PageDataService:
         self,
         paper: int,
         *,
-        question: int | None = None,
+        question_index: int | None = None,
         include_idpage: bool = False,
         include_dnmpages: bool = True,
     ) -> list[dict[str, Any]]:
@@ -118,10 +118,10 @@ class PageDataService:
         FixedPages.
 
         Args:
-            paper (int): test-paper number
+            paper: paper number
 
         Keyword Args:
-            question (int/None): question index, if not None.
+            question_index: restrict by question index, if not None.
             include_idpage (bool): whether to include ID pages in this
                 request (default: False)
             include_dnmpages (bool): whether to include any DNM pages in
@@ -148,11 +148,11 @@ class PageDataService:
         pages_metadata = []
 
         # loops below do not actually check if the question is valid: do that first
-        if question is not None:
+        if question_index is not None:
             question_indices = SpecificationService.get_question_indices()
-            if question not in question_indices:
+            if question_index not in question_indices:
                 raise ObjectDoesNotExist(
-                    f"question {question} is out of bounds {question_indices}"
+                    f"question index {question_index} is out of bounds {question_indices}"
                 )
 
         # get all the fixed pages of the test that have images - prefetch the related image
@@ -169,13 +169,13 @@ class PageDataService:
             fixed_pages = fixed_pages.exclude(page_type=FixedPage.DNMPAGE)
 
         for page in fixed_pages:
-            if question is None:
+            if question_index is None:
                 # TODO: or is it better to not include this key?  That's likely
                 # what the legacy server does...
                 included = True
             else:
                 if page.page_type == FixedPage.QUESTIONPAGE:
-                    included = page.question_index == question
+                    included = page.question_index == question_index
                 else:
                     included = False
             if page.page_type == FixedPage.QUESTIONPAGE:
@@ -225,7 +225,7 @@ class PageDataService:
                 {
                     "pagename": pagename,
                     "md5": page.image.baseimage.image_hash,
-                    "included": qidx == question,
+                    "included": qidx == question_index,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
                     # WARNING - HACKERY HERE ^^^^^^^^
