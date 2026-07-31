@@ -148,7 +148,7 @@ class ImageBundleService:
         # make look-up dict to more-easily get fixed pages from (papernum, pagenum)
         # note that a given pn/page may have multiple fixed pages (e.g., when
         # questions share pages).
-        fixedpage_by_pn_pg: dict[tuple[int, int], FixedPage] = {}
+        fixedpage_by_pn_pg: dict[tuple[int, int], list[FixedPage]] = {}
         for fp in (
             FixedPage.objects.select_for_update()
             .filter(paper__paper_number__in=paper_numbers)
