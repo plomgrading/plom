@@ -14,17 +14,17 @@ from plom_server.Papers.models import FixedPage, Image, MobilePage, Paper
 
 
 @transaction.atomic
-def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, Any]]:
+def get_question_pages_list(papernum: int, question_index: int) -> list[dict[str, Any]]:
     """Return a list of objects describing pages in a paper related to a question.
 
     Args:
-        paper: exam paper number.
+        papernum: paper number.
         question_index: which question.
     """
-    test_paper = Paper.objects.get(paper_number=paper)
+    paper_obj = Paper.objects.get(paper_number=papernum)
     question_pages = (
         FixedPage.objects.filter(
-            paper=test_paper,
+            paper=paper_obj,
             question_index=question_index,
             page_type=FixedPage.QUESTIONPAGE,
         )
@@ -33,7 +33,7 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
     )
     # Papers/models/structure.py claims MobilePages have no order so sort by id
     mobile_pages = (
-        MobilePage.objects.filter(paper=test_paper, question_index=question_index)
+        MobilePage.objects.filter(paper=paper_obj, question_index=question_index)
         .order_by("pk")
         .prefetch_related("image", "image__baseimage")
     )
@@ -104,7 +104,7 @@ class PageDataService:
     @transaction.atomic
     def get_question_pages_metadata(
         self,
-        paper: int,
+        papernum: int,
         *,
         question_index: int | None = None,
         include_idpage: bool = False,
@@ -118,7 +118,7 @@ class PageDataService:
         FixedPages.
 
         Args:
-            paper: paper number
+            papernum: paper number
 
         Keyword Args:
             question_index: restrict by question index, if not None.
@@ -144,7 +144,7 @@ class PageDataService:
         Raises:
             ObjectDoesNotExist: paper does not exist or question is out of range.
         """
-        test_paper = Paper.objects.get(paper_number=paper)
+        paper_obj = Paper.objects.get(paper_number=papernum)
         pages_metadata = []
 
         # loops below do not actually check if the question is valid: do that first
@@ -157,7 +157,7 @@ class PageDataService:
 
         # get all the fixed pages of the test that have images - prefetch the related image
         fixed_pages = (
-            FixedPage.objects.filter(paper=test_paper, image__isnull=False)
+            FixedPage.objects.filter(paper=paper_obj, image__isnull=False)
             .order_by("page_number")
             .prefetch_related("image", "image__baseimage")
         )
@@ -210,7 +210,7 @@ class PageDataService:
 
         # add mobile-pages in id order (is creation order)
         for page in (
-            MobilePage.objects.filter(paper=test_paper)
+            MobilePage.objects.filter(paper=paper_obj)
             .order_by("pk")
             .prefetch_related("image", "image__baseimage")
         ):
