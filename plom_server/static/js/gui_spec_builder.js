@@ -121,7 +121,6 @@ function refreshIdPageSummary() {
                         </div>`;
 }
 
-//
 /** Check the spec's DNM pages, and update html elements accordingly. */
 function refreshDnmPageLists() {
   refreshDnmPageSummary();
