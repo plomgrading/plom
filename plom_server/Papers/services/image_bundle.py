@@ -7,8 +7,6 @@
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025-2026 Aidan Murphy
 
-from collections import defaultdict
-
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -141,13 +139,14 @@ class ImageBundleService:
         # make look-up dict to more-easily get fixed pages from (papernum, pagenum)
         # note that a given pn/page may have multiple fixed pages (e.g., when
         # questions share pages).
-        fixedpage_by_pn_pg = defaultdict(list)
+        fixedpage_by_pn_pg = {}
         for fp in (
             FixedPage.objects.select_for_update()
             .filter(paper__paper_number__in=paper_numbers)
             .prefetch_related("paper")
         ):
-            fixedpage_by_pn_pg[(fp.paper.paper_number, fp.page_number)].append(fp)
+            key = (fp.paper.paper_number, fp.page_number)
+            fixedpage_by_pn_pg.setdefault(key, []).append(fp)
 
         for staged in bundle_images:
             # ensure that a pushed image has a defined rotation
