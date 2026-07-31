@@ -7,8 +7,6 @@
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2025-2026 Aidan Murphy
 
-from collections import defaultdict
-
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -80,6 +78,9 @@ class ImageBundleService:
         3. Check that no staging images collide with any uploaded images
         4. Bulk-create images
 
+        Note: this does not wrap itself in a transaction: callers will need to be
+        careful that they do so, b/c this uses `select_for_update()`.
+
         Raises:
             RuntimeError: an unexpected error, something we already checked
                 has failed.
@@ -90,6 +91,9 @@ class ImageBundleService:
         if not PapersPrinted.have_papers_been_printed():
             raise RuntimeError("Papers have not yet been printed.")
 
+        # Note: in arbitrary order, got confusing errors when I sorted here:
+        # "ORDER BY not allowed in subqueries of compound statements."
+        # Shall sort later..., probably less efficient that sorting here.
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
         ).prefetch_related("baseimage")
@@ -141,15 +145,20 @@ class ImageBundleService:
         # make look-up dict to more-easily get fixed pages from (papernum, pagenum)
         # note that a given pn/page may have multiple fixed pages (e.g., when
         # questions share pages).
-        fixedpage_by_pn_pg = defaultdict(list)
+        fixedpage_by_pn_pg: dict[tuple[int, int], list[FixedPage]] = {}
         for fp in (
             FixedPage.objects.select_for_update()
             .filter(paper__paper_number__in=paper_numbers)
             .prefetch_related("paper")
         ):
-            fixedpage_by_pn_pg[(fp.paper.paper_number, fp.page_number)].append(fp)
+            key = (fp.paper.paper_number, fp.page_number)
+            fixedpage_by_pn_pg.setdefault(key, []).append(fp)
 
-        for staged in bundle_images:
+        # MobilePage ordering is effected by the order they are created, so loop
+        # these in bundle order, and hope the bulk_create code below will be
+        # actually respect that.  That is at least predictable.  See #3659 and
+        # the comments in paper_structure.py.
+        for staged in bundle_images.order_by("bundle_order"):
             # ensure that a pushed image has a defined rotation
             # hard-coded to set rotation=0 if no staging image rotation exists
             # the use of rotation=None for StagingImages is currently unused,

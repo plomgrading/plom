@@ -289,7 +289,7 @@ class MgetPageDataQuestionInContext(APIView):
             # of the Plom Client UI tool.
             page_metadata = service.get_question_pages_metadata(
                 papernum,
-                question=questionidx,
+                question_index=questionidx,
                 include_idpage=True,
                 include_dnmpages=True,
             )

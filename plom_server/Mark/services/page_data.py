@@ -10,52 +10,58 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 
 from plom_server.Papers.services import SpecificationService
-from plom_server.Papers.models import FixedPage, Image, MobilePage, Paper
+from plom_server.Papers.models import FixedPage, Image, MobilePage
 
 
 @transaction.atomic
-def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, Any]]:
+def get_question_pages_list(papernum: int, question_index: int) -> list[dict[str, Any]]:
     """Return a list of objects describing pages in a paper related to a question.
 
     Args:
-        paper: exam paper number.
+        papernum: paper number.
         question_index: which question.
     """
-    test_paper = Paper.objects.get(paper_number=paper)
-    question_pages = FixedPage.objects.filter(
-        paper=test_paper,
-        question_index=question_index,
-        page_type=FixedPage.QUESTIONPAGE,
-    ).prefetch_related("image", "image__baseimage")
-    # Papers/models/structure.py claims MobilePages have no order so sort by id
+    # get all the question pages of the paper that have images - prefetch the related image
+    question_pages = (
+        FixedPage.objects.filter(
+            paper__paper_number=papernum,
+            image__isnull=False,
+            question_index=question_index,
+            page_type=FixedPage.QUESTIONPAGE,
+        )
+        .order_by("page_number")
+        .prefetch_related("image", "image__baseimage")
+    )
+    # Papers/models/paper_structure.py claims MobilePages have no order,
+    # so sort by id, which is their creation order.
     mobile_pages = (
-        MobilePage.objects.filter(paper=test_paper, question_index=question_index)
-        .order_by("pk")
+        MobilePage.objects.filter(
+            paper__paper_number=papernum, question_index=question_index
+        )
+        .order_by("pk")  # TODO: or order_by("image__bundle_order")?
         .prefetch_related("image", "image__baseimage")
     )
 
     page_list = []
-    for page in question_pages.order_by("page_number"):
-        image = page.image
-        if image:  # fixed pages might not have image if yet to be scanned.
-            page_list.append(
-                {
-                    "id": image.pk,
-                    "md5": image.baseimage.image_hash,
-                    "orientation": image.rotation,
-                    "server_path": image.baseimage.image_file.path,
-                    "included": True,
-                    "order": page.page_number,
-                    # For Future us vvvvv ?
-                    # "img_height": image.height, "img_width": image.width,
-                    # For Future us ^^^^^ ?
-                    # We may wish to also pass height/width info
-                    # if we do so then we need to confirm how django automagically computes
-                    # these for the imagefield - they are raw image height/width before any
-                    # exif or plom rotations. So will need to document precisely what these
-                    # are for any consumers of this API.
-                }
-            )
+    for page in question_pages:
+        page_list.append(
+            {
+                "id": page.image.pk,
+                "md5": page.image.baseimage.image_hash,
+                "orientation": page.image.rotation,
+                "server_path": str(page.image.baseimage.image_file.path),
+                "included": True,
+                "order": page.page_number,
+                # For Future us vvvvv ?
+                # "img_height": image.height, "img_width": image.width,
+                # For Future us ^^^^^ ?
+                # We may wish to also pass height/width info
+                # if we do so then we need to confirm how django automagically computes
+                # these for the imagefield - they are raw image height/width before any
+                # exif or plom rotations. So will need to document precisely what these
+                # are for any consumers of this API.
+            }
+        )
     # Note: MobilePages are ordered only by their id, as documented in
     # Papers/models/structure.py
     for page in mobile_pages:
@@ -100,9 +106,9 @@ class PageDataService:
     @transaction.atomic
     def get_question_pages_metadata(
         self,
-        paper: int,
+        papernum: int,
         *,
-        question: int | None = None,
+        question_index: int | None = None,
         include_idpage: bool = False,
         include_dnmpages: bool = True,
     ) -> list[dict[str, Any]]:
@@ -114,10 +120,10 @@ class PageDataService:
         FixedPages.
 
         Args:
-            paper (int): test-paper number
+            papernum: paper number
 
         Keyword Args:
-            question (int/None): question index, if not None.
+            question_index: restrict by question index, if not None.
             include_idpage (bool): whether to include ID pages in this
                 request (default: False)
             include_dnmpages (bool): whether to include any DNM pages in
@@ -140,21 +146,22 @@ class PageDataService:
         Raises:
             ObjectDoesNotExist: paper does not exist or question is out of range.
         """
-        test_paper = Paper.objects.get(paper_number=paper)
         pages_metadata = []
 
         # loops below do not actually check if the question is valid: do that first
-        if question is not None:
+        if question_index is not None:
             question_indices = SpecificationService.get_question_indices()
-            if question not in question_indices:
+            if question_index not in question_indices:
                 raise ObjectDoesNotExist(
-                    f"question {question} is out of bounds {question_indices}"
+                    f"question index {question_index} is out of bounds {question_indices}"
                 )
 
-        # get all the fixed pages of the test that have images - prefetch the related image
-        fixed_pages = FixedPage.objects.filter(
-            paper=test_paper, image__isnull=False
-        ).prefetch_related("image", "image__baseimage")
+        # get all the fixed pages of the paper that have images - prefetch the related image
+        fixed_pages = (
+            FixedPage.objects.filter(paper__paper_number=papernum, image__isnull=False)
+            .order_by("page_number")
+            .prefetch_related("image", "image__baseimage")
+        )
 
         # possibly filter out ID and DNM pages
         if not include_idpage:
@@ -162,14 +169,21 @@ class PageDataService:
         if not include_dnmpages:
             fixed_pages = fixed_pages.exclude(page_type=FixedPage.DNMPAGE)
 
-        for page in fixed_pages.order_by("page_number"):
-            if question is None:
+        # mobile-pages in id order (which is their creation order)
+        mobile_pages = (
+            MobilePage.objects.filter(paper__paper_number=papernum)
+            .order_by("pk")  # TODO: or order_by("image__bundle_order")?
+            .prefetch_related("image", "image__baseimage")
+        )
+
+        for page in fixed_pages:
+            if question_index is None:
                 # TODO: or is it better to not include this key?  That's likely
                 # what the legacy server does...
                 included = True
             else:
                 if page.page_type == FixedPage.QUESTIONPAGE:
-                    included = page.question_index == question
+                    included = page.question_index == question_index
                 else:
                     included = False
             if page.page_type == FixedPage.QUESTIONPAGE:
@@ -202,12 +216,7 @@ class PageDataService:
         # need to keep count as we go.
         question_mobile_page_count: dict[int, int] = {}
 
-        # add mobile-pages in id order (is creation order)
-        for page in (
-            MobilePage.objects.filter(paper=test_paper)
-            .order_by("pk")
-            .prefetch_related("image", "image__baseimage")
-        ):
+        for page in mobile_pages:
             qidx = page.question_index
             question_mobile_page_count.setdefault(qidx, 0)
             question_mobile_page_count[qidx] += 1
@@ -219,7 +228,7 @@ class PageDataService:
                 {
                     "pagename": pagename,
                     "md5": page.image.baseimage.image_hash,
-                    "included": qidx == question,
+                    "included": qidx == question_index,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
                     # WARNING - HACKERY HERE ^^^^^^^^
