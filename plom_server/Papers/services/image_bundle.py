@@ -78,6 +78,9 @@ class ImageBundleService:
         3. Check that no staging images collide with any uploaded images
         4. Bulk-create images
 
+        Note: this does not wrap itself in a transaction: callers will need to be
+        careful that they do so, b/c this uses `select_for_update()`.
+
         Raises:
             RuntimeError: an unexpected error, something we already checked
                 has failed.

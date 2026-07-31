@@ -9,6 +9,7 @@ from django.test import TestCase
 from model_bakery import baker
 
 from django.contrib.auth.models import User
+from django.db import transaction
 
 from plom_server.Base.models import BaseImage
 from plom_server.Preparation.services import PapersPrinted
@@ -302,7 +303,8 @@ class ImageBundleTests(TestCase):
             version=1,
         )
 
-        ImageBundleService.push_valid_bundle(bundle, self.user)
+        with transaction.atomic():
+            ImageBundleService.push_valid_bundle(bundle, self.user)
 
         self.assertEqual(Bundle.objects.all()[0].pdf_hash, bundle.pdf_hash)
         self.assertEqual(
