@@ -22,11 +22,15 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
         question_index: which question.
     """
     test_paper = Paper.objects.get(paper_number=paper)
-    question_pages = FixedPage.objects.filter(
-        paper=test_paper,
-        question_index=question_index,
-        page_type=FixedPage.QUESTIONPAGE,
-    ).prefetch_related("image", "image__baseimage")
+    question_pages = (
+        FixedPage.objects.filter(
+            paper=test_paper,
+            question_index=question_index,
+            page_type=FixedPage.QUESTIONPAGE,
+        )
+        .order_by("page_number")
+        .prefetch_related("image", "image__baseimage")
+    )
     # Papers/models/structure.py claims MobilePages have no order so sort by id
     mobile_pages = (
         MobilePage.objects.filter(paper=test_paper, question_index=question_index)
@@ -35,7 +39,7 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
     )
 
     page_list = []
-    for page in question_pages.order_by("page_number"):
+    for page in question_pages:
         image = page.image
         if image:  # fixed pages might not have image if yet to be scanned.
             page_list.append(
@@ -152,9 +156,11 @@ class PageDataService:
                 )
 
         # get all the fixed pages of the test that have images - prefetch the related image
-        fixed_pages = FixedPage.objects.filter(
-            paper=test_paper, image__isnull=False
-        ).prefetch_related("image", "image__baseimage")
+        fixed_pages = (
+            FixedPage.objects.filter(paper=test_paper, image__isnull=False)
+            .order_by("page_number")
+            .prefetch_related("image", "image__baseimage")
+        )
 
         # possibly filter out ID and DNM pages
         if not include_idpage:
@@ -162,7 +168,7 @@ class PageDataService:
         if not include_dnmpages:
             fixed_pages = fixed_pages.exclude(page_type=FixedPage.DNMPAGE)
 
-        for page in fixed_pages.order_by("page_number"):
+        for page in fixed_pages:
             if question is None:
                 # TODO: or is it better to not include this key?  That's likely
                 # what the legacy server does...
