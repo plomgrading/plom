@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Colin B. Macdonald
 
-from django.http import HttpRequest, HttpResponse
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 
 from plom_server.Base.base_group_views import ManagerRequiredView
@@ -41,3 +42,30 @@ class QuestionRegionsView(ManagerRequiredView):
         # except PlomDependencyConflict as err:
         #     messages.add_message(request, messages.ERROR, f"{err}")
         #     return redirect(reverse("prep_conflict"))
+
+
+class QuestionRegionsSubdivideView(ManagerRequiredView):
+    """Post a form to subdivide a page, called by HTMX."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Handle the form for subdividing a page."""
+        try:
+            pagenum = int(request.POST.get("page_number", ""))
+        except ValueError as e:
+            return HttpResponseBadRequest(e)
+
+        s = request.POST.get("comma_div_list", "")
+        try:
+            div = [float(x) for x in s.split(",") if x.strip()]
+        except ValueError as e:
+            return HttpResponseBadRequest(e)
+
+        # TODO: support version-specific setting
+        try:
+            QuestionRegionsService.subdivide_page(pagenum, div)
+        except ValueError as e:
+            return HttpResponseBadRequest(e)
+        except ObjectDoesNotExist:
+            return HttpResponse("no spec", status=409)
+
+        return HttpResponse("thanks for the info, please refresh")

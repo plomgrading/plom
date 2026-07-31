@@ -3,6 +3,7 @@
     Copyright (C) 2026 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}
     Adjust question regions
 {% endblock title %}
@@ -38,6 +39,51 @@
                 {% else %}
                     <p>No shared pages.</p>
                 {% endif %}
+                <div class="card mb-2" style="max-width: 50rem;">
+                    <h4 class="card-header">Page subdivision tool</h4>
+                    <div class="card-body">
+                        <form id="myform" hx-post="{% url 'question_regions_subdivide' %}">
+                            <!-- TODO: regular post with a "done" page or somehow hx refresh the whole page here? -->
+                            {% csrf_token %}
+                            <p>
+                                This tool helps you set page regions by
+                                dividing the page vertically.
+                                <!-- In the future maybe it will have some fancy -->
+                                <!-- Javascript UI to do this visually. -->
+                            </p>
+                            <div>
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <label class="input-group-text" for="page_number">Page number</label>
+                                            <input id="page_number"
+                                                   name="page_number"
+                                                   min="1"
+                                                   type="number"
+                                                   class="form-control"
+                                                   value="1"
+                                                   style="width: 10ch" />
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <label class="input-group-text" for="comma_div_list">List of divisions:</label>
+                                            <input id="comma_div_list"
+                                                   name="comma_div_list"
+                                                   class="form-control"
+                                                   type="text"
+                                                   required
+                                                   placeholder="23, 72.1"
+                                                   aria-describedby="comma_div_list_help" />
+                                        </div>
+                                        <div id="comma_div_list_help" class="form-text">(A comma-separated list of floats, representing percentages)</div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="subdivide_btn">Set page regions</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 <h3>Pages</h3>
                 <div class="mb-2">
                     {% for x in pages_with_regions %}

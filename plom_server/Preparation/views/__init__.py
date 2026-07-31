@@ -11,7 +11,7 @@ from .home import (
 )
 from .source_manage import SourceManageView, ReferenceImageView
 from .prenaming import PrenamingConfigView
-from .question_regions import QuestionRegionsView
+from .question_regions import QuestionRegionsView, QuestionRegionsSubdivideView
 from .classlist_manage import (
     ClasslistView,
     ClasslistDownloadView,
