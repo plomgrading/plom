@@ -45,14 +45,30 @@
   let activeBoxIndex = -1;
   let dragState = null;
 
+  /**
+   * Clamp a value to an inclusive numeric range.
+   * @param {number} value - Value to constrain.
+   * @param {number} low - Inclusive lower bound.
+   * @param {number} high - Inclusive upper bound.
+   * @returns {number} - Constrained value.
+   */
   function clamp(value, low, high) {
     return Math.min(Math.max(value, low), high);
   }
 
+  /**
+   * Round a normalized coordinate to the storage precision.
+   * @param {number} value - Coordinate to round.
+   * @returns {number} - Coordinate rounded to six decimal places.
+   */
   function roundCoord(value) {
     return Number(value.toFixed(6));
   }
 
+  /**
+   * Return the dimensions of the reference-image coordinate system.
+   * @returns {object} - Reference width and height in Plom coordinates.
+   */
   function getReferenceSize() {
     return {
       width: bottom_right_coord[0] - top_left_coord[0],
@@ -60,6 +76,12 @@
     };
   }
 
+  /**
+   * Convert a canvas-pixel delta to normalized Plom coordinates.
+   * @param {number} dx - Horizontal canvas delta in pixels.
+   * @param {number} dy - Vertical canvas delta in pixels.
+   * @returns {object} - Horizontal and vertical deltas in Plom coordinates.
+   */
   function canvasDeltaToPlom(dx, dy) {
     const referenceSize = getReferenceSize();
     return {
@@ -68,6 +90,11 @@
     };
   }
 
+  /**
+   * Convert a normalized Plom box to a canvas-pixel rectangle.
+   * @param {object} box - Option box in normalized Plom coordinates.
+   * @returns {object} - Rectangle positioned and sized in canvas pixels.
+   */
   function plomBoxToCanvasBox(box) {
     const referenceSize = getReferenceSize();
     const absLeft = top_left_coord[0] + box.left * referenceSize.width;
@@ -82,6 +109,10 @@
     };
   }
 
+  /**
+   * Return the normalized selected rectangle, or null when it is invalid.
+   * @returns {object | null} - Valid selected rectangle or null.
+   */
   function getSelectedRect() {
     const selected = {
       left: parseFloat(document.getElementById('plom_left').value),
@@ -112,29 +143,57 @@
     return selectedRect;
   }
 
+  /**
+   * Return the requested option count within the supported range.
+   * @returns {number} - Number of MCQ options.
+   */
   function getNumOptions() {
     return clamp(parseInt(optionCountInput.value, 10) || 1, 1, optionLabels.length);
   }
 
+  /**
+   * Return the option labels allowed by the current option count.
+   * @returns {string[]} - Allowed option labels.
+   */
   function getAllowedLabels() {
     return optionLabels.slice(0, getNumOptions()).split('');
   }
 
+  /**
+   * Return a stable sorting rank for an option label.
+   * @param {string} label - Option label to rank.
+   * @returns {number} - Zero-based label rank or the fallback rank.
+   */
   function getLabelRank(label) {
     const rank = optionLabels.indexOf(label);
     return rank >= 0 ? rank : optionLabels.length;
   }
 
+  /**
+   * Return whether the clustering form is currently in MCQ mode.
+   * @returns {boolean} - True when MCQ controls should be active.
+   */
   function isMCQMode() {
     return questionTypeInput.value === 'MCQ';
   }
 
+  /**
+   * Update the detection status message and error styling.
+   * @param {string} message - Status text to display.
+   * @param {boolean} isError - Whether to apply error styling.
+   */
   function setStatus(message, isError) {
     statusElement.textContent = message;
     statusElement.classList.toggle('text-danger', Boolean(isError));
     statusElement.classList.toggle('text-muted', !isError);
   }
 
+  /**
+   * Check whether an option box lies within the selected rectangle.
+   * @param {object} selectedRect - Bounding rectangle for all option boxes.
+   * @param {object} box - Option box to check.
+   * @returns {boolean} - True when the box is fully contained.
+   */
   function selectedRectContainsBox(selectedRect, box) {
     const tolerance = 0.000001;
     return (
@@ -145,16 +204,32 @@
     );
   }
 
+  /**
+   * Return all option boxes that lie outside the selected rectangle.
+   * @param {object} selectedRect - Bounding rectangle for all option boxes.
+   * @returns {object[]} - Option boxes outside the selected rectangle.
+   */
   function getBoxesOutsideSelectedRect(selectedRect) {
     return mcqBoxes.filter(box => !selectedRectContainsBox(selectedRect, box));
   }
 
+  /**
+   * Build the validation message for boxes outside the selection.
+   * @param {object[]} boxes - Option boxes outside the selected rectangle.
+   * @returns {string} - User-facing validation message.
+   */
   function boxOutsideMessage(boxes) {
     const labels = boxes.map(box => box.label).join(', ');
     const plural = boxes.length === 1 ? '' : 'es';
     return `Option box${plural} ${labels} must stay inside the selected rectangle.`;
   }
 
+  /**
+   * Constrain an option box to the selected rectangle.
+   * @param {object} box - Option box to constrain.
+   * @param {object} selectedRect - Bounding rectangle for the option box.
+   * @returns {object} - Constrained option box.
+   */
   function clampBoxToSelectedRect(box, selectedRect) {
     const selectedWidth = selectedRect.right - selectedRect.left;
     const selectedHeight = selectedRect.bottom - selectedRect.top;
@@ -171,6 +246,10 @@
     };
   }
 
+  /**
+   * Validate that every MCQ option box stays inside the selection.
+   * @returns {boolean} - True when every option box is valid.
+   */
   function validateBoxesInsideSelectedRect() {
     if (!isMCQMode() || mcqBoxes.length === 0) {
       return true;
@@ -188,6 +267,10 @@
     return true;
   }
 
+  /**
+   * Validate that option-box labels are allowed and unique.
+   * @returns {boolean} - True when every label is valid and unique.
+   */
   function validateBoxLabels() {
     if (!isMCQMode() || mcqBoxes.length === 0) {
       return true;
@@ -211,6 +294,7 @@
     return true;
   }
 
+  /** Align the option-box overlay with the image canvas. */
   function syncOverlayToCanvas() {
     overlay.style.left = canvas.style.left;
     overlay.style.top = canvas.style.top;
@@ -218,6 +302,11 @@
     overlay.style.height = `${canvas.height}px`;
   }
 
+  /**
+   * Convert an option box to the rounded submission payload shape.
+   * @param {object} box - Option box to serialize.
+   * @returns {object} - Rounded option-box payload.
+   */
   function serialiseBox(box) {
     return {
       label: box.label,
@@ -228,6 +317,10 @@
     };
   }
 
+  /**
+   * Return option boxes in deterministic submission order.
+   * @returns {object[]} - Option boxes sorted by label and position.
+   */
   function getBoxesForSubmission() {
     return [...mcqBoxes].sort((a, b) => {
       const labelOrder = getLabelRank(a.label) - getLabelRank(b.label);
@@ -241,6 +334,7 @@
     });
   }
 
+  /** Serialize the current MCQ box selection into the hidden form field. */
   function updateHiddenInput() {
     if (!isMCQMode()) {
       hiddenInput.value = '[]';
@@ -253,6 +347,11 @@
     });
   }
 
+  /**
+   * Sort option boxes from left to right within top-to-bottom rows.
+   * @param {object[]} boxes - Option boxes to sort.
+   * @returns {object[]} - Option boxes in visual reading order.
+   */
   function sortBoxesInReadingOrder(boxes) {
     const sortedByTop = [...boxes].sort((a, b) => {
       if (a.top === b.top) {
@@ -292,6 +391,7 @@
       .flatMap(row => row.boxes.sort((a, b) => a.left - b.left));
   }
 
+  /** Assign option labels according to visual reading order. */
   function autoLabelBoxes() {
     const activeBox = activeBoxIndex >= 0 ? mcqBoxes[activeBoxIndex] : null;
     mcqBoxes = sortBoxesInReadingOrder(mcqBoxes);
@@ -301,11 +401,16 @@
     activeBoxIndex = activeBox ? mcqBoxes.indexOf(activeBox) : activeBoxIndex;
   }
 
+  /**
+   * Return the first label not already assigned to an option box.
+   * @returns {string} - First unused label or the unknown-label marker.
+   */
   function getFirstUnusedLabel() {
     const usedLabels = new Set(mcqBoxes.map(box => box.label));
     return getAllowedLabels().find(label => !usedLabels.has(label)) || '?';
   }
 
+  /** Refresh the active-box label selector and its enabled state. */
   function updateActiveLabelSelect() {
     const activeBox = activeBoxIndex >= 0 ? mcqBoxes[activeBoxIndex] : null;
     activeLabelSelect.replaceChildren();
@@ -322,11 +427,19 @@
       : '';
   }
 
+  /**
+   * Select an option box by array index.
+   * @param {number} index - Index of the option box to activate.
+   */
   function setActiveBox(index) {
     activeBoxIndex = index >= 0 && index < mcqBoxes.length ? index : -1;
     updateActiveLabelSelect();
   }
 
+  /**
+   * Assign a label to the active box and swap an existing duplicate.
+   * @param {string} label - Label to assign to the active box.
+   */
   function setActiveBoxLabel(label) {
     if (activeBoxIndex < 0 || activeBoxIndex >= mcqBoxes.length || !label) {
       return;
@@ -343,6 +456,7 @@
     renderBoxes();
   }
 
+  /** Render all option boxes and synchronize the form payload. */
   function renderBoxes() {
     syncOverlayToCanvas();
     overlay.replaceChildren();
@@ -381,6 +495,10 @@
     updateHiddenInput();
   }
 
+  /**
+   * Begin moving or resizing the selected option box.
+   * @param {PointerEvent} event - Pointer-down event on an option box.
+   */
   function startDraggingBox(event) {
     const boxElement = event.currentTarget;
     setActiveBox(parseInt(boxElement.dataset.index, 10));
@@ -405,6 +523,10 @@
     renderBoxes();
   }
 
+  /**
+   * Apply pointer movement to the active option box.
+   * @param {PointerEvent} event - Pointer-move event for the drag operation.
+   */
   function moveActiveBox(event) {
     if (!dragState || activeBoxIndex < 0) {
       return;
@@ -456,6 +578,7 @@
     renderBoxes();
   }
 
+  /** Finish the current option-box drag operation. */
   function finishDraggingBox() {
     if (!dragState) {
       return;
@@ -467,6 +590,12 @@
     renderBoxes();
   }
 
+  /**
+   * Normalize a detected option box and constrain it to the selection.
+   * @param {object} box - Detected option box from the server.
+   * @param {object} selectedRect - Bounding rectangle for the option box.
+   * @returns {object} - Normalized and constrained option box.
+   */
   function normaliseDetectedBox(box, selectedRect) {
     return clampBoxToSelectedRect({
       label: box.label,
@@ -477,6 +606,7 @@
     }, selectedRect);
   }
 
+  /** Request automatic option-box detection for the selected rectangle. */
   function detectBoxes() {
     if (!isMCQMode()) {
       return;
@@ -527,6 +657,11 @@
       });
   }
 
+  /**
+   * Determine a suitable size for a newly added option box.
+   * @param {object} selectedRect - Bounding rectangle for the new option box.
+   * @returns {object} - Suggested width and height in Plom coordinates.
+   */
   function getDefaultBoxSize(selectedRect) {
     if (mcqBoxes.length > 0) {
       const widths = mcqBoxes
@@ -547,6 +682,7 @@
     return { width: size, height: size };
   }
 
+  /** Add a new option box within the selected rectangle. */
   function addBox() {
     if (!isMCQMode()) {
       return;
@@ -589,6 +725,7 @@
     setStatus(`${mcqBoxes.length} boxes selected.`, false);
   }
 
+  /** Remove the active option box. */
   function removeActiveBox() {
     if (activeBoxIndex < 0 || activeBoxIndex >= mcqBoxes.length) {
       return;
@@ -599,6 +736,7 @@
     setStatus(`${mcqBoxes.length} boxes selected.`, false);
   }
 
+  /** Remove all option boxes. */
   function clearBoxes() {
     mcqBoxes = [];
     setActiveBox(-1);
@@ -606,6 +744,7 @@
     setStatus('No boxes selected.', false);
   }
 
+  /** Toggle MCQ controls and reset state when MCQ mode is disabled. */
   function updateMCQMode() {
     const enabled = isMCQMode();
     controls.classList.toggle('d-none', !enabled);
