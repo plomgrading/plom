@@ -67,21 +67,24 @@ def test_stamp_QRs(tmp_path) -> None:
         d.save(out)
 
     # Now let's try to read it back, some overlap with test_qr_reads
-    files = processFileToBitmaps(out, tmp_path)
+    pg_files = processFileToBitmaps(out, tmp_path)
 
-    d = QRextract_legacy(files[0], write_to_file=False)
+    # page without QR codes
+    d = QRextract_legacy(pg_files[0], write_to_file=False)
     assert d is not None
     for _, v in d.items():
         assert len(v) == 0
 
-    d = QRextract_legacy(files[2], write_to_file=False)
+    p = 3
+    d = QRextract_legacy(pg_files[p - 1], write_to_file=False)
     assert d is not None
     assert not d["NW"]
     assert d["NE"] == ["00006003011123456"]
     assert d["SW"] == ["00006003013123456"]
     assert d["SE"] == ["00006003014123456"]
 
-    d = QRextract_legacy(files[3], write_to_file=False)
+    p = 4
+    d = QRextract_legacy(pg_files[p - 1], write_to_file=False)
     assert d is not None
     assert not d["NE"]
     assert d["NW"] == ["00006004012123456"]

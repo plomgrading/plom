@@ -64,7 +64,7 @@ def findCorner(qr, dim):
 def QRextract(
     image, *, try_harder: bool = True, rotation: int = 0
 ) -> dict[str, dict[str, Any]]:
-    """Decode and return QR codes in an image.
+    """Decode the QR codes in an image.
 
     Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
