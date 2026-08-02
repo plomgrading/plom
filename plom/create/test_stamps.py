@@ -12,7 +12,7 @@ from plom.common.spec_verifier import SpecVerifier
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import make_PDF
-from plom.scan import QRextract_legacy
+from plom.scan import QRextract, QRextract_legacy
 from plom.scan import processFileToBitmaps
 
 
@@ -90,6 +90,24 @@ def test_stamp_QRs(tmp_path) -> None:
     assert d["NW"] == ["00006004012123456"]
     assert d["SW"] == ["00006004013123456"]
     assert d["SE"] == ["00006004014123456"]
+
+
+def test_stamp_QRs_version_zero_means_ignore_version(tmp_path) -> None:
+    assert buildDemoSourceFiles(basedir=tmp_path)
+    with pymupdf.open(tmp_path / "sourceVersions/version1.pdf") as d:
+        p = 3
+        qr = create_QR_codes(6, p, 0, "123456", tmp_path)
+        pdf_page_add_labels_QRs(d[p - 1], "foo", "foo", qr, odd=bool(p % 2))
+        out = tmp_path / "debug_QR_codes.pdf"
+        d.save(out)
+
+    pg_files = processFileToBitmaps(out, tmp_path)
+
+    d = QRextract(pg_files[p - 1])
+    assert not d["NW"]
+    assert d["NE"]["tpv_signature"] == "00006003001123456"
+    assert d["SW"]["tpv_signature"] == "00006003003123456"
+    assert d["SE"]["tpv_signature"] == "00006003004123456"
 
 
 def test_qr_stamp_all_pages(tmp_path) -> None:
