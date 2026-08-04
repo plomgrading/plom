@@ -43,15 +43,19 @@ class QRService:
         extra_imgs = []  # extra-page
         scrap_imgs = []  # scrap-page
         bsep_imgs = []  # bundle-separator-page
-        # keep a dict of tpv to image_pk of known-images. is {tpv: [pk1, pk2, pk3,...]}
-        # if a given tpv shows up in a single image, then this is a normal "known" page
-        # if a given tpv corresponds to multiple images then that is
+        # keep a dict of (paper, pg) to image id of known-images:
+        #   {(paper, pg): [id1, id2, id3,...]}
+        # if a given (paper, pg) shows up in a single image, then this
+        # is a normal "known" page.
+        # if a given (paper, pg) corresponds to multiple images then that is
         # an "internal collision", that is, we have multiple copies of
-        # a given page (as encoded by its tpv) inside the current bundle.
+        # a given page inside the current bundle.
         known_imgs: dict[str, list[int]] = {}
         # for each known image, also keep its bundle-order - we use that to create useful
         # error messages in case of internal collisions.
         img_bundle_order = {}
+        # yuck, see comments in StagingImage "version" field
+        img_version = {}
 
         if not bundle.has_qr_codes:
             raise ValueError("This bundle has not had its QR codes read")
@@ -100,11 +104,13 @@ class QRService:
                 else:  # a normal qr-coded page
                     # if not seen before then store as **list** [img.pk]
                     # if has been seen before then append to that list.
-                    known_imgs.setdefault(tpv, []).append(img.pk)
+                    pn, pg, ver = parse_paper_page_version(tpv)
+                    known_imgs.setdefault((pn, pg), []).append(img.pk)
                     img_bundle_order[img.pk] = img.bundle_order
+                    img_version[img.pk] = ver
 
-        # check for internal collisions: tpv with 2 or more images
-        for tpv, colliding in known_imgs.items():
+        # check for internal collisions: (pn, pg) with 2 or more images
+        for colliding in known_imgs.values():
             if len(colliding) == 1:  # no collisions
                 continue
             # this tpv corresponds to multiple images: record "error images"
@@ -131,18 +137,19 @@ class QRService:
 
         with transaction.atomic():
             # save all the known images that are not collisions.
-            for tpv, img_list in known_imgs.items():
+            for key, img_list in known_imgs.items():
                 if len(img_list) > 1:
                     # this indicates a collision, and so handled by error-images
                     continue
                 img = StagingImage.objects.get(pk=img_list[0])
-                papernum, page_number, version = parse_paper_page_version(tpv)
+                papernum, pagenum = key
                 img.paper_number = papernum
-                img.page_number = page_number
+                img.page_number = pagenum
+                version = img_version[img.pk]
                 img.version = version
                 img.image_type = StagingImage.KNOWN
                 img.history += (
-                    f"; Made known ({papernum}, {page_number}, {version})"
+                    f"; Made known ({papernum}, {pagenum}, {version})"
                     " based on QR codes"
                 )
                 img.save()
