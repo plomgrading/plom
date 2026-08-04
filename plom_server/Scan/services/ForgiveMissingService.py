@@ -206,6 +206,7 @@ def get_substitute_image(page_number: int, version: int) -> Image:
             the substitution bundle has not been built yet.
         ObjectDoesNotExist: probably Image.DoesNotExist if the page number
             or version are out of range, TODO: but this is not tested.
+        NotImplementedError: version 0 shenanigans are definitely not supported.
     """
     try:
         bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
@@ -216,6 +217,10 @@ def get_substitute_image(page_number: int, version: int) -> Image:
         raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
+    if not version >= 1:
+        raise NotImplementedError(
+            "Substitution does not support 'version 0', such as mixed-version pages"
+        )
     bundle_order = n_pages * version + page_number
     return Image.objects.select_related("baseimage").get(
         bundle=bundle_obj, bundle_order=bundle_order

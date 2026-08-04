@@ -302,13 +302,20 @@ class QRService:
                 " - was a page from a different assessment uploaded?"
             )
 
+        # a zero version on the page indicates not recorded
         v_on_page = qr_info["page_info"]["version_num"]
-        if v_on_page != 0:
-            # a zero version indicates not recorded (so no checking needed)
-            # but if there is a version, it had better match the database
-            v_in_db = PaperInfoService.get_version_from_paper_page(
-                qr_info["page_info"]["paper_id"], qr_info["page_info"]["page_num"]
+        # a zero version response from this function indicates multi-version page
+        v_in_db = PaperInfoService.get_version_from_paper_page(
+            qr_info["page_info"]["paper_id"], qr_info["page_info"]["page_num"]
+        )
+        if v_in_db == 0 and v_on_page != 0:
+            # subtle: DB knows this is multiversions: QR must be consistent
+            raise ValueError(
+                f"Version of paper/page in qr-code = {v_on_page}"
+                f" does not match version in database = {v_in_db}"
             )
+        if v_on_page != 0:
+            # non-zero version on the page had better match the database
             if v_on_page != v_in_db:
                 raise ValueError(
                     f"Version of paper/page in qr-code = {v_on_page}"
