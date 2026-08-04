@@ -59,13 +59,13 @@ class GetIDPredictions(APIView):
         """Add or change ID predictions."""
         data = request.data
         user = request.user
-        for paper_num in data:
+        for prediction in data:
             IDReaderService.add_or_change_ID_prediction(
                 user,
-                int(paper_num),
-                data[paper_num]["student_id"],
-                data[paper_num]["certainty"],
-                data[paper_num]["predictor"],
+                prediction["papernum"],
+                prediction["student_id"],
+                prediction["certainty"],
+                prediction["predictor"],
             )
         return Response(status=status.HTTP_200_OK)
 
