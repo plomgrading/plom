@@ -45,7 +45,14 @@
                             <ul class="mb-0">
                                 <li>paper: {{ current_page.info.paper_number }}</li>
                                 <li>page: {{ current_page.info.page_number }}</li>
-                                <li>version: {{ current_page.info.version }}</li>
+                                <li>
+                                    version:
+                                    {% if current_page.info.version %}
+                                        {{ current_page.info.version }}
+                                    {% else %}
+                                        no data
+                                    {% endif %}
+                                </li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'extra' %}
@@ -327,7 +334,7 @@
                                                 </div>
                                             </div>
                                             <hr>
-                                            <fieldset x-data="{ question_all_dnm_selection: 'choose_q' }"" class="mt-2">
+                                            <fieldset x-data="{ question_all_dnm_selection: 'choose_q' }" class="mt-2">
                                                 <p class="mb-1 fw-bold">Question(s):</p>
                                                 <div class="form-check">
                                                     <input name="question_all_dnm"

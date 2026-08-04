@@ -84,7 +84,7 @@ class PaperInfoService:
         .. warning::
             This is a bit poorly defined; if two questions share a page
             their versions could (theoretically) differ.  Our tooling
-            does not allow this situation but someone doing something
+            does not create this situation but someone doing something
             exotic creating their own PDF tests could: they will get
             a NotImplementedError.
 

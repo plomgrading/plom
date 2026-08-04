@@ -261,6 +261,8 @@ class QRService:
         test-specification. Then check that the (paper,page,version)
         triple in the qr-code matches a (paper,page,version) in the
         database - which was determined by the question-version map.
+        A special case is made for version zero in the QR code: this
+        special value means don't check (matches any version in qvmap).
 
         Note that
            * this should only be called after qr-code consistency checks
@@ -294,12 +296,16 @@ class QRService:
             )
 
         v_on_page = qr_info["page_info"]["version_num"]
-        v_in_db = PaperInfoService.get_version_from_paper_page(
-            qr_info["page_info"]["paper_id"], qr_info["page_info"]["page_num"]
-        )
-        if v_on_page != v_in_db:
-            raise ValueError(
-                f"Version of paper/page in qr-code = {v_on_page} does not match version in database = {v_in_db}"
+        if v_on_page != 0:
+            # a zero version indicates not recorded (so no checking needed)
+            # but if there is a version, it had better match the database
+            v_in_db = PaperInfoService.get_version_from_paper_page(
+                qr_info["page_info"]["paper_id"], qr_info["page_info"]["page_num"]
             )
+            if v_on_page != v_in_db:
+                raise ValueError(
+                    f"Version of paper/page in qr-code = {v_on_page}"
+                    f" does not match version in database = {v_in_db}"
+                )
 
         return True

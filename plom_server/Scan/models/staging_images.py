@@ -68,7 +68,13 @@ class StagingImage(models.Model):
         page_number: used by type KNOWN, undefined for other types.  KNOWN
             images *must* have a non-None integer value.
         version: used by type KNOWN, undefined for other types.  KNOWN
-            images *must* have a non-None integer value.
+            images *must* have a non-None integer value, although it can
+            be zero, if the printed page did not encode a version.
+            Note that images don't really have versions, questions do.
+            Maybe somewhat deprecated as this isn't very well-definedf:
+            probably it should be used for *light* things like displaying
+            in a UI, double-checking against the "truth" (from elsewhere
+            in the DB, etc).
         question_idx_list: used by type EXTRA.  Note that the null/None semantics
             of JSON fields are complicated.  If you store a "JSON null" (e.g.,
             ``json.dumps(None)``) in this, its not well-defined what happens so don't
