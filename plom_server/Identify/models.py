@@ -125,6 +125,20 @@ class IDPrediction(models.Model):
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     student_id = models.CharField(null=True, max_length=255)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    # Perhaps "predictor" should be broken up into a name and type?
+    # see comments in #4154.
+    # predictor_name = models.CharField(null=False, max_length=255)
+    # class predictorType(models.TextChoices):
+    #     PLOM_PRENAME = "PRE", _("prename")
+    #     PLOM_ML = "MLM", _("ML model")
+    #     OTHER = "OTH", _("other")
+
+    # predictor = models.CharField(
+    #     null=False,
+    #     max_length=3,
+    #     choices=predictorType,
+    # )
+
     predictor = models.CharField(null=False, max_length=255)
     certainty = models.FloatField(null=False, default=0.0)
 
