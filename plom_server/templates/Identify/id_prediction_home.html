@@ -73,6 +73,7 @@
                                 <th>Certainty</th>
                                 <th>Best Guess (Raw)</th>
                                 <th>Certainty</th>
+                                <th>Other Predictions</th>
                             </tr>
                             {% for pn, dat in predictions.items %}
                                 <!-- Note: table-xxx styling "most likely won’t see" dark mode until
@@ -87,6 +88,7 @@
                                                     class="btn btn-outline-success">view</button>
                                         {% endif %}
                                     </td>
+                                    <!-- TODO: Do more in the service/view, not the template -->
                                     {% if 'identified' in dat %}
                                         <td>{{ dat.identified }}</td>
                                     {% else %}
@@ -118,6 +120,20 @@
                                         <td></td>
                                         <td></td>
                                     {% endif %}
+                                    <td>
+                                        {% for name, prediction_data in dat.items %}
+                                            {% if name == 'identified' %}
+                                            {% elif name == 'prename' %}
+                                            {% elif name == 'MLLAP' %}
+                                            {% elif name == 'MLGreedy' %}
+                                            {% elif name == 'MLBestGuess' %}
+                                            {% elif name == 'image_pk' %}
+                                            {% else %}
+                                                {{ name }}: {{ prediction_data.0 }} ({{ prediction_data.1 }})
+                                                <br />
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </table>
