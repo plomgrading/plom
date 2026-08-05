@@ -317,7 +317,7 @@ class ImageBundleService:
             ``[[StagingImage1.pk, StagingImage2.pk, StagingImage3.pk], ...]``
         """
         # temporary dict of (papernum, pagenum) to list of known-images
-        known_imgs: dict[str, list[int]] = {}
+        known_imgs: dict[tuple[int, int], list[int]] = {}
         # if that list is 2 or more then that it is an internal collision.
         collisions = []
 
