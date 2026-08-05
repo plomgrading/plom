@@ -31,6 +31,10 @@ class TestForgiveMissingService(TestCase):
         with self.assertRaisesRegex(ValueError, "Paper 7 does not exist"):
             ForgiveMissingService.forgive_missing_fixed_page(user, 7, 4)
 
+    def test_subs_bundle_get_non_existant_page(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Page 4567.*does not exist"):
+            ForgiveMissingService.get_substitute_page_info(5, 4567)
+
     def test_subs_bundle_no_bundle_erase(self) -> None:
         ForgiveMissingService.erase_all_substitute_images_and_their_bundle()
 
