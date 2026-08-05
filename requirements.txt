@@ -43,7 +43,9 @@ packaging==26.2
 pandas==2.3.3
 passlib==1.7.4
 Pillow==12.3.0
-plom-common==0.21.3
+# TODO: put back to `main` soon
+# TODO: put back to a pin before 0.22.0 release
+plom-common @ git+https://gitlab.com/plom/plom-common.git@ver0
 psycopg[binary]==3.3.4
 pydyf==0.12.1
 pymupdf==1.27.2.2  # waiting on https://gitlab.com/plom/plom/-/work_items/4260
