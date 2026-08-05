@@ -88,6 +88,7 @@ class QRServiceTest(TestCase):
             parsed_qr={
                 "NE": {
                     "tpv": "0000100301",
+                    "orientation": -10,
                     "page_type": "plom_qr",
                     "page_info": {
                         "public_code": "123456",
@@ -197,6 +198,7 @@ class QRServiceTest(TestCase):
         self.assertEqual(img.paper_number, 1)
         self.assertEqual(img.page_number, 3)
         self.assertEqual(img.version, 1)
+        self.assertEqual(img.parsed_qr["NE"]["orientation"], -10)
 
         # Extra -> EXTRA
         img = StagingImage.objects.get(pk=self.img_extra.pk)

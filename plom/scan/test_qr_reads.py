@@ -2,6 +2,7 @@
 # Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2026 Jax Lim
 
 import json
 from importlib import resources
@@ -23,14 +24,18 @@ def test_qr_reads_from_image() -> None:
     assert q["NW"]["tpv_signature"] == "00002806012823730"
     assert relative_error(q["NW"]["x"], 126) < 0.01
     assert relative_error(q["NW"]["y"], 139) < 0.01
+    assert q["NW"]["orientation"] == 0
     assert q["SE"]["tpv_signature"] == "00002806014823730"
     assert relative_error(q["SE"]["x"], 1419) < 0.001
     assert relative_error(q["SE"]["y"], 1861) < 0.001
+    assert q["SE"]["orientation"] == 0
     assert q["SW"]["tpv_signature"] == "00002806013823730"
     assert relative_error(q["SW"]["x"], 126) < 0.01
     assert relative_error(q["SW"]["y"], 1861) < 0.001
+    assert q["SW"]["orientation"] == 0
 
 
+#Do I need to add a test here
 def test_qr_reads_from_image_legacy() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     p = QRextract_legacy(im, write_to_file=False)
@@ -49,12 +54,15 @@ def test_qr_reads_slight_rotate() -> None:
     assert q["NW"]["tpv_signature"] == "00002806012823730"
     assert relative_error(q["NW"]["x"], 148) < 0.01
     assert relative_error(q["NW"]["y"], 384) < 0.01
+    assert q["NW"]["orientation"] == -10
     assert q["SE"]["tpv_signature"] == "00002806014823730"
     assert relative_error(q["SE"]["x"], 1720) < 0.001
     assert relative_error(q["SE"]["y"], 1856) < 0.001
+    assert q["SE"]["orientation"] == -10
     assert q["SW"]["tpv_signature"] == "00002806013823730"
     assert relative_error(q["SW"]["x"], 447) < 0.01
     assert relative_error(q["SW"]["y"], 2080) < 0.001
+    assert q["SW"]["orientation"] == -10
 
 
 def test_qr_reads_slight_rotate_legacy() -> None:
@@ -82,7 +90,9 @@ def test_qr_reads_upside_down() -> None:
     assert q["NE"]["tpv_signature"] == "00002806013823730"
     assert relative_error(q["NE"]["x"], 1420) < 0.001
     assert relative_error(q["NE"]["y"], 139) < 0.01
-
+    assert q["SE"]["orientation"] == 180
+    assert q["NW"]["orientation"] == 180
+    assert q["NE"]["orientation"] == 180
 
 def test_qr_reads_upside_down_legacy() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")

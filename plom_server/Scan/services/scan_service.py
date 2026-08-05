@@ -624,6 +624,8 @@ class ScanService:
 
         groupings = {}
         # TODO - simplify this loop using enumerate(list) or similar.
+        # Should be noted here that the outerloop in the following line always iterates once (see line #2114)
+        # since we are passing a list of a single dictionary to parse_qr_code
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
                 # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVOCCCCCC" qr-string
@@ -633,10 +635,12 @@ class ScanService:
                     continue
                 x_coord = list_qr_codes[page][quadrant].get("x")
                 y_coord = list_qr_codes[page][quadrant].get("y")
+                orientation = list_qr_codes[page][quadrant].get("orientation")
                 qr_code_dict = {
                     "raw_qr_string": raw_qr_string,
                     "x_coord": x_coord,
                     "y_coord": y_coord,
+                    "orientation": orientation  
                 }
 
                 if isValidTPV(raw_qr_string):
