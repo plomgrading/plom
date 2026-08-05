@@ -124,8 +124,6 @@ def get_parser():
         help="Make an extra pages PDF",
         description="""
             Make a extra-paper PDF for when anyone needs more space.
-            NOTE: the resulting file is NOT COMPATIBLE with legacy
-            servers (including those in common use in 2023).
         """,
     )
 
