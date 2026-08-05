@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
@@ -51,7 +51,7 @@ class MarkingTaskTestsWithConfig(TestCase):
     @config_test(
         {
             "test_spec": "tiny_spec.toml",
-            "qvmap": "tiny_qvmap.toml",
+            "qvmap": "tiny_qvmap.csv",
             "auto_init_tasks": True,
         }
     )
