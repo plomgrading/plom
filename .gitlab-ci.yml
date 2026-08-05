@@ -42,7 +42,7 @@ variables:
   PLOM_NO_SSL_VERIFY: 1
   QT_QPA_PLATFORM: offscreen
   PLOMCLIENT_BRANCHNAME: main
-  PLOMCOMMON_BRANCHNAME: ver0
+  PLOMCOMMON_BRANCHNAME: ver0  # TODO: Temporary!  back to main once ver0 merged in plom-common
 
 stages:
   - static_analysis
