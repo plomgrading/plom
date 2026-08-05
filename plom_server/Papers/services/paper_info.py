@@ -83,7 +83,7 @@ class PaperInfoService:
 
         .. warning::
             This is a bit poorly defined; if two questions share a page
-            their versions could (theoretically) differ.  Our tooling
+            their versions are allowed to differ.  Our tooling
             does not create this situation but someone doing something
             exotic creating their own PDF tests could: they will get a
             return value of zero.

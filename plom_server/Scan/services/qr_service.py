@@ -269,7 +269,7 @@ class QRService:
         triple in the qr-code matches a (paper,page,version) in the
         database - which was determined by the question-version map.
         A special case is made for version zero in the QR code: this
-        special value means don't check (matches any version in qvmap).
+        special value matches any version in qvmap.
 
         Note that
            * this should only be called after qr-code consistency checks
