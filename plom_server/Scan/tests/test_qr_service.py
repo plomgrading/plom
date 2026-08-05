@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Jax Lim
+
 
 from io import BytesIO
 

@@ -124,10 +124,10 @@ def QRextract(
         if cnr in cornerQR.keys():
             cornerQR[cnr].update(
                 {
-                    "tpv_signature": qr.text, 
-                    "x": x_coord, 
-                    "y": y_coord, 
-                    "orientation": qr.orientation
+                    "tpv_signature": qr.text,
+                    "x": x_coord,
+                    "y": y_coord,
+                    "orientation": qr.orientation,
                 }
             )
 
@@ -145,7 +145,7 @@ def QRextract(
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
-                #Why do we first assign it to 's' first? 
+                # Why do we first assign it to 's' first?
                 s = qr.text
                 prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
                 if not prev_tpv_signature:
@@ -155,11 +155,11 @@ def QRextract(
                     #     "not found at original size"
                     # )
                     cornerQR[cnr].update(
-                        {   
-                            "tpv_signature": s, 
-                            "x": x_coord, 
+                        {
+                            "tpv_signature": s,
+                            "x": x_coord,
                             "y": y_coord,
-                            "orientation": qr.orientation
+                            "orientation": qr.orientation,
                         }
                     )
                 elif s == prev_tpv_signature:

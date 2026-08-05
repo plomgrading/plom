@@ -35,7 +35,7 @@ def test_qr_reads_from_image() -> None:
     assert q["SW"]["orientation"] == 0
 
 
-#Do I need to add a test here
+# Do I need to add a test here
 def test_qr_reads_from_image_legacy() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     p = QRextract_legacy(im, write_to_file=False)
@@ -93,6 +93,7 @@ def test_qr_reads_upside_down() -> None:
     assert q["SE"]["orientation"] == 180
     assert q["NW"]["orientation"] == 180
     assert q["NE"]["orientation"] == 180
+
 
 def test_qr_reads_upside_down_legacy() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
