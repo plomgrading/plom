@@ -32,12 +32,10 @@ djangorestframework==3.17.2
 exif==1.6.1
 file-magic==0.4.1
 gunicorn==26.0.0
-huggingface-hub==1.17.0
 imutils==0.5.4
 matplotlib==3.10.9
 model-bakery==1.24.0
 numpy==2.4.6
-onnxruntime==1.26.0
 opencv-python-headless==4.13.0.92
 packaging==26.3
 pandas==2.3.3
@@ -72,4 +70,6 @@ zxing-cpp==2.3.0
 # django-silk==5.4.3  # for hunting down inefficient db queries
 
 # plom_ml
-transformers==5.5.4
+huggingface-hub==1.26.0
+onnxruntime==1.28.0
+transformers==5.14.1
