@@ -50,7 +50,7 @@ class QRService:
         # if a given (paper, pg) corresponds to multiple images then that is
         # an "internal collision", that is, we have multiple copies of
         # a given page inside the current bundle.
-        known_imgs: dict[str, list[int]] = {}
+        known_imgs: dict[tuple[int, int], list[int]] = {}
         # for each known image, also keep its bundle-order - we use that to create useful
         # error messages in case of internal collisions.
         img_bundle_order = {}
