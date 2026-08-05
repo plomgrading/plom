@@ -52,7 +52,7 @@ class GetIDPredictions(APIView):
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "identifier" not in group_list:
             return _error_response(
-                'Only users in the "manager" group can add predictions.',
+                'Only users in the "identifier" group can fetch predictions.',
                 status.HTTP_403_FORBIDDEN,
             )
         if not predictor:
