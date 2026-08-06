@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -101,9 +102,43 @@ class PaperIDAction(models.Model):
 
 
 class IDPrediction(models.Model):
+    """A prediction for the student ID on a particular Paper.
+
+    As of Aug. 4th 2026, "predictor" refers to a set of strings the server recognizes:
+     - prename
+     - MLGreedy
+     - MLLAP
+     - MLBestGuess
+    The database will technically accept anything, but behaviour is undefined if you
+    submit a predictor other than the options above.
+
+    paper: The paper which the prediction is for.
+    student_id: The prediction.
+    user: Who generated this id (or started the sequence of events).
+    predictor: A name associated with the prediction. Typically this is the name
+        of the model used to generate the prediction, but it only needs to
+        uniquely identify the prediction among others for the same paper.
+    certainty: The certainty in the machine learning model's prediction.
+        Roughly this is should be the probability that the predicton is correct.
+    """
+
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     student_id = models.CharField(null=True, max_length=255)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    # Perhaps "predictor" should be broken up into a name and type?
+    # see comments in #4154.
+    # predictor_name = models.CharField(null=False, max_length=255)
+    # class predictorType(models.TextChoices):
+    #     PLOM_PRENAME = "PRE", _("prename")
+    #     PLOM_ML = "MLM", _("ML model")
+    #     OTHER = "OTH", _("other")
+
+    # predictor = models.CharField(
+    #     null=False,
+    #     max_length=3,
+    #     choices=predictorType,
+    # )
+
     predictor = models.CharField(null=False, max_length=255)
     certainty = models.FloatField(null=False, default=0.0)
 

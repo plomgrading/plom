@@ -49,6 +49,12 @@ class GetIDPredictions(APIView):
             if returning all ID predictions, or a dict of dicts if returning
             only predictions for a single predictor.
         """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "identifier" not in group_list:
+            return _error_response(
+                'Only users in the "identifier" group can fetch predictions.',
+                status.HTTP_403_FORBIDDEN,
+            )
         if not predictor:
             predictions = IDReaderService.get_ID_predictions()
         else:
@@ -57,20 +63,32 @@ class GetIDPredictions(APIView):
 
     def put(self, request):
         """Add or change ID predictions."""
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can add predictions.',
+                status.HTTP_403_FORBIDDEN,
+            )
         data = request.data
         user = request.user
-        for paper_num in data:
+        for prediction in data:
             IDReaderService.add_or_change_ID_prediction(
                 user,
-                int(paper_num),
-                data[paper_num]["student_id"],
-                data[paper_num]["certainty"],
-                data[paper_num]["predictor"],
+                prediction["papernum"],
+                prediction["student_id"],
+                prediction["certainty"],
+                prediction["predictor"],
             )
         return Response(status=status.HTTP_200_OK)
 
     def delete(self, request: Request, *, predictor: str | None = None) -> Response:
         """Remove ID predictions from either a particular predictor or all ML predictors."""
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can delete predictions.',
+                status.HTTP_403_FORBIDDEN,
+            )
         if predictor:
             try:
                 IDReaderService.delete_ID_predictions(predictor)
