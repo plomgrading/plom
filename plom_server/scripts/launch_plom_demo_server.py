@@ -417,9 +417,6 @@ def populate_the_database(length="normal"):
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
     )
-    # run_django_manage_command(
-    #    f"plom_qvmap build_db -n {production[length]} --first-paper 1"
-    # )
     run_plom_cli_command(f"set-pqvmap -n {production[length]} -i 1")
     print("Paper database is now populated")
 
@@ -437,7 +434,6 @@ def depopulate_the_database():
     Note - runs in foreground; blocks until completed.
     """
     print("Clearing the database and qv-map")
-    # run_django_manage_command("plom_qvmap clear")
     run_plom_cli_command("delete-pqvmap")
 
 
