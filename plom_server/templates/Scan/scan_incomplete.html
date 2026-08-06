@@ -60,7 +60,7 @@
                                                     {% for mp in pages.mobile|dictsort:"question_idx" %}
                                                         <button hx-get="{% url 'pushed_img_wrap' 'mobile' mp.page_pk %}"
                                                                 hx-target="#incompleteImageHere"
-                                                                hx-replace="incompletInnerHTML"
+                                                                hx-replace="InnerHTML"
                                                                 class="btn btn-outline-info">
                                                             {{ mp.page_label }}
                                                         </button>
