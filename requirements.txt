@@ -20,7 +20,7 @@
 arrow==1.4.0
 canvasapi==3.4.0
 cryptography==48.0.1  # 49 breaks plom-client macOS x86_64, plom-client Issue #5139
-django==6.0
+django==6.0.8
 django-braces==1.17.0
 django-filter==26.1
 django-htmx==1.28.0
@@ -32,12 +32,10 @@ djangorestframework==3.17.2
 exif==1.6.1
 file-magic==0.4.1
 gunicorn==26.0.0
-huggingface-hub==1.17.0
 imutils==0.5.4
 matplotlib==3.10.9
 model-bakery==1.24.0
 numpy==2.4.6
-onnxruntime==1.26.0
 opencv-python-headless==4.13.0.92
 packaging==26.3
 pandas==2.3.3
@@ -65,11 +63,13 @@ urllib3==2.7.0
 weasyprint==69.0
 whitenoise==6.12.0
 zipfly==6.0.5
-zxing-cpp==2.3.0
+zxing-cpp==3.1.1
 
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems
 # django-silk==5.4.3  # for hunting down inefficient db queries
 
 # plom_ml
-transformers==5.5.4
+huggingface-hub==1.26.0
+onnxruntime==1.28.0
+transformers==5.14.1
