@@ -191,6 +191,9 @@ class TestForgiveServiceSharedPagesMixedVersions(TestCase):
         ForgiveMissingService.create_system_bundle_of_substitute_pages()
         # paper 1 pg 3 has version 1 for all 3 questions
         ForgiveMissingService.get_substitute_page_info(1, 3)
-        with self.assertRaisesRegex(NotImplementedError, "version 0"):
-            # but paper 4 pg 3 has mixed versions
-            ForgiveMissingService.get_substitute_page_info(4, 3)
+        # but paper 4 pg 3 has mixed versions, still works
+        info = ForgiveMissingService.get_substitute_page_info(4, 3)
+        # confirm the substitute image is the generic one
+        img_id = info["substitute_image_pk"]
+        img = ForgiveMissingService.get_generic_substitute_image()
+        self.assertEqual(img_id, img.id)

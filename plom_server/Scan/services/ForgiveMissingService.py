@@ -245,16 +245,23 @@ def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
         )
 
 
-def get_substitute_image(page_number: int, version: int) -> Image:
+def get_substitute_image(page_number: int, version: int | None = None) -> Image:
     """Return the substitute Image-object for the given page/version.
+
+    Args:
+        page_number: which page, indexed from 1.
+        version: if 0 or None or omitted, return the generic substitute,
+            otherwise a page-and-version specific image.
 
     Raises:
         ObjectDoesNotExist: Specifically ``Bundle.DoesNotExist`` if the
             the substitution bundle has not been built yet.
         ObjectDoesNotExist: probably Image.DoesNotExist if the page number
             or version are out of range, TODO: but this is not tested.
-        NotImplementedError: version 0 shenanigans are definitely not supported.
     """
+    if not version:
+        return get_generic_substitute_image()
+
     try:
         bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
     except Bundle.DoesNotExist as e:
@@ -264,13 +271,20 @@ def get_substitute_image(page_number: int, version: int) -> Image:
         raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
 
     n_pages = SpecificationService.get_n_pages()
-    if not version >= 1:
-        raise NotImplementedError(
-            "Substitution does not support 'version 0', such as mixed-version pages"
-        )
     bundle_order = n_pages * version + page_number
     return Image.objects.select_related("baseimage").get(
         bundle=bundle_obj, bundle_order=bundle_order
+    )
+
+
+def get_generic_substitute_image() -> Image:
+    """Return the generic substitute Image-object appropriate for any page."""
+    try:
+        bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+    except Bundle.DoesNotExist as e:
+        raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
+    return Image.objects.select_related("baseimage").get(
+        bundle=bundle_obj, bundle_order=0
     )
 
 
