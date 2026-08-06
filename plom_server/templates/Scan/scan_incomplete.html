@@ -19,9 +19,9 @@
     </div>
     <div class="card my-2">
         <div class="card-body">
-            <div class="row">
+            <div>
+                <h5>Incomplete papers: {{ number_of_incomplete_papers }}</h5>
                 <div class="row">
-                    <h5>Incomplete papers: {{ number_of_incomplete_papers }}</h5>
                     <div class="col">
                         <div class="card">
                             <div class="card-body">
@@ -60,7 +60,7 @@
                                                     {% for mp in pages.mobile|dictsort:"question_idx" %}
                                                         <button hx-get="{% url 'pushed_img_wrap' 'mobile' mp.page_pk %}"
                                                                 hx-target="#incompleteImageHere"
-                                                                hx-replace="incompletInnerHTML"
+                                                                hx-replace="InnerHTML"
                                                                 class="btn btn-outline-info">
                                                             {{ mp.page_label }}
                                                         </button>
@@ -73,10 +73,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col p-2 border" id="pushedImageFragment">
-                        <h6>Page image</h6>
-                        <div class="p-2"
-                             style="justify-content: center;
+                    <div class="col p-3 me-2 border rounded">
+                        <div style="justify-content: center;
                                     display:flex;
                                     align-items:center"
                              id="incompleteImageHere">
