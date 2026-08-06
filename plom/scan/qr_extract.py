@@ -103,11 +103,7 @@ def QRextract(
     # Otherwise, zxing-cpp might hide error messages, Issue #2597
     image.load()
 
-    try:
-        micro = BarcodeFormat.MicroQRCode
-    except AttributeError:
-        # workaround github.com/zxing-cpp/zxing-cpp/issues/512
-        micro = BarcodeFormat.MircoQRCode
+    micro = BarcodeFormat.MicroQRCode
 
     qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
     for qr in qrlist:
