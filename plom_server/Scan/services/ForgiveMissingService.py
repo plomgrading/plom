@@ -61,6 +61,89 @@ def create_system_bundle_of_substitute_pages() -> bool:
     return True
 
 
+def _put_stuff_on_page(pagenum: int, the_page: pymupdf.Page, the_rect):
+    print(type(the_rect))
+    pns_length = pymupdf.get_text_length(
+        page_not_submitted_text, fontsize=font_size_for_forgiven_blurb
+    )
+    text_start = (
+        (the_rect.width - pns_length) // 2,
+        the_rect.height // 10 + font_size_for_forgiven_blurb,
+    )
+    text_box = pymupdf.Rect(
+        text_start[0] - 8,
+        text_start[1] - font_size_for_forgiven_blurb,
+        text_start[0] + 8 + pns_length,
+        text_start[1] + font_size_for_forgiven_blurb * 0.3,
+    )
+    the_page.draw_rect(
+        text_box,
+        width=0.5,
+        color=(1, 1, 1),
+        fill=(1, 1, 1),
+        radius=0.02,
+        fill_opacity=0.75,
+    )
+    the_page.insert_text(
+        text_start,
+        page_not_submitted_text,
+        fontsize=font_size_for_forgiven_blurb,
+        color=(1, 0, 0),
+    )
+    text_start = (
+        (the_rect.width - pns_length) // 2,
+        9 * the_rect.height // 10 + font_size_for_forgiven_blurb,
+    )
+    text_box = pymupdf.Rect(
+        text_start[0] - 8,
+        text_start[1] - font_size_for_forgiven_blurb,
+        text_start[0] + 8 + pns_length,
+        text_start[1] + font_size_for_forgiven_blurb * 0.3,
+    )
+    the_page.draw_rect(
+        text_box,
+        width=0.5,
+        color=(1, 1, 1),
+        fill=(1, 1, 1),
+        radius=0.02,
+        fill_opacity=0.75,
+    )
+    the_page.insert_text(
+        text_start,
+        page_not_submitted_text,
+        fontsize=font_size_for_forgiven_blurb,
+        color=(1, 0, 0),
+    )
+    text_blob = f"Substitute Page {pagenum}"
+    text_blob_length = pymupdf.get_text_length(
+        text_blob, fontsize=font_size_for_forgiven_blurb
+    )
+    text_start = (
+        (the_rect.width - text_blob_length) // 2,
+        the_rect.height // 2,
+    )
+    text_box = pymupdf.Rect(
+        text_start[0] - 8,
+        text_start[1] - font_size_for_forgiven_blurb,
+        text_start[0] + 8 + text_blob_length,
+        text_start[1] + font_size_for_forgiven_blurb * 0.3,
+    )
+    the_page.draw_rect(
+        text_box,
+        width=0.5,
+        color=(1, 1, 1),
+        fill=(1, 1, 1),
+        radius=0.02,
+        fill_opacity=0.75,
+    )
+    the_page.insert_text(
+        text_start,
+        text_blob,
+        fontsize=font_size_for_forgiven_blurb,
+        color=(1, 0, 0),
+    )
+
+
 def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, Any]]:
     """Create all the substitute page pixmaps for missing pages.
 
@@ -74,96 +157,18 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     image_list = []
     for v in version_list:
         doc = pymupdf.Document(stream=SourceService.get_source_as_bytes(v))
-        for pg in page_list:
-            the_page = doc[pg - 1]  # 0-indexed
+        for pagenum in page_list:
+            the_page = doc[pagenum - 1]  # 0-indexed
             the_rect = the_page.rect
-            pns_length = pymupdf.get_text_length(
-                page_not_submitted_text, fontsize=font_size_for_forgiven_blurb
-            )
-            text_start = (
-                (the_rect.width - pns_length) // 2,
-                the_rect.height // 10 + font_size_for_forgiven_blurb,
-            )
-            text_box = pymupdf.Rect(
-                text_start[0] - 8,
-                text_start[1] - font_size_for_forgiven_blurb,
-                text_start[0] + 8 + pns_length,
-                text_start[1] + font_size_for_forgiven_blurb * 0.3,
-            )
-            the_page.draw_rect(
-                text_box,
-                width=0.5,
-                color=(1, 1, 1),
-                fill=(1, 1, 1),
-                radius=0.02,
-                fill_opacity=0.75,
-            )
-            the_page.insert_text(
-                text_start,
-                page_not_submitted_text,
-                fontsize=font_size_for_forgiven_blurb,
-                color=(1, 0, 0),
-            )
-            text_start = (
-                (the_rect.width - pns_length) // 2,
-                9 * the_rect.height // 10 + font_size_for_forgiven_blurb,
-            )
-            text_box = pymupdf.Rect(
-                text_start[0] - 8,
-                text_start[1] - font_size_for_forgiven_blurb,
-                text_start[0] + 8 + pns_length,
-                text_start[1] + font_size_for_forgiven_blurb * 0.3,
-            )
-            the_page.draw_rect(
-                text_box,
-                width=0.5,
-                color=(1, 1, 1),
-                fill=(1, 1, 1),
-                radius=0.02,
-                fill_opacity=0.75,
-            )
-            the_page.insert_text(
-                text_start,
-                page_not_submitted_text,
-                fontsize=font_size_for_forgiven_blurb,
-                color=(1, 0, 0),
-            )
-            text_blob = f"Substitute Page {pg}"
-            text_blob_length = pymupdf.get_text_length(
-                text_blob, fontsize=font_size_for_forgiven_blurb
-            )
-            text_start = (
-                (the_rect.width - text_blob_length) // 2,
-                the_rect.height // 2,
-            )
-            text_box = pymupdf.Rect(
-                text_start[0] - 8,
-                text_start[1] - font_size_for_forgiven_blurb,
-                text_start[0] + 8 + text_blob_length,
-                text_start[1] + font_size_for_forgiven_blurb * 0.3,
-            )
-            the_page.draw_rect(
-                text_box,
-                width=0.5,
-                color=(1, 1, 1),
-                fill=(1, 1, 1),
-                radius=0.02,
-                fill_opacity=0.75,
-            )
-            the_page.insert_text(
-                text_start,
-                text_blob,
-                fontsize=font_size_for_forgiven_blurb,
-                color=(1, 0, 0),
-            )
-            image_name = f"__forgive_v{v}_p{pg}.png"
+            _put_stuff_on_page(pagenum, the_page, the_rect)
+            image_name = f"__forgive_v{v}_p{pagenum}.png"
             image_bytes = the_page.get_pixmap(dpi=200, annots=True).tobytes(
                 output="png"
             )
             image_list.append(
                 {
                     "version": v,
-                    "page_number": pg,
+                    "page_number": pagenum,
                     "name": image_name,
                     "bytes": image_bytes,
                 }
