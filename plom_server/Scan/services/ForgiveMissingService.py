@@ -262,8 +262,8 @@ def get_substitute_image(page_number: int, version: int) -> Image:
         # e.add_note()
         # reraise
         raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
-    # bundle_order = version*number of pages + page_number
-    n_pages = SpecificationService.get_n_pages()  # 1-indexed
+
+    n_pages = SpecificationService.get_n_pages()
     if not version >= 1:
         raise NotImplementedError(
             "Substitution does not support 'version 0', such as mixed-version pages"
