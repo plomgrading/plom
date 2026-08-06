@@ -15,6 +15,7 @@ from django.core.files import File
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
+from plom_server.Base.services import Settings
 from plom_server.Base.models import BaseImage
 from plom_server.Papers.models import Bundle, DiscardPage, Image, FixedPage
 from plom_server.Papers.services import SpecificationService, PaperInfoService
@@ -61,8 +62,9 @@ def create_system_bundle_of_substitute_pages() -> bool:
     return True
 
 
-def _put_stuff_on_page(pagenum: int, the_page: pymupdf.Page, the_rect):
-    print(type(the_rect))
+def _put_stuff_on_page(
+    the_page: pymupdf.Page, the_rect: pymupdf.Rect, pagenum: int | None = None
+):
     pns_length = pymupdf.get_text_length(
         page_not_submitted_text, fontsize=font_size_for_forgiven_blurb
     )
@@ -114,7 +116,10 @@ def _put_stuff_on_page(pagenum: int, the_page: pymupdf.Page, the_rect):
         fontsize=font_size_for_forgiven_blurb,
         color=(1, 0, 0),
     )
-    text_blob = f"Substitute Page {pagenum}"
+    if pagenum is not None:
+        text_blob = f"Substitute Page {pagenum}"
+    else:
+        text_blob = "Generic Substitute Page"
     text_blob_length = pymupdf.get_text_length(
         text_blob, fontsize=font_size_for_forgiven_blurb
     )
@@ -160,7 +165,7 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
         for pagenum in page_list:
             the_page = doc[pagenum - 1]  # 0-indexed
             the_rect = the_page.rect
-            _put_stuff_on_page(pagenum, the_page, the_rect)
+            _put_stuff_on_page(the_page, the_rect, pagenum)
             image_name = f"__forgive_v{v}_p{pagenum}.png"
             image_bytes = the_page.get_pixmap(dpi=200, annots=True).tobytes(
                 output="png"
@@ -176,20 +181,57 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     return image_list
 
 
+def _create_generic_substitute_page_image() -> dict[str, Any]:
+    """Create the substitute page pixmap for missing pages without source underlay.
+
+    Returns:
+        Dict with keys ``name`` (a suggested image file name),
+        ``bytes`` (the bytes of the image, as PNG data).
+    """
+    pdf_doc = pymupdf.Document()
+    page = pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
+    _put_stuff_on_page(page, page.rect)
+    image_name = "__forgive_blank.png"
+    image_bytes = page.get_pixmap(dpi=200, annots=True).tobytes(output="png")
+    return {
+        "name": image_name,
+        "bytes": image_bytes,
+    }
+
+
 def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
     """Create the substitute page images and populate the given bundle with them.
 
-    The system substitute image bundle is populated with a substitute image for
-    each page/version of the assessment. If the assessment has n_pages pages,
-    then the substitute image for page p of version v is created at
-    bundle-order v*n_pages + p.
+    The system substitute image bundle is populated with a generic
+    substitute image that can be used for any missing page.  This is
+    placed in the bundle at bundle-order zero.
+
+    It also creates a particular substitution image for each
+    page/version of the assessment. If the assessment has n_pages
+    pages, then the substitute image for page p of version v is
+    created at bundle-order v*n_pages + p.
     """
+    img = _create_generic_substitute_page_image()
+    image_name = img["name"]
+    image_bytes = img["bytes"]
+    image_hash = hashlib.sha256(image_bytes).hexdigest()
+    image_file = File(BytesIO(image_bytes), name=image_name)
+    bimg = BaseImage.objects.create(image_file=image_file, image_hash=image_hash)
+    Image.objects.create(
+        bundle=sys_sub_bundle_obj,
+        bundle_order=0,
+        original_name=image_name,
+        baseimage=bimg,
+        parsed_qr={},
+        rotation=0,
+    )
+
     n_pages = SpecificationService.get_n_pages()
     image_list = _create_substitute_page_images_for_forgiveness_bundle()
-    for n, img_dat in enumerate(image_list):
-        bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
-        image_name = img_dat["name"]
-        image_bytes = img_dat["bytes"]
+    for n, img in enumerate(image_list):
+        bundle_order = img["version"] * n_pages + img["page_number"]
+        image_name = img["name"]
+        image_bytes = img["bytes"]
         image_hash = hashlib.sha256(image_bytes).hexdigest()
         image_file = File(BytesIO(image_bytes), name=image_name)
         bimg = BaseImage.objects.create(image_file=image_file, image_hash=image_hash)
