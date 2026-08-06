@@ -412,30 +412,33 @@ def upload_demo_classlist(length="normal"):
 
 
 def populate_the_database(length="normal"):
-    """Use 'plom_qvmap' to build a qv-map for the demo and populate the database."""
+    """Build a qv-map for the demo and populate the database."""
     production = {"quick": 35, "normal": 70, "long": 600, "plaid": 1200}
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
     )
-    run_django_manage_command(
-        f"plom_qvmap build_db -n {production[length]} --first-paper 1"
-    )
+    # run_django_manage_command(
+    #    f"plom_qvmap build_db -n {production[length]} --first-paper 1"
+    # )
+    run_plom_cli_command(f"set-pqvmap -n {production[length]} -i 1")
     print("Paper database is now populated")
 
 
 def download_the_qvmap(filepath: Path):
-    """Use 'plom_qvmap' to download the qv-map."""
+    """Download the qv-map."""
     print("Downloading the question-version map")
-    run_django_manage_command(f"plom_qvmap download {filepath}")
+    # run_django_manage_command(f"plom_qvmap download {filepath}")
+    run_plom_cli_command(f"get-pqvmap -o {filepath}")
 
 
 def depopulate_the_database():
-    """Use 'plom_qvmap' to clear the qv-map and database.
+    """Clear the qv-map and database.
 
     Note - runs in foreground; blocks until completed.
     """
     print("Clearing the database and qv-map")
-    run_django_manage_command("plom_qvmap clear")
+    # run_django_manage_command("plom_qvmap clear")
+    run_plom_cli_command("delete-pqvmap")
 
 
 def read_hack_and_resave_qvmap(filepath: Path):
@@ -464,6 +467,7 @@ def read_hack_and_resave_qvmap(filepath: Path):
 def upload_the_qvmap(filepath: Path):
     """Use 'plom_qvmap' to upload the qv-map."""
     print("Uploading the question-version map")
+    # TODO: replace with plom-cli
     run_django_manage_command(f"plom_qvmap upload {filepath}")
 
 
