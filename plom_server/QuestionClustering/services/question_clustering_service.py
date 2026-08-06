@@ -72,6 +72,20 @@ MCQ_MULTIPLE_CLUSTER_ID_OFFSET = 1
 MCQ_AMBIGUOUS_CLUSTER_ID_OFFSET = 2
 
 
+def _pad_box_rect(
+    left: float, top: float, right: float, bottom: float, pad_ratio: float
+) -> dict[str, float]:
+    """Expand a fractional box rect by pad_ratio of its own width/height on each side."""
+    pw = (right - left) * pad_ratio
+    ph = (bottom - top) * pad_ratio
+    return {
+        "left": left - pw,
+        "top": top - ph,
+        "right": right + pw,
+        "bottom": bottom + ph,
+    }
+
+
 class QuestionClusteringJobService:
     """Manage CRUDs of clustering jobs."""
 
@@ -379,13 +393,15 @@ class QuestionClusteringService:
         multiple_cluster_id = len(labels) + MCQ_MULTIPLE_CLUSTER_ID_OFFSET
         ambiguous_cluster_id = len(labels) + MCQ_AMBIGUOUS_CLUSTER_ID_OFFSET
 
+        _ML_CROP_PAD_RATIO = 0.05
         box_rect_by_label = {
-            str(box["label"]): {
-                "left": float(box["left"]),
-                "top": float(box["top"]),
-                "right": float(box["right"]),
-                "bottom": float(box["bottom"]),
-            }
+            str(box["label"]): _pad_box_rect(
+                float(box["left"]),
+                float(box["top"]),
+                float(box["right"]),
+                float(box["bottom"]),
+                _ML_CROP_PAD_RATIO,
+            )
             for box in option_boxes
         }
 

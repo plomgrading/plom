@@ -9,6 +9,8 @@ import base64
 from dataclasses import dataclass
 from io import BytesIO
 import logging
+import os
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -46,6 +48,37 @@ class MCQCheckboxPrediction:
     paper_number: int | None = None
 
 
+def _otsu_binarize(image: np.ndarray) -> np.ndarray:
+    """Binarize a crop with Otsu's method so gray marks become black.
+
+    Student marks in the 128-200 pixel range (light gray ink) are out of
+    distribution for a model trained on near-black synthetic marks.  Otsu
+    finds the optimal split between background (white) and foreground
+    (border + any mark), mapping the foreground to 0 and background to 255
+    regardless of how light the ink is.
+    """
+    gray = image.mean(axis=2) if image.ndim == 3 else image.astype(float)
+    hist, _ = np.histogram(gray.ravel(), bins=256, range=(0.0, 256.0))
+    total = float(hist.sum())
+    sum_all = float(np.arange(256, dtype=float) @ hist.astype(float))
+    w0, sum0, best_var, thresh = 0.0, 0.0, 0.0, 127
+    for t in range(256):
+        w0 += hist[t]
+        if w0 == 0 or w0 == total:
+            continue
+        w1 = total - w0
+        sum0 += t * hist[t]
+        mu0, mu1 = sum0 / w0, (sum_all - sum0) / w1
+        var = w0 * w1 * (mu0 - mu1) ** 2
+        if var > best_var:
+            best_var, thresh = var, t
+    binary = np.where(gray < thresh, np.uint8(0), np.uint8(255))
+    if image.ndim == 3:
+        return np.stack([binary, binary, binary], axis=2)
+    return binary
+
+
+
 def _image_to_base64_png(image: np.ndarray) -> str:
     """Encode a NumPy image array as base64 PNG for the ML service."""
     if image.size == 0:
@@ -70,6 +103,15 @@ def _read_bool(raw: dict[str, Any], key: str, *, default: bool | None = None) ->
     raise MCQCheckboxMLServiceError(
         f"Checkbox ML service prediction field {key!r} was not a boolean."
     )
+
+
+def _save_debug_crops(crops: list["MCQCheckboxCrop"], debug_dir: Path) -> None:
+    """Save checkbox crops to disk for visual inspection. Enable with PLOM_ML_DEBUG_CROP_DIR."""
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    for crop in crops:
+        fname = f"{crop.box_id}_paper{crop.paper_number}_{crop.label}.png"
+        Image.fromarray(crop.image).save(debug_dir / fname)
+    log.info("Saved %d debug crops to %s", len(crops), debug_dir)
 
 
 class MCQCheckboxMLClient:
@@ -105,15 +147,15 @@ class MCQCheckboxMLClient:
         if len(crop_by_id) != len(crops):
             raise MCQCheckboxMLServiceError("Checkbox ML request ids must be unique.")
 
-        payload = {
-            "items": [
-                {
-                    "id": crop.box_id,
-                    "image": _image_to_base64_png(crop.image),
-                }
-                for crop in crops
-            ]
-        }
+        items = [
+            {"id": crop.box_id, "image": _image_to_base64_png(_otsu_binarize(crop.image))}
+            for crop in crops
+        ]
+        debug_dir = os.environ.get("PLOM_ML_DEBUG_CROP_DIR", "").strip()
+        if debug_dir:
+            _save_debug_crops(crops, Path(debug_dir))
+
+        payload = {"items": items}
         try:
             response = requests.post(
                 self.predict_url,
