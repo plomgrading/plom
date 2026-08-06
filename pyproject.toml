@@ -238,7 +238,7 @@ line-length = 88
 target-version = ["py311"]
 
 [tool.pylint.main]
-extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
+extension-pkg-allow-list = ["PyQt6", "cv2"]
 generated-members = ["pandas", "cv2.*"]
 # order matters: need errors-only before disable
 errors-only = true

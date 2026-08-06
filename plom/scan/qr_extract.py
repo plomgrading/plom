@@ -7,18 +7,19 @@
 from statistics import mean
 from typing import Any
 
+import zxingcpp
 from zxingcpp import read_barcodes, BarcodeFormat
 from PIL import Image
 
 from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 
-def findCorner(qr, dim):
+def findCorner(qr: zxingcpp.Result, dim: tuple[int, int]):
     """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
 
     Args:
-        qr (zxingcpp.Result): object containing the information stored in the QR code
-        dim (tuple): pair of ints that correspond to the dimensions of
+        qr: object containing the information stored in the QR code
+        dim: pair of ints that correspond to the dimensions of
             the image that contains the QR code.
 
     Returns:
