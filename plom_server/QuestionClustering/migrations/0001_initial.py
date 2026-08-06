@@ -43,6 +43,7 @@ class Migration(migrations.Migration):
                         max_length=10,
                     ),
                 ),
+                ("mcq_metadata", models.JSONField(blank=True, default=dict)),
             ],
             bases=("Base.hueytasktracker",),
         ),
