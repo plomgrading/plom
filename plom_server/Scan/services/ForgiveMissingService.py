@@ -15,6 +15,7 @@ from django.core.files import File
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
+from plom_server.Base.services import Settings
 from plom_server.Base.models import BaseImage
 from plom_server.Papers.models import Bundle, DiscardPage, Image, FixedPage
 from plom_server.Papers.services import SpecificationService, PaperInfoService
@@ -61,6 +62,93 @@ def create_system_bundle_of_substitute_pages() -> bool:
     return True
 
 
+def _put_stuff_on_page(
+    the_page: pymupdf.Page, the_rect: pymupdf.Rect, pagenum: int | None = None
+):
+    pns_length = pymupdf.get_text_length(
+        page_not_submitted_text, fontsize=font_size_for_forgiven_blurb
+    )
+    text_start = (
+        (the_rect.width - pns_length) // 2,
+        the_rect.height // 10 + font_size_for_forgiven_blurb,
+    )
+    text_box = pymupdf.Rect(
+        text_start[0] - 8,
+        text_start[1] - font_size_for_forgiven_blurb,
+        text_start[0] + 8 + pns_length,
+        text_start[1] + font_size_for_forgiven_blurb * 0.3,
+    )
+    the_page.draw_rect(
+        text_box,
+        width=0.5,
+        color=(1, 1, 1),
+        fill=(1, 1, 1),
+        radius=0.02,
+        fill_opacity=0.75,
+    )
+    the_page.insert_text(
+        text_start,
+        page_not_submitted_text,
+        fontsize=font_size_for_forgiven_blurb,
+        color=(1, 0, 0),
+    )
+    text_start = (
+        (the_rect.width - pns_length) // 2,
+        9 * the_rect.height // 10 + font_size_for_forgiven_blurb,
+    )
+    text_box = pymupdf.Rect(
+        text_start[0] - 8,
+        text_start[1] - font_size_for_forgiven_blurb,
+        text_start[0] + 8 + pns_length,
+        text_start[1] + font_size_for_forgiven_blurb * 0.3,
+    )
+    the_page.draw_rect(
+        text_box,
+        width=0.5,
+        color=(1, 1, 1),
+        fill=(1, 1, 1),
+        radius=0.02,
+        fill_opacity=0.75,
+    )
+    the_page.insert_text(
+        text_start,
+        page_not_submitted_text,
+        fontsize=font_size_for_forgiven_blurb,
+        color=(1, 0, 0),
+    )
+    if pagenum is not None:
+        text_blob = f"Substitute Page {pagenum}"
+    else:
+        text_blob = "Generic Substitute Page"
+    text_blob_length = pymupdf.get_text_length(
+        text_blob, fontsize=font_size_for_forgiven_blurb
+    )
+    text_start = (
+        (the_rect.width - text_blob_length) // 2,
+        the_rect.height // 2,
+    )
+    text_box = pymupdf.Rect(
+        text_start[0] - 8,
+        text_start[1] - font_size_for_forgiven_blurb,
+        text_start[0] + 8 + text_blob_length,
+        text_start[1] + font_size_for_forgiven_blurb * 0.3,
+    )
+    the_page.draw_rect(
+        text_box,
+        width=0.5,
+        color=(1, 1, 1),
+        fill=(1, 1, 1),
+        radius=0.02,
+        fill_opacity=0.75,
+    )
+    the_page.insert_text(
+        text_start,
+        text_blob,
+        fontsize=font_size_for_forgiven_blurb,
+        color=(1, 0, 0),
+    )
+
+
 def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, Any]]:
     """Create all the substitute page pixmaps for missing pages.
 
@@ -74,96 +162,18 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     image_list = []
     for v in version_list:
         doc = pymupdf.Document(stream=SourceService.get_source_as_bytes(v))
-        for pg in page_list:
-            the_page = doc[pg - 1]  # 0-indexed
+        for pagenum in page_list:
+            the_page = doc[pagenum - 1]  # 0-indexed
             the_rect = the_page.rect
-            pns_length = pymupdf.get_text_length(
-                page_not_submitted_text, fontsize=font_size_for_forgiven_blurb
-            )
-            text_start = (
-                (the_rect.width - pns_length) // 2,
-                the_rect.height // 10 + font_size_for_forgiven_blurb,
-            )
-            text_box = pymupdf.Rect(
-                text_start[0] - 8,
-                text_start[1] - font_size_for_forgiven_blurb,
-                text_start[0] + 8 + pns_length,
-                text_start[1] + font_size_for_forgiven_blurb * 0.3,
-            )
-            the_page.draw_rect(
-                text_box,
-                width=0.5,
-                color=(1, 1, 1),
-                fill=(1, 1, 1),
-                radius=0.02,
-                fill_opacity=0.75,
-            )
-            the_page.insert_text(
-                text_start,
-                page_not_submitted_text,
-                fontsize=font_size_for_forgiven_blurb,
-                color=(1, 0, 0),
-            )
-            text_start = (
-                (the_rect.width - pns_length) // 2,
-                9 * the_rect.height // 10 + font_size_for_forgiven_blurb,
-            )
-            text_box = pymupdf.Rect(
-                text_start[0] - 8,
-                text_start[1] - font_size_for_forgiven_blurb,
-                text_start[0] + 8 + pns_length,
-                text_start[1] + font_size_for_forgiven_blurb * 0.3,
-            )
-            the_page.draw_rect(
-                text_box,
-                width=0.5,
-                color=(1, 1, 1),
-                fill=(1, 1, 1),
-                radius=0.02,
-                fill_opacity=0.75,
-            )
-            the_page.insert_text(
-                text_start,
-                page_not_submitted_text,
-                fontsize=font_size_for_forgiven_blurb,
-                color=(1, 0, 0),
-            )
-            text_blob = f"Substitute Page {pg}"
-            text_blob_length = pymupdf.get_text_length(
-                text_blob, fontsize=font_size_for_forgiven_blurb
-            )
-            text_start = (
-                (the_rect.width - text_blob_length) // 2,
-                the_rect.height // 2,
-            )
-            text_box = pymupdf.Rect(
-                text_start[0] - 8,
-                text_start[1] - font_size_for_forgiven_blurb,
-                text_start[0] + 8 + text_blob_length,
-                text_start[1] + font_size_for_forgiven_blurb * 0.3,
-            )
-            the_page.draw_rect(
-                text_box,
-                width=0.5,
-                color=(1, 1, 1),
-                fill=(1, 1, 1),
-                radius=0.02,
-                fill_opacity=0.75,
-            )
-            the_page.insert_text(
-                text_start,
-                text_blob,
-                fontsize=font_size_for_forgiven_blurb,
-                color=(1, 0, 0),
-            )
-            image_name = f"__forgive_v{v}_p{pg}.png"
+            _put_stuff_on_page(the_page, the_rect, pagenum)
+            image_name = f"__forgive_v{v}_p{pagenum}.png"
             image_bytes = the_page.get_pixmap(dpi=200, annots=True).tobytes(
                 output="png"
             )
             image_list.append(
                 {
                     "version": v,
-                    "page_number": pg,
+                    "page_number": pagenum,
                     "name": image_name,
                     "bytes": image_bytes,
                 }
@@ -171,20 +181,57 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     return image_list
 
 
+def _create_generic_substitute_page_image() -> dict[str, Any]:
+    """Create the substitute page pixmap for missing pages without source underlay.
+
+    Returns:
+        Dict with keys ``name`` (a suggested image file name),
+        ``bytes`` (the bytes of the image, as PNG data).
+    """
+    pdf_doc = pymupdf.Document()
+    page = pdf_doc.new_page(-1, *Settings.get_paper_size_in_pts())
+    _put_stuff_on_page(page, page.rect)
+    image_name = "__forgive_blank.png"
+    image_bytes = page.get_pixmap(dpi=200, annots=True).tobytes(output="png")
+    return {
+        "name": image_name,
+        "bytes": image_bytes,
+    }
+
+
 def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
     """Create the substitute page images and populate the given bundle with them.
 
-    The system substitute image bundle is populated with a substitute image for
-    each page/version of the assessment. If the assessment has n_pages pages,
-    then the substitute image for page p of version v is created at
-    bundle-order v*n_pages + p.
+    The system substitute image bundle is populated with a generic
+    substitute image that can be used for any missing page.  This is
+    placed in the bundle at bundle-order zero.
+
+    It also creates a particular substitution image for each
+    page/version of the assessment. If the assessment has n_pages
+    pages, then the substitute image for page p of version v is
+    created at bundle-order v*n_pages + p.
     """
+    img = _create_generic_substitute_page_image()
+    image_name = img["name"]
+    image_bytes = img["bytes"]
+    image_hash = hashlib.sha256(image_bytes).hexdigest()
+    image_file = File(BytesIO(image_bytes), name=image_name)
+    bimg = BaseImage.objects.create(image_file=image_file, image_hash=image_hash)
+    Image.objects.create(
+        bundle=sys_sub_bundle_obj,
+        bundle_order=0,
+        original_name=image_name,
+        baseimage=bimg,
+        parsed_qr={},
+        rotation=0,
+    )
+
     n_pages = SpecificationService.get_n_pages()
     image_list = _create_substitute_page_images_for_forgiveness_bundle()
-    for n, img_dat in enumerate(image_list):
-        bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
-        image_name = img_dat["name"]
-        image_bytes = img_dat["bytes"]
+    for n, img in enumerate(image_list):
+        bundle_order = img["version"] * n_pages + img["page_number"]
+        image_name = img["name"]
+        image_bytes = img["bytes"]
         image_hash = hashlib.sha256(image_bytes).hexdigest()
         image_file = File(BytesIO(image_bytes), name=image_name)
         bimg = BaseImage.objects.create(image_file=image_file, image_hash=image_hash)
@@ -198,8 +245,13 @@ def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
         )
 
 
-def get_substitute_image(page_number: int, version: int) -> Image:
+def get_substitute_image(page_number: int, version: int | None = None) -> Image:
     """Return the substitute Image-object for the given page/version.
+
+    Args:
+        page_number: which page, indexed from 1.
+        version: if 0 or None or omitted, return the generic substitute,
+            otherwise a page-and-version specific image.
 
     Raises:
         ObjectDoesNotExist: Specifically ``Bundle.DoesNotExist`` if the
@@ -207,6 +259,9 @@ def get_substitute_image(page_number: int, version: int) -> Image:
         ObjectDoesNotExist: probably Image.DoesNotExist if the page number
             or version are out of range, TODO: but this is not tested.
     """
+    if not version:
+        return get_generic_substitute_image()
+
     try:
         bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
     except Bundle.DoesNotExist as e:
@@ -214,11 +269,22 @@ def get_substitute_image(page_number: int, version: int) -> Image:
         # e.add_note()
         # reraise
         raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
-    # bundle_order = version*number of pages + page_number
-    n_pages = SpecificationService.get_n_pages()  # 1-indexed
+
+    n_pages = SpecificationService.get_n_pages()
     bundle_order = n_pages * version + page_number
     return Image.objects.select_related("baseimage").get(
         bundle=bundle_obj, bundle_order=bundle_order
+    )
+
+
+def get_generic_substitute_image() -> Image:
+    """Return the generic substitute Image-object appropriate for any page."""
+    try:
+        bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+    except Bundle.DoesNotExist as e:
+        raise Bundle.DoesNotExist("System substitution bundle not yet created") from e
+    return Image.objects.select_related("baseimage").get(
+        bundle=bundle_obj, bundle_order=0
     )
 
 

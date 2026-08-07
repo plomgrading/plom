@@ -18,7 +18,6 @@ def check_version_map(
     vm: dict[int, dict[int | str, int]],
     spec=None,
     *,
-    legacy: bool = False,
     required_papers: list[int] | None = None,
     num_questions: int | None = None,
     num_versions: int | None = None,
@@ -32,8 +31,6 @@ def check_version_map(
             dict, see :func:`plom.SpecVerifier`.
 
     Keyword Args:
-        legacy: True if this version map is for a legacy server, which
-            is more strict about contiguous range of papers for example.
         required_papers: A list of paper_numbers that the qv map must have.
         num_questions: if specified, we'll ensure each row has versions
             for each.
@@ -115,22 +112,6 @@ def check_version_map(
             raise ValueError(
                 f"Map is missing required papers: {missing_papers}. These were likely prenamed papers"
             )
-
-    if not legacy:
-        return
-    # remaining checks should matter only for legacy servers
-    if spec and not len(vm) == spec["numberToProduce"]:
-        raise ValueError(
-            f"Legacy server requires numberToProduce={spec['numberToProduce']}"
-            f" to match the number of rows {len(vm)} of the version map"
-        )
-    if vm.keys():
-        min_papernum = min(vm.keys())
-        max_papernum = max(vm.keys())
-        if not min_papernum == 1:
-            raise ValueError(f"paper number should start at 1: got {list(vm.keys())}")
-        if not set(vm.keys()) == set(range(min_papernum, max_papernum + 1)):
-            raise ValueError(f"No gaps allowed in paper number: got {list(vm.keys())}")
 
 
 def make_random_version_map(

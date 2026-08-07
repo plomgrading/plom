@@ -83,21 +83,20 @@ class PaperInfoService:
 
         .. warning::
             This is a bit poorly defined; if two questions share a page
-            their versions could (theoretically) differ.  Our tooling
-            does not allow this situation but someone doing something
-            exotic creating their own PDF tests could: they will get
-            a NotImplementedError.
+            their versions are allowed to differ.  Our tooling
+            does not create this situation but someone doing something
+            exotic creating their own PDF tests could: they will get a
+            return value of zero.
 
         Args:
             paper_number: which paper.
             page_number: which page.
 
         Returns:
-            The version.
+            The version, or zero if the page is multi-versioned.
 
         Raises:
             ValueError: paper and/or page does not exist.
-            NotImplementedError: multiple versions on the page that do not agree.
         """
         try:
             paper = Paper.objects.get(paper_number=paper_number)
@@ -113,10 +112,8 @@ class PaperInfoService:
             (ver,) = set(vers)
             return ver
         except ValueError:
-            raise NotImplementedError(
-                f"Heterogeneous versions per page not supported: got versions {vers}"
-                f" for page {page_number} of paper {paper_number}"
-            ) from None
+            # Heterogeneous versions per page
+            return 0
 
     @staticmethod
     def get_version_from_paper_question(paper_number: int, question_idx: int) -> int:
