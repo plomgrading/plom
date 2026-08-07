@@ -4,13 +4,17 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Aidan Murphy
 
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
 
-from plom.common.exceptions import PlomDependencyConflict
+from django.core.exceptions import ObjectDoesNotExist
+
+from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.version_maps import check_version_map
 from plom_server.Preparation.services import (
     PQVMappingService,
     StagingStudentService,
@@ -18,6 +22,7 @@ from plom_server.Preparation.services import (
 from plom_server.Papers.services import (
     PaperCreatorService,
     PaperInfoService,
+    SpecificationService,
 )
 from .utils import _error_response
 
@@ -174,6 +179,53 @@ class PQVmap(APIView):
         Returns:
             Status code 501, not implemented, for now.
         """
-        return _error_response(
-            "PUT method not built yet!", status.HTTP_501_NOT_IMPLEMENTED
-        )
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can populate the database.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # json converts all keys to strings, we need them as integers
+        def _convert_keys_to_int(d: dict) -> dict:
+            """Convert keys to integers recursively."""
+            return_dict = {
+                int(k) if isinstance(k, str) and k.isdigit() else k: v
+                for k, v in d.items()
+            }
+            for key, val in return_dict.items():
+                if isinstance(val, dict):
+                    return_dict[key] = _convert_keys_to_int(val)
+            return return_dict
+
+        try:
+            qvmap = _convert_keys_to_int(request.data["qvmap"])
+        except KeyError:
+            return _error_response('"qvmap" not provided', status.HTTP_400_BAD_REQUEST)
+
+        num_versions = SpecificationService.get_n_versions()
+        # screen user inputs before trying to push them to the DB
+        try:
+            num_questions = SpecificationService.get_n_questions()
+            check_version_map(
+                qvmap, num_questions=num_questions, num_versions=num_versions
+            )
+        except ObjectDoesNotExist:
+            return _error_response(
+                "Spec not uploaded yet, aborting", status.HTTP_409_CONFLICT
+            )
+        except ValueError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # untested, but I don't think the transaction will work because
+            # huey does this operation rather than django/gunicorn.
+            # with transaction.atomic:
+            PaperCreatorService.remove_all_papers_from_db(background=False)
+            PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=False)
+        except PlomDependencyConflict as err:
+            return _error_response(err, status.HTTP_409_CONFLICT)
+        except PlomDatabaseCreationError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+
+        return Response(PaperInfoService().get_pqv_map_dict())
