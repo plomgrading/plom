@@ -37,7 +37,9 @@ undoubtedly change.
       manually associate each extra sheet a particular paper, and optionally
       one or more questions.
    Identify
-      Associate an examinee ID (a sequence of numbers) and name with a paper.
+      Associate an examinee ID and name with a paper, or confirm that a paper is
+      entirely blank, or confirm that a paper cannot be identified (for example,
+      if the examinee didn't write identifying information on the page).
    Lead Marker
       A :term:`Marker` that has decision making authority over one or more question.
    Manager

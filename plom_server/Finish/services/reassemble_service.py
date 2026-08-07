@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
 import logging
@@ -399,6 +399,13 @@ class ReassembleService:
     @staticmethod
     def get_all_paper_status_for_reassembly() -> list[dict[str, Any]]:
         """Get the status information for all papers for reassembly.
+
+        Roughly, papers need to have been completely marked and
+        "identified" to be reassemble-able.
+        Papers explicitly ID'd as having no id or being entirely blank
+        are valid for reassembly.
+
+        There are statuses other than ready, not-ready and reassembled.
 
         Returns:
             List of dicts representing each row of the data.
