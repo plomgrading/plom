@@ -199,16 +199,16 @@ class PQVmap(APIView):
             return return_dict
 
         try:
-            qvmap = _convert_keys_to_int(request.data["qvmap"])
+            pqvmap = _convert_keys_to_int(request.data["pqvmap"])
         except KeyError:
-            return _error_response('"qvmap" not provided', status.HTTP_400_BAD_REQUEST)
+            return _error_response('"pqvmap" not provided', status.HTTP_400_BAD_REQUEST)
 
         num_versions = SpecificationService.get_n_versions()
         # screen user inputs before trying to push them to the DB
         try:
             num_questions = SpecificationService.get_n_questions()
             check_version_map(
-                qvmap, num_questions=num_questions, num_versions=num_versions
+                pqvmap, num_questions=num_questions, num_versions=num_versions
             )
         except ObjectDoesNotExist:
             return _error_response(
@@ -222,7 +222,7 @@ class PQVmap(APIView):
             # huey does this operation rather than django/gunicorn.
             # with transaction.atomic:
             PaperCreatorService.remove_all_papers_from_db(background=False)
-            PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=False)
+            PaperCreatorService.add_all_papers_in_qv_map(pqvmap, background=False)
         except PlomDependencyConflict as err:
             return _error_response(err, status.HTTP_409_CONFLICT)
         except PlomDatabaseCreationError as err:
