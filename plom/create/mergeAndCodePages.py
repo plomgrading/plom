@@ -598,14 +598,14 @@ def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
     img = zxingcpp.write_barcode(
         zxingcpp.BarcodeFormat.EAN13, "0123456789012", width=300, height=100
     )
-    Image.fromarray(img).save(filename)
+    Image.fromarray(img).save(filename)  # type: ignore[arg-type]
     qr_files.append(filename)
     # make a CODE128
     filename = dur / "code_invalid.png"
     img = zxingcpp.write_barcode(
         zxingcpp.BarcodeFormat.Code128, "even more wrong", width=300, height=100
     )
-    Image.fromarray(img).save(filename)
+    Image.fromarray(img).save(filename)  # type: ignore[arg-type]
     qr_files.append(filename)
     # make a top-left scrap-paper micro qr code
     filename = dur / "valid_tl_scrap_code.png"
