@@ -48,8 +48,8 @@ class RegionsView(APIView):
             request: An HTTP request.
 
         Returns:
-            A Response object containing the regions as a dict, with status 200,
-            on success.
+            A Response object containing the regions as a list of dicts,
+            with status 200.
         """
         return Response(QuestionRegionsService.get_question_regions())
 
