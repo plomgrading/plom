@@ -78,7 +78,6 @@ def _otsu_binarize(image: np.ndarray) -> np.ndarray:
     return binary
 
 
-
 def _image_to_base64_png(image: np.ndarray) -> str:
     """Encode a NumPy image array as base64 PNG for the ML service."""
     if image.size == 0:
@@ -148,7 +147,10 @@ class MCQCheckboxMLClient:
             raise MCQCheckboxMLServiceError("Checkbox ML request ids must be unique.")
 
         items = [
-            {"id": crop.box_id, "image": _image_to_base64_png(_otsu_binarize(crop.image))}
+            {
+                "id": crop.box_id,
+                "image": _image_to_base64_png(_otsu_binarize(crop.image)),
+            }
             for crop in crops
         ]
         debug_dir = os.environ.get("PLOM_ML_DEBUG_CROP_DIR", "").strip()
