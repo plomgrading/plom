@@ -14,6 +14,7 @@ class QuestionRegionsView(ManagerRequiredView):
     """Configure question regions."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render a page showing the current regions and various tools to change them."""
         context = self.build_context()
 
         spec = SpecificationService.get_the_spec()
@@ -42,6 +43,15 @@ class QuestionRegionsView(ManagerRequiredView):
         # except PlomDependencyConflict as err:
         #     messages.add_message(request, messages.ERROR, f"{err}")
         #     return redirect(reverse("prep_conflict"))
+
+    def delete(self, request: HttpRequest) -> HttpResponse:
+        """Delete all regions, both set by this view or otherwise.
+
+        Called by HTMX.
+        """
+        QuestionRegionsService.reset_question_regions()
+        # TODO: or redirect the the get, provided that doesn't break Ctrl-R
+        return HttpResponse("all gone, please refresh")
 
 
 class QuestionRegionsSubdivideView(ManagerRequiredView):

@@ -93,8 +93,15 @@
                                 {{ x.question_labels_html|join:", "|safe }}
                             </summary>
                             <!-- TODO: maybe a setter form here -->
-                            <div class="ms-4 mb-2">
-                                <img class="shadow" src="data:image/png;base64,{{ x.page_region_image }}" />
+                            <div class="row">
+                                <div class="col-auto">
+                                    <div class="ms-4 mb-2">
+                                        <img class="shadow" src="data:image/png;base64,{{ x.page_region_image }}" />
+                                    </div>
+                                </div>
+                                <!-- <div class="col-auto"> -->
+                                <!-- <button class="btn btn-outline-danger">Remove regions for page {{ x.page }}</button> -->
+                                <!-- </div> -->
                             </div>
                         </details>
                     {% endfor %}
@@ -106,6 +113,13 @@
                         <br />
                     {% endfor %}
                 </p>
+                <div class="mb-4">
+                    <!-- TODO: regular post with a "done" page or somehow hx refresh the whole page here? -->
+                    <button class="btn btn-outline-danger"
+                            hx-delete="{% url 'question_regions' %}"
+                            hx-confirm="Are you sure you want to delete all regions from all questions?"
+                            type="submit">Remove all regions from all pages</button>
+                </div>
             </div>
         </div>
     </div>
