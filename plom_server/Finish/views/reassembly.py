@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, Http404
 from django.http import FileResponse, StreamingHttpResponse
@@ -24,7 +25,9 @@ class ReassemblePapersView(ManagerRequiredView):
         # Note: uses the symbolic constants defined in HueyTaskTracker
 
         context = self.build_context()
-        if not SpecificationService.is_there_a_spec():
+        try:
+            n_questions = SpecificationService.get_n_questions()
+        except ObjectDoesNotExist:
             return render(request, "Finish/finish_no_spec.html", context=context)
         all_paper_status = ReassembleService.get_all_paper_status_for_reassembly()
         # Compute some counts required for the page
@@ -83,11 +86,13 @@ class ReassemblePapersView(ManagerRequiredView):
                 "n_not_ready": n_not_ready,
                 "n_ready": n_ready,
                 "n_outdated": n_outdated,
+                "n_complete_less_outdated": n_complete - n_outdated,
                 "n_errors": n_errors,
                 "n_complete": n_complete,
                 "n_queued": n_queued,
                 "min_paper_number": min_paper_number,
                 "max_paper_number": max_paper_number,
+                "n_questions": n_questions,
             }
         )
         return render(request, "Finish/reassemble_paper_pdfs.html", context=context)

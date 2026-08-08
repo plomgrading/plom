@@ -2,6 +2,7 @@
    Copyright (C) 2020 Andrew Rechnitzer
    Copyright (C) 2020-2025 Colin B. Macdonald
    Copyright (C) 2023 Philip D. Loewen
+   Copyright (C) 2026 Aidan Murphy
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -48,13 +49,17 @@ See `Return via Canvas`_ for an automated approach.
 Reassembly
 ----------
 
-Once everything is IDd and marked and you've done any necessary mopping
+Once everything is ID'd and marked and you've done any necessary mopping
 up and reviewing, it is time to reassemble all the annotated page-images
 into papers complete with simple cover-pages.
 
 You can look at individual PDF files within the web interface or you can
 download all the reassembled papers as one large zip file.
 
+.. note::
+   "ID'd" doesn't necessarily mean the paper is associated with a particular
+   examinee - you can "ID" a paper as: being blank; or missing identifying
+   information.
 
 Solutions
 ---------

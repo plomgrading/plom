@@ -4,27 +4,21 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2026 Jax Lim
 
-from __future__ import annotations
-
-import json
-from pathlib import Path
 from statistics import mean
 from typing import Any
 
+import zxingcpp
 from PIL import Image
 
 from .rotate import pil_load_with_jpeg_exif_rot_applied
 
-# hide import inside function to prevent PlomClient depending on it
-# from zxingcpp import read_barcodes, BarcodeFormat
 
-
-def findCorner(qr, dim):
+def findCorner(qr: zxingcpp.Result, dim: tuple[int, int]):
     """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
 
     Args:
-        qr (zxingcpp.Result): object containing the information stored in the QR code
-        dim (tuple): pair of ints that correspond to the dimensions of
+        qr: object containing the information stored in the QR code
+        dim: pair of ints that correspond to the dimensions of
             the image that contains the QR code.
 
     Returns:
@@ -64,7 +58,7 @@ def findCorner(qr, dim):
 def QRextract(
     image, *, try_harder: bool = True, rotation: int = 0
 ) -> dict[str, dict[str, Any]]:
-    """Decode and return QR codes in an image.
+    """Decode the QR codes in an image.
 
     Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
@@ -96,9 +90,6 @@ def QRextract(
 
     [1] https://gitlab.com/plom/plom/-/issues/967
     """
-    # hide import inside function to prevent PlomClient depending on it
-    from zxingcpp import read_barcodes, BarcodeFormat
-
     cornerQR: dict[str, dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
     if not isinstance(image, Image.Image):
@@ -112,13 +103,8 @@ def QRextract(
     # Otherwise, zxing-cpp might hide error messages, Issue #2597
     image.load()
 
-    try:
-        micro = BarcodeFormat.MicroQRCode
-    except AttributeError:
-        # workaround github.com/zxing-cpp/zxing-cpp/issues/512
-        micro = BarcodeFormat.MircoQRCode
-
-    qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
+    qr_code_formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
+    qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
     for qr in qrlist:
         cnr, x_coord, y_coord = findCorner(qr, image.size)
         if cnr in cornerQR.keys():
@@ -141,7 +127,7 @@ def QRextract(
             # mode-P (paletted pngs) fail to reduce, Issue #2631
             qrlist = []
         else:
-            qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
+            qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
@@ -169,96 +155,5 @@ def QRextract(
                     # TODO: found a different QR code at lower resolution!
                     # For now, just ignore and keep the previous hires result
                     pass
-
-    return cornerQR
-
-
-def QRextract_legacy(
-    image, *, write_to_file: bool = True, try_harder: bool = True
-) -> dict[str, list[str]] | None:
-    """Decode QR codes in an image, return or save them in .qr file.
-
-    Args:
-        image (str/pathlib.Path/PIL.Image): an image filename, either in
-            the local dir or specified e.g., using `pathlib.Path`.  Can
-            also be an instance of Pillow's `Image`.
-
-    Keyword Args:
-        write_to_file (bool): by default, the results are written into
-            a file named `image.qr` (i.e., the same as input name
-            with `.qr` appended, so something like `foo.jpg.qr`).
-            If this `.qr` file already exists and is non-empty, then no
-            action is taken, and None is returned.
-        try_harder (bool): Try to find QRs on a smaller resolution.
-            Defaults to True.  Sometimes this seems work around high
-            failure rates in the synthetic images used in CI testing.
-            Details blow.
-
-    Returns:
-        dict/None: Keys "NW", "NE", "SW", "SE", each with a list of the
-            strings extracted from QR codes, one string per code.  The
-            list is empty if no QR codes found in that corner.
-
-    Without the `try_harder` flag, we observe high failure rates when
-    the vertical resolution is near 2000 pixels (our current default).
-    This is Issue #967 [1].  It is not prevalent in real-life images,
-    but causes a roughly 5%-10% failure rate in our synthetic CI runs.
-    The workaround (on by default) uses Pillow's `.reduce()` to quickly
-    downscale the image.  This does increase the run time (have not
-    checked by how much: I assume between 25% and 50%) so if that is
-    more of a concern than error rate, turn off this flag.
-
-    [1] https://gitlab.com/plom/plom/-/issues/967
-    """
-    # hide import inside function to prevent PlomClient depending on it
-    from zxingcpp import read_barcodes, BarcodeFormat
-
-    if write_to_file:
-        image = Path(image)
-        # foo.jpg to foo.jpg.qr
-        qrfile = image.with_suffix("{}.qr".format(image.suffix))
-        if qrfile.exists() and qrfile.stat().st_size > 0:
-            return None
-
-    cornerQR: dict[str, list[str]] = {"NW": [], "NE": [], "SW": [], "SE": []}
-
-    if not isinstance(image, Image.Image):
-        image = pil_load_with_jpeg_exif_rot_applied(image)
-
-    # PIL does lazy loading.  Force loading now so we see errors now.
-    # Otherwise, zxing-cpp might hide error messages, Issue #2597
-    image.load()
-
-    try:
-        micro = BarcodeFormat.MicroQRCode
-    except AttributeError:
-        # workaround github.com/zxing-cpp/zxing-cpp/issues/512
-        micro = BarcodeFormat.MircoQRCode
-
-    qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
-    for qr in qrlist:
-        cnr = findCorner(qr, image.size)[0]
-        if cnr in cornerQR.keys():
-            cornerQR[cnr].append(qr.text)
-
-    if try_harder:
-        # try again on smaller image: avoids random CI failures #967?
-        image = image.reduce(2)
-        qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
-        for qr in qrlist:
-            cnr = findCorner(qr, image.size)[0]
-            if cnr in cornerQR.keys():
-                s = qr.text
-                if s not in cornerQR[cnr]:
-                    # TODO: log these failures?
-                    # print(
-                    #     f'Found QR-code "{s}" at {cnr} on reduced image, '
-                    #     "not found at original size"
-                    # )
-                    cornerQR[cnr].append(s)
-
-    if write_to_file:
-        with open(qrfile, "w") as fh:
-            json.dump(cornerQR, fh)
 
     return cornerQR

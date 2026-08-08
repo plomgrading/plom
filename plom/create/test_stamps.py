@@ -12,7 +12,7 @@ from plom.common.spec_verifier import SpecVerifier
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import make_PDF
-from plom.scan import QRextract_legacy
+from plom.scan import QRextract
 from plom.scan import processFileToBitmaps
 
 
@@ -67,26 +67,47 @@ def test_stamp_QRs(tmp_path) -> None:
         d.save(out)
 
     # Now let's try to read it back, some overlap with test_qr_reads
-    files = processFileToBitmaps(out, tmp_path)
+    pg_files = processFileToBitmaps(out, tmp_path)
 
-    d = QRextract_legacy(files[0], write_to_file=False)
+    # page without QR codes
+    d = QRextract(pg_files[0])
     assert d is not None
     for _, v in d.items():
         assert len(v) == 0
 
-    d = QRextract_legacy(files[2], write_to_file=False)
+    p = 3
+    d = QRextract(pg_files[p - 1])
     assert d is not None
     assert not d["NW"]
-    assert d["NE"] == ["00006003011123456"]
-    assert d["SW"] == ["00006003013123456"]
-    assert d["SE"] == ["00006003014123456"]
+    assert d["NE"]["tpv_signature"] == "00006003011123456"
+    assert d["SW"]["tpv_signature"] == "00006003013123456"
+    assert d["SE"]["tpv_signature"] == "00006003014123456"
 
-    d = QRextract_legacy(files[3], write_to_file=False)
+    p = 4
+    d = QRextract(pg_files[p - 1])
     assert d is not None
     assert not d["NE"]
-    assert d["NW"] == ["00006004012123456"]
-    assert d["SW"] == ["00006004013123456"]
-    assert d["SE"] == ["00006004014123456"]
+    assert d["NW"]["tpv_signature"] == "00006004012123456"
+    assert d["SW"]["tpv_signature"] == "00006004013123456"
+    assert d["SE"]["tpv_signature"] == "00006004014123456"
+
+
+def test_stamp_QRs_version_zero_means_ignore_version(tmp_path) -> None:
+    assert buildDemoSourceFiles(basedir=tmp_path)
+    with pymupdf.open(tmp_path / "sourceVersions/version1.pdf") as d:
+        p = 3
+        qr = create_QR_codes(6, p, 0, "123456", tmp_path)
+        pdf_page_add_labels_QRs(d[p - 1], "foo", "foo", qr, odd=bool(p % 2))
+        out = tmp_path / "debug_QR_codes.pdf"
+        d.save(out)
+
+    pg_files = processFileToBitmaps(out, tmp_path)
+
+    d = QRextract(pg_files[p - 1])
+    assert not d["NW"]
+    assert d["NE"]["tpv_signature"] == "00006003001123456"
+    assert d["SW"]["tpv_signature"] == "00006003003123456"
+    assert d["SE"]["tpv_signature"] == "00006003004123456"
 
 
 def test_qr_stamp_all_pages(tmp_path) -> None:

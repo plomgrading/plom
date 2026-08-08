@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021 Nicholas JH Lai
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024, 2026 Colin B. Macdonald
 # Copyright (C) 2025 Deep Shah
 
-"""Separate qr_coded pages from blank pages.
+"""Separate QR-coded pages from blank pages.
 
 This script is helpful if you accidentally printed the exam
 single-sided. This script will separate blank pages from
@@ -23,16 +23,12 @@ import sys
 import tempfile
 
 import pymupdf
+import zxingcpp
 from PIL import Image
-from zxingcpp import read_barcodes, BarcodeFormat
 
 from plom.scan.scansToImages import processFileToBitmaps
 
-try:
-    micro = BarcodeFormat.MicroQRCode
-except AttributeError:
-    # workaround github.com/zxing-cpp/zxing-cpp/issues/512
-    micro = BarcodeFormat.MircoQRCode
+qr_code_formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
 
 if len(sys.argv) != 2:
     print("Requires a single pdf as argument.")
@@ -55,7 +51,7 @@ with tempfile.TemporaryDirectory() as td:
         image = Image.open(X)
         # from pyzbar import pyzbar
         # qrlist = pyzbar.decode(image, symbols=[pyzbar.ZBarSymbol.QRCODE])
-        qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
+        qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
         if len(qrlist) > 0:
             print(f"# + Page {pn} has {len(qrlist)} codes")
             if len(qrlist) < 3:
