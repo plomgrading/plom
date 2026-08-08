@@ -91,14 +91,13 @@ class ExamMockerService:
             return pymupdf.open(f)
 
     @staticmethod
-    def _mock_exam_without_spec(source_path: Path, version: int) -> pymupdf.Document:
+    def _mock_exam_without_spec(version: int) -> pymupdf.Document:
         """Create a mock exam without the spec.
 
         This is a bit lower-level than the preferred
         :method:`_mock_exam_with_spec`.
 
         Args:
-            source_path: the path to the exam sourcefile.
             version: the version to mock.
 
         Returns:
