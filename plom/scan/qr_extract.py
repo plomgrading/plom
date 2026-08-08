@@ -7,18 +7,18 @@
 from statistics import mean
 from typing import Any
 
-from zxingcpp import read_barcodes, BarcodeFormat
+import zxingcpp
 from PIL import Image
 
 from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 
-def findCorner(qr, dim):
+def findCorner(qr: zxingcpp.Result, dim: tuple[int, int]):
     """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
 
     Args:
-        qr (zxingcpp.Result): object containing the information stored in the QR code
-        dim (tuple): pair of ints that correspond to the dimensions of
+        qr: object containing the information stored in the QR code
+        dim: pair of ints that correspond to the dimensions of
             the image that contains the QR code.
 
     Returns:
@@ -103,13 +103,8 @@ def QRextract(
     # Otherwise, zxing-cpp might hide error messages, Issue #2597
     image.load()
 
-    try:
-        micro = BarcodeFormat.MicroQRCode
-    except AttributeError:
-        # workaround github.com/zxing-cpp/zxing-cpp/issues/512
-        micro = BarcodeFormat.MircoQRCode
-
-    qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
+    qr_code_formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
+    qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
     for qr in qrlist:
         cnr, x_coord, y_coord = findCorner(qr, image.size)
         if cnr in cornerQR.keys():
@@ -125,7 +120,7 @@ def QRextract(
             # mode-P (paletted pngs) fail to reduce, Issue #2631
             qrlist = []
         else:
-            qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
+            qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
