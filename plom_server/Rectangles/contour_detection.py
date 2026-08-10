@@ -96,7 +96,8 @@ def approximate_contour(
 
 def contour_bounding_rect(contour: Any) -> tuple[int, int, int, int]:
     """Return an OpenCV bounding rectangle for a contour."""
-    return cv.boundingRect(contour)
+    left, top, width, height = cv.boundingRect(contour)
+    return left, top, width, height
 
 
 def largest_contour_bounding_rect(

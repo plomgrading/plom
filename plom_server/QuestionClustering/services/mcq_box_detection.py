@@ -18,6 +18,8 @@ from plom_server.Rectangles.contour_detection import (
 )
 
 if TYPE_CHECKING:
+    # Needed only for static type checking; avoid importing Django models when
+    # this image-processing module is loaded at runtime.
     from plom_server.Papers.models import ReferenceImage
 
 
