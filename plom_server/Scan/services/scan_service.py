@@ -628,9 +628,7 @@ class ScanService:
         # ++++++++++++++++++++++
 
         groupings = {}
-        # TODO - simplify this loop using enumerate(list) or similar.
-        # Should be noted here that the outerloop in the following line always iterates once (see line #2114)
-        # since we are passing a list of a single dictionary to parse_qr_code
+        # Note: the outer loop happens exactly once, TODO: consider flattening this code.
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
                 # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVOCCCCCC" qr-string
