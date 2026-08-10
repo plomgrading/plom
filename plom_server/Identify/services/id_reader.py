@@ -760,8 +760,7 @@ class IDBoxProcessorService:
             row.paper.paper_number: row.probabilities
             for row in rows
             if (
-                row.source_image_hash
-                == source_image_hashes.get(row.paper.paper_number)
+                row.source_image_hash == source_image_hashes.get(row.paper.paper_number)
                 and IDBoxProcessorService.is_complete_probability_heatmap(
                     row.probabilities, student_id_length=student_id_length
                 )

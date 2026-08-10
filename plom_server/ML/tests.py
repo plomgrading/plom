@@ -84,9 +84,7 @@ class PlomDigitServiceClientTests(TestCase):
                 ]
             }
         )
-        client = PlomDigitServiceClient(
-            "https://ml.example", _session=session
-        )
+        client = PlomDigitServiceClient("https://ml.example", _session=session)
         crops = [
             DigitCrop(b"one", "paper17-pos1", 17, 1),
             DigitCrop(b"two", "paper17-pos2", 17, 2),
@@ -122,9 +120,7 @@ class PlomDigitServiceClientTests(TestCase):
         session.post.return_value = response
         client = PlomDigitServiceClient("https://ml.example", _session=session)
 
-        with self.assertRaisesRegex(
-            PlomDigitServiceError, "403.*INVALID_BEARER_TOKEN"
-        ):
+        with self.assertRaisesRegex(PlomDigitServiceError, "403.*INVALID_BEARER_TOKEN"):
             client.predict_digit(
                 b"image",
                 crop_id="paper17-pos3",
@@ -156,9 +152,7 @@ class PlomDigitServiceClientTests(TestCase):
         session.post.return_value = self._response(prediction)
         client = PlomDigitServiceClient("https://ml.example", _session=session)
 
-        with self.assertRaisesRegex(
-            PlomDigitServiceError, "invalid probabilities"
-        ):
+        with self.assertRaisesRegex(PlomDigitServiceError, "invalid probabilities"):
             client.predict_digit(
                 b"image",
                 crop_id="paper17-pos3",
