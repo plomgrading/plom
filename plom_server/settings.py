@@ -13,7 +13,6 @@
 """Django settings for Plom project."""
 
 import os
-import platform
 import warnings
 from pathlib import Path
 
@@ -367,11 +366,7 @@ else:
 # a bundle and reading the QR codes.
 _huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
 _huey_parent_workers = int(os.environ.get("PLOM_HUEY_PARENT_WORKERS", 2))
-# On macOS, fork() in a multi-threaded process (numpy/OpenCV/onnxruntime)
-# crashes the worker on first native call. Default to "thread" to avoid that;
-# Linux production deployments can set PLOM_HUEY_WORKER_TYPE=process.
-_default_huey_worker_type = "thread" if platform.system() == "Darwin" else "process"
-_huey_worker_type = os.environ.get("PLOM_HUEY_WORKER_TYPE", _default_huey_worker_type)
+
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
     "default": "chores",
@@ -385,7 +380,7 @@ DJANGO_HUEY = {
             "utc": True,
             "consumer": {
                 "workers": _huey_workers,
-                "worker_type": _huey_worker_type,
+                "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
                 "max_delay": 10.0,
@@ -404,7 +399,7 @@ DJANGO_HUEY = {
             "utc": True,
             "consumer": {
                 "workers": _huey_parent_workers,
-                "worker_type": _huey_worker_type,
+                "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
                 "max_delay": 10.0,
