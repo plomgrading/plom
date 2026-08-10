@@ -59,13 +59,18 @@ class PlomDigitServiceClient:
         default_factory=_make_session, repr=False, compare=False
     )
 
+    def __post_init__(self) -> None:
+        """Normalize shared ML-service connection settings."""
+        object.__setattr__(self, "base_url", self.base_url.strip().rstrip("/"))
+        object.__setattr__(self, "token", self.token.strip())
+
     @classmethod
     def from_settings(cls) -> "PlomDigitServiceClient":
         """Build a client from Django settings."""
         return cls(
-            base_url=settings.PLOM_DIGIT_SERVICE_URL,
-            token=settings.PLOM_DIGIT_SERVICE_TOKEN,
-            timeout=settings.PLOM_DIGIT_SERVICE_TIMEOUT,
+            base_url=settings.PLOM_ML_SERVICE_URL,
+            token=settings.PLOM_ML_SERVICE_TOKEN,
+            timeout=settings.PLOM_ML_SERVICE_TIMEOUT,
         )
 
     @property
@@ -82,7 +87,7 @@ class PlomDigitServiceClient:
             PlomDigitServiceError: URL unset, service unreachable, or non-2xx.
         """
         if not self.base_url:
-            raise PlomDigitServiceError("PLOM_DIGIT_SERVICE_URL is not configured")
+            raise PlomDigitServiceError("PLOM_ML_SERVICE_URL is not configured")
         try:
             response = self._session.get(
                 f"{self.base_url}/health/ready",
@@ -116,7 +121,7 @@ class PlomDigitServiceClient:
     ) -> list[float]:
         """Submit one prepared digit crop and return 0-9-plus-blank probabilities."""
         if not self.base_url:
-            raise PlomDigitServiceError("PLOM_DIGIT_SERVICE_URL is not configured")
+            raise PlomDigitServiceError("PLOM_ML_SERVICE_URL is not configured")
 
         payload = {
             "crop_id": crop_id,
@@ -161,7 +166,7 @@ class PlomDigitServiceClient:
     ) -> dict[tuple[int, int], list[float]]:
         """Submit prepared digit crops and return probabilities keyed by metadata."""
         if not self.base_url:
-            raise PlomDigitServiceError("PLOM_DIGIT_SERVICE_URL is not configured")
+            raise PlomDigitServiceError("PLOM_ML_SERVICE_URL is not configured")
 
         crop_list = list(crops)
         if not crop_list:

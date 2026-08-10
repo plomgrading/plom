@@ -758,7 +758,7 @@ class IDBoxProcessorService:
         """Send prepared digit crops to the digit service and persist probabilities.
 
         Plom extracts and segments each ID box locally, posts each prepared
-        digit crop to ``PLOM_DIGIT_SERVICE_URL``, and saves each complete
+        digit crop to ``PLOM_ML_SERVICE_URL``, and saves each complete
         per-paper heatmap to the database as soon as all digit positions for
         that paper have been predicted.
 
@@ -769,7 +769,7 @@ class IDBoxProcessorService:
             reuse: do not call the digit service; only return saved heatmaps.
 
         Raises:
-            RuntimeError: PLOM_DIGIT_SERVICE_URL is not configured.
+            PlomDigitServiceError: the external service is not configured or fails.
         """
         heatmap_mode = _validate_heatmap_mode(heatmap_mode)
         student_id_length = settings.PLOM_STUDENT_ID_LENGTH
@@ -793,9 +793,9 @@ class IDBoxProcessorService:
         if not missing_id_box_files:
             return heatmap
 
-        if not settings.PLOM_DIGIT_SERVICE_URL:
-            raise RuntimeError(
-                "PLOM_DIGIT_SERVICE_URL must be configured: "
+        if not settings.PLOM_ML_SERVICE_URL:
+            raise PlomDigitServiceError(
+                "PLOM_ML_SERVICE_URL must be configured: "
                 "ID prediction requires the external Plom digit recognition service."
             )
         client = PlomDigitServiceClient.from_settings()
@@ -822,7 +822,7 @@ class IDBoxProcessorService:
                         digit_position=index,
                     )
                 )
-            if settings.PLOM_DIGIT_SERVICE_USE_NDIGITS:
+            if settings.PLOM_ML_SERVICE_DIGIT_USE_NDIGITS:
                 digit_probabilities = client.predict_digits(crops)
             else:
                 digit_probabilities = {

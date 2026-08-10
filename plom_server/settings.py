@@ -303,27 +303,6 @@ STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Similar to the "dynamic" static stuff, these are downloaded at runtime and cached.
 PLOM_MODEL_CACHE = PLOM_BASE_DIR / "model_cache"
 
-# External Plom digit recognition service used for ID-digit inference.
-# Plom owns ID-box extraction, digit segmentation, ID matching, and DB writes.
-# The external service only receives prepared digit crops and returns immediate
-# 0-9-plus-blank probabilities.
-PLOM_DIGIT_SERVICE_URL = os.environ.get("PLOM_DIGIT_SERVICE_URL", "").rstrip("/")
-PLOM_DIGIT_SERVICE_TOKEN = os.environ.get("PLOM_DIGIT_SERVICE_TOKEN", "")
-PLOM_DIGIT_SERVICE_TIMEOUT = float(os.environ.get("PLOM_DIGIT_SERVICE_TIMEOUT", "10"))
-PLOM_DIGIT_SERVICE_USE_NDIGITS = os.environ.get(
-    "PLOM_DIGIT_SERVICE_USE_NDIGITS", "1"
-).strip().lower() not in {"0", "false", "no", "off"}
-if not PLOM_DIGIT_SERVICE_URL:
-    if not DEBUG:
-        raise RuntimeError(
-            "When PLOM_DEBUG is off, you must set PLOM_DIGIT_SERVICE_URL. "
-            "ID prediction now requires the external Plom digit recognition service."
-        )
-    warnings.warn(
-        "PLOM_DIGIT_SERVICE_URL is unset; ID-prediction tasks will fail at runtime.",
-        RuntimeWarning,
-    )
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -467,7 +446,7 @@ MAX_BUNDLE_SIZE = 536870912
 MAX_BUNDLE_PAGES = 2500
 
 # Optional external ML service used for crop-only inference features such as
-# MCQ checkbox classification.  Leave URL blank to use local/fallback logic.
+# MCQ checkbox classification and student-ID digit recognition.
 PLOM_ML_SERVICE_URL = os.environ.get("PLOM_ML_SERVICE_URL", "").strip()
 PLOM_ML_SERVICE_TOKEN = os.environ.get("PLOM_ML_SERVICE_TOKEN", "").strip()
 PLOM_ML_SERVICE_TIMEOUT = float(os.environ.get("PLOM_ML_SERVICE_TIMEOUT", 30))
@@ -477,6 +456,9 @@ PLOM_ML_SERVICE_MCQ_BATCH_SIZE = int(
 PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO = float(
     os.environ.get("PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO", 0.25)
 )
+PLOM_ML_SERVICE_DIGIT_USE_NDIGITS = os.environ.get(
+    "PLOM_ML_SERVICE_DIGIT_USE_NDIGITS", "1"
+).strip().lower() not in {"0", "false", "no", "off"}
 
 # User uploaded (non-bundle) files are rejected if they exceed this byte size.
 # TODO: nginx also checks file size, does this serve a purpose?
