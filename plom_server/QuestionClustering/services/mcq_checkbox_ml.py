@@ -11,7 +11,6 @@ from io import BytesIO
 import logging
 from typing import Any
 
-from django.conf import settings
 import numpy as np
 from PIL import Image
 import requests
@@ -47,11 +46,6 @@ class MCQCheckboxPrediction:
     paper_number: int | None = None
 
 
-def is_mcq_checkbox_ml_enabled() -> bool:
-    """Return whether Plom should call the external checkbox ML service."""
-    return bool(getattr(settings, "PLOM_ML_SERVICE_URL", "").strip())
-
-
 def _image_to_base64_png(image: np.ndarray) -> str:
     """Encode a NumPy image array as base64 PNG for the ML service."""
     if image.size == 0:
@@ -81,14 +75,23 @@ def _read_bool(raw: dict[str, Any], key: str, *, default: bool | None = None) ->
 class MCQCheckboxMLClient:
     """HTTP client for the crop-only MCQ checkbox endpoint."""
 
-    def __init__(self) -> None:
-        base_url = getattr(settings, "PLOM_ML_SERVICE_URL", "").strip()
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        token: str = "",
+        timeout: float = 30.0,
+        batch_size: int = 128,
+    ) -> None:
+        base_url = base_url.strip()
         if not base_url:
-            raise MCQCheckboxMLServiceError("PLOM_ML_SERVICE_URL is not configured.")
+            raise MCQCheckboxMLServiceError("ML service URL is not configured.")
         self.predict_url = base_url.rstrip("/") + "/omr/infer"
-        self.timeout = float(getattr(settings, "PLOM_ML_SERVICE_TIMEOUT", 30.0))
-        self.batch_size = int(getattr(settings, "PLOM_ML_SERVICE_MCQ_BATCH_SIZE", 128))
-        self.token = getattr(settings, "PLOM_ML_SERVICE_TOKEN", "").strip()
+        self.timeout = float(timeout)
+        self.batch_size = int(batch_size)
+        if self.batch_size < 1:
+            raise MCQCheckboxMLServiceError("ML service batch size must be at least 1.")
+        self.token = token.strip()
 
     def _headers(self) -> dict[str, str]:
         if not self.token:
@@ -198,10 +201,6 @@ class MCQCheckboxMLClient:
         """Return checkbox predictions for all submitted crops."""
         if not crops:
             return []
-        if self.batch_size < 1:
-            raise MCQCheckboxMLServiceError(
-                "PLOM_ML_SERVICE_MCQ_BATCH_SIZE must be at least 1."
-            )
 
         predictions: list[MCQCheckboxPrediction] = []
         for chunk in _chunks(crops, self.batch_size):

@@ -49,7 +49,6 @@ from plom_server.QuestionClustering.services.mcq_checkbox_ml import (
     MCQCheckboxCrop,
     MCQCheckboxMLClient,
     MCQCheckboxMLServiceError,
-    is_mcq_checkbox_ml_enabled,
 )
 
 # exception
@@ -115,10 +114,7 @@ class QuestionClusteringJobService:
                     f"clustering job for q{question_idx}, v{version} already exists"
                 )
 
-            is_mcq_model = clustering_model in (
-                ClusteringModelType.MCQ,
-                ClusteringModelType.MCQ.value,
-            )
+            is_mcq_model = clustering_model == ClusteringModelType.MCQ
             x = QuestionClusteringChore.objects.create(
                 question_idx=question_idx,
                 version=version,
@@ -326,7 +322,7 @@ class QuestionClusteringService:
         all_scores: list[float] = []
 
         for paper_number in paper_numbers:
-            option_scores = {}
+            option_scores: dict[str, float] = {}
             for label, box_rect in box_rect_by_label.items():
                 scanned = rex.get_cropped_scanned_img_or_none(paper_number, box_rect)
                 if scanned is None:
@@ -396,7 +392,7 @@ class QuestionClusteringService:
         paper_to_cluster_id: dict[int, int] = {}
         crops: list[MCQCheckboxCrop] = []
         for paper_number in paper_numbers:
-            paper_crops = []
+            paper_crops: list[MCQCheckboxCrop] = []
             for label, box_rect in box_rect_by_label.items():
                 scanned = rex.get_cropped_scanned_img_or_none(paper_number, box_rect)
                 if scanned is None:
@@ -416,7 +412,12 @@ class QuestionClusteringService:
             else:
                 paper_to_cluster_id[paper_number] = ambiguous_cluster_id
 
-        predictions = MCQCheckboxMLClient().predict(crops)
+        predictions = MCQCheckboxMLClient(
+            settings.PLOM_ML_SERVICE_URL,
+            token=settings.PLOM_ML_SERVICE_TOKEN,
+            timeout=settings.PLOM_ML_SERVICE_TIMEOUT,
+            batch_size=settings.PLOM_ML_SERVICE_MCQ_BATCH_SIZE,
+        ).predict(crops)
         predictions_by_paper: dict[int, list] = defaultdict(list)
         for prediction in predictions:
             if prediction.paper_number is None:
@@ -439,8 +440,8 @@ class QuestionClusteringService:
                 label for label in labels if prediction_by_label[label].marked
             ]
             if len(selected_labels) == 0:
-                suspicious_fill_ratio = float(
-                    getattr(settings, "PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO", 0.25)
+                suspicious_fill_ratio = (
+                    settings.PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO
                 )
                 suspicious_labels = [
                     label
@@ -490,7 +491,7 @@ class QuestionClusteringService:
             page_num, version=version, scanned=True
         )
         if option_boxes:
-            if is_mcq_checkbox_ml_enabled():
+            if settings.PLOM_ML_SERVICE_URL:
                 try:
                     paper_to_clusterId = self._classify_mcq_papers_by_ml_option_boxes(
                         question_idx, version, page_num, paper_numbers, option_boxes
@@ -509,6 +510,8 @@ class QuestionClusteringService:
             )
             return
 
+        # Jobs created before checkbox metadata was added continue to use the
+        # legacy region-level MCQ clustering model.
         # Get reference image within the rectangle
         rex = RectangleExtractor(version, page_num)
         ref = rex.get_cropped_ref_img(rect)
@@ -614,13 +617,10 @@ class QuestionClusteringService:
         Raises:
             ValueError: extraction from problem reference image.
         """
-        if clustering_model in (ClusteringModelType.MCQ, ClusteringModelType.MCQ.value):
+        if clustering_model == ClusteringModelType.MCQ:
             self.cluster_mcq(question_idx, version, page_num, rect, mcq_metadata)
 
-        elif clustering_model in (
-            ClusteringModelType.HME,
-            ClusteringModelType.HME.value,
-        ):
+        elif clustering_model == ClusteringModelType.HME:
             self.cluster_hme(question_idx, version, page_num, rect)
 
     def get_question_clustering_tasks(self) -> list[dict]:
