@@ -43,10 +43,7 @@ def _build_mcq_metadata(
     cleaned_data: dict[str, Any], clustering_model: ClusteringModelType
 ) -> dict[str, Any]:
     """Build MCQ option-box metadata from the clustering form, if present."""
-    is_mcq_model = clustering_model in (
-        ClusteringModelType.MCQ,
-        ClusteringModelType.MCQ.value,
-    )
+    is_mcq_model = clustering_model == ClusteringModelType.MCQ
     if not is_mcq_model or cleaned_data.get("question_type") != "MCQ":
         return {}
 
@@ -101,7 +98,7 @@ def _build_mcq_metadata(
 
 def _get_padded_mcq_box(
     box: dict[str, Any], padding_ratio: float = 0.15
-) -> dict[str, float]:
+) -> dict[str, float | str]:
     left = float(box["left"])
     top = float(box["top"])
     right = float(box["right"])
@@ -255,7 +252,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         right = round(float(request.POST.get("plom_right")), 6)
         bottom = round(float(request.POST.get("plom_bottom")), 6)
 
-        params = {
+        params: dict[str, int | float | str] = {
             "version": version,
             "question_index": qidx,
             "page_num": page,
@@ -347,7 +344,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             page_num, version=version, scanned=True, limit=num_previews
         )
 
-        initial = {
+        initial: dict[str, int | float | str] = {
             "question": int(params["question_index"]),
             "version": version,
             "page_num": page_num,
@@ -360,6 +357,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             raw_mcq_boxes = params.get("mcq_boxes", "[]")
             initial.update(
                 {
+                    "choice": str(ClusteringModelType.MCQ),
                     "question_type": "MCQ",
                     "mcq_num_options": params.get("mcq_num_options", "4"),
                     "mcq_boxes": raw_mcq_boxes,
