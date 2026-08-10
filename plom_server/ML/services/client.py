@@ -113,7 +113,7 @@ class PlomDigitServiceClient:
         if not self.base_url:
             raise PlomDigitServiceError("PLOM_ML_SERVICE_URL is not configured")
 
-        payload = {
+        payload: dict[str, Any] = {
             "crop_id": crop_id,
             "paper_number": paper_number,
             "digit_position": digit_position,
@@ -162,7 +162,7 @@ class PlomDigitServiceClient:
         if not crop_list:
             return {}
 
-        payload = {
+        payload: dict[str, Any] = {
             "items": [
                 {
                     "crop_id": crop.crop_id,
