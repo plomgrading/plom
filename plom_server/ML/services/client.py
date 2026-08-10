@@ -9,7 +9,6 @@ import base64
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from django.conf import settings
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -63,15 +62,6 @@ class PlomDigitServiceClient:
         """Normalize shared ML-service connection settings."""
         object.__setattr__(self, "base_url", self.base_url.strip().rstrip("/"))
         object.__setattr__(self, "token", self.token.strip())
-
-    @classmethod
-    def from_settings(cls) -> "PlomDigitServiceClient":
-        """Build a client from Django settings."""
-        return cls(
-            base_url=settings.PLOM_ML_SERVICE_URL,
-            token=settings.PLOM_ML_SERVICE_TOKEN,
-            timeout=settings.PLOM_ML_SERVICE_TIMEOUT,
-        )
 
     @property
     def _headers(self) -> dict[str, str]:

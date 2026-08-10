@@ -822,7 +822,11 @@ class IDBoxProcessorService:
                 "PLOM_ML_SERVICE_URL must be configured: "
                 "ID prediction requires the external Plom digit recognition service."
             )
-        client = PlomDigitServiceClient.from_settings()
+        client = PlomDigitServiceClient(
+            settings.PLOM_ML_SERVICE_URL,
+            token=settings.PLOM_ML_SERVICE_TOKEN,
+            timeout=settings.PLOM_ML_SERVICE_TIMEOUT,
+        )
         client.check_ready()
         if heatmap_mode == HEATMAP_MODE_FRESH:
             cls.clear_probability_heatmaps(id_box_files.keys())

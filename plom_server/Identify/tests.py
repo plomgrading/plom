@@ -399,6 +399,8 @@ class IDPredictionHeatmapTests(TestCase):
 
     @override_settings(
         PLOM_ML_SERVICE_URL="https://ml.example",
+        PLOM_ML_SERVICE_TOKEN="test-token",
+        PLOM_ML_SERVICE_TIMEOUT=12.0,
         PLOM_ML_SERVICE_DIGIT_USE_NDIGITS=True,
     )
     def test_resume_recomputes_heatmap_after_source_image_changes(self) -> None:
@@ -424,10 +426,9 @@ class IDPredictionHeatmapTests(TestCase):
             }
             with (
                 patch(
-                    "plom_server.Identify.services.id_reader."
-                    "PlomDigitServiceClient.from_settings",
+                    "plom_server.Identify.services.id_reader.PlomDigitServiceClient",
                     return_value=client,
-                ),
+                ) as client_constructor,
                 patch.object(
                     IDBoxProcessorService,
                     "resize_ID_box_and_extract_digit_strip",
@@ -450,6 +451,11 @@ class IDPredictionHeatmapTests(TestCase):
                 )
 
             self.assertEqual(result, {paper.paper_number: new_probabilities})
+            client_constructor.assert_called_once_with(
+                "https://ml.example",
+                token="test-token",
+                timeout=12.0,
+            )
             client.check_ready.assert_called_once_with()
             client.predict_digits.assert_called_once()
             saved = IDPredictionHeatmap.objects.get(paper=paper)
