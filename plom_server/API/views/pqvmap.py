@@ -283,8 +283,7 @@ class PQVmap(APIView):
             return _error_response(err, status.HTTP_400_BAD_REQUEST)
 
         try:
-            # TODO: remove "force" kwarg from this function
-            PaperCreatorService.append_papers_to_qv_map(pqvmap, force=True)
+            PaperCreatorService.append_papers_to_qv_map(pqvmap)
         except ValueError as err:
             return _error_response(err, status.HTTP_400_BAD_REQUEST)
         except (PlomDependencyConflict, IntegrityError) as err:
