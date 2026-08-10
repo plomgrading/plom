@@ -18,6 +18,7 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.BuildPaperPDF.services import BuildPapersService
 from plom_server.Papers.services import (
     SpecificationService,
+    PaperCreatorService,
     PaperInfoService,
 )
 from ..services import (
@@ -36,7 +37,8 @@ class PreparationLandingView(ManagerRequiredView):
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "student_list_present": StagingStudentService.are_there_students(),
             "is_db_chore_running": PaperInfoService.is_paper_database_being_updated_in_background(),
-            "is_db_fully_populated": PaperInfoService.is_paper_database_fully_populated(),
+            "db_population_chore_status": PaperCreatorService.get_chore_status(),
+            "is_db_populated": PaperInfoService.is_paper_database_populated(),
             "all_papers_built": bps.are_all_papers_built(),
             "any_papers_built": bps.are_any_papers_built(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),

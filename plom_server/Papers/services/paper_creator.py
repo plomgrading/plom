@@ -9,6 +9,7 @@ import logging
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import IntegrityError
 from django.db import transaction
 from django_huey import db_task
 import huey
@@ -73,7 +74,10 @@ def huey_populate_whole_db(
             # increase verbosity, else it just prints like "4"
             raise KeyError(
                 f"KeyError {e}: perhaps not enough columns in your upload?"
+                f" Populated {idx}/{N} papers before failing."
             ) from e
+        except (ObjectDoesNotExist, IntegrityError) as e:
+            raise type(e)(f"{e}. Populated {idx}/{N} papers before failing.")
 
         if idx % 16 == 0:
             PopulateEvacuateDBChore.set_message(

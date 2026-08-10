@@ -157,7 +157,7 @@ class PQVMappingView(ManagerRequiredView):
             "question_indices": question_indices,
             "question_labels_html": question_triples,
             "question_labels_selection_html": selection_dict,
-            "pqv_mapping_present": PaperInfoService.is_paper_database_fully_populated(),
+            "pqv_mapping_present": PaperInfoService.is_paper_database_populated(),
             "number_of_students": num_students,
             "number_plus_twenty": num_students + 20,
             "number_times_1dot1": (num_students * 11) // 10,
