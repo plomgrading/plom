@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import IntegrityError
 
 from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom.common.version_maps import check_version_map
@@ -228,4 +229,64 @@ class PQVmap(APIView):
         except PlomDatabaseCreationError as err:
             return _error_response(err, status.HTTP_400_BAD_REQUEST)
 
+        return Response(PaperInfoService().get_pqv_map_dict())
+
+    # PATCH /api/beta/pqvmap
+    def patch(self, request: Request) -> Response:
+        """Append the PQV map attached to request to the server's PQV map.
+
+        Args:
+            request: An HTTP request, with a PQV map in the "pqvmap" key.
+
+        Returns:
+            Status 200 on success (with the entire pqvmap).
+            Status 400 for poor user input.
+            Status 401/301 for failed authentication/authorisation.
+            Status 409 for dependency conflicts (can't overwrite existing papers).
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can populate the database.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # json converts all keys to strings, we need them as integers
+        def _convert_keys_to_int(d: dict) -> dict:
+            """Convert keys to integers recursively."""
+            return_dict = {
+                int(k) if isinstance(k, str) and k.isdigit() else k: v
+                for k, v in d.items()
+            }
+            for key, val in return_dict.items():
+                if isinstance(val, dict):
+                    return_dict[key] = _convert_keys_to_int(val)
+            return return_dict
+
+        try:
+            pqvmap = _convert_keys_to_int(request.data["pqvmap"])
+        except KeyError:
+            return _error_response('"pqvmap" not provided', status.HTTP_400_BAD_REQUEST)
+
+        num_versions = SpecificationService.get_n_versions()
+        # screen user inputs before trying to push them to the DB
+        try:
+            num_questions = SpecificationService.get_n_questions()
+            check_version_map(
+                pqvmap, num_questions=num_questions, num_versions=num_versions
+            )
+        except ObjectDoesNotExist:
+            return _error_response(
+                "Spec not uploaded yet, aborting", status.HTTP_409_CONFLICT
+            )
+        except ValueError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # TODO: remove "force" kwarg from this function
+            PaperCreatorService.append_papers_to_qv_map(pqvmap, force=True)
+        except ValueError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+        except (PlomDependencyConflict, IntegrityError) as err:
+            return _error_response(err, status.HTTP_409_CONFLICT)
         return Response(PaperInfoService().get_pqv_map_dict())
