@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024-2026 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
-# Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2026 Deep Shah
 
 """Command line tool to start a Plom demonstration server."""
@@ -461,10 +461,10 @@ def read_hack_and_resave_qvmap(filepath: Path):
 
 
 def upload_the_qvmap(filepath: Path):
-    """Use 'plom_qvmap' to upload the qv-map."""
+    """Upload a qv-map from a file."""
     print("Uploading the question-version map")
-    # TODO: replace with plom-cli
-    run_django_manage_command(f"plom_qvmap upload {filepath}")
+    # run_django_manage_command(f"plom_qvmap upload {filepath}")
+    run_plom_cli_command("set-pqvmap --file {filepath}")
 
 
 def build_all_papers_and_wait():
