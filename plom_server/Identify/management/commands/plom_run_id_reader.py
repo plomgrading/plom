@@ -16,6 +16,7 @@ from ...services import (
     HEATMAP_MODE_FRESH,
     HEATMAP_MODE_RESUME,
     HEATMAP_MODE_REUSE,
+    HeatmapMode,
     IDReaderService,
 )
 
@@ -39,7 +40,7 @@ class Command(BaseCommand):
         return initial_rectangle
 
     def run_the_reader(
-        self, user_obj, rectangle: dict[str, float], *, heatmap_mode: str
+        self, user_obj, rectangle: dict[str, float], *, heatmap_mode: HeatmapMode
     ) -> None:
         try:
             self.stdout.write(f"Running the ID reader using {heatmap_mode} heatmaps")

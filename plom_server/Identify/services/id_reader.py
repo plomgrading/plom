@@ -10,6 +10,7 @@
 
 """Services for extracting ID boxes and predicting paper/student IDs."""
 
+import hashlib
 import time
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal, cast
@@ -52,11 +53,15 @@ from ..services import IdentifyTaskService, ClasslistService
 # the default certainty of prenaming predictions
 _default_prenaming_prediction_confidence = 0.9
 
-HEATMAP_MODE_FRESH = "fresh"
-HEATMAP_MODE_RESUME = "resume"
-HEATMAP_MODE_REUSE = "reuse"
 HeatmapMode = Literal["fresh", "resume", "reuse"]
-_heatmap_modes = {HEATMAP_MODE_FRESH, HEATMAP_MODE_RESUME, HEATMAP_MODE_REUSE}
+HEATMAP_MODE_FRESH: HeatmapMode = "fresh"
+HEATMAP_MODE_RESUME: HeatmapMode = "resume"
+HEATMAP_MODE_REUSE: HeatmapMode = "reuse"
+_heatmap_modes: set[HeatmapMode] = {
+    HEATMAP_MODE_FRESH,
+    HEATMAP_MODE_RESUME,
+    HEATMAP_MODE_REUSE,
+}
 
 
 def _validate_heatmap_mode(heatmap_mode: str) -> HeatmapMode:
@@ -415,7 +420,7 @@ class IDReaderService:
 @db_task(queue="chores", context=True)
 def huey_id_reading_task(
     user: User,
-    box_versions: dict[int, tuple[float, float, float, float] | None],
+    box_versions: dict[int, dict[str, float] | None],
     heatmap_mode: HeatmapMode,
     *,
     tracker_pk: int,
@@ -709,6 +714,11 @@ class IDBoxProcessorService:
         ).delete()
 
     @staticmethod
+    def hash_id_box_image(id_box_file: Path) -> str:
+        """Return a stable fingerprint of an extracted ID-box image."""
+        return hashlib.sha256(id_box_file.read_bytes()).hexdigest()
+
+    @staticmethod
     def is_complete_probability_heatmap(
         probabilities: Any, student_id_length: int = 8
     ) -> bool:
@@ -721,30 +731,40 @@ class IDBoxProcessorService:
 
     @staticmethod
     def save_probability_heatmap_for_paper(
-        paper_number: int, probabilities: list[list[float]]
+        paper_number: int,
+        probabilities: list[list[float]],
+        *,
+        source_image_hash: str,
     ) -> None:
         """Persist one complete paper's digit probability heatmap."""
         paper = Paper.objects.get(paper_number=paper_number)
         IDPredictionHeatmap.objects.update_or_create(
             paper=paper,
-            defaults={"probabilities": probabilities},
+            defaults={
+                "source_image_hash": source_image_hash,
+                "probabilities": probabilities,
+            },
         )
 
     @staticmethod
     def load_probability_heatmaps(
-        paper_numbers: Iterable[int],
+        source_image_hashes: dict[int, str],
         *,
         student_id_length: int = 8,
     ) -> dict[int, list[list[float]]]:
-        """Load complete saved digit probability heatmaps keyed by paper number."""
+        """Load complete heatmaps whose source images have not changed."""
         rows = IDPredictionHeatmap.objects.filter(
-            paper__paper_number__in=list(paper_numbers)
+            paper__paper_number__in=list(source_image_hashes)
         ).select_related("paper")
         return {
             row.paper.paper_number: row.probabilities
             for row in rows
-            if IDBoxProcessorService.is_complete_probability_heatmap(
-                row.probabilities, student_id_length=student_id_length
+            if (
+                row.source_image_hash
+                == source_image_hashes.get(row.paper.paper_number)
+                and IDBoxProcessorService.is_complete_probability_heatmap(
+                    row.probabilities, student_id_length=student_id_length
+                )
             )
         }
 
@@ -773,16 +793,20 @@ class IDBoxProcessorService:
         """
         heatmap_mode = _validate_heatmap_mode(heatmap_mode)
         student_id_length = settings.PLOM_STUDENT_ID_LENGTH
+        source_image_hashes = {
+            paper_number: cls.hash_id_box_image(id_box_file)
+            for paper_number, id_box_file in id_box_files.items()
+        }
         if heatmap_mode == HEATMAP_MODE_REUSE:
             return cls.load_probability_heatmaps(
-                id_box_files.keys(), student_id_length=student_id_length
+                source_image_hashes, student_id_length=student_id_length
             )
 
         if heatmap_mode == HEATMAP_MODE_FRESH:
             heatmap: dict[int, list[list[float]]] = {}
         else:
             heatmap = cls.load_probability_heatmaps(
-                id_box_files.keys(), student_id_length=student_id_length
+                source_image_hashes, student_id_length=student_id_length
             )
 
         missing_id_box_files = {
@@ -838,7 +862,11 @@ class IDBoxProcessorService:
                 digit_probabilities[(paper_number, position)]
                 for position in range(1, student_id_length + 1)
             ]
-            cls.save_probability_heatmap_for_paper(paper_number, paper_probabilities)
+            cls.save_probability_heatmap_for_paper(
+                paper_number,
+                paper_probabilities,
+                source_image_hash=source_image_hashes[paper_number],
+            )
             heatmap[paper_number] = paper_probabilities
 
         return heatmap
@@ -857,13 +885,8 @@ class IDBoxProcessorService:
             ValueError: no classlist.
         """
         heatmap_mode = _validate_heatmap_mode(heatmap_mode)
-        if heatmap_mode != HEATMAP_MODE_REUSE:
-            cls.compute_and_save_probability_heatmap(
-                id_box_files, heatmap_mode=heatmap_mode
-            )
-        probabilities = cls.load_probability_heatmaps(
-            id_box_files.keys(),
-            student_id_length=settings.PLOM_STUDENT_ID_LENGTH,
+        probabilities = cls.compute_and_save_probability_heatmap(
+            id_box_files, heatmap_mode=heatmap_mode
         )
         if not probabilities:
             raise ValueError("No digit probability heatmaps available")

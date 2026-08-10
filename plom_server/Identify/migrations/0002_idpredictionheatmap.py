@@ -23,6 +23,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("source_image_hash", models.CharField(max_length=64)),
                 ("probabilities", models.JSONField()),
                 ("time", models.DateTimeField(default=django.utils.timezone.now)),
                 ("last_update", models.DateTimeField(auto_now=True)),

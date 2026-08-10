@@ -10,6 +10,7 @@ from .id_reader import (
     HEATMAP_MODE_FRESH,
     HEATMAP_MODE_RESUME,
     HEATMAP_MODE_REUSE,
+    HeatmapMode,
     IDReaderService,
     IDBoxProcessorService,
 )
