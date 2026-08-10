@@ -16,41 +16,17 @@ from ...services import PaperCreatorService, PaperInfoService
 
 
 class Command(BaseCommand):
-    help = "Display the current state of test-papers in the database, populate the test-paper database, or clear."
+    help = "Display the current state of test-papers in the database, populate the test-paper database, or append new test papers to the database."
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
-            dest="command", description="Display, populate, or clear test-papers."
+            dest="command",
+            description="Display, populate, or download map of test-papers.",
         )
         sp.add_parser(
             "status", help="Show the current state of test-papers in the database."
         )
 
-        b = sp.add_parser(
-            "build_db",
-            help="""
-                Populate the database with test-papers - uses a default
-                version map.
-            """,
-        )
-        b.add_argument(
-            "-n",
-            "--number-to-produce",
-            metavar="N",
-            type=int,
-            help="""
-                The number of papers to produce.  If not present, the system will
-                compute this for you (not recommended).
-            """,
-        )
-        b.add_argument(
-            "--first-paper",
-            metavar="F",
-            type=int,
-            help="""
-                The paper number to start at.  Defaults to 1 if omitted.
-            """,
-        )
         dlp = sp.add_parser("download", help="Download the question-version map.")
         dlp.add_argument(
             "csv_file", nargs="?", help="Destination filename.csv - else use default"
@@ -79,8 +55,6 @@ class Command(BaseCommand):
             """,
         )
 
-        sp.add_parser("clear", help="Clear the database of test-papers.")
-
     def papers_status(self) -> None:
         """Get the status of test-papers in the database."""
         n_papers = PaperInfoService().how_many_papers_in_database()
@@ -89,44 +63,6 @@ class Command(BaseCommand):
             self.stdout.write("Database is ready")
         else:
             self.stdout.write("Database is not yet ready")
-
-    def build_db_of_papers(
-        self, *, number_to_produce: int | None = None, first: int | None = 1
-    ) -> None:
-        """Create a version map and use it to populate the database with papers."""
-        if PaperInfoService.is_paper_database_populated():
-            raise CommandError("Test-papers already saved to database - stopping.")
-
-        self.stdout.write("Creating test-papers...")
-        min_production = PQVMappingService().get_minimum_number_to_produce()
-        if number_to_produce is None:
-            number_to_produce = min_production
-        # guard Command line input
-        elif number_to_produce < 0:
-            number_to_produce = min_production
-
-        # need to assert for mypy
-        assert number_to_produce is not None
-        if first is None:
-            qv_map = PQVMappingService().make_version_map(number_to_produce)
-        else:
-            qv_map = PQVMappingService().make_version_map(
-                number_to_produce, first=first
-            )
-        try:
-            PaperCreatorService.add_all_papers_in_qv_map(qv_map, background=False)
-        except ValueError as e:
-            raise CommandError(e)
-        self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
-
-    def clear_papers(self) -> None:
-        """Remove all test-papers from the database."""
-        self.stdout.write("Removing test-papers and associated tasks...")
-        try:
-            PaperCreatorService.remove_all_papers_from_db(background=False)
-        except PlomDependencyConflict as e:
-            raise CommandError(e) from e
-        self.stdout.write("Database cleared of test-papers.")
 
     def download_pqv_map(self, dest_filename: str | None) -> None:
         # check if a populate/evacuate running
@@ -182,17 +118,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["command"] == "status":
             self.papers_status()
-        elif options["command"] == "build_db":
-            self.build_db_of_papers(
-                number_to_produce=options["number_to_produce"],
-                first=options["first_paper"],
-            )
         elif options["command"] == "download":
             self.download_pqv_map(options["csv_file"])
         elif options["command"] == "upload":
             self.upload_pqv_map(options["csv_or_json_file"])
-        elif options["command"] == "clear":
-            self.clear_papers()
         elif options["command"] == "append":
             self.append_rows_to_pqv_map(
                 options["csv_or_json_file"], force=options["force"]
