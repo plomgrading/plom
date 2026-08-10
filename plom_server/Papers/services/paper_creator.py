@@ -16,7 +16,6 @@ import huey
 import huey.api
 
 from plom.common.exceptions import PlomDatabaseCreationError
-from plom_server.Base.services import Settings
 from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
@@ -153,23 +152,6 @@ class PaperCreatorService:
 
     No need to instantiate: all methods can be called from the class.
     """
-
-    @staticmethod
-    def _set_number_to_produce(numberToProduce: int) -> None:
-        Settings.key_value_store_set(
-            "_tmp_number_of_papers_to_produce", numberToProduce
-        )
-
-    @staticmethod
-    def _increment_number_to_produce() -> None:
-        n = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
-        if n is None:
-            n = 0
-        Settings.key_value_store_set("_tmp_number_of_papers_to_produce", n)
-
-    @classmethod
-    def _reset_number_to_produce(cls) -> None:
-        Settings.key_value_store_reset("_tmp_number_of_papers_to_produce")
 
     @staticmethod
     @transaction.atomic()
@@ -366,7 +348,6 @@ class PaperCreatorService:
         # check if there is an existing non-obsolete task
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
-        cls._set_number_to_produce(len(qv_map))
 
         if not _testing:
             cls._populate_whole_db_huey_wrapper(qv_map, background=background)
@@ -415,7 +396,6 @@ class PaperCreatorService:
                 # todo: is durable correct?  I want both to fail or both succeed
 
                 # loop hammers the Settings database: how many might we be appending?
-                cls._increment_number_to_produce()
                 cls._create_single_paper_from_qvmapping_and_pages(
                     paper_number,
                     qv_row,
@@ -461,7 +441,6 @@ class PaperCreatorService:
         assert_can_modify_qv_mapping_database(deleting=True)
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
-        cls._reset_number_to_produce()
 
         if not _testing:
             cls._evacuate_whole_db_huey_wrapper(background=background)

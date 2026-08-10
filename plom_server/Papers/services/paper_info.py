@@ -9,7 +9,6 @@ import logging
 from django.db import transaction
 from django.db.models import Count
 
-from plom_server.Base.services import Settings
 from ..models import Paper, FixedPage
 from .paper_creator import PaperCreatorService
 
@@ -38,33 +37,12 @@ class PaperInfoService:
         return PaperCreatorService.is_background_chore_in_progress()
 
     @staticmethod
-    def is_paper_database_fully_populated() -> bool:
-        """Returns true when number of papers in the database equals the number to produce."""
-        # I recall being unhappy about this setting and its potential for abuse,
-        # so give it a underscore name.
-        nop = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
-        db_count = Paper.objects.count()
-        return db_count > 0 and db_count == nop
-
-    @staticmethod
-    def is_paper_database_partially_but_not_fully_populated() -> bool:
-        """Returns true when number of papers in the database is positive but strictly less than the number to produce.
-
-        TODO: currently I think this is unused.
-        """
-        nop = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
-        db_count = Paper.objects.count()
-        return db_count > 0 and db_count < nop
-
-    @staticmethod
     def is_paper_database_populated() -> bool:
         """True if any papers have been created in the DB.
 
         The database is initially created with empty tables.  Users get added.
         This function still returns False.  Eventually Tests (i.e., "papers")
         get created.  Then this function returns True.
-
-        See also :method:`is_paper_database_fully_populated`.
         """
         return Paper.objects.filter().exists()
 
