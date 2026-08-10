@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2026 Aidan Murphy
 
 import logging
 from typing import Any
@@ -383,8 +384,6 @@ class PaperCreatorService:
     def append_papers_to_qv_map(
         cls,
         qv_map: dict[int, dict[int | str, int]],
-        *,
-        force: bool = False,
     ):
         """Build additional Papers and associated tables from the qv-map, but not the PDF files.
 
@@ -398,19 +397,11 @@ class PaperCreatorService:
             qv_map: For each paper give the question-version map.
                 Of the form `{paper_number: {q: v}}`
 
-        Keyword Args:
-            force: if true, we don't check if we can modify the map, just try it.
-
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
             PlomDatabaseCreationError: if there are papers already in the database.
             IntegrityError: already have that row.
         """
-        if not force:
-            assert_can_modify_qv_mapping_database()
-            if Paper.objects.filter().exists():
-                raise PlomDatabaseCreationError("Already papers in the database.")
-
         # even with force you don't get to bully; other people are playing here!
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
