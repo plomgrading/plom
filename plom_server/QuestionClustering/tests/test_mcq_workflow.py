@@ -17,7 +17,7 @@ class PreviewSelectedRectsViewTests(SimpleTestCase):
         with patch("django.urls.reverse", return_value="/"):
             return render_to_string(
                 "QuestionClustering/show_rectangles.html",
-                context={**context, "csrf_token": "NOTPROVIDED"},
+                context={**context, "csrf_token": "test-csrf-token"},
             )
 
     def _get_context(self, **extra_params):
