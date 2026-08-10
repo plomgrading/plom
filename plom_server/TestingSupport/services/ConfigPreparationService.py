@@ -99,7 +99,7 @@ def create_qv_map_and_papers(config: PlomServerConfig):
                     "Number to produce and qvmap path missing from config."
                 )
 
-            # Some duplicated code here from `plom.version_maps``
+            # Some duplicated code here from `plom.common.version_maps``
             qvmap_path = config.parent_dir / qvmap_path
             with open(qvmap_path, "rb") as qvmap_file:
                 qvmap_rows = tomllib.load(qvmap_file)

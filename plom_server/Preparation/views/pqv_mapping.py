@@ -23,12 +23,11 @@ from plom_server.Papers.services import (
     PaperInfoService,
 )
 
-from plom.common.misc_utils import format_int_list_with_runs
 from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.common.misc_utils import format_int_list_with_runs
+from plom.common.version_maps import version_map_from_file
 
 from ..services import PQVMappingService, StagingStudentService, PapersPrinted
-
-from plom.version_maps import version_map_from_file
 
 
 class PQVMappingUploadView(ManagerRequiredView):

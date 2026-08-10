@@ -14,7 +14,7 @@ from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
 
 from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
-from plom.version_maps import check_version_map
+from plom.common.version_maps import check_version_map
 from plom_server.Preparation.services import (
     PQVMappingService,
     StagingStudentService,
