@@ -424,7 +424,6 @@ def populate_the_database(length="normal"):
 def download_the_qvmap(filepath: Path):
     """Download the qv-map."""
     print("Downloading the question-version map")
-    # run_django_manage_command(f"plom_qvmap download {filepath}")
     run_plom_cli_command(f"get-pqvmap -o {filepath}")
 
 
@@ -463,7 +462,6 @@ def read_hack_and_resave_qvmap(filepath: Path):
 def upload_the_qvmap(filepath: Path):
     """Upload a qv-map from a file."""
     print("Uploading the question-version map")
-    # run_django_manage_command(f"plom_qvmap upload {filepath}")
     run_plom_cli_command("set-pqvmap --file {filepath}")
 
 
