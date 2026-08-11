@@ -1175,9 +1175,7 @@ class QuestionClusteringService:
 
         # get tag_texts
         tag_texts = [
-            self._format_cluster_tag_text(
-                task_id, cid, clusterid_to_name.get(cid, "")
-            )
+            self._format_cluster_tag_text(task_id, cid, clusterid_to_name.get(cid, ""))
             for cid in clusterid_to_papers.keys()
         ]
 
@@ -1237,9 +1235,7 @@ class QuestionClusteringService:
         clean_name = cls._INVALID_CLUSTER_TAG_NAME_CHARS_RE.sub("_", clean_name)
         return clean_name.strip("_")
 
-    def remove_tag_from_a_cluster(
-        self, task_id: int, clusterId: int, tag_pk: int
-    ):
+    def remove_tag_from_a_cluster(self, task_id: int, clusterId: int, tag_pk: int):
         """Remove a tag identified with tag_pk from all tasks in the cluster.
 
         Args:

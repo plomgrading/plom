@@ -632,9 +632,7 @@ class AssignUnclusteredPapersView(ManagerRequiredView):
         """
         task_id = int(request.POST["task_id"])
         clusterId = int(request.POST["target_cluster_id"])
-        next_url = request.POST.get("next") or reverse(
-            "cluster_groups", args=[task_id]
-        )
+        next_url = request.POST.get("next") or reverse("cluster_groups", args=[task_id])
 
         paper_nums = list(map(int, request.POST.getlist("paper_nums")))
         qcs = QuestionClusteringService()
@@ -656,9 +654,7 @@ class AssignUnclusteredPapersView(ManagerRequiredView):
             messages.error(request, f"Assign failed: {err}")
         else:
             if is_htmx:
-                unclustered_count = len(
-                    qcs.get_unclustered_paper_nums(task_id)
-                )
+                unclustered_count = len(qcs.get_unclustered_paper_nums(task_id))
                 return JsonResponse(
                     {
                         "ok": True,
@@ -686,9 +682,7 @@ class CreateClusterFromUnclusteredPapersView(ManagerRequiredView):
         that create clusters without a full page reload.
         """
         task_id = int(request.POST["task_id"])
-        next_url = request.POST.get("next") or reverse(
-            "cluster_groups", args=[task_id]
-        )
+        next_url = request.POST.get("next") or reverse("cluster_groups", args=[task_id])
 
         paper_nums = list(map(int, request.POST.getlist("paper_nums")))
         qcs = QuestionClusteringService()
@@ -705,9 +699,7 @@ class CreateClusterFromUnclusteredPapersView(ManagerRequiredView):
             messages.error(request, f"Create cluster failed: {err}")
         else:
             if is_htmx:
-                unclustered_count = len(
-                    qcs.get_unclustered_paper_nums(task_id)
-                )
+                unclustered_count = len(qcs.get_unclustered_paper_nums(task_id))
                 return JsonResponse(
                     {
                         "ok": True,
