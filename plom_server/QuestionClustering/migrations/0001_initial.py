@@ -82,6 +82,16 @@ class Migration(migrations.Migration):
                 ("bottom", models.FloatField()),
                 ("right", models.FloatField()),
                 (
+                    "job",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="clusters",
+                        to="QuestionClustering.questionclusteringchore",
+                    ),
+                ),
+                (
                     "user_cluster",
                     models.ForeignKey(
                         blank=True,
@@ -141,6 +151,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name="qvcluster",
-            unique_together={("question_idx", "version", "clusterId", "type")},
+            unique_together={("job", "clusterId", "type")},
         ),
     ]
