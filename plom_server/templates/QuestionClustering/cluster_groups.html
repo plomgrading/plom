@@ -221,7 +221,12 @@
                             </td>
                             <!-- number of merged components -->
                             <td class="text-center align-middle">{% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}</td>
-                            <td class="text-center align-middle">{{ clusterId }}</td>
+                            <td class="text-center align-middle">
+                                {{ clusterId }}
+                                {% with cluster_label=cluster_id_to_label|get_item:clusterId %}
+                                    {% if cluster_label %}<span class="badge bg-secondary ms-1">{{ cluster_label }}</span>{% endif %}
+                                {% endwith %}
+                            </td>
                             {% with cluster_name=cluster_to_name|get_item:clusterId %}
                                 <td class="align-middle cluster-name-cell" data-cluster-name-cell>
                                     <div class="d-flex align-items-center justify-content-center cluster-name-view"

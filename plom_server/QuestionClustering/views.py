@@ -3,15 +3,18 @@
 # Copyright (C) 2025-2026 Colin B. Macdonald
 # Copyright (C) 2026 Deep Shah
 
+import json
+from typing import Any
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
+    Http404,
     HttpRequest,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseNotFound,
-    Http404,
     JsonResponse,
 )
 from django.shortcuts import render, redirect
@@ -20,13 +23,155 @@ from django.urls import reverse
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Rectangles.services import get_reference_qr_coords_for_page
+from .services.mcq_box_detection import detect_mcq_boxes_for_reference_image
 from .services import QuestionClusteringJobService, QuestionClusteringService
-from .models import QVCluster, QVClusterLink
+from .models import (
+    ClusteringModelType,
+    QuestionClusteringChore,
+    QVCluster,
+    QVClusterLink,
+)
 from .forms import ClusteringJobForm
 from .exceptions.job_exception import DuplicateClusteringJobError
 from .exceptions.clustering_exception import EmptySelectedError
+
+
+def _build_mcq_metadata(
+    cleaned_data: dict[str, Any], clustering_model: ClusteringModelType
+) -> dict[str, Any]:
+    """Build MCQ option-box metadata from the clustering form, if present."""
+    is_mcq_model = clustering_model == ClusteringModelType.MCQ
+    if not is_mcq_model or cleaned_data.get("question_type") != "MCQ":
+        return {}
+
+    raw_mcq_boxes = cleaned_data.get("mcq_boxes")
+    if not raw_mcq_boxes:
+        raise ValueError("No MCQ option boxes were submitted.")
+
+    try:
+        submitted_metadata = json.loads(raw_mcq_boxes)
+    except json.JSONDecodeError as err:
+        raise ValueError("MCQ option boxes were not valid JSON.") from err
+
+    if not isinstance(submitted_metadata, dict):
+        raise ValueError("MCQ option boxes were not submitted in the expected format.")
+
+    boxes = submitted_metadata.get("boxes", [])
+    if not isinstance(boxes, list) or not boxes:
+        raise ValueError("No MCQ option boxes were submitted.")
+
+    normalised_boxes = []
+    for idx, box in enumerate(boxes):
+        if not isinstance(box, dict):
+            raise ValueError(
+                "MCQ option boxes were not submitted in the expected format."
+            )
+
+        try:
+            normalised_boxes.append(
+                {
+                    "label": str(box["label"]),
+                    "left": round(float(box["left"]), 6),
+                    "top": round(float(box["top"]), 6),
+                    "right": round(float(box["right"]), 6),
+                    "bottom": round(float(box["bottom"]), 6),
+                }
+            )
+        except (KeyError, TypeError, ValueError) as err:
+            raise ValueError(
+                f"MCQ option box {idx + 1} is missing valid coordinates."
+            ) from err
+
+    return {
+        "question_type": "MCQ",
+        "num_options": int(
+            submitted_metadata.get("num_options")
+            or cleaned_data.get("mcq_num_options")
+            or len(normalised_boxes)
+        ),
+        "boxes": normalised_boxes,
+    }
+
+
+def _get_padded_mcq_box(
+    box: dict[str, Any], padding_ratio: float = 0.15
+) -> dict[str, float | str]:
+    left = float(box["left"])
+    top = float(box["top"])
+    right = float(box["right"])
+    bottom = float(box["bottom"])
+    width = right - left
+    height = bottom - top
+    pad_x = width * padding_ratio
+    pad_y = height * padding_ratio
+    return {
+        "left": max(0.0, left - pad_x),
+        "top": max(0.0, top - pad_y),
+        "right": min(1.0, right + pad_x),
+        "bottom": min(1.0, bottom + pad_y),
+    }
+
+
+def _build_mcq_crop_preview_boxes(raw_mcq_boxes: str) -> list[dict[str, Any]]:
+    """Build padded option-box crop coordinates for the pre-clustering preview."""
+    try:
+        submitted_metadata = json.loads(raw_mcq_boxes)
+    except json.JSONDecodeError as err:
+        raise ValueError("MCQ option boxes were not valid JSON.") from err
+
+    if not isinstance(submitted_metadata, dict):
+        raise ValueError("MCQ option boxes were not submitted in the expected format.")
+
+    boxes = submitted_metadata.get("boxes", [])
+    if not isinstance(boxes, list):
+        raise ValueError("MCQ option boxes were not submitted in the expected format.")
+
+    preview_boxes = []
+    for box in boxes:
+        if not isinstance(box, dict):
+            continue
+        padded_box = _get_padded_mcq_box(box)
+        padded_box["label"] = str(box.get("label", "?"))
+        preview_boxes.append(padded_box)
+    return preview_boxes
+
+
+def _get_mcq_cluster_label_map(
+    question_idx: int, version: int, page_num: int
+) -> dict[int, str]:
+    """Build display labels for checkbox-aware MCQ clusters, if available."""
+    job = (
+        QuestionClusteringChore.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            page_num=page_num,
+            obsolete=False,
+            clustering_model=ClusteringModelType.MCQ,
+        )
+        .order_by("-id")
+        .first()
+    )
+    if not job or not isinstance(job.mcq_metadata, dict):
+        return {}
+
+    boxes = job.mcq_metadata.get("boxes", [])
+    if not isinstance(boxes, list) or not boxes:
+        return {}
+
+    labels = [
+        str(box["label"]) for box in boxes if isinstance(box, dict) and "label" in box
+    ]
+    if not labels:
+        return {}
+
+    label_map = {idx: label for idx, label in enumerate(labels)}
+    label_map[len(labels)] = "blank"
+    label_map[len(labels) + 1] = "multiple"
+    label_map[len(labels) + 2] = "ambiguous"
+    return label_map
 
 
 class Debug(ManagerRequiredView):
@@ -107,7 +252,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         right = round(float(request.POST.get("plom_right")), 6)
         bottom = round(float(request.POST.get("plom_bottom")), 6)
 
-        params = {
+        params: dict[str, int | float | str] = {
             "version": version,
             "question_index": qidx,
             "page_num": page,
@@ -116,8 +261,59 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
             "right": right,
             "bottom": bottom,
         }
+        if request.POST.get("question_type") == "MCQ":
+            params.update(
+                {
+                    "question_type": "MCQ",
+                    "mcq_num_options": request.POST.get("mcq_num_options", "4"),
+                    "mcq_boxes": request.POST.get("mcq_boxes", "[]"),
+                }
+            )
         url = reverse("preview_clustering_region")
         return redirect(f"{url}?{urlencode(params)}")
+
+
+class DetectMCQBoxesView(ManagerRequiredView):
+    """Detect MCQ checkbox positions inside a selected reference-page region."""
+
+    def get(
+        self, request: HttpRequest, version: int, page: int
+    ) -> HttpResponse | JsonResponse:
+        """Return detected MCQ option boxes as JSON."""
+        try:
+            selected_rect = {
+                "left": float(request.GET["left"]),
+                "top": float(request.GET["top"]),
+                "right": float(request.GET["right"]),
+                "bottom": float(request.GET["bottom"]),
+            }
+            num_options = int(request.GET.get("num_options", "4"))
+        except (KeyError, TypeError, ValueError) as err:
+            return HttpResponseBadRequest(f"Invalid MCQ detection request: {err}")
+
+        if num_options < 1:
+            return HttpResponseBadRequest("num_options must be positive.")
+
+        try:
+            reference_image = ReferenceImage.objects.get(
+                version=version, page_number=page
+            )
+            boxes = detect_mcq_boxes_for_reference_image(
+                reference_image, selected_rect, num_options
+            )
+        except ReferenceImage.DoesNotExist as err:
+            raise Http404(
+                f"There is no reference image for v{version} pg{page}."
+            ) from err
+        except ValueError as err:
+            return JsonResponse({"error": str(err)}, status=400)
+
+        return JsonResponse(
+            {
+                "boxes": boxes,
+                "requested_num_options": num_options,
+            }
+        )
 
 
 # ======== Page to preview selected regions ===============
@@ -148,7 +344,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             page_num, version=version, scanned=True, limit=num_previews
         )
 
-        initial = {
+        initial: dict[str, int | float | str] = {
             "question": int(params["question_index"]),
             "version": version,
             "page_num": page_num,
@@ -157,6 +353,20 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             "right": float(params["right"]),
             "bottom": float(params["bottom"]),
         }
+        if params.get("question_type") == "MCQ":
+            raw_mcq_boxes = params.get("mcq_boxes", "[]")
+            initial.update(
+                {
+                    "choice": str(ClusteringModelType.MCQ),
+                    "question_type": "MCQ",
+                    "mcq_num_options": params.get("mcq_num_options", "4"),
+                    "mcq_boxes": raw_mcq_boxes,
+                }
+            )
+            try:
+                context["mcq_crop_boxes"] = _build_mcq_crop_preview_boxes(raw_mcq_boxes)
+            except ValueError as err:
+                context["mcq_crop_preview_error"] = str(err)
         form = ClusteringJobForm(initial=initial)
 
         context.update(initial)
@@ -182,6 +392,12 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             right = form.cleaned_data["right"]
             bottom = form.cleaned_data["bottom"]
 
+            try:
+                mcq_metadata = _build_mcq_metadata(form.cleaned_data, choice)
+            except ValueError as err:
+                messages.error(request, str(err))
+                return redirect("question_clustering_home")
+
             qcjs = QuestionClusteringJobService()
 
             rect = {"left": left, "top": top, "right": right, "bottom": bottom}
@@ -192,6 +408,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
                     page_num=page_num,
                     rect=rect,
                     clustering_model=choice,
+                    mcq_metadata=mcq_metadata,
                 )
 
                 messages.success(
@@ -338,6 +555,9 @@ def _get_cluster_groups_context(
                 "merged_count": qcs.get_merged_component_count(
                     question_idx=question_idx, version=version
                 ),
+                "cluster_id_to_label": _get_mcq_cluster_label_map(
+                    question_idx, version, page_num
+                ),
             }
         )
 
@@ -364,7 +584,6 @@ class ClusterGroupsView(ManagerRequiredView):
         except ObjectDoesNotExist as err:
             messages.error(request, err)
             return redirect("question_clustering_jobs_home")
-
         return render(
             request, "QuestionClustering/cluster_groups.html", context=context
         )
