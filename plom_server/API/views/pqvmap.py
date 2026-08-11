@@ -241,7 +241,7 @@ class PQVmap(APIView):
         Returns:
             Status 200 on success (with the entire pqvmap).
             Status 400 for poor user input.
-            Status 401/301 for failed authentication/authorisation.
+            Status 401/403 for failed authentication/authorisation.
             Status 409 for dependency conflicts (can't overwrite existing papers).
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
