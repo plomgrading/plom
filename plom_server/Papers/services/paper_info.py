@@ -184,12 +184,19 @@ class PaperInfoService:
         """
         pqvmapping: dict[int, dict[int | str, int]] = {}
         with transaction.atomic():
-            # note that this gets all question pages, not just one for each question.
-            for qp_obj in (
-                FixedPage.objects.filter(page_type=FixedPage.QUESTIONPAGE)
+            fixedpage_queryset = (
+                FixedPage.objects.all()
                 .prefetch_related("paper")
                 .order_by("paper__paper_number")
-            ):
+            )
+            # force evaluation here so we get question and id pages from a single query
+            # this is necessary to prevent race conditions, along with locks on fixedpage rows
+            list(fixedpage_queryset)
+
+            questionpages = fixedpage_queryset.filter(page_type=FixedPage.QUESTIONPAGE)
+            idpages = fixedpage_queryset.filter(page_type=FixedPage.IDPAGE)
+
+            for qp_obj in questionpages:
                 pn = qp_obj.paper.paper_number
                 if pn in pqvmapping:
                     if qp_obj.question_index in pqvmapping[pn]:
@@ -198,11 +205,9 @@ class PaperInfoService:
                         pqvmapping[pn][qp_obj.question_index] = qp_obj.version
                 else:
                     pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
-            for idpage_obj in (
-                FixedPage.objects.filter(page_type=FixedPage.IDPAGE)
-                .prefetch_related("paper")
-                .order_by("paper__paper_number")
-            ):
+
+            for idpage_obj in idpages:
                 pn = idpage_obj.paper.paper_number
                 pqvmapping[pn]["id"] = idpage_obj.version
+
             return pqvmapping

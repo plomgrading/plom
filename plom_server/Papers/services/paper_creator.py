@@ -201,6 +201,10 @@ class PaperCreatorService:
             question_page_numbers = SpecificationService.get_question_pages()
 
         paper_obj = Paper.objects.create(paper_number=paper_number)
+
+        # we do this to improve race conditions
+        Paper.objects.select_for_update().get(id=paper_obj.id)
+
         FixedPage.objects.create(
             page_type=FixedPage.IDPAGE,
             paper=paper_obj,
