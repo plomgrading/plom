@@ -38,12 +38,7 @@ class PaperInfoService:
 
     @staticmethod
     def is_paper_database_populated() -> bool:
-        """True if any papers have been created in the DB.
-
-        The database is initially created with empty tables.  Users get added.
-        This function still returns False.  Eventually Tests (i.e., "papers")
-        get created.  Then this function returns True.
-        """
+        """True if any papers have been created in the DB."""
         return Paper.objects.filter().exists()
 
     def is_this_paper_in_database(self, paper_number):
