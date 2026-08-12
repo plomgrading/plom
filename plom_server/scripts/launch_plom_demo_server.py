@@ -462,7 +462,7 @@ def read_hack_and_resave_qvmap(filepath: Path):
 def upload_the_qvmap(filepath: Path):
     """Upload a qv-map from a file."""
     print("Uploading the question-version map")
-    run_plom_cli_command("set-pqvmap --file {filepath}")
+    run_plom_cli_command(f"set-pqvmap --file {filepath}")
 
 
 def build_all_papers_and_wait():
