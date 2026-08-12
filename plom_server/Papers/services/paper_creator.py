@@ -71,12 +71,17 @@ def huey_populate_whole_db(
             )
         except KeyError as e:
             # increase verbosity, else it just prints like "4"
+            PopulateEvacuateDBChore.set_message(
+                tracker_pk, f"Populated {idx} of {N} papers in database"
+            )
             raise KeyError(
                 f"KeyError {e}: perhaps not enough columns in your upload?"
-                f" Populated {idx}/{N} papers before failing."
             ) from e
-        except (ObjectDoesNotExist, IntegrityError) as e:
-            raise type(e)(f"{e}. Populated {idx}/{N} papers before failing.")
+        except (ObjectDoesNotExist, IntegrityError):
+            PopulateEvacuateDBChore.set_message(
+                tracker_pk, f"Populated {idx} of {N} papers in database"
+            )
+            raise
 
         if idx % 16 == 0:
             PopulateEvacuateDBChore.set_message(
