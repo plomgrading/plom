@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 """Plom is Paperless Open Marking.
 
@@ -20,7 +21,7 @@ __version__ = "0.22.0.dev0"
 # There is no reason that they must match, although we generally bump both for the first
 # release 0.x.0.  Both should not change during patches of the 0.x.y cycle.  That is our
 # practice as of early 2026.
-Plom_API_Version = 117
+Plom_API_Version = 118
 Plom_DB_Version = 117
 
 # __all__ = [
