@@ -9,9 +9,9 @@ Assumes that the config describes a valid server state, and that the
 server will be created in order from test specification to building test-papers.
 """
 
-import tomllib
 from importlib import resources
 
+from plom.common import version_maps
 from plom_server.Papers.services import PaperCreatorService, SpecificationService
 from plom_server.Preparation import useful_files_for_testing as useful_files
 from plom_server.Preparation.services import (
@@ -80,7 +80,7 @@ def upload_classlist(config: PlomServerConfig):
 def create_qv_map_and_papers(config: PlomServerConfig):
     """Create a QVmap from a config and use it to populate the paper database.
 
-    Either generated from a number-to-produce value or a link to a QVmap CSV.
+    Either generated from a number-to-produce value or a link to a QVmap CSV/json.
     """
     qvmap: dict[int, dict[int | str, int]] = {}
     if config.num_to_produce:
@@ -91,24 +91,14 @@ def create_qv_map_and_papers(config: PlomServerConfig):
         else:
             qvmap = PQVMappingService().make_version_map(config.num_to_produce)
     else:
-        # TODO: extra validation steps here?
         try:
             qvmap_path = config.qvmap
-            if qvmap_path is None:
-                raise RuntimeError(
-                    "Number to produce and qvmap path missing from config."
-                )
-
-            # Some duplicated code here from `plom.common.version_maps``
-            qvmap_path = config.parent_dir / qvmap_path
-            with open(qvmap_path, "rb") as qvmap_file:
-                qvmap_rows = tomllib.load(qvmap_file)
-                for i in range(len(qvmap_rows)):
-                    paper_number = i + 1
-                    row = qvmap_rows[str(paper_number)]
-                    qvmap[paper_number] = {
-                        j: row[j - 1] for j in range(1, len(row) + 1)
-                    }
+        except Exception as e:
+            raise PlomConfigCreationError(e) from e
+        if qvmap_path is None:
+            raise RuntimeError("Number to produce and qvmap path missing from config.")
+        try:
+            qvmap = version_maps.version_map_from_file(config.parent_dir / qvmap_path)
         except Exception as e:
             raise PlomConfigCreationError(e) from e
     try:

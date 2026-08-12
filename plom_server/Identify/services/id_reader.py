@@ -39,6 +39,11 @@ from plom_server.Papers.models import Paper
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Preparation.services import StagingStudentService
 from plom_server.Rectangles.services import RectangleExtractor
+from plom_server.Rectangles.contour_detection import (
+    adaptive_threshold_foreground,
+    find_sorted_contours,
+    largest_contour_bounding_rect,
+)
 from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
 
@@ -602,25 +607,19 @@ class IDBoxProcessorService:
                 0 + top_bottom_crop : ID_box_height - top_bottom_crop, left:right
             ]
             blurred_digit = cv.GaussianBlur(single_digit, (3, 3), 0)
-            thresholded_digit = cv.adaptiveThreshold(
-                cv.cvtColor(blurred_digit, cv.COLOR_BGR2GRAY),
-                255,
-                cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv.THRESH_BINARY_INV,
-                127,  # pretty aggressively threshold here to get rid of dust
-                1,
+            thresholded_digit = adaptive_threshold_foreground(
+                blurred_digit,
+                block_size=127,  # pretty aggressively threshold here to get rid of dust
+                c=1,
+                blur_kernel=None,
             )
-            # extract the bounding box around largest 3 contours
-            contours, _ = cv.findContours(
-                thresholded_digit, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
-            )
+            # extract the bounding box around the largest contour
+            contours = find_sorted_contours(thresholded_digit, cv.RETR_EXTERNAL)
             # if couldn't find contours then return an empty list.
-            if len(contours) == 0:
+            bbox = largest_contour_bounding_rect(contours)
+            if bbox is None:
                 return []
 
-            # get the largest contour (by area)
-            contours = sorted(contours, key=cv.contourArea, reverse=True)
-            bbox = cv.boundingRect(contours[0])
             crop_pad = 4
             xrange = (max(bbox[0] - crop_pad, 0), bbox[0] + bbox[2] + crop_pad)
             yrange = (max(bbox[1] - crop_pad, 0), bbox[1] + bbox[3] + crop_pad)
@@ -768,9 +767,9 @@ class IDBoxProcessorService:
         """
         if not is_model_present(where=settings.PLOM_MODEL_CACHE):
             ensure_model_available(where=settings.PLOM_MODEL_CACHE)
-        student_id_length = 8
+
         heatmap = cls._compute_probability_heatmap_for_idbox_images(
-            id_box_files, student_id_length
+            id_box_files, settings.PLOM_STUDENT_ID_LENGTH
         )
 
         # probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}

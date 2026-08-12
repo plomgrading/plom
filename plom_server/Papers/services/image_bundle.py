@@ -12,7 +12,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet, Count, Q, OuterRef, Exists
 
-from plom.common.tpv_utils import encodePaperPageVersion
 from plom.common.exceptions import PlomPushCollisionException
 from plom.common.misc_utils import format_int_list_with_runs
 from plom_server.Scan.models import StagingImage, StagingBundle
@@ -317,19 +316,19 @@ class ImageBundleService:
             Looks something like:
             ``[[StagingImage1.pk, StagingImage2.pk, StagingImage3.pk], ...]``
         """
-        # temporary dict of short-tpv to list of known-images with that tpv
-        known_imgs: dict[str, list[int]] = {}
+        # temporary dict of (papernum, pagenum) to list of known-images
+        known_imgs: dict[tuple[int, int], list[int]] = {}
         # if that list is 2 or more then that it is an internal collision.
         collisions = []
 
         # note - only known-images will create collisions.
         # extra pages and discards will never collide.
         for img in staged_imgs.filter(image_type=StagingImage.KNOWN):
-            tpv = encodePaperPageVersion(img.paper_number, img.page_number, img.version)
-            # append this image.primary-key to the list of images with that tpv
-            known_imgs.setdefault(tpv, []).append(img.pk)
-        for tpv, image_list in known_imgs.items():
-            if len(image_list) == 1:  # no collision at this tpv
+            key = (img.paper_number, img.page_number)
+            # append this image.primary-key to the list of images with that key
+            known_imgs.setdefault(key, []).append(img.pk)
+        for key, image_list in known_imgs.items():
+            if len(image_list) == 1:  # no collision at this key
                 continue
             collisions.append(image_list)
 

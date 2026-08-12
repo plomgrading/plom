@@ -16,6 +16,33 @@ from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import Paper, FixedPage, MobilePage
 
 
+# Helper functions
+def _create_mock_image():
+    file = BytesIO()
+    image = Image.new("RGB", (1, 1), (0, 0, 0))
+    image.save(file, "PNG")
+    file.seek(0)
+    mock_image = SimpleUploadedFile(
+        name="test.png", content=file.read(), content_type="image/png"
+    )
+    return mock_image
+
+
+def make_staging_img(
+    bundle: StagingBundle, parsed_qr: dict, order: int = 0
+) -> StagingImage:
+    """Helper to add images with a given parsed_qr dict."""
+    image_file = _create_mock_image()
+    baseImage = BaseImage.objects.create(image_file=image_file)
+    return StagingImage.objects.create(
+        bundle=bundle,
+        bundle_order=order,
+        parsed_qr=parsed_qr,
+        image_type=StagingImage.UNKNOWN,
+        baseimage=baseImage,
+    )
+
+
 class QRServiceTest(TestCase):
     def setUp(self):
 
@@ -53,31 +80,6 @@ class QRServiceTest(TestCase):
         self.invalid_bundle = StagingBundle.objects.create(has_qr_codes=True)
         self.invalid_bundle = StagingBundle.objects.create(has_qr_codes=True)
         self.invalid_bundle = StagingBundle.objects.create(has_qr_codes=True)
-
-        # mock BaseImage
-        def create_mock_image():
-            file = BytesIO()
-            image = Image.new("RGB", (1, 1), (0, 0, 0))
-            image.save(file, "PNG")
-            file.seek(0)
-            mock_image = SimpleUploadedFile(
-                name="test.png", content=file.read(), content_type="image/png"
-            )
-            return mock_image
-
-        # Helper to add images with a given parsed_qr dict:
-        def make_staging_img(bundle, parsed_qr, order=0):
-            image_file = create_mock_image()
-            baseImage = BaseImage.objects.create(image_file=image_file)
-
-            img = StagingImage.objects.create(
-                bundle=bundle,
-                bundle_order=order,
-                parsed_qr=parsed_qr,
-                image_type=StagingImage.UNKNOWN,
-                baseimage=baseImage,
-            )
-            return img
 
         # no-QR image
         self.img_no_qr = make_staging_img(self.bundle, parsed_qr={})
@@ -215,6 +217,48 @@ class QRServiceTest(TestCase):
             img = StagingImage.objects.get(pk=img.pk)
             self.assertEqual(img.image_type, StagingImage.ERROR)
             self.assertIn("same QR codes", img.error_reason)
+            self.assertEqual(
+                img.error_reason_enum, StagingImage.ErrorReasonChoices.COLLISION
+            )
+
+    def test_subtle_collision_different_versions(self):
+        bundle = StagingBundle.objects.create(has_qr_codes=True)
+        make_staging_img(
+            bundle,
+            parsed_qr={
+                "NE": {
+                    "tpv": "0000100401",
+                    "page_type": "plom_qr",
+                    "page_info": {
+                        "public_code": "123456",
+                        "paper_id": 1,
+                        "page_num": 5,
+                        "version_num": 1,
+                    },
+                }
+            },
+            order=3,
+        )
+        # collides with the above, but only if you ignore version when keying
+        make_staging_img(
+            bundle,
+            parsed_qr={
+                "NE": {
+                    "tpv": "0000100400",
+                    "page_type": "plom_qr",
+                    "page_info": {
+                        "public_code": "123456",
+                        "paper_id": 1,
+                        "page_num": 5,
+                        "version_num": 0,
+                    },
+                }
+            },
+            order=4,
+        )
+        QRService.classify_staging_images_based_on_QR_codes(bundle)
+        for img in StagingImage.objects.filter(bundle=bundle):
+            self.assertEqual(img.image_type, StagingImage.ERROR)
             self.assertEqual(
                 img.error_reason_enum, StagingImage.ErrorReasonChoices.COLLISION
             )

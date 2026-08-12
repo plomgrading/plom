@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2026 Deep Shah
 
 from django import forms
 from .models import ClusteringModelType
@@ -24,3 +25,6 @@ class ClusteringJobForm(forms.Form):
     left = forms.FloatField(widget=forms.HiddenInput())
     bottom = forms.FloatField(widget=forms.HiddenInput())
     right = forms.FloatField(widget=forms.HiddenInput())
+    question_type = forms.CharField(required=False, widget=forms.HiddenInput())
+    mcq_num_options = forms.IntegerField(required=False, widget=forms.HiddenInput())
+    mcq_boxes = forms.CharField(required=False, widget=forms.HiddenInput())

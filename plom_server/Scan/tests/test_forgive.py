@@ -31,6 +31,10 @@ class TestForgiveMissingService(TestCase):
         with self.assertRaisesRegex(ValueError, "Paper 7 does not exist"):
             ForgiveMissingService.forgive_missing_fixed_page(user, 7, 4)
 
+    def test_subs_bundle_get_non_existant_page(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Page 4567.*does not exist"):
+            ForgiveMissingService.get_substitute_page_info(5, 4567)
+
     def test_subs_bundle_no_bundle_erase(self) -> None:
         ForgiveMissingService.erase_all_substitute_images_and_their_bundle()
 
@@ -169,3 +173,27 @@ class TestForgiveServiceSharedPages(TestCase):
 
         # the same subs image we saw three links to earlier
         self.assertEqual(info["substitute_image_pk"], image_ids[0])
+
+
+class TestForgiveServiceSharedPagesMixedVersions(TestCase):
+
+    @config_test(
+        {
+            "test_spec": "spec_with_shared_pages.toml",
+            "test_sources": "demo",
+            "qvmap": "shared_page_mixed_version_qvmap.csv",
+        }
+    )
+    def setUp(self) -> None:
+        pass
+
+    def test_forgive_page_3_multiversioned(self) -> None:
+        ForgiveMissingService.create_system_bundle_of_substitute_pages()
+        # paper 1 pg 3 has version 1 for all 3 questions
+        ForgiveMissingService.get_substitute_page_info(1, 3)
+        # but paper 4 pg 3 has mixed versions, still works
+        info = ForgiveMissingService.get_substitute_page_info(4, 3)
+        # confirm the substitute image is the generic one
+        img_id = info["substitute_image_pk"]
+        img = ForgiveMissingService.get_generic_substitute_image()
+        self.assertEqual(img_id, img.id)

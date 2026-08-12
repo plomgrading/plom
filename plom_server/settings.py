@@ -69,6 +69,26 @@ if not __:
 else:
     PLOM_QR_CODE_SIZE = int(__)
 
+# Number of digits in a student ID.  Default 8 (UBC student number length).
+# Set PLOM_STUDENT_ID_LENGTH to match your institution's student ID format.
+# Must be one of the supported lengths for which an ID box template exists.
+PLOM_SUPPORTED_ID_LENGTHS = (7, 8, 9)
+_student_id_length_env = os.environ.get("PLOM_STUDENT_ID_LENGTH")
+if not _student_id_length_env:
+    PLOM_STUDENT_ID_LENGTH = 8
+else:
+    try:
+        PLOM_STUDENT_ID_LENGTH = int(_student_id_length_env)
+    except ValueError:
+        raise RuntimeError(
+            f"PLOM_STUDENT_ID_LENGTH must be an integer, got '{_student_id_length_env}'"
+        )
+    if PLOM_STUDENT_ID_LENGTH not in PLOM_SUPPORTED_ID_LENGTHS:
+        raise RuntimeError(
+            f"PLOM_STUDENT_ID_LENGTH must be one of {PLOM_SUPPORTED_ID_LENGTHS},"
+            f" got {PLOM_STUDENT_ID_LENGTH}"
+        )
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("PLOM_SECRET_KEY")
@@ -418,6 +438,18 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 # Most likely the proxy server's limit should be used for security.
 MAX_BUNDLE_SIZE = 536870912
 MAX_BUNDLE_PAGES = 2500
+
+# Optional external ML service used for crop-only inference features such as
+# MCQ checkbox classification.  Leave URL blank to use local/fallback logic.
+PLOM_ML_SERVICE_URL = os.environ.get("PLOM_ML_SERVICE_URL", "").strip()
+PLOM_ML_SERVICE_TOKEN = os.environ.get("PLOM_ML_SERVICE_TOKEN", "").strip()
+PLOM_ML_SERVICE_TIMEOUT = float(os.environ.get("PLOM_ML_SERVICE_TIMEOUT", 30))
+PLOM_ML_SERVICE_MCQ_BATCH_SIZE = int(
+    os.environ.get("PLOM_ML_SERVICE_MCQ_BATCH_SIZE", 128)
+)
+PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO = float(
+    os.environ.get("PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO", 0.25)
+)
 
 # User uploaded (non-bundle) files are rejected if they exceed this byte size.
 # TODO: nginx also checks file size, does this serve a purpose?

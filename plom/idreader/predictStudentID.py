@@ -283,7 +283,7 @@ def compute_probabilities(image_file_paths, top, bottom, num_digits):
                 f"Test{testNumber}: could not read digits, excluding from calculations"
             )
             continue
-        elif len(prob_lists) != 8:
+        elif len(prob_lists) != num_digits:
             print(f"Test{testNumber}: unexpectedly len={len(prob_lists)}: {prob_lists}")
             probabilities[testNumber] = prob_lists
         else:

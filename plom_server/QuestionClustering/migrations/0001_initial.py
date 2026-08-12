@@ -37,12 +37,13 @@ class Migration(migrations.Migration):
                     "clustering_model",
                     models.CharField(
                         choices=[
-                            ("mcq", "Multiple choice (A-F, a-f)"),
+                            ("mcq", "Single-character response (A-F, a-f)"),
                             ("hme", "Generic handwritten math expression"),
                         ],
                         max_length=10,
                     ),
                 ),
+                ("mcq_metadata", models.JSONField(blank=True, default=dict)),
             ],
             bases=("Base.hueytasktracker",),
         ),

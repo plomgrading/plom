@@ -10,15 +10,19 @@ from pathlib import Path
 from typing import Any
 
 import cv2 as cv
-import imutils
 import numpy as np
 import zipfile
 from PIL import Image
 
+from plom.scan import rotate
 from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.models import Paper, FixedPage
 from plom_server.Papers.services import PaperInfoService
-from plom.scan import rotate
+from plom_server.Rectangles.contour_detection import (
+    approximate_contour,
+    canny_edges,
+    find_sorted_contours,
+)
 
 log = logging.getLogger(__name__)
 
@@ -616,20 +620,15 @@ def get_largest_rectangle_contour_from_image(
     # Process the image so as to find the contours.
     # TODO = improve this - it seems pretty clunky.
     # Grey, Blur and Edging are standard processes for text detection.
-    grey_image = cv.cvtColor(src_image, cv.COLOR_BGR2GRAY)
-    blurred_image = cv.GaussianBlur(grey_image, (3, 3), 0)
-    edged_image = cv.Canny(blurred_image, threshold1=5, threshold2=255)
-    contours = cv.findContours(edged_image, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-    contour_lists = imutils.grab_contours(contours)
-    sorted_contour_list = sorted(contour_lists, key=cv.contourArea, reverse=True)
+    edged_image = canny_edges(src_image, threshold1=5, threshold2=255)
+    sorted_contour_list = find_sorted_contours(edged_image, cv.RETR_EXTERNAL)
 
     box_contour = None
     for contour in sorted_contour_list:
-        perimeter = cv.arcLength(contour, True)
         # Approximate the contour
-        third_order_moment = cv.approxPolyDP(contour, 0.02 * perimeter, True)
+        third_order_moment = approximate_contour(contour, 0.02)
         # check that the contour is a quadrilateral
-        if len(third_order_moment) == 4:
+        if third_order_moment is not None and len(third_order_moment) == 4:
             box_contour = third_order_moment
             break
     if box_contour is None:
