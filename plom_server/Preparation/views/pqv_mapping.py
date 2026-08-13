@@ -193,7 +193,7 @@ class PQVMappingView(ManagerRequiredView):
         )
 
         # complicated conditional to prevent race conditions - don't try to fetch db
-        # rows while huey is working on them. Should simplify after Django 6.1
+        # rows while huey is working on them. Might be fixable after #4278 is resolved.
         if (
             not (context["populate_in_progress"] or context["evacuate_in_progress"])
             and context["pqv_mapping_present"]
