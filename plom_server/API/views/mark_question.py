@@ -25,9 +25,7 @@ from plom.common.exceptions import (
 from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
 from plom_server.Progress.services import UserInfoService
-from plom_server.Papers.models import Image
-from plom_server.Papers.services import PaperInfoService
-
+from plom_server.Papers.services import PaperInfoService, ImageBundleService
 from .utils import _error_response
 
 # Limit how many bytes of client non-image data we're willing to store,
@@ -334,14 +332,13 @@ class MarkTask(APIView):
             # The client reports "base images" used in underlay: verify those exist
             try:
                 src_img_data = user_agent_data["base_images"]
-                ids = set([img_data["id"] for img_data in src_img_data])
+                ids = [img_data["id"] for img_data in src_img_data]
             except KeyError as e:
                 return _400(f"Invalid base_images data in request: KeyError: {e}")
-            # TODO: refactor this to a service?
-            db_ids = set(Image.objects.filter(id__in=ids).values_list("id", flat=True))
-            missing = ids - db_ids
-            if missing:
-                return _400(f"Invalid base_images: nonexistent image ids: {missing}")
+            try:
+                ImageBundleService.ensure_all_image_ids_exist(ids)
+            except ValueError as e:
+                return _400(f"Invalid base_images: {e}")
 
             # take rid rev pairs from the annotation data, and verify they match
             rubric_list2 = extract_rubric_rid_rev_pairs(user_agent_data)
