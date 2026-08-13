@@ -198,7 +198,7 @@ push-to-docker-io:
 
 # to ensure the pypi job works, make sure we can package
 # TODO: we make these again during pypi push: better to use these artifacts?
-make_package:
+build-package:
   image: python:3.12
   stage: build
   script:
@@ -206,33 +206,43 @@ make_package:
     - python3 -m build
     - ls dist
     - md5sum dist/*
-    - mv dist dist_TODO
+    - sha256sum dist/*
   artifacts:
     paths:
-      - dist_TODO/plom-*.tar.gz
-      - dist_TODO/plom-*.whl
+      - dist/
     expire_in: 16 days
 
-
-# If we have a tag, then push to PyPI using TWINE_* env vars
-# Debug: `upload -r testpypi`, comment `only`, change and unprotect token
-# TODO: maybe we can bring the artifacts we built earlier in `make_package`?
-pypi:
-  image: python:3.12
+# If we have a tag, then push to PyPI using OIDC, no TWINE_* env vars
+# https://docs.pypi.org/trusted-publishers/using-a-publisher/#gitlab-cicd
+pypi-publish:
+  image: python:3
   stage: packaging
+  dependencies:
+    - build-package
   rules:
    - if: $CI_COMMIT_TAG
   cache: {}
+  id_tokens:
+    PYPI_ID_TOKEN:
+      aud: pypi
   script:
-    - pip install --upgrade twine wheel setuptools packaging build
-    - python3 -m build
+    - apt update && apt install -y jq
+    - pip install --upgrade twine id
+    # pip install --upgrade wheel setuptools packaging build
+    # python3 -m build
     - ls dist
     - pushd dist
     - md5sum *
     - sha256sum *
     - popd
-    - python3 -m twine check dist/*
-    - python3 -m twine upload --verbose dist/*
+
+    # Retrieve the OIDC token from GitLab CI/CD, and exchange it for a PyPI API token
+    - oidc_token=$(python -m id pypi)
+    - resp=$(curl -X POST https://pypi.org/_/oidc/mint-token -d "{\"token\":\"${oidc_token}\"}")
+    - api_token=$(jq --raw-output '.token' <<< "${resp}")
+
+    # Upload to PyPI authenticating via the newly-minted token
+    - twine upload -u __token__ -p ${api_token} --verbose dist/*
   artifacts:
     paths:
       - dist/plom-*.tar.gz
