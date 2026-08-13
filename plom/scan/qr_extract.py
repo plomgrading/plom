@@ -75,7 +75,7 @@ def QRextract(
 
     Returns:
         A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
-        a 'tpv_signature', 'x', 'y' keys that correspond to strings extracted from
+        a 'tpv_signature', 'x', 'y' and 'orientation' keys that correspond to strings extracted from
         QR codes (one string per code) and the x-y coordinates of the QR code.
         The dict is empty if no QR codes found in that corner.
 
@@ -108,7 +108,14 @@ def QRextract(
     for qr in qrlist:
         cnr, x_coord, y_coord = findCorner(qr, image.size)
         if cnr in cornerQR.keys():
-            cornerQR[cnr].update({"tpv_signature": qr.text, "x": x_coord, "y": y_coord})
+            cornerQR[cnr].update(
+                {
+                    "tpv_signature": qr.text,
+                    "x": x_coord,
+                    "y": y_coord,
+                    "orientation": qr.orientation,
+                }
+            )
 
     if try_harder:
         # Try again on smaller image: originally for pyzbar (Issue #967), but I
@@ -124,6 +131,7 @@ def QRextract(
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
+                # Why do we first assign it to 's' first?
                 s = qr.text
                 prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
                 if not prev_tpv_signature:
@@ -133,7 +141,12 @@ def QRextract(
                     #     "not found at original size"
                     # )
                     cornerQR[cnr].update(
-                        {"tpv_signature": s, "x": x_coord, "y": y_coord}
+                        {
+                            "tpv_signature": s,
+                            "x": x_coord,
+                            "y": y_coord,
+                            "orientation": qr.orientation,
+                        }
                     )
                 elif s == prev_tpv_signature:
                     # no-op, we already read this at the previous resolution

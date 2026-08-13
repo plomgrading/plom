@@ -8,6 +8,8 @@
 # Copyright (C) 2025-2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Deep Shah
+# Copyright (C) 2025 Jax Lim
+
 
 import hashlib
 import logging
@@ -562,6 +564,7 @@ class ScanService:
                     'tpv': '0000100301',
                     'x_coord': 2204,
                     'y_coord': 279.5
+                    'orientation': 0
                 },
                 'SW': {
                     'page_type': 'plom_qr',
@@ -574,7 +577,8 @@ class ScanService:
                     'quadrant': '3',
                     'tpv': '0000100301',
                     'x_coord': 234,
-                    'y_coord': 2909.5
+                    'y_coord': 2909.5,
+                    'orientation': 0
                 },
                 'SE': {
                     'page_type': 'plom_qr',
@@ -587,7 +591,8 @@ class ScanService:
                     'quadrant': '4',
                     'tpv': '0000100301',
                     'x_coord': 2203,
-                    'y_coord': 2906.5
+                    'y_coord': 2906.5,
+                    'orientation': 0
                 }
             }
             Alternatively, if the page is an extra page, then returns a similar dict but with entries of the form
@@ -623,7 +628,7 @@ class ScanService:
         # ++++++++++++++++++++++
 
         groupings = {}
-        # TODO - simplify this loop using enumerate(list) or similar.
+        # Note: the outer loop happens exactly once, TODO: consider flattening this code.
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
                 # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVOCCCCCC" qr-string
@@ -633,10 +638,12 @@ class ScanService:
                     continue
                 x_coord = list_qr_codes[page][quadrant].get("x")
                 y_coord = list_qr_codes[page][quadrant].get("y")
+                orientation = list_qr_codes[page][quadrant].get("orientation")
                 qr_code_dict = {
                     "raw_qr_string": raw_qr_string,
                     "x_coord": x_coord,
                     "y_coord": y_coord,
+                    "orientation": orientation,
                 }
 
                 if isValidTPV(raw_qr_string):

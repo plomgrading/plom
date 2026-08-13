@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Jax Lim
+
 
 from io import BytesIO
 
@@ -90,6 +92,7 @@ class QRServiceTest(TestCase):
             parsed_qr={
                 "NE": {
                     "tpv": "0000100301",
+                    "orientation": -10,
                     "page_type": "plom_qr",
                     "page_info": {
                         "public_code": "123456",
@@ -199,6 +202,7 @@ class QRServiceTest(TestCase):
         self.assertEqual(img.paper_number, 1)
         self.assertEqual(img.page_number, 3)
         self.assertEqual(img.version, 1)
+        self.assertEqual(img.parsed_qr["NE"]["orientation"], -10)
 
         # Extra -> EXTRA
         img = StagingImage.objects.get(pk=self.img_extra.pk)
