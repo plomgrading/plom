@@ -178,31 +178,25 @@ class PaperInfoService:
             are the int versions.
         """
         pqvmapping: dict[int, dict[int | str, int]] = {}
-        with transaction.atomic():
-            fixedpage_queryset = (
-                FixedPage.objects.all()
-                .prefetch_related("paper")
-                .order_by("paper__paper_number")
+
+        # huey also operates on the fixed pages table, so we want to fetch
+        # everything in a single query to avoid inconsistent data.
+        fixedpage_queryset = (
+            FixedPage.objects.filter(
+                page_type__in=[FixedPage.QUESTIONPAGE, FixedPage.IDPAGE]
             )
-            # force evaluation here so we get question and id pages from a single query
-            # this is necessary to prevent race conditions, along with locks on fixedpage rows
-            list(fixedpage_queryset)
+            .prefetch_related("paper")
+            .order_by("paper__paper_number")
+        )
 
-            questionpages = fixedpage_queryset.filter(page_type=FixedPage.QUESTIONPAGE)
-            idpages = fixedpage_queryset.filter(page_type=FixedPage.IDPAGE)
+        for page in fixedpage_queryset:
+            pn = page.paper.paper_number
 
-            for qp_obj in questionpages:
-                pn = qp_obj.paper.paper_number
-                if pn in pqvmapping:
-                    if qp_obj.question_index in pqvmapping[pn]:
-                        pass
-                    else:
-                        pqvmapping[pn][qp_obj.question_index] = qp_obj.version
-                else:
-                    pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
+            if page.page_type == FixedPage.QUESTIONPAGE:
+                pqvmapping.setdefault(pn, {})[page.question_index] = page.version
+            elif page.page_type == FixedPage.IDPAGE:
+                pqvmapping.setdefault(pn, {})["id"] = page.version
+            else:
+                raise RuntimeError('page type "{page.page_type}" unhandled')
 
-            for idpage_obj in idpages:
-                pn = idpage_obj.paper.paper_number
-                pqvmapping[pn]["id"] = idpage_obj.version
-
-            return pqvmapping
+        return pqvmapping
