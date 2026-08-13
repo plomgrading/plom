@@ -18,24 +18,44 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Process commandline arguments."""
-        parser.add_argument(
+        a_group = parser.add_mutually_exclusive_group()
+        a_group.add_argument(
             "--admin-login",
             nargs=2,
             metavar=("USERNAME", "PASSWORD"),
             help="Login details for the admin.",
         )
-        parser.add_argument(
+        a_group.add_argument(
+            "--no-admin-password",
+            action="store_true",
+            help="""
+                Don't generate a password, or reset link, for the admin user.
+                Most users won't need the admin user account for their assessments,
+                so for security reasons you might make this account inaccessible
+                until a password is set via the plom_users Django manage command.
+            """,
+        )
+        a_group.add_argument(
+            "--force-admin-password",
+            action="store_true",
+            help="""
+                Set simple passwords and write them to stdout, rather than
+                password reset links.
+            """,
+        )
+        m_group = parser.add_mutually_exclusive_group()
+        m_group.add_argument(
             "--manager-login",
             nargs=2,
             metavar=("USERNAME", "PASSWORD"),
             help="Login details for the manager.",
         )
-        parser.add_argument(
-            "--force-passwords",
+        m_group.add_argument(
+            "--force-manager-password",
             action="store_true",
             help="""
-                Set simple passwords and write them to stdout, rather than
-                password reset links.
+                Set a simple password and write it to stdout, rather than
+                a password reset link.
             """,
         )
         parser.add_argument(
@@ -91,7 +111,7 @@ class Command(BaseCommand):
             manager_string += "No manager login details provided: autogenerating...\n"
             manager_username = "manager"
             # check if passwords should be generated, or reset links should be provided
-            if options["force_passwords"]:
+            if options["force_manager_password"]:
                 manager_password = simple_password(6)
                 self.create_first_manager(manager_username, password=manager_password)
             else:
@@ -111,11 +131,18 @@ class Command(BaseCommand):
         self.stdout.write(manager_string)
 
         admin_string = "Make admin user\n"
-        if options["admin_login"] is None:
+        if options["no_admin_password"]:
+            admin_username = "admin"
+            admin_obj = self.create_admin(username=admin_username)
+            admin_string += "v" * 40 + "\n"
+            admin_string += f"Admin username: {admin_username}\n"
+            admin_string += "Admin password: [NONE]\n"
+            admin_string += "^" * 40 + "\n"
+        elif options["admin_login"] is None:
             admin_string += "No admin login details provided: autogenerating...\n"
             admin_username = "admin"
             # check if passwords should be generated, or reset links should be provided
-            if options["force_passwords"]:
+            if options["force_admin_password"]:
                 admin_password = simple_password(6)
                 self.create_admin(username=admin_username, password=admin_password)
             else:

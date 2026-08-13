@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Removed
+Servers no longer log plaintext passwords for the admin or first manager user on launch. By default, a password reset link is logged for the manager.
 
 ### Changed
 
