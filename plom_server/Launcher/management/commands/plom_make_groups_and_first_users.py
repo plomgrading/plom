@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Process commandline arguments."""
-        a_group = parser.add_mutually_exclusive_group(required=True)
+        a_group = parser.add_mutually_exclusive_group()
         a_group.add_argument(
             "--admin-login",
             nargs=2,
@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 password reset links.
             """,
         )
-        m_group = parser.add_mutually_exclusive_group(required=True)
+        m_group = parser.add_mutually_exclusive_group()
         m_group.add_argument(
             "--manager-login",
             nargs=2,
