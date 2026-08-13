@@ -32,10 +32,6 @@ from . import SpecificationService
 class ImageBundleService:
     """Class to encapsulate functions around validated page images and bundles."""
 
-    def image_exists(self, imghash: str) -> bool:
-        """Return True if a page image with the input hash exists in the database."""
-        return Image.objects.filter(hash=imghash).exists()
-
     @transaction.atomic
     def get_image_pushing_status(self, staged_image: StagingImage) -> str | None:
         """Return the status of a staged image's associated CreateImageHueyTask instance."""
