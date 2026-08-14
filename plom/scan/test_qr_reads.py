@@ -38,9 +38,9 @@ def test_qr_reads_from_image() -> None:
 
 def test_qr_reads_slight_rotate() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = im.rotate(10, expand=True)
+    rot = 10  # 10 degrees ccw
+    im = im.rotate(rot, expand=True)
     q = QRextract(im)
-    rot = -10
     assert not q["NE"]
     assert q["NW"]["tpv_signature"] == "00002806012823730"
     assert relative_error(q["NW"]["x"], 148) < 0.01
@@ -58,28 +58,28 @@ def test_qr_reads_slight_rotate() -> None:
 
 def test_qr_reads_upside_down() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = im.rotate(180)
-    q = QRextract(im)
     rot = 180
+    im = im.rotate(rot)
+    q = QRextract(im)
     assert not q["SW"]
     assert q["SE"]["tpv_signature"] == "00002806012823730"
     assert relative_error(q["SE"]["x"], 1420) < 0.001
     assert relative_error(q["SE"]["y"], 1861) < 0.001
-    assert abs(q["SE"]["orientation"] - rot) < 0.05
+    assert abs(q["SE"]["orientation"] - rot) % 360 < 0.05
     assert q["NW"]["tpv_signature"] == "00002806014823730"
     assert relative_error(q["NW"]["x"], 127) < 0.01
     assert relative_error(q["NW"]["y"], 139) < 0.01
-    assert abs(q["NW"]["orientation"] - rot) < 0.05
+    assert abs(q["NW"]["orientation"] - rot) % 360 < 0.05
     assert q["NE"]["tpv_signature"] == "00002806013823730"
     assert relative_error(q["NE"]["x"], 1420) < 0.001
     assert relative_error(q["NE"]["y"], 139) < 0.01
-    assert abs(q["NE"]["orientation"] - rot) < 0.05
+    assert abs(q["NE"]["orientation"] - rot) % 360 < 0.05
 
 
 def test_qr_reads_float_rotate() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
-    rot = -6.25
-    im = im.rotate(-rot, expand=True)
+    rot = 6.25
+    im = im.rotate(rot, expand=True)
     q = QRextract(im)
     # ZXing-cpp gives nearest integer orientation
     assert q["NW"]["orientation"] == round(rot)

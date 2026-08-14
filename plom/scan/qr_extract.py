@@ -75,8 +75,9 @@ def QRextract(
 
     Returns:
         A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
-        a 'tpv_signature', 'x', 'y' and 'orientation' keys that correspond to strings extracted from
-        QR codes (one string per code) and the x-y coordinates of the QR code.
+        a 'tpv_signature', 'x', 'y' (the horizontal and vertical pixel coordinates
+        of the QR code), 'orientation' (the rotation ccw of the QR code, currently
+        an integer).
         The dict is empty if no QR codes found in that corner.
 
     Without the `try_harder` flag, we observe high failure rates when
@@ -113,7 +114,7 @@ def QRextract(
                     "tpv_signature": qr.text,
                     "x": x_coord,
                     "y": y_coord,
-                    "orientation": qr.orientation,
+                    "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
                 }
             )
 
