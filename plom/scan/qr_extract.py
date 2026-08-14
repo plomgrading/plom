@@ -146,7 +146,7 @@ def QRextract(
                             "tpv_signature": s,
                             "x": x_coord,
                             "y": y_coord,
-                            "orientation": qr.orientation,
+                            "orientation": -qr.orientation,
                         }
                     )
                 elif s == prev_tpv_signature:
