@@ -43,23 +43,20 @@ class ExamMockerService:
             A bytes object containing the document.
         """
         try:
-            pdf_doc = cls._mock_exam_with_spec(version)
+            b = cls._mock_exam_with_spec(version)
         except ObjectDoesNotExist:
-            pdf_doc = cls._mock_exam_without_spec(version)
-        b = pdf_doc.tobytes()
-        pdf_doc.close()
+            b = cls._mock_exam_without_spec(version)
         return b
 
     @staticmethod
-    def _mock_exam_with_spec(version: int) -> pymupdf.Document:
+    def _mock_exam_with_spec(version: int) -> bytes:
         """Fetch the exam spec and create the mock exam.
 
         Args:
-            source_path: the path to the exam sourcefile
             version: the version to mock
 
         Returns:
-            An open PDF document: careful, you must close it.
+            The raw bytes of a PDF file.
         """
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
         from .SourceService import _get_source_file
@@ -88,10 +85,10 @@ class ExamMockerService:
                 paperstr="<Mock>",
                 qr_code_size=settings.PLOM_QR_CODE_SIZE,
             )
-            return pymupdf.open(f)
+            return pymupdf.open(f).tobytes()
 
     @staticmethod
-    def _mock_exam_without_spec(version: int) -> pymupdf.Document:
+    def _mock_exam_without_spec(version: int) -> bytes:
         """Create a mock exam without the spec.
 
         This is a bit lower-level than the preferred
@@ -101,7 +98,7 @@ class ExamMockerService:
             version: the version to mock.
 
         Returns:
-            An open PDF document: careful, you must close it.
+            The raw bytes of a PDF file.
         """
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
         from .SourceService import _get_source_file
@@ -128,8 +125,7 @@ class ExamMockerService:
                     qr_codes,
                     odd=odd,
                 )
-            # TODO: a terrible idea, returning something in a temp dir...
-            return pdf_doc
+        return pdf_doc.tobytes()
 
     @staticmethod
     def mock_ID_page(
@@ -198,9 +194,10 @@ class ExamMockerService:
             shown translucently.
         """
         try:
-            pdf_doc = cls._mock_exam_with_spec(version)
+            pdf_bytes = cls._mock_exam_with_spec(version)
         except ObjectDoesNotExist:
-            pdf_doc = cls._mock_exam_without_spec(version)
+            pdf_bytes = cls._mock_exam_without_spec(version)
+        pdf_doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
         page = pdf_doc[pg - 1]
         # borrowed from GNU Octave's defaults ("help lines")
         colour_choices = (
