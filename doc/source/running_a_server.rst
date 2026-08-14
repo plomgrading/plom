@@ -2,6 +2,7 @@
    Copyright (C) 2022-2024, 2026 Colin B. Macdonald
    Copyright (C) 2023 Philip D. Loewen
    Copyright (C) 2026 Aidan Murphy
+   Copyright (C) 2026 Deep Shah
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Running your own server
@@ -40,9 +41,7 @@ private, git-ignored ``.env`` file::
     PLOM_ML_SERVICE_TOKEN=replace-with-the-issued-token
 
 Use the base URL without ``/docs`` or ``/omr/infer``, keep the token secret,
-and restart Plom after changing either value.  Enabling this service sends
-cropped response images to it, so administrators should consider their
-institution's privacy requirements.
+and restart Plom after changing either value.
 
 Security
 --------
