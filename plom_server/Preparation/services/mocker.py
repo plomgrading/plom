@@ -115,7 +115,7 @@ class ExamMockerService:
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             pdf_doc = pymupdf.open(source_path)
-            for index, page in enumerate(pdf_doc):  # ignore: type[arg-type]
+            for index, page in enumerate(pdf_doc):  # type: ignore[arg-type]
                 qr_codes = create_QR_codes(
                     papernum, index + 1, version, example_code, Path(tmpdirname)
                 )
