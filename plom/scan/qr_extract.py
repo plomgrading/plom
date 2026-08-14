@@ -132,24 +132,22 @@ def QRextract(
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
-                # Why do we first assign it to 's' first?
-                s = qr.text
                 prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
                 if not prev_tpv_signature:
                     # TODO: log these failures?
                     # print(
-                    #     f'Found QR-code "{s}" at {cnr} on reduced image, '
+                    #     f'Found QR-code "{qr.text}" at {cnr} on reduced image, '
                     #     "not found at original size"
                     # )
                     cornerQR[cnr].update(
                         {
-                            "tpv_signature": s,
-                            "x": x_coord,
-                            "y": y_coord,
+                            "tpv_signature": qr.text,
+                            "x": 2 * x_coord,  # Issue #4279.
+                            "y": 2 * y_coord,
                             "orientation": -qr.orientation,
                         }
                     )
-                elif s == prev_tpv_signature:
+                elif qr.text == prev_tpv_signature:
                     # no-op, we already read this at the previous resolution
                     pass
                 else:
