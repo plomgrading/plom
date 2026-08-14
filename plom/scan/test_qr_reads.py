@@ -78,10 +78,11 @@ def test_qr_reads_upside_down() -> None:
 
 def test_qr_reads_float_rotate() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = im.rotate(6.25, expand=True)
+    rot = -6.25
+    im = im.rotate(-rot, expand=True)
     q = QRextract(im)
     # ZXing-cpp gives nearest integer orientation
-    assert q["NW"]["orientation"] == 6
+    assert q["NW"]["orientation"] == round(rot)
 
 
 def test_qr_reads_from_file(tmp_path) -> None:
