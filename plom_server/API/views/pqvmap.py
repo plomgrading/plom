@@ -185,8 +185,6 @@ class PQVmap(APIView):
     def put(self, request: Request) -> Response:
         """Replace the PQV map with the one attached to the request.
 
-        Not built yet! (But relevant infrastructure is available, thanks to others.)
-
         Args:
             request: An HTTP request, with a PQV map in the FILES container.
 
