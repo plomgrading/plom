@@ -6,7 +6,6 @@
 # Copyright (C) 2024 Bryan Tanady
 
 import json
-import pathlib
 
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -26,7 +25,7 @@ from plom.common.exceptions import (
 from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
 from plom_server.Mark.services import mark_task, page_data
 from plom_server.Progress.services import UserInfoService
-from plom_server.Papers.services import PaperInfoService
+from plom_server.Papers.services import PaperInfoService, ImageBundleService
 from .utils import _error_response
 
 # Limit how many bytes of client non-image data we're willing to store,
@@ -232,7 +231,9 @@ class MarkTask(APIView):
             200: returns two integers, first the number of marked papers
             for this question/version and the total number of papers for
             this question/version.
-            400: malformed input of some sort, such as poorly formed task code.
+            400: malformed input of some sort, such as poorly formed task code,
+            or the data provided is invalid in some way, for example references
+            a non-existent image.
             404: currently not returned but perhaps in the past this was used
             instead of 410, in some cases (depending on a regex matching of
             task codes.  Its possible in the future the server might distinguish
@@ -328,13 +329,16 @@ class MarkTask(APIView):
         # For now, and perhaps temporarily, we do some extra checking when
         # the client agent is specifically our official client.
         if user_agent == "org.plomgrading.PlomClient":
-            # Colin thinks this is a very bad idea: Issue #4219.
-            src_img_data = user_agent_data["base_images"]
-            for image_data in src_img_data:
-                # TODO: this looks like direct file access on the server, Issue #3888.
-                img_path = pathlib.Path(image_data["server_path"])
-                if not img_path.exists():
-                    return _400("Invalid original-image in request")
+            # The client reports "base images" used in underlay: verify those exist
+            try:
+                src_img_data = user_agent_data["base_images"]
+                ids = [img_data["id"] for img_data in src_img_data]
+            except KeyError as e:
+                return _400(f"Invalid base_images data in request: KeyError: {e}")
+            try:
+                ImageBundleService.ensure_all_image_ids_exist(ids)
+            except ValueError as e:
+                return _400(f"Invalid base_images: {e}")
 
             # take rid rev pairs from the annotation data, and verify they match
             rubric_list2 = extract_rubric_rid_rev_pairs(user_agent_data)

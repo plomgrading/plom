@@ -32,9 +32,14 @@ from . import SpecificationService
 class ImageBundleService:
     """Class to encapsulate functions around validated page images and bundles."""
 
-    def image_exists(self, imghash: str) -> bool:
-        """Return True if a page image with the input hash exists in the database."""
-        return Image.objects.filter(hash=imghash).exists()
+    @staticmethod
+    def ensure_all_image_ids_exist(id_list: list[int]) -> None:
+        """Raises a ValueError if one or more of the Image ids provided does not exist."""
+        db_ids = Image.objects.filter(id__in=id_list).values_list("id", flat=True)
+        missing = set(id_list) - set(db_ids)
+        if missing:
+            missing_strs = [str(x) for x in missing]
+            raise ValueError(f"nonexistent image ids: {', '.join(missing_strs)}")
 
     @transaction.atomic
     def get_image_pushing_status(self, staged_image: StagingImage) -> str | None:
