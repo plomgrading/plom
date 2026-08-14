@@ -35,13 +35,18 @@ class PQVmap(APIView):
     def delete(self, request: Request) -> Response:
         """Remove the current PQV map, if any, from the database.
 
-        This work is done by Huey, taking a blocking foreground approach.
+        This work is done by Huey, taking a blocking foreground approach
+        by default.
 
         The response will be generated only after all the deletions are
         complete. For large classes, this may take so long that the
         requester gives up and declares an HTTP timeout. This has not yet
         been observed in the wild, but we note it here in case some
         unfortunate colleague in the future needs a pointer on what's breaking.
+
+        Providing a boolean keyed by "background" will force this operation
+        to the background, where the caller will need to poll the pqvmap
+        to determine the success or failure of this operation.
 
         Args:
             request: An HTTP request.
@@ -58,9 +63,10 @@ class PQVmap(APIView):
                 'Only users in the "manager" group can clean the database.',
                 status.HTTP_403_FORBIDDEN,
             )
+        background = request.data.get("background", False)
 
         try:
-            PaperCreatorService.remove_all_papers_from_db(background=False)
+            PaperCreatorService.remove_all_papers_from_db(background=background)
         except PlomDependencyConflict as err:
             return _error_response(
                 f"Dependency Conflict. The database cannot be cleared right now. {err}",
@@ -97,7 +103,8 @@ class PQVmap(APIView):
 
         POST data determines the map to make. See below.
 
-        This work is done by Huey, taking a blocking foreground approach.
+        This work is done by Huey, taking a blocking foreground approach
+        by default.
         If 'count' is not provided, use the default suggested number.
         The request will be rejected if there is already a PQV map in place.
         (Note that the DELETE method is available on the same endpoint.)
@@ -114,6 +121,10 @@ class PQVmap(APIView):
         requester gives up and declares an HTTP timeout. This has not yet
         been observed in the wild, but we note it here in case some unfortunate
         colleague in the future needs a pointer on what's breaking.
+
+        Providing a boolean keyed by "background" will force this operation
+        to the background, where the caller will need to poll the pqvmap
+        to determine the success or failure of this operation.
 
         Args:
             request: An HTTP request.
@@ -158,11 +169,13 @@ class PQVmap(APIView):
 
         startn = int(request.POST.get("startn_value", first_paper_hint))
 
+        background = request.data.get("background", False)
+
         try:
             qvmap = PQVMappingService().make_version_map(
                 number_to_produce, first=startn
             )
-            PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=False)
+            PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=background)
         except PlomDependencyConflict as err:
             return _error_response(err, status.HTTP_409_CONFLICT)
 
