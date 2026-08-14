@@ -14,8 +14,7 @@ class QuestionRegionsService:
 
     @staticmethod
     def reset_question_regions() -> None:
-        regions = []
-        Settings.key_value_store_set("question_regions", regions)
+        Settings.key_value_store_set("question_regions", [])
 
     @classmethod
     def get_question_regions(cls) -> list[dict[str, Any]]:

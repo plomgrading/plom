@@ -115,21 +115,21 @@ class ExamMockerService:
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             pdf_doc = pymupdf.open(source_path)
-            if True:
-                for index, page in enumerate(pdf_doc):
-                    qr_codes = create_QR_codes(
-                        papernum, index + 1, version, example_code, Path(tmpdirname)
-                    )
-                    page = pdf_doc[index]
-                    odd = index % 2 == 0
-                    pdf_page_add_labels_QRs(
-                        page,
-                        "mock_shortname",
-                        f"Mock label pg. {index+1}",
-                        qr_codes,
-                        odd=odd,
-                    )
-                return pdf_doc
+            for index, page in enumerate(pdf_doc):  # ignore: type[arg-type]
+                qr_codes = create_QR_codes(
+                    papernum, index + 1, version, example_code, Path(tmpdirname)
+                )
+                page = pdf_doc[index]
+                odd = index % 2 == 0
+                pdf_page_add_labels_QRs(
+                    page,
+                    "mock_shortname",
+                    f"Mock label pg. {index+1}",
+                    qr_codes,
+                    odd=odd,
+                )
+            # TODO: a terrible idea, returning something in a temp dir...
+            return pdf_doc
 
     @staticmethod
     def mock_ID_page(
