@@ -60,6 +60,10 @@ services:
       # - WEB_CONCURRENCY=4  # how many gunicorn processes
       # - PLOM_HUEY_WORKERS=4
       # - PLOM_HUEY_PARENT_WORKERS=2
+      # Optional external ML service for features such as MCQ checkbox detection.
+      # Define these in the private, git-ignored .env file beside compose.yaml.
+      - PLOM_ML_SERVICE_URL=${PLOM_ML_SERVICE_URL:-}
+      - PLOM_ML_SERVICE_TOKEN=${PLOM_ML_SERVICE_TOKEN:-}
       # Other settings
       - PAPERSIZE=letter
       # - PLOM_QR_CODE_SIZE=70

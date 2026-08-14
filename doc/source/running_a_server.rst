@@ -30,6 +30,20 @@ Each Plom server release is documented on
 `gitlab <https://gitlab.com/plom/plom/-/releases>`_, and container images
 are available and currently hosted on DockerHub.
 
+External ML service
+-------------------
+Optional features such as MCQ checkbox detection use an external ML service.
+For the provided ``compose.yaml``, set its base URL and bearer token in the
+private, git-ignored ``.env`` file::
+
+    PLOM_ML_SERVICE_URL=https://ml.example.edu
+    PLOM_ML_SERVICE_TOKEN=replace-with-the-issued-token
+
+Use the base URL without ``/docs`` or ``/omr/infer``, keep the token secret,
+and restart Plom after changing either value.  Enabling this service sends
+cropped response images to it, so administrators should consider their
+institution's privacy requirements.
+
 Security
 --------
 While the Plom container contains some security measures, it
