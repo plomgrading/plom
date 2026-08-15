@@ -108,7 +108,6 @@ class QuestionRegionsService:
                 for row in _page_regions:
                     # TODO: hacking out some None stuff that confuses javascript
                     row.pop("version")
-                    print(row)
                     page_region_rects.append(row["rect"])
                     page_region_labels.append(row["qlabel_html"])
                 # TODO: version hardcoded to 1

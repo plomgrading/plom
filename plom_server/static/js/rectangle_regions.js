@@ -6,23 +6,16 @@
     Copyright (C) 2025-2026 Aidan Murphy
 */
 
-// TODO: remove?
-/* eslint-disable no-unused-vars */
-
-var image = document.getElementById('reference_image');
-var canvas = document.getElementById('canvas');
-
-// these must be initialised in the template
+// this global variables must be initialised in the template html file
 // eslint-disable-next-line no-unassigned-vars
-var list_of_rects;
-
-var list_of_labels_html;
+var rectangle_regions_data;
 
 /**
- * Draws a list of rectangles.
+ * Draws a list of rectangles on a Canvas.
  * @param {Array} list_of_rects - An array of 4-arrays.
+ * @param {object} canvas - An HTML Canvas to draw on.
  */
-function drawRects(list_of_rects) {
+function drawRects(list_of_rects, canvas) {
   const lw = 4; // rectangle border linewidth
   // sequence from GNU Octave's default ("help lines")
   const colours = ['#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'];
@@ -42,12 +35,21 @@ function drawRects(list_of_rects) {
 
 /** Make the canvas match the reference image, and redraw the rectangles. */
 function repositionCanvas() {
-  _initCanvas();
-  drawRects(list_of_rects);
+  // console.log('resize event');
+  for (let row of rectangle_regions_data) {
+    var image = document.getElementById(row.image_id);
+    var canvas = document.getElementById(row.canvas_id);
+    _initCanvas(canvas, image);
+    drawRects(row.page_region_rects, canvas);
+  }
 }
 
-/** Initialise the Canvas. */
-function _initCanvas() {
+/**
+ * Initialise a Canvas to a particular image.
+ * @param {object} canvas - An HTML Canvas element.
+ * @param {object} image - An HTML Image element.
+ */
+function _initCanvas(canvas, image) {
   // make canvas same as image, which may have changed size and position
   canvas.height = image.height;
   canvas.width = image.width;
@@ -57,10 +59,14 @@ function _initCanvas() {
 
 /** Call various initialisers. */
 function init() {
-  _initCanvas();
   // console.log('regions: init');
-  // console.log(list_of_rects);
-  drawRects(list_of_rects);
+  for (let row of rectangle_regions_data) {
+    // console.log(row);
+    var image = document.getElementById(row.image_id);
+    var canvas = document.getElementById(row.canvas_id);
+    _initCanvas(canvas, image);
+    drawRects(row.page_region_rects, canvas);
+  }
 }
 
 window.addEventListener('load', init);

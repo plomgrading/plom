@@ -109,11 +109,15 @@
                             <div class="row">
                                 <div class="col-6">
                                     <!-- TODO: need responsive thing here?  want a max and minimum size for this image --->
-                                    <img id="reference_image"
+                                    <!-- hardcoded version 1 -->
+                                    <img id="reference_image_pg{{ x.page }}"
                                          class="border shadow w-100"
-                                         src="{% url 'reference_image' 1 9 %}" />
+                                         src="{% url 'reference_image' 1 x.page %}" />
                                     <!-- TODO: javascript does not refresh canvas/image size properly on detail open/close -->
-                                    <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
+                                    <canvas id="canvas_pg{{ x.page }}"
+                                            style="position:absolute;
+                                                   left: 0px;
+                                                   top: 0px"></canvas>
                                 </div>
                                 {{ x.page }}
                                 <br />
@@ -142,8 +146,11 @@
     </div>
     <script src="{% static '/js/rectangle_regions.js' %}"></script>
     <script type="text/javascript">
-        // these variables pass information into 'rectangle_regions.js'
-        list_of_rects = {{pages_with_regions.0.page_region_rects}};
-        list_of_html_labels = {{pages_with_regions.0.page_region_labels|safe}};
+        // this global variables passes information into 'rectangle_regions.js'
+        rectangle_regions_data = [
+          {% for x in pages_with_regions %}
+            {"pg": {{ x.page }}, "page_region_rects": {{ x.page_region_rects }}, "canvas_id": "canvas_pg{{ x.page }}", "image_id": "reference_image_pg{{ x.page }}"},
+          {% endfor %}
+        ];
     </script>
 {% endblock main_content %}
