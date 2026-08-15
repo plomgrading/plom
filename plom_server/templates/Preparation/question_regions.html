@@ -99,9 +99,26 @@
                                         <img class="shadow" src="data:image/png;base64,{{ x.page_region_image }}" />
                                     </div>
                                 </div>
+                                {{ x.page }}
+                                <br />
+                                {{ x.has_regions }}
                                 <!-- <div class="col-auto"> -->
                                 <!-- <button class="btn btn-outline-danger">Remove regions for page {{ x.page }}</button> -->
                                 <!-- </div> -->
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <!-- TODO: need responsive thing here?  want a max and minimum size for this image --->
+                                    <img id="reference_image"
+                                         class="border shadow w-100"
+                                         src="{% url 'reference_image' 1 9 %}" />
+                                    <!-- TODO: javascript does not refresh canvas/image size properly on detail open/close -->
+                                    <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
+                                </div>
+                                {{ x.page }}
+                                <br />
+                                {{ x.has_regions }}
+                                <div class="col-6"></div>
                             </div>
                         </details>
                     {% endfor %}
@@ -123,4 +140,10 @@
             </div>
         </div>
     </div>
+    <script src="{% static '/js/rectangle_regions.js' %}"></script>
+    <script type="text/javascript">
+        // these variables pass information into 'rectangle_regions.js'
+        list_of_rects = {{pages_with_regions.0.page_region_rects}};
+        list_of_html_labels = {{pages_with_regions.0.page_region_labels|safe}};
+    </script>
 {% endblock main_content %}

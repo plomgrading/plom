@@ -101,6 +101,16 @@ class QuestionRegionsService:
             qlabels_html = [c for (a, b, c) in qidx_labels if a in qindices]
             if any([r["page"] == pg for r in regions]):
                 has_regions = True
+                # TODO: sort by qidx?
+                _page_regions = [r.copy() for r in regions if r["page"] == pg]
+                page_region_rects = []
+                page_region_labels = []
+                for row in _page_regions:
+                    # TODO: hacking out some None stuff that confuses javascript
+                    row.pop("version")
+                    print(row)
+                    page_region_rects.append(row["rect"])
+                    page_region_labels.append(row["qlabel_html"])
                 # TODO: version hardcoded to 1
                 png_bytes = ExamMockerService.get_temp_rendered_regions_page(
                     pg, 1, regions
@@ -118,6 +128,8 @@ class QuestionRegionsService:
                         "question_labels_html": qlabels_html,
                         "has_regions": has_regions,
                         "page_region_image": png_as_string,
+                        "page_region_rects": page_region_rects,
+                        "page_region_labels": page_region_labels,
                     }
                 )
         return info
