@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Colin B. Macdonald
 
-import base64
 from typing import Any
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
-from .mocker import ExamMockerService
 
 
 class QuestionRegionsService:
@@ -110,14 +108,8 @@ class QuestionRegionsService:
                     row.pop("version")
                     page_region_rects.append(row["rect"])
                     page_region_labels.append(row["qlabel_html"])
-                # TODO: version hardcoded to 1
-                png_bytes = ExamMockerService.get_temp_rendered_regions_page(
-                    pg, 1, regions
-                )
-                png_as_string = base64.b64encode(png_bytes).decode("ascii")
             else:
                 has_regions = False
-                png_as_string = ""
             if has_regions:
                 info.append(
                     {
@@ -126,7 +118,6 @@ class QuestionRegionsService:
                         "question_labels": qlabels,
                         "question_labels_html": qlabels_html,
                         "has_regions": has_regions,
-                        "page_region_image": png_as_string,
                         "page_region_rects": page_region_rects,
                         "page_region_labels": page_region_labels,
                     }

@@ -92,20 +92,6 @@
                                 <b>Page {{ x.page }}</b>:
                                 {{ x.question_labels_html|join:", "|safe }}
                             </summary>
-                            <!-- TODO: maybe a setter form here -->
-                            <div class="row">
-                                <div class="col-auto">
-                                    <div class="ms-4 mb-2">
-                                        <img class="shadow" src="data:image/png;base64,{{ x.page_region_image }}" />
-                                    </div>
-                                </div>
-                                {{ x.page }}
-                                <br />
-                                {{ x.has_regions }}
-                                <!-- <div class="col-auto"> -->
-                                <!-- <button class="btn btn-outline-danger">Remove regions for page {{ x.page }}</button> -->
-                                <!-- </div> -->
-                            </div>
                             <div class="row">
                                 <div class="col-6">
                                     <!-- TODO: need responsive thing here?  want a max and minimum size for this image --->
