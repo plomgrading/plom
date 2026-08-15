@@ -91,7 +91,7 @@ image.onload = function () {
   th_height = th_bottom - th_top;
 };
 
-/** Supports drawRectInCanvas(). TODO: what does this actually do? */
+/** Update input elements on an associated HTML page with rectangle corner values. */
 function updateHiddenInputs() {
   var inverse_ratio_w = effective_image_width / canvas.width;
   var inverse_ratio_h = effective_image_height / canvas.height;
