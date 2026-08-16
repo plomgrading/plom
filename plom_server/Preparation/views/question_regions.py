@@ -4,6 +4,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
+from django_htmx.http import HttpResponseClientRefresh
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
@@ -46,8 +47,7 @@ class QuestionRegionsView(ManagerRequiredView):
         Called by HTMX.
         """
         QuestionRegionsService.reset_question_regions()
-        # TODO: or redirect the the get, provided that doesn't break Ctrl-R
-        return HttpResponse("all gone, please refresh")
+        return HttpResponseClientRefresh()
 
 
 class QuestionRegionsSubdivideView(ManagerRequiredView):
@@ -74,4 +74,4 @@ class QuestionRegionsSubdivideView(ManagerRequiredView):
         except ObjectDoesNotExist:
             return HttpResponse("no spec", status=409)
 
-        return HttpResponse("thanks for the info, please refresh")
+        return HttpResponseClientRefresh()
