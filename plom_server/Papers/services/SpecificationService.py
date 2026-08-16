@@ -387,6 +387,20 @@ def get_n_pages() -> int:
     return spec.numberOfPages
 
 
+def is_enabled_allowSharedPages() -> bool:
+    """Check whether the specification has setting "allowSharedPages" enabled.
+
+    Note: doesn't actually check if any questions are actually sharing
+    pages!
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    # TODO: or None return for no spec case?
+    return spec.allowSharedPages
+
+
 def get_list_of_pages() -> list[int]:
     """Get a list of the pages.
 

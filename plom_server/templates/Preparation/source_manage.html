@@ -73,5 +73,15 @@
                 {% include "Preparation/source_item_view.html" with src=src %}
             </div>
         {% endfor %}
+        {% if allowSharedPages %}
+            <div class="mt-3">
+                <p>
+                    <tt>allowSharedPages</tt> is enabled; you can subdivide pages at
+                    <a class="btn btn-outline-secondary btn-sm align-baseline"
+                       href="{% url 'question_regions' %}">Manage crop regions</a>
+                    (also found under &ldquo;Tools&rdquo;).
+                </p>
+            </div>
+        {% endif %}
     </div>
 {% endblock main_content %}

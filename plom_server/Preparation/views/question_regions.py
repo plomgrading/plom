@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRefresh
 
@@ -18,7 +18,10 @@ class QuestionRegionsView(ManagerRequiredView):
         """Render a page showing the current regions and various tools to change them."""
         context = self.build_context()
 
-        spec = SpecificationService.get_the_spec()
+        try:
+            allowSharedPages = SpecificationService.is_enabled_allowSharedPages()
+        except ObjectDoesNotExist as e:
+            raise Http404(e)
 
         # Just testing...
         # regions = QuestionRegionsService.reset_question_regions()
@@ -31,7 +34,7 @@ class QuestionRegionsView(ManagerRequiredView):
 
         context.update(
             {
-                "allowSharedPages": spec["allowSharedPages"],
+                "allowSharedPages": allowSharedPages,
                 "regions": regions,
                 "region_info_per_page": region_info_per_page,
             }

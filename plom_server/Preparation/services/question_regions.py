@@ -61,9 +61,6 @@ class QuestionRegionsService:
     @staticmethod
     def get_shared_pages() -> list[dict[str, Any]]:
         """Produce a list pages that are shared by one or more questions."""
-        # TODO: doc how this fails if no spec
-        # spec = SpecificationService.get_the_spec()
-
         question_pages = SpecificationService.get_question_pages()
         qidx_labels = SpecificationService.get_question_html_label_triples()
 
