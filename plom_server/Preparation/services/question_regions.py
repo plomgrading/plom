@@ -85,7 +85,8 @@ class QuestionRegionsService:
         return info
 
     @classmethod
-    def get_region_mockups(cls) -> list:
+    def get_region_info_per_page(cls) -> list:
+        """Information about regions in a list of dicts, one per page."""
         question_pages = SpecificationService.get_question_pages()
         qidx_labels = SpecificationService.get_question_html_label_triples()
 
@@ -97,9 +98,15 @@ class QuestionRegionsService:
             qindices = [k for k, v in question_pages.items() if pg in v]
             qlabels = [b for (a, b, c) in qidx_labels if a in qindices]
             qlabels_html = [c for (a, b, c) in qidx_labels if a in qindices]
+
+            if len(qindices) > 1:
+                questions_share_this_page = True
+            else:
+                questions_share_this_page = False
+
             if any([r["page"] == pg for r in regions]):
                 has_regions = True
-                # TODO: sort by qidx?
+                # TODO: sort explicitly by qidx?
                 _page_regions = [r.copy() for r in regions if r["page"] == pg]
                 page_region_rects = []
                 page_region_labels = []
@@ -110,18 +117,21 @@ class QuestionRegionsService:
                     page_region_labels.append(row["qlabel_html"])
             else:
                 has_regions = False
-            if has_regions:
-                info.append(
-                    {
-                        "page": pg,
-                        "question_indicies": qindices,
-                        "question_labels": qlabels,
-                        "question_labels_html": qlabels_html,
-                        "has_regions": has_regions,
-                        "page_region_rects": page_region_rects,
-                        "page_region_labels": page_region_labels,
-                    }
-                )
+                page_region_rects = []
+                page_region_labels = []
+
+            info.append(
+                {
+                    "page": pg,
+                    "has_regions": has_regions,
+                    "questions_share_this_page": questions_share_this_page,
+                    "question_indicies": qindices,
+                    "question_labels": qlabels,
+                    "question_labels_comma_sep_list_html": ", ".join(qlabels_html),
+                    "page_region_rects": page_region_rects,
+                    "page_region_labels": page_region_labels,
+                }
+            )
         return info
 
     @classmethod
