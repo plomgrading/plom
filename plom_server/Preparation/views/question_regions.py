@@ -4,6 +4,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
+from django_htmx.http import HttpResponseClientRefresh
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
@@ -19,24 +20,20 @@ class QuestionRegionsView(ManagerRequiredView):
 
         spec = SpecificationService.get_the_spec()
 
-        # TODO: move to demo!
+        # Just testing...
         # regions = QuestionRegionsService.reset_question_regions()
         # QuestionRegionsService.subdivide_page(9, [23.5, 38.5], version=None)
-        # Just testing
         # QuestionRegionsService.set_question_regions(1, 3, [0.1, 0.2, 0.85, 0.7])
-
-        shared_pages_info = QuestionRegionsService.get_shared_pages()
+        # QuestionRegionsService.set_question_regions(1, 5, [0.05, 0.1, 0.9, 0.88])
 
         regions = QuestionRegionsService.get_question_regions()
-        region_mockups = QuestionRegionsService.get_region_mockups()
+        region_info_per_page = QuestionRegionsService.get_region_info_per_page()
 
         context.update(
             {
                 "allowSharedPages": spec["allowSharedPages"],
-                "shared_page_info": shared_pages_info,
                 "regions": regions,
-                "pages_with_regions": region_mockups,
-                # "page_region_image": png_as_string,
+                "region_info_per_page": region_info_per_page,
             }
         )
         return render(request, "Preparation/question_regions.html", context)
@@ -50,8 +47,7 @@ class QuestionRegionsView(ManagerRequiredView):
         Called by HTMX.
         """
         QuestionRegionsService.reset_question_regions()
-        # TODO: or redirect the the get, provided that doesn't break Ctrl-R
-        return HttpResponse("all gone, please refresh")
+        return HttpResponseClientRefresh()
 
 
 class QuestionRegionsSubdivideView(ManagerRequiredView):
@@ -78,4 +74,4 @@ class QuestionRegionsSubdivideView(ManagerRequiredView):
         except ObjectDoesNotExist:
             return HttpResponse("no spec", status=409)
 
-        return HttpResponse("thanks for the info, please refresh")
+        return HttpResponseClientRefresh()

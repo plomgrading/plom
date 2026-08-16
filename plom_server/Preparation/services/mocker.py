@@ -112,7 +112,7 @@ class ExamMockerService:
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             pdf_doc = pymupdf.open(source_path)
-            for index, page in enumerate(pdf_doc):  # type: ignore[arg-type]
+            for index, page in enumerate(pdf_doc):  # type: ignore[arg-type,var-annotated]
                 qr_codes = create_QR_codes(
                     papernum, index + 1, version, example_code, Path(tmpdirname)
                 )
@@ -174,86 +174,3 @@ class ExamMockerService:
             with pymupdf.open(f) as pdf_doc:
                 # id_page_number is indexed from 1
                 return pdf_doc[id_page_number - 1].get_pixmap().tobytes()
-
-    @classmethod
-    def get_temp_rendered_regions_page(
-        cls,
-        pg: int,
-        version: int,
-        regions,
-    ) -> bytes:
-        """Render a mock up of some regions on a particular page.
-
-        Args:
-            pg: which page, indexed from 1
-            version: which version.
-            regions: list of regions to draw,
-
-        Returns:
-            The bytes of a png image of that page, rendered with regions
-            shown translucently.
-        """
-        try:
-            pdf_bytes = cls._mock_exam_with_spec(version)
-        except ObjectDoesNotExist:
-            pdf_bytes = cls._mock_exam_without_spec(version)
-        pdf_doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
-        page = pdf_doc[pg - 1]
-        # borrowed from GNU Octave's defaults ("help lines")
-        colour_choices = (
-            (0, 0.447, 0.741),
-            (0.850, 0.325, 0.098),
-            (0.929, 0.694, 0.125),
-            (0.494, 0.184, 0.556),
-            (0.466, 0.674, 0.188),
-            (0.301, 0.745, 0.933),
-            (0.635, 0.078, 0.184),
-        )
-
-        i = 0
-        for region in regions:
-            if region["page"] != pg:
-                continue
-            rect = region["rect"]
-            colour = colour_choices[i % len(colour_choices)]
-            w = page.rect.width
-            h = page.rect.height
-            s = 4  # stroke width
-            pg_unit_rect = [
-                rect[0] * w + s / 2,
-                rect[1] * h + s / 2,
-                (rect[0] + rect[2]) * w - s / 2,
-                (rect[1] + rect[3]) * h - s / 2,
-            ]
-            # clarify overlap w/ horizontal even/odd offset (maybe distracting?)
-            pg_unit_rect[0] += (i % 2) * s
-            pg_unit_rect[2] -= ((i + 1) % 2) * s
-            i += 1
-            # draw text twice, once underneigh in white to oclude some of the page
-            page.insert_text(
-                (pg_unit_rect[0] + 1.5 * s, (pg_unit_rect[1] + pg_unit_rect[3]) / 2),
-                region["qlabel"],
-                fontsize=24,
-                color=(1, 1, 1),
-                fill=colour,
-                border_width=0.2,  # not sure what units this is
-                render_mode=2,
-            )
-            page.draw_rect(
-                pg_unit_rect,
-                color=colour,
-                fill=colour,
-                fill_opacity=0.15,
-                stroke_opacity=0.65,
-                width=s,
-            )
-            page.insert_text(
-                (pg_unit_rect[0] + 1.5 * s, (pg_unit_rect[1] + pg_unit_rect[3]) / 2),
-                region["qlabel"],
-                fontsize=24,
-                color=colour,
-            )
-
-        b = page.get_pixmap().tobytes()
-        pdf_doc.close()
-        return b

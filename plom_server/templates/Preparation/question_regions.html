@@ -15,95 +15,88 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        <div class="card">
-            <div class="card-body pb-0">
+        <div>
+            <div>
                 {% if allowSharedPages %}
                     <p>
                         Because <tt>allowSharedPages</tt> is enabled,
                         it is recommended that you define
                         &ldquo;regions&rdquo; of any shared pages
-                        where the answer to each question is expected.
-                        This will help Plom present the most relevant
-                        parts of the page for marking and for other
-                        question-specific tasks.
+                        shown below, to highlight where the answer to
+                        each question is expected.
+                        Doing so will help Plom present the most
+                        relevant parts of the page for marking and for
+                        other question-specific tasks.
                     </p>
                 {% endif %}
-                <h3>Pages shared by more than one question</h3>
-                {% if shared_page_info %}
-                    {% for x in shared_page_info %}
-                        <p>
-                            Page {{ x.page }} is shared by questions:
-                            {{ x.question_labels_that_share_html|join:", "|safe }}
-                        </p>
-                    {% endfor %}
-                {% else %}
-                    <p>No shared pages.</p>
-                {% endif %}
-                <div class="card mb-2" style="max-width: 50rem;">
-                    <h4 class="card-header">Page subdivision tool</h4>
-                    <div class="card-body">
-                        <form id="myform" hx-post="{% url 'question_regions_subdivide' %}">
-                            <!-- TODO: regular post with a "done" page or somehow hx refresh the whole page here? -->
-                            {% csrf_token %}
-                            <p>
-                                This tool helps you set page regions by
-                                dividing the page vertically.
-                                <!-- In the future maybe it will have some fancy -->
-                                <!-- Javascript UI to do this visually. -->
-                            </p>
-                            <div>
+                <div>
+                    {% for x in region_info_per_page %}
+                        {% if x.has_region or x.questions_share_this_page %}
+                            <div class="mb-4">
+                                <h3>
+                                    Page {{ x.page }}:
+                                    {{ x.question_labels_comma_sep_list_html|safe }}
+                                </h3>
                                 <div class="row">
-                                    <div class="col-auto">
-                                        <div class="input-group">
-                                            <label class="input-group-text" for="page_number">Page number</label>
-                                            <input id="page_number"
-                                                   name="page_number"
-                                                   min="1"
-                                                   type="number"
-                                                   class="form-control"
-                                                   value="1"
-                                                   style="width: 10ch" />
-                                        </div>
+                                    <div class="col-6">
+                                        <!-- TODO: need responsive thing here?  want a max and minimum size for this image --->
+                                        <!-- hardcoded version 1 -->
+                                        <img id="reference_image_pg{{ x.page }}"
+                                             class="border shadow w-100"
+                                             src="{% url 'reference_image' 1 x.page %}" />
+                                        <!-- TODO: javascript does not refresh canvas/image size properly on detail open/close -->
+                                        <canvas id="canvas_pg{{ x.page }}"
+                                                style="position:absolute;
+                                                       left: 0px;
+                                                       top: 0px"></canvas>
                                     </div>
-                                    <div class="col-auto">
-                                        <div class="input-group">
-                                            <label class="input-group-text" for="comma_div_list">List of divisions:</label>
-                                            <input id="comma_div_list"
-                                                   name="comma_div_list"
-                                                   class="form-control"
-                                                   type="text"
-                                                   required
-                                                   placeholder="23, 72.1"
-                                                   aria-describedby="comma_div_list_help" />
-                                        </div>
-                                        <div id="comma_div_list_help" class="form-text">(A comma-separated list of floats, representing percentages)</div>
+                                    <div class="col-6">
+                                        {% if x.questions_share_this_page %}
+                                            <div class="card mb-2" style="max-width: 50rem;">
+                                                <h5 class="card-header">Subdivide page {{ x.page }}</h5>
+                                                <div class="card-body">
+                                                    <form id="subdiv_form_pg{{ x.page }}"
+                                                          hx-post="{% url 'question_regions_subdivide' %}">
+                                                        <!-- TODO: regular post with a "done" page or somehow hx refresh the whole page here? -->
+                                                        {% csrf_token %}
+                                                        <p>
+                                                            Define new regions by &ldquo;slicing&rdquo; the page.
+                                                            <!-- In the future maybe it will have some fancy -->
+                                                            <!-- Javascript UI to do this visually. -->
+                                                        </p>
+                                                        <div>
+                                                            <div class="row">
+                                                                <input id="page_number_pg{{ x.page }}"
+                                                                       name="page_number"
+                                                                       type="hidden"
+                                                                       value="{{ x.page }}" />
+                                                                <div class="col-auto">
+                                                                    <div class="input-group">
+                                                                        <label class="input-group-text" for="comma_div_list">Divisions:</label>
+                                                                        <input id="comma_div_list_pg{{ x.page }}"
+                                                                               name="comma_div_list"
+                                                                               class="form-control"
+                                                                               type="text"
+                                                                               required
+                                                                               placeholder="23, 72.1"
+                                                                               aria-describedby="comma_div_list_help" />
+                                                                    </div>
+                                                                    <div id="comma_div_list_help" class="form-text">(A comma-separated list of floats, representing percentages)</div>
+                                                                </div>
+                                                            </div>
+                                                            <button type="submit"
+                                                                    class="btn btn-primary mt-2"
+                                                                    id="subdivide_btn_pg{{ x.page }}">Set regions for page {{ x.page }}</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary" id="subdivide_btn">Set page regions</button>
+                                <hr />
                             </div>
-                        </form>
-                    </div>
-                </div>
-                <h3>Pages</h3>
-                <div class="mb-2">
-                    {% for x in pages_with_regions %}
-                        <details open>
-                            <summary>
-                                <b>Page {{ x.page }}</b>:
-                                {{ x.question_labels_html|join:", "|safe }}
-                            </summary>
-                            <!-- TODO: maybe a setter form here -->
-                            <div class="row">
-                                <div class="col-auto">
-                                    <div class="ms-4 mb-2">
-                                        <img class="shadow" src="data:image/png;base64,{{ x.page_region_image }}" />
-                                    </div>
-                                </div>
-                                <!-- <div class="col-auto"> -->
-                                <!-- <button class="btn btn-outline-danger">Remove regions for page {{ x.page }}</button> -->
-                                <!-- </div> -->
-                            </div>
-                        </details>
+                        {% endif %}
                     {% endfor %}
                 </div>
                 <h3>Raw region data</h3>
@@ -123,4 +116,15 @@
             </div>
         </div>
     </div>
+    <script src="{% static '/js/rectangle_regions.js' %}"></script>
+    <script type="text/javascript">
+        // this global variables passes information into 'rectangle_regions.js'
+        rectangle_regions_data = [
+          {% for x in region_info_per_page %}
+            {% if x.has_regions %}
+              {"pg": {{ x.page }}, "page_region_rects": {{ x.page_region_rects }}, "canvas_id": "canvas_pg{{ x.page }}", "image_id": "reference_image_pg{{ x.page }}"},
+            {% endif %}
+          {% endfor %}
+        ];
+    </script>
 {% endblock main_content %}
