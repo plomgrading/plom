@@ -18,21 +18,19 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        <div class="card">
-            <div class="card-body pb-0">
-                <div class="card-text">
-                    {% if has_spec %}
-                        <p>
+        <div class="my-2">
+            <div>
+                <div>
+                    <p class="mb-2">
+                        {% if has_spec %}
                             According to the specification, each PDF must
                             have exactly {{ number_of_pages }} pages.
-                        </p>
-                    {% else %}
-                        <p>
+                        {% else %}
                             This server does not have a specification yet.
                             If you wish to upload more than one version you
                             must first complete the specification.
-                        </p>
-                    {% endif %}
+                        {% endif %}
+                    </p>
                     {% if duplicates %}
                         <div class="alert alert-warning pb-0" role="alert">
                             Some of the source PDFs are duplicates:
@@ -46,7 +44,7 @@
                             Note: the server is set to use
                             &ldquo;{{ server_paper_size_name }}&rdquo; paper.
                         </summary>
-                        <p class="text-muted">
+                        <p class="text-muted pb-0">
                             Plom generally respects the paper size of the source PDFs
                             you provide;
                             this setting effects other pages that Plom creates itself,
