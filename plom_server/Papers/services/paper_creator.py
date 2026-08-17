@@ -549,9 +549,7 @@ class PaperCreatorService:
         PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
     @classmethod
-    def remove_all_papers_from_db(
-        cls, *, background: bool = True, _testing: bool = False
-    ) -> None:
+    def remove_all_papers_from_db(cls, *, background: bool = True) -> None:
         """Remove all the papers and associated objects from the database.
 
         Keyword Args:
