@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2026 Aidan Murphy
 
+from collections.abc import Iterator
 import logging
 from typing import Any
 
@@ -55,39 +56,26 @@ def huey_populate_whole_db(
         tracker_pk, task.id, msg=f"Populating {N} papers in database..."
     )
 
-    id_page_number = SpecificationService.get_id_page_number()
-    dnm_page_numbers = SpecificationService.get_dnm_pages()
-    question_page_numbers = SpecificationService.get_question_pages()
-
-    # TODO - move much of this loop back into paper-creator.
-    for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        try:
-            PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
-                paper_number,
-                qv_row,
-                id_page_number=id_page_number,
-                dnm_page_numbers=dnm_page_numbers,
-                question_page_numbers=question_page_numbers,
-            )
-        except KeyError as e:
-            # increase verbosity, else it just prints like "4"
-            PopulateEvacuateDBChore.set_message(
-                tracker_pk, f"Populated {idx} of {N} papers in database"
-            )
-            raise KeyError(
-                f"KeyError {e}: perhaps not enough columns in your upload?"
-            ) from e
-        except (ObjectDoesNotExist, IntegrityError):
-            PopulateEvacuateDBChore.set_message(
-                tracker_pk, f"Populated {idx} of {N} papers in database"
-            )
-            raise
-
-        if idx % 16 == 0:
-            PopulateEvacuateDBChore.set_message(
-                tracker_pk, f"Populated {idx} of {N} papers in database"
-            )
-            log.info(f"Populated {idx} of {N} papers in database")
+    try:
+        for idx, qv_row in PaperCreatorService._populate_from_qvmapping(qv_map):
+            if idx % 16 == 0:
+                PopulateEvacuateDBChore.set_message(
+                    tracker_pk, f"Populated {idx} of {N} papers in database"
+                )
+                log.info(f"Populated {idx} of {N} papers in database")
+    except KeyError as e:
+        # increase verbosity, else it just prints like "4"
+        PopulateEvacuateDBChore.set_message(
+            tracker_pk, f"Populated {idx} of {N} papers in database"
+        )
+        raise KeyError(
+            f"KeyError {e}: perhaps not enough columns in your upload?"
+        ) from e
+    except (ObjectDoesNotExist, IntegrityError):
+        PopulateEvacuateDBChore.set_message(
+            tracker_pk, f"Populated {idx} of {N} papers in database"
+        )
+        raise
 
     # TODO: currently we let the catch-all in Base/models.py handle exceptions but
     # we could do so here, avoiding errors in Huey logs... Which is better?
@@ -264,6 +252,36 @@ class PaperCreatorService:
 
     No need to instantiate: all methods can be called from the class.
     """
+
+    @classmethod
+    @transaction.atomic()
+    def _populate_from_qvmapping(
+        cls, qv_map: dict[int, dict[int | str, int]]
+    ) -> Iterator[tuple[int, dict]]:
+        """Populate the DB from a qvmap.
+
+        We yield information so huey can record progress when calling this function.
+
+        Args:
+            qv_map: The question version map.
+
+        Yields:
+            A tuple containing the index and an informational dict for the
+            most recently populated paper.
+        """
+        id_page_number = SpecificationService.get_id_page_number()
+        dnm_page_numbers = SpecificationService.get_dnm_pages()
+        question_page_numbers = SpecificationService.get_question_pages()
+
+        for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+            cls._create_single_paper_from_qvmapping_and_pages(
+                paper_number,
+                qv_row,
+                id_page_number=id_page_number,
+                dnm_page_numbers=dnm_page_numbers,
+                question_page_numbers=question_page_numbers,
+            )
+            yield idx, qv_row
 
     @staticmethod
     @transaction.atomic()
