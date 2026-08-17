@@ -152,6 +152,113 @@ def huey_evacuate_whole_db(
     return True
 
 
+# The decorated function returns a ``huey.api.Result``
+@db_task(queue="chores", context=True)
+def huey_evacuate_then_populate_whole_db(
+    qv_map: dict[int, dict[int | str, int]],
+    *,
+    tracker_pk: int,
+    task: huey.api.Task | None = None,
+) -> bool:
+    """Evacuate then populate the database in a background Huey chore.
+
+    Args:
+        qv_map: the question-version map.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
+    """
+    # EVACUATE
+    assert task is not None
+
+    PopulateEvacuateDBChore.transition_to_running(
+        tracker_pk, task.id, msg="Deleting all papers from database..."
+    )
+    all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
+    num_papers_old = all_papers.count()
+    for idx, paper_obj in enumerate(all_papers):
+        for fp in paper_obj.fixedpage_set.all():
+            fp.delete()
+        paper_obj.delete()
+        if idx % 16 == 0:
+            PopulateEvacuateDBChore.set_message(
+                tracker_pk, f"Deleted {idx} of {num_papers_old} papers from database"
+            )
+            log.info(f"Deleted {idx} of {num_papers_old} papers from database")
+    # TODO - decide if we should delete by table rather than by paper.
+    # Table delete code follows below
+    # with transaction.atomic():
+    #     FixedPage.objects.all().delete()
+    # with transaction.atomic():
+    #     Paper.objects.all().delete()
+
+    PopulateEvacuateDBChore.set_message(
+        tracker_pk, f"Deleted all {num_papers_old} papers from database"
+    )
+    log.info(f"Deleted all {num_papers_old} papers from database")
+
+    # POPULATE
+    # update chore.action from EVACUATE to POPULATE and lock the chore while doing this
+    with transaction.atomic():
+        chore = PopulateEvacuateDBChore.objects.select_for_update().get(pk=tracker_pk)
+        chore.action = PopulateEvacuateDBChore.POPULATE
+        chore.save()
+
+    # assert task is not None
+    num_papers_new = len(qv_map)
+    PopulateEvacuateDBChore.set_message(
+        tracker_pk, f"Populating {num_papers_new} papers in database..."
+    )
+
+    id_page_number = SpecificationService.get_id_page_number()
+    dnm_page_numbers = SpecificationService.get_dnm_pages()
+    question_page_numbers = SpecificationService.get_question_pages()
+
+    # TODO - move much of this loop back into paper-creator.
+    for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+        try:
+            PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
+                paper_number,
+                qv_row,
+                id_page_number=id_page_number,
+                dnm_page_numbers=dnm_page_numbers,
+                question_page_numbers=question_page_numbers,
+            )
+        except KeyError as e:
+            # increase verbosity, else it just prints like "4"
+            PopulateEvacuateDBChore.set_message(
+                tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
+            )
+            raise KeyError(
+                f"KeyError {e}: perhaps not enough columns in your upload?"
+            ) from e
+        except (ObjectDoesNotExist, IntegrityError):
+            PopulateEvacuateDBChore.set_message(
+                tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
+            )
+            raise
+
+        if idx % 16 == 0:
+            PopulateEvacuateDBChore.set_message(
+                tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
+            )
+            log.info(f"Populated {idx} of {num_papers_new} papers in database")
+
+    PopulateEvacuateDBChore.transition_to_complete(
+        tracker_pk, msg=f"Populated all {num_papers_new} papers in database"
+    )
+    log.info(f"Populated all {num_papers_new} papers in database")
+    return True
+
+
 class PaperCreatorService:
     """Class to encapsulate functions to build the test-papers and groups in the DB.
 
@@ -472,6 +579,56 @@ class PaperCreatorService:
 
         res = huey_evacuate_whole_db(tracker_pk=tracker_pk)
         log.info(f"Just enqueued Huey evacuate-database task id={res.id}")
+        if background is False:
+            log.info("Running the task in foreground - will block until completed.")
+            res.get(blocking=True)
+            log.info("Completed.")
+        else:
+            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
+
+    @classmethod
+    def replace_all_papers_in_qv_map(
+        cls,
+        qv_map: dict[int, dict[int | str, int]],
+        *,
+        background: bool = True,
+    ):
+        """Remove existing Papers and pages from the db, then repopulate.
+
+        Args:
+            qv_map: For each paper give the question-version map.
+                Of the form `{paper_number: {q: v}}`
+
+        Keyword Args:
+            background: evacuate then populate the database in the background, or,
+                if false, as a blocking huey process
+
+        Raises:
+            PlomDependencyConflict: if preparation dependencies are not met.
+            PlomDatabaseCreationError: if there are papers already in the database
+                or a task is in an error state.
+        """
+        assert_can_modify_qv_mapping_database()
+        # check if there is an existing non-obsolete task
+        cls.assert_no_running_chore()
+        cls.obselete_all_existing_chores()
+
+        cls._evacuate_then_populate_whole_db_huey_wrapper(qv_map, background=background)
+
+    @staticmethod
+    def _evacuate_then_populate_whole_db_huey_wrapper(
+        qv_map: dict[int, dict[int | str, int]], *, background: bool = True
+    ) -> None:
+        # TODO - add seatbelt logic here
+        with transaction.atomic(durable=True):
+            tr = PopulateEvacuateDBChore.objects.create(
+                status=PopulateEvacuateDBChore.STARTING,
+                action=PopulateEvacuateDBChore.EVACUATE,
+            )
+            tracker_pk = tr.pk
+
+        res = huey_evacuate_then_populate_whole_db(qv_map, tracker_pk=tracker_pk)
+        log.info(f"Just enqueued Huey evacuate-populate-database task id={res.id}")
         if background is False:
             log.info("Running the task in foreground - will block until completed.")
             res.get(blocking=True)

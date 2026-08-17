@@ -230,11 +230,7 @@ class PQVmap(APIView):
             return _error_response(err, status.HTTP_400_BAD_REQUEST)
 
         try:
-            # untested, but I don't think the transaction will work because
-            # huey does this operation rather than django/gunicorn.
-            # with transaction.atomic:
-            PaperCreatorService.remove_all_papers_from_db(background=False)
-            PaperCreatorService.add_all_papers_in_qv_map(pqvmap, background=False)
+            PaperCreatorService.replace_all_papers_in_qv_map(pqvmap, background=True)
         except PlomDependencyConflict as err:
             return _error_response(err, status.HTTP_409_CONFLICT)
         except PlomDatabaseCreationError as err:
