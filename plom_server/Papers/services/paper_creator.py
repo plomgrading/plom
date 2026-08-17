@@ -471,7 +471,7 @@ class PaperCreatorService:
 
         Keyword Args:
             background: populate the database in the background, or, if false,
-                as a blocking huey process
+                as a synchronous, non-huey, process
 
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
@@ -485,7 +485,15 @@ class PaperCreatorService:
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
 
-        cls._populate_whole_db_huey_wrapper(qv_map, background=background)
+        if background:
+            cls._populate_whole_db_huey_wrapper(qv_map)
+        else:
+            log.info(
+                "Running populate task in foreground - will block until completed."
+            )
+            for _ in cls._populate_from_qvmapping(qv_map):
+                pass
+            log.info("Populate task finished!")
 
     @classmethod
     def append_papers_to_qv_map(
@@ -525,7 +533,7 @@ class PaperCreatorService:
 
     @staticmethod
     def _populate_whole_db_huey_wrapper(
-        qv_map: dict[int, dict[int | str, int]], *, background: bool = True
+        qv_map: dict[int, dict[int | str, int]],
     ) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
@@ -537,12 +545,8 @@ class PaperCreatorService:
 
         res = huey_populate_whole_db(qv_map, tracker_pk=tracker_pk)
         log.info(f"Just enqueued Huey populate-database task id={res.id}")
-        if background is False:
-            log.info("Running the task in foreground - will block until completed.")
-            res.get(blocking=True)
-            log.info("Completed.")
-        else:
-            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
+
+        PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
     @classmethod
     def remove_all_papers_from_db(
@@ -552,7 +556,7 @@ class PaperCreatorService:
 
         Keyword Args:
             background: de-populate the database in the background, or, if false,
-                as a blocking huey process
+                as a synchronous, non-huey process.
 
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
@@ -562,10 +566,18 @@ class PaperCreatorService:
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
 
-        cls._evacuate_whole_db_huey_wrapper(background=background)
+        if background:
+            cls._evacuate_whole_db_huey_wrapper()
+        else:
+            log.info(
+                "Running evacuate task in foreground - will block until completed."
+            )
+            for _ in cls._evacuate_qvmapping():
+                pass
+            log.info("Evacuate task finished!")
 
     @staticmethod
-    def _evacuate_whole_db_huey_wrapper(*, background: bool = True) -> None:
+    def _evacuate_whole_db_huey_wrapper() -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
@@ -576,12 +588,8 @@ class PaperCreatorService:
 
         res = huey_evacuate_whole_db(tracker_pk=tracker_pk)
         log.info(f"Just enqueued Huey evacuate-database task id={res.id}")
-        if background is False:
-            log.info("Running the task in foreground - will block until completed.")
-            res.get(blocking=True)
-            log.info("Completed.")
-        else:
-            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
+
+        PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
     @classmethod
     def replace_all_papers_in_qv_map(
@@ -598,7 +606,7 @@ class PaperCreatorService:
 
         Keyword Args:
             background: evacuate then populate the database in the background, or,
-                if false, as a blocking huey process
+                if false, as a synchronous, non-huey process
 
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
@@ -610,13 +618,24 @@ class PaperCreatorService:
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
 
-        cls._evacuate_then_populate_whole_db_huey_wrapper(qv_map, background=background)
+        if background:
+            cls._evacuate_then_populate_whole_db_huey_wrapper(qv_map)
+        else:
+            log.info(
+                "Running evacuate-then-populate task in foreground - will block until completed."
+            )
+            for _ in cls._evacuate_qvmapping():
+                pass
+            for _ in cls._populate_from_qvmapping(qv_map):
+                pass
+            log.info("Evacuate-then-populate task finished!")
 
     @staticmethod
     def _evacuate_then_populate_whole_db_huey_wrapper(
-        qv_map: dict[int, dict[int | str, int]], *, background: bool = True
+        qv_map: dict[int, dict[int | str, int]],
     ) -> None:
         # TODO - add seatbelt logic here
+        # ^^ What does this mean?
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
                 status=PopulateEvacuateDBChore.STARTING,
@@ -626,9 +645,5 @@ class PaperCreatorService:
 
         res = huey_evacuate_then_populate_whole_db(qv_map, tracker_pk=tracker_pk)
         log.info(f"Just enqueued Huey evacuate-populate-database task id={res.id}")
-        if background is False:
-            log.info("Running the task in foreground - will block until completed.")
-            res.get(blocking=True)
-            log.info("Completed.")
-        else:
-            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
+
+        PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
