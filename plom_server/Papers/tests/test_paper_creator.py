@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.test import TestCase
 from django.db import IntegrityError
@@ -80,6 +81,7 @@ class PaperCreatorTests(TestCase):
         with self.assertRaises(IntegrityError):
             PaperCreatorService._create_single_paper_from_qvmapping_and_pages(1, qv_map)
 
+    # TODO: delete this and _testing branches in paper_creator
     def test_clear_papers(self) -> None:
         """Test PaperCreatorService.remove_papers_from_db()."""
         baker.make(Specification)
@@ -106,3 +108,48 @@ class PaperCreatorTests(TestCase):
         self.assertEqual(n_id, 0)
         self.assertEqual(n_dnm, 0)
         self.assertEqual(n_question, 0)
+
+    def test__evacuate_qvmapping(self) -> None:
+        """Test PaperCreatorService._evacuate_qvmapping()."""
+        baker.make(Specification)
+
+        paper = baker.make(Paper)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.IDPAGE)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.DNMPAGE)
+        baker.make(FixedPage, paper=paper, page_type=FixedPage.QUESTIONPAGE)
+
+        n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
+
+        self.assertEqual(n_papers, 1)
+        self.assertEqual(n_pages, 3)
+        self.assertEqual(n_id, 1)
+        self.assertEqual(n_dnm, 1)
+        self.assertEqual(n_question, 1)
+
+        # this functions yields, so need to iterate
+        for idx, papernum in PaperCreatorService._evacuate_qvmapping():
+            pass
+
+        n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
+
+        self.assertEqual(n_papers, 0)
+        self.assertEqual(n_pages, 0)
+        self.assertEqual(n_id, 0)
+        self.assertEqual(n_dnm, 0)
+        self.assertEqual(n_question, 0)
+
+    def test__populate_from_qvmapping(self) -> None:
+        """Test PaperCreatorService._populate_from_qvmapping()."""
+        qv_map = {1: {1: 2, 2: 1}, 2: {1: 1, 2: 2}, 3: {1: 2, 2: 2}}
+
+        # this functions yields, so need to iterate
+        for idx, qv_row in PaperCreatorService._populate_from_qvmapping(qv_map):
+            pass
+
+        n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
+
+        self.assertEqual(n_papers, 3)
+        self.assertEqual(n_pages, 18)
+        self.assertEqual(n_id, 3)
+        self.assertEqual(n_dnm, 9)
+        self.assertEqual(n_question, 6)
