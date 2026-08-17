@@ -117,21 +117,12 @@ def huey_evacuate_whole_db(
     )
     all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
     N = all_papers.count()
-    for idx, paper_obj in enumerate(all_papers):
-        for fp in paper_obj.fixedpage_set.all():
-            fp.delete()
-        paper_obj.delete()
+    for idx, papernum in PaperCreatorService._evacuate_qvmapping():
         if idx % 16 == 0:
             PopulateEvacuateDBChore.set_message(
                 tracker_pk, f"Deleted {idx} of {N} papers from database"
             )
             log.info(f"Deleted {idx} of {N} papers from database")
-    # TODO - decide if we should delete by table rather than by paper.
-    # Table delete code follows below
-    # with transaction.atomic():
-    #     FixedPage.objects.all().delete()
-    # with transaction.atomic():
-    #     Paper.objects.all().delete()
 
     PopulateEvacuateDBChore.transition_to_complete(
         tracker_pk, msg=f"Deleted all {N} papers from database"
@@ -358,6 +349,31 @@ class PaperCreatorService:
                     question_index=q_idx,
                     version=version,
                 )
+
+    @staticmethod
+    @transaction.atomic()
+    def _evacuate_qvmapping() -> Iterator[tuple[int, int]]:
+        """Remove all papers from the DB.
+
+        We yield information so huey can record progress when calling this function.
+
+        Yields:
+            As a tuple: the running count of the number of papers removed and the
+            paper number of the most recently removed paper.
+        """
+        all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
+        for idx, paper_obj in enumerate(all_papers):
+            for fp in paper_obj.fixedpage_set.all():
+                fp.delete()
+            papernum = paper_obj.paper_number
+            paper_obj.delete()
+            yield idx, papernum
+        # TODO - decide if we should delete by table rather than by paper.
+        # Table delete code follows below
+        # with transaction.atomic():
+        #     FixedPage.objects.all().delete()
+        # with transaction.atomic():
+        #     Paper.objects.all().delete()
 
     @staticmethod
     def assert_no_running_chore():
