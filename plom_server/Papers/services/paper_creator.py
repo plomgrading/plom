@@ -462,7 +462,6 @@ class PaperCreatorService:
         qv_map: dict[int, dict[int | str, int]],
         *,
         background: bool = True,
-        _testing: bool = False,
     ):
         """Build all the Paper and associated tables from the qv-map, but not the PDF files.
 
@@ -473,8 +472,6 @@ class PaperCreatorService:
         Keyword Args:
             background: populate the database in the background, or, if false,
                 as a blocking huey process
-            _testing: when set true, blocking is ignored, and the db-build is done as
-                a foreground process without huey involved.
 
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
@@ -488,21 +485,7 @@ class PaperCreatorService:
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
 
-        if not _testing:
-            cls._populate_whole_db_huey_wrapper(qv_map, background=background)
-        else:
-            # log(f"Adding {len(qv_map)} papers via foreground process for testing")
-            id_page_number = SpecificationService.get_id_page_number()
-            dnm_page_numbers = SpecificationService.get_dnm_pages()
-            question_page_numbers = SpecificationService.get_question_pages()
-            for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-                cls._create_single_paper_from_qvmapping_and_pages(
-                    paper_number,
-                    qv_row,
-                    id_page_number=id_page_number,
-                    dnm_page_numbers=dnm_page_numbers,
-                    question_page_numbers=question_page_numbers,
-                )
+        cls._populate_whole_db_huey_wrapper(qv_map, background=background)
 
     @classmethod
     def append_papers_to_qv_map(
@@ -570,8 +553,6 @@ class PaperCreatorService:
         Keyword Args:
             background: de-populate the database in the background, or, if false,
                 as a blocking huey process
-            _testing: when set true, blocking is ignored, and the db depopulation is done as
-                a foreground process without huey involved.
 
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
@@ -581,14 +562,7 @@ class PaperCreatorService:
         cls.assert_no_running_chore()
         cls.obselete_all_existing_chores()
 
-        if not _testing:
-            cls._evacuate_whole_db_huey_wrapper(background=background)
-        else:
-            # for testing purposes we delete in foreground
-            with transaction.atomic():
-                FixedPage.objects.all().delete()
-            with transaction.atomic():
-                Paper.objects.all().delete()
+        cls._evacuate_whole_db_huey_wrapper(background=background)
 
     @staticmethod
     def _evacuate_whole_db_huey_wrapper(*, background: bool = True) -> None:

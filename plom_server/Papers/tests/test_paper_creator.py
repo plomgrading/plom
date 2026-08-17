@@ -81,34 +81,6 @@ class PaperCreatorTests(TestCase):
         with self.assertRaises(IntegrityError):
             PaperCreatorService._create_single_paper_from_qvmapping_and_pages(1, qv_map)
 
-    # TODO: delete this and _testing branches in paper_creator
-    def test_clear_papers(self) -> None:
-        """Test PaperCreatorService.remove_papers_from_db()."""
-        baker.make(Specification)
-
-        paper = baker.make(Paper)
-        baker.make(FixedPage, paper=paper, page_type=FixedPage.IDPAGE)
-        baker.make(FixedPage, paper=paper, page_type=FixedPage.DNMPAGE)
-        baker.make(FixedPage, paper=paper, page_type=FixedPage.QUESTIONPAGE)
-
-        n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
-
-        self.assertEqual(n_papers, 1)
-        self.assertEqual(n_pages, 3)
-        self.assertEqual(n_id, 1)
-        self.assertEqual(n_dnm, 1)
-        self.assertEqual(n_question, 1)
-
-        PaperCreatorService.remove_all_papers_from_db(_testing=True)
-
-        n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
-
-        self.assertEqual(n_papers, 0)
-        self.assertEqual(n_pages, 0)
-        self.assertEqual(n_id, 0)
-        self.assertEqual(n_dnm, 0)
-        self.assertEqual(n_question, 0)
-
     def test__evacuate_qvmapping(self) -> None:
         """Test PaperCreatorService._evacuate_qvmapping()."""
         baker.make(Specification)
