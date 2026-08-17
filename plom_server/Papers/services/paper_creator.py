@@ -163,21 +163,13 @@ def huey_evacuate_then_populate_whole_db(
     )
     all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
     num_papers_old = all_papers.count()
-    for idx, paper_obj in enumerate(all_papers):
-        for fp in paper_obj.fixedpage_set.all():
-            fp.delete()
-        paper_obj.delete()
+
+    for idx, papernum in PaperCreatorService._evacuate_qvmapping():
         if idx % 16 == 0:
             PopulateEvacuateDBChore.set_message(
                 tracker_pk, f"Deleted {idx} of {num_papers_old} papers from database"
             )
             log.info(f"Deleted {idx} of {num_papers_old} papers from database")
-    # TODO - decide if we should delete by table rather than by paper.
-    # Table delete code follows below
-    # with transaction.atomic():
-    #     FixedPage.objects.all().delete()
-    # with transaction.atomic():
-    #     Paper.objects.all().delete()
 
     PopulateEvacuateDBChore.set_message(
         tracker_pk, f"Deleted all {num_papers_old} papers from database"
@@ -197,39 +189,36 @@ def huey_evacuate_then_populate_whole_db(
         tracker_pk, f"Populating {num_papers_new} papers in database..."
     )
 
-    id_page_number = SpecificationService.get_id_page_number()
-    dnm_page_numbers = SpecificationService.get_dnm_pages()
-    question_page_numbers = SpecificationService.get_question_pages()
+    try:
+        for idx, qv_row in PaperCreatorService._populate_from_qvmapping(qv_map):
+            if idx % 16 == 0:
+                PopulateEvacuateDBChore.set_message(
+                    tracker_pk,
+                    f"Populated {idx} of {num_papers_new} papers in database",
+                )
+                log.info(f"Populated {idx} of {num_papers_new} papers in database")
+    except KeyError as e:
+        # increase verbosity, else it just prints like "4"
+        PopulateEvacuateDBChore.set_message(
+            tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
+        )
+        raise KeyError(
+            f"KeyError {e}: perhaps not enough columns in your upload?"
+        ) from e
+    except (ObjectDoesNotExist, IntegrityError):
+        PopulateEvacuateDBChore.set_message(
+            tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
+        )
+        raise
 
-    # TODO - move much of this loop back into paper-creator.
-    for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        try:
-            PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
-                paper_number,
-                qv_row,
-                id_page_number=id_page_number,
-                dnm_page_numbers=dnm_page_numbers,
-                question_page_numbers=question_page_numbers,
-            )
-        except KeyError as e:
-            # increase verbosity, else it just prints like "4"
-            PopulateEvacuateDBChore.set_message(
-                tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
-            )
-            raise KeyError(
-                f"KeyError {e}: perhaps not enough columns in your upload?"
-            ) from e
-        except (ObjectDoesNotExist, IntegrityError):
-            PopulateEvacuateDBChore.set_message(
-                tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
-            )
-            raise
-
-        if idx % 16 == 0:
-            PopulateEvacuateDBChore.set_message(
-                tracker_pk, f"Populated {idx} of {num_papers_new} papers in database"
-            )
-            log.info(f"Populated {idx} of {num_papers_new} papers in database")
+    # TODO: currently we let the catch-all in Base/models.py handle exceptions but
+    # we could do so here, avoiding errors in Huey logs... Which is better?
+    # except Exception as e:
+    #     PopulateEvacuateDBChore.transition_chore_to_error(
+    #          tracker_pk,
+    #          f"Something went wrong building database: {e}",
+    #     )
+    #     return True
 
     PopulateEvacuateDBChore.transition_to_complete(
         tracker_pk, msg=f"Populated all {num_papers_new} papers in database"
