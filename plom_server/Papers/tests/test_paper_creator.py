@@ -112,7 +112,11 @@ class PaperCreatorTests(TestCase):
 
     def test__populate_from_qvmapping(self) -> None:
         """Test PaperCreatorService._populate_from_qvmapping()."""
-        qv_map = {1: {1: 2, 2: 1}, 2: {1: 1, 2: 2}, 3: {1: 2, 2: 2}}
+        qv_map: dict[int, dict[int | str, int]] = {
+            1: {1: 2, 2: 1},
+            2: {1: 1, 2: 2},
+            3: {1: 2, 2: 2},
+        }
 
         # this functions yields, so need to iterate
         for idx, qv_row in PaperCreatorService._populate_from_qvmapping(qv_map):
