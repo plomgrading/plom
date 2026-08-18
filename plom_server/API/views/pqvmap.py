@@ -45,7 +45,7 @@ class PQVmap(APIView):
         unfortunate colleague in the future needs a pointer on what's breaking.
 
         This operation can be forced to the foreground by providing a
-        "false" boolean keyed by "background".
+        "false" string keyed by "background".
 
         Args:
             request: An HTTP request.
@@ -63,7 +63,7 @@ class PQVmap(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         # stuff is converted to strings over http, so use str comparison
-        background = request.data.get("background", "True") == "True"
+        background = request.data.get("background", "True").strip().lower() != "false"
 
         try:
             PaperCreatorService.remove_all_papers_from_db(background=background)
@@ -122,7 +122,7 @@ class PQVmap(APIView):
         colleague in the future needs a pointer on what's breaking.
 
         This operation can be forced to the foreground by providing a
-        "false" boolean keyed by "background".
+        "false" string keyed by "background".
 
         Args:
             request: An HTTP request.
@@ -168,7 +168,7 @@ class PQVmap(APIView):
         startn = int(request.POST.get("startn_value", first_paper_hint))
 
         # stuff is converted to strings over http, so use str comparison
-        background = request.data.get("background", "True") == "True"
+        background = request.data.get("background", "True").strip().lower() != "false"
 
         try:
             qvmap = PQVMappingService().make_version_map(
@@ -189,7 +189,7 @@ class PQVmap(APIView):
         success/failure of this call.
 
         This operation can be forced to the foreground by providing a
-        "false" boolean keyed by "background".
+        "false" string keyed by "background".
 
         Args:
             request: An HTTP request, with a PQV map in the FILES container.
@@ -236,7 +236,7 @@ class PQVmap(APIView):
             return _error_response(err, status.HTTP_400_BAD_REQUEST)
 
         # stuff is converted to strings over http, so use str comparison
-        background = request.data.get("background", "True") == "True"
+        background = request.data.get("background", "True").strip().lower() != "false"
 
         try:
             PaperCreatorService.replace_all_papers_in_qv_map(
