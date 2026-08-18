@@ -234,13 +234,14 @@ class PaperCreatorService:
     """
 
     @classmethod
-    @transaction.atomic()
     def _populate_from_qvmapping(
         cls, qv_map: dict[int, dict[int | str, int]]
     ) -> Iterator[tuple[int, dict]]:
         """Populate the DB from a qvmap.
 
         We yield information so huey can record progress when calling this function.
+        Unfortunately this means we can't use a transaction decorator; callers are
+        responsible for rolling back changes on failure.
 
         Args:
             qv_map: The question version map.
@@ -308,49 +309,59 @@ class PaperCreatorService:
         paper_obj = Paper.objects.create(paper_number=paper_number)
 
         # we do this to improve race conditions
-        Paper.objects.select_for_update().get(id=paper_obj.id)
+        paper_obj = Paper.objects.select_for_update().get(id=paper_obj.id)
 
-        FixedPage.objects.create(
-            page_type=FixedPage.IDPAGE,
-            paper=paper_obj,
-            image=None,
-            page_number=id_page_number,
-            version=qv_row.get("id", 1),
+        fixed_pages = []
+        fixed_pages.append(
+            FixedPage(
+                page_type=FixedPage.IDPAGE,
+                paper=paper_obj,
+                image=None,
+                page_number=id_page_number,
+                version=qv_row.get("id", 1),
+            )
         )
         # currently DNM pages are always taken from version 1
         for pg in dnm_page_numbers:
-            FixedPage.objects.create(
-                page_type=FixedPage.DNMPAGE,
-                paper=paper_obj,
-                image=None,
-                page_number=pg,
-                version=1,
+            fixed_pages.append(
+                FixedPage(
+                    page_type=FixedPage.DNMPAGE,
+                    paper=paper_obj,
+                    image=None,
+                    page_number=pg,
+                    version=1,
+                )
             )
         for index, q_pages in question_page_numbers.items():
             q_idx = int(index)
             version = int(qv_row[q_idx])
             for pg in q_pages:
-                FixedPage.objects.create(
-                    page_type=FixedPage.QUESTIONPAGE,
-                    paper=paper_obj,
-                    image=None,
-                    page_number=int(pg),
-                    question_index=q_idx,
-                    version=version,
+                fixed_pages.append(
+                    FixedPage(
+                        page_type=FixedPage.QUESTIONPAGE,
+                        paper=paper_obj,
+                        image=None,
+                        page_number=int(pg),
+                        question_index=q_idx,
+                        version=version,
+                    )
                 )
+        FixedPage.objects.bulk_create(fixed_pages)
 
     @staticmethod
-    @transaction.atomic()
     def _evacuate_qvmapping() -> Iterator[tuple[int, int]]:
         """Remove all papers from the DB.
 
         We yield information so huey can record progress when calling this function.
+        Unfortunately this means we can't use a transaction decorator; callers are
+        responsible for rolling back changes on failure.
 
         Yields:
             As a tuple: the running count of the number of papers removed and the
             paper number of the most recently removed paper.
         """
         all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
+
         for idx, paper_obj in enumerate(all_papers):
             for fp in paper_obj.fixedpage_set.all():
                 fp.delete()
@@ -361,7 +372,6 @@ class PaperCreatorService:
         # Table delete code follows below
         # with transaction.atomic():
         #     FixedPage.objects.all().delete()
-        # with transaction.atomic():
         #     Paper.objects.all().delete()
 
     @staticmethod
@@ -491,8 +501,9 @@ class PaperCreatorService:
             log.info(
                 "Running populate task in foreground - will block until completed."
             )
-            for _ in cls._populate_from_qvmapping(qv_map):
-                pass
+            with transaction.atomic():
+                for _ in cls._populate_from_qvmapping(qv_map):
+                    pass
             log.info("Populate task finished!")
 
     @classmethod
@@ -570,8 +581,9 @@ class PaperCreatorService:
             log.info(
                 "Running evacuate task in foreground - will block until completed."
             )
-            for _ in cls._evacuate_qvmapping():
-                pass
+            with transaction.atomic():
+                for _ in cls._evacuate_qvmapping():
+                    pass
             log.info("Evacuate task finished!")
 
     @staticmethod
@@ -622,10 +634,11 @@ class PaperCreatorService:
             log.info(
                 "Running evacuate-then-populate task in foreground - will block until completed."
             )
-            for _ in cls._evacuate_qvmapping():
-                pass
-            for _ in cls._populate_from_qvmapping(qv_map):
-                pass
+            with transaction.atomic():
+                for _ in cls._evacuate_qvmapping():
+                    pass
+                for _ in cls._populate_from_qvmapping(qv_map):
+                    pass
             log.info("Evacuate-then-populate task finished!")
 
     @staticmethod
