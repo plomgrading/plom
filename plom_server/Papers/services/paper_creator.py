@@ -363,10 +363,12 @@ class PaperCreatorService:
         all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
 
         for idx, paper_obj in enumerate(all_papers):
-            for fp in paper_obj.fixedpage_set.all():
-                fp.delete()
-            papernum = paper_obj.paper_number
-            paper_obj.delete()
+            # TODO: is this even necessary? Model says fixedpage cascades from paper...
+            # Django/DB would probably handle this more efficiently
+            with transaction.atomic():
+                paper_obj.fixedpage_set.all().delete()
+                papernum = paper_obj.paper_number
+                paper_obj.delete()
             yield idx, papernum
         # TODO - decide if we should delete by table rather than by paper.
         # Table delete code follows below
