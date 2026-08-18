@@ -400,6 +400,7 @@ class PaperCreatorService:
 
     @staticmethod
     def obselete_all_existing_chores():
+        """Set the "obsolete" flag to True on all Huey chores."""
         PopulateEvacuateDBChore.objects.filter(obsolete=False).update(obsolete=True)
         # TODO: check that this doesn't do superclass as well!
         # TODO: can probably verify by `print(cls)` in the superclass code
@@ -546,6 +547,7 @@ class PaperCreatorService:
     def _populate_whole_db_huey_wrapper(
         qv_map: dict[int, dict[int | str, int]],
     ) -> None:
+        """Instantiate a huey tracker, then start the task."""
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
@@ -588,6 +590,7 @@ class PaperCreatorService:
 
     @staticmethod
     def _evacuate_whole_db_huey_wrapper() -> None:
+        """Instantiate a huey tracker, then start the task."""
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
@@ -645,6 +648,7 @@ class PaperCreatorService:
     def _evacuate_then_populate_whole_db_huey_wrapper(
         qv_map: dict[int, dict[int | str, int]],
     ) -> None:
+        """Instantiate a huey tracker, then start the task."""
         # TODO - add seatbelt logic here
         # ^^ What does this mean?
         with transaction.atomic(durable=True):
