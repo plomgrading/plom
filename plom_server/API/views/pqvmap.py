@@ -35,8 +35,8 @@ class PQVmap(APIView):
     def delete(self, request: Request) -> Response:
         """Remove the current PQV map, if any, from the database.
 
-        This work is done by Huey, taking a blocking foreground approach
-        by default.
+        By default, This work is done asynchronously (i.e., in the background)
+        by Huey.
 
         The response will be generated only after all the deletions are
         complete. For large classes, this may take so long that the
@@ -44,9 +44,8 @@ class PQVmap(APIView):
         been observed in the wild, but we note it here in case some
         unfortunate colleague in the future needs a pointer on what's breaking.
 
-        Providing a boolean keyed by "background" will force this operation
-        to the background, where the caller will need to poll the pqvmap
-        to determine the success or failure of this operation.
+        This operation can be forced to the foreground by providing a
+        "false" boolean keyed by "background".
 
         Args:
             request: An HTTP request.
@@ -63,7 +62,7 @@ class PQVmap(APIView):
                 'Only users in the "manager" group can clean the database.',
                 status.HTTP_403_FORBIDDEN,
             )
-        background = request.data.get("background", False)
+        background = request.data.get("background", True)
 
         try:
             PaperCreatorService.remove_all_papers_from_db(background=background)
@@ -103,9 +102,8 @@ class PQVmap(APIView):
 
         POST data determines the map to make. See below.
 
-        This work is done by Huey, taking a blocking foreground approach
-        by default.
-        If 'count' is not provided, use the default suggested number.
+        By default, This work is done asynchronously (i.e., in the background)
+        by Huey. If 'count' is not provided, use the default suggested number.
         The request will be rejected if there is already a PQV map in place.
         (Note that the DELETE method is available on the same endpoint.)
 
@@ -122,9 +120,8 @@ class PQVmap(APIView):
         been observed in the wild, but we note it here in case some unfortunate
         colleague in the future needs a pointer on what's breaking.
 
-        Providing a boolean keyed by "background" will force this operation
-        to the background, where the caller will need to poll the pqvmap
-        to determine the success or failure of this operation.
+        This operation can be forced to the foreground by providing a
+        "false" boolean keyed by "background".
 
         Args:
             request: An HTTP request.
@@ -169,7 +166,7 @@ class PQVmap(APIView):
 
         startn = int(request.POST.get("startn_value", first_paper_hint))
 
-        background = request.data.get("background", False)
+        background = request.data.get("background", True)
 
         try:
             qvmap = PQVMappingService().make_version_map(
@@ -184,6 +181,13 @@ class PQVmap(APIView):
     # PUT /api/beta/pqvmap
     def put(self, request: Request) -> Response:
         """Replace the PQV map with the one attached to the request.
+
+        By default, This work is done asynchronously (i.e., in the background)
+        by Huey. Callers will need to poll the GET endpoint to confirm the
+        success/failure of this call.
+
+        This operation can be forced to the foreground by providing a
+        "false" boolean keyed by "background".
 
         Args:
             request: An HTTP request, with a PQV map in the FILES container.
@@ -229,8 +233,12 @@ class PQVmap(APIView):
         except ValueError as err:
             return _error_response(err, status.HTTP_400_BAD_REQUEST)
 
+        background = request.data.get("background", True)
+
         try:
-            PaperCreatorService.replace_all_papers_in_qv_map(pqvmap, background=True)
+            PaperCreatorService.replace_all_papers_in_qv_map(
+                pqvmap, background=background
+            )
         except PlomDependencyConflict as err:
             return _error_response(err, status.HTTP_409_CONFLICT)
         except PlomDatabaseCreationError as err:
@@ -241,6 +249,8 @@ class PQVmap(APIView):
     # PATCH /api/beta/pqvmap
     def patch(self, request: Request) -> Response:
         """Append the PQV map attached to request to the server's PQV map.
+
+        This operation is completed synchronously (i.e., in the foreground).
 
         Args:
             request: An HTTP request, with a PQV map in the "pqvmap" key.
