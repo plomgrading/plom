@@ -62,7 +62,8 @@ class PQVmap(APIView):
                 'Only users in the "manager" group can clean the database.',
                 status.HTTP_403_FORBIDDEN,
             )
-        background = request.data.get("background", True)
+        # stuff is converted to strings over http, so use str comparison
+        background = request.data.get("background", "True") == "True"
 
         try:
             PaperCreatorService.remove_all_papers_from_db(background=background)
@@ -166,7 +167,8 @@ class PQVmap(APIView):
 
         startn = int(request.POST.get("startn_value", first_paper_hint))
 
-        background = request.data.get("background", True)
+        # stuff is converted to strings over http, so use str comparison
+        background = request.data.get("background", "True") == "True"
 
         try:
             qvmap = PQVMappingService().make_version_map(
@@ -233,7 +235,8 @@ class PQVmap(APIView):
         except ValueError as err:
             return _error_response(err, status.HTTP_400_BAD_REQUEST)
 
-        background = request.data.get("background", True)
+        # stuff is converted to strings over http, so use str comparison
+        background = request.data.get("background", "True") == "True"
 
         try:
             PaperCreatorService.replace_all_papers_in_qv_map(
