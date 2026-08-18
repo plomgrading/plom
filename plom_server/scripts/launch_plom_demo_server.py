@@ -417,7 +417,7 @@ def populate_the_database(length="normal"):
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
     )
-    run_plom_cli_command(f"set-pqvmap -n {production[length]} -i 1")
+    run_plom_cli_command(f"set-pqvmap -n {production[length]} -i 1 --foreground")
     print("Paper database is now populated")
 
 
@@ -433,7 +433,7 @@ def depopulate_the_database():
     Note - runs in foreground; blocks until completed.
     """
     print("Clearing the database and qv-map")
-    run_plom_cli_command("delete-pqvmap")
+    run_plom_cli_command("delete-pqvmap --foreground")
 
 
 def read_hack_and_resave_qvmap(filepath: Path):
@@ -462,7 +462,7 @@ def read_hack_and_resave_qvmap(filepath: Path):
 def upload_the_qvmap(filepath: Path):
     """Upload a qv-map from a file."""
     print("Uploading the question-version map")
-    run_plom_cli_command(f"set-pqvmap --file {filepath}")
+    run_plom_cli_command(f"set-pqvmap --file {filepath} --foreground")
 
 
 def build_all_papers_and_wait():
