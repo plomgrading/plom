@@ -33,7 +33,8 @@ are available and currently hosted on DockerHub.
 
 External ML service
 -------------------
-Optional features such as MCQ checkbox detection use an external ML service.
+Optional features such as examinee ID prediction and MCQ checkbox detection use an external
+`lightweight-compute-server<https://gitlab.com/plom/lightweight-compute-server>`_ ML service.
 For the provided ``compose.yaml``, set its base URL and bearer token in the
 private, git-ignored ``.env`` file::
 
