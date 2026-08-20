@@ -2,6 +2,7 @@
    Copyright (C) 2022-2024, 2026 Colin B. Macdonald
    Copyright (C) 2023 Philip D. Loewen
    Copyright (C) 2026 Aidan Murphy
+   Copyright (C) 2026 Deep Shah
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Running your own server
@@ -29,6 +30,19 @@ containers.
 Each Plom server release is documented on
 `gitlab <https://gitlab.com/plom/plom/-/releases>`_, and container images
 are available and currently hosted on DockerHub.
+
+External ML service
+-------------------
+Optional features such as examinee ID prediction and MCQ checkbox detection use an external
+`lightweight-compute-server<https://gitlab.com/plom/lightweight-compute-server>`_ ML service.
+For the provided ``compose.yaml``, set its base URL and bearer token in the
+private, git-ignored ``.env`` file::
+
+    PLOM_ML_SERVICE_URL=https://ml.example.edu
+    PLOM_ML_SERVICE_TOKEN=replace-with-the-issued-token
+
+Use the base URL without ``/docs`` or ``/omr/infer``, keep the token secret,
+and restart Plom after changing either value.
 
 Security
 --------
