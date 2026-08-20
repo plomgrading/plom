@@ -140,9 +140,8 @@ def _build_mcq_crop_preview_boxes(raw_mcq_boxes: str) -> list[dict[str, Any]]:
 
 def _get_mcq_cluster_label_map(job: QuestionClusteringChore) -> dict[int, str]:
     """Build display labels for checkbox-aware MCQ clusters, if available."""
-    if (
-        job.clustering_model != ClusteringModelType.MCQ
-        or not isinstance(job.mcq_metadata, dict)
+    if job.clustering_model != ClusteringModelType.MCQ or not isinstance(
+        job.mcq_metadata, dict
     ):
         return {}
 

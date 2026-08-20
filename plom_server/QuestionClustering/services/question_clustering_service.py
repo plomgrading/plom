@@ -606,9 +606,7 @@ class QuestionClusteringService:
             ValueError: extraction from problem reference image.
         """
         if clustering_model == ClusteringModelType.MCQ:
-            self.cluster_mcq(
-                job, question_idx, version, page_num, rect, mcq_metadata
-            )
+            self.cluster_mcq(job, question_idx, version, page_num, rect, mcq_metadata)
 
         elif clustering_model == ClusteringModelType.HME:
             self.cluster_hme(job, question_idx, version, page_num, rect)
