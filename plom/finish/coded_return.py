@@ -13,7 +13,7 @@ import sys
 import shutil
 from pathlib import Path
 
-from plom.rules import isValidStudentID, StudentIDLength
+from plom.common.rules import isValidStudentID, StudentIDLength
 from plom.finish import CSVFilename
 from .return_tools import csv_add_return_codes
 

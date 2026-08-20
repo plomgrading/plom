@@ -180,7 +180,7 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
         dict of the mapping from student number to secret code.
     """
     import pandas
-    from plom.rules import isValidStudentID
+    from plom.common.rules import isValidStudentID
 
     df = pandas.read_csv(csvin, dtype="object")
 
