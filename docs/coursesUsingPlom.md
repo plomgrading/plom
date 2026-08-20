@@ -423,3 +423,30 @@ Approx: 11,700 students over 30 courses
 | SCIE 001        | Midterm+Final                     | 65          |                                       |
 
 Approx: 12,861 students over 32 courses
+
+
+## 2026S1+S2
+
+| Course      | Tasks                             | # students  | Notes                          |
+|----------   |---------------------------------- |:----------: |------------------------------- |
+| Math100     | Midterm+Final                     | 216         |                                |
+| Math101     | Midterm+Final                     | 290         |                                |
+| Math200     | Quiz+Midterm+Final                | 120         |                                |
+| Math215/255 | Midterm(x3)+Final                 | 75          |                                |
+| Math253     | Midterm(x2)+Final                 | 120         |                                |
+| Math256     | Midterm(x2)+Final                 | 54          |                                |
+| Math257/316 | Midterm+Final                     | 100         |                                |
+| Math302     | Midterm+Final                     | 100         |                                |
+| Math307     | Midterm+Final                     | 71          |                                |
+| Math317     | Midterm+Final                     | 70          |                                |
+| Biol111     | Midterm+Final                     | 117         |                                |
+| Biol112     | Midterm+Final                     | 164         |                                |
+| Biol121     | Midterm+Final                     | 102         |                                |
+| Biol200     | Midterm+Final                     | 116         |                                |
+| Biol204     | Midterm+Final(x2)                 | 22          |                                |
+| Biol260     | Midterm+Final                     | 82          |                                |
+| Biol300     | Midterm+Final                     | 103         |                                |
+| Phys117     | Midterm+Final                     | 40          |                                |
+
+
+Approx: 1962 students over 18 courses
