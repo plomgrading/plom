@@ -7,7 +7,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Aidan Murphy
+# Copyright (C) 2024-2026 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -42,7 +42,7 @@ variables:
   PLOM_NO_SSL_VERIFY: 1
   QT_QPA_PLATFORM: offscreen
   PLOMCLIENT_BRANCHNAME: main
-  PLOMCOMMON_BRANCHNAME: main
+  PLOMCOMMON_BRANCHNAME: background_qvmap  # revert to main before merging
 
 stages:
   - static_analysis
@@ -559,8 +559,10 @@ webplom_demo:
     - apt-get --no-install-recommends --yes install git
     # pip install plom-client
     # but we might need a more recent one if API recently changed
-    - pip install -U git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
     - pip install -U git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
+    # -U isn't always sufficient to remove the base installation from plom-common:main
+    - pip uninstall -y plom-common
+    - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
