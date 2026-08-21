@@ -451,9 +451,6 @@ PLOM_ML_SERVICE_MCQ_BATCH_SIZE = int(
 PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO = float(
     os.environ.get("PLOM_ML_SERVICE_MCQ_SUSPICIOUS_FILL_RATIO", 0.25)
 )
-PLOM_ML_SERVICE_DIGIT_USE_NDIGITS = os.environ.get(
-    "PLOM_ML_SERVICE_DIGIT_USE_NDIGITS", "1"
-).strip().lower() not in {"0", "false", "no", "off"}
 
 # User uploaded (non-bundle) files are rejected if they exceed this byte size.
 # TODO: nginx also checks file size, does this serve a purpose?

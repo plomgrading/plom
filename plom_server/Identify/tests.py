@@ -401,7 +401,6 @@ class IDPredictionHeatmapTests(TestCase):
         PLOM_ML_SERVICE_URL="https://ml.example",
         PLOM_ML_SERVICE_TOKEN="test-token",
         PLOM_ML_SERVICE_TIMEOUT=12.0,
-        PLOM_ML_SERVICE_DIGIT_USE_NDIGITS=True,
     )
     def test_resume_recomputes_heatmap_after_source_image_changes(self) -> None:
         """Resume calls the ML service when the current ID box is different."""

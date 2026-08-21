@@ -52,9 +52,7 @@ other configures the service itself.  Do not include the word ``Bearer`` in
 either value; Plom adds the ``Authorization: Bearer ...`` header automatically.
 
 Requests time out after 30 seconds by default.  This can be changed with
-``PLOM_ML_SERVICE_TIMEOUT``.  Plom normally uses the service's batch digit
-endpoint; ``PLOM_ML_SERVICE_DIGIT_USE_NDIGITS=0`` enables the single-digit
-endpoint for compatibility with an older service deployment.
+``PLOM_ML_SERVICE_TIMEOUT``.
 
 ..
     TODO: xref to the `plom_server.Identify` app later, assuming those

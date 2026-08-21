@@ -849,18 +849,7 @@ class IDBoxProcessorService:
                         digit_position=index,
                     )
                 )
-            if settings.PLOM_ML_SERVICE_DIGIT_USE_NDIGITS:
-                digit_probabilities = client.predict_digits(crops)
-            else:
-                digit_probabilities = {
-                    (crop.paper_number, crop.digit_position): client.predict_digit(
-                        crop.image_bytes,
-                        crop_id=crop.crop_id,
-                        paper_number=crop.paper_number,
-                        digit_position=crop.digit_position,
-                    )
-                    for crop in crops
-                }
+            digit_probabilities = client.predict_digits(crops)
             paper_probabilities = [
                 digit_probabilities[(paper_number, position)]
                 for position in range(1, student_id_length + 1)

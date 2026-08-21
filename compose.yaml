@@ -66,7 +66,6 @@ services:
       # - PLOM_ML_SERVICE_URL=https://quiz-lml.example.ca
       # - PLOM_ML_SERVICE_TOKEN=replace-with-the-configured-token
       # - PLOM_ML_SERVICE_TIMEOUT=30
-      # - PLOM_ML_SERVICE_DIGIT_USE_NDIGITS=1
       # Other settings
       - PAPERSIZE=letter
       # - PLOM_QR_CODE_SIZE=70
