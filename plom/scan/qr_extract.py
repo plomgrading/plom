@@ -75,8 +75,9 @@ def QRextract(
 
     Returns:
         A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
-        a 'tpv_signature', 'x', 'y' and 'orientation' keys that correspond to strings extracted from
-        QR codes (one string per code) and the x-y coordinates of the QR code.
+        a 'tpv_signature', 'x', 'y' (the horizontal and vertical pixel coordinates
+        of the QR code), 'orientation' (the rotation ccw of the QR code, currently
+        an integer).
         The dict is empty if no QR codes found in that corner.
 
     Without the `try_harder` flag, we observe high failure rates when
@@ -113,7 +114,7 @@ def QRextract(
                     "tpv_signature": qr.text,
                     "x": x_coord,
                     "y": y_coord,
-                    "orientation": qr.orientation,
+                    "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
                 }
             )
 
@@ -131,24 +132,22 @@ def QRextract(
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
-                # Why do we first assign it to 's' first?
-                s = qr.text
                 prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
                 if not prev_tpv_signature:
                     # TODO: log these failures?
                     # print(
-                    #     f'Found QR-code "{s}" at {cnr} on reduced image, '
+                    #     f'Found QR-code "{qr.text}" at {cnr} on reduced image, '
                     #     "not found at original size"
                     # )
                     cornerQR[cnr].update(
                         {
-                            "tpv_signature": s,
-                            "x": x_coord,
-                            "y": y_coord,
-                            "orientation": qr.orientation,
+                            "tpv_signature": qr.text,
+                            "x": 2 * x_coord,  # Issue #4279.
+                            "y": 2 * y_coord,
+                            "orientation": -qr.orientation,
                         }
                     )
-                elif s == prev_tpv_signature:
+                elif qr.text == prev_tpv_signature:
                     # no-op, we already read this at the previous resolution
                     pass
                 else:

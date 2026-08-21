@@ -10,7 +10,7 @@ import csv
 from pathlib import Path
 from typing import Any, Sequence
 
-from plom.rules import validateStudentID
+from plom.common.rules import validateStudentID
 
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
