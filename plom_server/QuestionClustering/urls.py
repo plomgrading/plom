@@ -73,12 +73,12 @@ urlpatterns = [
     ),
     # === Cluster detail page (# members, priorities, tags, etc) =========
     path(
-        "cluster_groups/<int:question_idx>/<int:version>/<int:page_num>",
+        "cluster_groups/<int:task_id>",
         ClusterGroupsView.as_view(),
         name="cluster_groups",
     ),
     path(
-        "cluster_groups/<int:question_idx>/<int:version>/<int:page_num>/unclustered",
+        "cluster_groups/<int:task_id>/unclustered",
         UnclusteredPapersView.as_view(),
         name="unclustered_papers",
     ),
@@ -137,7 +137,7 @@ urlpatterns = [
         name="remove_tag_from_cluster",
     ),
     path(
-        "clustered_papers/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
+        "clustered_papers/<int:task_id>/<int:clusterId>",
         ClusteredPapersView.as_view(),
         name="clustered_papers",
     ),
