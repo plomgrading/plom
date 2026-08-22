@@ -33,7 +33,7 @@
                 {% endif %}
                 <div>
                     {% for x in region_info_per_page %}
-                        {% if x.has_region or x.questions_share_this_page %}
+                        {% if x.has_regions or x.questions_share_this_page %}
                             <div class="mb-4">
                                 <h3>
                                     Page {{ x.page }}:
@@ -124,7 +124,7 @@
     </div>
     <script src="{% static '/js/rectangle_regions.js' %}"></script>
     <script type="text/javascript">
-        // this global variables passes information into 'rectangle_regions.js'
+        // this global variable passes information into 'rectangle_regions.js'
         rectangle_regions_data = [
           {% for x in region_info_per_page %}
             {% if x.has_regions %}
