@@ -23,7 +23,7 @@ from plom_server.Rectangles.services import (
     clear_idbox_rectangle,
     RectangleExtractor,
 )
-from .services import HEATMAP_MODE_RESUME, IDReaderService, IDProgressService
+from .services import IDReaderService, IDProgressService
 
 
 class IDPredictionView(IdentifierOrManagerView):
@@ -94,7 +94,7 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
             IDReaderService.run_id_reader_in_background_via_huey(
                 request.user,
                 id_version_rectangles,
-                heatmap_mode=HEATMAP_MODE_RESUME,
+                use_existing_heatmaps=True,
             )
         except MultipleObjectsReturned:
             # this means a ID predictor task was already running, so

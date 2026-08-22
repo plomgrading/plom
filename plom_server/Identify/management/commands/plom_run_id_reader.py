@@ -12,12 +12,7 @@ from django.core.exceptions import MultipleObjectsReturned
 
 from plom_server.Rectangles.services import RectangleExtractor
 from plom_server.Papers.services import SpecificationService
-from ...services import (
-    HEATMAP_MODE_FRESH,
-    HEATMAP_MODE_RESUME,
-    HeatmapMode,
-    IDReaderService,
-)
+from ...services import IDReaderService
 
 
 class Command(BaseCommand):
@@ -39,14 +34,19 @@ class Command(BaseCommand):
         return initial_rectangle
 
     def run_the_reader(
-        self, user_obj, rectangle: dict[str, float], *, heatmap_mode: HeatmapMode
+        self, user_obj, rectangle: dict[str, float], use_existing_heatmaps: bool
     ) -> None:
         try:
-            self.stdout.write(f"Running the ID reader using {heatmap_mode} heatmaps")
+            if use_existing_heatmaps:
+                self.stdout.write(
+                    "Running ID reader, reusing existing heatmaps when possible"
+                )
+            else:
+                self.stdout.write("Running ID reader, recomputing heatmaps")
             IDReaderService.run_id_reader_in_background_via_huey(
                 user_obj,
                 {1: rectangle},
-                heatmap_mode=heatmap_mode,
+                use_existing_heatmaps=use_existing_heatmaps,
             )
         except MultipleObjectsReturned:
             raise CommandError("The ID reader is already running.")
@@ -116,14 +116,10 @@ class Command(BaseCommand):
             the_id_box_rectangle = self.get_the_rectangle()
         elif kwargs["run"]:
             the_id_box_rectangle = self.get_the_rectangle()
-            self.run_the_reader(
-                user_obj, the_id_box_rectangle, heatmap_mode=HEATMAP_MODE_FRESH
-            )
+            self.run_the_reader(user_obj, the_id_box_rectangle, False)
         elif kwargs["run_use_existing_heatmaps"]:
             the_id_box_rectangle = self.get_the_rectangle()
-            self.run_the_reader(
-                user_obj, the_id_box_rectangle, heatmap_mode=HEATMAP_MODE_RESUME
-            )
+            self.run_the_reader(user_obj, the_id_box_rectangle, True)
         elif kwargs["list"]:
             self.list_predictions()
         elif kwargs["wait"]:
