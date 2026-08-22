@@ -16,7 +16,7 @@ Then versions 4, 5 and 6 are interleaved for papers 200 to 400.
 
 import random
 
-from plom.version_maps import version_map_to_csv
+from plom.common.version_maps import version_map_to_csv
 
 if __name__ == "__main__":
     num_questions = 5

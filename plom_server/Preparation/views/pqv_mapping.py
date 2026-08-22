@@ -23,12 +23,11 @@ from plom_server.Papers.services import (
     PaperInfoService,
 )
 
-from plom.common.misc_utils import format_int_list_with_runs
 from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.common.misc_utils import format_int_list_with_runs
+from plom.common.version_maps import version_map_from_file
 
 from ..services import PQVMappingService, StagingStudentService, PapersPrinted
-
-from plom.version_maps import version_map_from_file
 
 
 class PQVMappingUploadView(ManagerRequiredView):
@@ -158,7 +157,7 @@ class PQVMappingView(ManagerRequiredView):
             "question_indices": question_indices,
             "question_labels_html": question_triples,
             "question_labels_selection_html": selection_dict,
-            "pqv_mapping_present": PaperInfoService.is_paper_database_fully_populated(),
+            "pqv_mapping_present": PaperInfoService.is_paper_database_populated(),
             "number_of_students": num_students,
             "number_plus_twenty": num_students + 20,
             "number_times_1dot1": (num_students * 11) // 10,
@@ -193,7 +192,12 @@ class PQVMappingView(ManagerRequiredView):
             StagingStudentService().get_minimum_number_to_produce()
         )
 
-        if context["pqv_mapping_present"]:
+        # complicated conditional to prevent race conditions - don't try to fetch db
+        # rows while huey is working on them. Might be fixable after #4278 is resolved.
+        if (
+            not (context["populate_in_progress"] or context["evacuate_in_progress"])
+            and context["pqv_mapping_present"]
+        ):
             context["pqv_table"] = PQVMappingService().get_pqv_map_as_table(
                 prenaming=True
             )

@@ -17,7 +17,7 @@ between versions 3 and 4 for papers 200-500 (the second sitting).
 
 from math import remainder
 
-from plom.version_maps import version_map_to_csv
+from plom.common.version_maps import version_map_to_csv
 
 if __name__ == "__main__":
     num_questions = 5

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from copy import deepcopy
 from typing import Any
@@ -20,10 +21,6 @@ default_settings = {
     "feedback_rules": deepcopy(static_feedback_rules),
     "prenaming_xcoord": 50,
     "prenaming_ycoord": 42,
-    # I recall being unhappy about this setting and its potential for abuse,
-    # so give it a underscore name: IIRC, it is a very transcient notion of
-    # how many papers to produce, and should not be widely trusted/consulted
-    "_tmp_number_of_papers_to_produce": 0,
 }
 
 
