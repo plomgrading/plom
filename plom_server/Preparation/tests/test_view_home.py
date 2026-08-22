@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2026 Aidan Murphy
 
 from importlib import resources
 
@@ -53,7 +54,7 @@ class PreparationLandingTests(TestCase):
         self.assertFalse(context["student_list_present"])
 
         self.assertFalse(context["is_db_chore_running"])
-        self.assertFalse(context["is_db_fully_populated"])
+        self.assertFalse(context["is_db_populated"])
 
         self.assertFalse(context["all_papers_built"])
 

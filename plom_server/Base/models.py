@@ -388,7 +388,7 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
     with transaction.atomic():
         task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
         task_obj.status = HueyTaskTracker.ERROR
-        task_obj.message = exc
+        task_obj.message = f"{exc} ({task_obj.message})"
         task_obj.save()
 
 

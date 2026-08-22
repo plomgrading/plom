@@ -2,13 +2,13 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2026 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 import logging
 
 from django.db import transaction
 from django.db.models import Count
 
-from plom_server.Base.services import Settings
 from ..models import Paper, FixedPage
 from .paper_creator import PaperCreatorService
 
@@ -37,34 +37,8 @@ class PaperInfoService:
         return PaperCreatorService.is_background_chore_in_progress()
 
     @staticmethod
-    def is_paper_database_fully_populated() -> bool:
-        """Returns true when number of papers in the database equals the number to produce."""
-        # I recall being unhappy about this setting and its potential for abuse,
-        # so give it a underscore name.
-        nop = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
-        db_count = Paper.objects.count()
-        return db_count > 0 and db_count == nop
-
-    @staticmethod
-    def is_paper_database_partially_but_not_fully_populated() -> bool:
-        """Returns true when number of papers in the database is positive but strictly less than the number to produce.
-
-        TODO: currently I think this is unused.
-        """
-        nop = Settings.key_value_store_get("_tmp_number_of_papers_to_produce")
-        db_count = Paper.objects.count()
-        return db_count > 0 and db_count < nop
-
-    @staticmethod
     def is_paper_database_populated() -> bool:
-        """True if any papers have been created in the DB.
-
-        The database is initially created with empty tables.  Users get added.
-        This function still returns False.  Eventually Tests (i.e., "papers")
-        get created.  Then this function returns True.
-
-        See also :method:`is_paper_database_fully_populated`.
-        """
+        """True if any papers have been created in the DB."""
         return Paper.objects.filter().exists()
 
     def is_this_paper_in_database(self, paper_number):
@@ -204,26 +178,25 @@ class PaperInfoService:
             are the int versions.
         """
         pqvmapping: dict[int, dict[int | str, int]] = {}
-        with transaction.atomic():
-            # note that this gets all question pages, not just one for each question.
-            for qp_obj in (
-                FixedPage.objects.filter(page_type=FixedPage.QUESTIONPAGE)
-                .prefetch_related("paper")
-                .order_by("paper__paper_number")
-            ):
-                pn = qp_obj.paper.paper_number
-                if pn in pqvmapping:
-                    if qp_obj.question_index in pqvmapping[pn]:
-                        pass
-                    else:
-                        pqvmapping[pn][qp_obj.question_index] = qp_obj.version
-                else:
-                    pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
-            for idpage_obj in (
-                FixedPage.objects.filter(page_type=FixedPage.IDPAGE)
-                .prefetch_related("paper")
-                .order_by("paper__paper_number")
-            ):
-                pn = idpage_obj.paper.paper_number
-                pqvmapping[pn]["id"] = idpage_obj.version
-            return pqvmapping
+
+        # huey also operates on the fixed pages table, so we want to fetch
+        # everything in a single query to avoid inconsistent data.
+        fixedpage_queryset = (
+            FixedPage.objects.filter(
+                page_type__in=[FixedPage.QUESTIONPAGE, FixedPage.IDPAGE]
+            )
+            .prefetch_related("paper")
+            .order_by("paper__paper_number")
+        )
+
+        for page in fixedpage_queryset:
+            pn = page.paper.paper_number
+
+            if page.page_type == FixedPage.QUESTIONPAGE:
+                pqvmapping.setdefault(pn, {})[page.question_index] = page.version
+            elif page.page_type == FixedPage.IDPAGE:
+                pqvmapping.setdefault(pn, {})["id"] = page.version
+            else:
+                raise RuntimeError('page type "{page.page_type}" unhandled')
+
+        return pqvmapping

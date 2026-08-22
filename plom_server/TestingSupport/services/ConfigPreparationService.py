@@ -11,7 +11,7 @@ server will be created in order from test specification to building test-papers.
 
 from importlib import resources
 
-from plom import version_maps
+from plom.common import version_maps
 from plom_server.Papers.services import PaperCreatorService, SpecificationService
 from plom_server.Preparation import useful_files_for_testing as useful_files
 from plom_server.Preparation.services import (
@@ -102,7 +102,7 @@ def create_qv_map_and_papers(config: PlomServerConfig):
         except Exception as e:
             raise PlomConfigCreationError(e) from e
     try:
-        PaperCreatorService.add_all_papers_in_qv_map(qvmap, _testing=True)
+        PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=False)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 

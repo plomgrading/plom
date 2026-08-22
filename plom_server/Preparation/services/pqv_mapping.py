@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from plom.common.spec_verifier import SpecVerifier
-from plom.version_maps import version_map_to_csv
+from plom.common.version_maps import version_map_to_csv, make_random_version_map
 from plom_server.Papers.services import SpecificationService
 
 from ..services import StagingStudentService
@@ -100,8 +100,6 @@ class PQVMappingService:
             question index (int, but indexed from 1 not 0).  Values are
             integers.
         """
-        from plom.version_maps import make_random_version_map
-
         # grab the spec as dict from the test creator services
         spec_dict = SpecificationService.get_the_spec()
         # Legacy make_random_version_map will be unhappy if not fed a numberToProduce

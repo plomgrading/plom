@@ -4,13 +4,18 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Aidan Murphy
 
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
 
-from plom.common.exceptions import PlomDependencyConflict
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import IntegrityError
+
+from plom.common.exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.common.version_maps import check_version_map
 from plom_server.Preparation.services import (
     PQVMappingService,
     StagingStudentService,
@@ -18,6 +23,7 @@ from plom_server.Preparation.services import (
 from plom_server.Papers.services import (
     PaperCreatorService,
     PaperInfoService,
+    SpecificationService,
 )
 from .utils import _error_response
 
@@ -29,13 +35,17 @@ class PQVmap(APIView):
     def delete(self, request: Request) -> Response:
         """Remove the current PQV map, if any, from the database.
 
-        This work is done by Huey, taking a blocking foreground approach.
+        By default, This work is done asynchronously (i.e., in the background)
+        by Huey.
 
         The response will be generated only after all the deletions are
         complete. For large classes, this may take so long that the
         requester gives up and declares an HTTP timeout. This has not yet
         been observed in the wild, but we note it here in case some
         unfortunate colleague in the future needs a pointer on what's breaking.
+
+        This operation can be forced to the foreground by providing a
+        "false" string keyed by "background".
 
         Args:
             request: An HTTP request.
@@ -52,9 +62,11 @@ class PQVmap(APIView):
                 'Only users in the "manager" group can clean the database.',
                 status.HTTP_403_FORBIDDEN,
             )
+        # stuff is converted to strings over http, so use str comparison
+        background = request.data.get("background", "True").strip().lower() != "false"
 
         try:
-            PaperCreatorService.remove_all_papers_from_db(background=False)
+            PaperCreatorService.remove_all_papers_from_db(background=background)
         except PlomDependencyConflict as err:
             return _error_response(
                 f"Dependency Conflict. The database cannot be cleared right now. {err}",
@@ -91,8 +103,8 @@ class PQVmap(APIView):
 
         POST data determines the map to make. See below.
 
-        This work is done by Huey, taking a blocking foreground approach.
-        If 'count' is not provided, use the default suggested number.
+        By default, This work is done asynchronously (i.e., in the background)
+        by Huey. If 'count' is not provided, use the default suggested number.
         The request will be rejected if there is already a PQV map in place.
         (Note that the DELETE method is available on the same endpoint.)
 
@@ -108,6 +120,9 @@ class PQVmap(APIView):
         requester gives up and declares an HTTP timeout. This has not yet
         been observed in the wild, but we note it here in case some unfortunate
         colleague in the future needs a pointer on what's breaking.
+
+        This operation can be forced to the foreground by providing a
+        "false" string keyed by "background".
 
         Args:
             request: An HTTP request.
@@ -152,11 +167,14 @@ class PQVmap(APIView):
 
         startn = int(request.POST.get("startn_value", first_paper_hint))
 
+        # stuff is converted to strings over http, so use str comparison
+        background = request.data.get("background", "True").strip().lower() != "false"
+
         try:
             qvmap = PQVMappingService().make_version_map(
                 number_to_produce, first=startn
             )
-            PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=False)
+            PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=background)
         except PlomDependencyConflict as err:
             return _error_response(err, status.HTTP_409_CONFLICT)
 
@@ -166,7 +184,12 @@ class PQVmap(APIView):
     def put(self, request: Request) -> Response:
         """Replace the PQV map with the one attached to the request.
 
-        Not built yet! (But relevant infrastructure is available, thanks to others.)
+        By default, This work is done asynchronously (i.e., in the background)
+        by Huey. Callers will need to poll the GET endpoint to confirm the
+        success/failure of this call.
+
+        This operation can be forced to the foreground by providing a
+        "false" string keyed by "background".
 
         Args:
             request: An HTTP request, with a PQV map in the FILES container.
@@ -174,6 +197,115 @@ class PQVmap(APIView):
         Returns:
             Status code 501, not implemented, for now.
         """
-        return _error_response(
-            "PUT method not built yet!", status.HTTP_501_NOT_IMPLEMENTED
-        )
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can populate the database.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # json converts all keys to strings, we need them as integers
+        def _convert_keys_to_int(d: dict) -> dict:
+            """Convert keys to integers recursively."""
+            return_dict = {
+                int(k) if isinstance(k, str) and k.isdigit() else k: v
+                for k, v in d.items()
+            }
+            for key, val in return_dict.items():
+                if isinstance(val, dict):
+                    return_dict[key] = _convert_keys_to_int(val)
+            return return_dict
+
+        try:
+            pqvmap = _convert_keys_to_int(request.data["pqvmap"])
+        except KeyError:
+            return _error_response('"pqvmap" not provided', status.HTTP_400_BAD_REQUEST)
+
+        num_versions = SpecificationService.get_n_versions()
+        # screen user inputs before trying to push them to the DB
+        try:
+            num_questions = SpecificationService.get_n_questions()
+            check_version_map(
+                pqvmap, num_questions=num_questions, num_versions=num_versions
+            )
+        except ObjectDoesNotExist:
+            return _error_response(
+                "Spec not uploaded yet, aborting", status.HTTP_409_CONFLICT
+            )
+        except ValueError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+
+        # stuff is converted to strings over http, so use str comparison
+        background = request.data.get("background", "True").strip().lower() != "false"
+
+        try:
+            PaperCreatorService.replace_all_papers_in_qv_map(
+                pqvmap, background=background
+            )
+        except PlomDependencyConflict as err:
+            return _error_response(err, status.HTTP_409_CONFLICT)
+        except PlomDatabaseCreationError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+
+        return Response(PaperInfoService().get_pqv_map_dict())
+
+    # PATCH /api/beta/pqvmap
+    def patch(self, request: Request) -> Response:
+        """Append the PQV map attached to request to the server's PQV map.
+
+        This operation is completed synchronously (i.e., in the foreground).
+
+        Args:
+            request: An HTTP request, with a PQV map in the "pqvmap" key.
+
+        Returns:
+            Status 200 on success (with the entire pqvmap).
+            Status 400 for poor user input.
+            Status 401/403 for failed authentication/authorisation.
+            Status 409 for dependency conflicts (can't overwrite existing papers).
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can populate the database.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # json converts all keys to strings, we need them as integers
+        def _convert_keys_to_int(d: dict) -> dict:
+            """Convert keys to integers recursively."""
+            return_dict = {
+                int(k) if isinstance(k, str) and k.isdigit() else k: v
+                for k, v in d.items()
+            }
+            for key, val in return_dict.items():
+                if isinstance(val, dict):
+                    return_dict[key] = _convert_keys_to_int(val)
+            return return_dict
+
+        try:
+            pqvmap = _convert_keys_to_int(request.data["pqvmap"])
+        except KeyError:
+            return _error_response('"pqvmap" not provided', status.HTTP_400_BAD_REQUEST)
+
+        num_versions = SpecificationService.get_n_versions()
+        # screen user inputs before trying to push them to the DB
+        try:
+            num_questions = SpecificationService.get_n_questions()
+            check_version_map(
+                pqvmap, num_questions=num_questions, num_versions=num_versions
+            )
+        except ObjectDoesNotExist:
+            return _error_response(
+                "Spec not uploaded yet, aborting", status.HTTP_409_CONFLICT
+            )
+        except ValueError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+
+        try:
+            PaperCreatorService.append_papers_to_qv_map(pqvmap)
+        except ValueError as err:
+            return _error_response(err, status.HTTP_400_BAD_REQUEST)
+        except (PlomDependencyConflict, IntegrityError) as err:
+            return _error_response(err, status.HTTP_409_CONFLICT)
+        return Response(PaperInfoService().get_pqv_map_dict())
