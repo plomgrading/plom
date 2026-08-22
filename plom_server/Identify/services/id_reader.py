@@ -340,19 +340,6 @@ class IDReaderService:
             PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
     @staticmethod
-    def run_id_reader_in_foreground(
-        user: User,
-        box_versions: dict[int, dict[str, float] | None],
-        *,
-        heatmap_mode: HeatmapMode = HEATMAP_MODE_RESUME,
-    ):
-        """Some debugging code, currently uncalled.  Deprecated?"""
-        id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
-        IDBoxProcessorService.compute_id_predictions(
-            user, id_box_image_dict, heatmap_mode=heatmap_mode
-        )
-
-    @staticmethod
     def get_id_reader_background_chore_status() -> dict[str, str]:
         """Return the status and human-readable message about the background ID reader chore."""
         try:
