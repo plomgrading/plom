@@ -122,15 +122,7 @@
             </div>
         </div>
     </div>
+    <!-- this json_script filter makes python data available to javascript at this id -->
+    {{ region_info_per_page|json_script:"rectangle-regions-data" }}
     <script src="{% static '/js/rectangle_regions.js' %}"></script>
-    <script type="text/javascript">
-        // this global variable passes information into 'rectangle_regions.js'
-        rectangle_regions_data = [
-          {% for x in region_info_per_page %}
-            {% if x.has_regions %}
-              {"pg": {{ x.page }}, "page_region_rects": {{ x.page_region_rects }}, "canvas_id": "canvas_pg{{ x.page }}", "image_id": "reference_image_pg{{ x.page }}"},
-            {% endif %}
-          {% endfor %}
-        ];
-    </script>
 {% endblock main_content %}

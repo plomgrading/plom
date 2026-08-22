@@ -6,16 +6,20 @@
     Copyright (C) 2025-2026 Aidan Murphy
 */
 
-// this global variables must be initialised in the template html file
-// eslint-disable-next-line no-unassigned-vars
-var rectangle_regions_data;
+/**
+ * This javascript routine draw a series of coloured rectangles on top
+ * of a list of html canvas/image pairs.
+ *
+ * The caller must provide a <script> block with id 'rectangle-regions-data',
+ * which should be a list of dicts, the format is which TODO.
+ */
 
 /**
  * Draws a list of rectangles on a Canvas.
  * @param {Array} list_of_rects - An array of 4-arrays.
  * @param {object} canvas - An HTML Canvas to draw on.
  */
-function drawRects(list_of_rects, canvas) {
+function drawLabeledRectangles(list_of_rects, canvas) {
   const lw = 4; // rectangle border linewidth
   // sequence from GNU Octave's default ("help lines")
   const colours = ['#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'];
@@ -49,14 +53,18 @@ function drawRects(list_of_rects, canvas) {
   }
 }
 
-/** Make the canvas match the reference image, and redraw the rectangles. */
-function repositionCanvas() {
-  // console.log('resize event');
-  for (let row of rectangle_regions_data) {
-    var image = document.getElementById(row.image_id);
-    var canvas = document.getElementById(row.canvas_id);
-    _initCanvas(canvas, image);
-    drawRects(row.page_region_rects, canvas);
+/** Make the canvas match the reference image, and draw the rectangles, labels etc. */
+function drawTheStuff() {
+  const data = JSON.parse(document.getElementById('rectangle-regions-data').textContent);
+  for (let row of data) {
+    if (row.has_regions) {
+      // console.log(row);
+      // these ids must match what is written in the HTML (TODO: store in data?)
+      var image = document.getElementById('reference_image_pg' + String(row.page));
+      var canvas = document.getElementById('canvas_pg' + String(row.page));
+      _initCanvas(canvas, image);
+      drawLabeledRectangles(row.page_region_rects, canvas);
+    }
   }
 }
 
@@ -76,14 +84,8 @@ function _initCanvas(canvas, image) {
 /** Call various initialisers. */
 function init() {
   // console.log('regions: init');
-  for (let row of rectangle_regions_data) {
-    // console.log(row);
-    var image = document.getElementById(row.image_id);
-    var canvas = document.getElementById(row.canvas_id);
-    _initCanvas(canvas, image);
-    drawRects(row.page_region_rects, canvas);
-  }
+  drawTheStuff();
 }
 
 window.addEventListener('load', init);
-window.addEventListener('resize', repositionCanvas);
+window.addEventListener('resize', drawTheStuff);

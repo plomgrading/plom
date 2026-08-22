@@ -93,7 +93,7 @@ class QuestionRegionsService:
         for pg in range(1, 1 + SpecificationService.get_n_pages()):
             # the question indices that share this page
             qindices = [k for k, v in question_pages.items() if pg in v]
-            qlabels = [b for (a, b, c) in qidx_labels if a in qindices]
+            qlabels_str = [b for (a, b, c) in qidx_labels if a in qindices]
             qlabels_html = [c for (a, b, c) in qidx_labels if a in qindices]
 
             if len(qindices) > 1:
@@ -106,16 +106,13 @@ class QuestionRegionsService:
                 # TODO: sort explicitly by qidx?
                 _page_regions = [r.copy() for r in regions if r["page"] == pg]
                 page_region_rects = []
-                page_region_labels = []
                 for row in _page_regions:
                     # TODO: hacking out some None stuff that confuses javascript
                     row.pop("version")
                     page_region_rects.append(row["rect"])
-                    page_region_labels.append(row["qlabel_html"])
             else:
                 has_regions = False
                 page_region_rects = []
-                page_region_labels = []
 
             info.append(
                 {
@@ -123,10 +120,9 @@ class QuestionRegionsService:
                     "has_regions": has_regions,
                     "questions_share_this_page": questions_share_this_page,
                     "question_indicies": qindices,
-                    "question_labels": qlabels,
+                    "question_labels_str_list": qlabels_str,
                     "question_labels_comma_sep_list_html": ", ".join(qlabels_html),
                     "page_region_rects": page_region_rects,
-                    "page_region_labels": page_region_labels,
                 }
             )
         return info
