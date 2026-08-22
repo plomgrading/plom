@@ -18,8 +18,8 @@
 # without any warranty.
 
 arrow==1.4.0
-canvasapi==3.6.0
-cryptography==50.0.0
+canvasapi==3.4.0
+cryptography==48.0.1  # 49 breaks plom-client macOS x86_64, plom-client Issue #5139
 django==6.1
 django-braces==1.17.0
 django-filter==26.1
