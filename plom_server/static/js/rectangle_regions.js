@@ -12,9 +12,10 @@
  *
  * The caller must provide a <script> block with id 'rectangle-regions-data',
  * which should be a list of dicts, each of which must have keys
- * 'has_regions' (bool), 'ref_image_id' (str), 'canvas_id' (str),
+ * 'has_regions' (bool), 'ref_image_html_id' (str), 'canvas_html_id' (str),
  * 'page_region_rects' (list of 4-lists), 'question_labels_str_list' (list
  * of strings).  The HTML/js safety of the strings is TBD (TODO!).
+ * See question_regions.py: get_region_info_per_page() which generates this.
  */
 
 /**
@@ -63,9 +64,8 @@ function drawTheStuff() {
   for (let row of data) {
     if (row.has_regions) {
       // console.log(row);
-      // these ids must match what is written in the HTML (TODO: store in data?)
-      var image = document.getElementById('reference_image_pg' + String(row.page));
-      var canvas = document.getElementById('canvas_pg' + String(row.page));
+      var image = document.getElementById(row.ref_image_html_id);
+      var canvas = document.getElementById(row.canvas_html_id);
       _initCanvas(canvas, image);
       drawLabeledRectangles(row.page_region_rects, row.question_labels_str_list, canvas);
     }

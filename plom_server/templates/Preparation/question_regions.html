@@ -43,11 +43,11 @@
                                     <div class="col-6">
                                         <!-- TODO: need responsive thing here?  want a max and minimum size for this image --->
                                         <!-- hardcoded version 1 -->
-                                        <img id="reference_image_pg{{ x.page }}"
+                                        <img id="{{ x.ref_image_html_id }}"
                                              class="border shadow w-100"
                                              src="{% url 'reference_image' 1 x.page %}" />
                                         <!-- TODO: javascript does not refresh canvas/image size properly on detail open/close -->
-                                        <canvas id="canvas_pg{{ x.page }}"
+                                        <canvas id="{{ x.canvas_html_id }}"
                                                 style="position:absolute;
                                                        left: 0px;
                                                        top: 0px"></canvas>
