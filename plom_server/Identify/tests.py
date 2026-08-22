@@ -381,7 +381,7 @@ class IDPredictionHeatmapTests(TestCase):
             )
 
             self.assertEqual(
-                IDBoxProcessorService.compute_and_save_probability_heatmap(
+                IDBoxProcessorService.get_or_compute_probability_heatmaps(
                     {paper.paper_number: id_box_file},
                     heatmap_mode=HEATMAP_MODE_REUSE,
                 ),
@@ -390,7 +390,7 @@ class IDPredictionHeatmapTests(TestCase):
 
             id_box_file.write_bytes(b"rescanned ID-box image")
             self.assertEqual(
-                IDBoxProcessorService.compute_and_save_probability_heatmap(
+                IDBoxProcessorService.get_or_compute_probability_heatmaps(
                     {paper.paper_number: id_box_file},
                     heatmap_mode=HEATMAP_MODE_REUSE,
                 ),
@@ -444,7 +444,7 @@ class IDPredictionHeatmapTests(TestCase):
                     return_value=b"png",
                 ),
             ):
-                result = IDBoxProcessorService.compute_and_save_probability_heatmap(
+                result = IDBoxProcessorService.get_or_compute_probability_heatmaps(
                     {paper.paper_number: id_box_file},
                     heatmap_mode=HEATMAP_MODE_RESUME,
                 )

@@ -456,19 +456,27 @@ def huey_id_reading_task(
         return True
 
     HueyTaskTracker.set_message(
-        tracker_pk,
-        "ID boxes from page images saved. Computing ID predictions.",
+        tracker_pk, "ID boxes images saved. Computing prediction heatmaps..."
     )
 
     try:
-        IDBoxProcessorService.compute_id_predictions(
-            user, id_box_image_dict, heatmap_mode=heatmap_mode
+        probabilities = IDBoxProcessorService.get_or_compute_probability_heatmaps(
+            id_box_image_dict, heatmap_mode=heatmap_mode
         )
     except PlomDigitServiceError as e:
         HueyTaskTracker.transition_chore_to_error(
             tracker_pk, f"Digit recognition service error: {e}"
         )
         return True
+
+    HueyTaskTracker.set_message(
+        tracker_pk, "Heatmaps saved.  Computing ID predictions..."
+    )
+
+    try:
+        if not probabilities:
+            raise ValueError("No digit probability heatmaps available")
+        IDBoxProcessorService.compute_id_predictions(user, probabilities)
     except ValueError as e:
         HueyTaskTracker.transition_chore_to_error(
             tracker_pk, f"ID prediction failed: {e}"
@@ -754,7 +762,7 @@ class IDBoxProcessorService:
         }
 
     @classmethod
-    def compute_and_save_probability_heatmap(
+    def get_or_compute_probability_heatmaps(
         cls,
         id_box_files: dict[int, Path],
         *,
@@ -849,22 +857,18 @@ class IDBoxProcessorService:
     def compute_id_predictions(
         cls,
         user: User,
-        id_box_files: dict[int, Path],
-        *,
-        heatmap_mode: HeatmapMode = HEATMAP_MODE_RESUME,
+        probabilities: dict[int, list[list[float]]],
     ) -> None:
         """Predict which IDs correspond to which SID from the classlist.
+
+        Args:
+            user: which user is running these predictions.
+            probabilities: dict keyed by papernum containing matrices,
+                each matrix is a list of lists of floats.
 
         Raises:
             ValueError: no classlist.
         """
-        heatmap_mode = _validate_heatmap_mode(heatmap_mode)
-        probabilities = cls.compute_and_save_probability_heatmap(
-            id_box_files, heatmap_mode=heatmap_mode
-        )
-        if not probabilities:
-            raise ValueError("No digit probability heatmaps available")
-
         student_ids = ClasslistService.get_classlist_sids_for_ID_matching()
         if not student_ids:
             raise ValueError("No student IDs provided")
