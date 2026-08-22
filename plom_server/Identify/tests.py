@@ -26,7 +26,6 @@ from model_bakery import baker
 from plom.common.exceptions import PlomConflict
 from plom_server.Papers.models import FixedPage, Image, Paper
 from .services import (
-    HEATMAP_MODE_RESUME,
     IDBoxProcessorService,
     IdentifyTaskService,
     IDProgressService,
@@ -412,8 +411,7 @@ class IDPredictionHeatmapTests(TestCase):
                 ),
             ):
                 result = IDBoxProcessorService.get_or_compute_probability_heatmaps(
-                    {paper.paper_number: id_box_file},
-                    heatmap_mode=HEATMAP_MODE_RESUME,
+                    {paper.paper_number: id_box_file}
                 )
 
             self.assertEqual(result, {paper.paper_number: new_probabilities})
