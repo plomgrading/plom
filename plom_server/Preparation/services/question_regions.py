@@ -28,7 +28,7 @@ class QuestionRegionsService:
     def set_question_regions(
         cls, qidx: int, pagenum: int, rect, *, version: int | None = None
     ) -> None:
-        """Set the crop region of a particular question to page, optionally with a version."""
+        """Set the region for a particular question to subset of a page, optionally with a version."""
         cls._remove_question_regions(qidx, pagenum, version=version)
         regions = cls.get_question_regions()
         qlabel, qlabel_html = SpecificationService.get_question_label_str_and_html(qidx)
