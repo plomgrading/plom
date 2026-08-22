@@ -22,14 +22,30 @@ function drawRects(list_of_rects, canvas) {
   var ci = 0;
   var ctx = canvas.getContext('2d');
   for (let r of Object.values(list_of_rects)) {
+    var colour = colours[ci];
+    ci = (ci + 1) % colours.length;
+    // text with white border draw *before* the rectangle
+    ctx.font = '30px Arial';
+    ctx.fillStyle = colour;
+    ctx.strokeStyle = '#ffffffcc';
+    ctx.lineWidth = 1.5 * lw;
+    ctx.lineJoin = 'round';
+    var tx = r[0] * canvas.width + lw / 2 + 10;
+    var ty = (r[1] + 0.5 * r[3]) * canvas.height + 10;
+    ctx.strokeText('Q', tx, ty);
+
+    // now the rectangle
     ctx.beginPath();
     ctx.lineWidth = lw;
-    ctx.fillStyle = colours[ci] + '30';
-    ctx.strokeStyle = colours[ci] + '99';
-    ci = (ci + 1) % colours.length;
+    ctx.fillStyle = colour + '30';
+    ctx.strokeStyle = colour + '99';
     ctx.rect(r[0] * canvas.width + lw / 2, r[1] * canvas.height + lw / 2, r[2] * canvas.width - lw, r[3] * canvas.height - lw);
     ctx.fill();
     ctx.stroke();
+
+    // and the coloured text itself
+    ctx.fillStyle = colour;
+    ctx.fillText('Q', tx, ty);
   }
 }
 
