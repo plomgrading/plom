@@ -720,7 +720,7 @@ class IDBoxProcessorService:
 
     @staticmethod
     def is_complete_probability_heatmap(
-        probabilities: Any, student_id_length: int = 8
+        probabilities: Any, *, student_id_length: int
     ) -> bool:
         """Return whether a saved heatmap has all digit positions and classes."""
         return (
@@ -750,7 +750,7 @@ class IDBoxProcessorService:
     def load_probability_heatmaps(
         source_image_hashes: dict[int, str],
         *,
-        student_id_length: int = 8,
+        student_id_length: int,
     ) -> dict[int, list[list[float]]]:
         """Load complete heatmaps whose source images have not changed."""
         rows = IDPredictionHeatmap.objects.filter(
