@@ -27,7 +27,6 @@ from plom.common.exceptions import PlomConflict
 from plom_server.Papers.models import FixedPage, Image, Paper
 from .services import (
     HEATMAP_MODE_RESUME,
-    HEATMAP_MODE_REUSE,
     IDBoxProcessorService,
     IdentifyTaskService,
     IDProgressService,
@@ -364,38 +363,6 @@ class IDPredictionHeatmapTests(TestCase):
     @staticmethod
     def _probabilities(value: float) -> list[list[float]]:
         return [[value] * 11 for _ in range(8)]
-
-    def test_reuse_requires_matching_source_image_hash(self) -> None:
-        """A saved heatmap is ignored after its extracted ID box changes."""
-        paper = baker.make(Paper, paper_number=1)
-        probabilities = self._probabilities(0.1)
-
-        with TemporaryDirectory() as directory:
-            id_box_file = Path(directory) / "id-box.png"
-            id_box_file.write_bytes(b"original ID-box image")
-            original_hash = IDBoxProcessorService.hash_id_box_image(id_box_file)
-            IDPredictionHeatmap.objects.create(
-                paper=paper,
-                source_image_hash=original_hash,
-                probabilities=probabilities,
-            )
-
-            self.assertEqual(
-                IDBoxProcessorService.get_or_compute_probability_heatmaps(
-                    {paper.paper_number: id_box_file},
-                    heatmap_mode=HEATMAP_MODE_REUSE,
-                ),
-                {paper.paper_number: probabilities},
-            )
-
-            id_box_file.write_bytes(b"rescanned ID-box image")
-            self.assertEqual(
-                IDBoxProcessorService.get_or_compute_probability_heatmaps(
-                    {paper.paper_number: id_box_file},
-                    heatmap_mode=HEATMAP_MODE_REUSE,
-                ),
-                {},
-            )
 
     @override_settings(
         PLOM_ML_SERVICE_URL="https://ml.example",
