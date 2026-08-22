@@ -144,13 +144,14 @@ class QuestionRegionsService:
         Args:
             pagenum: which page, indexed from 1.
             div: a list of the interior divisions of a page, for example
-                ``[0.4]`` or ``[0.33, 0.66]``.
+                ``[40]`` or ``[33, 66.2]``.
 
         Keyword Args:
             version: optionally do this subdivision for this version only.
 
         Raises:
-            ValueError: number of divisions does not correspond to questions.
+            ValueError: number of divisions does not correspond to
+                questions, is mis-sorted, out of range, etc.
             ObjectDoesNotExist: no spec yet.
         """
         question_pages = SpecificationService.get_question_pages()
@@ -164,6 +165,12 @@ class QuestionRegionsService:
                 f" wrong number of divisions provided: {len(div)}"
                 f" but the expected number is {len(qindices) - 1}"
             )
+        if sorted(div) != div:
+            raise ValueError("Divisions must be monotonic")
+        for d in div:
+            if not 0 < d < 100:
+                raise ValueError(f'Division "{d}" out of range')
+
         div = [0, *div, 100]
 
         for i, qidx in enumerate(qindices):
