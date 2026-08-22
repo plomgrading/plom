@@ -11,32 +11,36 @@
  * of a list of html canvas/image pairs.
  *
  * The caller must provide a <script> block with id 'rectangle-regions-data',
- * which should be a list of dicts, the format is which TODO.
+ * which should be a list of dicts, each of which must have keys
+ * 'has_regions' (bool), 'ref_image_id' (str), 'canvas_id' (str),
+ * 'page_region_rects' (list of 4-lists), 'question_labels_str_list' (list
+ * of strings).  The HTML/js safety of the strings is TBD (TODO!).
  */
 
 /**
  * Draws a list of rectangles on a Canvas.
- * @param {Array} list_of_rects - An array of 4-arrays.
+ * @param {Array} rects - An array of 4-arrays.
+ * @param {Array} labels - String labels for each of the above.
  * @param {object} canvas - An HTML Canvas to draw on.
  */
-function drawLabeledRectangles(list_of_rects, canvas) {
+function drawLabeledRectangles(rects, labels, canvas) {
   const lw = 4; // rectangle border linewidth
   // sequence from GNU Octave's default ("help lines")
   const colours = ['#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'];
-  var ci = 0;
   var ctx = canvas.getContext('2d');
-  for (let r of Object.values(list_of_rects)) {
-    var colour = colours[ci];
-    ci = (ci + 1) % colours.length;
+  for (let i = 0; i < rects.length; i++) {
+    var r = rects[i];
+    var label = labels[i];
+    var colour = colours[i % colours.length];
     // text with white border draw *before* the rectangle
     ctx.font = '30px Arial';
     ctx.fillStyle = colour;
-    ctx.strokeStyle = '#ffffffcc';
+    ctx.strokeStyle = '#ffffffaa';
     ctx.lineWidth = 1.5 * lw;
     ctx.lineJoin = 'round';
     var tx = r[0] * canvas.width + lw / 2 + 10;
     var ty = (r[1] + 0.5 * r[3]) * canvas.height + 10;
-    ctx.strokeText('Q', tx, ty);
+    ctx.strokeText(label, tx, ty);
 
     // now the rectangle
     ctx.beginPath();
@@ -49,7 +53,7 @@ function drawLabeledRectangles(list_of_rects, canvas) {
 
     // and the coloured text itself
     ctx.fillStyle = colour;
-    ctx.fillText('Q', tx, ty);
+    ctx.fillText(label, tx, ty);
   }
 }
 
@@ -63,7 +67,7 @@ function drawTheStuff() {
       var image = document.getElementById('reference_image_pg' + String(row.page));
       var canvas = document.getElementById('canvas_pg' + String(row.page));
       _initCanvas(canvas, image);
-      drawLabeledRectangles(row.page_region_rects, canvas);
+      drawLabeledRectangles(row.page_region_rects, row.question_labels_str_list, canvas);
     }
   }
 }
