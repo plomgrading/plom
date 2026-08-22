@@ -780,6 +780,7 @@ class IDBoxProcessorService:
                 digit service is known to be reachable.
             resume: reuse complete saved heatmaps and compute only missing papers.
             reuse: do not call the digit service; only return saved heatmaps.
+                TODO: what is the reason for this?
 
         Raises:
             PlomDigitServiceError: the external service is not configured or fails.
