@@ -40,9 +40,6 @@ class QuestionRegionsView(ManagerRequiredView):
             }
         )
         return render(request, "Preparation/question_regions.html", context)
-        # except PlomDependencyConflict as err:
-        #     messages.add_message(request, messages.ERROR, f"{err}")
-        #     return redirect(reverse("prep_conflict"))
 
     def delete(self, request: HttpRequest) -> HttpResponse:
         """Delete all regions, both set by this view or otherwise.
