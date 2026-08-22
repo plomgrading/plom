@@ -749,10 +749,9 @@ class IDBoxProcessorService:
     @staticmethod
     def load_probability_heatmaps(
         source_image_hashes: dict[int, str],
-        *,
-        student_id_length: int,
     ) -> dict[int, list[list[float]]]:
         """Load complete heatmaps whose source images have not changed."""
+        student_id_length = settings.PLOM_STUDENT_ID_LENGTH
         rows = IDPredictionHeatmap.objects.filter(
             paper__paper_number__in=list(source_image_hashes)
         ).select_related("paper")
@@ -797,16 +796,12 @@ class IDBoxProcessorService:
             for paper_number, id_box_file in id_box_files.items()
         }
         if heatmap_mode == HEATMAP_MODE_REUSE:
-            return cls.load_probability_heatmaps(
-                source_image_hashes, student_id_length=student_id_length
-            )
+            return cls.load_probability_heatmaps(source_image_hashes)
 
         if heatmap_mode == HEATMAP_MODE_FRESH:
             heatmap: dict[int, list[list[float]]] = {}
         else:
-            heatmap = cls.load_probability_heatmaps(
-                source_image_hashes, student_id_length=student_id_length
-            )
+            heatmap = cls.load_probability_heatmaps(source_image_hashes)
 
         missing_id_box_files = {
             paper_number: id_box_file
