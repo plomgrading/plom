@@ -866,7 +866,7 @@ class IDBoxProcessorService:
         *,
         heatmap_mode: HeatmapMode = HEATMAP_MODE_RESUME,
     ) -> None:
-        """Predict whxich IDs correspond to which SID from the classlist.
+        """Predict which IDs correspond to which SID from the classlist.
 
         Raises:
             ValueError: no classlist.
