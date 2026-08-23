@@ -53,11 +53,11 @@ class RegionsView(APIView):
         """
         return Response(QuestionRegionsService.get_question_regions())
 
-    # PUT /api/beta/region/{qidx}/{ver}/{page}
+    # PUT /api/beta/region/{qidx}/{ver}
     def put(self, request: Request, *, qidx: int) -> Response:
-        """Create/change the region for a particular question/ver/page.
+        """Create/change the region for a particular question/page/ver.
 
-        TODO: ver/page?  For now only accept question  URL versus query params?
+        TODO: ver?
 
         TODO: who should be allowed to set this?  Probably at least
         lead_markers if we want it from the client...  Consider saving
@@ -68,11 +68,15 @@ class RegionsView(APIView):
             request: An HTTP request.
 
         Keyword Args:
-            qidx: which question.
+            qidx: which question, indexed from 1.
 
         POST Data:
-            Should contain float values for "xmin", "ymin", "xmax", "ymax"
+            Should contain float values for "xmin", "ymin", "xmax", "ymax",
             representing fractions of the page (each in [0, 1]).
+            It can *optionally* contain "page", an integer indexed from 1.
+            This is *required* if a question spans more than one page.
+            Or perhaps we can more accurately say that regions for
+            questions spanning multiple pages is currently illdefined.
 
         Returns:
             An empty response with status code 204, on success. Status code 403
@@ -87,21 +91,6 @@ class RegionsView(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        # # TODO: fail if not spce
-        # if PaperInfoService.is_paper_database_populated():
-        #     return _error_response(
-        #         "PQV map is not empty. Consider deleting before re-generating.",
-        #         status.HTTP_409_CONFLICT,
-        #     )
-
-        # ntp_default = StagingStudentService().get_minimum_number_to_produce()
-        # ntp = request.POST.get("number_to_produce", ntp_default)
-        # number_to_produce = int(ntp)
-
-        print(request)
-        print(request.POST)
-        print(request.query_params)
-        print(request.data)
         try:
             xmin = float(request.data.get("xmin"))
             assert 0 <= xmin <= 1, "xmin out of range [0, 1]"
@@ -118,14 +107,23 @@ class RegionsView(APIView):
                 f"Could not get rectangle coordinates: {e}", status.HTTP_400_BAD_REQUEST
             )
 
-        print(QuestionRegionsService.get_question_regions())
+        try:
+            page = request.data.get("page")
+            if page is not None:
+                page = int(page)
+        except (ValueError, TypeError) as e:
+            return _error_response(f"Invalid page: {e}", status.HTTP_400_BAD_REQUEST)
 
-        pagenum = 3  # TODO
-        QuestionRegionsService.set_question_regions(
-            qidx, pagenum, [xmin, ymin, xmax, ymax]
-        )
-
-        print(QuestionRegionsService.get_question_regions())
+        try:
+            QuestionRegionsService.set_question_regions(
+                qidx, page, [xmin, ymin, xmax, ymax]
+            )
+        except ObjectDoesNotExist as e:
+            return _error_response(
+                f"no spec or qidx out of range? {e}", status.HTTP_400_BAD_REQUEST
+            )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

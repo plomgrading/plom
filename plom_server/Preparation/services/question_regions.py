@@ -28,7 +28,7 @@ class QuestionRegionsService:
     def set_question_regions(
         cls,
         qidx: int,
-        pagenum: int,
+        pagenum: int | None,
         rect: Sequence[float | int],
         *,
         version: int | None = None,
@@ -39,13 +39,31 @@ class QuestionRegionsService:
 
         Args:
             qidx: which question, indexed from 1.
-            pagenum: which page number, indexed from 1.
+            pagenum: which page number, indexed from 1.  Or None and
+                we'll try to find it, which will only work if the
+                question does not span pages.
             rect: four floats of the form ``xmin, ymin, xmax, ymax``,
                 each in the range [0, 1].
 
         Keyword Args:
             version: optionally, make the region version-specific.
+
+        Exceptions:
+            ObjectDoesNotExist: no such question index, typically b/c there is no spec.
+            ValueError: question spans multiple pages but pagenum not specified.
         """
+        pages = SpecificationService.get_question_pages()[qidx]
+        if pagenum is None:
+            if len(pages) == 1:
+                pagenum = pages[0]
+            else:
+                raise ValueError(
+                    f'Question idx {qidx} spans {pages} but "page" was not specified'
+                )
+        else:
+            if pagenum not in pages:
+                raise ValueError(f"Question idx {qidx} does not include page {pagenum}")
+
         cls._remove_question_regions(qidx, pagenum, version=version)
         regions = cls.get_question_regions()
         qlabel, qlabel_html = SpecificationService.get_question_label_str_and_html(qidx)
