@@ -153,12 +153,11 @@ class QuestionRegionsService:
                     "has_regions": has_regions,
                     "questions_share_this_page": questions_share_this_page,
                     "question_indicies": qindices,
-                    # This one is for JS, TODO: caution about JS vs HTML escaping...!
+                    # This is for JS: Dango's json_script in question_regions.html escapes <&>
                     "question_labels_str_list": qlabels_str,
-                    # This one is for HTML
                     "question_labels_comma_sep_list_html": ", ".join(qlabels_html),
                     "page_region_rects": page_region_rects,
-                    # Used to link html and js
+                    # two html element ids used to link html and js
                     "ref_image_html_id": f"reference_image_id_pg{pg}",
                     "canvas_html_id": f"canvas_id_pg{pg}",
                 }

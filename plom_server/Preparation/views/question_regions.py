@@ -23,12 +23,6 @@ class QuestionRegionsView(ManagerRequiredView):
         except ObjectDoesNotExist as e:
             raise Http404(e)
 
-        # Just for testing...
-        # QuestionRegionsService.reset_question_regions()
-        # QuestionRegionsService.subdivide_page(9, [23.5, 38.5], version=None)
-        # QuestionRegionsService.set_question_regions(1, 3, [0.1, 0.2, 0.85, 0.7])
-        # QuestionRegionsService.set_question_regions(2, 5, [0.05, 0.1, 0.9, 0.88])
-
         regions = QuestionRegionsService.get_question_regions()
         region_info_per_page = QuestionRegionsService.get_region_info_per_page()
 
