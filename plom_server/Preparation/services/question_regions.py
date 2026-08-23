@@ -142,8 +142,6 @@ class QuestionRegionsService:
                 _page_regions = [r.copy() for r in regions if r["page"] == pg]
                 page_region_rects = []
                 for row in _page_regions:
-                    # TODO: hacking out some None stuff that confuses javascript
-                    row.pop("version")
                     page_region_rects.append(row["rect"])
             else:
                 has_regions = False
