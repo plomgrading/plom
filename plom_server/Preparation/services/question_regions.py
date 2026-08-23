@@ -133,38 +133,33 @@ class QuestionRegionsService:
         for pg in range(1, 1 + SpecificationService.get_n_pages()):
             # the question indices that share this page
             qindices = [k for k, v in question_pages.items() if pg in v]
-            qlabels_str = [b for (a, b, c) in qidx_labels if a in qindices]
             qlabels_html = [c for (a, b, c) in qidx_labels if a in qindices]
+            comma_sep_html = ", ".join(qlabels_html)
 
             if len(qindices) > 1:
-                questions_share_this_page = True
+                shared_page = True
             else:
-                questions_share_this_page = False
+                shared_page = False
 
             if any([r["page"] == pg for r in regions]):
                 has_regions = True
                 # TODO: sort explicitly by qidx?
                 _page_regions = [r.copy() for r in regions if r["page"] == pg]
-                page_region_rects = []
-                for row in _page_regions:
-                    page_region_rects.append(row["rect"])
             else:
                 has_regions = False
-                page_region_rects = []
+                _page_regions = []
 
             info.append(
                 {
                     "page": pg,
                     "has_regions": has_regions,
-                    "has_questions_sharing_this_page": questions_share_this_page,
-                    "question_indicies": qindices,
-                    # This is for JS: Dango's json_script in question_regions.html escapes <&>
-                    "question_labels_str_list": qlabels_str,
-                    "question_labels_comma_sep_list_html": ", ".join(qlabels_html),
-                    "page_region_rects": page_region_rects,
+                    "has_questions_sharing_this_page": shared_page,
+                    # an html fragment of the question labels on this page
+                    "question_labels_comma_sep_list_html": comma_sep_html,
                     # two html element ids used to link html and js
                     "ref_image_html_id": f"reference_image_id_pg{pg}",
                     "canvas_html_id": f"canvas_id_pg{pg}",
+                    "question_regions": _page_regions,
                 }
             )
         return info
