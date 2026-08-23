@@ -33,7 +33,7 @@
                 {% endif %}
                 <div>
                     {% for x in region_info_per_page %}
-                        {% if x.has_regions or x.questions_share_this_page %}
+                        {% if x.has_regions or x.has_questions_sharing_this_page %}
                             <div class="mb-4">
                                 <h3>
                                     Page {{ x.page }}:
@@ -53,7 +53,7 @@
                                                        top: 0px"></canvas>
                                     </div>
                                     <div class="col-6">
-                                        {% if x.questions_share_this_page %}
+                                        {% if x.has_questions_sharing_this_page %}
                                             <div class="card mb-2" style="max-width: 50rem;">
                                                 <h5 class="card-header">Subdivide page {{ x.page }}</h5>
                                                 <div class="card-body">

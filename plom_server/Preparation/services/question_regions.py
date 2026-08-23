@@ -118,7 +118,12 @@ class QuestionRegionsService:
 
     @classmethod
     def get_region_info_per_page(cls) -> list:
-        """Information about regions in a list of dicts, one per page."""
+        """Information about regions in a list of dicts, one per page.
+
+        This is used for templating a UI view, its rather specific and includes
+        stuff to be rendered in HTML and in JS.  See `rectangle_region.js` and
+        `question_regions.html`.
+        """
         question_pages = SpecificationService.get_question_pages()
         qidx_labels = SpecificationService.get_question_html_label_triples()
 
@@ -151,7 +156,7 @@ class QuestionRegionsService:
                 {
                     "page": pg,
                     "has_regions": has_regions,
-                    "questions_share_this_page": questions_share_this_page,
+                    "has_questions_sharing_this_page": questions_share_this_page,
                     "question_indicies": qindices,
                     # This is for JS: Dango's json_script in question_regions.html escapes <&>
                     "question_labels_str_list": qlabels_str,
