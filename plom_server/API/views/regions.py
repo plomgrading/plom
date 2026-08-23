@@ -16,9 +16,9 @@ from .utils import _error_response
 class RegionsView(APIView):
     """Handle API requests to manipulate question regions."""
 
-    # DELETE /api/beta/regions
+    # DELETE /api/beta/region
     def delete(self, request: Request) -> Response:
-        """Remove all or particular question / version crop regions.
+        """Remove all or particular question / version regions.
 
         Args:
             request: An HTTP request.
@@ -40,7 +40,7 @@ class RegionsView(APIView):
         QuestionRegionsService.reset_question_regions()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # GET /api/beta/regions
+    # GET /api/beta/region
     def get(self, request: Request) -> Response:
         """Get the current list of regions.
 
@@ -53,11 +53,12 @@ class RegionsView(APIView):
         """
         return Response(QuestionRegionsService.get_question_regions())
 
-    # POST /api/beta/regions/{qidx}/{ver}/{page}
-    def post(self, request: Request) -> Response:
-        """Create a crop region for a particular question/ver/page.
+    # PUT /api/beta/region/{qidx}/{ver}/{page}
+    def put(self, request: Request, *, qidx: int) -> Response:
+        """Create/change the region for a particular question/ver/page.
 
-        TODO: page?
+        TODO: ver/page?  For now only accept question  URL versus query params?
+
         TODO: who should be allowed to set this?  Probably at least
         lead_markers if we want it from the client...  Consider saving
         the username into the region metadata to future-proof each user
@@ -66,8 +67,12 @@ class RegionsView(APIView):
         Args:
             request: An HTTP request.
 
+        Keyword Args:
+            qidx: which question.
+
         POST Data:
-            TODO: TODO:
+            Should contain float values for "xmin", "ymin", "xmax", "ymax"
+            representing fractions of the page (each in [0, 1]).
 
         Returns:
             An empty response with status code 204, on success. Status code 403
@@ -93,10 +98,34 @@ class RegionsView(APIView):
         # ntp = request.POST.get("number_to_produce", ntp_default)
         # number_to_produce = int(ntp)
 
-        # TODO: set stuff
-        return _error_response(
-            "POST regions not built yet!", status.HTTP_501_NOT_IMPLEMENTED
+        print(request)
+        print(request.POST)
+        print(request.query_params)
+        print(request.data)
+        try:
+            xmin = float(request.data.get("xmin"))
+            assert 0 <= xmin <= 1, "xmin out of range [0, 1]"
+            ymin = float(request.data.get("ymin"))
+            assert 0 <= ymin <= 1, "ymin out of range [0, 1]"
+            xmax = float(request.data.get("xmax"))
+            assert 0 <= xmax <= 1, "xmax out of range [0, 1]"
+            ymax = float(request.data.get("ymax"))
+            assert 0 <= ymax <= 1, "ymax out of range [0, 1]"
+            assert xmin <= xmax, "denegerate rectangle"
+            assert ymin <= ymax, "denegerate rectangle"
+        except (ValueError, TypeError, AssertionError) as e:
+            return _error_response(
+                f"Could not get rectangle coordinates: {e}", status.HTTP_400_BAD_REQUEST
+            )
+
+        print(QuestionRegionsService.get_question_regions())
+
+        pagenum = 3  # TODO
+        QuestionRegionsService.set_question_regions(
+            qidx, pagenum, [xmin, ymin, xmax, ymax]
         )
+
+        print(QuestionRegionsService.get_question_regions())
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -104,7 +133,7 @@ class RegionsView(APIView):
 class RegionsSubdivideView(APIView):
     """Handle API requests to subdivide a page into regions."""
 
-    # POST /api/beta/regions/subdivide/{pagenum}
+    # POST /api/beta/region/subdivide/{pagenum}
     def post(self, request: Request, *, pagenum: int) -> Response:
         """Create regions for questions that share a page.
 

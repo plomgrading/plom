@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Colin B. Macdonald
 
-from typing import Any
+from typing import Any, Sequence
 
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
@@ -26,9 +26,26 @@ class QuestionRegionsService:
 
     @classmethod
     def set_question_regions(
-        cls, qidx: int, pagenum: int, rect, *, version: int | None = None
+        cls,
+        qidx: int,
+        pagenum: int,
+        rect: Sequence[float | int],
+        *,
+        version: int | None = None,
     ) -> None:
-        """Set the region for a particular question to subset of a page, optionally with a version."""
+        """Set the region for a particular question to subset of a page, optionally with a version.
+
+        TODO: sanitize the qidx/pagenum makes sense!
+
+        Args:
+            qidx: which question, indexed from 1.
+            pagenum: which page number, indexed from 1.
+            rect: four floats of the form ``xmin, ymin, xmax, ymax``,
+                each in the range [0, 1].
+
+        Keyword Args:
+            version: optionally, make the region version-specific.
+        """
         cls._remove_question_regions(qidx, pagenum, version=version)
         regions = cls.get_question_regions()
         qlabel, qlabel_html = SpecificationService.get_question_label_str_and_html(qidx)
@@ -181,7 +198,6 @@ class QuestionRegionsService:
             bottom = (div[i + 1] / 100.0) + overlap
             top = max(0, top)
             bottom = min(1, bottom)
-            height = bottom - top
             QuestionRegionsService.set_question_regions(
-                qidx, pagenum, [0, top, 1, height], version=version
+                qidx, pagenum, [0, top, 1, bottom], version=version
             )

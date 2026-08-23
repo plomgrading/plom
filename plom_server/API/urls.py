@@ -188,19 +188,19 @@ urlpatterns = [
         name="pqvmapper",
     ),
     path(
-        "api/beta/regions/subdivide_page/<int:pagenum>",
+        "api/beta/region/subdivide_page/<int:pagenum>",
         RegionsSubdivideView.as_view(),
-        name="api_regions_subdivide",
+        name="api_region_subdivide",
     ),
     path(
-        "api/beta/regions/<int:question_index>",
+        "api/beta/region/<int:qidx>",
         RegionsView.as_view(),
-        name="api_regions_question",
+        name="api_region_question",
     ),
     path(
-        "api/beta/regions",
+        "api/beta/region",
         RegionsView.as_view(),
-        name="api_regions",
+        name="api_region",
     ),
 ]
 

@@ -40,7 +40,7 @@ function drawLabeledRectangles(rects, labels, canvas) {
     ctx.lineWidth = 1.5 * lw;
     ctx.lineJoin = 'round';
     var tx = r[0] * canvas.width + lw / 2 + 10;
-    var ty = (r[1] + 0.5 * r[3]) * canvas.height + 10;
+    var ty = (r[1] + r[3]) * 0.5 * canvas.height + 10;
     ctx.strokeText(label, tx, ty);
 
     // now the rectangle
@@ -48,7 +48,12 @@ function drawLabeledRectangles(rects, labels, canvas) {
     ctx.lineWidth = lw;
     ctx.fillStyle = colour + '30';
     ctx.strokeStyle = colour + '99';
-    ctx.rect(r[0] * canvas.width + lw / 2, r[1] * canvas.height + lw / 2, r[2] * canvas.width - lw, r[3] * canvas.height - lw);
+    ctx.rect(
+      r[0] * canvas.width + lw / 2,
+      r[1] * canvas.height + lw / 2,
+      (r[2] - r[0]) * canvas.width - lw,
+      (r[3] - r[1]) * canvas.height - lw,
+    );
     ctx.fill();
     ctx.stroke();
 
