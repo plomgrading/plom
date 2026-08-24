@@ -9,13 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Preliminary support for multiple choice questions, with cluster-based grading based on machine-read checkboxes.
+* Preliminary graphical UI to make help make the assessment specification.
+* Servers can define "regions", intended to divide-up shared pages.  Clients will receive this via the "crop" feature.
+* Servers can communicate with a "lightweight-compute-server" do perform computational tasks such as digit reading and multiple choice box checking.
+* More server configuration can be performed using the API.
 
 ### Removed
-Servers no longer log plaintext passwords for the admin or first manager user on launch. By default, a password reset link is logged for the manager.
+* Servers no longer log plaintext passwords for the admin or first manager user on launch. By default, a password reset link is logged for the manager.
 
 ### Changed
+* Generalizations to support student IDs that are not precisely 8 digits.
+* Generalizations of the "version" code to support, for example, omitting the versions from the QR codes on each page.
+* Less rigid paths through the assessment preparation steps, for example, you can upload a PDF file before the spec.
 
 ### Fixed
+* Many fixes around Rubric creation/download/upload.
 
 
 
