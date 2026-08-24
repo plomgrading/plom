@@ -316,7 +316,9 @@ def get_question_pages() -> dict[int, list[int]]:
     """Get the pages of each question, indexed from one.
 
     Returns:
-        A dictionary of question indices giving a list of the corresponding pages {question_index: question_pages}.
+        A dictionary of question indices giving a list of the corresponding
+        pages {question_index: question_pages}.
+
     Exceptions:
         ObjectDoesNotExist: no exam specification yet.
     """
@@ -383,6 +385,20 @@ def get_n_pages() -> int:
     """
     spec = Specification.objects.get()
     return spec.numberOfPages
+
+
+def is_enabled_allowSharedPages() -> bool:
+    """Check whether the specification has setting "allowSharedPages" enabled.
+
+    Note: doesn't actually check if any questions are actually sharing
+    pages!
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    # TODO: or None return for no spec case?
+    return spec.allowSharedPages
 
 
 def get_list_of_pages() -> list[int]:

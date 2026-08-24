@@ -42,6 +42,22 @@ class ExamMockerService:
         Returns:
             A bytes object containing the document.
         """
+        try:
+            b = cls._mock_exam_with_spec(version)
+        except ObjectDoesNotExist:
+            b = cls._mock_exam_without_spec(version)
+        return b
+
+    @staticmethod
+    def _mock_exam_with_spec(version: int) -> bytes:
+        """Fetch the exam spec and create the mock exam.
+
+        Args:
+            version: the version to mock
+
+        Returns:
+            The raw bytes of a PDF file.
+        """
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
         from .SourceService import _get_source_file
 
@@ -49,22 +65,6 @@ class ExamMockerService:
         __, abstract_django_file = _get_source_file(version)
         source_path = Path(abstract_django_file.path)
 
-        try:
-            return cls._mock_exam_with_spec(source_path, version)
-        except ObjectDoesNotExist:
-            return cls._mock_exam_without_spec(source_path, version)
-
-    @staticmethod
-    def _mock_exam_with_spec(source_path: Path, version: int) -> bytes:
-        """Fetch the exam spec and create the mock exam.
-
-        Args:
-            source_path: the path to the exam sourcefile
-            version: the version to mock
-
-        Returns:
-            A bytes object containing the document.
-        """
         example_code = _make_example_public_code()
         spec = SpecificationService.get_the_spec()
         num_questions = SpecificationService.get_n_questions()
@@ -85,43 +85,47 @@ class ExamMockerService:
                 paperstr="<Mock>",
                 qr_code_size=settings.PLOM_QR_CODE_SIZE,
             )
-            with pymupdf.open(f) as pdf_doc:
-                return pdf_doc.tobytes()
+            return pymupdf.open(f).tobytes()
 
     @staticmethod
-    def _mock_exam_without_spec(source_path: Path, version: int) -> bytes:
+    def _mock_exam_without_spec(version: int) -> bytes:
         """Create a mock exam without the spec.
 
         This is a bit lower-level than the preferred
         :method:`_mock_exam_with_spec`.
 
         Args:
-            source_path: the path to the exam sourcefile.
             version: the version to mock.
 
         Returns:
-            A bytes object containing the document.
+            The raw bytes of a PDF file.
         """
+        # TODO: refactor to delocalize this import, SourceService and mocker are circular
+        from .SourceService import _get_source_file
+
+        # TODO: Issue #3888 this does direct file access, fails for remote storage?
+        __, abstract_django_file = _get_source_file(version)
+        source_path = Path(abstract_django_file.path)
+
         example_code = _make_example_public_code()
         papernum = 1
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            with pymupdf.open(source_path) as pdf_doc:
-                for index, page in enumerate(pdf_doc):
-                    qr_codes = create_QR_codes(
-                        papernum, index + 1, version, example_code, Path(tmpdirname)
-                    )
-                    page = pdf_doc[index]
-                    odd = index % 2 == 0
-                    pdf_page_add_labels_QRs(
-                        page,
-                        "mock_shortname",
-                        f"Mock label pg. {index+1}",
-                        qr_codes,
-                        odd=odd,
-                    )
-
-                return pdf_doc.tobytes()
+            pdf_doc = pymupdf.open(source_path)
+            for index, page in enumerate(pdf_doc):  # type: ignore[arg-type,var-annotated]
+                qr_codes = create_QR_codes(
+                    papernum, index + 1, version, example_code, Path(tmpdirname)
+                )
+                page = pdf_doc[index]
+                odd = index % 2 == 0
+                pdf_page_add_labels_QRs(
+                    page,
+                    "mock_shortname",
+                    f"Mock label pg. {index+1}",
+                    qr_codes,
+                    odd=odd,
+                )
+        return pdf_doc.tobytes()
 
     @staticmethod
     def mock_ID_page(

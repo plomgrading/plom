@@ -46,13 +46,16 @@ class SourceManageView(ManagerRequiredView):
         try:
             number_of_pages = SpecificationService.get_n_pages()
             has_spec = True
+            allowSharedPages = SpecificationService.is_enabled_allowSharedPages()
         except ObjectDoesNotExist:
             number_of_pages = None
             has_spec = False
+            allowSharedPages = None
 
         return {
             "has_spec": has_spec,
             "number_of_pages": number_of_pages,
+            "allowSharedPages": allowSharedPages,
             "sources": sources,
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": SourceService.check_pdf_duplication(),

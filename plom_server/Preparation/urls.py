@@ -10,6 +10,8 @@ from .views import (
     PreparationLandingView,
     PreparationDependencyConflictView,
     PreparationFinishedView,
+    QuestionRegionsView,
+    QuestionRegionsSubdivideView,
     SourceManageView,
     PrenamingConfigView,
     ClasslistView,
@@ -38,6 +40,12 @@ urlpatterns = [
     path("source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
     path(
         "prename/configure", PrenamingConfigView.as_view(), name="configure_prenaming"
+    ),
+    path("question_regions", QuestionRegionsView.as_view(), name="question_regions"),
+    path(
+        "question_regions/subdivide_page",
+        QuestionRegionsSubdivideView.as_view(),
+        name="question_regions_subdivide",
     ),
     path("classlist/", ClasslistView.as_view(), name="prep_classlist"),
     path(

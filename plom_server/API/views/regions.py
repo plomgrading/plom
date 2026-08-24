@@ -1,0 +1,177 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Colin B. Macdonald
+
+from rest_framework.response import Response
+from rest_framework.request import Request
+from rest_framework.views import APIView
+from rest_framework import status
+
+from django.core.exceptions import ObjectDoesNotExist
+
+# from plom.common.exceptions import PlomDependencyConflict
+from plom_server.Preparation.services import QuestionRegionsService
+from .utils import _error_response
+
+
+class RegionsView(APIView):
+    """Handle API requests to manipulate question regions."""
+
+    # DELETE /api/beta/region
+    def delete(self, request: Request) -> Response:
+        """Remove all or particular question / version regions.
+
+        Args:
+            request: An HTTP request.
+
+        Returns:
+            An empty response with status 204, on success.
+            Status 403 if the caller is not in the 'manager' group;
+            status 409 if TODO.
+        """
+        # Reject the request if the user is not in the 'manager' group.
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group delete regions.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # TODO: question_index input?
+        QuestionRegionsService.reset_question_regions()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # GET /api/beta/region
+    def get(self, request: Request) -> Response:
+        """Get the current list of regions.
+
+        Args:
+            request: An HTTP request.
+
+        Returns:
+            A Response object containing the regions as a list of dicts,
+            with status 200.
+        """
+        return Response(QuestionRegionsService.get_question_regions())
+
+    # PUT /api/beta/region/{qidx}/{ver}
+    def put(self, request: Request, *, qidx: int) -> Response:
+        """Create/change the region for a particular question/page/ver.
+
+        TODO: ver?
+
+        TODO: who should be allowed to set this?  Probably at least
+        lead_markers if we want it from the client...  Consider saving
+        the username into the region metadata to future-proof each user
+        potentially saving their own.
+
+        Args:
+            request: An HTTP request.
+
+        Keyword Args:
+            qidx: which question, indexed from 1.
+
+        POST Data:
+            Should contain float values for "xmin", "ymin", "xmax", "ymax",
+            representing fractions of the page (each in [0, 1]).
+            It can *optionally* contain "page", an integer indexed from 1.
+            This is *required* if a question spans more than one page.
+            Or perhaps we can more accurately say that regions for
+            questions spanning multiple pages is currently illdefined.
+
+        Returns:
+            An empty response with status code 204, on success. Status code 403
+            if the user is not in the 'manager' group; status code 409 if the
+            operation has been blocked by some kind of conflict.
+        """
+        # Reject the request if the user is not in the 'manager' group.
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can set regions.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            xmin = float(request.data.get("xmin"))
+            assert 0 <= xmin <= 1, "xmin out of range [0, 1]"
+            ymin = float(request.data.get("ymin"))
+            assert 0 <= ymin <= 1, "ymin out of range [0, 1]"
+            xmax = float(request.data.get("xmax"))
+            assert 0 <= xmax <= 1, "xmax out of range [0, 1]"
+            ymax = float(request.data.get("ymax"))
+            assert 0 <= ymax <= 1, "ymax out of range [0, 1]"
+            assert xmin <= xmax, "denegerate rectangle"
+            assert ymin <= ymax, "denegerate rectangle"
+        except (ValueError, TypeError, AssertionError) as e:
+            return _error_response(
+                f"Could not get rectangle coordinates: {e}", status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            page = request.data.get("page")
+            if page is not None:
+                page = int(page)
+        except (ValueError, TypeError) as e:
+            return _error_response(f"Invalid page: {e}", status.HTTP_400_BAD_REQUEST)
+
+        try:
+            QuestionRegionsService.set_question_regions(
+                qidx, page, [xmin, ymin, xmax, ymax]
+            )
+        except ObjectDoesNotExist as e:
+            return _error_response(
+                f"no spec or qidx out of range? {e}", status.HTTP_400_BAD_REQUEST
+            )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RegionsSubdivideView(APIView):
+    """Handle API requests to subdivide a page into regions."""
+
+    # POST /api/beta/region/subdivide/{pagenum}
+    def post(self, request: Request, *, pagenum: int) -> Response:
+        """Create regions for questions that share a page.
+
+        Args:
+            request: An HTTP request.
+
+        Keyword Args:
+            pagenum: which page, indexed from one.
+
+        POST Data:
+            The post data should contain a list of "divisions", then length
+            of which must be one less than the number of questions that
+            share this page.
+
+        Returns:
+            An empty response with status code 204, on success. Status code 403
+            if the user is not in the 'manager' group; status code 400 for
+            malformed floats or wrong number of floats; status code 409 if the
+            operation has been blocked by a conflict (no spec for example).
+        """
+        # Reject the request if the user is not in the 'manager' group.
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can set regions.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        div = request.data.get("divisions")
+        try:
+            div = [float(x) for x in div]
+        except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
+
+        # TODO: support version-specific setting
+        try:
+            QuestionRegionsService.subdivide_page(pagenum, div)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
+        except ObjectDoesNotExist:
+            return _error_response("no spec", status.HTTP_409_CONFLICT)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

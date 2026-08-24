@@ -46,6 +46,8 @@ from .views import (
     PublicCodeAPIView,
     RectangleExtractorView,
     PQVmap,
+    RegionsView,
+    RegionsSubdivideView,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -184,6 +186,21 @@ urlpatterns = [
         "api/beta/pqvmap",
         PQVmap.as_view(),
         name="pqvmapper",
+    ),
+    path(
+        "api/beta/region/subdivide_page/<int:pagenum>",
+        RegionsSubdivideView.as_view(),
+        name="api_region_subdivide",
+    ),
+    path(
+        "api/beta/region/<int:qidx>",
+        RegionsView.as_view(),
+        name="api_region_question",
+    ),
+    path(
+        "api/beta/region",
+        RegionsView.as_view(),
+        name="api_region",
     ),
 ]
 
