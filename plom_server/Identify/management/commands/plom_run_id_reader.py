@@ -12,13 +12,7 @@ from django.core.exceptions import MultipleObjectsReturned
 
 from plom_server.Rectangles.services import RectangleExtractor
 from plom_server.Papers.services import SpecificationService
-from ...services import (
-    HEATMAP_MODE_FRESH,
-    HEATMAP_MODE_RESUME,
-    HEATMAP_MODE_REUSE,
-    HeatmapMode,
-    IDReaderService,
-)
+from ...services import IDReaderService
 
 
 class Command(BaseCommand):
@@ -40,14 +34,19 @@ class Command(BaseCommand):
         return initial_rectangle
 
     def run_the_reader(
-        self, user_obj, rectangle: dict[str, float], *, heatmap_mode: HeatmapMode
+        self, user_obj, rectangle: dict[str, float], use_existing_heatmaps: bool
     ) -> None:
         try:
-            self.stdout.write(f"Running the ID reader using {heatmap_mode} heatmaps")
+            if use_existing_heatmaps:
+                self.stdout.write(
+                    "Running ID reader, reusing existing heatmaps when possible"
+                )
+            else:
+                self.stdout.write("Running ID reader, recomputing heatmaps")
             IDReaderService.run_id_reader_in_background_via_huey(
                 user_obj,
                 {1: rectangle},
-                heatmap_mode=heatmap_mode,
+                use_existing_heatmaps=use_existing_heatmaps,
             )
         except MultipleObjectsReturned:
             raise CommandError("The ID reader is already running.")
@@ -83,27 +82,24 @@ class Command(BaseCommand):
         self.stdout.write(tabulate(rows, headers="keys", tablefmt="simple_outline"))
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        g = parser.add_mutually_exclusive_group()
+        g.add_argument(
             "--rectangle", action="store_true", help="Just get the ID-box rectangle"
         )
-        parser.add_argument("--run", action="store_true", help="Run the ID-reader")
-        parser.add_argument(
-            "--fresh",
+        g.add_argument("--run", action="store_true", help="Run the ID-reader")
+        g.add_argument(
+            "--run-use-existing-heatmaps",
             action="store_true",
-            help="Discard saved digit heatmaps and recompute all papers",
+            help="""
+               Run the ID-rder, but try to reuse any existing saved
+               digit "heatmaps" where possible
+            """,
         )
-        parser.add_argument(
-            "--reuse-heatmaps",
-            action="store_true",
-            help="Do not call the digit service; match using saved digit heatmaps",
-        )
-        parser.add_argument(
-            "--delete", action="store_true", help="Delete any predictions"
-        )
-        parser.add_argument(
+        g.add_argument("--delete", action="store_true", help="Delete any predictions")
+        g.add_argument(
             "--wait", action="store_true", help="Wait for any running ID-reader process"
         )
-        parser.add_argument(
+        g.add_argument(
             "--list", action="store_true", help="List any existing predictions"
         )
 
@@ -116,26 +112,14 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise CommandError(f"User '{username}' does not exist")
 
-        if kwargs["fresh"] and kwargs["reuse_heatmaps"]:
-            raise CommandError("Choose only one of --fresh or --reuse-heatmaps.")
-        if (kwargs["fresh"] or kwargs["reuse_heatmaps"]) and not kwargs["run"]:
-            raise CommandError(
-                "--fresh and --reuse-heatmaps can only be used with --run."
-            )
-
         if kwargs["rectangle"]:
             the_id_box_rectangle = self.get_the_rectangle()
         elif kwargs["run"]:
             the_id_box_rectangle = self.get_the_rectangle()
-            if kwargs["fresh"]:
-                heatmap_mode = HEATMAP_MODE_FRESH
-            elif kwargs["reuse_heatmaps"]:
-                heatmap_mode = HEATMAP_MODE_REUSE
-            else:
-                heatmap_mode = HEATMAP_MODE_RESUME
-            self.run_the_reader(
-                user_obj, the_id_box_rectangle, heatmap_mode=heatmap_mode
-            )
+            self.run_the_reader(user_obj, the_id_box_rectangle, False)
+        elif kwargs["run_use_existing_heatmaps"]:
+            the_id_box_rectangle = self.get_the_rectangle()
+            self.run_the_reader(user_obj, the_id_box_rectangle, True)
         elif kwargs["list"]:
             self.list_predictions()
         elif kwargs["wait"]:

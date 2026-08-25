@@ -13,7 +13,7 @@
 import hashlib
 import time
 from pathlib import Path
-from typing import Any, Callable, Iterable, Literal, cast
+from typing import Any, Callable, Iterable
 
 import cv2 as cv
 import numpy as np
@@ -52,26 +52,6 @@ from ..services import IdentifyTaskService, ClasslistService
 
 # the default certainty of prenaming predictions
 _default_prenaming_prediction_confidence = 0.9
-
-HeatmapMode = Literal["fresh", "resume", "reuse"]
-HEATMAP_MODE_FRESH: HeatmapMode = "fresh"
-HEATMAP_MODE_RESUME: HeatmapMode = "resume"
-HEATMAP_MODE_REUSE: HeatmapMode = "reuse"
-_heatmap_modes: set[HeatmapMode] = {
-    HEATMAP_MODE_FRESH,
-    HEATMAP_MODE_RESUME,
-    HEATMAP_MODE_REUSE,
-}
-
-
-def _validate_heatmap_mode(heatmap_mode: str) -> HeatmapMode:
-    """Validate and return a supported heatmap mode."""
-    if heatmap_mode not in _heatmap_modes:
-        raise ValueError(
-            f'Unknown heatmap mode "{heatmap_mode}". '
-            f"Expected one of {sorted(_heatmap_modes)}."
-        )
-    return cast(HeatmapMode, heatmap_mode)
 
 
 class IDReaderService:
@@ -340,19 +320,6 @@ class IDReaderService:
             PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
     @staticmethod
-    def run_id_reader_in_foreground(
-        user: User,
-        box_versions: dict[int, dict[str, float] | None],
-        *,
-        heatmap_mode: HeatmapMode = HEATMAP_MODE_RESUME,
-    ):
-        """Some debugging code, currently uncalled.  Deprecated?"""
-        id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
-        IDBoxProcessorService.compute_id_predictions(
-            user, id_box_image_dict, heatmap_mode=heatmap_mode
-        )
-
-    @staticmethod
     def get_id_reader_background_chore_status() -> dict[str, str]:
         """Return the status and human-readable message about the background ID reader chore."""
         try:
@@ -366,15 +333,13 @@ class IDReaderService:
     def run_id_reader_in_background_via_huey(
         user: User,
         box_versions: dict[int, dict[str, float] | None],
-        heatmap_mode: HeatmapMode = HEATMAP_MODE_RESUME,
+        use_existing_heatmaps: bool,
     ):
         """Run the ID reading process in the background.
 
         Raises:
             MultipleObjectsReturned: if the user tries to run multiple such tasks.
-            ValueError: if the heatmap mode is unsupported.
         """
-        heatmap_mode = _validate_heatmap_mode(heatmap_mode)
         # Note that we should only have 1 task running at a time.
         # if there is already one then check its status carefully
         # Note that the status should never be TO_DO since this
@@ -409,7 +374,7 @@ class IDReaderService:
         res = huey_id_reading_task(
             user,
             box_versions,
-            heatmap_mode=heatmap_mode,
+            use_existing_heatmaps=use_existing_heatmaps,
             tracker_pk=tracker_pk,
         )
         # and update the status
@@ -421,7 +386,7 @@ class IDReaderService:
 def huey_id_reading_task(
     user: User,
     box_versions: dict[int, dict[str, float] | None],
-    heatmap_mode: HeatmapMode,
+    use_existing_heatmaps: bool,
     *,
     tracker_pk: int,
     task: huey.api.Task | None = None,
@@ -434,7 +399,7 @@ def huey_id_reading_task(
     Args:
         user: the user who triggered this process and so who will be associated with the predictions.
         box_versions: a dict keyed by version of the coordinates of the ID box to extract.
-        heatmap_mode: how to use saved digit probability heatmaps.
+        use_existing_heatmaps: if possible, use existing heatmaps.
 
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
@@ -448,7 +413,6 @@ def huey_id_reading_task(
         block or detect whether a task has finished".
     """
     assert task is not None
-    heatmap_mode = _validate_heatmap_mode(heatmap_mode)
     HueyTaskTracker.transition_to_running(
         tracker_pk, task.id, msg="ID Reading task has started. Getting ID boxes."
     )
@@ -468,20 +432,34 @@ def huey_id_reading_task(
         )
         return True
 
-    HueyTaskTracker.set_message(
-        tracker_pk,
-        "ID boxes from page images saved. Computing ID predictions.",
-    )
+    if use_existing_heatmaps:
+        HueyTaskTracker.set_message(
+            tracker_pk,
+            "ID boxes images saved. Computing any missing/changed heatmaps...",
+        )
+    else:
+        HueyTaskTracker.set_message(
+            tracker_pk, "ID boxes images saved. Computing ALL heatmaps..."
+        )
 
     try:
-        IDBoxProcessorService.compute_id_predictions(
-            user, id_box_image_dict, heatmap_mode=heatmap_mode
+        probabilities = IDBoxProcessorService.get_or_compute_probability_heatmaps(
+            id_box_image_dict, use_existing_heatmaps=use_existing_heatmaps
         )
     except PlomDigitServiceError as e:
         HueyTaskTracker.transition_chore_to_error(
             tracker_pk, f"Digit recognition service error: {e}"
         )
         return True
+
+    HueyTaskTracker.set_message(
+        tracker_pk, "Heatmaps saved.  Computing ID predictions..."
+    )
+
+    try:
+        if not probabilities:
+            raise ValueError("No digit probability heatmaps available")
+        IDBoxProcessorService.compute_id_predictions(user, probabilities)
     except ValueError as e:
         HueyTaskTracker.transition_chore_to_error(
             tracker_pk, f"ID prediction failed: {e}"
@@ -749,10 +727,9 @@ class IDBoxProcessorService:
     @staticmethod
     def load_probability_heatmaps(
         source_image_hashes: dict[int, str],
-        *,
-        student_id_length: int,
     ) -> dict[int, list[list[float]]]:
         """Load complete heatmaps whose source images have not changed."""
+        student_id_length = settings.PLOM_STUDENT_ID_LENGTH
         rows = IDPredictionHeatmap.objects.filter(
             paper__paper_number__in=list(source_image_hashes)
         ).select_related("paper")
@@ -768,11 +745,11 @@ class IDBoxProcessorService:
         }
 
     @classmethod
-    def compute_and_save_probability_heatmap(
+    def get_or_compute_probability_heatmaps(
         cls,
         id_box_files: dict[int, Path],
         *,
-        heatmap_mode: HeatmapMode = HEATMAP_MODE_RESUME,
+        use_existing_heatmaps: bool = True,
     ) -> dict[int, list[list[float]]]:
         """Send prepared digit crops to the digit service and persist probabilities.
 
@@ -781,32 +758,18 @@ class IDBoxProcessorService:
         per-paper heatmap to the database as soon as all digit positions for
         that paper have been predicted.
 
-        Heatmap modes:
-            fresh: compute all papers, replacing saved heatmaps after the
-                digit service is known to be reachable.
-            resume: reuse complete saved heatmaps and compute only missing papers.
-            reuse: do not call the digit service; only return saved heatmaps.
-
         Raises:
             PlomDigitServiceError: the external service is not configured or fails.
         """
-        heatmap_mode = _validate_heatmap_mode(heatmap_mode)
         student_id_length = settings.PLOM_STUDENT_ID_LENGTH
         source_image_hashes = {
             paper_number: cls.hash_id_box_image(id_box_file)
             for paper_number, id_box_file in id_box_files.items()
         }
-        if heatmap_mode == HEATMAP_MODE_REUSE:
-            return cls.load_probability_heatmaps(
-                source_image_hashes, student_id_length=student_id_length
-            )
-
-        if heatmap_mode == HEATMAP_MODE_FRESH:
+        if not use_existing_heatmaps:
             heatmap: dict[int, list[list[float]]] = {}
         else:
-            heatmap = cls.load_probability_heatmaps(
-                source_image_hashes, student_id_length=student_id_length
-            )
+            heatmap = cls.load_probability_heatmaps(source_image_hashes)
 
         missing_id_box_files = {
             paper_number: id_box_file
@@ -827,7 +790,7 @@ class IDBoxProcessorService:
             timeout=settings.PLOM_ML_SERVICE_TIMEOUT,
         )
         client.check_ready()
-        if heatmap_mode == HEATMAP_MODE_FRESH:
+        if not use_existing_heatmaps:
             cls.clear_probability_heatmaps(id_box_files.keys())
 
         for paper_number, id_box_file in missing_id_box_files.items():
@@ -867,22 +830,18 @@ class IDBoxProcessorService:
     def compute_id_predictions(
         cls,
         user: User,
-        id_box_files: dict[int, Path],
-        *,
-        heatmap_mode: HeatmapMode = HEATMAP_MODE_RESUME,
+        probabilities: dict[int, list[list[float]]],
     ) -> None:
-        """Predict whxich IDs correspond to which SID from the classlist.
+        """Predict which IDs correspond to which SID from the classlist.
+
+        Args:
+            user: which user is running these predictions.
+            probabilities: dict keyed by papernum containing matrices,
+                each matrix is a list of lists of floats.
 
         Raises:
             ValueError: no classlist.
         """
-        heatmap_mode = _validate_heatmap_mode(heatmap_mode)
-        probabilities = cls.compute_and_save_probability_heatmap(
-            id_box_files, heatmap_mode=heatmap_mode
-        )
-        if not probabilities:
-            raise ValueError("No digit probability heatmaps available")
-
         student_ids = ClasslistService.get_classlist_sids_for_ID_matching()
         if not student_ids:
             raise ValueError("No student IDs provided")

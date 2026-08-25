@@ -4,15 +4,9 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2026 Deep Shah
+# Copyright (C) 2026 Colin B. Macdonald
 
 from .id_tasks import IdentifyTaskService
-from .id_reader import (
-    HEATMAP_MODE_FRESH,
-    HEATMAP_MODE_RESUME,
-    HEATMAP_MODE_REUSE,
-    HeatmapMode,
-    IDReaderService,
-    IDBoxProcessorService,
-)
+from .id_reader import IDReaderService, IDBoxProcessorService
 from .id_progress import IDProgressService
 from .id_direct import IDDirectService
