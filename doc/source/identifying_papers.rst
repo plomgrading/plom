@@ -1,6 +1,7 @@
 .. Plom documentation
    Copyright (C) 2020 Andrew Rechnitzer
    Copyright (C) 2022-2025 Colin B. Macdonald
+   Copyright (C) 2026 Deep Shah
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -36,6 +37,22 @@ larger box.
 
 To run the auto-identifier, locate it under "ID Progress" in the Plom
 web interface.
+
+The auto-identifier sends cropped student-ID digits to a separately deployed
+``lightweight-compute-server``.  Configure the Plom server process with the
+shared service URL and bearer token::
+
+    PLOM_ML_SERVICE_URL=https://quiz-lml.example.ca
+    PLOM_ML_SERVICE_TOKEN=replace-with-the-configured-token
+
+The token value must match ``PLOM_DIGIT_TOKEN`` on the
+``lightweight-compute-server``.  These are intentionally different environment
+variable names because one configures the Plom client of the service and the
+other configures the service itself.  Do not include the word ``Bearer`` in
+either value; Plom adds the ``Authorization: Bearer ...`` header automatically.
+
+Requests time out after 30 seconds by default.  This can be changed with
+``PLOM_ML_SERVICE_TIMEOUT``.
 
 ..
     TODO: xref to the `plom_server.Identify` app later, assuming those

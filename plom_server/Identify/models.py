@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
+# Copyright (C) 2026 Deep Shah
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -141,6 +142,16 @@ class IDPrediction(models.Model):
 
     predictor = models.CharField(null=False, max_length=255)
     certainty = models.FloatField(null=False, default=0.0)
+
+
+class IDPredictionHeatmap(models.Model):
+    """Per-paper digit probability heatmap for machine ID prediction."""
+
+    paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
+    source_image_hash = models.CharField(max_length=64)
+    probabilities = models.JSONField()
+    time = models.DateTimeField(default=timezone.now)
+    last_update = models.DateTimeField(auto_now=True)
 
 
 class IDReadingHueyTaskTracker(HueyTaskTracker):

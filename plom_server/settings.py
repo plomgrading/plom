@@ -8,6 +8,7 @@
 # Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2026 Deep Shah
 
 """Django settings for Plom project."""
 
@@ -440,7 +441,7 @@ MAX_BUNDLE_SIZE = 536870912
 MAX_BUNDLE_PAGES = 2500
 
 # Optional external ML service used for crop-only inference features such as
-# MCQ checkbox classification.  Leave URL blank to use local/fallback logic.
+# MCQ checkbox classification and student-ID digit recognition.
 PLOM_ML_SERVICE_URL = os.environ.get("PLOM_ML_SERVICE_URL", "").strip()
 PLOM_ML_SERVICE_TOKEN = os.environ.get("PLOM_ML_SERVICE_TOKEN", "").strip()
 PLOM_ML_SERVICE_TIMEOUT = float(os.environ.get("PLOM_ML_SERVICE_TIMEOUT", 30))

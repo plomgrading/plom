@@ -5,21 +5,19 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2020-2026 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2024-2025 Deep Shah
+# Copyright (C) 2024-2026 Deep Shah
 # Copyright (C) 2026 Aidan Murphy
 
-import json
+"""Services for extracting ID boxes and predicting paper/student IDs."""
+
+import hashlib
 import time
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import cv2 as cv
-
-# import cv2.typing - problems importing this - see MR 3050.
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-
-import onnxruntime  # type: ignore
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -29,12 +27,12 @@ from django_huey import db_task
 import huey
 import huey.api
 
-from plom.idreader.model_utils import (
-    load_model,
-    is_model_present,
-    ensure_model_available,
-)
 from plom_server.Base.models import HueyTaskTracker
+from plom_server.ML.services.client import (
+    DigitCrop,
+    PlomDigitServiceClient,
+    PlomDigitServiceError,
+)
 from plom_server.Papers.models import Paper
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Preparation.services import StagingStudentService
@@ -44,17 +42,16 @@ from plom_server.Rectangles.contour_detection import (
     find_sorted_contours,
     largest_contour_bounding_rect,
 )
-from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
+from ..models import (
+    PaperIDTask,
+    IDPrediction,
+    IDPredictionHeatmap,
+    IDReadingHueyTaskTracker,
+)
 from ..services import IdentifyTaskService, ClasslistService
 
 # the default certainty of prenaming predictions
 _default_prenaming_prediction_confidence = 0.9
-
-
-def _np_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
-    x = x - np.max(x, axis=axis, keepdims=True)
-    e = np.exp(x)
-    return e / np.sum(e, axis=axis, keepdims=True)
 
 
 class IDReaderService:
@@ -237,6 +234,7 @@ class IDReaderService:
 
     @staticmethod
     def all_ML_ID_predictor_names() -> Iterable[str]:
+        """Return the predictor names used by machine-learning ID prediction."""
         return ("MLLAP", "MLGreedy", "MLBestGuess")
 
     @staticmethod
@@ -322,19 +320,6 @@ class IDReaderService:
             PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
     @staticmethod
-    def run_id_reader_in_foreground(
-        user: User,
-        box_versions: dict[int, dict[str, float] | None],
-        *,
-        recompute_heatmap: bool = True,
-    ):
-        """Some debugging code, currently uncalled.  Deprecated?"""
-        id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
-        IDBoxProcessorService.compute_id_predictions(
-            user, id_box_image_dict, recompute_heatmap=recompute_heatmap
-        )
-
-    @staticmethod
     def get_id_reader_background_chore_status() -> dict[str, str]:
         """Return the status and human-readable message about the background ID reader chore."""
         try:
@@ -348,7 +333,7 @@ class IDReaderService:
     def run_id_reader_in_background_via_huey(
         user: User,
         box_versions: dict[int, dict[str, float] | None],
-        recompute_heatmap: bool | None = True,
+        use_existing_heatmaps: bool,
     ):
         """Run the ID reading process in the background.
 
@@ -389,7 +374,7 @@ class IDReaderService:
         res = huey_id_reading_task(
             user,
             box_versions,
-            recompute_heatmap=recompute_heatmap,
+            use_existing_heatmaps=use_existing_heatmaps,
             tracker_pk=tracker_pk,
         )
         # and update the status
@@ -400,8 +385,8 @@ class IDReaderService:
 @db_task(queue="chores", context=True)
 def huey_id_reading_task(
     user: User,
-    box_versions: dict[int, tuple[float, float, float, float] | None],
-    recompute_heatmap: bool,
+    box_versions: dict[int, dict[str, float] | None],
+    use_existing_heatmaps: bool,
     *,
     tracker_pk: int,
     task: huey.api.Task | None = None,
@@ -414,7 +399,7 @@ def huey_id_reading_task(
     Args:
         user: the user who triggered this process and so who will be associated with the predictions.
         box_versions: a dict keyed by version of the coordinates of the ID box to extract.
-        recompute_heatmap: whether or not to recompute the digit probability heatmap.
+        use_existing_heatmaps: if possible, use existing heatmaps.
 
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
@@ -432,7 +417,14 @@ def huey_id_reading_task(
         tracker_pk, task.id, msg="ID Reading task has started. Getting ID boxes."
     )
 
-    id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(box_versions)
+    HueyTaskTracker.set_message(tracker_pk, "Extracting ID boxes from scanned pages.")
+    id_box_image_dict = IDBoxProcessorService.save_all_id_boxes(
+        box_versions,
+        progress_callback=lambda msg: HueyTaskTracker.set_message(tracker_pk, msg),
+    )
+    HueyTaskTracker.set_message(
+        tracker_pk, f"Extracted {len(id_box_image_dict)} ID boxes from scanned pages."
+    )
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
         HueyTaskTracker.transition_to_complete(
@@ -440,17 +432,37 @@ def huey_id_reading_task(
         )
         return True
 
+    if use_existing_heatmaps:
+        HueyTaskTracker.set_message(
+            tracker_pk,
+            "ID boxes images saved. Computing any missing/changed heatmaps...",
+        )
+    else:
+        HueyTaskTracker.set_message(
+            tracker_pk, "ID boxes images saved. Computing ALL heatmaps..."
+        )
+
+    try:
+        probabilities = IDBoxProcessorService.get_or_compute_probability_heatmaps(
+            id_box_image_dict, use_existing_heatmaps=use_existing_heatmaps
+        )
+    except PlomDigitServiceError as e:
+        HueyTaskTracker.transition_chore_to_error(
+            tracker_pk, f"Digit recognition service error: {e}"
+        )
+        return True
+
     HueyTaskTracker.set_message(
-        tracker_pk, "ID boxes from page images saved. Computing predictions."
+        tracker_pk, "Heatmaps saved.  Computing ID predictions..."
     )
 
     try:
-        IDBoxProcessorService.compute_id_predictions(
-            user, id_box_image_dict, recompute_heatmap=recompute_heatmap
-        )
+        if not probabilities:
+            raise ValueError("No digit probability heatmaps available")
+        IDBoxProcessorService.compute_id_predictions(user, probabilities)
     except ValueError as e:
         HueyTaskTracker.transition_chore_to_error(
-            tracker_pk, f"Did you upload a classlist?  {e}"
+            tracker_pk, f"ID prediction failed: {e}"
         )
         return True
 
@@ -465,12 +477,12 @@ class IDBoxProcessorService:
     """Service for dealing with the ID box and processing it into ID predictions."""
 
     @staticmethod
-    @transaction.atomic
     def save_all_id_boxes(
         box_versions: dict[int, dict[str, float] | None],
         *,
         exclude_prenamed_papers: bool = True,
         save_dir: Path | None = None,
+        progress_callback: Callable[[str], None] | None = None,
     ) -> dict[int, Path]:
         """Extract the id box, or really any rectangular part of the id page.
 
@@ -486,6 +498,8 @@ class IDBoxProcessorService:
             exclude_prenamed_papers: by default we don't extract the id
                 box from prenamed papers.
             save_dir: what directory to save to, or a default if omitted.
+            progress_callback: optional callable invoked with a status
+                message as extraction progresses.
 
         Returns:
             dict: a dict of paper_number -> ID box path and filename (temporary)
@@ -524,7 +538,12 @@ class IDBoxProcessorService:
             ]
             # use the rectangle extractor to then get all the rectangles from those pages and save them
             rex = RectangleExtractor(v, id_page_number)
-            for pn in paper_numbers:
+            total = len(paper_numbers)
+            for index, pn in enumerate(paper_numbers, start=1):
+                if progress_callback:
+                    progress_callback(
+                        f"Extracting ID box {index}/{total} for version {v}, paper {pn}."
+                    )
                 id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
                 try:
                     id_box_bytes = rex.extract_rect_region(pn, *box)
@@ -657,147 +676,172 @@ class IDBoxProcessorService:
             processed_digits_images_list.append(bordered_image)
         return processed_digits_images_list
 
-    @classmethod
-    def get_digit_probabilities(
-        cls,
-        prediction_model: tuple["onnxruntime.InferenceSession", str],
-        id_box_file: Path,
-        num_digits: int,
-        *,
-        debug: bool = True,
-    ) -> list[list[float]]:
-        """Return a list of probability predictions for the student ID digits on the cropped image.
+    @staticmethod
+    def encode_digit_image_as_png(digit_image) -> bytes:
+        """Encode a prepared digit image as PNG bytes for the digit service."""
+        success, buffer = cv.imencode(".png", digit_image)
+        if not success:
+            raise ValueError("Could not encode digit crop as PNG")
+        return buffer.tobytes()
 
-        Args:
-            prediction_model: PyTorch CNN Prediction model (ONNX).
-            id_box_file (str/pathlib.Path): File path for the image of the ID box.
-            num_digits (int): Number of digits in the student ID.
+    @staticmethod
+    def clear_probability_heatmaps(paper_numbers: Iterable[int]) -> None:
+        """Delete saved digit probability heatmaps for the given paper numbers."""
+        IDPredictionHeatmap.objects.filter(
+            paper__paper_number__in=list(paper_numbers)
+        ).delete()
 
-        Keyword Args:
-            debug (bool): output the trimmed images into "debug_id_reader/"
+    @staticmethod
+    def hash_id_box_image(id_box_file: Path) -> str:
+        """Return a stable fingerprint of an extracted ID-box image."""
+        return hashlib.sha256(id_box_file.read_bytes()).hexdigest()
 
-        Returns:
-            list: A list of lists of probabilities.  The outer list is over
-            the 8 positions.  Inner lists have length 11: the probability
-            that the digit is a 0, 1, 2, ..., 9, blank.
-            In case of errors it returns an empty list
-        """
-        model, device = prediction_model
-
-        debugdir = None
-        id_page_file = Path(id_box_file)
-        # TODO - sort out cv.typing
-        # ID_box: cv.typing.MatLike | None = cls.resize_ID_box_and_extract_digit_strip(
-        #     id_page_file
-        # )
-        ID_box = cls.resize_ID_box_and_extract_digit_strip(id_page_file)
-        if ID_box is None:
-            return []
-        if debug:
-            debugdir = Path(settings.MEDIA_ROOT / "debug_id_reader")
-            debugdir.mkdir(exist_ok=True)
-            p = debugdir / f"idbox_{id_page_file.stem}.png"
-            cv.imwrite(str(p), ID_box)
-        processed_digits_images = cls.get_digit_images(ID_box, num_digits)
-        if len(processed_digits_images) == 0:
-            # TODO - put in warning
-            # self.stdout.write("Trouble finding digits inside the ID box")
-            return []
-        if debugdir:
-            for n, digit_image in enumerate(processed_digits_images):
-                p = debugdir / f"digit_{id_page_file.stem}-pos{n}.png"
-                cv.imwrite(str(p), digit_image)
-        prob_lists = []
-        input_name = model.get_inputs()[0].name
-        output_name = model.get_outputs()[0].name
-        for digit_image in processed_digits_images:
-            # get it into format needed by model predictor
-            x = (digit_image.astype(np.float32) / 255.0)[None, None, :, :]
-            logits = model.run([output_name], {input_name: x})[0]
-            probs = _np_softmax(logits, axis=1)[0].tolist()
-            prob_lists.append(probs)
-
-        return prob_lists
-
-    @classmethod
-    def _compute_probability_heatmap_for_idbox_images(
-        cls, image_file_paths: dict[int, Path], num_digits: int
-    ) -> dict[int, list[list[float]]]:
-        """Return probabilities for digits for each paper in the given dictionary of images files.
-
-        Args:
-            image_file_paths: A dictionary  {paper_number: path_to_id_box_image_file}
-            num_digits: how many digits in a student ID.
-
-        Returns:
-            dict: A dictionary which gives the probability that the number in the ID on a given paper is a particular digit.
-        """
-        prediction_model = load_model(where=settings.PLOM_MODEL_CACHE)
-        probabilities = {}
-        for paper_number, image_file in image_file_paths.items():
-            prob_lists = cls.get_digit_probabilities(
-                prediction_model, image_file, num_digits
-            )
-            if len(prob_lists) == 0:
-                # TODO - put in warning
-                # self.stdout.write(
-                #     f"Test{paper_number}: could not read digits, excluding from calculations"
-                # )
-                continue
-            elif len(prob_lists) != num_digits:
-                # TODO - put in warning
-                # self.stdout.write(
-                #     f"Test{paper_number}: unexpectedly len={len(prob_lists)}: {prob_lists}"
-                # )
-                probabilities[paper_number] = prob_lists
-            else:
-                probabilities[paper_number] = prob_lists
-        return probabilities
-
-    @classmethod
-    def compute_and_save_probability_heatmap(cls, id_box_files: dict[int, Path]):
-        """Use classifier to compute and save a probability heatmap for the ids.
-
-        This downloads a pre-trained random forest classier to compute the probability
-        that the given number in the ID on the given paper is a particular digit.
-        The resulting heatmap is saved for use by predictor algorithms.
-
-        Note: no database stuff: this just dumps a file on disc, which may not be
-        ideal.  Lot of direct file access here.
-        """
-        if not is_model_present(where=settings.PLOM_MODEL_CACHE):
-            ensure_model_available(where=settings.PLOM_MODEL_CACHE)
-
-        heatmap = cls._compute_probability_heatmap_for_idbox_images(
-            id_box_files, settings.PLOM_STUDENT_ID_LENGTH
+    @staticmethod
+    def is_complete_probability_heatmap(
+        probabilities: Any, *, student_id_length: int
+    ) -> bool:
+        """Return whether a saved heatmap has all digit positions and classes."""
+        return (
+            isinstance(probabilities, list)
+            and len(probabilities) == student_id_length
+            and all(isinstance(row, list) and len(row) == 11 for row in probabilities)
         )
 
-        # probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
-        with open(settings.MEDIA_ROOT / "id_prob_heatmaps.json", "w") as fh:
-            json.dump(heatmap, fh, indent="  ")
+    @staticmethod
+    def save_probability_heatmap_for_paper(
+        paper_number: int,
+        probabilities: list[list[float]],
+        *,
+        source_image_hash: str,
+    ) -> None:
+        """Persist one complete paper's digit probability heatmap."""
+        paper = Paper.objects.get(paper_number=paper_number)
+        IDPredictionHeatmap.objects.update_or_create(
+            paper=paper,
+            defaults={
+                "source_image_hash": source_image_hash,
+                "probabilities": probabilities,
+            },
+        )
+
+    @staticmethod
+    def load_probability_heatmaps(
+        source_image_hashes: dict[int, str],
+    ) -> dict[int, list[list[float]]]:
+        """Load complete heatmaps whose source images have not changed."""
+        student_id_length = settings.PLOM_STUDENT_ID_LENGTH
+        rows = IDPredictionHeatmap.objects.filter(
+            paper__paper_number__in=list(source_image_hashes)
+        ).select_related("paper")
+        return {
+            row.paper.paper_number: row.probabilities
+            for row in rows
+            if (
+                row.source_image_hash == source_image_hashes.get(row.paper.paper_number)
+                and IDBoxProcessorService.is_complete_probability_heatmap(
+                    row.probabilities, student_id_length=student_id_length
+                )
+            )
+        }
+
+    @classmethod
+    def get_or_compute_probability_heatmaps(
+        cls,
+        id_box_files: dict[int, Path],
+        *,
+        use_existing_heatmaps: bool = True,
+    ) -> dict[int, list[list[float]]]:
+        """Send prepared digit crops to the digit service and persist probabilities.
+
+        Plom extracts and segments each ID box locally, posts each prepared
+        digit crop to ``PLOM_ML_SERVICE_URL``, and saves each complete
+        per-paper heatmap to the database as soon as all digit positions for
+        that paper have been predicted.
+
+        Raises:
+            PlomDigitServiceError: the external service is not configured or fails.
+        """
+        student_id_length = settings.PLOM_STUDENT_ID_LENGTH
+        source_image_hashes = {
+            paper_number: cls.hash_id_box_image(id_box_file)
+            for paper_number, id_box_file in id_box_files.items()
+        }
+        if not use_existing_heatmaps:
+            heatmap: dict[int, list[list[float]]] = {}
+        else:
+            heatmap = cls.load_probability_heatmaps(source_image_hashes)
+
+        missing_id_box_files = {
+            paper_number: id_box_file
+            for paper_number, id_box_file in id_box_files.items()
+            if paper_number not in heatmap
+        }
+        if not missing_id_box_files:
+            return heatmap
+
+        if not settings.PLOM_ML_SERVICE_URL:
+            raise PlomDigitServiceError(
+                "PLOM_ML_SERVICE_URL must be configured: "
+                "ID prediction requires the external Plom digit recognition service."
+            )
+        client = PlomDigitServiceClient(
+            settings.PLOM_ML_SERVICE_URL,
+            token=settings.PLOM_ML_SERVICE_TOKEN,
+            timeout=settings.PLOM_ML_SERVICE_TIMEOUT,
+        )
+        client.check_ready()
+        if not use_existing_heatmaps:
+            cls.clear_probability_heatmaps(id_box_files.keys())
+
+        for paper_number, id_box_file in missing_id_box_files.items():
+            id_box = cls.resize_ID_box_and_extract_digit_strip(id_box_file)
+            if id_box is None:
+                continue
+            digit_images = cls.get_digit_images(id_box, student_id_length)
+            if len(digit_images) != student_id_length:
+                continue
+
+            crops: list[DigitCrop] = []
+            for index, digit_image in enumerate(digit_images, start=1):
+                crop_id = f"paper{paper_number}-pos{index}"
+                crops.append(
+                    DigitCrop(
+                        image_bytes=cls.encode_digit_image_as_png(digit_image),
+                        crop_id=crop_id,
+                        paper_number=paper_number,
+                        digit_position=index,
+                    )
+                )
+            digit_probabilities = client.predict_digits(crops)
+            paper_probabilities = [
+                digit_probabilities[(paper_number, position)]
+                for position in range(1, student_id_length + 1)
+            ]
+            cls.save_probability_heatmap_for_paper(
+                paper_number,
+                paper_probabilities,
+                source_image_hash=source_image_hashes[paper_number],
+            )
+            heatmap[paper_number] = paper_probabilities
+
         return heatmap
 
     @classmethod
     def compute_id_predictions(
         cls,
         user: User,
-        id_box_files: dict[int, Path],
-        *,
-        recompute_heatmap: bool = True,
+        probabilities: dict[int, list[list[float]]],
     ) -> None:
-        """Predict whxich IDs correspond to which SID from the classlist.
+        """Predict which IDs correspond to which SID from the classlist.
+
+        Args:
+            user: which user is running these predictions.
+            probabilities: dict keyed by papernum containing matrices,
+                each matrix is a list of lists of floats.
 
         Raises:
             ValueError: no classlist.
         """
-        if recompute_heatmap:
-            probabilities = cls.compute_and_save_probability_heatmap(id_box_files)
-        else:
-            heatmaps_file = settings.MEDIA_ROOT / "id_prob_heatmaps.json"
-            with open(heatmaps_file, "r") as fh:
-                probabilities = json.load(fh)
-            probabilities = {int(k): v for k, v in probabilities.items()}
-
         student_ids = ClasslistService.get_classlist_sids_for_ID_matching()
         if not student_ids:
             raise ValueError("No student IDs provided")
@@ -845,6 +889,7 @@ class IDBoxProcessorService:
 
     @classmethod
     def run_lap_solver(cls, user: User, student_ids: list[str], probabilities) -> None:
+        """Run the linear-assignment student-ID matcher and save its predictions."""
         # start by removing any IDs that have already been used.
         for ided_stu in IDReaderService.get_already_matched_sids():
             try:

@@ -3,6 +3,8 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2026 Deep Shah
+# Copyright (C) 2026 Colin B. Macdonald
 
 from .id_tasks import IdentifyTaskService
 from .id_reader import IDReaderService, IDBoxProcessorService

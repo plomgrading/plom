@@ -5,8 +5,12 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2026 Deep Shah
 
 from datetime import timedelta
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 from django.contrib.auth.models import User
 from django.core.exceptions import (
@@ -15,14 +19,19 @@ from django.core.exceptions import (
     MultipleObjectsReturned,
 )
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from model_bakery import baker
 
 from plom.common.exceptions import PlomConflict
 from plom_server.Papers.models import FixedPage, Image, Paper
-from .services import IdentifyTaskService, IDProgressService, IDDirectService
-from .models import PaperIDTask, PaperIDAction
+from .services import (
+    IDBoxProcessorService,
+    IdentifyTaskService,
+    IDProgressService,
+    IDDirectService,
+)
+from .models import IDPredictionHeatmap, PaperIDTask, PaperIDAction
 
 
 class IdentifyTaskTests(TestCase):
@@ -345,3 +354,77 @@ class IdentifyTaskTests(TestCase):
         }
 
         self.assertEqual(info_dict, ids.get_all_id_task_info())
+
+
+class IDPredictionHeatmapTests(TestCase):
+    """Tests for safely reusing saved digit probability heatmaps."""
+
+    @staticmethod
+    def _probabilities(value: float) -> list[list[float]]:
+        return [[value] * 11 for _ in range(8)]
+
+    @override_settings(
+        PLOM_ML_SERVICE_URL="https://ml.example",
+        PLOM_ML_SERVICE_TOKEN="test-token",
+        PLOM_ML_SERVICE_TIMEOUT=12.0,
+    )
+    def test_resume_recomputes_heatmap_after_source_image_changes(self) -> None:
+        """Resume calls the ML service when the current ID box is different."""
+        paper = baker.make(Paper, paper_number=1)
+        old_probabilities = self._probabilities(0.1)
+        new_probabilities = self._probabilities(0.2)
+
+        with TemporaryDirectory() as directory:
+            id_box_file = Path(directory) / "id-box.png"
+            id_box_file.write_bytes(b"original ID-box image")
+            IDPredictionHeatmap.objects.create(
+                paper=paper,
+                source_image_hash=IDBoxProcessorService.hash_id_box_image(id_box_file),
+                probabilities=old_probabilities,
+            )
+            id_box_file.write_bytes(b"rescanned ID-box image")
+
+            client = Mock()
+            client.predict_digits.return_value = {
+                (paper.paper_number, position): new_probabilities[position - 1]
+                for position in range(1, 9)
+            }
+            with (
+                patch(
+                    "plom_server.Identify.services.id_reader.PlomDigitServiceClient",
+                    return_value=client,
+                ) as client_constructor,
+                patch.object(
+                    IDBoxProcessorService,
+                    "resize_ID_box_and_extract_digit_strip",
+                    return_value=object(),
+                ),
+                patch.object(
+                    IDBoxProcessorService,
+                    "get_digit_images",
+                    return_value=[object()] * 8,
+                ),
+                patch.object(
+                    IDBoxProcessorService,
+                    "encode_digit_image_as_png",
+                    return_value=b"png",
+                ),
+            ):
+                result = IDBoxProcessorService.get_or_compute_probability_heatmaps(
+                    {paper.paper_number: id_box_file}
+                )
+
+            self.assertEqual(result, {paper.paper_number: new_probabilities})
+            client_constructor.assert_called_once_with(
+                "https://ml.example",
+                token="test-token",
+                timeout=12.0,
+            )
+            client.check_ready.assert_called_once_with()
+            client.predict_digits.assert_called_once()
+            saved = IDPredictionHeatmap.objects.get(paper=paper)
+            self.assertEqual(
+                saved.source_image_hash,
+                IDBoxProcessorService.hash_id_box_image(id_box_file),
+            )
+            self.assertEqual(saved.probabilities, new_probabilities)

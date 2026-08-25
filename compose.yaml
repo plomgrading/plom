@@ -65,6 +65,7 @@ services:
       # Define these in the private, git-ignored .env file beside compose.yaml.
       - PLOM_ML_SERVICE_URL=${PLOM_ML_SERVICE_URL:-}
       - PLOM_ML_SERVICE_TOKEN=${PLOM_ML_SERVICE_TOKEN:-}
+      # Alternatively, you can define them here directly
       # Other settings
       - PAPERSIZE=letter
       # - PLOM_QR_CODE_SIZE=70

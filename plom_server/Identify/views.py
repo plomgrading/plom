@@ -2,6 +2,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
+# Copyright (C) 2026 Deep Shah
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.http import HttpRequest, HttpResponse, Http404
@@ -93,7 +94,7 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
             IDReaderService.run_id_reader_in_background_via_huey(
                 request.user,
                 id_version_rectangles,
-                recompute_heatmap=True,
+                use_existing_heatmaps=True,
             )
         except MultipleObjectsReturned:
             # this means a ID predictor task was already running, so

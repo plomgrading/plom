@@ -93,7 +93,7 @@ def get_parser() -> argparse.ArgumentParser:
     * bundles-pushed = those bundles are "pushed" so that they can be graded.
     * rubrics = system and demo rubrics are created for marking.
     * qtags = demo question-tags are created.
-    * auto-id = run the auto-id-reader
+    * auto-id = run the auto-id-reader if the external digit service is configured
     * randoiding = run rando-id'er to identify papers, will use best predictions to ID papers and else random.  You will need to have the `plom-client` installed.
     * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work.  You will need to have the `plom-client` installed.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
@@ -682,8 +682,15 @@ def run_demo_bundle_scan_commands(
     return True
 
 
-def run_the_auto_id_reader():
-    """Run the auto ID reader."""
+def run_the_auto_id_reader() -> None:
+    """Run the auto ID reader when the external digit service is configured."""
+    if not os.environ.get("PLOM_ML_SERVICE_URL", "").strip():
+        print(
+            "Skipping the auto ID reader because PLOM_ML_SERVICE_URL is not "
+            "configured. The rando-IDer will identify the remaining papers."
+        )
+        return
+
     run_django_manage_command("plom_run_id_reader --run")
     run_django_manage_command("plom_run_id_reader --wait")
 
@@ -824,7 +831,7 @@ def run_marking_commands(
     In order it runs:
         * (rubrics): Make system and demo rubrics.
         * (qtags): Make and apply question/pedagogy-tags
-        * (auto-id): Run the auto id-reader and wait for its results
+        * (auto-id): Run the auto ID reader when the digit service is configured
         * (randoder): make random id-er on papers (this will use the best predictions to id.)
         * (randomarker): make random marking-annotations on papers.
 
