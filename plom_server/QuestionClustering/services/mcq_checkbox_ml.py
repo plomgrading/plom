@@ -146,6 +146,7 @@ class MCQCheckboxMLClient:
         if len(crop_by_id) != len(crops):
             raise MCQCheckboxMLServiceError("Checkbox ML request ids must be unique.")
 
+        # This binarize is a quick hack, see Issue #4277 for longer-term.
         items = [
             {
                 "id": crop.box_id,
