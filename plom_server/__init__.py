@@ -22,7 +22,7 @@ __version__ = "0.22.0.dev0"
 # release 0.x.0.  Both should not change during patches of the 0.x.y cycle.  That is our
 # practice as of early 2026.
 Plom_API_Version = 118
-Plom_DB_Version = 117
+Plom_DB_Version = 118
 
 # __all__ = [
 #     "Preparation",
