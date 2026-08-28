@@ -3,7 +3,8 @@
 # Copyright (C) 2020-2026 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2026 Aidan Murphy
 
 # Any utilities that don't have there own version can use this one
 # Also in plom_server/__init__.py
-__version__ = "0.22.0.dev0"
+__version__ = "0.22.0"
