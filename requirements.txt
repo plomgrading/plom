@@ -29,7 +29,7 @@ django-humanize==0.1.2
 django-mathfilters==1.0.0
 django-reset-migrations==0.4.0
 django-tables2==3.0.0
-djangorestframework==3.17.1
+djangorestframework==3.17.2
 exif==1.6.1
 file-magic==0.4.1
 gunicorn==26.0.0
