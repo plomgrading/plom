@@ -220,8 +220,8 @@ def get_courses_teaching(api: bsapi.BSAPI) -> list[tuple[int, str]]:
     """
     courses_teaching = []
     for course in api.get_course_enrollments():
-        # observed types are "Learner", "TA"
-        if course.access.classlist_role_name not in ["TA"]:
+        # observed types are "Learner", "TA", "Instructor"
+        if course.access.classlist_role_name not in ["TA", "Instructor"]:
             continue
         courses_teaching.append((course.org_unit.id, course.org_unit.name))
 
