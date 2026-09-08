@@ -163,14 +163,14 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint. Leave the server running.",
+        help="Stop the demo sequence at a certain breakpoint. Terminate the server.",
     )
     stop_wait_group.add_argument(
         "--wait-after",
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint. Terminate the server.",
+        help="Stop the demo sequence at a certain breakpoint. Leave the server running.",
     )
     prod_dev_group = parser.add_mutually_exclusive_group()
     prod_dev_group.add_argument(
