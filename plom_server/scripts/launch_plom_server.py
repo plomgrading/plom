@@ -46,6 +46,14 @@ def get_parser() -> argparse.ArgumentParser:
         """,
     )
     parser.add_argument(
+        "--init",
+        action="store_true",
+        help="""
+            Initialise static resources and the database without writing
+            to the db or launching the server.
+        """,
+    )
+    parser.add_argument(
         "--wipe",
         action="store_true",
         help="""
@@ -209,17 +217,17 @@ def main():
         run_django_manage_command("plom_clean_misc")
         print("Dropping any existing database...")
         run_django_manage_command("plom_database --drop-database --yes")
-
-    # TODO not have_db or args.init
-    if not have_db:
-        print("Rebuilding database and migrations...")
+        print("Rebuilding database...")
         run_django_manage_command("plom_database --create-database")
+
+    if not have_db or args.init:
+        print("Building migrations...")
         run_django_manage_command("migrate")
         run_django_manage_command("plom_database --create-database-metadata")
         print("Database initial migrate complete")
 
-    # TODO: if args.init:
-    #           return
+    if args.init:
+        return
 
     # TODO: split into "make_groups" and "make_users"
     # if not have_users:
