@@ -3,7 +3,6 @@
 # Copyright (C) 2024-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
-from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser, CommandError
 from django.db import transaction
 
@@ -14,7 +13,7 @@ from plom_server.Authentication.services import AuthService
 
 
 class Command(BaseCommand):
-    """Build user groups, the admin and manager users."""
+    """Create the admin and manager users."""
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Process commandline arguments."""
@@ -100,10 +99,7 @@ class Command(BaseCommand):
             raise CommandError(e) from None
 
     def handle(self, *args, **options):
-        """Make groups and users for the plom-server."""
-        self.stdout.write("Make user groups")
-        call_command("plom_create_groups")
-
+        """Make users for the plom-server."""
         port = options["port"] or ""
         # generate passwords if no info is provided via the commandline
         manager_string = "Make manager user\n"

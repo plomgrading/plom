@@ -945,8 +945,9 @@ def main():
     saytime("Finished refreshing the database.")
 
     # build the user-groups and the admin and manager users
+    run_django_manage_command("plom_create_groups")
     run_django_manage_command(
-        f"plom_make_groups_and_first_users --manager-login manager 1234 --port {args.port}"
+        f"plom_make_first_users --manager-login manager 1234 --port {args.port}"
     )
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")

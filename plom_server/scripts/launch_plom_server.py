@@ -229,12 +229,12 @@ def main():
     if args.init:
         return
 
-    # TODO: split into "make_groups" and "make_users"
+    # if not have_groups:
+    if not have_db:
+        run_django_manage_command("plom_create_groups")
     # if not have_users:
     if not have_db:
-        run_django_manage_command(
-            "plom_make_groups_and_first_users --no-admin-password"
-        )
+        run_django_manage_command("plom_make_first_users --no-admin-password")
 
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 
