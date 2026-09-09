@@ -228,9 +228,7 @@ def main():
             "plom_make_groups_and_first_users --no-admin-password"
         )
 
-    # TODO: if not scrap_extra_pages_exist:
-    if not have_db:
-        run_django_manage_command("plom_build_scrap_extra_pdfs")
+    run_django_manage_command("plom_build_scrap_extra_pdfs")
 
     run_django_manage_command("plom_get_static_javascript")
 
