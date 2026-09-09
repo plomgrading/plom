@@ -204,32 +204,32 @@ def main():
     # return value, so we call the service directly (isn't this better anyway?)
     have_db = database_service.is_there_a_database()
 
-    if have_db and not args.wipe:
-        if not args.hotstart:
-            raise ValueError(
-                "There is an existing database: consider passing --hotstart or --wipe"
-            )
-        print("DOING A HOT START (we already have a database)")
-        # Note: we check database versions but how can we be confident
-        # that the file system stuff is consistent?  (Issue #3299)
-        run_django_manage_command("plom_database --check-database")
-        run_django_manage_command("plom_database --update-database-metadata")
-    else:
+    if not have_db or args.wipe:
         # We either don't have a DB or we do and we want to wipe it.
         run_django_manage_command("plom_clean_misc")
         print("Dropping any existing database...")
         run_django_manage_command("plom_database --drop-database --yes")
+
+    # TODO not have_db or args.init
+    if not have_db:
         print("Rebuilding database and migrations...")
         run_django_manage_command("plom_database --create-database")
         run_django_manage_command("migrate")
         run_django_manage_command("plom_database --create-database-metadata")
         print("Database initial migrate complete")
 
-        # build the user-groups and the admin and manager users
+    # TODO: if args.init:
+    #           return
+
+    # TODO: split into "make_groups" and "make_users"
+    # if not have_users:
+    if not have_db:
         run_django_manage_command(
             "plom_make_groups_and_first_users --no-admin-password"
         )
-        # build extra-page and scrap-paper PDFs
+
+    # TODO: if not scrap_extra_pages_exist:
+    if not have_db:
         run_django_manage_command("plom_build_scrap_extra_pdfs")
 
     run_django_manage_command("plom_get_static_javascript")
