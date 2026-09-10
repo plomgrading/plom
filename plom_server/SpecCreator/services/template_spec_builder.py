@@ -44,7 +44,7 @@ doNotMarkPages = []
 # available versions - either
 #    select = [1,2] - take randomly from version 1 or version 2
 #    select = 1 - always take from version 1
-# By default Plom will take randomly from all questions
+# By default Plom draws randomly from all versions.
 """
 
         score_per_question = score // questions
