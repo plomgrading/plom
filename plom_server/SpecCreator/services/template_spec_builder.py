@@ -12,7 +12,7 @@ class TemplateSpecBuilderService:
     ):
         """Builds a template toml string with comments."""
         spec_toml = f"""
-# Two human-readable names of the test - one long, one short.
+# Two human-readable names of the assessment - one long, one short.
 longName = "{longName}"
 
 # The short name must be alphanumeric without spaces. Underscore, hyphens and periods are okay.
@@ -24,7 +24,7 @@ numberOfQuestions = {questions}
 numberOfVersions = {versions}
 totalMarks = {score}
 
-# Your test must have exactly one id-page this is usually page 1
+# Your assesssment must have exactly one id-page this is usually page 1
 idPage = 1
 
 # List of pages that are not marked (like instructions, formula sheets, etc)
