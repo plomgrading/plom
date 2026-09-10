@@ -70,20 +70,19 @@ class Command(BaseCommand):
 
     def create_admin(self, username: str, password: str | None = None) -> User:
         """Create an admin user."""
-        with transaction.atomic(durable=True):
-            if User.objects.filter(is_superuser=True).count() > 0:
-                raise CommandError("Cannot create admin-user, they already exist.")
+        if User.objects.filter(is_superuser=True).count() > 0:
+            raise CommandError("Cannot create admin-user, they already exist.")
 
-            if not Group.objects.filter(name="admin").exists():
-                raise CommandError(
-                    "Cannot create admin-user since the admin group has not been created."
-                )
+        if not Group.objects.filter(name="admin").exists():
+            raise CommandError(
+                "Cannot create admin-user since the admin group has not been created."
+            )
 
-            admin = User.objects.create_superuser(username=username, password=password)
-            admin_group = Group.objects.get(name="admin")
-            admin.groups.add(admin_group)
-            admin.save()
-            return admin
+        admin = User.objects.create_superuser(username=username, password=password)
+        admin_group = Group.objects.get(name="admin")
+        admin.groups.add(admin_group)
+        admin.save()
+        return admin
 
     def create_first_manager(
         self, username: str, *, password: str | None = None
@@ -98,6 +97,7 @@ class Command(BaseCommand):
         except ValueError as e:
             raise CommandError(e) from None
 
+    @transaction.atomic(durable=True)
     def handle(self, *args, **options):
         """Make users for the plom-server."""
         port = options["port"] or ""
