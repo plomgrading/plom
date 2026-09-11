@@ -229,9 +229,8 @@ def main():
     if args.init:
         return
 
-    # if not have_groups:
-    if not have_db:
-        run_django_manage_command("plom_create_groups")
+    # Idempotent - it's ok if the groups already exist
+    run_django_manage_command("plom_create_groups")
     # if not have_users:
     if not have_db:
         run_django_manage_command("plom_make_first_users --no-admin-password")

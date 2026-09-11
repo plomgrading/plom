@@ -17,6 +17,8 @@ class Command(BaseCommand):
 
     Any existing superusers will be automatically added to the admin
     group (but you can add others later).
+
+    Idempotent - can be run multiple times without raising errors.
     """
 
     def handle(self, *args, **options):
