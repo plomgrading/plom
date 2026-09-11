@@ -231,9 +231,8 @@ def main():
 
     # Idempotent - it's ok if the groups already exist
     run_django_manage_command("plom_create_groups")
-    # if not have_users:
-    if not have_db:
-        run_django_manage_command("plom_make_first_users --no-admin-password")
+    # Idempotent - it's ok if an admin and/or manager account already exists
+    run_django_manage_command("plom_make_first_users --no-admin-password")
 
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 
