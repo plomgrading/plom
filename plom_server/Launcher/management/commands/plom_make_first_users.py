@@ -13,7 +13,14 @@ from plom_server.Authentication.services import AuthService
 
 
 class Command(BaseCommand):
-    """Create the admin and manager users."""
+    """Creates admin and manager users if none exist."""
+
+    help = """
+        Creates a starting manager and admin account if there aren't any existing
+        manager or admin accounts.
+        If there are existing manager or admin accounts, logs a message to stder and
+        exits with code 0 (no error). In this way, the command is idempotent.
+    """
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Process commandline arguments."""
@@ -42,6 +49,7 @@ class Command(BaseCommand):
                 password reset links.
             """,
         )
+
         m_group = parser.add_mutually_exclusive_group()
         m_group.add_argument(
             "--manager-login",
@@ -57,6 +65,7 @@ class Command(BaseCommand):
                 a password reset link.
             """,
         )
+
         parser.add_argument(
             "--port",
             help="""
@@ -71,7 +80,9 @@ class Command(BaseCommand):
     def create_admin(self, username: str, password: str | None = None) -> User:
         """Create an admin user."""
         if User.objects.filter(is_superuser=True).count() > 0:
-            raise CommandError("Cannot create admin-user, they already exist.")
+            raise CommandError(
+                "Cannot create admin user, they already exist.", returncode=0
+            )
 
         if not Group.objects.filter(name="admin").exists():
             raise CommandError(
@@ -90,67 +101,80 @@ class Command(BaseCommand):
         """Create a manager user."""
         if User.objects.filter(groups__name="manager").exists():
             raise CommandError(
-                "Cannot initialize server - manager user already exists."
+                "Cannot create manager user, they already exists.", returncode=0
             )
         try:
             return AuthService.create_manager_user(username, password=password)
         except ValueError as e:
             raise CommandError(e) from None
 
+    def _create_user(
+        self,
+        *,
+        kind: str,
+        default_username: str,
+        force_password: bool,
+        login_credentials: tuple[str, str] | None,
+        no_password: bool = False,
+        port: str = "",
+    ) -> str:
+        """Create a manager or admin user and return a string with login details."""
+        out = f"Make {kind} user\n"
+        if kind == "manager":
+            _make_user = self.create_first_manager
+        elif kind == "admin":
+            _make_user = self.create_admin
+        else:
+            raise CommandError(f'kind "{kind}" is not valid')
+
+        if no_password:
+            username = default_username
+            _make_user(username)
+            out += "v" * 40 + "\n"
+            out += f"{kind} username: {username}\n"
+            out += f"{kind} password: [NONE]\n"
+            out += "^" * 40 + "\n"
+        elif login_credentials is None:
+            out += f"No {kind} login details provided: autogenerating...\n"
+            username = default_username
+            if force_password:
+                password = simple_password(6)
+                _make_user(username, password=password)
+            else:
+                user_obj = _make_user(username)
+                password = AuthService.generate_link(user_obj, port=port)
+            out += "v" * 40 + "\n"
+            out += f"{kind} username: {username}\n"
+            out += f"{kind} password: {password}\n"
+            out += "^" * 40 + "\n"
+        else:
+            username, password = login_credentials
+            _make_user(username, password=password)
+            out += "v" * 40 + "\n"
+            out += f"{kind} username: {username}\n"
+            out += f"{kind} password: [as provided on command line]\n"
+            out += "^" * 40 + "\n"
+        return out
+
     @transaction.atomic(durable=True)
     def handle(self, *args, **options):
         """Make users for the plom-server."""
         port = options["port"] or ""
-        # generate passwords if no info is provided via the commandline
-        manager_string = "Make manager user\n"
-        if options["manager_login"] is None:
-            manager_string += "No manager login details provided: autogenerating...\n"
-            manager_username = "manager"
-            # check if passwords should be generated, or reset links should be provided
-            if options["force_manager_password"]:
-                manager_password = simple_password(6)
-                self.create_first_manager(manager_username, password=manager_password)
-            else:
-                manager_obj = self.create_first_manager(manager_username)
-                manager_password = AuthService.generate_link(manager_obj, port=port)
-            manager_string += "v" * 40 + "\n"
-            manager_string += f"Manager username: {manager_username}\n"
-            manager_string += f"Manager password: {manager_password}\n"
-            manager_string += "^" * 40 + "\n"
-        else:
-            manager_username, manager_password = options["manager_login"]
-            self.create_first_manager(manager_username, password=manager_password)
-            manager_string += "v" * 40 + "\n"
-            manager_string += f"Manager username: {manager_username}\n"
-            manager_string += "Manager password: [as provided on command line]\n"
-            manager_string += "^" * 40 + "\n"
-        self.stdout.write(manager_string)
 
-        admin_string = "Make admin user\n"
-        if options["no_admin_password"]:
-            admin_username = "admin"
-            admin_obj = self.create_admin(username=admin_username)
-            admin_string += "v" * 40 + "\n"
-            admin_string += f"Admin username: {admin_username}\n"
-            admin_string += "Admin password: [NONE]\n"
-            admin_string += "^" * 40 + "\n"
-        elif options["admin_login"] is None:
-            admin_string += "No admin login details provided: autogenerating...\n"
-            admin_username = "admin"
-            # check if passwords should be generated, or reset links should be provided
-            if options["force_admin_password"]:
-                admin_password = simple_password(6)
-                self.create_admin(username=admin_username, password=admin_password)
-            else:
-                admin_obj = self.create_admin(username=admin_username)
-                admin_password = AuthService.generate_link(admin_obj, port=port)
-            admin_string += "v" * 40 + "\n"
-            admin_string += f"Admin username: {admin_username}\n"
-            admin_string += f"Admin password: {admin_password}\n"
-            admin_string += "^" * 40 + "\n"
-        else:
-            admin_username, admin_password = options["admin_login"]
-            self.create_admin(username=admin_username, password=admin_password)
-            manager_string += f"Admin username: {admin_username}\n"
-            manager_string += "Admin password: [as provided on command line]\n"
-        self.stdout.write(admin_string)
+        manager_str = self._create_user(
+            kind="manager",
+            default_username="manager",
+            force_password=options["force_manager_password"],
+            login_credentials=options["manager_login"],
+            port=port,
+        )
+        admin_str = self._create_user(
+            kind="admin",
+            default_username="admin",
+            force_password=options["force_admin_password"],
+            login_credentials=options["admin_login"],
+            no_password=options["no_admin_password"],
+            port=port,
+        )
+        self.stdout.write(manager_str)
+        self.stdout.write(admin_str)
