@@ -30,7 +30,7 @@ django-tables2==3.0.1
 djangorestframework==3.18.1
 exif==1.6.1
 file-magic==0.4.1
-gunicorn==26.0.0
+gunicorn==26.2.0
 imutils==0.5.4
 matplotlib==3.10.9
 model-bakery==1.24.0
