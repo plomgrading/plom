@@ -639,9 +639,8 @@ class ScanService:
         """Parse more info from QR codes extracted by QRextract."""
         qr_codes_w_more_info = {}
         for key, qrcode in qr_codes.items():
-            # note from legacy-scan code, tpv_signature is the full raw
-            # "TTTTTPPPVVOCCCCCC" string while tpv refers to "TTTTTPPPVV"
-            raw_qr_string = qrcode.get("tpv_signature", None)
+            # "TTTTTPPPVVOCCCCCC"
+            raw_qr_string = qrcode.get("raw_qr_string", None)
             if raw_qr_string is None:
                 continue
             qr_code_dict = {
@@ -656,6 +655,7 @@ class ScanService:
                     paper_id, page_num, version_num, public_code, corner = parseTPV(
                         raw_qr_string
                     )
+                    # get the "TTTTTPPPVV" part
                     tpv = getPaperPageVersion(raw_qr_string)
                     qr_code_dict.update(
                         {

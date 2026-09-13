@@ -21,16 +21,16 @@ def test_qr_reads_from_image() -> None:
     q = QRextract(im)
     rot = 0
     assert not q["NE"]  # staple
-    assert q["NW"]["tpv_signature"] == "00002806012823730"
+    assert q["NW"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["NW"]["x"], 126) < 0.01
     assert relative_error(q["NW"]["y"], 139) < 0.01
     assert abs(q["NW"]["orientation"] - rot) < 0.05
-    assert q["SE"]["tpv_signature"] == "00002806014823730"
+    assert q["SE"]["raw_qr_string"] == "00002806014823730"
     assert relative_error(q["SE"]["x"], 1419) < 0.001
     assert relative_error(q["SE"]["y"], 1861) < 0.001
     assert abs(q["SE"]["orientation"] - rot) < 0.05
 
-    assert q["SW"]["tpv_signature"] == "00002806013823730"
+    assert q["SW"]["raw_qr_string"] == "00002806013823730"
     assert relative_error(q["SW"]["x"], 126) < 0.01
     assert relative_error(q["SW"]["y"], 1861) < 0.001
     assert abs(q["SW"]["orientation"] - rot) < 0.05
@@ -42,15 +42,15 @@ def test_qr_reads_slight_rotate() -> None:
     im = im.rotate(rot, expand=True)
     q = QRextract(im)
     assert not q["NE"]
-    assert q["NW"]["tpv_signature"] == "00002806012823730"
+    assert q["NW"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["NW"]["x"], 148) < 0.01
     assert relative_error(q["NW"]["y"], 384) < 0.01
     assert abs(q["NW"]["orientation"] - rot) < 0.05
-    assert q["SE"]["tpv_signature"] == "00002806014823730"
+    assert q["SE"]["raw_qr_string"] == "00002806014823730"
     assert relative_error(q["SE"]["x"], 1720) < 0.001
     assert relative_error(q["SE"]["y"], 1856) < 0.001
     assert abs(q["SE"]["orientation"] - rot) < 0.05
-    assert q["SW"]["tpv_signature"] == "00002806013823730"
+    assert q["SW"]["raw_qr_string"] == "00002806013823730"
     assert relative_error(q["SW"]["x"], 447) < 0.01
     assert relative_error(q["SW"]["y"], 2080) < 0.001
     assert abs(q["SW"]["orientation"] - rot) < 0.05
@@ -62,15 +62,15 @@ def test_qr_reads_upside_down() -> None:
     im = im.rotate(rot)
     q = QRextract(im)
     assert not q["SW"]
-    assert q["SE"]["tpv_signature"] == "00002806012823730"
+    assert q["SE"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["SE"]["x"], 1420) < 0.001
     assert relative_error(q["SE"]["y"], 1861) < 0.001
     assert abs(q["SE"]["orientation"] - rot) % 360 < 0.05
-    assert q["NW"]["tpv_signature"] == "00002806014823730"
+    assert q["NW"]["raw_qr_string"] == "00002806014823730"
     assert relative_error(q["NW"]["x"], 127) < 0.01
     assert relative_error(q["NW"]["y"], 139) < 0.01
     assert abs(q["NW"]["orientation"] - rot) % 360 < 0.05
-    assert q["NE"]["tpv_signature"] == "00002806013823730"
+    assert q["NE"]["raw_qr_string"] == "00002806013823730"
     assert relative_error(q["NE"]["x"], 1420) < 0.001
     assert relative_error(q["NE"]["y"], 139) < 0.01
     assert abs(q["NE"]["orientation"] - rot) % 360 < 0.05

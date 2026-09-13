@@ -69,9 +69,9 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
 
     Returns:
         A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
-        a 'tpv_signature', 'x', 'y' (the horizontal and vertical pixel coordinates
-        of the QR code), 'orientation' (the rotation ccw of the QR code, currently
-        an integer).
+        'raw_qr_stinrg', 'x', 'y' (the horizontal and vertical pixel coordinates
+        of the QR code), 'orientation' (the rotation ccw of the QR code in degrees,
+        currently an integer).
         The dict is empty if no QR codes found in that corner.
     """
     cornerQR: dict[str, dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
@@ -94,7 +94,7 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
         if cnr in cornerQR.keys():
             cornerQR[cnr].update(
                 {
-                    "tpv_signature": qr.text,
+                    "raw_qr_string": qr.text,
                     "x": x_coord,
                     "y": y_coord,
                     "orientation": -qr.orientation,  # Zxing has + meaning cw (!)

@@ -79,17 +79,17 @@ def test_stamp_QRs(tmp_path) -> None:
     d = QRextract(pg_files[p - 1])
     assert d is not None
     assert not d["NW"]
-    assert d["NE"]["tpv_signature"] == "00006003011123456"
-    assert d["SW"]["tpv_signature"] == "00006003013123456"
-    assert d["SE"]["tpv_signature"] == "00006003014123456"
+    assert d["NE"]["raw_qr_string"] == "00006003011123456"
+    assert d["SW"]["raw_qr_string"] == "00006003013123456"
+    assert d["SE"]["raw_qr_string"] == "00006003014123456"
 
     p = 4
     d = QRextract(pg_files[p - 1])
     assert d is not None
     assert not d["NE"]
-    assert d["NW"]["tpv_signature"] == "00006004012123456"
-    assert d["SW"]["tpv_signature"] == "00006004013123456"
-    assert d["SE"]["tpv_signature"] == "00006004014123456"
+    assert d["NW"]["raw_qr_string"] == "00006004012123456"
+    assert d["SW"]["raw_qr_string"] == "00006004013123456"
+    assert d["SE"]["raw_qr_string"] == "00006004014123456"
 
 
 def test_stamp_QRs_version_zero_means_ignore_version(tmp_path) -> None:
@@ -105,9 +105,9 @@ def test_stamp_QRs_version_zero_means_ignore_version(tmp_path) -> None:
 
     d = QRextract(pg_files[p - 1])
     assert not d["NW"]
-    assert d["NE"]["tpv_signature"] == "00006003001123456"
-    assert d["SW"]["tpv_signature"] == "00006003003123456"
-    assert d["SE"]["tpv_signature"] == "00006003004123456"
+    assert d["NE"]["raw_qr_string"] == "00006003001123456"
+    assert d["SW"]["raw_qr_string"] == "00006003003123456"
+    assert d["SE"]["raw_qr_string"] == "00006003004123456"
 
 
 def test_qr_stamp_all_pages(tmp_path) -> None:
