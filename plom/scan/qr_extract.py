@@ -55,9 +55,7 @@ def findCorner(qr: zxingcpp.Result, dim: tuple[int, int]):
     return NS + EW, mx, my
 
 
-def QRextract(
-    image, *, try_harder: bool = True, rotation: int = 0
-) -> dict[str, dict[str, Any]]:
+def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
     """Decode the QR codes in an image.
 
     Args:
@@ -66,10 +64,6 @@ def QRextract(
             also be an instance of Pillow's `Image`.
 
     Keyword Args:
-        try_harder (bool): Try to find QRs on a smaller resolution.
-            Defaults to True.  Sometimes this seems work around high
-            failure rates in the synthetic images used in CI testing.
-            Details below.
         rotation (int): Rotate the image by 90, -90, 180 or 270 degrees
             counterclockwise prior to reading the QR codes. Defaults to 0.
 
@@ -79,17 +73,6 @@ def QRextract(
         of the QR code), 'orientation' (the rotation ccw of the QR code, currently
         an integer).
         The dict is empty if no QR codes found in that corner.
-
-    Without the `try_harder` flag, we observe high failure rates when
-    the vertical resolution is near 2000 pixels (our current default).
-    This is Issue #967 [1].  It is not prevalent in real-life images,
-    but causes a roughly 5%-10% failure rate in our synthetic CI runs.
-    The workaround (on by default) uses Pillow's `.reduce()` to quickly
-    downscale the image.  This does increase the run time (have not
-    checked by how much: I assume between 25% and 50%) so if that is
-    more of a concern than error rate, turn off this flag.
-
-    [1] https://gitlab.com/plom/plom/-/issues/967
     """
     cornerQR: dict[str, dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
@@ -117,42 +100,5 @@ def QRextract(
                     "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
                 }
             )
-
-    if try_harder:
-        # Try again on smaller image: originally for pyzbar (Issue #967), but I
-        # think I've seen this find a QR-code missed by the above since
-        # switching to ZXing-cpp (Issue #2520), so we'll leave it.
-        try:
-            image = image.reduce(2)
-        except ValueError:
-            # mode-P (paletted pngs) fail to reduce, Issue #2631
-            qrlist = []
-        else:
-            qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
-        for qr in qrlist:
-            cnr, x_coord, y_coord = findCorner(qr, image.size)
-            if cnr in cornerQR.keys():
-                prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
-                if not prev_tpv_signature:
-                    # TODO: log these failures?
-                    # print(
-                    #     f'Found QR-code "{qr.text}" at {cnr} on reduced image, '
-                    #     "not found at original size"
-                    # )
-                    cornerQR[cnr].update(
-                        {
-                            "tpv_signature": qr.text,
-                            "x": 2 * x_coord,  # Issue #4279.
-                            "y": 2 * y_coord,
-                            "orientation": -qr.orientation,
-                        }
-                    )
-                elif qr.text == prev_tpv_signature:
-                    # no-op, we already read this at the previous resolution
-                    pass
-                else:
-                    # TODO: found a different QR code at lower resolution!
-                    # For now, just ignore and keep the previous hires result
-                    pass
 
     return cornerQR
