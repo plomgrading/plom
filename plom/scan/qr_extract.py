@@ -13,29 +13,20 @@ from PIL import Image
 from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 
-def findCorner(qr: zxingcpp.Result, dim: tuple[int, int]):
+def _findCorner(mx: float, my: float, dim: tuple[int, int]):
     """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
 
     Args:
-        qr: object containing the information stored in the QR code
+        mx: floating point x coord, centre of the QR code.
+        my: floating point y coord, centre of the QR code.
         dim: pair of ints that correspond to the dimensions of
             the image that contains the QR code.
 
     Returns:
-        tuple: a triple ``(str, mx, my)`` where ``str`` is a 2-char string, one of
-        "NE", "NW", "SW", "SE", depending on the relative location of the QR code,
-        or "??" if the QR code cannot be detected. ``mx, my`` are either ints that correspond
-        to the (x, y) coordinates of the QR code's centre location in the image, or None
-        if the QR code is not detected and there are no coordinates to return.
+        A 2-char string, one of "NE", "NW", "SW", "SE", depending on the
+        relative location of the QR code, or "??" if the QR code cannot
+        be assigned a corner,
     """
-    qr_polygon = [
-        qr.position.top_left,
-        qr.position.top_right,
-        qr.position.bottom_left,
-        qr.position.bottom_right,
-    ]
-    mx = mean([p.x for p in qr_polygon])
-    my = mean([p.y for p in qr_polygon])
     width, height = dim
 
     NS = "?"
@@ -45,14 +36,14 @@ def findCorner(qr: zxingcpp.Result, dim: tuple[int, int]):
     elif my > 0.6 * height:
         NS = "S"
     else:
-        return "??", None, None
+        return "??"
     if mx < 0.4 * width:
         EW = "W"
     elif mx > 0.6 * width:
         EW = "E"
     else:
-        return "??", None, None
-    return NS + EW, mx, my
+        return "??"
+    return NS + EW
 
 
 def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
@@ -73,8 +64,9 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
         of the QR code), 'orientation' (the rotation ccw of the QR code in degrees,
         currently an integer).
         The dict is empty if no QR codes found in that corner.
+        TODO: if multiple QR codes are found in one corner...?!?
     """
-    cornerQR: dict[str, dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
+    cornerQR: dict[str, Any] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}, "others": []}
 
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
@@ -90,15 +82,28 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
     qr_code_formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
     qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
     for qr in qrlist:
-        cnr, x_coord, y_coord = findCorner(qr, image.size)
-        if cnr in cornerQR.keys():
-            cornerQR[cnr].update(
-                {
-                    "raw_qr_string": qr.text,
-                    "x": x_coord,
-                    "y": y_coord,
-                    "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
-                }
-            )
+        qr_polygon = [
+            qr.position.top_left,
+            qr.position.top_right,
+            qr.position.bottom_left,
+            qr.position.bottom_right,
+        ]
+        x_coord = mean([p.x for p in qr_polygon])
+        y_coord = mean([p.y for p in qr_polygon])
+
+        d = {
+            "raw_qr_string": qr.text,
+            "x": x_coord,
+            "y": y_coord,
+            "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
+        }
+        cnr = _findCorner(x_coord, y_coord, image.size)
+        if cnr in cornerQR.keys() and not cornerQR[cnr]:
+            cornerQR[cnr].update(d)
+        else:
+            # if we find two QR codes in a corner, one of them will end up
+            # here, currently just based on whatever one we look at first
+            # TODO: which seems rather poorly posed.
+            cornerQR["others"].append(d)
 
     return cornerQR

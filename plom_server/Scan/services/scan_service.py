@@ -559,7 +559,9 @@ class ScanService:
 
         Return:
             A dict keyed by "NE", "NW", "SE", "WE" with detailed info of what
-            was read from the QR codes.  For example:
+            was read from the QR codes.  Any QR codes that cannot be uniquely
+            assigned to corners will appear in a list under the key "others".
+            For example:
             {
                 'NE': {
                     'page_type': 'plom_qr',
