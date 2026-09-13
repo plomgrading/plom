@@ -634,37 +634,28 @@ class ScanService:
     @staticmethod
     def _parse_more_from_qr_codes(
         qr_codes: dict[str, dict[str, Any]],
-    ) -> dict[str, Any]:
+    ) -> dict[str, dict[str, Any]]:
         """Parse more info from QR codes extracted by QRextract."""
-        # ++++++++++++++++++++++
-        # TODO - hack this to handle tpv and plomX pages.
-        # Need to add a tpv-utils method to decide if tpv or plomX and then
-        # act accordingly here.
-        # ++++++++++++++++++++++
+        qr_codes_w_more_info = {}
+        for key, qrcode in qr_codes.items():
+            # note from legacy-scan code, tpv_signature is the full raw
+            # "TTTTTPPPVVOCCCCCC" string while tpv refers to "TTTTTPPPVV"
+            raw_qr_string = qrcode.get("tpv_signature", None)
+            if raw_qr_string is None:
+                continue
+            qr_code_dict = {
+                "raw_qr_string": raw_qr_string,
+                "x_coord": qrcode.get("x"),
+                "y_coord": qrcode.get("y"),
+                "orientation": qrcode.get("orientation"),
+            }
 
-        groupings = {}
-        for direction_str, qrcode in qr_codes.items():
             if True:  # TODO: avoiding big diff of reindent
-                # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVOCCCCCC" qr-string
-                # while tpv refers to "TTTTTPPPVV"
-                raw_qr_string = qrcode.get("tpv_signature", None)
-                if raw_qr_string is None:
-                    continue
-                x_coord = qrcode.get("x")
-                y_coord = qrcode.get("y")
-                orientation = qrcode.get("orientation")
-                qr_code_dict = {
-                    "raw_qr_string": raw_qr_string,
-                    "x_coord": x_coord,
-                    "y_coord": y_coord,
-                    "orientation": orientation,
-                }
-
                 if isValidTPV(raw_qr_string):
                     paper_id, page_num, version_num, public_code, corner = parseTPV(
                         raw_qr_string
                     )
-                    tpv = getPaperPageVersion(qrcode.get("tpv_signature"))
+                    tpv = getPaperPageVersion(raw_qr_string)
                     qr_code_dict.update(
                         {
                             "page_type": "plom_qr",
@@ -713,8 +704,8 @@ class ScanService:
                             "quadrant": "0",
                         }
                     )
-                groupings[direction_str] = qr_code_dict
-        return groupings
+            qr_codes_w_more_info[key] = qr_code_dict
+        return qr_codes_w_more_info
 
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
