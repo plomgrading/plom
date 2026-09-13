@@ -61,11 +61,10 @@ class PreparationLandingTests(TestCase):
     def test_after_spec_made(self) -> None:
         """Test the seatbelts after a specification is saved.
 
-        Tt should reveal source versions and QV map.
+        It should reveal source versions and QV map.
         """
         spec_path = resources.files(useful_files) / "testing_test_spec.toml"
-        # mypy stumbling over Traverseable?
-        SpecificationService.install_spec_from_toml_file(spec_path)  # type: ignore[arg-type]
+        SpecificationService.install_spec_from_toml_file(spec_path)
 
         landing = PreparationLandingView()
         context = landing.build_context()
