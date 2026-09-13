@@ -98,7 +98,12 @@ def _QRextract(image, *, rotation: int = 0) -> list[dict[str, Any]]:
     # Otherwise, zxing-cpp might hide error messages, Issue #2597
     image.load()
 
-    qr_code_formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
+    # TODO: new kwargs?  only_QRCodeModel2, only_MicroQRCode?
+    qr_code_formats = [
+        zxingcpp.BarcodeFormat.QRCodeModel2,
+        zxingcpp.BarcodeFormat.MicroQRCode,
+    ]
+
     qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
     list_of_dicts = []
     for qr in qrlist:
