@@ -18,6 +18,7 @@ import random
 import tempfile
 import time
 from datetime import datetime
+from importlib.resources.abc import Traversable
 from io import BytesIO
 from math import ceil
 from pathlib import Path
@@ -544,7 +545,7 @@ class ScanService:
 
     @classmethod
     def parse_qr_codes(
-        cls, image_path: str | pathlib.Path, rotation: int = 0
+        cls, image_path: str | pathlib.Path | Traversable, rotation: int = 0
     ) -> dict[str, Any]:
         """Parse Plom's QR code info from an image, optionally with a rotation pre-applied.
 
