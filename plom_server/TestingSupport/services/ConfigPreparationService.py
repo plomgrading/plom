@@ -35,8 +35,7 @@ def create_specification(config: PlomServerConfig):
             spec_src = resources.files(useful_files) / "testing_test_spec.toml"
         else:
             spec_src = config.parent_dir / spec_path
-        # mypy stumbling over Traverseable?
-        SpecificationService.install_spec_from_toml_file(spec_src)  # type: ignore[arg-type]
+        SpecificationService.install_spec_from_toml_file(spec_src)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 
@@ -47,8 +46,7 @@ def upload_test_sources(config: PlomServerConfig) -> None:
     if source_paths == "demo":
         version1 = resources.files(useful_files) / "test_version1.pdf"
         version2 = resources.files(useful_files) / "test_version2.pdf"
-        # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
-        source_paths = [version1, version2]  # type: ignore[list-item]
+        source_paths = [version1, version2]
 
     try:
         assert isinstance(source_paths, list)
@@ -62,8 +60,7 @@ def upload_classlist(config: PlomServerConfig):
     """Upload classlist specified in a config."""
     classlist_path = config.classlist
     if classlist_path == "demo":
-        # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
-        classlist_path = resources.files(useful_files) / "cl_for_demo.csv"  # type: ignore[assignment]
+        classlist_path = resources.files(useful_files) / "cl_for_demo.csv"
 
     assert classlist_path is not None
     assert not isinstance(classlist_path, str)
