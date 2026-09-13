@@ -96,8 +96,8 @@ class RectangleServiceTests(TestCase):
         img_size = (img.width, img.height)
         img_bytes = img_path.read_bytes()
 
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
+        _codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_code(_codes)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
@@ -115,8 +115,8 @@ class RectangleServiceTests(TestCase):
     def test_rect_affine_matrix_minimal_correction(self) -> None:
         """Close to identity for affine transformation matrix."""
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
+        _codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_code(_codes)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)

@@ -543,11 +543,11 @@ class ScanService:
         return StagingBundle.objects.all().exists()
 
     @staticmethod
-    def parse_qr_code(list_qr_codes: list[dict[str, Any]]) -> dict[str, Any]:
-        """Parse QR codes into list of dictionaries.
+    def parse_qr_code(qr_codes: dict[str, dict[str, Any]]) -> dict[str, Any]:
+        """Parse more info from QR codes.
 
         Args:
-            list_qr_codes: QR codes returned from QRextract() method as a dictionary
+            qr_codes: QR codes returned from QRextract() method as a dictionary
 
         Returns:
             groupings: (dict) Set of data from raw-qr-strings
@@ -621,6 +621,10 @@ class ScanService:
                 }
 
         """
+        if isinstance(qr_codes, list):
+            # temporary hack until we clean up all the single-item list callers
+            (qr_codes,) = qr_codes
+
         # ++++++++++++++++++++++
         # TODO - hack this to handle tpv and plomX pages.
         # Need to add a tpv-utils method to decide if tpv or plomX and then
@@ -628,17 +632,16 @@ class ScanService:
         # ++++++++++++++++++++++
 
         groupings = {}
-        # Note: the outer loop happens exactly once, TODO: consider flattening this code.
-        for page in range(len(list_qr_codes)):
-            for quadrant in list_qr_codes[page]:
+        for direction_str, qrcode in qr_codes.items():
+            if True:  # TODO: avoiding big diff of reindent
                 # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVOCCCCCC" qr-string
                 # while tpv refers to "TTTTTPPPVV"
-                raw_qr_string = list_qr_codes[page][quadrant].get("tpv_signature", None)
+                raw_qr_string = qrcode.get("tpv_signature", None)
                 if raw_qr_string is None:
                     continue
-                x_coord = list_qr_codes[page][quadrant].get("x")
-                y_coord = list_qr_codes[page][quadrant].get("y")
-                orientation = list_qr_codes[page][quadrant].get("orientation")
+                x_coord = qrcode.get("x")
+                y_coord = qrcode.get("y")
+                orientation = qrcode.get("orientation")
                 qr_code_dict = {
                     "raw_qr_string": raw_qr_string,
                     "x_coord": x_coord,
@@ -650,9 +653,7 @@ class ScanService:
                     paper_id, page_num, version_num, public_code, corner = parseTPV(
                         raw_qr_string
                     )
-                    tpv = getPaperPageVersion(
-                        list_qr_codes[page][quadrant].get("tpv_signature")
-                    )
+                    tpv = getPaperPageVersion(qrcode.get("tpv_signature"))
                     qr_code_dict.update(
                         {
                             "page_type": "plom_qr",
@@ -701,7 +702,7 @@ class ScanService:
                             "quadrant": "0",
                         }
                     )
-                groupings[quadrant] = qr_code_dict
+                groupings[direction_str] = qr_code_dict
         return groupings
 
     def read_qr_codes(self, bundle_pk: int) -> None:
@@ -2117,8 +2118,7 @@ def huey_child_parse_qr_code(
     image_path = staging_img.baseimage.image_file.path
 
     code_dict = QRextract(image_path)
-
-    page_data = ScanService.parse_qr_code([code_dict])
+    page_data = ScanService.parse_qr_code(code_dict)
 
     if _debug_be_flaky:
         log.debug("Huey debug, random sleep in task %d", task.id)
@@ -2132,9 +2132,10 @@ def huey_child_parse_qr_code(
     # rotations in the future, such as `plom.scan.rotate_bitmap`.
 
     # Re-read QR codes if the page image needs to be rotated
+    # This doesn't seem very efficient but its easy
     if rotation and rotation != 0:
         code_dict = QRextract(image_path, rotation=rotation)
-        page_data = ScanService.parse_qr_code([code_dict])
+        page_data = ScanService.parse_qr_code(code_dict)
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
     # Return the parsed QR codes for parent process to store in db
