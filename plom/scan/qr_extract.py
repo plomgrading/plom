@@ -55,19 +55,38 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
             also be an instance of Pillow's `Image`.
 
     Keyword Args:
-        rotation (int): Rotate the image by 90, -90, 180 or 270 degrees
+        rotation: Rotate the image by 90, -90, 180 or 270 degrees
             counterclockwise prior to reading the QR codes. Defaults to 0.
 
     Returns:
         A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
-        'raw_qr_stinrg', 'x', 'y' (the horizontal and vertical pixel coordinates
+        'raw_qr_string', 'x', 'y' (the horizontal and vertical pixel coordinates
         of the QR code), 'orientation' (the rotation ccw of the QR code in degrees,
         currently an integer).
         The dict is empty if no QR codes found in that corner.
-        TODO: if multiple QR codes are found in one corner...?!?
+        Any QR codes that aren't roughly in a corner will appear with keys
+        "other1", "other2", etc.  If two or more QR codes are in the same
+        broadly-defined corner, one will appear with the proper "NW", etc key
+        and the others will be in the "other*" list: its not well-defined
+        which appears where, which kinda sucks.
     """
-    cornerQR: dict[str, Any] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}, "others": []}
+    cornerQR: dict[str, Any] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
+    c = 0
+    list_of_dicts = _QRextract(image, rotation=rotation)
+    for qr in list_of_dicts:
+        corner = qr["corner"]
+        if corner in cornerQR.keys() and not cornerQR[corner]:
+            # TODO: if there were two, keep last one
+            cornerQR[corner] = qr
+        else:
+            c += 1
+            cornerQR[f"other{c}"] = qr
+    return cornerQR
+
+
+def _QRextract(image, *, rotation: int = 0) -> list[dict[str, Any]]:
+    """Decode the QR codes in an image."""
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
 
@@ -81,6 +100,7 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
 
     qr_code_formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
     qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
+    list_of_dicts = []
     for qr in qrlist:
         qr_polygon = [
             qr.position.top_left,
@@ -96,14 +116,7 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
             "x": x_coord,
             "y": y_coord,
             "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
+            "corner": _findCorner(x_coord, y_coord, image.size),
         }
-        cnr = _findCorner(x_coord, y_coord, image.size)
-        if cnr in cornerQR.keys() and not cornerQR[cnr]:
-            cornerQR[cnr].update(d)
-        else:
-            # if we find two QR codes in a corner, one of them will end up
-            # here, currently just based on whatever one we look at first
-            # TODO: which seems rather poorly posed.
-            cornerQR["others"].append(d)
-
-    return cornerQR
+        list_of_dicts.append(d)
+    return list_of_dicts
