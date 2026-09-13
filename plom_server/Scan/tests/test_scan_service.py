@@ -202,8 +202,7 @@ class MoreScanServiceTests(TestCase):
 
             codes_flipped = ScanService.parse_qr_codes(image_flipped_path)
 
-            pipr = PageImageProcessor()
-            rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
+            rotation = PageImageProcessor.get_rotation_angle_from_QRs(codes_flipped)
             self.assertEqual(rotation, 180)
 
             # read QR codes a second time due to rotation of image
@@ -244,8 +243,7 @@ class MoreScanServiceTests(TestCase):
 
             codes_flipped = ScanService.parse_qr_codes(image_flipped_path)
 
-            pipr = PageImageProcessor()
-            rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
+            rotation = PageImageProcessor.get_rotation_angle_from_QRs(codes_flipped)
             self.assertEqual(rotation, 180)
 
             with open(image_flipped_path, "rb") as f:
@@ -289,8 +287,7 @@ class MoreScanServiceTests(TestCase):
 
             codes_exif_180 = ScanService.parse_qr_codes(image_exif_180_path)
 
-            pipr = PageImageProcessor()
-            rotation = pipr.get_rotation_angle_from_QRs(codes_exif_180)
+            rotation = PageImageProcessor.get_rotation_angle_from_QRs(codes_exif_180)
             self.assertEqual(rotation, 180)
 
             with open(image_exif_180_path, "rb") as f:
@@ -316,8 +313,7 @@ class MoreScanServiceTests(TestCase):
 
             codes_flipped = ScanService.parse_qr_codes(image_flipped_path)
 
-            pipr = PageImageProcessor()
-            rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
+            rotation = PageImageProcessor.get_rotation_angle_from_QRs(codes_flipped)
             self.assertEqual(rotation, 0)
 
             with open(image_flipped_path, "rb") as f:
@@ -357,8 +353,7 @@ class MoreScanServiceTests(TestCase):
 
             codes_90_rot = ScanService.parse_qr_codes(image_exif_90_path)
 
-            pipr = PageImageProcessor()
-            rotation = pipr.get_rotation_angle_from_QRs(codes_90_rot)
+            rotation = PageImageProcessor.get_rotation_angle_from_QRs(codes_90_rot)
             self.assertEqual(rotation, -90)
 
             with open(image_exif_90_path, "rb") as f:
