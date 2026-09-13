@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025-2026 Aidan Murphy
 
@@ -24,7 +24,7 @@ from model_bakery import baker
 from PIL import Image
 
 from plom.common.tpv_utils import encodePaperPageVersion
-from plom.scan import QRextract, pdfmucker, rotate
+from plom.scan import pdfmucker, rotate
 
 from .. import tests as _Scan_tests
 
@@ -130,8 +130,7 @@ class MoreScanServiceTests(TestCase):
     def test_parse_qr_codes(self) -> None:
         """Test QR codes read and parsed correctly."""
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes = ScanService.parse_qr_codes(img_path)
 
         assert parsed_codes
         # note this info is highly specific to the tested image
@@ -191,8 +190,7 @@ class MoreScanServiceTests(TestCase):
     def test_parse_qr_codes_png_rotated_180(self) -> None:
         """Test QR codes read correctly after rotation."""
         image_upright_path = resources.files(_Scan_tests) / "id_page_img.png"
-        qrs_upright = QRextract(image_upright_path)
-        codes_upright = ScanService.parse_qr_code([qrs_upright])
+        codes_upright = ScanService.parse_qr_codes(image_upright_path)
         # mypy complains about Traversable
         # assert isinstance(image_upright_path, (Path, resources.abc.Traversable))
         image_upright = Image.open(image_upright_path)  # type: ignore[arg-type]
@@ -202,16 +200,16 @@ class MoreScanServiceTests(TestCase):
             image_flipped = image_upright.rotate(180)
             image_flipped.save(image_flipped_path)
 
-            qrs_flipped = QRextract(image_flipped_path)
-            codes_flipped = ScanService.parse_qr_code([qrs_flipped])
+            codes_flipped = ScanService.parse_qr_codes(image_flipped_path)
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
             self.assertEqual(rotation, 180)
 
             # read QR codes a second time due to rotation of image
-            qrs_flipped = QRextract(image_flipped_path, rotation=rotation)
-            codes_flipped = ScanService.parse_qr_code([qrs_flipped])
+            codes_flipped = ScanService.parse_qr_codes(
+                image_flipped_path, rotation=rotation
+            )
 
         xy_upright = []
         xy_flipped = []
@@ -231,8 +229,7 @@ class MoreScanServiceTests(TestCase):
     def test_parse_qr_codes_jpeg_rotated_180_no_exif(self) -> None:
         """Test QR codes are read correctly, after rotating an upside-down jpeg page image with no exif."""
         image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
-        qrs_original = QRextract(image_original_path)
-        codes_original = ScanService.parse_qr_code([qrs_original])
+        codes_original = ScanService.parse_qr_codes(image_original_path)
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
         image_original = image_original.convert("RGB")  # type: ignore[assignment]
@@ -245,8 +242,7 @@ class MoreScanServiceTests(TestCase):
                 im = exif.Image(f)
             assert not im.has_exif
 
-            qrs_flipped = QRextract(image_flipped_path)
-            codes_flipped = ScanService.parse_qr_code([qrs_flipped])
+            codes_flipped = ScanService.parse_qr_codes(image_flipped_path)
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
@@ -257,8 +253,9 @@ class MoreScanServiceTests(TestCase):
             assert not im.has_exif
 
             # read QR codes a second time due to rotation of image
-            qrs_flipped = QRextract(image_flipped_path, rotation=rotation)
-            codes_flipped = ScanService.parse_qr_code([qrs_flipped])
+            codes_flipped = ScanService.parse_qr_codes(
+                image_flipped_path, rotation=rotation
+            )
 
             xy_upright = []
             xy_flipped = []
@@ -290,8 +287,7 @@ class MoreScanServiceTests(TestCase):
                 orig_im = exif.Image(f)
             self.assertEqual(orig_im.get("orientation"), exif.Orientation.BOTTOM_RIGHT)
 
-            qrs_exif_180 = QRextract(image_exif_180_path)
-            codes_exif_180 = ScanService.parse_qr_code([qrs_exif_180])
+            codes_exif_180 = ScanService.parse_qr_codes(image_exif_180_path)
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_exif_180)
@@ -302,10 +298,9 @@ class MoreScanServiceTests(TestCase):
             self.assertEqual(im.get("orientation"), orig_im.get("orientation"))
 
     def test_parse_qr_codes_jpeg_upside_down_exif_180(self) -> None:
-        """Test ScanService.parse_qr_code() when image is upside down, but exif indicates 180 rotation."""
+        """Test parsing when image is upside down, but exif indicates 180 rotation."""
         image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
-        qrs_original = QRextract(image_original_path)
-        codes_original = ScanService.parse_qr_code([qrs_original])
+        codes_original = ScanService.parse_qr_codes(image_original_path)
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
         image_original = image_original.convert("RGB")  # type: ignore[assignment]
@@ -319,8 +314,7 @@ class MoreScanServiceTests(TestCase):
                 orig_im = exif.Image(f)
             self.assertEqual(orig_im.get("orientation"), exif.Orientation.BOTTOM_RIGHT)
 
-            qrs_flipped = QRextract(image_flipped_path)
-            codes_flipped = ScanService.parse_qr_code([qrs_flipped])
+            codes_flipped = ScanService.parse_qr_codes(image_flipped_path)
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
@@ -346,10 +340,9 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
     def test_parse_qr_codes_jpeg_exif_90(self) -> None:
-        """Test ScanService.parse_qr_code() when image exif indicates 90 counterclockwise rotation."""
+        """Test parsing when image exif indicates 90 counterclockwise rotation."""
         image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
-        qrs_original = QRextract(image_original_path)
-        codes_original = ScanService.parse_qr_code([qrs_original])
+        codes_original = ScanService.parse_qr_codes(image_original_path)
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
         image_original = image_original.convert("RGB")  # type: ignore[assignment]
@@ -362,8 +355,7 @@ class MoreScanServiceTests(TestCase):
                 orig_im = exif.Image(f)
             self.assertEqual(orig_im.get("orientation"), exif.Orientation.LEFT_BOTTOM)
 
-            qrs_90_rot = QRextract(image_exif_90_path)
-            codes_90_rot = ScanService.parse_qr_code([qrs_90_rot])
+            codes_90_rot = ScanService.parse_qr_codes(image_exif_90_path)
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_90_rot)
@@ -374,8 +366,9 @@ class MoreScanServiceTests(TestCase):
             self.assertEqual(im.get("orientation"), orig_im.get("orientation"))
 
             # read QR codes a second time due to rotation of image
-            qrs_90_rot = QRextract(image_exif_90_path, rotation=rotation)
-            codes_90_rot = ScanService.parse_qr_code([qrs_90_rot])
+            codes_90_rot = ScanService.parse_qr_codes(
+                image_exif_90_path, rotation=rotation
+            )
 
             xy_upright = []
             xy_90_rot = []
