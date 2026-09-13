@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2024, 2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2026 Jax Lim
 
@@ -9,6 +9,16 @@ from typing import Any
 
 import zxingcpp
 from PIL import Image
+
+from plom.common.tpv_utils import (
+    parseTPV,
+    parseExtraPageCode,
+    getPaperPageVersion,
+    isValidTPV,
+    isValidExtraPageCode,
+    isValidScrapPaperCode,
+    isValidBundleSeparatorPaperCode,
+)
 
 from .rotate import pil_load_with_jpeg_exif_rot_applied
 
@@ -75,7 +85,7 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
     c = 0
     list_of_dicts = _QRextract(image, rotation=rotation)
     for qr in list_of_dicts:
-        corner = qr["corner"]
+        corner = qr["corner_rough_guess"]
         if corner in cornerQR.keys() and not cornerQR[corner]:
             # TODO: if there were two, keep last one
             cornerQR[corner] = qr
@@ -121,7 +131,55 @@ def _QRextract(image, *, rotation: int = 0) -> list[dict[str, Any]]:
             "x": x_coord,
             "y": y_coord,
             "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
-            "corner": _findCorner(x_coord, y_coord, image.size),
+            "corner_rough_guess": _findCorner(x_coord, y_coord, image.size),
         }
         list_of_dicts.append(d)
     return list_of_dicts
+
+
+def parse_raw_qr_string(raw_qr_string):
+    if isValidTPV(raw_qr_string):
+        paper_id, page_num, version_num, public_code, corner = parseTPV(raw_qr_string)
+        # get the "TTTTTPPPVV" part
+        tpv = getPaperPageVersion(raw_qr_string)
+        return {
+            "page_type": "plom_qr",
+            "page_info": {
+                "paper_id": paper_id,
+                "page_num": page_num,
+                "version_num": version_num,
+                "public_code": public_code,
+            },
+            "quadrant": corner,
+            "tpv": tpv,
+        }
+
+    elif isValidExtraPageCode(raw_qr_string):
+        corner = parseExtraPageCode(raw_qr_string)
+        return {
+            "page_type": "plom_extra",
+            "quadrant": corner,
+            "tpv": "plomX",
+        }
+
+    elif isValidScrapPaperCode(raw_qr_string):
+        corner = parseExtraPageCode(raw_qr_string)
+        return {
+            "page_type": "plom_scrap",
+            "quadrant": corner,
+            "tpv": "plomS",
+        }
+
+    elif isValidBundleSeparatorPaperCode(raw_qr_string):
+        corner = parseExtraPageCode(raw_qr_string)
+        return {
+            "page_type": "plom_bundle_separator",
+            "quadrant": corner,
+            "tpv": "plomB",
+        }
+
+    else:
+        return {
+            "page_type": "invalid_qr",
+            "quadrant": "0",
+        }
