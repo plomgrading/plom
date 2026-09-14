@@ -23,8 +23,8 @@ from plom.common.tpv_utils import (
 from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 
-def _findCorner(mx: float, my: float, dim: tuple[int, int]):
-    """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
+def _find_corner(mx: float, my: float, dim: tuple[int, int]):
+    """Which corner based on the relative location of the given QR code's approximate centre.
 
     Args:
         mx: floating point x coord, centre of the QR code.
@@ -166,7 +166,7 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
             "x_coord": x_coord,
             "y_coord": y_coord,
             "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
-            "corner_guess_from_position": _findCorner(x_coord, y_coord, image.size),
+            "corner_guess_from_position": _find_corner(x_coord, y_coord, image.size),
         }
         d.update(_parse_raw_qr_string(qr.text))
         list_of_dicts.append(d)
