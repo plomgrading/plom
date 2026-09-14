@@ -214,7 +214,7 @@ class QRService:
             return any([X != lst[0] for X in lst])
 
         # check all page-types are the same
-        page_types = [parsed_qr_dict[x]["page_type"] for x in parsed_qr_dict]
+        page_types = [x["page_type"] for x in parsed_qr_dict.values()]
         # check if there is an invalid qr code on the page
         if "invalid_qr" in page_types:
             raise ValueError(
@@ -224,12 +224,14 @@ class QRService:
 
         if is_list_inconsistent(page_types):
             raise ValueError("Inconsistent QR codes - check scan for folded pages")
+
         # if it is an extra page or scrap-paper, then no further consistency checks
         if page_types[0] in ("plom_extra", "plom_scrap", "plom_bundle_separator"):
             return
+
         # must be a normal qr-coded plom-page - so make sure public-code is consistent
         # note - this does not check the code against that given by the spec.
-        codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
+        codes = [x["page_info"]["public_code"] for x in parsed_qr_dict.values()]
         if is_list_inconsistent(codes):
             raise ValueError(
                 "Inconsistent public-codes within the QR codes - "
@@ -237,25 +239,24 @@ class QRService:
             )
         # check all the same paper_id
         if is_list_inconsistent(
-            [parsed_qr_dict[x]["page_info"]["paper_id"] for x in parsed_qr_dict]
+            [x["page_info"]["paper_id"] for x in parsed_qr_dict.values()]
         ):
             raise ValueError("Inconsistent paper-numbers - check scan for folded pages")
         # check all the same page_number
         if is_list_inconsistent(
-            [parsed_qr_dict[x]["page_info"]["page_num"] for x in parsed_qr_dict]
+            [x["page_info"]["page_num"] for x in parsed_qr_dict.values()]
         ):
             raise ValueError("Inconsistent page-numbers - check scan for folded pages")
         # check all the same version_number
         if is_list_inconsistent(
-            [parsed_qr_dict[x]["page_info"]["version_num"] for x in parsed_qr_dict]
+            [x["page_info"]["version_num"] for x in parsed_qr_dict.values()]
         ):
             raise ValueError(
                 "Inconsistent version-numbers - check scan for folded pages"
             )
         # check all the same tpv - this **should** not be triggered because of previous checks
-        if is_list_inconsistent([parsed_qr_dict[x]["tpv"] for x in parsed_qr_dict]):
+        if is_list_inconsistent([x["tpv"] for x in parsed_qr_dict.values()]):
             raise ValueError("Inconsistent tpv - check scan for folded pages")
-        # check that the version in the qr-code matches the question-version-map in the system.
 
     @staticmethod
     def _check_qrs_against_spec_and_qvmap(
