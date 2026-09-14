@@ -84,7 +84,7 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
         list.
     """
     valid_corners = ("NW", "NE", "SW", "SE")
-    qr_list_by_corner = {k: [] for k in valid_corners}
+    qr_list_by_corner: dict[str, list[dict[str, Any]]] = {k: [] for k in valid_corners}
 
     cornerQR: dict[str, Any] = {}
 
