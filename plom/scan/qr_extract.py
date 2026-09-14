@@ -75,24 +75,52 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
         of the QR code), 'orientation' (the rotation ccw of the QR code in degrees,
         currently an integer) and other info.
         Any QR codes that aren't roughly in a corner will appear with keys
-        "other1", "other2", etc.  If two or more QR codes are in the same
-        broadly-defined corner, one will appear with the proper "NW", etc key
-        and the others will be in the "other*" list: its not well-defined
-        which appears where, which kinda sucks.
+        "other1", "other2", etc.
+        If two or more QR codes are in the same broadly-defined corner, say SW,
+        then if one of them is a proper QR code identified as a "qr_page"
+        (i.e., not an error and not a microQR), then that one is set to the SW
+        corner (and the others join the others list).  In all other cases,
+        we refuse to choose a SW corner one and dump everything in the others
+        list.
     """
-    cornerQR: dict[str, Any] = {}
     valid_corners = ("NW", "NE", "SW", "SE")
+    qr_list_by_corner = {k: [] for k in valid_corners}
+
+    cornerQR: dict[str, Any] = {}
+
+    qrlist = QRextract_list(image, rotation=rotation)
+    # first build a list for each corner
+    other_list = []
+    for qr in qrlist:
+        corner = qr["corner_guess_from_position"]
+        if corner in valid_corners:
+            qr_list_by_corner[corner].append(qr)
+        else:
+            other_list.append(qr)
+
+    for k, qrs in qr_list_by_corner.items():
+        if len(qrs) == 0:
+            pass
+        elif len(qrs) == 1:
+            cornerQR[k] = qrs[0]
+        else:
+            # separate the "qr_pages" from the microQR stuff
+            qr_pages = [qr for qr in qrs if qr["page_type"] == "plom_qr"]
+            if len(qr_pages) == 1:
+                # if there is exactly qr_page, keep that
+                cornerQR[k] = qr_pages[0]
+                # and put the rest into the "other" list
+                for qr in qrs:
+                    if qr["page_type"] != "plom_qr":
+                        other_list.append(qr)
+            else:
+                for qr in qrs:
+                    other_list.append(qr)
 
     c = 0
-    list_of_dicts = QRextract_list(image, rotation=rotation)
-    for qr in list_of_dicts:
-        corner = qr["corner_guess_from_position"]
-        if corner in valid_corners and not cornerQR.get(corner, None):
-            # TODO: if there were two, keep last one
-            cornerQR[corner] = qr
-        else:
-            c += 1
-            cornerQR[f"other{c}"] = qr
+    for qr in other_list:
+        c += 1
+        cornerQR[f"other{c}"] = qr
     return cornerQR
 
 
