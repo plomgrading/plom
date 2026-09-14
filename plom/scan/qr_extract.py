@@ -138,10 +138,16 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
     image.load()
 
     # TODO: new kwargs?  only_QRCodeModel2, only_MicroQRCode?
-    qr_code_formats = [
-        zxingcpp.BarcodeFormat.QRCodeModel2,
-        zxingcpp.BarcodeFormat.MicroQRCode,
-    ]
+
+    # qr_code_formats = (
+    #     zxingcpp.BarcodeFormat.QRCodeModel2,
+    #     zxingcpp.BarcodeFormat.MicroQRCode,
+    # )
+
+    # deprecated?  but mypy complains about the the above...?
+    qr_code_formats = (
+        zxingcpp.BarcodeFormat.QRCodeModel2 | zxingcpp.BarcodeFormat.MicroQRCode
+    )
 
     qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
     list_of_dicts = []
