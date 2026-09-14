@@ -83,12 +83,16 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
         we refuse to choose a SW corner one and dump everything in the others
         list.
     """
+    qrlist = QRextract_list(image, rotation=rotation)
+    return _assign_corners(qrlist)
+
+
+def _assign_corners(qrlist: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     valid_corners = ("NW", "NE", "SW", "SE")
     qr_list_by_corner: dict[str, list[dict[str, Any]]] = {k: [] for k in valid_corners}
 
     cornerQR: dict[str, Any] = {}
 
-    qrlist = QRextract_list(image, rotation=rotation)
     # first build a list for each corner
     other_list = []
     for qr in qrlist:
