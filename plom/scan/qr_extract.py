@@ -69,24 +69,25 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
             counterclockwise prior to reading the QR codes. Defaults to 0.
 
     Returns:
-        A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
+        A dict with keys such as "NW", "NE", "SW", "SE", "other1", "other2",
+        each with a dict containing
         'raw_qr_string', 'x', 'y' (the horizontal and vertical pixel coordinates
         of the QR code), 'orientation' (the rotation ccw of the QR code in degrees,
-        currently an integer).
-        The dict is empty if no QR codes found in that corner.
+        currently an integer) and other info.
         Any QR codes that aren't roughly in a corner will appear with keys
         "other1", "other2", etc.  If two or more QR codes are in the same
         broadly-defined corner, one will appear with the proper "NW", etc key
         and the others will be in the "other*" list: its not well-defined
         which appears where, which kinda sucks.
     """
-    cornerQR: dict[str, Any] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
+    cornerQR: dict[str, Any] = {}
+    valid_corners = ("NW", "NE", "SW", "SE")
 
     c = 0
-    list_of_dicts = _QRextract(image, rotation=rotation)
+    list_of_dicts = QRextract_list(image, rotation=rotation)
     for qr in list_of_dicts:
         corner = qr["corner_guess_from_position"]
-        if corner in cornerQR.keys() and not cornerQR[corner]:
+        if corner in valid_corners and not cornerQR.get(corner, None):
             # TODO: if there were two, keep last one
             cornerQR[corner] = qr
         else:
@@ -95,7 +96,7 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
     return cornerQR
 
 
-def _QRextract(image, *, rotation: int = 0) -> list[dict[str, Any]]:
+def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
     """Decode the QR codes in an image."""
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
@@ -133,11 +134,12 @@ def _QRextract(image, *, rotation: int = 0) -> list[dict[str, Any]]:
             "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
             "corner_guess_from_position": _findCorner(x_coord, y_coord, image.size),
         }
+        d.update(_parse_raw_qr_string(qr.text))
         list_of_dicts.append(d)
     return list_of_dicts
 
 
-def parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
+def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
     """Extract Plom-specific info in a dict structure from a raw QR code string."""
     if isValidTPV(raw_qr_string):
         paper_id, page_num, version_num, public_code, corner = parseTPV(raw_qr_string)

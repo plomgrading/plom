@@ -45,7 +45,6 @@ from plom.common.misc_utils import format_int_list_with_runs
 from plom.common.exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
-from plom.scan.qr_extract import parse_raw_qr_string
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
 from plom_server.Papers.models import MobilePage
@@ -551,9 +550,10 @@ class ScanService:
                 counterclockwise prior to reading the QR codes. Defaults to 0.
 
         Return:
-            A dict keyed by "NE", "NW", "SE", "WE" with detailed info of what
-            was read from the QR codes.  Any QR codes that cannot be uniquely
-            assigned to corners will appear in a list under the key "others".
+            A dict with keys such as "NE", "NW", "SE", "SW", "other1", "other2".
+            Each value is detailed info of what was read from QR codes.
+            Any QR codes that cannot be uniquely assigned to corners will
+            appear in under a key "other*".
             For example:
             {
                 'NE': {
@@ -625,23 +625,7 @@ class ScanService:
                 }
         """
         codes = QRextract(image_path, rotation=rotation)
-        return cls._parse_more_from_qr_codes(codes)
-
-    @staticmethod
-    def _parse_more_from_qr_codes(
-        qr_codes: dict[str, dict[str, Any]],
-    ) -> dict[str, dict[str, Any]]:
-        """Parse more info from QR codes extracted by QRextract."""
-        qr_codes_w_more_info = {}
-        for key, qrcode in qr_codes.items():
-            if not qrcode:
-                continue
-            # "TTTTTPPPVVOCCCCCC" or some special microQR cases
-            raw_qr_string = qrcode.get("raw_qr_string")
-            qr_code_dict = qrcode.copy()
-            qr_code_dict.update(parse_raw_qr_string(raw_qr_string))
-            qr_codes_w_more_info[key] = qr_code_dict
-        return qr_codes_w_more_info
+        return codes
 
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
