@@ -131,12 +131,12 @@ class RectangleServiceTests(TestCase):
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
         codes = QRextract(img_path)
         # hack our own integer values in, so we get a precise transform
-        codes["NE"]["x"] = 1500
-        codes["NE"]["y"] = 100
-        codes["SE"]["x"] = 1500
-        codes["SE"]["y"] = 2000
-        codes["SW"]["x"] = 100
-        codes["SW"]["y"] = 2000
+        codes["NE"]["x_coord"] = 1500
+        codes["NE"]["y_coord"] = 100
+        codes["SE"]["x_coord"] = 1500
+        codes["SE"]["y_coord"] = 2000
+        codes["SW"]["x_coord"] = 100
+        codes["SW"]["y_coord"] = 2000
         parsed_codes = ScanService._parse_more_from_qr_codes(codes)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
@@ -146,11 +146,11 @@ class RectangleServiceTests(TestCase):
 
         # Now try the other corner
         codes["NW"] = codes.pop("NE")
-        codes["NW"]["x"] = 100
-        codes["SE"]["x"] = 1500
-        codes["SE"]["y"] = 2000
-        codes["SW"]["x"] = 100
-        codes["SW"]["y"] = 2000
+        codes["NW"]["x_coord"] = 100
+        codes["SE"]["x_coord"] = 1500
+        codes["SE"]["y_coord"] = 2000
+        codes["SW"]["x_coord"] = 100
+        codes["SW"]["y_coord"] = 2000
         parsed_codes = ScanService._parse_more_from_qr_codes(codes)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])

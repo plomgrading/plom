@@ -85,7 +85,7 @@ def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
     c = 0
     list_of_dicts = _QRextract(image, rotation=rotation)
     for qr in list_of_dicts:
-        corner = qr["corner_rough_guess"]
+        corner = qr["corner_guess_from_position"]
         if corner in cornerQR.keys() and not cornerQR[corner]:
             # TODO: if there were two, keep last one
             cornerQR[corner] = qr
@@ -128,16 +128,17 @@ def _QRextract(image, *, rotation: int = 0) -> list[dict[str, Any]]:
 
         d = {
             "raw_qr_string": qr.text,
-            "x": x_coord,
-            "y": y_coord,
+            "x_coord": x_coord,
+            "y_coord": y_coord,
             "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
-            "corner_rough_guess": _findCorner(x_coord, y_coord, image.size),
+            "corner_guess_from_position": _findCorner(x_coord, y_coord, image.size),
         }
         list_of_dicts.append(d)
     return list_of_dicts
 
 
-def parse_raw_qr_string(raw_qr_string):
+def parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
+    """Extract Plom-specific info in a dict structure from a raw QR code string."""
     if isValidTPV(raw_qr_string):
         paper_id, page_num, version_num, public_code, corner = parseTPV(raw_qr_string)
         # get the "TTTTTPPPVV" part

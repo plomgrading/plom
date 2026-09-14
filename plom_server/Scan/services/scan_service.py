@@ -634,16 +634,11 @@ class ScanService:
         """Parse more info from QR codes extracted by QRextract."""
         qr_codes_w_more_info = {}
         for key, qrcode in qr_codes.items():
-            # "TTTTTPPPVVOCCCCCC" or some special microQR cases
-            raw_qr_string = qrcode.get("raw_qr_string", None)
-            if raw_qr_string is None:
+            if not qrcode:
                 continue
-            qr_code_dict = {
-                "raw_qr_string": raw_qr_string,
-                "x_coord": qrcode.get("x"),
-                "y_coord": qrcode.get("y"),
-                "orientation": qrcode.get("orientation"),
-            }
+            # "TTTTTPPPVVOCCCCCC" or some special microQR cases
+            raw_qr_string = qrcode.get("raw_qr_string")
+            qr_code_dict = qrcode.copy()
             qr_code_dict.update(parse_raw_qr_string(raw_qr_string))
             qr_codes_w_more_info[key] = qr_code_dict
         return qr_codes_w_more_info
