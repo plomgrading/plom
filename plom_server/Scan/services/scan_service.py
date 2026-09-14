@@ -43,7 +43,7 @@ import pymupdf
 
 from plom.common.misc_utils import format_int_list_with_runs
 from plom.common.exceptions import PlomConflict
-from plom.scan import QRextract
+from plom.scan import QRextract_corners
 from plom.scan import render_page_to_bitmap, try_to_extract_image
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
@@ -624,7 +624,7 @@ class ScanService:
                     'y_coord': 2906.5
                 }
         """
-        codes = QRextract(image_path, rotation=rotation)
+        codes = QRextract_corners(image_path, rotation=rotation)
         return codes
 
     def read_qr_codes(self, bundle_pk: int) -> None:

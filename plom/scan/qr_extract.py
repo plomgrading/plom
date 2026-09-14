@@ -56,8 +56,8 @@ def _find_corner(mx: float, my: float, dim: tuple[int, int]):
     return NS + EW
 
 
-def QRextract(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
-    """Decode the QR codes in an image.
+def QRextract_corners(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
+    """Decode the QR codes in an image, assigning to corners and others.
 
     Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
@@ -129,7 +129,20 @@ def _assign_corners(qrlist: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 
 def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
-    """Decode the QR codes in an image."""
+    """Decode the QR codes in an image.
+
+    Args:
+        image (str/pathlib.Path/PIL.Image): an image filename, either in
+            the local dir or specified e.g., using `pathlib.Path`.  Can
+            also be an instance of Pillow's `Image`.
+
+    Keyword Args:
+        rotation: Rotate the image by 90, -90, 180 or 270 degrees
+            counterclockwise prior to reading the QR codes. Defaults to 0.
+
+    Returns:
+        A list of dicts, each representing a QR found on the page.
+    """
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
 

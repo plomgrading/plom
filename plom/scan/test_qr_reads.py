@@ -7,7 +7,7 @@
 from importlib import resources
 
 import plom.scan
-from plom.scan import QRextract
+from plom.scan import QRextract_corners
 
 from .test_rotations import _PIL_Image_open
 
@@ -18,7 +18,7 @@ def relative_error(x, y) -> float:
 
 def test_qr_reads_from_image() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
-    q = QRextract(im)
+    q = QRextract_corners(im)
     rot = 0
     assert not q.get("NE")  # staple
     assert q["NW"]["raw_qr_string"] == "00002806012823730"
@@ -40,7 +40,7 @@ def test_qr_reads_slight_rotate() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     rot = 10  # 10 degrees ccw
     im = im.rotate(rot, expand=True)
-    q = QRextract(im)
+    q = QRextract_corners(im)
     assert not q.get("NE")
     assert q["NW"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["NW"]["x_coord"], 148) < 0.01
@@ -60,7 +60,7 @@ def test_qr_reads_upside_down() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     rot = 180
     im = im.rotate(rot)
-    q = QRextract(im)
+    q = QRextract_corners(im)
     assert not q.get("SW")
     assert q["SE"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["SE"]["x_coord"], 1420) < 0.001
@@ -80,7 +80,7 @@ def test_qr_reads_float_rotate() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     rot = 6.25
     im = im.rotate(rot, expand=True)
-    q = QRextract(im)
+    q = QRextract_corners(im)
     # ZXing-cpp gives nearest integer orientation
     assert q["NW"]["orientation"] == round(rot)
 
@@ -90,7 +90,7 @@ def test_qr_reads_from_file(tmp_path) -> None:
     f = tmp_path / "test_zbar.png"
     with open(f, "wb") as fh:
         fh.write(b)
-    q = QRextract(f)
+    q = QRextract_corners(f)
     assert not q.get("NE")
     assert q["NW"]
     assert q["SE"]
