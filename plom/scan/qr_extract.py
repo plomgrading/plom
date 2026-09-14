@@ -41,15 +41,15 @@ def _find_corner(mx: float, my: float, dim: tuple[int, int]):
 
     NS = "?"
     EW = "?"
-    if my < 0.4 * height:
+    if my < 0.3 * height:
         NS = "N"
-    elif my > 0.6 * height:
+    elif my > 0.7 * height:
         NS = "S"
     else:
         return "??"
-    if mx < 0.4 * width:
+    if mx < 0.3 * width:
         EW = "W"
-    elif mx > 0.6 * width:
+    elif mx > 0.7 * width:
         EW = "E"
     else:
         return "??"
