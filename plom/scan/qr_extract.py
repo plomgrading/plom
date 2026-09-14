@@ -169,6 +169,13 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
             "corner_guess_from_position": _find_corner(x_coord, y_coord, image.size),
         }
         d.update(_parse_raw_qr_string(qr.text))
+        d.update(
+            {
+                "format": str(qr.format),
+                "content_type": str(qr.content_type).removeprefix("ContentType."),
+                "tech_details": str(qr.extra),
+            }
+        )
         list_of_dicts.append(d)
     return list_of_dicts
 
