@@ -20,7 +20,7 @@ def test_qr_reads_from_image() -> None:
     im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     q = QRextract(im)
     rot = 0
-    assert not q["NE"]  # staple
+    assert not q.get("NE")  # staple
     assert q["NW"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["NW"]["x_coord"], 126) < 0.01
     assert relative_error(q["NW"]["y_coord"], 139) < 0.01
@@ -41,7 +41,7 @@ def test_qr_reads_slight_rotate() -> None:
     rot = 10  # 10 degrees ccw
     im = im.rotate(rot, expand=True)
     q = QRextract(im)
-    assert not q["NE"]
+    assert not q.get("NE")
     assert q["NW"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["NW"]["x_coord"], 148) < 0.01
     assert relative_error(q["NW"]["y_coord"], 384) < 0.01
@@ -61,7 +61,7 @@ def test_qr_reads_upside_down() -> None:
     rot = 180
     im = im.rotate(rot)
     q = QRextract(im)
-    assert not q["SW"]
+    assert not q.get("SW")
     assert q["SE"]["raw_qr_string"] == "00002806012823730"
     assert relative_error(q["SE"]["x_coord"], 1420) < 0.001
     assert relative_error(q["SE"]["y_coord"], 1861) < 0.001
@@ -91,7 +91,7 @@ def test_qr_reads_from_file(tmp_path) -> None:
     with open(f, "wb") as fh:
         fh.write(b)
     q = QRextract(f)
-    assert not q["NE"]
+    assert not q.get("NE")
     assert q["NW"]
     assert q["SE"]
     assert q["SW"]
