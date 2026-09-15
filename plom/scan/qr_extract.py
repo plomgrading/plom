@@ -5,7 +5,6 @@
 # Copyright (C) 2026 Jax Lim
 
 from statistics import mean
-from math import sqrt
 from typing import Any
 
 import zxingcpp
@@ -102,18 +101,19 @@ def _filter_codes(qrlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     for qr in qrlist:
         if qr["format"] == "Micro QR Code" and qr["page_type"] == "invalid_qr":
-            x = qr["x_coord"]
-            y = qr["y_coord"]
             qr_pages = [q for q in qrlist if q["page_type"] == "plom_qr"]
-            if not qr_pages:
-                continue
+            if qr_pages:
+                x = qr["x_coord"]
+                y = qr["y_coord"]
 
-            def euclid(q):
-                return (q["x_coord"] - x) ** 2 + (q["y_coord"] - y) ** 2
+                def sqrdist(q):
+                    return (q["x_coord"] - x) ** 2 + (q["y_coord"] - y) ** 2
 
-            closest_qr_page = min(qr_pages, key=euclid)
-            if sqrt(euclid(closest_qr_page)) < 100:
-                qr["ignore"] = True
+                closest_qr_page = min(qr_pages, key=sqrdist)
+                # 80 tuned for microQR just outside QR, letter paper 2000px high
+                if sqrdist(closest_qr_page) < 80**2:
+                    qr["ignore"] = True
+
     return qrlist
 
 
