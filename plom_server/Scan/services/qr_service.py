@@ -16,6 +16,15 @@ from plom_server.Papers.services import PaperInfoService
 from ..models import StagingImage, StagingBundle
 
 
+def _filter(qr_dict: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Filter out any QRs that are marked "ignore" from the QR dict input."""
+    qr_dict_copy = qr_dict.copy()
+    for k, qr in qr_dict.items():
+        if qr.get("ignore"):
+            qr_dict_copy.pop(k)
+    return qr_dict_copy
+
+
 class QRService:
     @classmethod
     def classify_staging_images_based_on_QR_codes(cls, bundle: StagingBundle) -> None:
@@ -63,13 +72,15 @@ class QRService:
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
             for img in images:
-                if len(img.parsed_qr) == 0:
+                parsed_qr = _filter(img.parsed_qr)
+
+                if len(parsed_qr) == 0:
                     # no qr-codes found.
                     no_qr_imgs.append(img.pk)
                     continue
 
                 try:
-                    cls._check_consistent_qrs(img.parsed_qr)
+                    cls._check_consistent_qrs(parsed_qr)
                 except ValueError as err:
                     error_imgs.append(
                         (
@@ -81,7 +92,7 @@ class QRService:
                     )
                     continue
                 try:
-                    cls._check_qrs_against_spec_and_qvmap(img.parsed_qr)
+                    cls._check_qrs_against_spec_and_qvmap(parsed_qr)
                 except ValueError as err:
                     error_imgs.append(
                         (
@@ -94,7 +105,7 @@ class QRService:
                     continue
 
                 # we know the codes are consistent, sufficient to check just one.
-                tpv = list(img.parsed_qr.values())[0]["tpv"]
+                tpv = list(parsed_qr.values())[0]["tpv"]
                 if tpv == "plomX":  # is an extra page
                     extra_imgs.append(img.pk)
                 elif tpv == "plomS":  # is a scrap-paper page
