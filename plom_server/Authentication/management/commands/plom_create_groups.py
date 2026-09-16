@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.core.management.base import BaseCommand
 
