@@ -7,7 +7,7 @@
 from importlib import resources
 
 import plom.scan
-from plom.scan import QRextract_corners
+from plom.scan import QRextract_corners, QRextract_list
 
 from .test_rotations import _PIL_Image_open
 
@@ -95,3 +95,59 @@ def test_qr_reads_from_file(tmp_path) -> None:
     assert q["NW"]
     assert q["SE"]
     assert q["SW"]
+
+
+def test_qr_reads_from_image_ignore_microqr_near_or_in_good_qr() -> None:
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_nearby_microqr.png")
+    qrs = QRextract_list(im)
+
+    (f,) = [q for q in qrs if q["raw_qr_string"] == "hello"]
+    assert f["ignore"]
+    assert f["corner_guess_from_position"] == "SW"
+    (f,) = [q for q in qrs if q["raw_qr_string"] == "goodbye"]
+    assert f["ignore"]
+    assert f["corner_guess_from_position"] == "SW"
+
+    (f,) = [q for q in qrs if q["raw_qr_string"] == "abcdef"]
+    assert not f["ignore"]
+    assert f["corner_guess_from_position"] == "??"
+
+    (f,) = [q for q in qrs if q["corner_guess_from_position"] == "NE"]
+    assert not f["ignore"]
+    assert f["format"] == "Micro QR Code"
+    assert f["content_type"] == "Binary"
+
+    # depends on https://github.com/zxing-cpp/zxing-cpp/issues/1162
+    # with Zxing 3.0.0, 3.1.1 there is a halucinated microQR in the SE
+    ignores = [q for q in qrs if q["ignore"]]
+    assert len(ignores) in (2, 3)
+
+    for q in ignores:
+        assert q["corner_guess_from_position"] in ("SE", "SW")
+
+
+def test_qr_reads_from_image_ignore_microqr_near_or_in_good_qr_corners() -> None:
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_nearby_microqr.png")
+    q = QRextract_corners(im)
+    assert not q.get("NW")
+
+    assert q["NE"]["format"] == "Micro QR Code"
+    assert q["NE"]["page_type"] == "invalid_qr"
+    assert not q["NE"]["ignore"]
+
+    assert q["SE"]["format"] == "QR Code"
+    assert q["SE"]["page_type"] == "plom_qr"
+    assert not q["SE"]["ignore"]
+
+    assert q["SW"]["format"] == "QR Code"
+    assert q["SW"]["page_type"] == "plom_qr"
+    assert not q["SW"]["ignore"]
+
+    assert "other1" in q.keys()
+    assert "other2" in q.keys()
+    assert "other3" in q.keys()
+    # there might be other4 as well, see zxing-cpp/issues/1162 above
+
+    for k, v in q.items():
+        if "other" in k:
+            assert v["format"] == "Micro QR Code"

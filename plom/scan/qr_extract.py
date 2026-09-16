@@ -87,6 +87,36 @@ def QRextract_corners(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
     return _assign_corners(qrlist)
 
 
+def _mark_some_codes_ignore(qrlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Mark some QR codes "ignore" in certain circumstances.
+
+    MicroQRCodes can theoretically be found inside QR codes.  Perhaps
+    in practice too [1].  If a MicroQRCode is in approximately the same
+    place as QR code, and is not recognized by Plom (an "invalid_qr")
+    whereas the QR is valid (a "plom_qr"), then we set it to be ignored.
+
+    Other circumstances might be added in the future.
+
+    [1] https://github.com/zxing-cpp/zxing-cpp/issues/1162
+    """
+    for qr in qrlist:
+        if qr["format"] == "Micro QR Code" and qr["page_type"] == "invalid_qr":
+            qr_pages = [q for q in qrlist if q["page_type"] == "plom_qr"]
+            if qr_pages:
+                x = qr["x_coord"]
+                y = qr["y_coord"]
+
+                def sqrdist(q):
+                    return (q["x_coord"] - x) ** 2 + (q["y_coord"] - y) ** 2
+
+                closest_qr_page = min(qr_pages, key=sqrdist)
+                # 80 tuned for microQR just outside QR, letter paper 2000px high
+                if sqrdist(closest_qr_page) < 80**2:
+                    qr["ignore"] = True
+
+    return qrlist
+
+
 def _assign_corners(qrlist: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     valid_corners = ("NW", "NE", "SW", "SE")
     qr_list_by_corner: dict[str, list[dict[str, Any]]] = {k: [] for k in valid_corners}
@@ -166,9 +196,9 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
         zxingcpp.BarcodeFormat.QRCodeModel2 | zxingcpp.BarcodeFormat.MicroQRCode
     )
 
-    qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
-    list_of_dicts = []
-    for qr in qrlist:
+    qr_obj_list = zxingcpp.read_barcodes(image, formats=qr_code_formats)
+    qr_list = []
+    for qr in qr_obj_list:
         qr_polygon = [
             qr.position.top_left,
             qr.position.top_right,
@@ -191,10 +221,11 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
                 "format": str(qr.format),
                 "content_type": str(qr.content_type).removeprefix("ContentType."),
                 "tech_details": str(qr.extra),
+                "ignore": False,
             }
         )
-        list_of_dicts.append(d)
-    return list_of_dicts
+        qr_list.append(d)
+    return _mark_some_codes_ignore(qr_list)
 
 
 def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:

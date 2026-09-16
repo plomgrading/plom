@@ -19,8 +19,7 @@ include requirements.txt
 include plom/create/digits.json
 include plom/create/extra_pages_src.tex
 include plom/create/scrap_paper_src.tex
-include plom/scan/test_zbar_fails.png
-include plom/scan/test_rgb.png
+include plom/scan/test_*.png
 include plom/textools/test*.png
 include plom/textools/latexTemplate.tex
 include plom/textools/latexTemplatev2.tex
