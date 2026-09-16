@@ -58,46 +58,46 @@ class PageImageProcessor:
         """
         northeast_orientation = None
         if "NE" in qr_code_data:
-            expected_corner = qr_code_data["NE"]["quadrant"]
+            expected_corner = int(qr_code_data["NE"]["quadrant"])
             northeast_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
-                upright="1",
-                turned_right="2",
-                turned_left="4",
-                upside_down="3",
+                upright=1,
+                turned_right=2,
+                turned_left=4,
+                upside_down=3,
             )
 
         northwest_orientation = None
         if "NW" in qr_code_data:
-            expected_corner = qr_code_data["NW"]["quadrant"]
+            expected_corner = int(qr_code_data["NW"]["quadrant"])
             northwest_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
-                upright="2",
-                turned_right="3",
-                turned_left="1",
-                upside_down="4",
+                upright=2,
+                turned_right=3,
+                turned_left=1,
+                upside_down=4,
             )
 
         southeast_orientation = None
         if "SE" in qr_code_data:
-            expected_corner = qr_code_data["SE"]["quadrant"]
+            expected_corner = int(qr_code_data["SE"]["quadrant"])
             southeast_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
-                upright="4",
-                turned_right="1",
-                turned_left="3",
-                upside_down="2",
+                upright=4,
+                turned_right=1,
+                turned_left=3,
+                upside_down=2,
             )
 
         southwest_orientation = None
         if "SW" in qr_code_data:
-            expected_corner = qr_code_data["SW"]["quadrant"]
+            expected_corner = int(qr_code_data["SW"]["quadrant"])
             southwest_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
-                upright="3",
-                turned_right="4",
-                turned_left="2",
-                upside_down="1",
+                upright=3,
+                turned_right=4,
+                turned_left=2,
+                upside_down=1,
             )
 
         # make sure at least one corner is truthy, and they all agree
@@ -120,21 +120,21 @@ class PageImageProcessor:
 
     @staticmethod
     def _check_corner(
-        val_from_qr: str,
-        upright: str,
-        turned_right: str,
-        turned_left: str,
-        upside_down: str,
+        val_from_qr: int,
+        upright: int,
+        turned_right: int,
+        turned_left: int,
+        upside_down: int,
     ) -> str:
         """Check a page corner for its actual orientation.
 
         Args:
-            val_from_qr (str): one of "1", "2", "3", "4"
-            upright (str): the quadrant value for an upright orientation,
-                           one of "1", "2", "3", "4"
-            turned_right (str): value for a turned_right orientation
-            turned_left (str): value for a turned_left orientation
-            upside_down (str): value for an upside_down orientation
+            val_from_qr: one of 1, 2, 3, 4.
+            upright: the quadrant value for an upright orientation,
+                one of 1, 2, 3, 4.
+            turned_right: value for a turned_right orientation
+            turned_left: value for a turned_left orientation
+            upside_down: value for an upside_down orientation
 
         Returns:
             String describing the orientation.
