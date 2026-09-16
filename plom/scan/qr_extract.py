@@ -87,7 +87,7 @@ def QRextract_corners(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
     return _assign_corners(qrlist)
 
 
-def _filter_codes(qrlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _mark_some_codes_ignore(qrlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Mark some QR codes "ignore" in certain circumstances.
 
     MicroQRCodes can theoretically be found inside QR codes.  Perhaps
@@ -225,7 +225,7 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
             }
         )
         qr_list.append(d)
-    return _filter_codes(qr_list)
+    return _mark_some_codes_ignore(qr_list)
 
 
 def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
