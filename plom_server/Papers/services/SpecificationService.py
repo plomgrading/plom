@@ -12,6 +12,7 @@ import html
 import logging
 import tomllib
 from copy import deepcopy
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any
 
@@ -118,7 +119,7 @@ def install_spec_from_dict(
 
 
 def install_spec_from_toml_file(
-    pathname: str | Path,
+    pathname: Path | Traversable,
 ) -> Specification:
     """Load a specification from a TOML file and save it to the database.
 
@@ -131,7 +132,7 @@ def install_spec_from_toml_file(
         ValueError: see :func:`install_spec_from_dict`.
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
-    with open(pathname, "rb") as toml_file:
+    with pathname.open("rb") as toml_file:
         data = tomllib.load(toml_file)
     return install_spec_from_dict(data)
 

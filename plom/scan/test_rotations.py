@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
+import pathlib
 from importlib import resources
 from math import sqrt
 
@@ -17,8 +18,7 @@ from plom.scan.rotate import (
 
 
 def _PIL_Image_open(resource):
-    # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
-    # assert isinstance(resource, (pathlib.Path, resources.abc.Traversable))
+    assert isinstance(resource, (pathlib.Path, resources.abc.Traversable))
     return Image.open(resource)
 
 

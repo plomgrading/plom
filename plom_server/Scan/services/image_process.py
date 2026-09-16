@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from typing import Any
@@ -8,19 +8,6 @@ from typing import Any
 
 class PageImageProcessor:
     """Functions for processing a page-image: rotation."""
-
-    # values used for QR code centre locations and page dimensions
-    # obtained by running QRextract on un-rotated demo page images
-    TOP = 139.5
-    BOTTOM = 1861.5
-    RIGHT = 1419.5
-    LEFT = 126.5
-    PWIDTH = 1546
-    PHEIGHT = 2000
-
-    # dimensions of the QR-bounded region
-    WIDTH = RIGHT - LEFT
-    HEIGHT = BOTTOM - TOP
 
     @classmethod
     def get_page_orientation(cls, qr_code_data: dict[str, dict[str, Any]]) -> str:

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 
 from django.test import TestCase
 
@@ -82,8 +82,7 @@ class PageImageProcessorTests(TestCase):
         return super().setUp()
 
     def test_check_corner(self) -> None:
-        pipr = PageImageProcessor()
-        orientation = pipr._check_corner(
+        orientation = PageImageProcessor._check_corner(
             val_from_qr="1",
             upright="1",
             turned_right="2",
@@ -94,8 +93,7 @@ class PageImageProcessorTests(TestCase):
 
     def test_get_page_orientation(self) -> None:
         """Test PageImageProcessor.get_page_orientation()."""
-        pipr = PageImageProcessor()
-
+        pipr = PageImageProcessor
         upright = pipr.get_page_orientation(self.upright_page_full)
         upright_flaky = pipr.get_page_orientation(self.upright_page_flaky)
         self.assertEqual(upright, "upright")
