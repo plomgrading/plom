@@ -145,28 +145,25 @@ class MoreScanServiceTests(TestCase):
             "NE": {
                 "page_info": page_info,
                 "tpv": tpv,
-                "quadrant": "2",
                 "x_coord": 1420,  # units of pixels
                 "y_coord": 140,
             },
             "SW": {
                 "page_info": page_info,
                 "tpv": tpv,
-                "quadrant": "3",
                 "x_coord": 120,
                 "y_coord": 1866,
             },
             "SE": {
                 "page_info": page_info,
                 "tpv": tpv,
-                "quadrant": "4",
                 "x_coord": 1420,
                 "y_coord": 1866,
             },
         }
-        for quadrant in code_dict.keys():
-            parsed = parsed_codes[quadrant]
-            truth = code_dict[quadrant]
+        for corner in code_dict.keys():
+            parsed = parsed_codes[corner]
+            truth = code_dict[corner]
             self.assertEqual(
                 parsed["page_info"]["paper_id"],
                 truth["page_info"]["paper_id"],
