@@ -85,11 +85,11 @@ class PageImageProcessorTests(TestCase):
 
     def test_check_corner(self) -> None:
         orientation = PageImageProcessor._check_corner(
-            val_from_qr="1",
-            upright="1",
-            turned_right="2",
-            turned_left="4",
-            upside_down="3",
+            val_from_qr=1,
+            upright=1,
+            turned_right=2,
+            turned_left=4,
+            upside_down=3,
         )
         self.assertEqual(orientation, "upright")
 
