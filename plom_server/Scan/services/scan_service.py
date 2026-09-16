@@ -551,9 +551,9 @@ class ScanService:
 
         Return:
             A dict with keys such as "NE", "NW", "SE", "SW", "other1", "other2".
-            Each value is detailed info of what was read from QR codes.
+            Each value is detailed info of what was read from a single QR code.
             Any QR codes that cannot be uniquely assigned to corners will
-            appear in under a key "other*".
+            each appear under a key "other*".
             For example:
             {
                 'NE': {
