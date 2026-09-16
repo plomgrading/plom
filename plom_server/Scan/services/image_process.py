@@ -153,14 +153,16 @@ class PageImageProcessor:
     def get_rotation_angle_from_QRs(cls, qr_data: dict[str, dict[str, Any]]) -> int:
         """Get the current orientation of a page-image using its parsed QR code data.
 
-        If it isn't upright, return the angle by which the image needs to be rotated,
-        in degrees counter-clockwise.
+        If it isn't upright, return the angle by which the image needs
+        to be rotated, in degrees counter-clockwise.  Note this only
+        deals with multiples of 90 degrees: fractional rotations are
+        handled elsewhere (namely in "Rectangle Extraction").
 
         Args:
             qr_data: parsed QR code data.
 
         Returns:
-            Rotation angle by which the page needs to be rotated.
+            Integer rotation angle by which the page needs to be rotated.
             If page is already upright, rotation angle of 0 is returned.
 
         Raises:
