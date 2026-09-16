@@ -220,7 +220,7 @@ def main():
         print("Rebuilding database...")
         run_django_manage_command("plom_database --create-database")
 
-    if not have_db or args.init:
+    if any(not have_db, args.wipe, args.init):
         print("Building migrations...")
         run_django_manage_command("migrate")
         run_django_manage_command("plom_database --create-database-metadata")
