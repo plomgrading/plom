@@ -273,5 +273,4 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
     else:
         return {
             "page_type": "invalid_qr",
-            "quadrant": "0",
         }
