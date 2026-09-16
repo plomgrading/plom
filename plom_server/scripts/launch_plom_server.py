@@ -49,8 +49,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--init",
         action="store_true",
         help="""
-            Initialise static resources and the database without writing
-            much to the db or launching the server.
+            Initialise the database without launching the server.
         """,
     )
     parser.add_argument(
