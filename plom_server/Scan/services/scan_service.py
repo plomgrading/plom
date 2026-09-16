@@ -40,18 +40,10 @@ import huey.api
 import huey.exceptions
 import pymupdf
 
+
 from plom.common.misc_utils import format_int_list_with_runs
 from plom.common.exceptions import PlomConflict
-from plom.common.tpv_utils import (
-    parseTPV,
-    parseExtraPageCode,
-    getPaperPageVersion,
-    isValidTPV,
-    isValidExtraPageCode,
-    isValidScrapPaperCode,
-    isValidBundleSeparatorPaperCode,
-)
-from plom.scan import QRextract
+from plom.scan import QRextract_corners
 from plom.scan import render_page_to_bitmap, try_to_extract_image
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
@@ -558,8 +550,11 @@ class ScanService:
                 counterclockwise prior to reading the QR codes. Defaults to 0.
 
         Return:
-            A dict keyed by "NE", "NW", "SE", "WE" with detailed info of what
-            was read from the QR codes.  For example:
+            A dict with keys such as "NE", "NW", "SE", "SW", "other1", "other2".
+            Each value is detailed info of what was read from a single QR code.
+            Any QR codes that cannot be uniquely assigned to corners will
+            each appear under a key "other*".
+            For example:
             {
                 'NE': {
                     'page_type': 'plom_qr',
@@ -629,84 +624,8 @@ class ScanService:
                     'y_coord': 2906.5
                 }
         """
-        codes = QRextract(image_path, rotation=rotation)
-        return cls._parse_more_from_qr_codes(codes)
-
-    @staticmethod
-    def _parse_more_from_qr_codes(
-        qr_codes: dict[str, dict[str, Any]],
-    ) -> dict[str, dict[str, Any]]:
-        """Parse more info from QR codes extracted by QRextract."""
-        qr_codes_w_more_info = {}
-        for key, qrcode in qr_codes.items():
-            # note from legacy-scan code, tpv_signature is the full raw
-            # "TTTTTPPPVVOCCCCCC" string while tpv refers to "TTTTTPPPVV"
-            raw_qr_string = qrcode.get("tpv_signature", None)
-            if raw_qr_string is None:
-                continue
-            qr_code_dict = {
-                "raw_qr_string": raw_qr_string,
-                "x_coord": qrcode.get("x"),
-                "y_coord": qrcode.get("y"),
-                "orientation": qrcode.get("orientation"),
-            }
-
-            if True:  # TODO: avoiding big diff of reindent
-                if isValidTPV(raw_qr_string):
-                    paper_id, page_num, version_num, public_code, corner = parseTPV(
-                        raw_qr_string
-                    )
-                    tpv = getPaperPageVersion(raw_qr_string)
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_qr",
-                            "page_info": {
-                                "paper_id": paper_id,
-                                "page_num": page_num,
-                                "version_num": version_num,
-                                "public_code": public_code,
-                            },
-                            "quadrant": corner,
-                            "tpv": tpv,
-                        }
-                    )
-                elif isValidExtraPageCode(raw_qr_string):
-                    corner = parseExtraPageCode(raw_qr_string)
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_extra",
-                            "quadrant": corner,
-                            "tpv": "plomX",
-                        }
-                    )
-                elif isValidScrapPaperCode(raw_qr_string):
-                    corner = parseExtraPageCode(raw_qr_string)
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_scrap",
-                            "quadrant": corner,
-                            "tpv": "plomS",
-                        }
-                    )
-                elif isValidBundleSeparatorPaperCode(raw_qr_string):
-                    corner = parseExtraPageCode(raw_qr_string)
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_bundle_separator",
-                            "quadrant": corner,
-                            "tpv": "plomB",
-                        }
-                    )
-                else:
-                    # it is not a valid qr-code
-                    qr_code_dict.update(
-                        {
-                            "page_type": "invalid_qr",
-                            "quadrant": "0",
-                        }
-                    )
-            qr_codes_w_more_info[key] = qr_code_dict
-        return qr_codes_w_more_info
+        codes = QRextract_corners(image_path, rotation=rotation)
+        return codes
 
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.

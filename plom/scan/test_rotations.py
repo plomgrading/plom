@@ -156,17 +156,6 @@ def test_rotate_jpeg_lossless_cw(tmp_path) -> None:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=True)
 
-        # r = rot_angle_from_jpeg_exif_tag(f)
-        # print(("r=", r, "angle=", angle))
-        # assert angle == r
-        # TODO: Issue #2584?
-        # TODO: 270 same as -90, some modular arith check instead
-        # assert abs(r) == abs(angle)
-
-        # q = QRextract(im2)
-        # print(q)
-        # print(q["NW"])
-
         # now load it back, rotate it back it it would make the original
         im = pil_load_with_jpeg_exif_rot_applied(f)
         im2 = Image.open(orig)

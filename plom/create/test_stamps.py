@@ -12,7 +12,7 @@ from plom.common.spec_verifier import SpecVerifier
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import make_PDF
-from plom.scan import QRextract
+from plom.scan import QRextract_corners, QRextract_list
 from plom.scan import processFileToBitmaps
 
 
@@ -70,26 +70,24 @@ def test_stamp_QRs(tmp_path) -> None:
     pg_files = processFileToBitmaps(out, tmp_path)
 
     # page without QR codes
-    d = QRextract(pg_files[0])
-    assert d is not None
-    for _, v in d.items():
-        assert len(v) == 0
+    lst = QRextract_list(pg_files[0])
+    assert not lst
 
     p = 3
-    d = QRextract(pg_files[p - 1])
+    d = QRextract_corners(pg_files[p - 1])
     assert d is not None
-    assert not d["NW"]
-    assert d["NE"]["tpv_signature"] == "00006003011123456"
-    assert d["SW"]["tpv_signature"] == "00006003013123456"
-    assert d["SE"]["tpv_signature"] == "00006003014123456"
+    assert not d.get("NW")
+    assert d["NE"]["raw_qr_string"] == "00006003011123456"
+    assert d["SW"]["raw_qr_string"] == "00006003013123456"
+    assert d["SE"]["raw_qr_string"] == "00006003014123456"
 
     p = 4
-    d = QRextract(pg_files[p - 1])
+    d = QRextract_corners(pg_files[p - 1])
     assert d is not None
-    assert not d["NE"]
-    assert d["NW"]["tpv_signature"] == "00006004012123456"
-    assert d["SW"]["tpv_signature"] == "00006004013123456"
-    assert d["SE"]["tpv_signature"] == "00006004014123456"
+    assert not d.get("NE")
+    assert d["NW"]["raw_qr_string"] == "00006004012123456"
+    assert d["SW"]["raw_qr_string"] == "00006004013123456"
+    assert d["SE"]["raw_qr_string"] == "00006004014123456"
 
 
 def test_stamp_QRs_version_zero_means_ignore_version(tmp_path) -> None:
@@ -103,11 +101,11 @@ def test_stamp_QRs_version_zero_means_ignore_version(tmp_path) -> None:
 
     pg_files = processFileToBitmaps(out, tmp_path)
 
-    d = QRextract(pg_files[p - 1])
-    assert not d["NW"]
-    assert d["NE"]["tpv_signature"] == "00006003001123456"
-    assert d["SW"]["tpv_signature"] == "00006003003123456"
-    assert d["SE"]["tpv_signature"] == "00006003004123456"
+    d = QRextract_corners(pg_files[p - 1])
+    assert not d.get("NW")
+    assert d["NE"]["raw_qr_string"] == "00006003001123456"
+    assert d["SW"]["raw_qr_string"] == "00006003003123456"
+    assert d["SE"]["raw_qr_string"] == "00006003004123456"
 
 
 def test_qr_stamp_all_pages(tmp_path) -> None:
