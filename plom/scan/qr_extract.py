@@ -236,7 +236,7 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
 def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
     """Extract Plom-specific info in a dict structure from a raw QR code string."""
     if isValidTPV(raw_qr_string):
-        paper_id, page_num, version_num, public_code, corner = parseTPV(raw_qr_string)
+        paper_id, page_num, version_num, public_code, crnr = parseTPV(raw_qr_string)
         # get the "TTTTTPPPVV" part
         tpv = getPaperPageVersion(raw_qr_string)
         return {
@@ -247,7 +247,7 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
                 "version_num": version_num,
                 "public_code": public_code,
             },
-            "quadrant": corner,
+            "quadrant": crnr,
             "tpv": tpv,
         }
 
