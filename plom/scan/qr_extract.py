@@ -253,7 +253,7 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
 
     elif isValidExtraPageCode(raw_qr_string):
         if Version(plom.common.__version__) <= Version("0.22.0"):
-            corner = parseExtraPageCode(raw_qr_string)
+            corner = int(parseExtraPageCode(raw_qr_string))
         else:
             corner = getExtraPageOrientation(raw_qr_string)
         return {
@@ -264,7 +264,7 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
 
     elif isValidScrapPaperCode(raw_qr_string):
         if Version(plom.common.__version__) <= Version("0.22.0"):
-            corner = parseExtraPageCode(raw_qr_string)
+            corner = int(parseExtraPageCode(raw_qr_string))
         else:
             corner = getScrapPaperOrientation(raw_qr_string)
         return {
@@ -275,7 +275,7 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
 
     elif isValidBundleSeparatorPaperCode(raw_qr_string):
         if Version(plom.common.__version__) <= Version("0.22.0"):
-            corner = parseExtraPageCode(raw_qr_string)
+            corner = int(parseExtraPageCode(raw_qr_string))
         else:
             corner = getBundleSeparatorPaperOrientation(raw_qr_string)
         return {
