@@ -617,7 +617,7 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:44
+  image: fedora:45
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
@@ -633,6 +633,7 @@ out-of-tree-scratch:
           python3-tomlkit python3-pillow python3-tqdm
           python3-psycopg3 python3-PyMySQL
           python3-django python3-django-filter python3-django-tables2
+          python3-django-rest-framework
           python3-gunicorn python3-whitenoise
           python3-arrow
           python3-cryptography
