@@ -1,5 +1,8 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later
-Copyright (C) 2025 Bryan Tanady -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+    Copyright (C) 2026 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
 {% load static %}
 {% block title %}
@@ -11,7 +14,7 @@ Copyright (C) 2025 Bryan Tanady -->
 {% block main_content %}
     {% include "../base/alert_messages.html" with messages=messages %}
     <div>
-        <a class="btn btn-success" href="{% url 'question_clustering_home' %}">
+        <a class="btn btn-primary" href="{% url 'question_clustering_home' %}">
             <i class="bi bi-chevron-left"></i>
             Return to choose version/question
         </a>
