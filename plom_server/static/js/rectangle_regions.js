@@ -13,7 +13,7 @@
  * The caller must provide a <script> block with id 'rectangle-regions-data',
  * which should be a list of dicts, each of which must have keys
  * 'has_regions' (bool), 'ref_image_html_id' (str), 'canvas_html_id' (str),
- * 'question_regions' (list of dicts, each with `rect` and `qlabel` at least).
+ * 'question_regions' (list of dicts, each with `rect`, `qidx`, and `qlabel`).
  * The HTML/js safety of qlabel is ensured if you use json_script.
  * See question_regions.py: get_region_info_per_page() which generates this.
  */
