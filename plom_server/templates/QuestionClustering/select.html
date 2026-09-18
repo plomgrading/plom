@@ -189,6 +189,9 @@
             </div>
         </div>
     </div>
+    {{ region_info_per_page|json_script:"rectangle-regions-data" }}
+    <script src="{% static '/js/rectangle_regions.js' %}"></script>
+    <!-- TODO: next one erases my region rect :( -->
     <script src="{% static '/js/rectangle_select.js' %}"></script>
     <script>
       // these are declared in the above 'rectangle_select.js' script

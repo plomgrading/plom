@@ -26,6 +26,7 @@ from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Rectangles.services import get_reference_qr_coords_for_page
+from plom_server.Preparation.services import QuestionRegionsService
 from .services.mcq_box_detection import detect_mcq_boxes_for_reference_image
 from .services import QuestionClusteringJobService, QuestionClusteringService
 from .models import (
@@ -218,6 +219,25 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         y_coords = [X[1] for X in qr_info.values()]
         rect_top_left = [min(x_coords), min(y_coords)]
         rect_bottom_right = [max(x_coords), max(y_coords)]
+
+        # regions = QuestionRegionsService.get_question_regions()
+        # for x in regions:
+        #     print(x)
+
+        # TODO: this seems messy, need new service for this?
+        region_info_per_page = QuestionRegionsService.get_region_info_per_page()
+        # print(region_info_per_page)
+        print("* " * 42)
+        region_info_per_page = [x for x in region_info_per_page if x["page"] == page]
+        if len(region_info_per_page) > 0:
+            Z = region_info_per_page[0]["question_regions"]
+            Z = [x for x in Z if x["qidx"] == qidx]
+            region_info_per_page[0]["question_regions"] = Z
+            region_info_per_page[0]["ref_image_html_id"] = "reference_image"
+            region_info_per_page[0]["canvas_html_id"] = "canvas"
+        for x in region_info_per_page:
+            print(x)
+
         context.update(
             {
                 "version": version,
@@ -226,9 +246,9 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
                 "top_left": rect_top_left,
                 "bottom_right": rect_bottom_right,
                 "q_label": SpecificationService.get_question_label(qidx),
+                "region_info_per_page": region_info_per_page,
             }
         )
-
         return render(request, "QuestionClustering/select.html", context)
 
     def post(
