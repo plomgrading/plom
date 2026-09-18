@@ -55,16 +55,15 @@
                                      style="max-height: 600px;
                                             max-width: fit-content"
                                      src="{% url 'reference_image' v page_num %}"
-                                     alt="Preview page for q{{ qidx }} v{{ v }} page {{ page_num }}">
-                            </img>
-                        </a>
-                    {% endfor %}
-                </div>
-            {% endwith %}
-        {% endfor %}
-    </div>
-{% endfor %}
-<script>
+                                     alt="Preview page for q{{ qidx }} v{{ v }} page {{ page_num }}" />
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+    <script>
         // Script controls image viewer show/hidden and highlights the question button that is
         // currently active
         document.addEventListener('DOMContentLoaded', function() {
@@ -93,5 +92,5 @@
                 });
             });
         });
-</script>
+    </script>
 {% endblock main_content %}
