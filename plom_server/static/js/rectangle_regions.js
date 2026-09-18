@@ -41,7 +41,7 @@ function drawLabeledRectangles(blocks, canvas) {
   for (let i = 0; i < blocks.length; i++) {
     var r = blocks[i].rect;
     var label = blocks[i].qlabel;
-    var colour = colours[i % colours.length];
+    var colour = colours[blocks[i].qidx % colours.length];
     // text with white border draw *before* the rectangle
     ctx.font = '30px Arial';
     ctx.fillStyle = colour;
