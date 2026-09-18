@@ -1,3 +1,4 @@
+{% extends "base/base.html" %}
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
@@ -7,13 +8,12 @@
     Copyright (C) 2026 Deep Shah
 -->
 <!-- Adopted from templates/Rectangles/select.html -->
-{% extends "base/base.html" %}
 {% load static %}
 {% block title %}
-    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_num }}
+    Select rectangle for {{ q_label }} clustering from ver {{ version }} p {{ page_num }}
 {% endblock title %}
 {% block page_heading %}
-    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_num }}
+    Select rectangle for {{ q_label }} clustering from ver {{ version }} p {{ page_num }}
 {% endblock page_heading %}
 {% block main_content %}
     <style>
@@ -81,123 +81,122 @@
                     <div id="reference_image_container" class="position-relative w-100">
                         <img id="reference_image"
                              class="border w-100"
-                             src="{% url 'reference_image' version page_num %}">
-                    </img>
-                    <canvas id="canvas"
-                            style="position:absolute;
-                                   left: 0px;
-                                   top: 0px;
-                                   z-index: 5"></canvas>
-                    <div id="mcq_box_overlay"></div>
+                             src="{% url 'reference_image' version page_num %}" />
+                        <canvas id="canvas"
+                                style="position:absolute;
+                                       left: 0px;
+                                       top: 0px;
+                                       z-index: 5"></canvas>
+                        <div id="mcq_box_overlay"></div>
+                    </div>
                 </div>
-            </div>
-            <div class="col-6">
-                <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
+                <div class="col-6">
+                    <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
                      have special names that read/written by javascript, to sync
                      interactive box drawing to the coordinates in the inputs. -->
-                <p>The absolute coordinates of the selection.</p>
-                <ul>
-                    <li>
-                        Top-left (
-                        <input id="thb_left" readonly />
-                        ,
-                        <input id="thb_top" readonly />
-                        )
-                    </li>
-                    <li>
-                        Bottom-right (
-                        <input id="thb_right" readonly />
-                        ,
-                        <input id="thb_bottom" readonly />
-                        )
-                    </li>
-                </ul>
-                <p>The scaled coordinates of the selection.</p>
-                <form method="post">
-                    {% csrf_token %}
+                    <p>The absolute coordinates of the selection.</p>
                     <ul>
                         <li>
                             Top-left (
-                            <input id="plom_left" name="plom_left" readonly />
+                            <input id="thb_left" readonly />
                             ,
-                            <input id="plom_top" name="plom_top" readonly />
+                            <input id="thb_top" readonly />
                             )
                         </li>
                         <li>
                             Bottom-right (
-                            <input id="plom_right" name="plom_right" readonly />
+                            <input id="thb_right" readonly />
                             ,
-                            <input id="plom_bottom" name="plom_bottom" readonly />
+                            <input id="thb_bottom" readonly />
                             )
                         </li>
                     </ul>
-                    <div class="border-top mt-3 pt-3">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-6">
-                                <label for="question_type" class="form-label">Response layout</label>
-                                <select id="question_type" name="question_type" class="form-select">
-                                    <option value="" selected>Generic response region</option>
-                                    <option value="MCQ">MCQ checkboxes</option>
-                                </select>
-                            </div>
-                            <div id="mcq_option_count" class="col-6 d-none">
-                                <label for="mcq_num_options" class="form-label">Options</label>
-                                <input id="mcq_num_options"
-                                       name="mcq_num_options"
-                                       type="number"
-                                       class="form-control"
-                                       min="1"
-                                       max="26"
-                                       value="4" />
-                            </div>
-                        </div>
-                        <div id="mcq_controls" class="d-none">
-                            <div class="btn-toolbar gap-2 mt-3" role="toolbar">
-                                <button id="mcq_detect_boxes" type="button" class="btn btn-outline-primary">
-                                    <i class="bi bi-search"></i>
-                                    Detect boxes
-                                </button>
-                                <button id="mcq_add_box" type="button" class="btn btn-outline-secondary">
-                                    <i class="bi bi-plus-lg"></i>
-                                    Add box
-                                </button>
-                                <button id="mcq_remove_box" type="button" class="btn btn-outline-secondary">
-                                    <i class="bi bi-trash"></i>
-                                    Remove
-                                </button>
-                                <button id="mcq_clear_boxes" type="button" class="btn btn-outline-secondary">
-                                    <i class="bi bi-x-lg"></i>
-                                    Clear
-                                </button>
-                                <button id="mcq_auto_label_boxes"
-                                        type="button"
-                                        class="btn btn-outline-secondary">
-                                    <i class="bi bi-sort-alpha-down"></i>
-                                    Auto-label
-                                </button>
-                                <div class="input-group w-auto">
-                                    <label class="input-group-text" for="mcq_active_label">Label</label>
-                                    <select id="mcq_active_label" class="form-select"></select>
+                    <p>The scaled coordinates of the selection.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <ul>
+                            <li>
+                                Top-left (
+                                <input id="plom_left" name="plom_left" readonly />
+                                ,
+                                <input id="plom_top" name="plom_top" readonly />
+                                )
+                            </li>
+                            <li>
+                                Bottom-right (
+                                <input id="plom_right" name="plom_right" readonly />
+                                ,
+                                <input id="plom_bottom" name="plom_bottom" readonly />
+                                )
+                            </li>
+                        </ul>
+                        <div class="border-top mt-3 pt-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6">
+                                    <label for="question_type" class="form-label">Response layout</label>
+                                    <select id="question_type" name="question_type" class="form-select">
+                                        <option value="" selected>Generic response region</option>
+                                        <option value="MCQ">MCQ checkboxes</option>
+                                    </select>
+                                </div>
+                                <div id="mcq_option_count" class="col-6 d-none">
+                                    <label for="mcq_num_options" class="form-label">Options</label>
+                                    <input id="mcq_num_options"
+                                           name="mcq_num_options"
+                                           type="number"
+                                           class="form-control"
+                                           min="1"
+                                           max="26"
+                                           value="4" />
                                 </div>
                             </div>
-                            <div id="mcq_detection_status" class="form-text mt-2"></div>
+                            <div id="mcq_controls" class="d-none">
+                                <div class="btn-toolbar gap-2 mt-3" role="toolbar">
+                                    <button id="mcq_detect_boxes" type="button" class="btn btn-outline-primary">
+                                        <i class="bi bi-search"></i>
+                                        Detect boxes
+                                    </button>
+                                    <button id="mcq_add_box" type="button" class="btn btn-outline-secondary">
+                                        <i class="bi bi-plus-lg"></i>
+                                        Add box
+                                    </button>
+                                    <button id="mcq_remove_box" type="button" class="btn btn-outline-secondary">
+                                        <i class="bi bi-trash"></i>
+                                        Remove
+                                    </button>
+                                    <button id="mcq_clear_boxes" type="button" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-lg"></i>
+                                        Clear
+                                    </button>
+                                    <button id="mcq_auto_label_boxes"
+                                            type="button"
+                                            class="btn btn-outline-secondary">
+                                        <i class="bi bi-sort-alpha-down"></i>
+                                        Auto-label
+                                    </button>
+                                    <div class="input-group w-auto">
+                                        <label class="input-group-text" for="mcq_active_label">Label</label>
+                                        <select id="mcq_active_label" class="form-select"></select>
+                                    </div>
+                                </div>
+                                <div id="mcq_detection_status" class="form-text mt-2"></div>
+                            </div>
+                            <input id="mcq_boxes" name="mcq_boxes" type="hidden" value="[]" />
                         </div>
-                        <input id="mcq_boxes" name="mcq_boxes" type="hidden" value="[]" />
-                    </div>
-                    <input type="submit" class="btn btn-primary mt-3" value="Submit">
-                </form>
+                        <input type="submit" class="btn btn-primary mt-3" value="Submit" />
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<script src="{% static '/js/rectangle_select.js' %}"></script>
-<script type="text/javascript">
-  // these are declared in the above 'rectangle_select.js'script
-  // and are required to allow it to function
-  corner_dat = {{qr_info|safe}};
-  top_left_coord = {{top_left|safe}};
-  bottom_right_coord = {{bottom_right|safe}};
-  var mcq_box_detection_url = "{% url 'question_clustering_detect_mcq_boxes' version page_num %}";
-</script>
-<script src="{% static '/js/mcq_box_select.js' %}"></script>
+    <script src="{% static '/js/rectangle_select.js' %}"></script>
+    <script>
+      // these are declared in the above 'rectangle_select.js' script
+      // and are required to allow it to function
+      corner_dat = {{qr_info|safe}};
+      top_left_coord = {{top_left|safe}};
+      bottom_right_coord = {{bottom_right|safe}};
+      var mcq_box_detection_url = "{% url 'question_clustering_detect_mcq_boxes' version page_num %}";
+    </script>
+    <script src="{% static '/js/mcq_box_select.js' %}"></script>
 {% endblock main_content %}
