@@ -55,7 +55,7 @@ function drawLabeledRectangles(blocks, canvas) {
     // now the rectangle
     ctx.beginPath();
     ctx.lineWidth = lw;
-    ctx.fillStyle = colour + '30';
+    ctx.fillStyle = colour + '1b';
     ctx.strokeStyle = colour + '99';
     ctx.rect(
       r[0] * canvas.width + lw / 2,
