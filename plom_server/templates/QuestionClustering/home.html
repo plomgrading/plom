@@ -1,9 +1,9 @@
+{% extends "base/base.html" %}
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2026 Colin B. Macdonald
 -->
-{% extends "base/base.html" %}
 {% load custom_tags %}
 {% block title %}
     Cluster papers based on written answer
@@ -37,6 +37,7 @@
                 <h5 class="card-title">Questions from version {{ v }}</h5>
                 {% for qidx, q_label in q_idx_label_pairs %}
                     <button class="btn btn-info btn-question"
+                            type="button"
                             data-version="{{ v }}"
                             data-qidx="{{ qidx }}">{{ q_label }}</button>
                 {% endfor %}
