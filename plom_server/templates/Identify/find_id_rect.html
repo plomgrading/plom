@@ -1,10 +1,10 @@
+{% extends "base/base.html" %}
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Andrew Rechnitzer
-    Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2025-2026 Colin B. Macdonald
     Copyright (C) 2025 Aidan Murphy
 -->
-{% extends "base/base.html" %}
 {% load static %}
 {% block title %}
     Extract ID box rectangle.
@@ -26,17 +26,15 @@
                 <div class="col-6">
                     <img id="reference_image"
                          class="border w-100"
-                         src="{% url 'reference_image' version page_number %}">
-                </img>
-                <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
-            </div>
-            <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
+                         src="{% url 'reference_image' version page_number %}" />
+                    <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
+                </div>
+                <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
                  have special names that read/written by javascript, to sync
                  interactive box drawing to the coordinates in the inputs.
                  Here those elements are hidden from the users view. -->
-            <div class="col-6">
-                <p hidden>
-                    The absolute coordinates of the selection.
+                <div class="col-6">
+                    <p hidden>The absolute coordinates of the selection.</p>
                     <ul hidden>
                         <li>
                             Top-left (
@@ -53,27 +51,25 @@
                             )
                         </li>
                     </ul>
-                </p>
-                <form method="post" class="form my-2">
-                    {% csrf_token %}
-                    <ul hidden>
-                        <li>
-                            Top-left (
-                            <input id="plom_left" name="plom_left" readonly />
-                            ,
-                            <input id="plom_top" name="plom_top" readonly />
-                            )
-                        </li>
-                        <li>
-                            Bottom-right (
-                            <input id="plom_right" name="plom_right" readonly />
-                            ,
-                            <input id="plom_bottom" name="plom_bottom" readonly />
-                            )
-                        </li>
-                    </ul>
-                    <p>
-                        Instructions:
+                    <form method="post" class="form my-2">
+                        {% csrf_token %}
+                        <ul hidden>
+                            <li>
+                                Top-left (
+                                <input id="plom_left" name="plom_left" readonly />
+                                ,
+                                <input id="plom_top" name="plom_top" readonly />
+                                )
+                            </li>
+                            <li>
+                                Bottom-right (
+                                <input id="plom_right" name="plom_right" readonly />
+                                ,
+                                <input id="plom_bottom" name="plom_bottom" readonly />
+                                )
+                            </li>
+                        </ul>
+                        <p>Instructions:</p>
                         <ul>
                             <li>Select a rectangle that completely covers the ID box - with some margin.</li>
                             <li>
@@ -86,37 +82,38 @@
                                 - and plom will start the student-ID prediction.
                             </li>
                         </ul>
-                    </p>
-                    <input class="btn btn-primary"
-                           type="submit"
-                           name="find_rect"
-                           value="Find Rectangle">
-                    <input class="btn btn-warning"
-                           type="submit"
-                           name="submit"
-                           value="Set Rectangle">
-                    <button hx-delete="" class="btn btn-danger">Clear</button>
-                </form>
-                {% if initial_rectangle %}
-                    {% if best_guess %}
-                        <div class="alert alert-info">No pre-existing rectangle, making a reasonable guess (we hope)</div>
+                        <input class="btn btn-primary"
+                               type="submit"
+                               name="find_rect"
+                               value="Find Rectangle">
+                        <input class="btn btn-warning"
+                               type="submit"
+                               name="submit"
+                               value="Set Rectangle">
+                        <button hx-delete="" class="btn btn-danger" type="button">Clear</button>
+                    </form>
+                    {% if initial_rectangle %}
+                        {% if best_guess %}
+                            <div class="alert alert-info">No pre-existing rectangle, making a reasonable guess (we hope)</div>
+                        {% else %}
+                            <div class="alert alert-success">Found rectangle</div>
+                        {% endif %}
                     {% else %}
-                        <div class="alert alert-success">Found rectangle</div>
+                        <div class="alert alert-warning">Could not find rectangle</div>
                     {% endif %}
-                {% else %}
-                    <div class="alert alert-warning">Could not find rectangle</div>
-                {% endif %}
+                </div>
             </div>
         </div>
     </div>
-</div>
-<script src="{% static '/js/rectangle_select.js' %}"></script>
-<script type="text/javascript">
-  // these are declared in the above 'rectangle_select.js'script
-  // and are required to allow it to function
-  corner_dat = {{qr_info|safe}};
-  top_left_coord = {{top_left|safe}};
-  bottom_right_coord = {{bottom_right|safe}};
-</script>
-{% if initial_rectangle %}<script>setInitialIDBoxRectangle({{initial_rectangle}});</script>{% endif %}
+    <script src="{% static '/js/rectangle_select.js' %}"></script>
+    <script>
+      // these are declared in the above 'rectangle_select.js' script
+      // and are required to allow it to function
+      corner_dat = {{qr_info|safe}};
+      top_left_coord = {{top_left|safe}};
+      bottom_right_coord = {{bottom_right|safe}};
+    </script>
+    {% if initial_rectangle %}
+        <script>setInitialIDBoxRectangle({{initial_rectangle}});</script>
+    {% endif %}
 {% endblock main_content %}

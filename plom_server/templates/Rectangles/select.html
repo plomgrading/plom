@@ -1,10 +1,10 @@
+{% extends "base/base.html" %}
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
-    Copyright (C) 2025 Colin B. Macdonald
+    Copyright (C) 2025-2026 Colin B. Macdonald
     Copyright (C) 2025 Aidan Murphy
 -->
-{% extends "base/base.html" %}
 {% load static %}
 {% block title %}
     Select rectangle from v {{ version }} p {{ page_number }}
@@ -26,62 +26,61 @@
                 <div class="col-6">
                     <img id="reference_image"
                          class="border w-100"
-                         src="{% url 'reference_image' version page_number %}">
-                </img>
-                <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
-            </div>
-            <div class="col-6">
-                <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
+                         src="{% url 'reference_image' version page_number %}" />
+                    <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
+                </div>
+                <div class="col-6">
+                    <!-- Note: some of these input boxes, such as "thb_left", "plom_left"
                      have special names that read/written by javascript, to sync
                      interactive box drawing to the coordinates in the inputs. -->
-                <p>The absolute coordinates of the selection.</p>
-                <ul>
-                    <li>
-                        Top-left (
-                        <input id="thb_left" readonly />
-                        ,
-                        <input id="thb_top" readonly />
-                        )
-                    </li>
-                    <li>
-                        Bottom-right (
-                        <input id="thb_right" readonly />
-                        ,
-                        <input id="thb_bottom" readonly />
-                        )
-                    </li>
-                </ul>
-                <p>The scaled coordinates of the selection.</p>
-                <form method="post">
-                    {% csrf_token %}
+                    <p>The absolute coordinates of the selection.</p>
                     <ul>
                         <li>
                             Top-left (
-                            <input id="plom_left" name="plom_left" readonly />
+                            <input id="thb_left" readonly />
                             ,
-                            <input id="plom_top" name="plom_top" readonly />
+                            <input id="thb_top" readonly />
                             )
                         </li>
                         <li>
                             Bottom-right (
-                            <input id="plom_right" name="plom_right" readonly />
+                            <input id="thb_right" readonly />
                             ,
-                            <input id="plom_bottom" name="plom_bottom" readonly />
+                            <input id="thb_bottom" readonly />
                             )
                         </li>
                     </ul>
-                    <input type="submit" value="Submit">
-                </form>
+                    <p>The scaled coordinates of the selection.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <ul>
+                            <li>
+                                Top-left (
+                                <input id="plom_left" name="plom_left" readonly />
+                                ,
+                                <input id="plom_top" name="plom_top" readonly />
+                                )
+                            </li>
+                            <li>
+                                Bottom-right (
+                                <input id="plom_right" name="plom_right" readonly />
+                                ,
+                                <input id="plom_bottom" name="plom_bottom" readonly />
+                                )
+                            </li>
+                        </ul>
+                        <input type="submit" value="Submit">
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<script src="{% static '/js/rectangle_select.js' %}"></script>
-<script type="text/javascript">
-  // these are declared in the above 'rectangle_select.js'script
-  // and are required to allow it to function
-  corner_dat = {{qr_info|safe}};
-  top_left_coord = {{top_left|safe}};
-  bottom_right_coord = {{bottom_right|safe}};
-</script>
+    <script src="{% static '/js/rectangle_select.js' %}"></script>
+    <script>
+      // these are declared in the above 'rectangle_select.js' script
+      // and are required to allow it to function
+      corner_dat = {{qr_info|safe}};
+      top_left_coord = {{top_left|safe}};
+      bottom_right_coord = {{bottom_right|safe}};
+    </script>
 {% endblock main_content %}
