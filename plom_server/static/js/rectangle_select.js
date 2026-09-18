@@ -158,7 +158,7 @@ function drawPlomBits() {
 /** Draw the rectangle. */
 function drawRectInCanvas() {
   var ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  //ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
   ctx.lineWidth = '2';
   ctx.fillStyle = '#00808050';
@@ -362,8 +362,8 @@ function repositionCanvas() {
 
 /** Initialise the Canvas. */
 function initCanvas() {
-  canvas.height = image.height;
-  canvas.width = image.width;
+  // canvas.height = image.height;
+  // canvas.width = image.width;
   canvas.style.top = image.offsetTop + 'px'; ;
   canvas.style.left = image.offsetLeft + 'px';
   updateCurrentCanvasRect();

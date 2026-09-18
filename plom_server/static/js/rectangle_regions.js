@@ -93,6 +93,7 @@ function drawTheStuff() {
  */
 function _initCanvas(canvas, image) {
   // make canvas same as image, which may have changed size and position
+  // setting the width / height wipes the drawing
   canvas.height = image.height;
   canvas.width = image.width;
   canvas.style.top = image.offsetTop + 'px'; ;
