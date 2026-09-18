@@ -26,8 +26,17 @@
  */
 function drawLabeledRectangles(blocks, canvas) {
   const lw = 4; // rectangle border linewidth
-  // sequence from GNU Octave's default ("help lines")
-  const colours = ['#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'];
+  // sequence from GNU Octave's default ("help lines") + one more teal
+  const colours = [
+    '#0072BD',
+    '#D95319',
+    '#EDB120',
+    '#7E2F8E',
+    '#77AC30',
+    '#4DBEEE',
+    '#A2142F',
+    '#007760',
+  ];
   var ctx = canvas.getContext('2d');
   for (let i = 0; i < blocks.length; i++) {
     var r = blocks[i].rect;
