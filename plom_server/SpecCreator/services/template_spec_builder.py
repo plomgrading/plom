@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-204 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024, 2026 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
 
 from plom.common.misc_utils import interpolate_questions_over_pages
@@ -12,7 +12,7 @@ class TemplateSpecBuilderService:
     ):
         """Builds a template toml string with comments."""
         spec_toml = f"""
-# Two human-readable names of the test - one long, one short.
+# Two human-readable names of the assessment - one long, one short.
 longName = "{longName}"
 
 # The short name must be alphanumeric without spaces. Underscore, hyphens and periods are okay.
@@ -24,7 +24,7 @@ numberOfQuestions = {questions}
 numberOfVersions = {versions}
 totalMarks = {score}
 
-# Your test must have exactly one id-page this is usually page 1
+# Your assesssment must have exactly one id-page this is usually page 1
 idPage = 1
 
 # List of pages that are not marked (like instructions, formula sheets, etc)
@@ -44,7 +44,7 @@ doNotMarkPages = []
 # available versions - either
 #    select = [1,2] - take randomly from version 1 or version 2
 #    select = 1 - always take from version 1
-# By default Plom will take randomly from all questions
+# By default Plom draws randomly from all versions.
 """
 
         score_per_question = score // questions
@@ -59,7 +59,8 @@ doNotMarkPages = []
 
         for k in range(questions):
             spec_toml += f"""
-[[question]]  # q.{k+1}
+# Question {k+1}
+[[question]]
 ## pages = {question_pages[k]}  ## <<<<< This needs editing
 ## mark = {question_scores[k]}  ## <<<<< This needs editing
 """
