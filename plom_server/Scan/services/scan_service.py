@@ -564,7 +564,7 @@ class ScanService:
                         'version_num': 1,
                         'public_code': '193849',
                     }
-                    'quadrant': '1',
+                    'quadrant': 1,
                     'tpv': '0000100301',
                     'x_coord': 2204,
                     'y_coord': 279.5
@@ -578,7 +578,7 @@ class ScanService:
                         'version_num': 1,
                         'public_code': '193849',
                 }
-                    'quadrant': '3',
+                    'quadrant': 3,
                     'tpv': '0000100301',
                     'x_coord': 234,
                     'y_coord': 2909.5,
@@ -592,7 +592,7 @@ class ScanService:
                         'version_num': 1,
                         'public_code': '193849',
                     }
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': '0000100301',
                     'x_coord': 2203,
                     'y_coord': 2906.5,
@@ -602,7 +602,7 @@ class ScanService:
             Alternatively, if the page is an extra page, then returns a similar dict but with entries of the form
                     'SE': {
                     'page_type': 'plom_extra',
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': 'plomX',
                     'x_coord': 2203,
                     'y_coord': 2906.5
@@ -610,7 +610,7 @@ class ScanService:
             Similarly, if the page is a scrap-paper page, then returns
                     'SE': {
                     'page_type': 'plom_scrap',
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': 'plomS',
                     'x_coord': 2203,
                     'y_coord': 2906.5
@@ -618,7 +618,7 @@ class ScanService:
             Similarly, if the page is a bundle-separator-paper page, then returns
                     'SE': {
                     'page_type': 'plom_bundle_separator',
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': 'plomB',
                     'x_coord': 2203,
                     'y_coord': 2906.5
