@@ -4,20 +4,25 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2026 Jax Lim
 
+from packaging.version import Version
 from statistics import mean
 from typing import Any
 
 import zxingcpp
 from PIL import Image
 
+import plom.common
 from plom.common.tpv_utils import (
     parseTPV,
-    parseExtraPageCode,
+    parseExtraPageCode,  # deprecated, remove in 0.23.x
     getPaperPageVersion,
     isValidTPV,
     isValidExtraPageCode,
     isValidScrapPaperCode,
     isValidBundleSeparatorPaperCode,
+    getExtraPageOrientation,
+    getScrapPaperOrientation,
+    getBundleSeparatorPaperOrientation,
 )
 
 from .rotate import pil_load_with_jpeg_exif_rot_applied
@@ -231,7 +236,7 @@ def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
 def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
     """Extract Plom-specific info in a dict structure from a raw QR code string."""
     if isValidTPV(raw_qr_string):
-        paper_id, page_num, version_num, public_code, corner = parseTPV(raw_qr_string)
+        paper_id, page_num, version_num, public_code, crnr = parseTPV(raw_qr_string)
         # get the "TTTTTPPPVV" part
         tpv = getPaperPageVersion(raw_qr_string)
         return {
@@ -242,12 +247,15 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
                 "version_num": version_num,
                 "public_code": public_code,
             },
-            "quadrant": corner,
+            "quadrant": crnr,
             "tpv": tpv,
         }
 
     elif isValidExtraPageCode(raw_qr_string):
-        corner = parseExtraPageCode(raw_qr_string)
+        if Version(plom.common.__version__) <= Version("0.22.0"):
+            corner = int(parseExtraPageCode(raw_qr_string))
+        else:
+            corner = getExtraPageOrientation(raw_qr_string)
         return {
             "page_type": "plom_extra",
             "quadrant": corner,
@@ -255,7 +263,10 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
         }
 
     elif isValidScrapPaperCode(raw_qr_string):
-        corner = parseExtraPageCode(raw_qr_string)
+        if Version(plom.common.__version__) <= Version("0.22.0"):
+            corner = int(parseExtraPageCode(raw_qr_string))
+        else:
+            corner = getScrapPaperOrientation(raw_qr_string)
         return {
             "page_type": "plom_scrap",
             "quadrant": corner,
@@ -263,7 +274,10 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
         }
 
     elif isValidBundleSeparatorPaperCode(raw_qr_string):
-        corner = parseExtraPageCode(raw_qr_string)
+        if Version(plom.common.__version__) <= Version("0.22.0"):
+            corner = int(parseExtraPageCode(raw_qr_string))
+        else:
+            corner = getBundleSeparatorPaperOrientation(raw_qr_string)
         return {
             "page_type": "plom_bundle_separator",
             "quadrant": corner,
@@ -273,5 +287,4 @@ def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
     else:
         return {
             "page_type": "invalid_qr",
-            "quadrant": "0",
         }

@@ -57,48 +57,56 @@ class PageImageProcessor:
             RuntimeError: something inconsistent in the QR data.
         """
         northeast_orientation = None
-        if "NE" in qr_code_data:
-            expected_corner = qr_code_data["NE"]["quadrant"]
-            northeast_orientation = cls._check_corner(
-                val_from_qr=expected_corner,
-                upright="1",
-                turned_right="2",
-                turned_left="4",
-                upside_down="3",
-            )
+        qr = qr_code_data.get("NE")
+        if qr:
+            qr_orientation = qr.get("quadrant")
+            if qr_orientation is not None:
+                northeast_orientation = cls._check_corner(
+                    val_from_qr=int(qr_orientation),
+                    upright=1,
+                    turned_right=2,
+                    turned_left=4,
+                    upside_down=3,
+                )
 
         northwest_orientation = None
-        if "NW" in qr_code_data:
-            expected_corner = qr_code_data["NW"]["quadrant"]
-            northwest_orientation = cls._check_corner(
-                val_from_qr=expected_corner,
-                upright="2",
-                turned_right="3",
-                turned_left="1",
-                upside_down="4",
-            )
+        qr = qr_code_data.get("NW")
+        if qr:
+            qr_orientation = qr.get("quadrant")
+            if qr_orientation is not None:
+                northwest_orientation = cls._check_corner(
+                    val_from_qr=int(qr_orientation),
+                    upright=2,
+                    turned_right=3,
+                    turned_left=1,
+                    upside_down=4,
+                )
 
         southeast_orientation = None
-        if "SE" in qr_code_data:
-            expected_corner = qr_code_data["SE"]["quadrant"]
-            southeast_orientation = cls._check_corner(
-                val_from_qr=expected_corner,
-                upright="4",
-                turned_right="1",
-                turned_left="3",
-                upside_down="2",
-            )
+        qr = qr_code_data.get("SE")
+        if qr:
+            qr_orientation = qr.get("quadrant")
+            if qr_orientation is not None:
+                southeast_orientation = cls._check_corner(
+                    val_from_qr=int(qr_orientation),
+                    upright=4,
+                    turned_right=1,
+                    turned_left=3,
+                    upside_down=2,
+                )
 
         southwest_orientation = None
-        if "SW" in qr_code_data:
-            expected_corner = qr_code_data["SW"]["quadrant"]
-            southwest_orientation = cls._check_corner(
-                val_from_qr=expected_corner,
-                upright="3",
-                turned_right="4",
-                turned_left="2",
-                upside_down="1",
-            )
+        qr = qr_code_data.get("SW")
+        if qr:
+            qr_orientation = qr.get("quadrant")
+            if qr_orientation is not None:
+                southwest_orientation = cls._check_corner(
+                    val_from_qr=int(qr_orientation),
+                    upright=3,
+                    turned_right=4,
+                    turned_left=2,
+                    upside_down=1,
+                )
 
         # make sure at least one corner is truthy, and they all agree
         truthy_results = [
@@ -120,25 +128,12 @@ class PageImageProcessor:
 
     @staticmethod
     def _check_corner(
-        val_from_qr: str,
-        upright: str,
-        turned_right: str,
-        turned_left: str,
-        upside_down: str,
+        val_from_qr: int,
+        upright: int,
+        turned_right: int,
+        turned_left: int,
+        upside_down: int,
     ) -> str:
-        """Check a page corner for its actual orientation.
-
-        Args:
-            val_from_qr (str): one of "1", "2", "3", "4"
-            upright (str): the quadrant value for an upright orientation,
-                           one of "1", "2", "3", "4"
-            turned_right (str): value for a turned_right orientation
-            turned_left (str): value for a turned_left orientation
-            upside_down (str): value for an upside_down orientation
-
-        Returns:
-            String describing the orientation.
-        """
         if val_from_qr == upright:
             return "upright"
         elif val_from_qr == turned_right:
@@ -153,14 +148,16 @@ class PageImageProcessor:
     def get_rotation_angle_from_QRs(cls, qr_data: dict[str, dict[str, Any]]) -> int:
         """Get the current orientation of a page-image using its parsed QR code data.
 
-        If it isn't upright, return the angle by which the image needs to be rotated,
-        in degrees counter-clockwise.
+        If it isn't upright, return the angle by which the image needs
+        to be rotated, in degrees counter-clockwise.  Note this only
+        deals with multiples of 90 degrees: fractional rotations are
+        handled elsewhere (namely in "Rectangle Extraction").
 
         Args:
             qr_data: parsed QR code data.
 
         Returns:
-            Rotation angle by which the page needs to be rotated.
+            Integer rotation angle by which the page needs to be rotated.
             If page is already upright, rotation angle of 0 is returned.
 
         Raises:

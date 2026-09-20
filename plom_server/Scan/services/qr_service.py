@@ -208,10 +208,10 @@ class QRService:
 
         Note that the parsed_qr_dict is of the form
         {
-        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'tpv': '00001001001', 'raw_qr_string': '00001001001128558'},
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': 1, 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'tpv': '00001001001', 'raw_qr_string': '00001001001128558'},
         }
         or potentially (if an extra page or scrap-paper)
-        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': 1, 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
 
         Returns:
             None if all good
