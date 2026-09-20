@@ -134,19 +134,6 @@ class PageImageProcessor:
         turned_left: int,
         upside_down: int,
     ) -> str:
-        """Check a page corner for its actual orientation.
-
-        Args:
-            val_from_qr: one of 1, 2, 3, 4.
-            upright: the quadrant value for an upright orientation,
-                one of 1, 2, 3, 4.
-            turned_right: value for a turned_right orientation
-            turned_left: value for a turned_left orientation
-            upside_down: value for an upside_down orientation
-
-        Returns:
-            String describing the orientation.
-        """
         if val_from_qr == upright:
             return "upright"
         elif val_from_qr == turned_right:
