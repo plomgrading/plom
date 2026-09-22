@@ -190,14 +190,9 @@
         </div>
     </div>
     {{ region_info_per_page|json_script:"rectangle-regions-data" }}
+    {{ top_left|json_script:"top_left_ref_coord" }}
+    {{ bottom_right|json_script:"bottom_right_ref_coord" }}
     <script type="module" src="{% static '/js/rectangle_select.js' %}"></script>
-    <script>
-      // these are declared in the above 'rectangle_select.js' script
-      // and are required to allow it to function
-      corner_dat = {{qr_info|safe}};
-      top_left_coord = {{top_left|safe}};
-      bottom_right_coord = {{bottom_right|safe}};
-      var mcq_box_detection_url = "{% url 'question_clustering_detect_mcq_boxes' version page_num %}";
-    </script>
+    <script>var mcq_box_detection_url = "{% url 'question_clustering_detect_mcq_boxes' version page_num %}";</script>
     <script src="{% static '/js/mcq_box_select.js' %}"></script>
 {% endblock main_content %}

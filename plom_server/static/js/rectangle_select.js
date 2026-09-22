@@ -6,6 +6,18 @@
     Copyright (C) 2025-2026 Aidan Murphy
 */
 
+/**
+ * This javascript routine allows the user to select a box on-top
+ * of an image.
+ *
+ * The html template must have a canvas element with id `canvas`
+ * and an img element with id `refrence_image`.
+ *
+ * It must define some variables using Django's `json_script`:
+ * top_left_coord, bottom_right_coord.
+ * TODO: others.
+ */
+
 /* eslint-disable no-unused-vars */
 
 // Code idea copied from
@@ -53,12 +65,6 @@ function setInitialIDBoxRectangle(id_box_rect) {
   initial_rect = id_box_rect;
 }
 
-// these must be initialised in the template
-// eslint-disable-next-line no-unassigned-vars
-var top_left_coord;
-// eslint-disable-next-line no-unassigned-vars
-var bottom_right_coord;
-
 // some starting values
 var th_left = 0;
 var th_top = 0;
@@ -81,6 +87,9 @@ image.onload = function () {
   effective_image_width = image.naturalWidth;
   effective_image_height = image.naturalHeight;
 
+  const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
+  const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
+
   var w = bottom_right_coord[0] - top_left_coord[0];
   var h = bottom_right_coord[1] - top_left_coord[1];
 
@@ -101,6 +110,9 @@ function updateHiddenInputs() {
   h_th_top.value = Math.round(rect.top * inverse_ratio_h);
   h_th_right.value = Math.round((rect.left + rect.width) * inverse_ratio_w);
   h_th_bottom.value = Math.round((rect.top + rect.height) * inverse_ratio_h);
+
+  const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
+  const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
 
   var w = bottom_right_coord[0] - top_left_coord[0];
   var h = bottom_right_coord[1] - top_left_coord[1];
@@ -145,6 +157,10 @@ function drawPlomBits() {
   var ratio_h = canvas.height / effective_image_height;
 
   const data = JSON.parse(document.getElementById('rectangle-regions-data').textContent);
+
+  const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
+  const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
+
   // TODO: fix hardcoding of structure here
   drawLabeledRectangles(data[0].question_regions, canvas);
 
