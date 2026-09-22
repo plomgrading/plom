@@ -137,29 +137,16 @@ function drawHandles() {
 }
 
 /**
- * Draw Plom related things on screen.
- *   Supports drawRectInCanvas().
- *   TODO: What are Plom related things?
+ * Draw a box for Plom's QR coordinate system.
  */
-function drawPlomBits() {
+function drawQRCoordBox() {
   // draw plom coordinate system
   var ctx = canvas.getContext('2d');
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
 
-  var regions = [];
-  let elm = document.getElementById('rectangle-regions-data');
-  if (elm) {
-    let tmp = JSON.parse(elm.textContent);
-    // TODO: clean this up
-    regions = tmp[0].question_regions;
-  }
-
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
-
-  // TODO: fix hardcoding of structure here
-  drawLabeledRectangles(regions, canvas);
 
   ctx.strokeStyle = '#ff8000';
   ctx.setLineDash([2, 4]);
@@ -175,10 +162,10 @@ function drawPlomBits() {
   ctx.rect(top_left_coord[0] * ratio_w, top_left_coord[1] * ratio_h, (bottom_right_coord[0] - top_left_coord[0]) * ratio_w, (bottom_right_coord[1] - top_left_coord[1]) * ratio_h);
   ctx.stroke();
 }
+
 /** Draw the rectangle. */
-function drawRectInCanvas() {
-  var ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function _drawRect() {
+  let ctx = canvas.getContext('2d');
   ctx.beginPath();
   ctx.lineWidth = '2';
   ctx.fillStyle = '#00808050';
@@ -187,11 +174,29 @@ function drawRectInCanvas() {
   ctx.fill();
   ctx.stroke();
   drawHandles();
-  drawPlomBits();
+}
+
+/** Draw all the bits and pieces. */
+function drawStuff() {
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawQRCoordBox();
+
+  let regions = [];
+  let elm = document.getElementById('rectangle-regions-data');
+  if (elm) {
+    let tmp = JSON.parse(elm.textContent);
+    // TODO: clean this up
+    regions = tmp[0].question_regions;
+  }
+  // TODO: fix hardcoding of structure here
+  drawLabeledRectangles(regions, canvas);
+
+  _drawRect();
 
   updateHiddenInputs();
 }
-// drawRectInCanvas() connected functions -- END
 
 /** Sets global vars when the mouse button is lifted. */
 function mouseUp() {
@@ -279,7 +284,7 @@ function mouseDown(e) {
   else {
     // handle not resizing
   }
-  drawRectInCanvas();
+  drawStuff();
 }
 // mousedown connected functions -- END
 
@@ -350,7 +355,7 @@ function mouseMove(e) {
       rect.height = newSideY;
     }
   }
-  drawRectInCanvas();
+  drawStuff();
 }
 
 /** Update global variables relating to the rectangle. */
@@ -377,7 +382,7 @@ function repositionCanvas() {
   rect.height = rect.height * ratio_h;
   rect.width = rect.width * ratio_w;
   updateCurrentCanvasRect();
-  drawRectInCanvas();
+  drawStuff();
 }
 
 /** Initialise the Canvas. */
@@ -419,7 +424,7 @@ function init() {
   canvas.addEventListener('touchend', mouseUp);
   initCanvas();
   initRect();
-  drawRectInCanvas();
+  drawStuff();
 }
 
 window.addEventListener('load', init);
