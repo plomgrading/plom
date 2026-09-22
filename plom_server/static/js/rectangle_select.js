@@ -38,51 +38,46 @@ var h_plom_tl_y = document.getElementById('plom_top');
 var h_plom_br_x = document.getElementById('plom_right');
 var h_plom_br_y = document.getElementById('plom_bottom');
 
-var handleRadius = 10;
+const handleRadius = 10;
 
 var dragTL, dragBL, dragTR, dragBR;
 dragTL = dragBL = dragTR = dragBR = false;
 
 var dragWholeRect = false;
 
-var rect = {};
+// represents the corners of the interactive rectangle in the canvas
+// unit coordinate system (which is dependent on the current layout)
+let rect = {"left": 100, "top": 50, "width": 256, "height": 128};
+
 var current_canvas_rect = {};
 
 var mouseX, mouseY;
 var startX, startY;
 
-// the initial rectangle should be given in [0, 1] coords.
-var initial_rect = [0.1, 0.1, 0.1 + 0.2, 0.1 + 0.1];
-
 import { drawLabeledRectangles } from './rectangle_tools.js';
+
 
 /**
  * Set a variable with the initial rectangle.
- * @param id_box_rect
+ * @param initial_rect - 4-Array, in the QR-coordinate system.
  */
-function setInitialIDBoxRectangle(id_box_rect) {
-  initial_rect = id_box_rect;
-}
-
-// some starting values
-var th_left = 0;
-var th_top = 0;
-var th_right = 256;
-var th_bottom = 128;
-
-
-/** Initial setup stuff. */
-function todo_init_rect_stuff() {
+function setInitialIDBoxRectangle(initial_rect) {
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
-
   const w = bottom_right_coord[0] - top_left_coord[0];
   const h = bottom_right_coord[1] - top_left_coord[1];
-  th_left = initial_rect[0] * w + top_left_coord[0];
-  th_right = initial_rect[2] * w + top_left_coord[0];
-  th_top = initial_rect[1] * h + top_left_coord[1];
-  th_bottom = initial_rect[3] * h + top_left_coord[1];
-};
+  const th_left = initial_rect[0] * w + top_left_coord[0];
+  const th_right = initial_rect[2] * w + top_left_coord[0];
+  const th_top = initial_rect[1] * h + top_left_coord[1];
+  const th_bottom = initial_rect[3] * h + top_left_coord[1];
+  const ratio_w = canvas.width / image.naturalWidth;
+  const ratio_h = canvas.height / image.naturalHeight;
+  rect.width = (th_right - th_left) * ratio_w;
+  rect.height = (th_bottom - th_top) * ratio_h;
+  rect.left = th_left * ratio_w;
+  rect.top = th_top * ratio_h;
+}
+
 
 /** Update input elements on an associated HTML page with rectangle corner values. */
 function updateHiddenInputs() {
@@ -385,20 +380,9 @@ function initCanvas() {
   updateCurrentCanvasRect();
 }
 
-/** Initialise the rectangle. */
-function initRect() {
-  const ratio_w = canvas.width / image.naturalWidth;
-  const ratio_h = canvas.height / image.naturalHeight;
-  const th_width = th_right - th_left;
-  const th_height = th_bottom - th_top;
-  rect.height = th_height * ratio_h;
-  rect.width = th_width * ratio_w;
-  rect.top = th_top * ratio_h;
-  rect.left = th_left * ratio_w;
-}
-
 /** Call various initialisers, and add event listeners to the canvas. */
 function init() {
+  initCanvas();
   let elm = document.getElementById('initial_rectangle');
   if (elm) {
     let tmp = JSON.parse(elm.textContent);
@@ -410,9 +394,6 @@ function init() {
   canvas.addEventListener('touchstart', mouseDown);
   canvas.addEventListener('touchmove', mouseMove);
   canvas.addEventListener('touchend', mouseUp);
-  todo_init_rect_stuff();
-  initCanvas();
-  initRect();
   drawStuff();
 }
 
