@@ -1,16 +1,26 @@
 /*
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2026 Deep Shah
+    Copyright (C) 2026 Colin B. Macdonald
 */
 
+/**
+ * This javascript routine provides interaction with small multiple choice boxes.
+ *
+ * The html template must have a canvas element with id `canvas`
+ * and an img element with id `refrence_image`.
+ *
+ * The template must define some variables using Django's `json_script` filter:
+ * top_left_ref_coord, bottom_right_ref_coord.
+ */
+
 /* global
-    bottom_right_coord,
-    top_left_coord,
-    effective_image_width,
-    effective_image_height,
-    canvas,
     mcq_box_detection_url
 */
+
+const image = document.getElementById('reference_image');
+const canvas = document.getElementById('canvas');
+
 
 (function () {
   const optionLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -70,6 +80,8 @@
    * @returns {object} - Reference width and height in Plom coordinates.
    */
   function getReferenceSize() {
+    const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
+    const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
     return {
       width: bottom_right_coord[0] - top_left_coord[0],
       height: bottom_right_coord[1] - top_left_coord[1],
@@ -81,12 +93,13 @@
    * @param {number} dx - Horizontal canvas delta in pixels.
    * @param {number} dy - Vertical canvas delta in pixels.
    * @returns {object} - Horizontal and vertical deltas in Plom coordinates.
+   * Accesses global variables `image` and `canvas`.
    */
   function canvasDeltaToPlom(dx, dy) {
     const referenceSize = getReferenceSize();
     return {
-      dx: (dx * effective_image_width / canvas.width) / referenceSize.width,
-      dy: (dy * effective_image_height / canvas.height) / referenceSize.height,
+      dx: (dx * image.naturalWidth / canvas.width) / referenceSize.width,
+      dy: (dy * image.naturalHeight / canvas.height) / referenceSize.height,
     };
   }
 
@@ -94,18 +107,20 @@
    * Convert a normalized Plom box to a canvas-pixel rectangle.
    * @param {object} box - Option box in normalized Plom coordinates.
    * @returns {object} - Rectangle positioned and sized in canvas pixels.
+   * Accesses global variables `image` and `canvas`.
    */
   function plomBoxToCanvasBox(box) {
+    const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
     const referenceSize = getReferenceSize();
     const absLeft = top_left_coord[0] + box.left * referenceSize.width;
     const absTop = top_left_coord[1] + box.top * referenceSize.height;
     const absRight = top_left_coord[0] + box.right * referenceSize.width;
     const absBottom = top_left_coord[1] + box.bottom * referenceSize.height;
     return {
-      left: absLeft * canvas.width / effective_image_width,
-      top: absTop * canvas.height / effective_image_height,
-      width: (absRight - absLeft) * canvas.width / effective_image_width,
-      height: (absBottom - absTop) * canvas.height / effective_image_height,
+      left: absLeft * canvas.width / image.naturalWidth,
+      top: absTop * canvas.height / image.naturalHeight,
+      width: (absRight - absLeft) * canvas.width / image.naturalWidth,
+      height: (absBottom - absTop) * canvas.height / image.naturalHeight,
     };
   }
 

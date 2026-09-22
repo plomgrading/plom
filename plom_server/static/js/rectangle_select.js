@@ -7,14 +7,14 @@
 */
 
 /**
- * This javascript routine allows the user to select a box on-top
+ * This javascript module allows the user to select a box on-top
  * of an image.
  *
  * The html template must have a canvas element with id `canvas`
  * and an img element with id `refrence_image`.
  *
  * It must define some variables using Django's `json_script` filter:
- * top_left_coord, bottom_right_coord.
+ * top_left_ref_coord, bottom_right_ref_coord.
  * Optionally, there can also be `initial_rectangle` and ... TODO
  * TODO: doc the other one too.
  */
@@ -24,8 +24,8 @@
 // Code idea copied from
 // https://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
 
-var image = document.getElementById('reference_image');
-var canvas = document.getElementById('canvas');
+const image = document.getElementById('reference_image');
+const canvas = document.getElementById('canvas');
 
 // These are input elements that any page using this javascript must provide
 var h_th_left = document.getElementById('thb_left');
