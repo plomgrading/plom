@@ -107,8 +107,6 @@
     </div>
     {{ top_left|json_script:"top_left_ref_coord" }}
     {{ bottom_right|json_script:"bottom_right_ref_coord" }}
+    {{ initial_rectangle|json_script:"initial-rectangle" }}
     <script type="module" src="{% static '/js/rectangle_select.js' %}"></script>
-    {% if initial_rectangle %}
-        <script>setInitialIDBoxRectangle({{initial_rectangle}});</script>
-    {% endif %}
 {% endblock main_content %}

@@ -52,8 +52,6 @@ var startX, startY;
 
 // the initial rectangle should be given in [0, 1] coords.
 var initial_rect = [0.1, 0.1, 0.1 + 0.2, 0.1 + 0.1];
-/* exported setInitialIDBoxRectangle */
-// above is the correct way, but not working :(
 
 import { drawLabeledRectangles } from './rectangle_tools.js';
 
@@ -411,6 +409,12 @@ function initRect() {
 
 /** Call various initialisers, and add event listeners to the canvas. */
 function init() {
+  let elm = document.getElementById('initial-rectangle');
+  if (elm) {
+    let tmp = JSON.parse(elm.textContent);
+    console.log(tmp)
+    setInitialIDBoxRectangle(tmp)
+  }
   canvas.addEventListener('mousedown', mouseDown, false);
   canvas.addEventListener('mouseup', mouseUp, false);
   canvas.addEventListener('mousemove', mouseMove, false);
