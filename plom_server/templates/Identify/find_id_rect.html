@@ -105,14 +105,9 @@
             </div>
         </div>
     </div>
-    <script src="{% static '/js/rectangle_select.js' %}"></script>
-    <script>
-      // these are declared in the above 'rectangle_select.js' script
-      // and are required to allow it to function
-      corner_dat = {{qr_info|safe}};
-      top_left_coord = {{top_left|safe}};
-      bottom_right_coord = {{bottom_right|safe}};
-    </script>
+    {{ top_left|json_script:"top_left_ref_coord" }}
+    {{ bottom_right|json_script:"bottom_right_ref_coord" }}
+    <script type="module" src="{% static '/js/rectangle_select.js' %}"></script>
     {% if initial_rectangle %}
         <script>setInitialIDBoxRectangle({{initial_rectangle}});</script>
     {% endif %}

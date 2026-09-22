@@ -156,13 +156,19 @@ function drawPlomBits() {
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
 
-  const data = JSON.parse(document.getElementById('rectangle-regions-data').textContent);
+  var regions = [];
+  let elm = document.getElementById('rectangle-regions-data');
+  if (elm) {
+    let tmp = JSON.parse(elm.textContent);
+    // TODO: clean this up
+    regions = tmp[0].question_regions;
+  }
 
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
 
   // TODO: fix hardcoding of structure here
-  drawLabeledRectangles(data[0].question_regions, canvas);
+  drawLabeledRectangles(regions, canvas);
 
   ctx.strokeStyle = '#ff8000';
   ctx.setLineDash([2, 4]);
