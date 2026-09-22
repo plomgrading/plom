@@ -70,19 +70,9 @@ var th_top = 0;
 var th_right = 256;
 var th_bottom = 128;
 
-// some starting values
-var effective_image_width = 1700;
-var effective_image_height = 2200;
-//
-/**
- * Overwrite the onload function for our reference image.
- *  It updates global values after the image has
- *  loaded; so we can establish an effective coord system.
- */
-image.onload = function () {
-  effective_image_width = image.naturalWidth;
-  effective_image_height = image.naturalHeight;
 
+/** Initial setup stuff. */
+function todo_init_rect_stuff() {
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
 
@@ -96,8 +86,9 @@ image.onload = function () {
 
 /** Update input elements on an associated HTML page with rectangle corner values. */
 function updateHiddenInputs() {
-  var inverse_ratio_w = effective_image_width / canvas.width;
-  var inverse_ratio_h = effective_image_height / canvas.height;
+  // image.naturalWidth is number of pixels, vs image.width which depends on size on page
+  const inverse_ratio_w = image.naturalWidth / canvas.width;
+  const inverse_ratio_h = image.naturalHeight / canvas.height;
   h_th_left.value = Math.round(rect.left * inverse_ratio_w);
   h_th_top.value = Math.round(rect.top * inverse_ratio_h);
   h_th_right.value = Math.round((rect.left + rect.width) * inverse_ratio_w);
@@ -106,8 +97,8 @@ function updateHiddenInputs() {
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
 
-  var w = bottom_right_coord[0] - top_left_coord[0];
-  var h = bottom_right_coord[1] - top_left_coord[1];
+  const w = bottom_right_coord[0] - top_left_coord[0];
+  const h = bottom_right_coord[1] - top_left_coord[1];
 
   h_plom_tl_x.value = (h_th_left.value - top_left_coord[0]) / w;
   h_plom_tl_y.value = (h_th_top.value - top_left_coord[1]) / h;
@@ -141,10 +132,9 @@ function drawHandles() {
  * Draw a box for Plom's QR coordinate system.
  */
 function drawQRCoordBox() {
-  // draw plom coordinate system
   var ctx = canvas.getContext('2d');
-  var ratio_w = canvas.width / effective_image_width;
-  var ratio_h = canvas.height / effective_image_height;
+  const ratio_w = canvas.width / image.naturalWidth;
+  const ratio_h = canvas.height / image.naturalHeight;
 
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
@@ -397,12 +387,10 @@ function initCanvas() {
 
 /** Initialise the rectangle. */
 function initRect() {
-  var ratio_w = canvas.width / effective_image_width;
-  var ratio_h = canvas.height / effective_image_height;
-
+  const ratio_w = canvas.width / image.naturalWidth;
+  const ratio_h = canvas.height / image.naturalHeight;
   const th_width = th_right - th_left;
   const th_height = th_bottom - th_top;
-
   rect.height = th_height * ratio_h;
   rect.width = th_width * ratio_w;
   rect.top = th_top * ratio_h;
@@ -422,6 +410,7 @@ function init() {
   canvas.addEventListener('touchstart', mouseDown);
   canvas.addEventListener('touchmove', mouseMove);
   canvas.addEventListener('touchend', mouseUp);
+  todo_init_rect_stuff();
   initCanvas();
   initRect();
   drawStuff();
