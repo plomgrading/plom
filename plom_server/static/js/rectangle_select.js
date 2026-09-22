@@ -69,9 +69,6 @@ var th_top = 0;
 var th_right = 256;
 var th_bottom = 128;
 
-var th_width = th_right - th_left;
-var th_height = th_bottom - th_top;
-
 // some starting values
 var effective_image_width = 1700;
 var effective_image_height = 2200;
@@ -88,16 +85,12 @@ image.onload = function () {
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
 
-  var w = bottom_right_coord[0] - top_left_coord[0];
-  var h = bottom_right_coord[1] - top_left_coord[1];
-
+  const w = bottom_right_coord[0] - top_left_coord[0];
+  const h = bottom_right_coord[1] - top_left_coord[1];
   th_left = initial_rect[0] * w + top_left_coord[0];
   th_right = initial_rect[2] * w + top_left_coord[0];
   th_top = initial_rect[1] * h + top_left_coord[1];
   th_bottom = initial_rect[3] * h + top_left_coord[1];
-
-  th_width = th_right - th_left;
-  th_height = th_bottom - th_top;
 };
 
 /** Update input elements on an associated HTML page with rectangle corner values. */
@@ -400,6 +393,9 @@ function initCanvas() {
 function initRect() {
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
+
+  const th_width = th_right - th_left;
+  const th_height = th_bottom - th_top;
 
   rect.height = th_height * ratio_h;
   rect.width = th_width * ratio_w;
