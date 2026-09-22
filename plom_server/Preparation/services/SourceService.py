@@ -18,7 +18,6 @@ from django.core.files import File
 from django.core.files.utils import validate_file_name
 from django.db import transaction
 
-from plom.scan import QRextract
 from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
@@ -361,15 +360,14 @@ def store_reference_images(source_version: int):
             pix = pg.get_pixmap(dpi=200, annots=True)
             fname = tmpdir / f"ref_{source_version}_{n+1}.png"
             pix.save(fname)
-            code_dict = QRextract(fname)
-            page_data = ScanService.parse_qr_code([code_dict])
+            parsed_qr = ScanService.parse_qr_codes(fname)
             with open(fname, "rb") as fh:
                 pix_file = File(fh, name=fname.name)
                 ReferenceImage.objects.create(
                     page_number=n + 1,
                     version=source_version,
                     image_file=pix_file,
-                    parsed_qr=page_data,
+                    parsed_qr=parsed_qr,
                 )
 
 

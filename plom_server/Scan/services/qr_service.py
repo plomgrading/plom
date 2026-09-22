@@ -16,6 +16,15 @@ from plom_server.Papers.services import PaperInfoService
 from ..models import StagingImage, StagingBundle
 
 
+def _filter(qr_dict: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Filter out any QRs that are marked "ignore" from the QR dict input."""
+    qr_dict_copy = qr_dict.copy()
+    for k, qr in qr_dict.items():
+        if qr.get("ignore"):
+            qr_dict_copy.pop(k)
+    return qr_dict_copy
+
+
 class QRService:
     @classmethod
     def classify_staging_images_based_on_QR_codes(cls, bundle: StagingBundle) -> None:
@@ -63,13 +72,15 @@ class QRService:
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
             for img in images:
-                if len(img.parsed_qr) == 0:
+                parsed_qr = _filter(img.parsed_qr)
+
+                if len(parsed_qr) == 0:
                     # no qr-codes found.
                     no_qr_imgs.append(img.pk)
                     continue
 
                 try:
-                    cls._check_consistent_qrs(img.parsed_qr)
+                    cls._check_consistent_qrs(parsed_qr)
                 except ValueError as err:
                     error_imgs.append(
                         (
@@ -81,7 +92,7 @@ class QRService:
                     )
                     continue
                 try:
-                    cls._check_qrs_against_spec_and_qvmap(img.parsed_qr)
+                    cls._check_qrs_against_spec_and_qvmap(parsed_qr)
                 except ValueError as err:
                     error_imgs.append(
                         (
@@ -94,7 +105,7 @@ class QRService:
                     continue
 
                 # we know the codes are consistent, sufficient to check just one.
-                tpv = list(img.parsed_qr.values())[0]["tpv"]
+                tpv = list(parsed_qr.values())[0]["tpv"]
                 if tpv == "plomX":  # is an extra page
                     extra_imgs.append(img.pk)
                 elif tpv == "plomS":  # is a scrap-paper page
@@ -197,10 +208,10 @@ class QRService:
 
         Note that the parsed_qr_dict is of the form
         {
-        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'tpv': '00001001001', 'raw_qr_string': '00001001001128558'},
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': 1, 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'tpv': '00001001001', 'raw_qr_string': '00001001001128558'},
         }
         or potentially (if an extra page or scrap-paper)
-        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': 1, 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
 
         Returns:
             None if all good
@@ -214,7 +225,7 @@ class QRService:
             return any([X != lst[0] for X in lst])
 
         # check all page-types are the same
-        page_types = [parsed_qr_dict[x]["page_type"] for x in parsed_qr_dict]
+        page_types = [x["page_type"] for x in parsed_qr_dict.values()]
         # check if there is an invalid qr code on the page
         if "invalid_qr" in page_types:
             raise ValueError(
@@ -224,12 +235,14 @@ class QRService:
 
         if is_list_inconsistent(page_types):
             raise ValueError("Inconsistent QR codes - check scan for folded pages")
+
         # if it is an extra page or scrap-paper, then no further consistency checks
         if page_types[0] in ("plom_extra", "plom_scrap", "plom_bundle_separator"):
             return
+
         # must be a normal qr-coded plom-page - so make sure public-code is consistent
         # note - this does not check the code against that given by the spec.
-        codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
+        codes = [x["page_info"]["public_code"] for x in parsed_qr_dict.values()]
         if is_list_inconsistent(codes):
             raise ValueError(
                 "Inconsistent public-codes within the QR codes - "
@@ -237,25 +250,24 @@ class QRService:
             )
         # check all the same paper_id
         if is_list_inconsistent(
-            [parsed_qr_dict[x]["page_info"]["paper_id"] for x in parsed_qr_dict]
+            [x["page_info"]["paper_id"] for x in parsed_qr_dict.values()]
         ):
             raise ValueError("Inconsistent paper-numbers - check scan for folded pages")
         # check all the same page_number
         if is_list_inconsistent(
-            [parsed_qr_dict[x]["page_info"]["page_num"] for x in parsed_qr_dict]
+            [x["page_info"]["page_num"] for x in parsed_qr_dict.values()]
         ):
             raise ValueError("Inconsistent page-numbers - check scan for folded pages")
         # check all the same version_number
         if is_list_inconsistent(
-            [parsed_qr_dict[x]["page_info"]["version_num"] for x in parsed_qr_dict]
+            [x["page_info"]["version_num"] for x in parsed_qr_dict.values()]
         ):
             raise ValueError(
                 "Inconsistent version-numbers - check scan for folded pages"
             )
         # check all the same tpv - this **should** not be triggered because of previous checks
-        if is_list_inconsistent([parsed_qr_dict[x]["tpv"] for x in parsed_qr_dict]):
+        if is_list_inconsistent([x["tpv"] for x in parsed_qr_dict.values()]):
             raise ValueError("Inconsistent tpv - check scan for folded pages")
-        # check that the version in the qr-code matches the question-version-map in the system.
 
     @staticmethod
     def _check_qrs_against_spec_and_qvmap(

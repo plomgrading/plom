@@ -11,7 +11,6 @@ import cv2 as cv
 from django.test import TestCase
 from PIL import Image
 
-from plom.scan import QRextract
 import plom_server.Scan.tests as _Scan_tests
 from plom_server.Scan.services import ScanService
 
@@ -96,8 +95,7 @@ class RectangleServiceTests(TestCase):
         img_size = (img.width, img.height)
         img_bytes = img_path.read_bytes()
 
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes = ScanService.parse_qr_codes(img_path)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
@@ -115,8 +113,7 @@ class RectangleServiceTests(TestCase):
     def test_rect_affine_matrix_minimal_correction(self) -> None:
         """Close to identity for affine transformation matrix."""
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes = ScanService.parse_qr_codes(img_path)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
@@ -131,15 +128,14 @@ class RectangleServiceTests(TestCase):
 
     def test_rect_precisely_affine_matrix_no_correction(self) -> None:
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
-        codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_codes(img_path)
         # hack our own integer values in, so we get a precise transform
-        codes["NE"]["x"] = 1500
-        codes["NE"]["y"] = 100
-        codes["SE"]["x"] = 1500
-        codes["SE"]["y"] = 2000
-        codes["SW"]["x"] = 100
-        codes["SW"]["y"] = 2000
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes["NE"]["x_coord"] = 1500
+        parsed_codes["NE"]["y_coord"] = 100
+        parsed_codes["SE"]["x_coord"] = 1500
+        parsed_codes["SE"]["y_coord"] = 2000
+        parsed_codes["SW"]["x_coord"] = 100
+        parsed_codes["SW"]["y_coord"] = 2000
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
@@ -147,13 +143,13 @@ class RectangleServiceTests(TestCase):
         self.assertLess(np.linalg.norm(matrix - expected_matrix, "fro"), 0.000001)
 
         # Now try the other corner
-        codes["NW"] = codes.pop("NE")
-        codes["NW"]["x"] = 100
-        codes["SE"]["x"] = 1500
-        codes["SE"]["y"] = 2000
-        codes["SW"]["x"] = 100
-        codes["SW"]["y"] = 2000
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes = ScanService.parse_qr_codes(img_path)
+        parsed_codes["NW"] = parsed_codes.pop("NE")
+        parsed_codes["NW"]["x_coord"] = 100
+        parsed_codes["SE"]["x_coord"] = 1500
+        parsed_codes["SE"]["y_coord"] = 2000
+        parsed_codes["SW"]["x_coord"] = 100
+        parsed_codes["SW"]["y_coord"] = 2000
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
@@ -162,19 +158,17 @@ class RectangleServiceTests(TestCase):
 
     def test_rect_fail_with_less_than_three_corners(self) -> None:
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
-        codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_codes(img_path)
         # hack these a bit for testing: without a top point, we'll get None
-        codes.pop("NE")
-        codes.pop("NW")
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes.pop("NE", None)
+        parsed_codes.pop("NW", None)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
         self.assertIsNone(matrix)
 
-        codes = QRextract(img_path)
-        codes.pop("SE")
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes = ScanService.parse_qr_codes(img_path)
+        parsed_codes.pop("SE")
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
@@ -184,8 +178,7 @@ class RectangleServiceTests(TestCase):
         """Rotation of image, and affine transformation."""
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
         img = Image.open(img_path)  # type: ignore[arg-type]
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes = ScanService.parse_qr_codes(img_path)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
@@ -196,8 +189,7 @@ class RectangleServiceTests(TestCase):
             img_rot = img.rotate(5, expand=True)
             img_rot.save(img_rot_path)
 
-            codes = QRextract(img_rot_path)
-            parsed_codes = ScanService.parse_qr_code([codes])
+            parsed_codes = ScanService.parse_qr_codes(img_rot_path)
 
             matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
             expected_matrix = np.array(
@@ -215,8 +207,7 @@ class RectangleServiceTests(TestCase):
         img = img.convert("RGB")  # type: ignore[assignment]
 
         img_bytes = img_path.read_bytes()
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
+        parsed_codes = ScanService.parse_qr_codes(img_path)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
@@ -235,8 +226,7 @@ class RectangleServiceTests(TestCase):
             img_rot_path = Path(tmpdir) / "rotated_img.png"
             img_rot = img.rotate(3, expand=True)
             img_rot.save(img_rot_path)
-            codes = QRextract(img_rot_path)
-            parsed_codes = ScanService.parse_qr_code([codes])
+            parsed_codes = ScanService.parse_qr_codes(img_rot_path)
 
             output_bytes = _extract_rect_region_from_image(
                 img_rot_path,

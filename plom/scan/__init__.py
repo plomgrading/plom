@@ -18,7 +18,7 @@ PlomImageExts = ("png", "jpg", "jpeg")
 # This used to be shared with Client; don't think they need to match
 DefaultPixelHeight = 2000
 
-from .qr_extract import QRextract
+from .qr_extract import QRextract_list, QRextract_corners
 from .scansToImages import processFileToBitmaps
 from .scansToImages import try_to_extract_image, render_page_to_bitmap
 from .rotate import rotate_bitmap
@@ -26,6 +26,7 @@ from .rotate import rotate_bitmap
 # what you get from "from plom.scan import *"
 __all__ = [
     "processFileToBitmaps",
-    "QRextract",
+    "QRextract_list",
+    "QRextract_corners",
     "rotate_bitmap",
 ]

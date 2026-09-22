@@ -18,6 +18,7 @@ import random
 import tempfile
 import time
 from datetime import datetime
+from importlib.resources.abc import Traversable
 from io import BytesIO
 from math import ceil
 from pathlib import Path
@@ -39,18 +40,10 @@ import huey.api
 import huey.exceptions
 import pymupdf
 
+
 from plom.common.misc_utils import format_int_list_with_runs
 from plom.common.exceptions import PlomConflict
-from plom.common.tpv_utils import (
-    parseTPV,
-    parseExtraPageCode,
-    getPaperPageVersion,
-    isValidTPV,
-    isValidExtraPageCode,
-    isValidScrapPaperCode,
-    isValidBundleSeparatorPaperCode,
-)
-from plom.scan import QRextract
+from plom.scan import QRextract_corners
 from plom.scan import render_page_to_bitmap, try_to_extract_image
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
@@ -542,15 +535,26 @@ class ScanService:
         """Check if any staging bundles exist."""
         return StagingBundle.objects.all().exists()
 
-    @staticmethod
-    def parse_qr_code(list_qr_codes: list[dict[str, Any]]) -> dict[str, Any]:
-        """Parse QR codes into list of dictionaries.
+    @classmethod
+    def parse_qr_codes(
+        cls, image_path: str | pathlib.Path | Traversable, rotation: int = 0
+    ) -> dict[str, Any]:
+        """Parse Plom's QR code info from an image, optionally with a rotation pre-applied.
 
         Args:
-            list_qr_codes: QR codes returned from QRextract() method as a dictionary
+            image_path: an image filename, either in the local dir or
+                specified e.g., using `pathlib.Path`.
 
-        Returns:
-            groupings: (dict) Set of data from raw-qr-strings
+        Keyword Args:
+            rotation: Rotate the image by 90, -90, 180 or 270 degrees
+                counterclockwise prior to reading the QR codes. Defaults to 0.
+
+        Return:
+            A dict with keys such as "NE", "NW", "SE", "SW", "other1", "other2".
+            Each value is detailed info of what was read from a single QR code.
+            Any QR codes that cannot be uniquely assigned to corners will
+            each appear under a key "other*".
+            For example:
             {
                 'NE': {
                     'page_type': 'plom_qr',
@@ -560,7 +564,7 @@ class ScanService:
                         'version_num': 1,
                         'public_code': '193849',
                     }
-                    'quadrant': '1',
+                    'quadrant': 1,
                     'tpv': '0000100301',
                     'x_coord': 2204,
                     'y_coord': 279.5
@@ -574,7 +578,7 @@ class ScanService:
                         'version_num': 1,
                         'public_code': '193849',
                 }
-                    'quadrant': '3',
+                    'quadrant': 3,
                     'tpv': '0000100301',
                     'x_coord': 234,
                     'y_coord': 2909.5,
@@ -588,7 +592,7 @@ class ScanService:
                         'version_num': 1,
                         'public_code': '193849',
                     }
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': '0000100301',
                     'x_coord': 2203,
                     'y_coord': 2906.5,
@@ -598,7 +602,7 @@ class ScanService:
             Alternatively, if the page is an extra page, then returns a similar dict but with entries of the form
                     'SE': {
                     'page_type': 'plom_extra',
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': 'plomX',
                     'x_coord': 2203,
                     'y_coord': 2906.5
@@ -606,7 +610,7 @@ class ScanService:
             Similarly, if the page is a scrap-paper page, then returns
                     'SE': {
                     'page_type': 'plom_scrap',
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': 'plomS',
                     'x_coord': 2203,
                     'y_coord': 2906.5
@@ -614,95 +618,14 @@ class ScanService:
             Similarly, if the page is a bundle-separator-paper page, then returns
                     'SE': {
                     'page_type': 'plom_bundle_separator',
-                    'quadrant': '4',
+                    'quadrant': 4,
                     'tpv': 'plomB',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
-
         """
-        # ++++++++++++++++++++++
-        # TODO - hack this to handle tpv and plomX pages.
-        # Need to add a tpv-utils method to decide if tpv or plomX and then
-        # act accordingly here.
-        # ++++++++++++++++++++++
-
-        groupings = {}
-        # Note: the outer loop happens exactly once, TODO: consider flattening this code.
-        for page in range(len(list_qr_codes)):
-            for quadrant in list_qr_codes[page]:
-                # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVOCCCCCC" qr-string
-                # while tpv refers to "TTTTTPPPVV"
-                raw_qr_string = list_qr_codes[page][quadrant].get("tpv_signature", None)
-                if raw_qr_string is None:
-                    continue
-                x_coord = list_qr_codes[page][quadrant].get("x")
-                y_coord = list_qr_codes[page][quadrant].get("y")
-                orientation = list_qr_codes[page][quadrant].get("orientation")
-                qr_code_dict = {
-                    "raw_qr_string": raw_qr_string,
-                    "x_coord": x_coord,
-                    "y_coord": y_coord,
-                    "orientation": orientation,
-                }
-
-                if isValidTPV(raw_qr_string):
-                    paper_id, page_num, version_num, public_code, corner = parseTPV(
-                        raw_qr_string
-                    )
-                    tpv = getPaperPageVersion(
-                        list_qr_codes[page][quadrant].get("tpv_signature")
-                    )
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_qr",
-                            "page_info": {
-                                "paper_id": paper_id,
-                                "page_num": page_num,
-                                "version_num": version_num,
-                                "public_code": public_code,
-                            },
-                            "quadrant": corner,
-                            "tpv": tpv,
-                        }
-                    )
-                elif isValidExtraPageCode(raw_qr_string):
-                    corner = parseExtraPageCode(raw_qr_string)
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_extra",
-                            "quadrant": corner,
-                            "tpv": "plomX",
-                        }
-                    )
-                elif isValidScrapPaperCode(raw_qr_string):
-                    corner = parseExtraPageCode(raw_qr_string)
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_scrap",
-                            "quadrant": corner,
-                            "tpv": "plomS",
-                        }
-                    )
-                elif isValidBundleSeparatorPaperCode(raw_qr_string):
-                    corner = parseExtraPageCode(raw_qr_string)
-                    qr_code_dict.update(
-                        {
-                            "page_type": "plom_bundle_separator",
-                            "quadrant": corner,
-                            "tpv": "plomB",
-                        }
-                    )
-                else:
-                    # it is not a valid qr-code
-                    qr_code_dict.update(
-                        {
-                            "page_type": "invalid_qr",
-                            "quadrant": "0",
-                        }
-                    )
-                groupings[quadrant] = qr_code_dict
-        return groupings
+        codes = QRextract_corners(image_path, rotation=rotation)
+        return codes
 
     def read_qr_codes(self, bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
@@ -2116,9 +2039,7 @@ def huey_child_parse_qr_code(
     # image_fieldfile = staging_img.baseimage.image_file
     image_path = staging_img.baseimage.image_file.path
 
-    code_dict = QRextract(image_path)
-
-    page_data = ScanService.parse_qr_code([code_dict])
+    qr_data = ScanService.parse_qr_codes(image_path)
 
     if _debug_be_flaky:
         log.debug("Huey debug, random sleep in task %d", task.id)
@@ -2126,20 +2047,21 @@ def huey_child_parse_qr_code(
         if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
 
-    rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(page_data)
+    rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(qr_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
     # rotations in the future, such as `plom.scan.rotate_bitmap`.
 
     # Re-read QR codes if the page image needs to be rotated
+    # This doesn't seem very efficient but its easy
     if rotation and rotation != 0:
-        code_dict = QRextract(image_path, rotation=rotation)
-        page_data = ScanService.parse_qr_code([code_dict])
+        qr_data = ScanService.parse_qr_codes(image_path, rotation=rotation)
+
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
     # Return the parsed QR codes for parent process to store in db
     return {
         "image_pk": image_pk,
-        "parsed_qr": page_data,
+        "parsed_qr": qr_data,
         "rotation": rotation,
     }

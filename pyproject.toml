@@ -41,12 +41,9 @@ classifiers=[
 ]
 dynamic = ['version']
 requires-python = '>=3.11'
-# pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
     "arrow>=1.1.1",
     "canvasapi>=3.0.0",
-    "cryptography>=41.0.3",
-    "pyOpenSSL>=23.2.0",
     "django>=5.1.1",
     "django-braces>=1.15.0",
     "django-filter>=23.2",
@@ -90,7 +87,7 @@ dependencies = [
     "weasyprint>=57.0",
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
-    "zxing-cpp>=2.2.0",
+    "zxing-cpp>=3.0.0",
     "onnxruntime>=1.20.1",
     "huggingface-hub>=0.30.2",
     # "nplusone>=1.0.0",

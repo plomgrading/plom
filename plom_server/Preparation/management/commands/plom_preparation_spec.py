@@ -49,7 +49,7 @@ class Command(BaseCommand):
         with open(fname, "w") as f:
             f.write(SpecificationService.get_the_spec_as_toml())
 
-    def upload_spec(self, spec_file: str | Path) -> None:
+    def upload_spec(self, spec_file: Path) -> None:
         try:
             SpecificationService.install_spec_from_toml_file(spec_file)
         except (
@@ -93,7 +93,7 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":
-            self.upload_spec(options["test_spec.toml"])
+            self.upload_spec(Path(options["test_spec.toml"]))
         elif options["command"] == "download":
             self.download_spec(options["dest"])
         elif options["command"] == "remove":

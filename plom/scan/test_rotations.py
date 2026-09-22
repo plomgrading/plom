@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2025 Colin B. Macdonald
+# Copyright (C) 2021-2026 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
+import pathlib
 from importlib import resources
 from math import sqrt
 
@@ -17,8 +18,7 @@ from plom.scan.rotate import (
 
 
 def _PIL_Image_open(resource):
-    # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
-    # assert isinstance(resource, (pathlib.Path, resources.abc.Traversable))
+    assert isinstance(resource, (pathlib.Path, resources.abc.Traversable))
     return Image.open(resource)
 
 
@@ -155,17 +155,6 @@ def test_rotate_jpeg_lossless_cw(tmp_path) -> None:
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=True)
-
-        # r = rot_angle_from_jpeg_exif_tag(f)
-        # print(("r=", r, "angle=", angle))
-        # assert angle == r
-        # TODO: Issue #2584?
-        # TODO: 270 same as -90, some modular arith check instead
-        # assert abs(r) == abs(angle)
-
-        # q = QRextract(im2)
-        # print(q)
-        # print(q["NW"])
 
         # now load it back, rotate it back it it would make the original
         im = pil_load_with_jpeg_exif_rot_applied(f)

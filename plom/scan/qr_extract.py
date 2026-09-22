@@ -1,63 +1,169 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2024, 2026 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2026 Jax Lim
 
+from packaging.version import Version
 from statistics import mean
 from typing import Any
 
 import zxingcpp
 from PIL import Image
 
+import plom.common
+from plom.common.tpv_utils import (
+    parseTPV,
+    parseExtraPageCode,  # deprecated, remove in 0.23.x
+    getPaperPageVersion,
+    isValidTPV,
+    isValidExtraPageCode,
+    isValidScrapPaperCode,
+    isValidBundleSeparatorPaperCode,
+    getExtraPageOrientation,
+    getScrapPaperOrientation,
+    getBundleSeparatorPaperOrientation,
+)
+
 from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 
-def findCorner(qr: zxingcpp.Result, dim: tuple[int, int]):
-    """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
+def _find_corner(mx: float, my: float, dim: tuple[int, int]):
+    """Which corner based on the relative location of the given QR code's approximate centre.
 
     Args:
-        qr: object containing the information stored in the QR code
+        mx: floating point x coord, centre of the QR code.
+        my: floating point y coord, centre of the QR code.
         dim: pair of ints that correspond to the dimensions of
             the image that contains the QR code.
 
     Returns:
-        tuple: a triple ``(str, mx, my)`` where ``str`` is a 2-char string, one of
-        "NE", "NW", "SW", "SE", depending on the relative location of the QR code,
-        or "??" if the QR code cannot be detected. ``mx, my`` are either ints that correspond
-        to the (x, y) coordinates of the QR code's centre location in the image, or None
-        if the QR code is not detected and there are no coordinates to return.
+        A 2-char string, one of "NE", "NW", "SW", "SE", depending on the
+        relative location of the QR code, or "??" if the QR code cannot
+        be assigned a corner,
     """
-    qr_polygon = [
-        qr.position.top_left,
-        qr.position.top_right,
-        qr.position.bottom_left,
-        qr.position.bottom_right,
-    ]
-    mx = mean([p.x for p in qr_polygon])
-    my = mean([p.y for p in qr_polygon])
     width, height = dim
 
     NS = "?"
     EW = "?"
-    if my < 0.4 * height:
+    if my < 0.3 * height:
         NS = "N"
-    elif my > 0.6 * height:
+    elif my > 0.7 * height:
         NS = "S"
     else:
-        return "??", None, None
-    if mx < 0.4 * width:
+        return "??"
+    if mx < 0.3 * width:
         EW = "W"
-    elif mx > 0.6 * width:
+    elif mx > 0.7 * width:
         EW = "E"
     else:
-        return "??", None, None
-    return NS + EW, mx, my
+        return "??"
+    return NS + EW
 
 
-def QRextract(
-    image, *, try_harder: bool = True, rotation: int = 0
-) -> dict[str, dict[str, Any]]:
+def QRextract_corners(image, *, rotation: int = 0) -> dict[str, dict[str, Any]]:
+    """Decode the QR codes in an image, assigning to corners and others.
+
+    Args:
+        image (str/pathlib.Path/PIL.Image): an image filename, either in
+            the local dir or specified e.g., using `pathlib.Path`.  Can
+            also be an instance of Pillow's `Image`.
+
+    Keyword Args:
+        rotation: Rotate the image by 90, -90, 180 or 270 degrees
+            counterclockwise prior to reading the QR codes. Defaults to 0.
+
+    Returns:
+        A dict with keys such as "NW", "NE", "SW", "SE", "other1", "other2",
+        each with a dict containing
+        'raw_qr_string', 'x', 'y' (the horizontal and vertical pixel coordinates
+        of the QR code), 'orientation' (the rotation ccw of the QR code in degrees,
+        currently an integer) and other info.
+        Any QR codes that aren't roughly in a corner will appear with keys
+        "other1", "other2", etc.
+        If two or more QR codes are in the same broadly-defined corner, say SW,
+        then if one of them is a proper QR code identified as a "qr_page"
+        (i.e., not an error and not a microQR), then that one is set to the SW
+        corner (and the others join the others list).  In all other cases,
+        we refuse to choose a SW corner one and dump everything in the others
+        list.
+    """
+    qrlist = QRextract_list(image, rotation=rotation)
+    return _assign_corners(qrlist)
+
+
+def _mark_some_codes_ignore(qrlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Mark some QR codes "ignore" in certain circumstances.
+
+    MicroQRCodes can theoretically be found inside QR codes.  Perhaps
+    in practice too [1].  If a MicroQRCode is in approximately the same
+    place as QR code, and is not recognized by Plom (an "invalid_qr")
+    whereas the QR is valid (a "plom_qr"), then we set it to be ignored.
+
+    Other circumstances might be added in the future.
+
+    [1] https://github.com/zxing-cpp/zxing-cpp/issues/1162
+    """
+    for qr in qrlist:
+        if qr["format"] == "Micro QR Code" and qr["page_type"] == "invalid_qr":
+            qr_pages = [q for q in qrlist if q["page_type"] == "plom_qr"]
+            if qr_pages:
+                x = qr["x_coord"]
+                y = qr["y_coord"]
+
+                def sqrdist(q):
+                    return (q["x_coord"] - x) ** 2 + (q["y_coord"] - y) ** 2
+
+                closest_qr_page = min(qr_pages, key=sqrdist)
+                # 80 tuned for microQR just outside QR, letter paper 2000px high
+                if sqrdist(closest_qr_page) < 80**2:
+                    qr["ignore"] = True
+
+    return qrlist
+
+
+def _assign_corners(qrlist: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    valid_corners = ("NW", "NE", "SW", "SE")
+    qr_list_by_corner: dict[str, list[dict[str, Any]]] = {k: [] for k in valid_corners}
+
+    cornerQR: dict[str, Any] = {}
+
+    # first build a list for each corner
+    other_list = []
+    for qr in qrlist:
+        corner = qr["corner_guess_from_position"]
+        if corner in valid_corners:
+            qr_list_by_corner[corner].append(qr)
+        else:
+            other_list.append(qr)
+
+    for k, qrs in qr_list_by_corner.items():
+        if len(qrs) == 0:
+            pass
+        elif len(qrs) == 1:
+            cornerQR[k] = qrs[0]
+        else:
+            # separate the "qr_pages" from the microQR stuff
+            qr_pages = [qr for qr in qrs if qr["page_type"] == "plom_qr"]
+            if len(qr_pages) == 1:
+                # if there is exactly qr_page, keep that
+                cornerQR[k] = qr_pages[0]
+                # and put the rest into the "other" list
+                for qr in qrs:
+                    if qr["page_type"] != "plom_qr":
+                        other_list.append(qr)
+            else:
+                for qr in qrs:
+                    other_list.append(qr)
+
+    c = 0
+    for qr in other_list:
+        c += 1
+        cornerQR[f"other{c}"] = qr
+    return cornerQR
+
+
+def QRextract_list(image, *, rotation: int = 0) -> list[dict[str, Any]]:
     """Decode the QR codes in an image.
 
     Args:
@@ -66,33 +172,12 @@ def QRextract(
             also be an instance of Pillow's `Image`.
 
     Keyword Args:
-        try_harder (bool): Try to find QRs on a smaller resolution.
-            Defaults to True.  Sometimes this seems work around high
-            failure rates in the synthetic images used in CI testing.
-            Details below.
-        rotation (int): Rotate the image by 90, -90, 180 or 270 degrees
+        rotation: Rotate the image by 90, -90, 180 or 270 degrees
             counterclockwise prior to reading the QR codes. Defaults to 0.
 
     Returns:
-        A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
-        a 'tpv_signature', 'x', 'y' (the horizontal and vertical pixel coordinates
-        of the QR code), 'orientation' (the rotation ccw of the QR code, currently
-        an integer).
-        The dict is empty if no QR codes found in that corner.
-
-    Without the `try_harder` flag, we observe high failure rates when
-    the vertical resolution is near 2000 pixels (our current default).
-    This is Issue #967 [1].  It is not prevalent in real-life images,
-    but causes a roughly 5%-10% failure rate in our synthetic CI runs.
-    The workaround (on by default) uses Pillow's `.reduce()` to quickly
-    downscale the image.  This does increase the run time (have not
-    checked by how much: I assume between 25% and 50%) so if that is
-    more of a concern than error rate, turn off this flag.
-
-    [1] https://gitlab.com/plom/plom/-/issues/967
+        A list of dicts, each representing a QR found on the page.
     """
-    cornerQR: dict[str, dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
-
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
 
@@ -104,55 +189,102 @@ def QRextract(
     # Otherwise, zxing-cpp might hide error messages, Issue #2597
     image.load()
 
-    qr_code_formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
-    qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
-    for qr in qrlist:
-        cnr, x_coord, y_coord = findCorner(qr, image.size)
-        if cnr in cornerQR.keys():
-            cornerQR[cnr].update(
-                {
-                    "tpv_signature": qr.text,
-                    "x": x_coord,
-                    "y": y_coord,
-                    "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
-                }
-            )
+    # TODO: new kwargs?  only_QRCodeModel2, only_MicroQRCode?
 
-    if try_harder:
-        # Try again on smaller image: originally for pyzbar (Issue #967), but I
-        # think I've seen this find a QR-code missed by the above since
-        # switching to ZXing-cpp (Issue #2520), so we'll leave it.
-        try:
-            image = image.reduce(2)
-        except ValueError:
-            # mode-P (paletted pngs) fail to reduce, Issue #2631
-            qrlist = []
+    # qr_code_formats = (
+    #     zxingcpp.BarcodeFormat.QRCodeModel2,
+    #     zxingcpp.BarcodeFormat.MicroQRCode,
+    # )
+
+    # deprecated?  but mypy complains about the the above...?
+    qr_code_formats = (
+        zxingcpp.BarcodeFormat.QRCodeModel2 | zxingcpp.BarcodeFormat.MicroQRCode
+    )
+
+    qr_obj_list = zxingcpp.read_barcodes(image, formats=qr_code_formats)
+    qr_list = []
+    for qr in qr_obj_list:
+        qr_polygon = [
+            qr.position.top_left,
+            qr.position.top_right,
+            qr.position.bottom_left,
+            qr.position.bottom_right,
+        ]
+        x_coord = mean([p.x for p in qr_polygon])
+        y_coord = mean([p.y for p in qr_polygon])
+
+        d = {
+            "raw_qr_string": qr.text,
+            "x_coord": x_coord,
+            "y_coord": y_coord,
+            "orientation": -qr.orientation,  # Zxing has + meaning cw (!)
+            "corner_guess_from_position": _find_corner(x_coord, y_coord, image.size),
+        }
+        d.update(_parse_raw_qr_string(qr.text))
+        d.update(
+            {
+                "format": str(qr.format),
+                "content_type": str(qr.content_type).removeprefix("ContentType."),
+                "tech_details": str(qr.extra),
+                "ignore": False,
+            }
+        )
+        qr_list.append(d)
+    return _mark_some_codes_ignore(qr_list)
+
+
+def _parse_raw_qr_string(raw_qr_string: str) -> dict[str, Any]:
+    """Extract Plom-specific info in a dict structure from a raw QR code string."""
+    if isValidTPV(raw_qr_string):
+        paper_id, page_num, version_num, public_code, crnr = parseTPV(raw_qr_string)
+        # get the "TTTTTPPPVV" part
+        tpv = getPaperPageVersion(raw_qr_string)
+        return {
+            "page_type": "plom_qr",
+            "page_info": {
+                "paper_id": paper_id,
+                "page_num": page_num,
+                "version_num": version_num,
+                "public_code": public_code,
+            },
+            "quadrant": crnr,
+            "tpv": tpv,
+        }
+
+    elif isValidExtraPageCode(raw_qr_string):
+        if Version(plom.common.__version__) <= Version("0.22.0"):
+            corner = int(parseExtraPageCode(raw_qr_string))
         else:
-            qrlist = zxingcpp.read_barcodes(image, formats=qr_code_formats)
-        for qr in qrlist:
-            cnr, x_coord, y_coord = findCorner(qr, image.size)
-            if cnr in cornerQR.keys():
-                prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
-                if not prev_tpv_signature:
-                    # TODO: log these failures?
-                    # print(
-                    #     f'Found QR-code "{qr.text}" at {cnr} on reduced image, '
-                    #     "not found at original size"
-                    # )
-                    cornerQR[cnr].update(
-                        {
-                            "tpv_signature": qr.text,
-                            "x": 2 * x_coord,  # Issue #4279.
-                            "y": 2 * y_coord,
-                            "orientation": -qr.orientation,
-                        }
-                    )
-                elif qr.text == prev_tpv_signature:
-                    # no-op, we already read this at the previous resolution
-                    pass
-                else:
-                    # TODO: found a different QR code at lower resolution!
-                    # For now, just ignore and keep the previous hires result
-                    pass
+            corner = getExtraPageOrientation(raw_qr_string)
+        return {
+            "page_type": "plom_extra",
+            "quadrant": corner,
+            "tpv": "plomX",
+        }
 
-    return cornerQR
+    elif isValidScrapPaperCode(raw_qr_string):
+        if Version(plom.common.__version__) <= Version("0.22.0"):
+            corner = int(parseExtraPageCode(raw_qr_string))
+        else:
+            corner = getScrapPaperOrientation(raw_qr_string)
+        return {
+            "page_type": "plom_scrap",
+            "quadrant": corner,
+            "tpv": "plomS",
+        }
+
+    elif isValidBundleSeparatorPaperCode(raw_qr_string):
+        if Version(plom.common.__version__) <= Version("0.22.0"):
+            corner = int(parseExtraPageCode(raw_qr_string))
+        else:
+            corner = getBundleSeparatorPaperOrientation(raw_qr_string)
+        return {
+            "page_type": "plom_bundle_separator",
+            "quadrant": corner,
+            "tpv": "plomB",
+        }
+
+    else:
+        return {
+            "page_type": "invalid_qr",
+        }
