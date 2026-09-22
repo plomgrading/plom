@@ -74,7 +74,8 @@
                                                                        value="{{ x.page }}" />
                                                                 <div class="col-auto">
                                                                     <div class="input-group">
-                                                                        <label class="input-group-text" for="comma_div_list">Divisions:</label>
+                                                                        <label class="input-group-text"
+                                                                               for="comma_div_list">Divisions:</label>
                                                                         <input id="comma_div_list_pg{{ x.page }}"
                                                                                name="comma_div_list"
                                                                                class="form-control"
@@ -124,5 +125,5 @@
     </div>
     <!-- this json_script filter makes python data available to javascript at this id -->
     {{ region_info_per_page|json_script:"rectangle-regions-data" }}
-    <script src="{% static '/js/rectangle_regions.js' %}"></script>
+    <script type="module" src="{% static 'js/rectangle_regions.js' %}"></script>
 {% endblock main_content %}

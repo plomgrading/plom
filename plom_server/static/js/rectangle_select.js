@@ -43,6 +43,8 @@ var initial_rect = [0.1, 0.1, 0.1 + 0.2, 0.1 + 0.1];
 /* exported setInitialIDBoxRectangle */
 // above is the correct way, but not working :(
 
+import { drawLabeledRectangles } from './rectangle_tools.js';
+
 /**
  * Set a variable with the initial rectangle.
  * @param id_box_rect
@@ -141,6 +143,11 @@ function drawPlomBits() {
   var ctx = canvas.getContext('2d');
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
+
+  const data = JSON.parse(document.getElementById('rectangle-regions-data').textContent);
+  // TODO: fix hardcoding of structure here
+  drawLabeledRectangles(data[0].question_regions, canvas);
+
   ctx.strokeStyle = '#ff8000';
   ctx.setLineDash([2, 4]);
   ctx.fillStyle = '#ff8000';
@@ -158,7 +165,7 @@ function drawPlomBits() {
 /** Draw the rectangle. */
 function drawRectInCanvas() {
   var ctx = canvas.getContext('2d');
-  //ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
   ctx.lineWidth = '2';
   ctx.fillStyle = '#00808050';
@@ -362,8 +369,8 @@ function repositionCanvas() {
 
 /** Initialise the Canvas. */
 function initCanvas() {
-  // canvas.height = image.height;
-  // canvas.width = image.width;
+  canvas.height = image.height;
+  canvas.width = image.width;
   canvas.style.top = image.offsetTop + 'px'; ;
   canvas.style.left = image.offsetLeft + 'px';
   updateCurrentCanvasRect();
