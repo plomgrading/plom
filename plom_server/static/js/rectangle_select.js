@@ -101,14 +101,8 @@ function updateHiddenInputs() {
   h_plom_br_y.value = (h_th_bottom.value - top_left_coord[1]) / h;
 }
 
-/**
- * Draws a circle.
- * @param {number} x - X coordinate of circle's centre.
- * @param {number} y - Y coordinate of circle's centre.
- * @param {number} radius - Circle's radius.
- */
-function drawCircle(x, y, radius) {
-  var ctx = canvas.getContext('2d');
+/** Draws a circle. */
+function drawCircle(ctx, x, y, radius) {
   ctx.fillStyle = '#008080';
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, 2 * Math.PI);
@@ -116,16 +110,14 @@ function drawCircle(x, y, radius) {
 }
 
 /** Draw circles on the corners of the rectangle. */
-function drawHandles() {
-  drawCircle(rect.left, rect.top, handleRadius);
-  drawCircle(rect.left + rect.width, rect.top, handleRadius);
-  drawCircle(rect.left + rect.width, rect.top + rect.height, handleRadius);
-  drawCircle(rect.left, rect.top + rect.height, handleRadius);
+function drawHandles(ctx, rect) {
+  drawCircle(ctx, rect.left, rect.top, handleRadius);
+  drawCircle(ctx, rect.left + rect.width, rect.top, handleRadius);
+  drawCircle(ctx, rect.left + rect.width, rect.top + rect.height, handleRadius);
+  drawCircle(ctx, rect.left, rect.top + rect.height, handleRadius);
 }
 
-/**
- * Draw a box for Plom's QR coordinate system.
- */
+/** Draw a box for Plom's QR coordinate system. */
 function drawQRCoordBox() {
   var ctx = canvas.getContext('2d');
   const ratio_w = canvas.width / image.naturalWidth;
@@ -137,20 +129,14 @@ function drawQRCoordBox() {
   ctx.strokeStyle = '#ff8000';
   ctx.setLineDash([2, 4]);
   ctx.fillStyle = '#ff8000';
-  for (let v of Object.values(rect)) {
-    ctx.beginPath();
-    ctx.arc(v[0] * ratio_w, v[1] * ratio_h, 8, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.stroke();
-  }
   ctx.beginPath();
   ctx.lineWidth = '2';
   ctx.rect(top_left_coord[0] * ratio_w, top_left_coord[1] * ratio_h, (bottom_right_coord[0] - top_left_coord[0]) * ratio_w, (bottom_right_coord[1] - top_left_coord[1]) * ratio_h);
   ctx.stroke();
 }
 
-/** Draw the rectangle. */
-function _drawRect() {
+/** Draw the selection rectangle. */
+function drawSelectionRect() {
   let ctx = canvas.getContext('2d');
   ctx.beginPath();
   ctx.lineWidth = '2';
@@ -159,7 +145,7 @@ function _drawRect() {
   ctx.rect(rect.left, rect.top, rect.width, rect.height);
   ctx.fill();
   ctx.stroke();
-  drawHandles();
+  drawHandles(ctx, rect);
 }
 
 /** Draw all the bits and pieces. */
@@ -179,7 +165,7 @@ function drawStuff() {
   // TODO: fix hardcoding of structure here
   drawLabeledRectangles(regions, canvas);
 
-  _drawRect();
+  drawSelectionRect();
 
   updateHiddenInputs();
 }
