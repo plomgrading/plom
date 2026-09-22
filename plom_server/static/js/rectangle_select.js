@@ -13,9 +13,10 @@
  * The html template must have a canvas element with id `canvas`
  * and an img element with id `refrence_image`.
  *
- * It must define some variables using Django's `json_script`:
+ * It must define some variables using Django's `json_script` filter:
  * top_left_coord, bottom_right_coord.
- * TODO: others.
+ * Optionally, there can also be `initial_rectangle` and ... TODO
+ * TODO: doc the other one too.
  */
 
 /* eslint-disable no-unused-vars */
@@ -410,11 +411,10 @@ function initRect() {
 
 /** Call various initialisers, and add event listeners to the canvas. */
 function init() {
-  let elm = document.getElementById('initial-rectangle');
+  let elm = document.getElementById('initial_rectangle');
   if (elm) {
     let tmp = JSON.parse(elm.textContent);
-    console.log(tmp)
-    setInitialIDBoxRectangle(tmp)
+    setInitialIDBoxRectangle(tmp);
   }
   canvas.addEventListener('mousedown', mouseDown, false);
   canvas.addEventListener('mouseup', mouseUp, false);
