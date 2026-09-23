@@ -47,7 +47,7 @@ var dragWholeRect = false;
 
 // represents the corners of the interactive rectangle in the canvas
 // unit coordinate system (which is dependent on the current layout)
-let rect = {"left": 100, "top": 50, "width": 256, "height": 128};
+let rect = {"left": 50, "top": 50, "width": 150, "height": 100};
 
 var current_canvas_rect = {};
 
@@ -61,7 +61,7 @@ import { drawLabeledRectangles } from './rectangle_tools.js';
  * Set a variable with the initial rectangle.
  * @param initial_rect - 4-Array, in the QR-coordinate system.
  */
-function setInitialIDBoxRectangle(initial_rect) {
+function setInitialRectangle(initial_rect) {
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
   const w = bottom_right_coord[0] - top_left_coord[0];
@@ -372,7 +372,7 @@ function init() {
   let elm = document.getElementById('initial_rectangle');
   if (elm) {
     let tmp = JSON.parse(elm.textContent);
-    setInitialIDBoxRectangle(tmp);
+    setInitialRectangle(tmp);
   }
   canvas.addEventListener('mousedown', mouseDown, false);
   canvas.addEventListener('mouseup', mouseUp, false);
