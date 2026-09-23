@@ -21,7 +21,6 @@
 const image = document.getElementById('reference_image');
 const canvas = document.getElementById('canvas');
 
-
 (function () {
   const optionLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const overlay = document.getElementById('mcq_box_overlay');
