@@ -17,6 +17,8 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
 
+from plom.common.misc_utils import generate_strong_password
+
 
 class AuthService:
     """A service class for managing authentication-related tasks."""
@@ -242,13 +244,19 @@ class AuthService:
         return user
 
     @classmethod
-    def create_users_from_csv(cls, f: Path | str | bytes) -> list[dict[str, str]]:
+    def create_users_from_csv(
+        cls, f: Path | str | bytes, *, set_random_password: bool = False
+    ) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.
 
         This is an atomic operation: either all users are created or all fail.
 
         Args:
             f: a path to the .csv file, or the bytes of a .csv file.
+
+        Keyword Args:
+            set_random_password: set a password for each created user and
+                activate their accounts.
 
         Returns:
             A list of dicts containing information for each user, each entry
@@ -278,11 +286,18 @@ class AuthService:
         # either all succeed or all fail
         with transaction.atomic():
             for idx, user_dict in enumerate(user_list):
+                if set_random_password:
+                    random_password = generate_strong_password()
                 groups = user_dict["usergroups"].split(",")
                 try:
-                    u, g = cls.create_user_and_add_to_groups(
-                        user_dict["username"], groups
-                    )
+                    if set_random_password:
+                        u, g = cls.create_user_and_add_to_groups(
+                            user_dict["username"], groups, password=random_password
+                        )
+                    else:
+                        u, g = cls.create_user_and_add_to_groups(
+                            user_dict["username"], groups
+                        )
                 except (ValueError, ObjectDoesNotExist, IntegrityError) as e:
                     raise type(e)(f"Error near row {idx + 1}: {e}")
                 user = User.objects.get(username=user_dict["username"])
@@ -290,7 +305,11 @@ class AuthService:
                     {
                         "username": u,
                         "groups": g,
-                        "link": cls.generate_link(user),
+                        "link": (
+                            cls.generate_link(user)
+                            if not set_random_password
+                            else random_password
+                        ),
                     }
                 )
 
