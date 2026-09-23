@@ -13,7 +13,7 @@
  * The caller must provide a <script> block with id 'rectangle-regions-data',
  * which should be a list of dicts, each of which must have keys
  * 'has_regions' (bool), 'ref_image_html_id' (str), 'canvas_html_id' (str),
- * 'question_regions' (list of dicts, each with `rect` and `qlabel` at least).
+ * 'question_regions' (list of dicts, each with `rect`, `qidx`, and `qlabel`).
  * The HTML/js safety of qlabel is ensured if you use json_script.
  * See question_regions.py: get_region_info_per_page() which generates this.
  */
@@ -26,13 +26,22 @@
  */
 function drawLabeledRectangles(blocks, canvas) {
   const lw = 4; // rectangle border linewidth
-  // sequence from GNU Octave's default ("help lines")
-  const colours = ['#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'];
+  // sequence from GNU Octave's default ("help lines") + one more teal
+  const colours = [
+    '#0072BD',
+    '#D95319',
+    '#EDB120',
+    '#7E2F8E',
+    '#77AC30',
+    '#4DBEEE',
+    '#A2142F',
+    '#007760',
+  ];
   var ctx = canvas.getContext('2d');
   for (let i = 0; i < blocks.length; i++) {
     var r = blocks[i].rect;
     var label = blocks[i].qlabel;
-    var colour = colours[i % colours.length];
+    var colour = colours[blocks[i].qidx % colours.length];
     // text with white border draw *before* the rectangle
     ctx.font = '30px Arial';
     ctx.fillStyle = colour;
@@ -46,7 +55,7 @@ function drawLabeledRectangles(blocks, canvas) {
     // now the rectangle
     ctx.beginPath();
     ctx.lineWidth = lw;
-    ctx.fillStyle = colour + '30';
+    ctx.fillStyle = colour + '1b';
     ctx.strokeStyle = colour + '99';
     ctx.rect(
       r[0] * canvas.width + lw / 2,
