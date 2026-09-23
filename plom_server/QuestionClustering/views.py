@@ -243,9 +243,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         if region_info_per_page and region_info_per_page[0]["question_regions"]:
             initial_rectangle = region_info_per_page[0]["question_regions"][0]["rect"]
         else:
-            # TODO: ensure this means ignore, currenting bring NaNs
             initial_rectangle = []
-        print(initial_rectangle)
 
         context.update(
             {

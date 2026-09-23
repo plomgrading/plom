@@ -365,7 +365,9 @@ function init() {
   let elm = document.getElementById('initial_rectangle');
   if (elm) {
     let tmp = JSON.parse(elm.textContent);
-    setInitialRectangle(tmp);
+    if (tmp.length) {
+      setInitialRectangle(tmp);
+    }
   }
   canvas.addEventListener('mousedown', mouseDown, false);
   canvas.addEventListener('mouseup', mouseUp, false);
