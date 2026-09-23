@@ -220,28 +220,12 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         rect_top_left = [min(x_coords), min(y_coords)]
         rect_bottom_right = [max(x_coords), max(y_coords)]
 
-        # regions = QuestionRegionsService.get_question_regions()
-        # for x in regions:
-        #     print(x)
+        all_regions = QuestionRegionsService.get_question_regions()
+        regions = [x for x in all_regions if x["page"] == page and x["qidx"] == qidx]
 
-        # TODO: this seems messy, need new service for this?
-        region_info_per_page = QuestionRegionsService.get_region_info_per_page()
-        # print(region_info_per_page)
-        print("* " * 42)
-        region_info_per_page = [x for x in region_info_per_page if x["page"] == page]
-        if len(region_info_per_page) > 0:
-            Z = region_info_per_page[0]["question_regions"]
-            Z = [x for x in Z if x["qidx"] == qidx]
-            region_info_per_page[0]["question_regions"] = Z
-            region_info_per_page[0]["ref_image_html_id"] = "reference_image"
-            region_info_per_page[0]["canvas_html_id"] = "canvas"
-        for x in region_info_per_page:
-            print(x)
-
-        # TODO: set this from the regions, if there are any, but clean this up
         # TODO: but region in [0,1] page coords whereas init_rect in QR coords
-        if region_info_per_page and region_info_per_page[0]["question_regions"]:
-            initial_rectangle = region_info_per_page[0]["question_regions"][0]["rect"]
+        if regions:
+            initial_rectangle = regions[0]["rect"]
         else:
             initial_rectangle = []
 
@@ -253,7 +237,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
                 "top_left": rect_top_left,
                 "bottom_right": rect_bottom_right,
                 "q_label": SpecificationService.get_question_label(qidx),
-                "region_info_per_page": region_info_per_page,
+                "regions_data": regions,
                 "initial_rectangle": initial_rectangle,
             }
         )

@@ -157,13 +157,10 @@ function drawStuff() {
   drawQRCoordBox();
 
   let regions = [];
-  let elm = document.getElementById('rectangle-regions-data');
+  let elm = document.getElementById('regions_data');
   if (elm) {
-    let tmp = JSON.parse(elm.textContent);
-    // TODO: clean this up
-    regions = tmp[0].question_regions;
+    regions = JSON.parse(elm.textContent);
   }
-  // TODO: fix hardcoding of structure here
   drawLabeledRectangles(regions, canvas);
 
   drawSelectionRect();

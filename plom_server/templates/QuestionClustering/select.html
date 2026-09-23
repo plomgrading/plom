@@ -189,7 +189,7 @@
             </div>
         </div>
     </div>
-    {{ region_info_per_page|json_script:"rectangle-regions-data" }}
+    {{ regions_data|json_script:"regions_data" }}
     {{ top_left|json_script:"top_left_ref_coord" }}
     {{ bottom_right|json_script:"bottom_right_ref_coord" }}
     {{ initial_rectangle|json_script:"initial_rectangle" }}
