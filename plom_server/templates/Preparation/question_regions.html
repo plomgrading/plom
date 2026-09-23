@@ -21,9 +21,9 @@
             <div>
                 {% if allowSharedPages %}
                     <p>
-                        Because <tt>allowSharedPages</tt> is enabled,
+                        Because <code>allowSharedPages</code> is enabled,
                         it is recommended that you define
-                        &ldquo;regions&rdquo; of any shared pages
+                        <q>regions</q> of any shared pages
                         shown below, to highlight where the answer to
                         each question is expected.
                         Doing so will help Plom present the most
@@ -62,7 +62,7 @@
                                                         <!-- TODO: regular post with a "done" page or somehow hx refresh the whole page here? -->
                                                         {% csrf_token %}
                                                         <p>
-                                                            Define new regions by &ldquo;slicing&rdquo; the page.
+                                                            Define new regions by <q>slicing</q> the page.
                                                             <!-- In the future maybe it will have some fancy -->
                                                             <!-- Javascript UI to do this visually. -->
                                                         </p>
@@ -74,8 +74,7 @@
                                                                        value="{{ x.page }}" />
                                                                 <div class="col-auto">
                                                                     <div class="input-group">
-                                                                        <label class="input-group-text"
-                                                                               for="comma_div_list">Divisions:</label>
+                                                                        <label class="input-group-text" for="comma_div_list">Divisions:</label>
                                                                         <input id="comma_div_list_pg{{ x.page }}"
                                                                                name="comma_div_list"
                                                                                class="form-control"
@@ -97,7 +96,7 @@
                                         {% endif %}
                                         <details class="ms-3">
                                             <summary>Details</summary>
-                                            <tt>{{ x }}</tt>
+                                            <comp>{{ x }}</comp>
                                         </details>
                                     </div>
                                 </div>
@@ -109,7 +108,7 @@
                 <h3>Raw region data</h3>
                 <p>
                     {% for region in regions %}
-                        <tt>{{ region }}</tt>
+                        <comp>{{ region }}</comp>
                         <br />
                     {% endfor %}
                 </p>
