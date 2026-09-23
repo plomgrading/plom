@@ -38,17 +38,14 @@ var h_plom_br_y = document.getElementById('plom_bottom');
 
 const handleRadius = 10;
 
-var dragTL, dragBL, dragTR, dragBR;
-dragTL = dragBL = dragTR = dragBR = false;
-
-var dragWholeRect = false;
-
 // represents the corners of the interactive rectangle in the canvas
 // unit coordinate system (which is dependent on the current layout)
 let rect = { left: 50, top: 50, width: 150, height: 100 };
 
-var mouseX, mouseY;
-var startX, startY;
+// global variables used in mouse movement deltas
+let startX, startY;
+let dragWholeRect = false;
+let dragTL = false, dragBL = false, dragTR = false, dragBR = false;
 
 import { drawLabeledRectangles } from './rectangle_tools.js';
 
@@ -232,9 +229,9 @@ function getMousePos(canvas, evt) {
  */
 function mouseDown(e) {
   // we assume `this` is a Canvas object.
-  var pos = getMousePos(this, e);
-  mouseX = pos.x;
-  mouseY = pos.y;
+  let pos = getMousePos(this, e);
+  let mouseX = pos.x;
+  let mouseY = pos.y;
   // 1. top left
   if (checkCloseEnough(mouseX, rect.left) && checkCloseEnough(mouseY, rect.top)) {
     dragTL = true;
@@ -270,9 +267,9 @@ function mouseDown(e) {
  * @param {Event} e
  */
 function mouseMove(e) {
-  var pos = getMousePos(this, e);
-  mouseX = pos.x;
-  mouseY = pos.y;
+  let pos = getMousePos(this, e);
+  let mouseX = pos.x;
+  let mouseY = pos.y;
   if (dragWholeRect) {
     e.preventDefault();
     e.stopPropagation();
