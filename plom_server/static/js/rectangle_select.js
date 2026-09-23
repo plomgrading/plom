@@ -19,8 +19,6 @@
  * TODO: doc the other one too.
  */
 
-/* eslint-disable no-unused-vars */
-
 // Code idea copied from
 // https://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
 
@@ -47,15 +45,12 @@ var dragWholeRect = false;
 
 // represents the corners of the interactive rectangle in the canvas
 // unit coordinate system (which is dependent on the current layout)
-let rect = {"left": 50, "top": 50, "width": 150, "height": 100};
-
-var current_canvas_rect = {};
+let rect = { left: 50, top: 50, width: 150, height: 100 };
 
 var mouseX, mouseY;
 var startX, startY;
 
 import { drawLabeledRectangles } from './rectangle_tools.js';
-
 
 /**
  * Set a variable with the initial rectangle.
@@ -77,7 +72,6 @@ function setInitialRectangle(initial_rect) {
   rect.left = th_left * ratio_w;
   rect.top = th_top * ratio_h;
 }
-
 
 /** Update input elements on an associated HTML page with rectangle corner values. */
 function updateHiddenInputs() {
@@ -101,7 +95,13 @@ function updateHiddenInputs() {
   h_plom_br_y.value = (h_th_bottom.value - top_left_coord[1]) / h;
 }
 
-/** Draws a circle. */
+/**
+ * Draws a circle.
+ * @param ctx
+ * @param x
+ * @param y
+ * @param radius
+ */
 function drawCircle(ctx, x, y, radius) {
   ctx.fillStyle = '#008080';
   ctx.beginPath();
@@ -109,7 +109,11 @@ function drawCircle(ctx, x, y, radius) {
   ctx.fill();
 }
 
-/** Draw circles on the corners of the rectangle. */
+/**
+ * Draw circles on the corners of the rectangle.
+ * @param ctx
+ * @param rect
+ */
 function drawHandles(ctx, rect) {
   drawCircle(ctx, rect.left, rect.top, handleRadius);
   drawCircle(ctx, rect.left + rect.width, rect.top, handleRadius);
@@ -330,30 +334,23 @@ function mouseMove(e) {
   drawStuff();
 }
 
-/** Update global variables relating to the rectangle. */
-function updateCurrentCanvasRect() {
-  current_canvas_rect.height = canvas.height;
-  current_canvas_rect.width = canvas.width;
-  current_canvas_rect.top = image.offsetTop;
-  current_canvas_rect.left = image.offsetLeft;
-}
-
 /** Make the canvas match the reference image, and update the rectangle. */
 function repositionCanvas() {
+  let old_canvas_rect_width = canvas.width;
+  let old_canvas_rect_height = canvas.height;
   // make canvas same as image, which may have changed size and position
   canvas.height = image.height;
   canvas.width = image.width;
   canvas.style.top = image.offsetTop + 'px'; ;
   canvas.style.left = image.offsetLeft + 'px';
   // compute ratio comparing the NEW canvas rect with the OLD (current)
-  var ratio_w = canvas.width / current_canvas_rect.width;
-  var ratio_h = canvas.height / current_canvas_rect.height;
+  var ratio_w = canvas.width / old_canvas_rect_width;
+  var ratio_h = canvas.height / old_canvas_rect_height;
   // update rect coordinates
   rect.top = rect.top * ratio_h;
   rect.left = rect.left * ratio_w;
   rect.height = rect.height * ratio_h;
   rect.width = rect.width * ratio_w;
-  updateCurrentCanvasRect();
   drawStuff();
 }
 
@@ -363,7 +360,6 @@ function initCanvas() {
   canvas.width = image.width;
   canvas.style.top = image.offsetTop + 'px'; ;
   canvas.style.left = image.offsetLeft + 'px';
-  updateCurrentCanvasRect();
 }
 
 /** Call various initialisers, and add event listeners to the canvas. */
