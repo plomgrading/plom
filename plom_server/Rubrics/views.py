@@ -369,7 +369,6 @@ class FeedbackRulesView(ManagerRequiredView):
         # decide if we are resetting or updating the rules from the form
         if request.POST.get("_whut_do") == "reset":
             Settings.key_value_store_reset("feedback_rules")
-            rules = Settings.get_feedback_rules()
         else:
             rules = Settings.get_feedback_rules()
             for code in rules.keys():
@@ -383,11 +382,11 @@ class FeedbackRulesView(ManagerRequiredView):
 
         # essentially a copy-paste of get from here :(
         context = self.build_context()
-        Settings.get_feedback_rules()
+        current_rules = Settings.get_feedback_rules()
         context.update(
             {
                 "successful_post": True,
-                "feedback_rules": _rules_as_list(rules),
+                "feedback_rules": _rules_as_list(current_rules),
             }
         )
         return render(request, template_name, context=context)
