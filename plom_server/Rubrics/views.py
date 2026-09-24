@@ -368,7 +368,8 @@ class FeedbackRulesView(ManagerRequiredView):
         template_name = "Rubrics/feedback_rules.html"
         # decide if we are resetting or updating the rules from the form
         if request.POST.get("_whut_do") == "reset":
-            rules = {}
+            Settings.key_value_store_reset("feedback_rules")
+            rules = Settings.get_feedback_rules()
         else:
             rules = Settings.get_feedback_rules()
             for code in rules.keys():
@@ -378,7 +379,7 @@ class FeedbackRulesView(ManagerRequiredView):
                 rules[code]["warn"] = True if x is not None else False
                 x = request.POST.get(f"{code}-dama_allowed", None)
                 rules[code]["dama_allowed"] = True if x is not None else False
-        Settings.key_value_store_set("feedback_rules", rules)
+            Settings.key_value_store_set("feedback_rules", rules)
 
         # essentially a copy-paste of get from here :(
         context = self.build_context()
