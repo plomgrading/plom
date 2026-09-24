@@ -282,25 +282,27 @@ class AuthService:
                 f" it must contain: {required_fields}"
             )
 
+        # convert user list into kwargs for user creation function
+        # WET with create_user_and_add_to_groups(...)
+        user_kwargs = []
+        for user_dict in user_list:
+            kwarg_dict = {
+                "username": user_dict["username"],
+                "group_names": user_dict["usergroups"].split(","),
+            }
+            if set_random_password:
+                kwarg_dict.update({"password": generate_strong_password()})
+            user_kwargs.append(kwarg_dict)
+
         users_added = []
         # either all succeed or all fail
         with transaction.atomic():
-            for idx, user_dict in enumerate(user_list):
-                if set_random_password:
-                    random_password = generate_strong_password()
-                groups = user_dict["usergroups"].split(",")
+            for idx, user_kwarg_dict in enumerate(user_kwargs):
                 try:
-                    if set_random_password:
-                        u, g = cls.create_user_and_add_to_groups(
-                            user_dict["username"], groups, password=random_password
-                        )
-                    else:
-                        u, g = cls.create_user_and_add_to_groups(
-                            user_dict["username"], groups
-                        )
+                    u, g = cls.create_user_and_add_to_groups(**user_kwarg_dict)
                 except (ValueError, ObjectDoesNotExist, IntegrityError) as e:
                     raise type(e)(f"Error near row {idx + 1}: {e}")
-                user = User.objects.get(username=user_dict["username"])
+                user = User.objects.get(username=user_kwarg_dict["username"])
                 users_added.append(
                     {
                         "username": u,
@@ -308,7 +310,7 @@ class AuthService:
                         "link": (
                             cls.generate_link(user)
                             if not set_random_password
-                            else random_password
+                            else user_kwarg_dict["password"]
                         ),
                     }
                 )
