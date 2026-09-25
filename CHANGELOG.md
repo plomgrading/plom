@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Invalid QR codes no longer store "quadrant" keys.
 
 ### Fixed
+* Resetting feedback rules to "factory settings" would remove all rules, causing client crashes.
 
 
 
