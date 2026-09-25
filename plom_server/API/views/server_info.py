@@ -153,6 +153,7 @@ class ExamInfo(APIView):
         ``current_largest_paper_num`` and ``feedback_rules``.
     """
 
+    # GET: /info/exam/
     def get(self, request: Request) -> Response:
         # TODO: who_can_create_rubrics
         # TODO: who_can_modify_rubrics
