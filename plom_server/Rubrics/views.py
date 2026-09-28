@@ -367,7 +367,7 @@ class FeedbackRulesView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/feedback_rules.html"
         # decide if we are resetting or updating the rules from the form
-        if request.POST.get("_whut_do") == "reset":
+        if request.POST.get("what_action") == "reset":
             Settings.key_value_store_reset("feedback_rules")
         else:
             rules = Settings.get_feedback_rules()
