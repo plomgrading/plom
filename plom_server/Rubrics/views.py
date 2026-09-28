@@ -354,6 +354,7 @@ class FeedbackRulesView(ManagerRequiredView):
     """Viewing and changing the defaults around potentially problem cases in annotation."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the current state of the feedback rules."""
         template_name = "Rubrics/feedback_rules.html"
         context = self.build_context()
         rules = Settings.get_feedback_rules()
@@ -365,7 +366,7 @@ class FeedbackRulesView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        template_name = "Rubrics/feedback_rules.html"
+        """Change or reset some feedback rules, then redirect to the viewing page."""
         # decide if we are resetting or updating the rules from the form
         if request.POST.get("what_action") == "reset":
             Settings.key_value_store_reset("feedback_rules")
@@ -380,16 +381,7 @@ class FeedbackRulesView(ManagerRequiredView):
                 rules[code]["dama_allowed"] = True if x is not None else False
             Settings.key_value_store_set("feedback_rules", rules)
 
-        # essentially a copy-paste of get from here :(
-        context = self.build_context()
-        current_rules = Settings.get_feedback_rules()
-        context.update(
-            {
-                "successful_post": True,
-                "feedback_rules": _rules_as_list(current_rules),
-            }
-        )
-        return render(request, template_name, context=context)
+        return redirect("feedback_rules")
 
 
 class DownloadRubricView(ManagerRequiredView):
