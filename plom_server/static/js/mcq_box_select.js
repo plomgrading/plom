@@ -77,7 +77,7 @@ const image = document.getElementById('reference_image');
    * Convert a canvas-pixel delta to normalized Plom QR coordinates.
    * @param {number} dx - Horizontal canvas delta in pixels.
    * @param {number} dy - Vertical canvas delta in pixels.
-   * @returns {object} - Horizontal and vertical deltas in Plom coordinates.
+   * @returns {object} - Horizontal/vertical deltas in Plom QR coordinates keyed by "dx" and "dy".
    * Accesses global variable `image`.  Doesn't actually use `canvas` but
    * assumes they have the same size (or something like that: I had some
    * trouble with both this file and rectangle_select.js accessing `canvas`).
