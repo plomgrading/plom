@@ -223,7 +223,6 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         all_regions = QuestionRegionsService.get_question_regions()
         regions = [x for x in all_regions if x["page"] == page and x["qidx"] == qidx]
 
-        # TODO: but region in [0,1] page coords whereas init_rect in QR coords
         if regions:
             initial_rectangle = regions[0]["rect"]
         else:
@@ -238,7 +237,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
                 "bottom_right": rect_bottom_right,
                 "q_label": SpecificationService.get_question_label(qidx),
                 "regions_data": regions,
-                "initial_rectangle": initial_rectangle,
+                "initial_rectangle_01": initial_rectangle,
             }
         )
         return render(request, "QuestionClustering/select.html", context)

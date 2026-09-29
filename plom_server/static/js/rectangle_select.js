@@ -50,24 +50,41 @@ let dragTL = false, dragBL = false, dragTR = false, dragBR = false;
 import { drawLabeledRectangles } from './rectangle_tools.js';
 
 /**
- * Set a variable with the initial rectangle.
- * @param initial_rect - 4-Array, in the QR-coordinate system.
+ * Set the initial rectangle from an array in the QR coordinate system.
+ * @param {Array} initial_rect - 4 numbers in the "QR"-based coordinate system.
  */
-function setInitialRectangle(initial_rect) {
+function set_initial_rectangle_from_qr_coord(initial_rect) {
   const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
   const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
   const w = bottom_right_coord[0] - top_left_coord[0];
   const h = bottom_right_coord[1] - top_left_coord[1];
-  const th_left = initial_rect[0] * w + top_left_coord[0];
-  const th_right = initial_rect[2] * w + top_left_coord[0];
-  const th_top = initial_rect[1] * h + top_left_coord[1];
-  const th_bottom = initial_rect[3] * h + top_left_coord[1];
+  const left = initial_rect[0] * w + top_left_coord[0];
+  const right = initial_rect[2] * w + top_left_coord[0];
+  const top = initial_rect[1] * h + top_left_coord[1];
+  const bottom = initial_rect[3] * h + top_left_coord[1];
   const ratio_w = canvas.width / image.naturalWidth;
   const ratio_h = canvas.height / image.naturalHeight;
-  rect.width = (th_right - th_left) * ratio_w;
-  rect.height = (th_bottom - th_top) * ratio_h;
-  rect.left = th_left * ratio_w;
-  rect.top = th_top * ratio_h;
+  rect.width = (right - left) * ratio_w;
+  rect.height = (bottom - top) * ratio_h;
+  rect.left = left * ratio_w;
+  rect.top = top * ratio_h;
+}
+
+/**
+ * Set the initial rectangle from an array in [0, 1] coordinate system.
+ * @param {Array} initial_rect - 4 numbers in a normalized [0, 1] coordinate system.
+ */
+function set_initial_rectangle_from_01_coord(initial_rect) {
+  const w = canvas.width;
+  const h = canvas.height;
+  const left = initial_rect[0] * w;
+  const right = initial_rect[2] * w;
+  const top = initial_rect[1] * h;
+  const bottom = initial_rect[3] * h;
+  rect.width = right - left;
+  rect.height = bottom - top;
+  rect.left = left;
+  rect.top = top;
 }
 
 /** Update input elements on an associated HTML page with rectangle corner values. */
@@ -363,7 +380,14 @@ function init() {
   if (elm) {
     let tmp = JSON.parse(elm.textContent);
     if (tmp.length) {
-      setInitialRectangle(tmp);
+      set_initial_rectangle_from_qr_coord(tmp);
+    }
+  }
+  let elm2 = document.getElementById('initial_rectangle_01_coords');
+  if (elm2) {
+    let tmp = JSON.parse(elm2.textContent);
+    if (tmp.length) {
+      set_initial_rectangle_from_01_coord(tmp);
     }
   }
   canvas.addEventListener('mousedown', mouseDown, false);
