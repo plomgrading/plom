@@ -223,7 +223,7 @@ class AuthService:
         Note: If a password is supplied, the user will be set active.
         """
         group_names = cls.apply_group_name_implications(["manager"])
-        with transaction.atomic(durable=True):
+        with transaction.atomic():
             groups = Group.objects.filter(name__in=group_names)
             # We need one-to-one between the group_names (strs) and the Groups
             # list() so its not a QuerySet

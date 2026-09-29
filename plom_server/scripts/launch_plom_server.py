@@ -46,6 +46,13 @@ def get_parser() -> argparse.ArgumentParser:
         """,
     )
     parser.add_argument(
+        "--init",
+        action="store_true",
+        help="""
+            Initialise the database without launching the server.
+        """,
+    )
+    parser.add_argument(
         "--wipe",
         action="store_true",
         help="""
@@ -204,33 +211,29 @@ def main():
     # return value, so we call the service directly (isn't this better anyway?)
     have_db = database_service.is_there_a_database()
 
-    if have_db and not args.wipe:
-        if not args.hotstart:
-            raise ValueError(
-                "There is an existing database: consider passing --hotstart or --wipe"
-            )
-        print("DOING A HOT START (we already have a database)")
-        # Note: we check database versions but how can we be confident
-        # that the file system stuff is consistent?  (Issue #3299)
-        run_django_manage_command("plom_database --check-database")
-        run_django_manage_command("plom_database --update-database-metadata")
-    else:
+    if not have_db or args.wipe:
         # We either don't have a DB or we do and we want to wipe it.
         run_django_manage_command("plom_clean_misc")
         print("Dropping any existing database...")
         run_django_manage_command("plom_database --drop-database --yes")
-        print("Rebuilding database and migrations...")
+        print("Rebuilding database...")
         run_django_manage_command("plom_database --create-database")
+
+    if any([not have_db, args.wipe, args.init]):
+        print("Building migrations...")
         run_django_manage_command("migrate")
         run_django_manage_command("plom_database --create-database-metadata")
         print("Database initial migrate complete")
 
-        # build the user-groups and the admin and manager users
-        run_django_manage_command(
-            "plom_make_groups_and_first_users --no-admin-password"
-        )
-        # build extra-page and scrap-paper PDFs
-        run_django_manage_command("plom_build_scrap_extra_pdfs")
+    if args.init:
+        return
+
+    # Idempotent - it's ok if the groups already exist
+    run_django_manage_command("plom_create_groups")
+    # Idempotent - it's ok if an admin and/or manager account already exists
+    run_django_manage_command("plom_make_first_users --no-admin-password")
+
+    run_django_manage_command("plom_build_scrap_extra_pdfs")
 
     run_django_manage_command("plom_get_static_javascript")
 

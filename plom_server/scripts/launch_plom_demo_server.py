@@ -163,14 +163,14 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint. Leave the server running.",
+        help="Stop the demo sequence at a certain breakpoint. Terminate the server.",
     )
     stop_wait_group.add_argument(
         "--wait-after",
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint. Terminate the server.",
+        help="Stop the demo sequence at a certain breakpoint. Leave the server running.",
     )
     prod_dev_group = parser.add_mutually_exclusive_group()
     prod_dev_group.add_argument(
@@ -945,8 +945,9 @@ def main():
     saytime("Finished refreshing the database.")
 
     # build the user-groups and the admin and manager users
+    run_django_manage_command("plom_create_groups")
     run_django_manage_command(
-        f"plom_make_groups_and_first_users --manager-login manager 1234 --port {args.port}"
+        f"plom_make_first_users --manager-login manager 1234 --port {args.port}"
     )
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")

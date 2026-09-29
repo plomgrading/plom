@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2026 Aidan Murphy
 
 from django.core.management.base import BaseCommand
 
@@ -17,6 +18,8 @@ class Command(BaseCommand):
 
     Any existing superusers will be automatically added to the admin
     group (but you can add others later).
+
+    Idempotent - can be run multiple times without raising errors.
     """
 
     def handle(self, *args, **options):
