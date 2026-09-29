@@ -378,7 +378,13 @@ def _check_if_rubric_dupes_existing(d: dict[str, Any]) -> None:
     except MultipleObjectsReturned as e:
         raise PlomConflict(f"Multiple conflicting Rubrics unexpectedly exist: {e}")
 
-    raise PlomConflict(f"A conflicting rubric rid={existing.rid} already exists")
+    raise PlomConflict(
+        f"A conflicting rubric rid={existing.rid} already exists: {existing}\n"
+        f"Full existing rubric data: {_Rubric_to_dict(existing)}\n"
+        f"Proposed data: {d}\n"
+        '(Note if you are making multiple Rubrics at once, then "existing"'
+        " might refer to an internal collision within your data)"
+    )
 
 
 class RubricService:
