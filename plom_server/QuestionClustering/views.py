@@ -26,6 +26,7 @@ from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Rectangles.services import get_reference_qr_coords_for_page
+from plom_server.Preparation.services import QuestionRegionsService
 from .services.mcq_box_detection import detect_mcq_boxes_for_reference_image
 from .services import QuestionClusteringJobService, QuestionClusteringService
 from .models import (
@@ -218,6 +219,22 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         y_coords = [X[1] for X in qr_info.values()]
         rect_top_left = [min(x_coords), min(y_coords)]
         rect_bottom_right = [max(x_coords), max(y_coords)]
+
+        all_regions = QuestionRegionsService.get_question_regions()
+        regions = [x for x in all_regions if x["page"] == page and x["qidx"] == qidx]
+
+        if regions:
+            init = regions[0]["rect"].copy()
+            # tighten the rectangle a little if its not too small (rect values in [0, 1])
+            if abs(init[2] - init[0]) > 0.2:
+                init[0] += 0.025
+                init[2] -= 0.025
+            if abs(init[3] - init[1]) > 0.1:
+                init[1] += 0.02
+                init[3] -= 0.02
+        else:
+            init = []
+
         context.update(
             {
                 "version": version,
@@ -226,9 +243,10 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
                 "top_left": rect_top_left,
                 "bottom_right": rect_bottom_right,
                 "q_label": SpecificationService.get_question_label(qidx),
+                "regions_data": regions,
+                "initial_rectangle_01": init,
             }
         )
-
         return render(request, "QuestionClustering/select.html", context)
 
     def post(

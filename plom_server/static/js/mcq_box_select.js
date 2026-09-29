@@ -1,16 +1,29 @@
 /*
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2026 Deep Shah
+    Copyright (C) 2026 Colin B. Macdonald
 */
 
+/**
+ * This javascript routine provides interaction with small multiple choice boxes.
+ *
+ * The html template must have a img element with id `reference_image`.
+ *
+ * The template must define some variables using Django's `json_script` filter:
+ * `top_left_ref_coord` and `bottom_right_ref_coord`.
+ *
+ * It also must have a bunch of elements with very specific id: this file
+ * is tightly coupled to `QuestionClustering/select.html`.
+ *
+ * To search a particular rectangle, it looks for the elements with id:
+ * `plom_left`, `plom_top`, `plom_right`, `plom_bottom`.
+ */
+
 /* global
-    bottom_right_coord,
-    top_left_coord,
-    effective_image_width,
-    effective_image_height,
-    canvas,
     mcq_box_detection_url
 */
+
+const image = document.getElementById('reference_image');
 
 (function () {
   const optionLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -66,46 +79,46 @@
   }
 
   /**
-   * Return the dimensions of the reference-image coordinate system.
-   * @returns {object} - Reference width and height in Plom coordinates.
-   */
-  function getReferenceSize() {
-    return {
-      width: bottom_right_coord[0] - top_left_coord[0],
-      height: bottom_right_coord[1] - top_left_coord[1],
-    };
-  }
-
-  /**
-   * Convert a canvas-pixel delta to normalized Plom coordinates.
+   * Convert a canvas-pixel delta to normalized Plom QR coordinates.
    * @param {number} dx - Horizontal canvas delta in pixels.
    * @param {number} dy - Vertical canvas delta in pixels.
-   * @returns {object} - Horizontal and vertical deltas in Plom coordinates.
+   * @returns {object} - Horizontal/vertical deltas in Plom QR coordinates keyed by "dx" and "dy".
+   * Accesses global variable `image`.  Doesn't actually use `canvas` but
+   * assumes they have the same size (or something like that: I had some
+   * trouble with both this file and rectangle_select.js accessing `canvas`).
    */
   function canvasDeltaToPlom(dx, dy) {
-    const referenceSize = getReferenceSize();
+    const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
+    const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
+    const refwidth = bottom_right_coord[0] - top_left_coord[0];
+    const refheight = bottom_right_coord[1] - top_left_coord[1];
     return {
-      dx: (dx * effective_image_width / canvas.width) / referenceSize.width,
-      dy: (dy * effective_image_height / canvas.height) / referenceSize.height,
+      dx: (dx * image.naturalWidth / image.width) / refwidth,
+      dy: (dy * image.naturalHeight / image.height) / refheight,
     };
   }
 
   /**
-   * Convert a normalized Plom box to a canvas-pixel rectangle.
-   * @param {object} box - Option box in normalized Plom coordinates.
+   * Convert a normalized Plom QR-coord box to a canvas-pixel rectangle.
+   * @param {object} box - Box in normalized Plom QR coordinates.
    * @returns {object} - Rectangle positioned and sized in canvas pixels.
+   * Accesses global variables `image` and `canvas`.
    */
   function plomBoxToCanvasBox(box) {
-    const referenceSize = getReferenceSize();
-    const absLeft = top_left_coord[0] + box.left * referenceSize.width;
-    const absTop = top_left_coord[1] + box.top * referenceSize.height;
-    const absRight = top_left_coord[0] + box.right * referenceSize.width;
-    const absBottom = top_left_coord[1] + box.bottom * referenceSize.height;
+    const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
+    const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
+    const refwidth = bottom_right_coord[0] - top_left_coord[0];
+    const refheight = bottom_right_coord[1] - top_left_coord[1];
+
+    const absLeft = top_left_coord[0] + box.left * refwidth;
+    const absTop = top_left_coord[1] + box.top * refheight;
+    const absRight = top_left_coord[0] + box.right * refwidth;
+    const absBottom = top_left_coord[1] + box.bottom * refheight;
     return {
-      left: absLeft * canvas.width / effective_image_width,
-      top: absTop * canvas.height / effective_image_height,
-      width: (absRight - absLeft) * canvas.width / effective_image_width,
-      height: (absBottom - absTop) * canvas.height / effective_image_height,
+      left: absLeft * image.width / image.naturalWidth,
+      top: absTop * image.height / image.naturalHeight,
+      width: (absRight - absLeft) * image.width / image.naturalWidth,
+      height: (absBottom - absTop) * image.height / image.naturalHeight,
     };
   }
 
@@ -294,12 +307,12 @@
     return true;
   }
 
-  /** Align the option-box overlay with the image canvas. */
+  /** Align the option-box overlay with the image. */
   function syncOverlayToCanvas() {
-    overlay.style.left = canvas.style.left;
-    overlay.style.top = canvas.style.top;
-    overlay.style.width = `${canvas.width}px`;
-    overlay.style.height = `${canvas.height}px`;
+    overlay.style.top = image.offsetTop + 'px';
+    overlay.style.left = image.offsetLeft + 'px';
+    overlay.style.width = `${image.width}px`;
+    overlay.style.height = `${image.height}px`;
   }
 
   /**
