@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Improved QR code handling in rare cases, for example, when there are more than the expected 3 QR codes on the page.
 * Invalid QR codes no longer store "quadrant" keys.
+* `plom-server --init` will initialize the database etc without starting the server.
 
 ### Fixed
 * Resetting feedback rules to "factory settings" would remove all rules, causing client crashes.
