@@ -8,7 +8,7 @@
  * This javascript routine provides interaction with small multiple choice boxes.
  *
  * The html template must have a canvas element with id `canvas`
- * and an img element with id `refrence_image`.
+ * and an img element with id `reference_image`.
  *
  * The template must define some variables using Django's `json_script` filter:
  * top_left_ref_coord, bottom_right_ref_coord.

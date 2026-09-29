@@ -6,7 +6,7 @@
     Copyright (C) 2025-2026 Aidan Murphy
 */
 
-/** This javascript routine draw a series of coloured rectangles on top of canvas. */
+/** This is a toolkit to display rectangles in js. Alone, it doesn't do anything */
 
 /**
  * Draws a list of rectangles on a Canvas.
