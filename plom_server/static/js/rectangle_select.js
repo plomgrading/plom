@@ -352,7 +352,7 @@ function repositionCanvas() {
 function initCanvas() {
   canvas.height = image.height;
   canvas.width = image.width;
-  canvas.style.top = image.offsetTop + 'px'; ;
+  canvas.style.top = image.offsetTop + 'px';
   canvas.style.left = image.offsetLeft + 'px';
 }
 
