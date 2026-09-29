@@ -101,7 +101,7 @@ class Command(BaseCommand):
         """Create a manager user."""
         if User.objects.filter(groups__name="manager").exists():
             raise CommandError(
-                "Cannot create manager user, they already exists.", returncode=0
+                "Cannot create manager user, they already exist.", returncode=0
             )
         try:
             return AuthService.create_manager_user(username, password=password)
