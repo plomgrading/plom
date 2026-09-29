@@ -1,13 +1,13 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
     Copyright (C) 2024-2025 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Pushed bundles
 {% endblock title %}
@@ -21,7 +21,7 @@
     <div class="card my-2">
         <div class="card-body">
             <h5 class="card-title">{{ pushed_bundles|length }} pushed bundles:</h5>
-            <p>
+            <div>
                 <ul>
                     <li>These bundles have been pushed to the main server.</li>
                     <li>Markers may have already starting marking these pages.</li>
@@ -38,7 +38,7 @@
                            href="{% url 'scan_list_discard' %}">discarded page images</a>.
                     </li>
                 </ul>
-            </p>
+            </div>
             {% if pushed_bundles %}
                 <table class="table table-sm table-bordered text-center sortable">
                     <thead>
@@ -52,9 +52,9 @@
                             <tr>
                                 <td>{{ bundle.slug }}.pdf</td>
                                 <td>
-                                    <tt>{{ bundle.staged_username }}</tt> scanned
+                                    <samp>{{ bundle.staged_username }}</samp> scanned
                                     <br />
-                                    <tt>{{ bundle.pushed_username }}</tt> pushed
+                                    <samp>{{ bundle.pushed_username }}</samp> pushed
                                 </td>
                                 <td class="text-start">
                                     <ul>
