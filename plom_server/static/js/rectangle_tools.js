@@ -6,7 +6,7 @@
     Copyright (C) 2025-2026 Aidan Murphy
 */
 
-/** This is a toolkit to display rectangles in js. Alone, it doesn't do anything */
+/** This is a toolkit to display rectangles in js. Alone, it doesn't do anything. */
 
 /**
  * Draws a list of rectangles on a Canvas.

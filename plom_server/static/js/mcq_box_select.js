@@ -7,11 +7,16 @@
 /**
  * This javascript routine provides interaction with small multiple choice boxes.
  *
- * The html template must have a canvas element with id `canvas`
- * and an img element with id `reference_image`.
+ * The html template must have a img element with id `reference_image`.
  *
  * The template must define some variables using Django's `json_script` filter:
- * top_left_ref_coord, bottom_right_ref_coord.
+ * `top_left_ref_coord` and `bottom_right_ref_coord`.
+ *
+ * It also must have a bunch of elements with very specific id: this file
+ * is tightly coupled to `QuestionClustering/select.html`.
+ *
+ * To search a particular rectangle, it looks for the elements with id:
+ * `plom_left`, `plom_top`, `plom_right`, `plom_bottom`.
  */
 
 /* global
