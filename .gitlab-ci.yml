@@ -144,7 +144,7 @@ djlint:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint==1.40.3
+    - pip install djlint==1.46.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -407,7 +407,7 @@ flake8:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install flake8~=7.3.0
+    - pip install flake8~=7.4.1
   script:
     # first show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -420,7 +420,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.16.7
+    - pip install ruff~=0.16.9
   script:
     - ruff check .
     # ruff format .
@@ -431,7 +431,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.16.7
+    - pip install ruff~=0.16.9
   script:
     - EXCEPTIONS="D101,D102,D103,D104"
     # run once just for log out but don't fail
@@ -498,7 +498,7 @@ eslint:
   image: node:24
   stage: static_analysis
   script:
-    - npm install eslint@10.10.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin eslint-plugin-jsdoc@63.0
+    - npm install eslint@10.11.0 globals @eslint/js@10.0.1 @stylistic/eslint-plugin eslint-plugin-jsdoc@63.0
     - npx eslint plom_server/**/*.js
 
 
