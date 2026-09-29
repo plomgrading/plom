@@ -19,7 +19,6 @@
 */
 
 const image = document.getElementById('reference_image');
-const canvas = document.getElementById('canvas');
 
 (function () {
   const optionLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -75,51 +74,46 @@ const canvas = document.getElementById('canvas');
   }
 
   /**
-   * Return the dimensions of the reference-image coordinate system.
-   * @returns {object} - Reference width and height in Plom coordinates.
-   */
-  function getReferenceSize() {
-    const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
-    const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
-    return {
-      width: bottom_right_coord[0] - top_left_coord[0],
-      height: bottom_right_coord[1] - top_left_coord[1],
-    };
-  }
-
-  /**
-   * Convert a canvas-pixel delta to normalized Plom coordinates.
+   * Convert a canvas-pixel delta to normalized Plom QR coordinates.
    * @param {number} dx - Horizontal canvas delta in pixels.
    * @param {number} dy - Vertical canvas delta in pixels.
    * @returns {object} - Horizontal and vertical deltas in Plom coordinates.
-   * Accesses global variables `image` and `canvas`.
+   * Accesses global variable `image`.  Doesn't actually use `canvas` but
+   * assumes they have the same size (or something like that: I had some
+   * trouble with both this file and rectangle_select.js accessing `canvas`).
    */
   function canvasDeltaToPlom(dx, dy) {
-    const referenceSize = getReferenceSize();
+    const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
+    const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
+    const refwidth = bottom_right_coord[0] - top_left_coord[0];
+    const refheight = bottom_right_coord[1] - top_left_coord[1];
     return {
-      dx: (dx * image.naturalWidth / canvas.width) / referenceSize.width,
-      dy: (dy * image.naturalHeight / canvas.height) / referenceSize.height,
+      dx: (dx * image.naturalWidth / image.width) / refwidth,
+      dy: (dy * image.naturalHeight / image.height) / refheight,
     };
   }
 
   /**
-   * Convert a normalized Plom box to a canvas-pixel rectangle.
-   * @param {object} box - Option box in normalized Plom coordinates.
+   * Convert a normalized Plom QR-coord box to a canvas-pixel rectangle.
+   * @param {object} box - Box in normalized Plom QR coordinates.
    * @returns {object} - Rectangle positioned and sized in canvas pixels.
    * Accesses global variables `image` and `canvas`.
    */
   function plomBoxToCanvasBox(box) {
     const top_left_coord = JSON.parse(document.getElementById('top_left_ref_coord').textContent);
-    const referenceSize = getReferenceSize();
-    const absLeft = top_left_coord[0] + box.left * referenceSize.width;
-    const absTop = top_left_coord[1] + box.top * referenceSize.height;
-    const absRight = top_left_coord[0] + box.right * referenceSize.width;
-    const absBottom = top_left_coord[1] + box.bottom * referenceSize.height;
+    const bottom_right_coord = JSON.parse(document.getElementById('bottom_right_ref_coord').textContent);
+    const refwidth = bottom_right_coord[0] - top_left_coord[0];
+    const refheight = bottom_right_coord[1] - top_left_coord[1];
+
+    const absLeft = top_left_coord[0] + box.left * refwidth;
+    const absTop = top_left_coord[1] + box.top * refheight;
+    const absRight = top_left_coord[0] + box.right * refwidth;
+    const absBottom = top_left_coord[1] + box.bottom * refheight;
     return {
-      left: absLeft * canvas.width / image.naturalWidth,
-      top: absTop * canvas.height / image.naturalHeight,
-      width: (absRight - absLeft) * canvas.width / image.naturalWidth,
-      height: (absBottom - absTop) * canvas.height / image.naturalHeight,
+      left: absLeft * image.width / image.naturalWidth,
+      top: absTop * image.height / image.naturalHeight,
+      width: (absRight - absLeft) * image.width / image.naturalWidth,
+      height: (absBottom - absTop) * image.height / image.naturalHeight,
     };
   }
 
@@ -308,12 +302,12 @@ const canvas = document.getElementById('canvas');
     return true;
   }
 
-  /** Align the option-box overlay with the image canvas. */
+  /** Align the option-box overlay with the image. */
   function syncOverlayToCanvas() {
-    overlay.style.left = canvas.style.left;
-    overlay.style.top = canvas.style.top;
-    overlay.style.width = `${canvas.width}px`;
-    overlay.style.height = `${canvas.height}px`;
+    overlay.style.top = image.offsetTop + 'px';
+    overlay.style.left = image.offsetLeft + 'px';
+    overlay.style.width = `${image.width}px`;
+    overlay.style.height = `${image.height}px`;
   }
 
   /**
