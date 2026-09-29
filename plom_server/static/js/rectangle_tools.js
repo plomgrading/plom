@@ -27,11 +27,11 @@ export function drawLabeledRectangles(blocks, canvas) {
     '#A2142F',
     '#007760',
   ];
-  var ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   for (let i = 0; i < blocks.length; i++) {
-    var r = blocks[i].rect;
-    var label = blocks[i].qlabel;
-    var colour = colours[blocks[i].qidx % colours.length];
+    const r = blocks[i].rect;
+    const label = blocks[i].qlabel;
+    const colour = colours[blocks[i].qidx % colours.length];
     // text with white border draw *before* the rectangle
     ctx.font = '30px Arial';
     ctx.fillStyle = colour;
@@ -39,8 +39,8 @@ export function drawLabeledRectangles(blocks, canvas) {
     ctx.lineWidth = 1.5 * lw;
     ctx.setLineDash([]);
     ctx.lineJoin = 'round';
-    var tx = r[0] * canvas.width + lw / 2 + 10;
-    var ty = (r[1] + r[3]) * 0.5 * canvas.height + 10;
+    const tx = r[0] * canvas.width + lw / 2 + 10;
+    const ty = (r[1] + r[3]) * 0.5 * canvas.height + 10;
     ctx.strokeText(label, tx, ty);
 
     // now the rectangle

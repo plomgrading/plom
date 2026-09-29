@@ -26,8 +26,8 @@ function drawTheStuff() {
   for (let row of data) {
     if (row.has_regions) {
       // console.log(row);
-      var image = document.getElementById(row.ref_image_html_id);
-      var canvas = document.getElementById(row.canvas_html_id);
+      const image = document.getElementById(row.ref_image_html_id);
+      const canvas = document.getElementById(row.canvas_html_id);
       _initCanvas(canvas, image);
       drawLabeledRectangles(row.question_regions, canvas);
     }

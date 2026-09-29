@@ -14,27 +14,28 @@
  * and an img element with id `refrence_image`.
  *
  * It must define some variables using Django's `json_script` filter:
- * top_left_ref_coord, bottom_right_ref_coord.
- * Optionally, there can also be `initial_rectangle` and ... TODO
- * TODO: doc the other one too.
+ * `top_left_ref_coord`, `bottom_right_ref_coord`.
+ * Optionally, there can also be `initial_rectangle` or `initial_rectangle_01_coords`
+ * which specify the initial selection, either in QR or [0, 1]-based coordinates.
+ * Optionally, there can be a `regions_data` id element from `json_script`
+ * containing info about a labelled region.
+ *
+ * Original event code based on
+ * https://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280.
  */
-
-// Code idea copied from
-// https://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
 
 const image = document.getElementById('reference_image');
 const canvas = document.getElementById('canvas');
 
 // These are input elements that any page using this javascript must provide
-var h_th_left = document.getElementById('thb_left');
-var h_th_top = document.getElementById('thb_top');
-var h_th_right = document.getElementById('thb_right');
-var h_th_bottom = document.getElementById('thb_bottom');
-
-var h_plom_tl_x = document.getElementById('plom_left');
-var h_plom_tl_y = document.getElementById('plom_top');
-var h_plom_br_x = document.getElementById('plom_right');
-var h_plom_br_y = document.getElementById('plom_bottom');
+const h_th_left = document.getElementById('thb_left');
+const h_th_top = document.getElementById('thb_top');
+const h_th_right = document.getElementById('thb_right');
+const h_th_bottom = document.getElementById('thb_bottom');
+const h_plom_tl_x = document.getElementById('plom_left');
+const h_plom_tl_y = document.getElementById('plom_top');
+const h_plom_br_x = document.getElementById('plom_right');
+const h_plom_br_y = document.getElementById('plom_bottom');
 
 const handleRadius = 10;
 
@@ -111,10 +112,10 @@ function updateHiddenInputs() {
 
 /**
  * Draws a circle.
- * @param ctx
- * @param x
- * @param y
- * @param radius
+ * @param {object} ctx - Context for drawing operations.
+ * @param {number} x - X coordinate of circle's centre.
+ * @param {number} y - Y coordinate of circle's centre.
+ * @param {number} radius - Circle's radius.
  */
 function drawCircle(ctx, x, y, radius) {
   ctx.fillStyle = '#008080';
@@ -125,8 +126,8 @@ function drawCircle(ctx, x, y, radius) {
 
 /**
  * Draw circles on the corners of the rectangle.
- * @param ctx
- * @param rect
+ * @param {object} ctx - Context for drawing operations.
+ * @param {object} rect - Dict specifying the rectangle.
  */
 function drawHandles(ctx, rect) {
   drawCircle(ctx, rect.left, rect.top, handleRadius);
@@ -137,7 +138,7 @@ function drawHandles(ctx, rect) {
 
 /** Draw a box for Plom's QR coordinate system. */
 function drawQRCoordBox() {
-  var ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   const ratio_w = canvas.width / image.naturalWidth;
   const ratio_h = canvas.height / image.naturalHeight;
 
@@ -168,7 +169,7 @@ function drawSelectionRect() {
 
 /** Draw all the bits and pieces. */
 function drawStuff() {
-  var ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   drawQRCoordBox();
@@ -196,7 +197,7 @@ function mouseUp() {
  * Check if a certain coordinate is in a given rectangle.
  * @param {number} x - The X coord.
  * @param {number} y - The Y coord.
- * @param r - The rectangle to check.
+ * @param {object} r - The rectangle to check.
  * @returns {boolean} - `true` if the coords are in the rectangle.
  */
 function checkInRect(x, y, r) {
@@ -204,9 +205,9 @@ function checkInRect(x, y, r) {
 }
 
 /**
- * Are the given points close enough for Plom's liking?
- * @param p1
- * @param p2
+ * Are the given numbers close enough for Plom's liking?
+ * @param {number} p1 - A number, in local canvas coord sys.
+ * @param {number} p2 - A number, in local canvas coord sys.
  * @returns {boolean} - `true` if the points are close enough.
  */
 function checkCloseEnough(p1, p2) {
@@ -229,7 +230,7 @@ function getMousePos(canvas, evt) {
     clx = evt.clientX;
     cly = evt.clientY;
   }
-  var boundingRect = canvas.getBoundingClientRect();
+  const boundingRect = canvas.getBoundingClientRect();
   return {
     x: clx - boundingRect.left,
     y: cly - boundingRect.top,
@@ -347,16 +348,16 @@ function mouseMove(e) {
 
 /** Make the canvas match the reference image, and update the rectangle. */
 function repositionCanvas() {
-  let old_canvas_rect_width = canvas.width;
-  let old_canvas_rect_height = canvas.height;
+  const old_canvas_rect_width = canvas.width;
+  const old_canvas_rect_height = canvas.height;
   // make canvas same as image, which may have changed size and position
   canvas.height = image.height;
   canvas.width = image.width;
   canvas.style.top = image.offsetTop + 'px'; ;
   canvas.style.left = image.offsetLeft + 'px';
   // compute ratio comparing the NEW canvas rect with the OLD (current)
-  var ratio_w = canvas.width / old_canvas_rect_width;
-  var ratio_h = canvas.height / old_canvas_rect_height;
+  const ratio_w = canvas.width / old_canvas_rect_width;
+  const ratio_h = canvas.height / old_canvas_rect_height;
   // update rect coordinates
   rect.top = rect.top * ratio_h;
   rect.left = rect.left * ratio_w;
