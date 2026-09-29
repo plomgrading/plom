@@ -41,11 +41,10 @@
                 the changes and markers may need to refresh their client.
             </p>
             <div>
-                <button class="btn btn-primary" type="submit" name="what_action" value="">Save settings</button>
+                <button class="btn btn-primary" type="submit">Save settings</button>
                 <button class="btn btn-outline-secondary ms-2 me-2"
-                        type="action"
-                        name="what_action"
-                        value="reset">Reset to factory defaults</button>
+                        hx-delete="{% url 'feedback_rules' %}"
+                        type="action">Reset to factory defaults</button>
             </div>
             <!-- consider adding "sortable" to the class for clickable headers -->
             <table class="tablem mt-3">

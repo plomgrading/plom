@@ -22,6 +22,8 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils.translation import ngettext
 from django.views.generic.edit import UpdateView
+from django.urls import reverse
+from django_htmx.http import HttpResponseClientRedirect
 from rest_framework import serializers
 
 from plom.common.exceptions import PlomConflict
@@ -366,22 +368,24 @@ class FeedbackRulesView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Change or reset some feedback rules, then redirect to the viewing page."""
-        # decide if we are resetting or updating the rules from the form
-        if request.POST.get("what_action") == "reset":
-            Settings.key_value_store_reset("feedback_rules")
-        else:
-            rules = Settings.get_feedback_rules()
-            for code in rules.keys():
-                x = request.POST.get(f"{code}-allowed", None)
-                rules[code]["allowed"] = True if x is not None else False
-                x = request.POST.get(f"{code}-warn", None)
-                rules[code]["warn"] = True if x is not None else False
-                x = request.POST.get(f"{code}-dama_allowed", None)
-                rules[code]["dama_allowed"] = True if x is not None else False
-            Settings.key_value_store_set("feedback_rules", rules)
-
+        """Change some feedback rules, then redirect to the viewing page."""
+        rules = Settings.get_feedback_rules()
+        for code in rules.keys():
+            x = request.POST.get(f"{code}-allowed", None)
+            rules[code]["allowed"] = True if x is not None else False
+            x = request.POST.get(f"{code}-warn", None)
+            rules[code]["warn"] = True if x is not None else False
+            x = request.POST.get(f"{code}-dama_allowed", None)
+            rules[code]["dama_allowed"] = True if x is not None else False
+        Settings.key_value_store_set("feedback_rules", rules)
         return redirect("feedback_rules")
+
+    def delete(self, request: HttpRequest) -> HttpResponse:
+        """Reset the feedback rules to factory defaults, called by HTMX."""
+        Settings.key_value_store_reset("feedback_rules")
+        # TODO: I dunno why, but regular redirect doesn't work with htmx
+        # return redirect("feedback_rules")
+        return HttpResponseClientRedirect(reverse("feedback_rules"))
 
 
 class DownloadRubricView(ManagerRequiredView):
