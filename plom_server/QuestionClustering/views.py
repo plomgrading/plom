@@ -224,9 +224,16 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         regions = [x for x in all_regions if x["page"] == page and x["qidx"] == qidx]
 
         if regions:
-            initial_rectangle = regions[0]["rect"]
+            init = regions[0]["rect"].copy()
+            # tighten the rectangle a little if its not too small (rect values in [0, 1])
+            if abs(init[2] - init[0]) > 0.2:
+                init[0] += 0.025
+                init[2] -= 0.025
+            if abs(init[3] - init[1]) > 0.1:
+                init[1] += 0.02
+                init[3] -= 0.02
         else:
-            initial_rectangle = []
+            init = []
 
         context.update(
             {
@@ -237,7 +244,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
                 "bottom_right": rect_bottom_right,
                 "q_label": SpecificationService.get_question_label(qidx),
                 "regions_data": regions,
-                "initial_rectangle_01": initial_rectangle,
+                "initial_rectangle_01": init,
             }
         )
         return render(request, "QuestionClustering/select.html", context)
