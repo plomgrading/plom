@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Clustering selection now shows the region for a question, if one is set.
+* Much more detail to error messages about colliding rubrics.
 
 ### Removed
 
