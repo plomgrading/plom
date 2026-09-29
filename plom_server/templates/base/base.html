@@ -1,7 +1,7 @@
 {# SPDX-License-Identifier: AGPL-3.0-or-later #}
 {# Copyright (C) 2022-2023 Edith Coates #}
 {# Copyright (C) 2022-2023 Brennen Chiu #}
-{# Copyright (C) 2023-2025 Colin B. Macdonald #}
+{# Copyright (C) 2023-2026 Colin B. Macdonald #}
 {# Copyright (C) 2023 Julian Lapenna #}
 {# Copyright (C) 2023-2024 Andrew Rechnitzer #}
 {# Copyright (C) 2024 Aden Chan #}
@@ -23,16 +23,16 @@
         <!-- Alpine.js -->
         <script defer src="{% static 'js3rdparty/alpine.js' %}"></script>
         <!-- Bootstrap stylesheet -->
-        <link href="{% static 'css3rdparty/bootstrap.min.css' %}" rel="stylesheet" />
+        <link rel="stylesheet" href="{% static 'css3rdparty/bootstrap.min.css' %}" />
         <script src="{% static 'js3rdparty/bootstrap.bundle.min.js' %}"></script>
         <!-- Bootstrap icons -->
-        <link href="{% static 'css3rdparty/bootstrap-icons.css' %}"
-              rel="stylesheet" />
+        <link rel="stylesheet"
+              href="{% static 'css3rdparty/bootstrap-icons.css' %}" />
         <!-- Sorttable by Stuart Langridge, https://www.kryogenix.org/code/browser/sorttable/ -->
         <script src="{% static '/js3rdparty/sorttable.js' %}"></script>
         <!-- Base stylesheet -->
-        <link rel="stylesheet" href="{% static 'css/base.css' %}">
-        <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+        <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/profile.css' %}" />
         <link rel="stylesheet" href="{% static 'css/diff_table.css' %}" />
         <!-- some custom js functions for common page interactions -->
         <script type="module" src="{% static 'js/frontend_utils.js' %}"></script>
