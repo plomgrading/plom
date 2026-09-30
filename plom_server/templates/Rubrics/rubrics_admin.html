@@ -1,4 +1,5 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
@@ -7,8 +8,7 @@
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2025 Deep Shah
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Rubrics - Admin
 {% endblock title %}
@@ -63,7 +63,7 @@
                 Create +&frac12;, -&frac12;, +&frac14;, etc, rubrics based on which
                 fractions are enabled above (make sure you click "Submit" first).
                 Any existing fractional rubrics will be ignored.
-                Hint: if you later want to remove these rubrics, you'll need to &ldquo;unpublish&rdquo; them one-at-a-time.
+                Hint: if you later want to remove these rubrics, you'll need to <q>unpublish</q> them one-at-a-time.
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
             </p>
             <hr />
