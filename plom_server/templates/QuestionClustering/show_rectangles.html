@@ -1,9 +1,10 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2026 Deep Shah
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
 {% block title %}
     Rectangles from v {{ version }} p {{ page_num }}
@@ -94,7 +95,9 @@
                                     {% endif %}
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button"
+                                            class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-primary">Submit</button>
                                 </div>
                             </form>
@@ -104,37 +107,37 @@
             {% endif %}
             <!-- </form> -->
             {% if papers %}
-                <p>
-                    <ul>
-                        <div class="container">
-                            <div class="row">
-                                {% for pn in papers %}
-                                    <div class="col-6 mb-4">
-                                        <strong>Paper {{ pn }}:</strong>
-                                        <br />
-                                        <img class="img-fluid border p-2"
-                                             src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                             onerror="imgError(this)" />
-                                    </div>
-                                {% endfor %}
-                            </div>
+                <ul>
+                    <div class="container">
+                        <div class="row">
+                            {% for pn in papers %}
+                                <div class="col-6 mb-4">
+                                    <strong>Paper {{ pn }}:</strong>
+                                    <br />
+                                    <img class="img-fluid border p-2"
+                                         src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                         onerror="imgError(this)" />
+                                </div>
+                            {% endfor %}
                         </div>
-                    </ul>
-                </p>
+                    </div>
+                </ul>
             {% else %}
                 <p>
-                    There are no papers with version {{ version }} of page {{ page_num }}. This could be because
-                    <ul>
-                        <li>You have not finished uploading scans</li>
-                        <li>
-                            Your test specification, or question-version map, may not allow page {{ page_num }} to be chosen from version {{ version }}
-                        </li>
-                    </ul>
+                    There are no papers with version {{ version }} of page {{ page_num }}.
+                    This could be because:
                 </p>
+                <ul>
+                    <li>You have not finished uploading scans</li>
+                    <li>
+                        Your test specification, or question-version map, may not allow
+                        page {{ page_num }} to be chosen from version {{ version }}
+                    </li>
+                </ul>
             {% endif %}
         </div>
     </div>
-    <script type="text/javascript">
+    <script>
   function imgError(image) {
     var img_error_span = document.createElement('span');
     img_error_span.classList.add("alert", "alert-warning", "mx-2", "py-0");
