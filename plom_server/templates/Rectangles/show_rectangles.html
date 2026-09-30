@@ -1,8 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
 {% block title %}
     Rectangles from v {{ version }} p {{ page_number }}
@@ -26,6 +27,8 @@
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'zip_rectangles' version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}">download zip of images</a>
+                </p>
+                <div>
                     <ul>
                         {% for pn in papers %}
                             <li>
@@ -36,21 +39,23 @@
                             </li>
                         {% endfor %}
                     </ul>
-                </p>
+                </div>
             {% else %}
                 <p>
-                    There are no papers with version {{ version }} of page {{ page_number }}. This could be because
-                    <ul>
-                        <li>You have not finished uploading scans</li>
-                        <li>
-                            Your test specification, or question-version map, may not allow page {{ page_number }} to be chosen from version {{ version }}
-                        </li>
-                    </ul>
+                    There are no papers with version {{ version }} of page {{ page_number }}.
+                    This could be because
                 </p>
+                <ul>
+                    <li>You have not finished uploading scans</li>
+                    <li>
+                        Your test specification, or question-version map, may not allow
+                        page {{ page_number }} to be chosen from version {{ version }}
+                    </li>
+                </ul>
             {% endif %}
         </div>
     </div>
-    <script type="text/javascript">
+    <script>
   function imgError(image) {
     var img_error_span = document.createElement('span');
     img_error_span.classList.add("alert", "alert-warning", "mx-2", "py-0");
