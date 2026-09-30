@@ -41,7 +41,8 @@
                                            id="fixed"
                                            value="fixed"
                                            x-model="assignment_type" />
-                                    <label class="form-check-label" for="fixed">Missing fixed page from an incomplete paper</label>
+                                    <label class="form-check-label"
+                                           for="fixed">Missing fixed page from an incomplete paper</label>
                                     <div class="ms-4">
                                         <!-- above div can be hidden with x-show but I found it jumpy, disable control instead -->
                                         <div class="container shadow-sm p-2">
@@ -87,7 +88,8 @@
                                                            id="question_all_dnm1"
                                                            checked
                                                            x-model="showq" />
-                                                    <label class="form-check-label" for="question_all_dnm1">Attach to specific question(s):</label>
+                                                    <label class="form-check-label"
+                                                           for="question_all_dnm1">Attach to specific question(s):</label>
                                                 </div>
                                                 <div class="ms-4">
                                                     <fieldset>
@@ -99,7 +101,8 @@
                                                                        value="{{ qidx }}"
                                                                        id="qidx{{ qidx }}"
                                                                        x-bind:disabled="showq != 'choose_q'" />
-                                                                <label class="form-check-label" for="qidx{{ qidx }}">{{ qlabel_html | safe }}</label>
+                                                                <label class="form-check-label"
+                                                                       for="qidx{{ qidx }}">{{ qlabel_html | safe }}</label>
                                                             </div>
                                                         {% endfor %}
                                                     </fieldset>
