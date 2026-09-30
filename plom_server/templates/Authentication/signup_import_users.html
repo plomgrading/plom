@@ -1,10 +1,40 @@
-<!--
+{% extends "Authentication/signup_base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Aidan Murphy
--->
-{% extends "Authentication/signup_base.html" %}
+    Copyright (C) 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
 {% block card_content %}
+    <p>
+        Create many users via a <tt>.csv</tt> file.
+    </p>
+    <div class="m-2">
+        <details>
+            <summary>File requirements</summary>
+            A valid <tt>.csv</tt> file must contain 2 columns:
+            <ul>
+                <!-- WET - see AuthService.create_users_from_csv -->
+                <li>'username'</li>
+                <li>'usergroups'. This can be one or more of:</li>
+                <ul>
+                    {% for group in valid_user_groups %}<li>{{ group }}</li>{% endfor %}
+                </ul>
+                each separated by a comma.
+            </ul>
+            <p>
+                Here is a template:
+                <button type="button"
+                        class="btn btn-link"
+                        onclick="downloadCSV(this)"
+                        id="download-template"
+                        data-downloadText='{{ example_input_csv }}'
+                        data-filename="user_import_template.csv">
+                    user_import_template.csv<i class="bi bi-download"></i>
+                </button>
+            </p>
+        </details>
+    </div>
     <form id="myform"
           method="post"
           action="{% url 'signup_import' %}"
@@ -18,6 +48,8 @@
                    required
                    id="csv_file">
         </div>
-        <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
+        <p>
+            <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
+        </p>
     </form>
 {% endblock card_content %}
