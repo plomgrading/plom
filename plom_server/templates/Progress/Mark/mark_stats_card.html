@@ -1,10 +1,10 @@
-<!--
+{% comment %}
      SPDX-License-Identifier: AGPL-3.0-or-later
      Copyright (C) 2023-2025 Andrew Rechnitzer
      Copyright (C) 2024, 2026 Aidan Murphy
-     Copyright (C) 2024-2025 Colin B. Macdonald
+     Copyright (C) 2024-2026 Colin B. Macdonald
      Copyright (C) 2025 Deep Shah
--->
+{% endcomment %}
 <div class="card">
     <div class="card-body p-2 pb-1">
         <div class="d-flex justify-content-between align-items-center">
@@ -20,7 +20,7 @@
             </div>
         </div>
         <div class="mt-0">
-            <!--
+            {% comment %}
             <details open>
             <summary>
                 <span class="text-muted small">Details</span>
@@ -35,7 +35,7 @@
                     {% endif %}
                 </p>
             </details>
-            -->
+            {% endcomment %}
             <div>
                 {% if histogram_data %}
                     <div class="mb-0 text-body text-end">
