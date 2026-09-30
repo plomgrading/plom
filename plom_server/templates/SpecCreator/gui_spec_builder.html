@@ -1,8 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     [BETA] Build a specification
 {% endblock title %}
@@ -83,23 +84,31 @@
                             <div class="col-4">
                                 <span class="text-muted small">Pages selected:</span>
                                 <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
-                                <button class="btn btn-sm btn-secondary p-1"
+                                <button type="button"
+                                        class="btn btn-sm btn-secondary p-1"
                                         onclick="clearAllSelectedPages()">
                                     <i class="bi bi-eraser"></i>
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <button class="btn btn-primary" onclick="assignSelectedPages('newQuestion')">assign to new question</button>
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        onclick="assignSelectedPages('newQuestion')">assign to new question</button>
                             </div>
                             <div class="col-auto">
-                                <button class="btn btn-primary" onclick="assignSelectedPages('id')">assign as ID page</button>
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        onclick="assignSelectedPages('id')">assign as ID page</button>
                             </div>
                             <div class="col-auto">
-                                <button class="btn btn-primary" onclick="assignSelectedPages('dnm')">assign to dnm</button>
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        onclick="assignSelectedPages('dnm')">assign to dnm</button>
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
-                                    <button class="btn btn-primary"
+                                    <button type="button"
+                                            class="btn btn-primary"
                                             onclick="assignSelectedPages('question', parseInt(document.getElementById('questionAssignmentSelector').value))">
                                         assign to
                                     </button>
@@ -112,7 +121,9 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <button class="btn btn-danger" onclick="unassignSelectedPages()">unassign</button>
+                                <button type="button"
+                                        class="btn btn-danger"
+                                        onclick="unassignSelectedPages()">unassign</button>
                             </div>
                         </div>
                     </div>
@@ -146,6 +157,7 @@
                                                        type="checkbox"
                                                        onchange="updateSelectedPages({{ index }}, this.checked)">
                                                 <button id="page{{ index }}Blowup"
+                                                        type="button"
                                                         class="btn btn-secondary bg-secondary position-absolute end-0 bg-opacity-10 m-1 p-1 border-0"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#page{{ index }}Modal">
@@ -175,7 +187,9 @@
                                 <!-- dynamically update this with js -->
                             </div>
                             <div id="newQuestionButton" class="mt-1">
-                                <button class="btn btn-primary w-100 btn-sm" onclick="createQuestion()">New question</button>
+                                <button type="button"
+                                        class="btn btn-primary w-100 btn-sm"
+                                        onclick="createQuestion()">New question</button>
                             </div>
                             <div id="questionSummary">
                                 <!-- dynamically update this with js -->
@@ -203,7 +217,7 @@
                               hx-on:htmx:config-request="event.detail.parameters.spec=getSpecJson()"
                               hx-target-error="#submissionErrors">
                             <!-- This input represents the spec as a json string
-			         though it doesn't actually need to be here. -->
+                                 though it doesn't actually need to be here. -->
                             <input name="spec" type="hidden">
                             <button type="submit" class="btn btn-success">submit</button>
                         </form>
@@ -215,6 +229,8 @@
             </div>
         {% endif %}
     </div>
+    <!-- TODO: blank space at bottom?  why are these here? -->
+    <!-- djlint:off H036 -->
     <br />
     <br />
     <br />
@@ -223,5 +239,6 @@
     <br />
     <br />
     <br />
+    <!-- djlint:on -->
     <script src="{% static 'js/gui_spec_builder.js' %}"></script>
 {% endblock main_content %}
