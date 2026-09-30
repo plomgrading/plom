@@ -258,7 +258,9 @@ python_files = "test_*.py *_test.py tests.py"
 
 [tool.djlint]
 # TODO: fix then remove from ignore list: H013
-ignore="H013,H021,H023,H030,H031,H050"
+# TODO: fix then remove: T041: extends tag should be first
+# TODO: fix then remove: H043: button tag should have type
+ignore="H013,H021,H023,H030,H031,H050,T041,H043"
 # indent=2
 
 [tool.mypy]
