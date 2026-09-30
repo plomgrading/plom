@@ -56,8 +56,12 @@
                       action="{% url 'modify_default_limit' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="limit">New Limit</label>
-                        <input type="number" class="form-control" id="limit" name="limit" required>
+                        <label for="default_limit">New Limit</label>
+                        <input type="number"
+                               class="form-control"
+                               id="default_limit"
+                               name="default_limit"
+                               required>
                     </div>
                     <div>
                         <button type="submit" class="btn btn-primary" style="margin-top: 10px">Set</button>
