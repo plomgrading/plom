@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Deep Shah
-    Copyright (C) 2025 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2025-2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     Handwriting Comparison
 {% endblock title %}
@@ -12,7 +12,7 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div class="my-2">
-        <button class="btn btn-primary" onclick="window.close()">Return to Bundle View</button>
+        <button type="button" class="btn btn-primary" onclick="window.close()">Return to Bundle View</button>
     </div>
     <div class="row g-3" style="height: 80vh;">
         <!-- Previous Paper Panel -->
@@ -30,12 +30,16 @@
                     {% if prev_paper_first_page_index is not None %}
                         <small class="fw-light small lh-1 position-absolute top-0 start-0 m-2 z-3">{{ prev_paper_first_page_info }}</small>
                         <button id="view-pdf-btn-prev"
+                                type="button"
                                 class="btn btn-sm btn-secondary position-absolute bottom-0 end-0 m-2 z-3"
                                 onclick="showPdf('prev')">View Full PDF</button>
                         <img id="img-prev"
                              class="w-100 h-100 object-fit-contain"
                              src="{% url 'scan_get_rotated_image' bundle_id prev_paper_first_page_index %}" />
-                        <iframe id="iframe-prev" class="w-100 h-100 border-0" style="display: none;"></iframe>
+                        <iframe id="iframe-prev"
+                                title="previous page"
+                                class="w-100 h-100 border-0"
+                                style="display: none"></iframe>
                     {% else %}
                         <div class="p-3">No previous paper found in scan order.</div>
                     {% endif %}
@@ -67,12 +71,16 @@
                     {% if next_paper_first_page_index is not None %}
                         <small class="fw-light small lh-1 position-absolute top-0 start-0 m-2 z-3">{{ next_paper_first_page_info }}</small>
                         <button id="view-pdf-btn-next"
+                                type="button"
                                 class="btn btn-sm btn-secondary position-absolute bottom-0 end-0 m-2 z-3"
                                 onclick="showPdf('next')">View Full PDF</button>
                         <img id="img-next"
                              class="w-100 h-100 object-fit-contain"
                              src="{% url 'scan_get_rotated_image' bundle_id next_paper_first_page_index %}" />
-                        <iframe id="iframe-next" class="w-100 h-100 border-0" style="display: none;"></iframe>
+                        <iframe id="iframe-next"
+                                title="next page"
+                                class="w-100 h-100 border-0"
+                                style="display: none"></iframe>
                     {% else %}
                         <div class="p-3">No next paper found in scan order.</div>
                     {% endif %}
