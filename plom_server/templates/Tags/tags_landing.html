@@ -1,34 +1,33 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
-    Copyright (C) 2023 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2023, 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
+{% block title %}
+    Tags
+{% endblock title %}
 {% block page_heading %}
     Tags
 {% endblock page_heading %}
 {% block main_content %}
     <body>
-        <section>
+        <div>
+            <h5>Tag filtering form:</h5>
+            <form method="post" action="{% url 'tag_filter' %}">
+                {% csrf_token %}
+                {{ text_field_form.as_p }}
+                <button type="submit">Submit</button>
+            </form>
+            <p class="mt-4">
+                You are filtering for tags containing <q><code>{{ tag_filter_text }}</code></q>
+                with strict matching {{ tag_filter_strict }}.
+            </p>
+        </div>
+        <div class="d-flex gap-4 mt-4">
             <div>
-                <h5>Tag filtering form:</h5>
-                <form method="post" action="{% url 'tag_filter' %}">
-                    {% csrf_token %}
-                    {{ text_field_form.as_p }}
-                    <button type="submit">Submit</button>
-                </form>
-                <br>
-                <br>
-                You are filtering for tags containing &ldquo;{{ tag_filter_text }}&rdquo; with
-                strict matching {{ tag_filter_strict }}.
-            </div>
-        </section>
-        <section style="display: flex;">
-            <div style="flex: 1;">
-                <br>
-                <h5>Papers by tags:</h5>
-                <br>
+                <h5>Papers by tags</h5>
                 <table class="table table-striped table-bordered sortable"
                        style="width: 95%">
                     <thead>
@@ -54,10 +53,8 @@
                     </tbody>
                 </table>
             </div>
-            <div style="flex: 1;">
-                <br>
-                <h5>All tags:</h5>
-                <br>
+            <div>
+                <h5>All tags</h5>
                 <table class="table table-striped table-bordered sortable"
                        style="width: 95%">
                     <thead>
@@ -81,6 +78,6 @@
                     </tbody>
                 </table>
             </div>
-        </section>
+        </div>
     </body>
 {% endblock main_content %}
