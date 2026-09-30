@@ -257,8 +257,8 @@ qt_api = "pyqt6"
 python_files = "test_*.py *_test.py tests.py"
 
 [tool.djlint]
-# TODO: fix then remove from ignore list: H006, H013
-ignore="H006,H013,H021,H022,H023,H030,H031,H050"
+# TODO: fix then remove from ignore list: H013
+ignore="H013,H021,H023,H030,H031,H050"
 # indent=2
 
 [tool.mypy]
