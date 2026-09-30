@@ -1,8 +1,8 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2026 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% block title %}
     Adjust question regions
@@ -12,11 +12,11 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
-        <!--
+        {% comment %}
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-	-->
+        {% endcomment %}
         <div>
             <div>
                 {% if allowSharedPages %}
