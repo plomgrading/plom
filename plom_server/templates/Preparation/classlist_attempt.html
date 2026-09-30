@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Andrew Rechnitzer
-    Copyright (C) 2023-2024 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2023-2024, 2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     Manage classlist
 {% endblock title %}
@@ -20,7 +20,10 @@
                         <a class="btn btn-warning" href="{% url 'prep_classlist' %}">return to upload another file</a>
                     </span>
                 </p>
-                <p>Note that you can set "Ignore warnings" on upload to ignore these warnings.</p>
+                <p>
+                    Note that you can set <q>Ignore warnings</q> on
+                    upload to ignore these warnings.
+                </p>
             </div>
             <div class="card">
                 <div class="card-body">
