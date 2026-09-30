@@ -1,8 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2026 Deep Shah
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
 {% load custom_tags %}
 {% block title %}
@@ -83,7 +84,8 @@
                             <span class="badge text-bg-primary d-none"
                                   aria-live="polite"
                                   data-selected-count></span>
-                            <span class="badge text-bg-secondary" data-unclustered-count>{{ unclustered_papers|length }}</span>
+                            <span class="badge text-bg-secondary"
+                                  data-unclustered-count>{{ unclustered_papers|length }}</span>
                         </div>
                     </div>
                     <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3"

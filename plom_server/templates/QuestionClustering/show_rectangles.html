@@ -73,7 +73,8 @@
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="modelSelectionModalLabel">Choose answer type for clustering.</h5>
+                                <h5 class="modal-title"
+                                    id="modelSelectionModalLabel">Choose answer type for clustering.</h5>
                                 <button type="button"
                                         class="btn-close"
                                         data-bs-dismiss="modal"
@@ -87,7 +88,8 @@
                                     {% for radio in clustering_job_form.choice %}
                                         <div class="form-check">
                                             {{ radio.tag }}
-                                            <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                                            <label class="form-check-label"
+                                                   for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
                                         </div>
                                     {% endfor %}
                                     {% if clustering_job_form.choice.errors %}
