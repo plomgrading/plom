@@ -149,11 +149,11 @@ djlint:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
 
-djlint-check:
+djlint-format:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint==1.40.3
+    - pip install djlint==1.46.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
