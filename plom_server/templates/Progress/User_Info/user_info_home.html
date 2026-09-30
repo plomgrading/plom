@@ -220,11 +220,13 @@
         </table>
     </div>
     <!-- Hidden element to pass message data and username to modal forms -->
+    <!-- djlint:off -->
     <div id="messages"
          data-message-type="{% if messages %}{% for message in messages %}{{ message.tags }}{% endfor %}{% endif %}"
          data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
          data-username="{{ username }}">
     </div>
+    <!-- djlint:on -->
     {% include "./modal_forms.html" %}
     <script src="{% static 'js3rdparty/jquery.min.js' %}"></script>
     <script src="{% static 'js3rdparty/select2.min.js' %}"></script>
