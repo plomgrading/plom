@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2024 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2023-2024, 2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     Images discarded from bundles on push
 {% endblock title %}
@@ -74,7 +74,7 @@
                                             </select>
                                             <p class="mb-2">
                                                 <small>
-                                                    Mobile pages typically do not have an &ldquo;expected&rdquo; place in the paper.
+                                                    Mobile pages typically do not have an <q>expected</q> place in the paper.
                                                     Instead they are attached to none, one, or more questions.
                                                 </small>
                                             </p>
