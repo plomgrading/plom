@@ -157,6 +157,7 @@ table = [
             },
         ],
     },
+    # Not many pages use this, so those that import it should be checked if this is bumped
     {
         "name": "JQuery",
         "license": "MIT",
