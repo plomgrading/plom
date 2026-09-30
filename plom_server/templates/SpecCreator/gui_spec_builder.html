@@ -83,7 +83,8 @@
                         <div class="row">
                             <div class="col-4">
                                 <span class="text-muted small">Pages selected:</span>
-                                <span id="selectedPagesDisplay" class="text-muted small"><!-- js fills this in --></span>
+                                <span id="selectedPagesDisplay"
+                                      class="text-muted small"><!-- js fills this in --></span>
                                 <button type="button"
                                         class="btn btn-sm btn-secondary p-1"
                                         onclick="clearAllSelectedPages()">
@@ -149,7 +150,8 @@
                                                         <p class="text-center m-1 p-0">{{ index }}</p>
                                                     </div>
                                                     <div class="col-5 ps-0">
-                                                        <p class="text-end m-1 p-0 fw-bold" id="page{{ index }}Assignments"></p>
+                                                        <p id="page{{ index }}Assignments"
+                                                           class="text-end m-1 p-0 fw-bold"></p>
                                                     </div>
                                                 </div>
                                                 <input id="page{{ index }}Checkbox"
@@ -171,7 +173,8 @@
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content bg-transparent border-0">
                                                 <div class="modal-body p-0">
-                                                    <img src="data:image/png;base64,{{ image_string }}" class="img-fluid">
+                                                    <img class="img-fluid"
+                                                         src="data:image/png;base64,{{ image_string }}" />
                                                 </div>
                                             </div>
                                         </div>
@@ -200,12 +203,18 @@
                 <div class="card-footer">
                     <div class="row">
                         <div class="col-auto">
-                            <span>Number of questions:</span> <span id="numberOfQuestions"></span>
+                            <span>Number of questions:</span>
+                            <span id="numberOfQuestions"></span>
                         </div>
                         <div class="col-auto">
-                            <span>Total marks:</span> <span id="totalMarks"></span>
+                            <span>Total marks:</span>
+                            <span id="totalMarks"></span>
                         </div>
-                        <div class="col-auto">Number of Pages:<span id="numberOfPages" data-number-of-pages="{{ pdf_image_dict|length }}">{{ pdf_image_dict|length }}</span></div>
+                        <div class="col-auto">
+                            <span>Number of Pages:</span>
+                            <span id="numberOfPages"
+                                  data-number-of-pages="{{ pdf_image_dict|length }}">{{ pdf_image_dict|length }}</span>
+                        </div>
                     </div>
                     <hr />
                     <div class="row">
