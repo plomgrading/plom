@@ -1,8 +1,8 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024, 2026 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Rubric access controls
 {% endblock title %}
@@ -13,7 +13,7 @@
     <div class="card m-2">
         <div class="card-body">
             <p>
-                These options provide &ldquo;high-level&rdquo; control over which users
+                These options provide <q>high-level</q> control over which users
                 can create and modify existing rubrics.
             </p>
             <form enctype="multipart/form-data"
@@ -48,8 +48,7 @@
                                     <label class="form-check-label" for="create1">
                                         <strong>Some users</strong> can create rubrics,
                                         depending on their account settings
-                                        (you can add users to the &ldquo;lead markers&rdquo;
-                                        group).
+                                        (you can add users to the <q>lead markers</q> group).
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
@@ -80,7 +79,7 @@
                                     <label class="form-check-label" for="modify0">
                                         <strong>Permissive:</strong> any user can modify
                                         non-system rubrics rubrics;
-                                        &ldquo;<strong>manager</strong>&rdquo; users can modify system-rubrics.
+                                        <q><strong>manager</strong></q> users can modify system-rubrics.
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
@@ -93,9 +92,9 @@
                                     <label class="form-check-label" for="modify1">
                                         <strong>Default:</strong>
                                         Users can modify rubrics <strong>they created.</strong>
-                                        Users in the &ldquo;<strong>lead markers</strong>&rdquo;
+                                        Users in the <q><strong>lead markers</strong></q>
                                         group may modify all non-system rubrics;
-                                        &ldquo;<strong>manager</strong>&rdquo; users can modify system-rubrics.
+                                        <q><strong>manager</strong></q> users can modify system-rubrics.
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
@@ -107,7 +106,7 @@
                                            {% if modify2_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="modify2">
                                         <strong>Locked-down:</strong> No users can modify rubrics, overriding any per-account settings;
-                                        &ldquo;<strong>manager</strong>&rdquo; users cannot modify system-rubrics.
+                                        <q><strong>manager</strong></q> users cannot modify system-rubrics.
                                     </label>
                                 </div>
                             </fieldset>
