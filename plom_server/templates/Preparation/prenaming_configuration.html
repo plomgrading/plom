@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Aidan Murphy
-    Copyright (C) 2024-2025 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2024-2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     Adjust prenaming position
 {% endblock title %}
@@ -23,6 +23,7 @@
                             <h5 class="card-title">Prenaming configuration</h5>
                             <div class="form-group">
                                 <form action="{% url 'configure_prenaming' %}" method="post">
+                                    {% csrf_token %}
                                     <p class="mb-1">You can adjust the position of the prenaming box.</p>
                                     <div class="row">
                                         <div class="col-auto">
@@ -51,17 +52,16 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                {% csrf_token %}
-                                <input class="btn btn-primary mt-2"
-                                       type="submit"
-                                       name="set_config"
-                                       value="Save">
-                                <input class="btn btn-primary mt-2"
-                                       type="submit"
-                                       name="reset_config"
-                                       value="Reset to defaults">
-                            </form>
+                                    <input class="btn btn-primary mt-2"
+                                           type="submit"
+                                           name="set_config"
+                                           value="Save">
+                                    <input class="btn btn-primary mt-2"
+                                           type="submit"
+                                           name="reset_config"
+                                           value="Reset to defaults">
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
