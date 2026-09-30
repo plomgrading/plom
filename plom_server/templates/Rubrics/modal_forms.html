@@ -1,4 +1,4 @@
-<!--
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
@@ -7,7 +7,7 @@
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
     Copyright (C) 2025 Deep Shah
--->
+{% endcomment %}
 <script>
     function populateFields() {
         updateQuestion();
@@ -189,7 +189,8 @@
                                                        name="{{ edit_form.published.name }}"
                                                        id="{{ edit_form.published.id_for_label }}"
                                                        {% if edit_form.published.value %}checked{% endif %}>
-                                                <label class="form-check-label" for="{{ edit_form.published.id_for_label }}">
+                                                <label class="form-check-label"
+                                                       for="{{ edit_form.published.id_for_label }}">
                                                     Published
                                                     <small class="d-block text-muted mb-0 mt-0">Publishing a rubric makes it usable by markers.</small>
                                                 </label>
@@ -259,8 +260,9 @@
                         </div>
                         <div>
                             <small>
-                                (You can learn more about Plom's rubrics
-                                <a target="_" href="https://plom.readthedocs.io/en/latest/rubrics.html">in the docs</a>.)
+                                (You can learn more about Plom&apos;s rubrics
+                                <a href="https://plom.readthedocs.io/en/latest/rubrics.html"
+                                   target="_">in the docs</a>.)
                             </small>
                         </div>
                     {% endif %}
