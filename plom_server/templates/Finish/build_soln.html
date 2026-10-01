@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2026 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% block title %}
     Build solution pdfs
@@ -54,7 +54,8 @@
                 {% endif %}
             </ul>
             {% if n_outdated %}
-                <a href="{% url 'build_all_soln' %}" class="btn btn-danger">Download zip of solutions</a> some papers outdated
+                <a href="{% url 'build_all_soln' %}"
+                   class="btn btn-danger">Download zip of solutions</a> some papers outdated
             {% elif n_complete == n_papers %}
                 <a href="{% url 'build_all_soln' %}" class="btn btn-success">Download zip of solutions</a>
             {% elif n_complete %}
