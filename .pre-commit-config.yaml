@@ -51,7 +51,7 @@ repos:
   - id: flake8
 
 - repo: https://github.com/Riverside-Healthcare/djLint
-  rev: v1.46.3
+  rev: v1.46.4
   hooks:
   - id: djlint-reformat-django
   - id: djlint-django

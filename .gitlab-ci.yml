@@ -144,7 +144,7 @@ djlint:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint==1.46.3
+    - pip install djlint==1.46.4
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --lint
 
@@ -153,7 +153,7 @@ djlint-format:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint==1.46.3
+    - pip install djlint==1.46.4
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
