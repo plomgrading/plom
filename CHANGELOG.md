@@ -6,13 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.22.1] 2026-10-01
 
 ### Added
 * Clustering selection now shows the region for a question, if one is set.
 * Much more detail to error messages about colliding rubrics.
-
-### Removed
 
 ### Changed
 * Improved QR code handling in rare cases, for example, when there are more than the expected 3 QR codes on the page.
@@ -25,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## [v0.22.0] - 2026-08-28
+## [0.22.0] - 2026-08-28
 
 ### Added
 * Preliminary support for multiple choice questions, with cluster-based grading based on machine-read checkboxes.
@@ -1736,7 +1734,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.22.0...main
+[0.22.1]: https://gitlab.com/plom/plom/-/compare/v0.22.0...v0.22.1
 [0.22.0]: https://gitlab.com/plom/plom/-/compare/v0.21.2...v0.22.0
 [0.21.2]: https://gitlab.com/plom/plom/-/compare/v0.21.1...v0.21.2
 [0.21.1]: https://gitlab.com/plom/plom/-/compare/v0.21.0...v0.21.1
