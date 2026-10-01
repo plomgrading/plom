@@ -40,7 +40,7 @@ packaging==26.3
 pandas==2.3.3
 passlib==1.7.4
 Pillow==12.3.0
-plom-common==0.22.0  # @ git+https://gitlab.com/plom/plom-common.git@main
+plom-common==0.22.1  # @ git+https://gitlab.com/plom/plom-common.git@main
 psycopg[binary]==3.3.5
 pydyf==0.12.1
 pymupdf==1.28.2
