@@ -59,7 +59,7 @@ tabulate==0.10.0
 tomlkit==0.15.1
 tqdm==4.70.1
 urllib3==2.8.0
-weasyprint==69.0
+weasyprint==70.0
 whitenoise==6.12.0
 zipfly==6.0.5
 zxing-cpp==3.1.1
