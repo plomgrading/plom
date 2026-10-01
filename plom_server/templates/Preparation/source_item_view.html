@@ -13,7 +13,7 @@
                 <a href="{{ src.version }}" target="_blank">{{ src.original_filename }}</a>
             </h5>
             <p class="card-text mb-2">
-                sha256: <small class="text-muted"><tt>{{ src.hash }}</tt></small>
+                sha256: <small class="text-muted font-monospace">{{ src.hash }}</small>
                 {% if src.duplicate_versions %}
                     <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                     duplicate of version{{ src.duplicate_versions|pluralize }}: {{ src.duplicate_versions|join:", " }}
