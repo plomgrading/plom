@@ -1,11 +1,11 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024-2025 Andrew Rechnitzer
-    Copyright (C) 2024-2025 Colin B. Macdonald
+    Copyright (C) 2024-2026 Colin B. Macdonald
     Copyright (C) 2024-2025 Deep Shah
     Copyright (C) 2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% block title %}
     ID Predictions
@@ -19,7 +19,8 @@
             <p class="my-4">
                 <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
                 {% for predictor in list_of_ML_predictors %}
-                    <button class="btn btn-warning"
+                    <button type="button"
+                            class="btn btn-warning"
                             hx-delete="{% url 'id_prediction_delete' predictor %}"
                             hx-confirm="Are you sure?">Delete {{ predictor }} predictions</button>
                 {% endfor %}
@@ -29,7 +30,8 @@
             <p class="my-4">
                 <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
                 {% for predictor in list_of_ML_predictors %}
-                    <button class="btn btn-warning"
+                    <button type="button"
+                            class="btn btn-warning"
                             hx-delete="{% url 'id_prediction_delete' predictor %}"
                             hx-confirm="Are you sure?">Delete {{ predictor }} predictions</button>
                 {% endfor %}
@@ -39,7 +41,8 @@
             <p class="my-4">
                 <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</a>
                 {% for predictor in list_of_ML_predictors %}
-                    <button class="btn btn-warning"
+                    <button type="button"
+                            class="btn btn-warning"
                             hx-delete="{% url 'id_prediction_delete' predictor %}"
                             hx-confirm="Are you sure?">Delete {{ predictor }} predictions</button>
                 {% endfor %}
@@ -47,11 +50,15 @@
             <span class="alert alert-info my-4">Reader not yet run.</span>
         {% else %}
             <p class="my-4">
-                <button disabled class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</button>
+                <button disabled
+                        type="button"
+                        class="btn btn-primary"
+                        href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</button>
                 {% for predictor in list_of_ML_predictors %}
-                    <button class="btn btn-warning" disabled>Delete {{ predictor }} predictions</button>
+                    <button disabled type="button" class="btn btn-warning">Delete {{ predictor }} predictions</button>
                 {% endfor %}
-                <a class="btn btn-primary" href="{% url 'id_prediction_home' %}"><i class="bi bi-arrow-clockwise"></i></a>
+                <a class="btn btn-primary"
+                   href="{% url 'id_prediction_home' %}"><i class="bi bi-arrow-clockwise"></i></a>
             </p>
             <span class="alert alert-info my-4">{{ id_reader_task_status.message }}</span>
         {% endif %}
@@ -83,38 +90,39 @@
                                     <td>
                                         {{ pn }}
                                         {% if dat.image_pk %}
-                                            <button hx-get="{% url 'ID_img_wrap' dat.image_pk %}"
+                                            <button type="button"
+                                                    class="btn btn-outline-success"
+                                                    hx-get="{% url 'ID_img_wrap' dat.image_pk %}"
                                                     hx-target="#imageHere"
-                                                    hx-replace="innerHTML"
-                                                    class="btn btn-outline-success">view</button>
+                                                    hx-replace="innerHTML">view</button>
                                         {% endif %}
                                     </td>
                                     <!-- TODO: Do more in the service/view, not the template -->
-                                    {% if 'identified' in dat %}
+                                    {% if "identified" in dat %}
                                         <td>{{ dat.identified }}</td>
                                     {% else %}
                                         <td>{{ dat.status }}</td>
                                     {% endif %}
-                                    {% if 'prename' in dat %}
+                                    {% if "prename" in dat %}
                                         <td>{{ dat.prename.0 }}</td>
                                     {% else %}
                                         <td></td>
                                     {% endif %}
-                                    {% if 'MLLAP' in dat %}
+                                    {% if "MLLAP" in dat %}
                                         <td>{{ dat.MLLAP.0 }}</td>
                                         <td>{{ dat.MLLAP.1 }}</td>
                                     {% else %}
                                         <td></td>
                                         <td></td>
                                     {% endif %}
-                                    {% if 'MLGreedy' in dat %}
+                                    {% if "MLGreedy" in dat %}
                                         <td>{{ dat.MLGreedy.0 }}</td>
                                         <td>{{ dat.MLGreedy.1 }}</td>
                                     {% else %}
                                         <td></td>
                                         <td></td>
                                     {% endif %}
-                                    {% if 'MLBestGuess' in dat %}
+                                    {% if "MLBestGuess" in dat %}
                                         <td>{{ dat.MLBestGuess.0 }}</td>
                                         <td>{{ dat.MLBestGuess.1 }}</td>
                                     {% else %}
@@ -123,12 +131,12 @@
                                     {% endif %}
                                     <td>
                                         {% for name, prediction_data in dat.items %}
-                                            {% if name == 'identified' %}
-                                            {% elif name == 'prename' %}
-                                            {% elif name == 'MLLAP' %}
-                                            {% elif name == 'MLGreedy' %}
-                                            {% elif name == 'MLBestGuess' %}
-                                            {% elif name == 'image_pk' %}
+                                            {% if name == "identified" %}
+                                            {% elif name == "prename" %}
+                                            {% elif name == "MLLAP" %}
+                                            {% elif name == "MLGreedy" %}
+                                            {% elif name == "MLBestGuess" %}
+                                            {% elif name == "image_pk" %}
                                             {% else %}
                                                 {{ name }}: {{ prediction_data.0 }} ({{ prediction_data.1 }})
                                                 <br />
