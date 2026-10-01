@@ -1,18 +1,19 @@
-<!--
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2025-2026 Colin B. Macdonald
     Copyright (C) 2026 Aidan Murphy
--->
+{% endcomment %}
 <div class="card">
     <!-- pb-0 so we can sneak in the error div -->
     <div class="card-body pb-0">
         {% if src.uploaded %}
             <h5 class="card-title">
-                PDF for version {{ src.version }}: <a target="_blank" href={{ src.version }}>{{ src.original_filename }}</a>
+                PDF for version {{ src.version }}:
+                <a href="{{ src.version }}" target="_blank">{{ src.original_filename }}</a>
             </h5>
             <p class="card-text mb-2">
-                sha256: <small class="text-muted"><tt>{{ src.hash }}</tt></small>
+                sha256: <small class="text-muted font-monospace">{{ src.hash }}</small>
                 {% if src.duplicate_versions %}
                     <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                     duplicate of version{{ src.duplicate_versions|pluralize }}: {{ src.duplicate_versions|join:", " }}

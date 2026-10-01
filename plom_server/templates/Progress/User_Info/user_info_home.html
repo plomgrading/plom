@@ -1,12 +1,12 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
     Copyright (C) 2025-2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% block title %}
     Marker progress and quotas
@@ -25,7 +25,7 @@
             {% if messages %}
                 <div>
                     {% for message in messages %}
-                        {% if 'modify_default_limit' in message.tags %}
+                        {% if "modify_default_limit" in message.tags %}
                             {% include "../../base/alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}
@@ -64,7 +64,7 @@
             {% if messages %}
                 <div>
                     {% for message in messages %}
-                        {% if 'modify_quota' in message.tags %}
+                        {% if "modify_quota" in message.tags %}
                             {% include "../../base/alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}
@@ -98,7 +98,7 @@
                             {% endif %}
                             {% if messages %}
                                 {% for message in messages %}
-                                    {% if 'quota_warning' in message.tags and progress.would_exceed_default_limit %}
+                                    {% if "quota_warning" in message.tags and progress.would_exceed_default_limit %}
                                         <i class="bi bi-exclamation-triangle-fill text-warning"
                                            data-bs-toggle="modal"
                                            data-bs-target="#confirmSetQuota"
@@ -115,7 +115,7 @@
                         <td>{{ progress.tasks_marked }}</td>
                         <td>{{ progress.tasks_claimed }}</td>
                         <!-- really need custom key here, Issue #4026 -->
-                        <td sorttable_customkey={{ progress.quota_limit_or_zero }}>
+                        <td sorttable_customkey="{{ progress.quota_limit_or_zero }}">
                             {% if progress.has_quota_limit %}
                                 {{ progress.quota_limit }}
                                 <button class="btn btn-outline-primary ms-1"
@@ -202,9 +202,7 @@
                             <td>{{ data.question_label_html|safe }}</td>
                             <td>{{ data.question_version }}</td>
                             <td>{{ data.annotations_count }}</td>
-                            <td sorttable_customkey={{ data.average_marking_time_sort_key_hack }}>
-                                {{ data.average_marking_time }}
-                            </td>
+                            <td sorttable_customkey="{{ data.average_marking_time_sort_key_hack }}">{{ data.average_marking_time }}</td>
                             <td>
                                 <div class="progress">
                                     <div class="progress-bar"
@@ -221,22 +219,27 @@
             </tbody>
         </table>
     </div>
-    <!-- Hidden element to pass message data and username -->
+    <!-- Hidden element to pass message data and username to modal forms -->
+    <!-- djlint:off -->
     <div id="messages"
          data-message-type="{% if messages %}{% for message in messages %}{{ message.tags }}{% endfor %}{% endif %}"
          data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
-         data-username="{{ username }}"></div>
+         data-username="{{ username }}">
+    </div>
+    <!-- djlint:on -->
     {% include "./modal_forms.html" %}
-    <script src="{% static 'js3rdparty/jquery-3.6.4.min.js' %}"></script>
+    <script src="{% static 'js3rdparty/jquery.min.js' %}"></script>
     <script src="{% static 'js3rdparty/select2.min.js' %}"></script>
     <link href="{% static 'css3rdparty/select2.min.css' %}" rel="stylesheet" />
     <script>
+        // $ means jquery is being used here
         $('#editLimit').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            var username = button.data('username');
-            var limit = button.data('limit');
-            var modal = $(this);
+            const button = $(event.relatedTarget);
+            const username = button.data('username');
+            const limit = button.data('limit');
+            const modal = $(this);
 
+            // javascript code to insert username and current limit into modal
             modal.find('.modal-title').text('Edit Limit for ' + username);
             modal.find('input[name="username"]').val(username);
             modal.find('input[name="limit"]').val(limit);

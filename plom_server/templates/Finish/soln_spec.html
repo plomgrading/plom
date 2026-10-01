@@ -1,8 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
 {% block title %}
     Solution Specification
@@ -24,8 +25,8 @@
             <div class="card-body">
                 <div class="card-text p-4 border rounded font-monospace">
                     {% for line in toml_line_by_line %}
-                        {% if line.0 == '#' %}
-                            {% if line.1 == '#' %}
+                        {% if line.0 == "#" %}
+                            {% if line.1 == "#" %}
                                 <span class="text-danger fw-medium">{{ line }}</span>
                             {% else %}
                                 <span class="text-primary fw-medium">{{ line }}</span>

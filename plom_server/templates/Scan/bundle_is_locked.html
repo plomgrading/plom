@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2024 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2024, 2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     Bundle is locked
 {% endblock title %}
@@ -27,22 +27,20 @@
                         In most cases there will be a more-specific error
                         message below.
                     </p>
-                    <p>
-                        Note that
-                        <ul>
-                            <li>Only one bundle can be pushed at a given time.</li>
-                            <li>
-                                You may not change a bundle when it is mid-push;
-                                another user may have pushed the bundle while
-                                you were trying to alter things.
-                            </li>
-                            <li>
-                                Many operations cannot be performed while bundles
-                                are in the process of uploading, processing pages,
-                                or reading QR codes.
-                            </li>
-                        </ul>
-                    </p>
+                    <p>Note that:</p>
+                    <ul>
+                        <li>Only one bundle can be pushed at a given time.</li>
+                        <li>
+                            You may not change a bundle when it is mid-push;
+                            another user may have pushed the bundle while
+                            you were trying to alter things.
+                        </li>
+                        <li>
+                            Many operations cannot be performed while bundles
+                            are in the process of uploading, processing pages,
+                            or reading QR codes.
+                        </li>
+                    </ul>
                     <p class="mb-0">
                         Please return to the main scanning overview page;
                         you may be able to re-try your operation in a moment.

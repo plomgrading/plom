@@ -1,10 +1,10 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Incomplete pushed papers
 {% endblock title %}
@@ -39,14 +39,16 @@
                                                 <td>
                                                     {% for fp in pages.fixed|dictsort:"page_number" %}
                                                         {% if fp.img_pk %}
-                                                            <button hx-get="{% url 'pushed_img_wrap' 'fixed' fp.page_pk %}"
+                                                            <button type="button"
+                                                                    class="btn btn-outline-success"
+                                                                    hx-get="{% url 'pushed_img_wrap' 'fixed' fp.page_pk %}"
                                                                     hx-target="#incompleteImageHere"
-                                                                    hx-replace="innerHTML"
-                                                                    class="btn btn-outline-success">
+                                                                    hx-replace="innerHTML">
                                                                 {{ fp.page_number }}
                                                             </button>
                                                         {% else %}
-                                                            <button class="btn btn-danger p-3"
+                                                            <button type="button"
+                                                                    class="btn btn-danger p-3"
                                                                     data-bs-toggle="tooltip"
                                                                     data-bs-placement="top"
                                                                     data-bs-title="missing {{ pn }}.{{ fp.page_number }}"
@@ -58,12 +60,11 @@
                                                         {% endif %}
                                                     {% endfor %}
                                                     {% for mp in pages.mobile|dictsort:"question_idx" %}
-                                                        <button hx-get="{% url 'pushed_img_wrap' 'mobile' mp.page_pk %}"
+                                                        <button type="button"
+                                                                class="btn btn-outline-info"
+                                                                hx-get="{% url 'pushed_img_wrap' 'mobile' mp.page_pk %}"
                                                                 hx-target="#incompleteImageHere"
-                                                                hx-replace="InnerHTML"
-                                                                class="btn btn-outline-info">
-                                                            {{ mp.page_label }}
-                                                        </button>
+                                                                hx-replace="InnerHTML">{{ mp.page_label }}</button>
                                                     {% endfor %}
                                                 </td>
                                             </tr>

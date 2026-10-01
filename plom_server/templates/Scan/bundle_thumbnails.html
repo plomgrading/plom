@@ -1,13 +1,13 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Winnie Cheung
     Copyright (C) 2025 Philip D. Loewen
     Copyright (C) 2025-2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Bundle thumbnails
 {% endblock title %}
@@ -22,8 +22,6 @@
             <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundles</a>
         {% endif %}
         <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundles</a>
-    </div>
-    <div class="my-2">
         <a class="btn btn-secondary"
            href="{% url 'scan_recent_bundle_thumbnails' %}">Go to most recently-staged bundle</a>
     </div>
@@ -41,7 +39,7 @@
                 <div class="card-header">
                     <div class="card-title mb-0">
                         <div class="dropdown">
-                            <!-- WET, see <script> tag further down. -->
+                            <!-- WET, see script tag further down. -->
                             <!-- autocomplete is Firefox-specific fix: https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
                             <!-- ********* Note ********* -->
                             <!-- 13th of August 2025 - filtering only happens when changing the dropdown -->
@@ -65,7 +63,9 @@
                         <div class="container">
                             <div class="row text-center d-flex align-items-center">
                                 <div class="col-2 px-1">
-                                    <button class="btn btn-sm btn-outline" onclick="tickSlider(-1)">-</button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline"
+                                            onclick="tickSlider(-1)">-</button>
                                 </div>
                                 <div class="col-8 px-1 d-flex align-items-center">
                                     <input id="thumbnailResizeSlider"
@@ -75,11 +75,13 @@
                                            max="20"
                                            step="1"
                                            value="10"
-                                           autocomplete="off"
-                                           oninput="resizeThumbnailContainers(this.value)">
+                                           oninput="resizeThumbnailContainers(this.value)"
+                                           autocomplete="off" />
                                 </div>
                                 <div class="col-2 px-1">
-                                    <button class="btn btn-sm btn-outline" onclick="tickSlider(1)">+</button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline"
+                                            onclick="tickSlider(1)">+</button>
                                 </div>
                             </div>
                         </div>
@@ -109,8 +111,9 @@
         <div class="col-8" id="updatePage" style="min-height: 83vh;">
             <!-- HTMX will fill this in -->
         </div>
-        <!-- thumbnail container border uses radios, this changes radio appearance -->
-        <style>
+    </div>
+    <!-- thumbnail container border uses radios, this changes radio appearance -->
+    <style>
 			  input[type="radio"][id^="pgradio-"] {
 				display: none;
 			  }
@@ -128,14 +131,14 @@
 			  .radio-label:hover {
 				cursor: pointer;
 			  }
-        </style>
-        <script>
+    </style>
+    <script>
 			// https://getbootstrap.com/docs/5.3/components/tooltips
 			// create all tooltips when page is initially loaded
 				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 				const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-		        // do stuff after all the content on the page has loaded (not necessarily rendered)
+			// do stuff after all the content on the page has loaded (not necessarily rendered)
 			document.addEventListener("DOMContentLoaded", (event) => {
 				let sliderValue = localStorage.getItem("thumbnailSizeSliderValue");
 				if (sliderValue !== null)
@@ -230,6 +233,5 @@
 				slider.value = sliderValue;
 				resizeThumbnailContainers(slider.value);
 			}
-        </script>
-    </div>
+    </script>
 {% endblock main_content %}

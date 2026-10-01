@@ -1,13 +1,13 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
     Copyright (C) 2024 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Staged bundles
 {% endblock title %}
@@ -22,13 +22,13 @@
     <div class="card my-2">
         <div class="card-body">
             <h5 class="card-title">{{ staged_bundles|length }} staged bundles:</h5>
-            <p>
+            <div>
                 <ul>
                     <li>These bundles have been uploaded to the staging area.</li>
                     <li>You can view and fix problems &mdash; such as assigning extra pages.</li>
-                    <li>Pages here are not yet available to markers, until you &ldquo;push&rdquo; them.</li>
+                    <li>Pages here are not yet available to markers, until you <q>push</q> them.</li>
                 </ul>
-            </p>
+            </div>
             {% if staged_bundles %}
                 <table class="table table-sm table-bordered text-center sortable">
                     <thead>

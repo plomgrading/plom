@@ -1,12 +1,12 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2025 Andrew Rechnitzer
     Copyright (C) 2023, 2025-2026 Colin B. Macdonald
     Copyright (C) 2025-2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% block title %}
     Reassemble Papers
@@ -121,7 +121,8 @@ document.getElementById('nonreassembledPapersPie'),
                 <a href="{% url 'reassemble_all_pdfs' %}"
                    class="btn btn-secondary-outline disabled">Download zip of all reassembled papers</a> no papers reassembled yet
             {% else %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-primary">Download zip of all reassembled papers</a>
+                <a href="{% url 'reassemble_all_pdfs' %}"
+                   class="btn btn-primary">Download zip of all reassembled papers</a>
                 {% if n_outdated %}
                     <i class="bi bi-exclamation-diamond-fill text-warning"></i> some papers outdated
                 {% elif n_complete == n_papers %}

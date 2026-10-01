@@ -157,12 +157,14 @@ table = [
             },
         ],
     },
+    # Not many pages use this, so those that import it should be checked if this is bumped
     {
         "name": "JQuery",
         "license": "MIT",
         "files": [
             {
                 "url": "https://code.jquery.com/jquery-3.7.1.min.js",
+                "filename": "jquery.min.js",  # otherwise it has the version number
                 "hash": "sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=",
             },
         ],

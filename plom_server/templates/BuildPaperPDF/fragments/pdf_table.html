@@ -1,12 +1,12 @@
-<!--
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2024, 2026 Colin B. Macdonald
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Aidan Murphy
--->
+{% endcomment %}
 <div class="d-grid gap-2">
     {% if not db_initialised %}
         <div class="card w-50">
@@ -20,7 +20,7 @@
         </div>
     {% endif %}
     <div>
-        <a class="btn btn-primary {% if papers_built %}disabled{% endif %} "
+        <a class="btn btn-primary {% if papers_built %}disabled{% endif %}"
            href="{% url 'configure_prenaming' %}">Adjust prenaming position</a>
         <a class="btn btn-primary"
            hx-post="{% url 'start_all_PDFs' %}"
@@ -44,7 +44,9 @@
     </div>
     <p class="mb-1">{{ message }}</p>
 </div>
-<!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
+{% comment %}
+<a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a>
+{% endcomment %}
 <table class="table table-striped"
        {% if poll %} hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 0.5s" {% endif %}>
     <thead>
@@ -61,19 +63,19 @@
             <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
             <td>{{ task.paper_number }}</td>
             <td>
-                {% if task.status == 'Complete' and not task.obsolete %}
+                {% if task.status == "Complete" and not task.obsolete %}
                     <a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ task.pdf_filename }}</a>
                 {% else %}
                     {{ task.pdf_filename }}
                 {% endif %}
             </td>
-            {% if task.status == 'Complete' %}
+            {% if task.status == "Complete" %}
                 <td>
                     {% if task.obsolete %}Obsolete:&nbsp;{% endif %}
                     {{ task.status }}
                 </td>
                 <td></td>
-            {% elif task.status == 'Error' %}
+            {% elif task.status == "Error" %}
                 <td>
                     <p class="text-danger">{{ task.message }}</p>
                 </td>
@@ -84,12 +86,12 @@
                            hx-target="#pdf_table">Retry</a>
                     {% endif %}
                 </td>
-            {% elif task.status == 'Queued' or ask.status == "Starting" %}
+            {% elif task.status == "Queued" or ask.status == "Starting" %}
                 <td>
                     {{ task.status }}
                     <div class="spinner-grow spinner-grow-sm text-secondary"></div>
                 </td>
-            {% elif task.status == 'Running' %}
+            {% elif task.status == "Running" %}
                 <td>
                     {{ task.status }}
                     <div class="spinner-grow spinner-grow-sm text-secondary"></div>

@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
-    Copyright (C) 2023-2025 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2023-2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     Create assessment specification: upload
 {% endblock title %}
@@ -58,7 +58,7 @@
                 </li>
                 <li>
                     The upload will fail if the file contains a
-                    &ldquo;<tt>publicCode</tt>&rdquo; field from an earlier
+                    <q><code>publicCode</code></q> field from an earlier
                     version of Plom.  Manually remove, save and re-upload.
                 </li>
                 <li>

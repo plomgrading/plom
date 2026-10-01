@@ -1,11 +1,11 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2024-2025 Colin B. Macdonald
+    Copyright (C) 2024-2026 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% block title %}
     Upload pdf bundle of scanned papers and pages
@@ -48,7 +48,8 @@
                                    id="read_after"
                                    name="read_after"
                                    checked />
-                            <label class="form-check-label" for="read_after">automatically read qr-codes after upload</label>
+                            <label class="form-check-label"
+                                   for="read_after">automatically read qr-codes after upload</label>
                         </div>
                         <div class="form-check mb-2">
                             <input class="form-check-input"
@@ -123,7 +124,7 @@
                 <summary>
                     What is <q>safe mode rendering</q>?
                 </summary>
-                <p>
+                <div>
                     <ul>
                         <li>
                             By default, Plom checks the content of each
@@ -135,7 +136,7 @@
                             If Plom detects anything on the page other
                             than a single bitmap image (such as text, PDF
                             annotations, vector art, etc) it falls back on
-                            &ldquo;rendering&rdquo; the page to generate a
+                            <q>rendering</q> the page to generate a
                             bitmap.
                         </li>
                         <li>
@@ -153,9 +154,9 @@
                             all cases.
                         </li>
                     </ul>
-                </p>
-            </div>
-        </details>
+                </div>
+            </details>
+        </div>
     </div>
     <div class="card my-2">
         <div class="card-body">

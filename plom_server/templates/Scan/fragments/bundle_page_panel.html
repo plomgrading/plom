@@ -1,11 +1,11 @@
-<!--
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2025 Aidan Murphy
     Copyright (C) 2025 Deep Shah
--->
+{% endcomment %}
 <div id="bundlePageFragment">
     <!-- TODO: I would like to use the containers "class col" in the containing file. -->
     <!-- this way feels repetitive but if I try to flatten they don't stay on one row -->
@@ -39,7 +39,7 @@
                     </button>
                 </div>
                 <div class="card-body p-2 py-0">
-                    {% if current_page.status == 'known' %}
+                    {% if current_page.status == "known" %}
                         <div class="alert alert-success my-2 p-2">
                             <h5 class="alert-heading">Known</h5>
                             <ul class="mb-0">
@@ -56,7 +56,7 @@
                                 </li>
                             </ul>
                         </div>
-                    {% elif current_page.status == 'extra' %}
+                    {% elif current_page.status == "extra" %}
                         <div class="alert alert-info my-2 p-2">
                             <h5 class="alert-heading">Extra</h5>
                             <ul class="mb-0">
@@ -65,16 +65,16 @@
                             </ul>
                         </div>
                         <p class="mb-0">rotation: {{ current_page.rotation }}</p>
-                    {% elif current_page.status == 'unknown' %}
+                    {% elif current_page.status == "unknown" %}
                         <div class="alert alert-warning my-2 p-2">
                             <h5 class="alert-heading">Unknown</h5>
                         </div>
-                    {% elif current_page.status == 'discard' %}
+                    {% elif current_page.status == "discard" %}
                         <div class="alert alert-dark mt-2 mb-1 p-2">
                             <h5 class="alert-heading">Discard</h5>
                             {{ current_page.info.reason }}
                         </div>
-                    {% elif current_page.status == 'error' %}
+                    {% elif current_page.status == "error" %}
                         <div class="alert alert-danger my-2 p-2">
                             <h5 class="alert-heading">Error</h5>
                             {{ current_page.info.reason }}
@@ -83,7 +83,7 @@
                                 are collisions a problem, and what are my options?</a>
                             {% endif %}
                         </div>
-                    {% elif current_page.status == 'unread' %}
+                    {% elif current_page.status == "unread" %}
                         <div class="alert alert-dark my-2">
                             <h5 class="alert-heading">Unread</h5>
                             <ul>
@@ -160,7 +160,7 @@
                              the next dive, not sure why -->
                         <div class="py-4" id="invalidmessage"></div>
                         <!-- what we can do depends on the status -->
-                        {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
+                        {% if current_page.status == "known" or current_page.status == "error" or current_page.status == "extra" or current_page.status == "unknown" %}
                             <div class="my-2"
                                  hx-target="this"
                                  hx-target-error="this"
@@ -169,7 +169,7 @@
                                    hx-post="{% url 'discard_image' bundle_id index %}">Discard</a>
                             </div>
                         {% endif %}
-                        {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
+                        {% if current_page.status == "error" or current_page.status == "discard" or current_page.status == "unknown" %}
                             <div class="my-2"
                                  hx-target="this"
                                  hx-target-error="this"
@@ -178,20 +178,20 @@
                                    hx-put="{% url 'extralise_image' bundle_id index %}">Cast to extra page</a>
                             </div>
                         {% endif %}
-                        {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
+                        {% if current_page.status == "error" or current_page.status == "discard" or current_page.status == "unknown" %}
                             <div class="my-2">
                                 <a class="btn btn-outline-success text-center w-100"
                                    hx-get="{% url 'knowify_image' bundle_id index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                         {% endif %}
-                        {% if current_page.status == 'known' %}
+                        {% if current_page.status == "known" %}
                             <!-- stuff unique to known pages -->
-                        {% elif current_page.status == 'error' %}
+                        {% elif current_page.status == "error" %}
                             <!-- stuff unique to error pages -->
-                        {% elif current_page.status == 'unread' %}
+                        {% elif current_page.status == "unread" %}
                             <!-- cannot do anything with an unread page -->
-                        {% elif current_page.status == 'discard' %}
+                        {% elif current_page.status == "discard" %}
                             <!-- stuff unique to discard pages -->
                             <div class="my-2"
                                  hx-target="this"
@@ -209,7 +209,7 @@
                                     <i class="bi bi-exclamation-diamond-fill"></i>
                                 </a>
                             </div>
-                        {% elif current_page.status == 'unknown' %}
+                        {% elif current_page.status == "unknown" %}
                             <!-- stuff unique to unknown pages -->
                             <div class="my-2">
                                 <a class="btn btn-outline-danger text-centre w-100"
@@ -220,7 +220,7 @@
                                     <i class="bi bi-exclamation-diamond-fill"></i>
                                 </a>
                             </div>
-                        {% elif current_page.status == 'extra' %}
+                        {% elif current_page.status == "extra" %}
                             <!-- stuff unique to extra pages  -->
                             <div class="my-2">
                                 <a class="btn btn-outline-secondary w-100"
@@ -285,7 +285,8 @@
                                                            x-model="selection_method"
                                                            @change="final_paper_number = '{{ prev_paper_number }}'"
                                                            id="prev_radio_{{ index }}">
-                                                    <label class="form-check-label" for="prev_radio_{{ index }}">{{ prev_paper_number }} (adjacent paper)</label>
+                                                    <label class="form-check-label"
+                                                           for="prev_radio_{{ index }}">{{ prev_paper_number }} (adjacent paper)</label>
                                                 </div>
                                             {% endif %}
                                             {% if next_paper_number %}
@@ -297,7 +298,8 @@
                                                            x-model="selection_method"
                                                            @change="final_paper_number = '{{ next_paper_number }}'"
                                                            id="next_radio_{{ index }}">
-                                                    <label class="form-check-label" for="next_radio_{{ index }}">{{ next_paper_number }} (adjacent paper)</label>
+                                                    <label class="form-check-label"
+                                                           for="next_radio_{{ index }}">{{ next_paper_number }} (adjacent paper)</label>
                                                 </div>
                                             {% endif %}
                                             <div class="form-check">
@@ -308,7 +310,8 @@
                                                        x-model="selection_method"
                                                        @change="final_paper_number = null"
                                                        id="dropdown_radio_{{ index }}">
-                                                <label class="form-check-label" for="dropdown_radio_{{ index }}">Choose from list...</label>
+                                                <label class="form-check-label"
+                                                       for="dropdown_radio_{{ index }}">Choose from list...</label>
                                             </div>
                                             <div x-show="selection_method === 'dropdown'"
                                                  style="display: none"
@@ -319,7 +322,8 @@
                                                            type="checkbox"
                                                            x-model="bundlepapers"
                                                            id="bundlepapers_toggle_{{ index }}">
-                                                    <label class="form-check-label" for="bundlepapers_toggle_{{ index }}">from this bundle</label>
+                                                    <label class="form-check-label"
+                                                           for="bundlepapers_toggle_{{ index }}">from this bundle</label>
                                                 </div>
                                                 <div x-show="bundlepapers" class="mt-2">
                                                     <select class="form-select" x-model="final_paper_number">
@@ -345,7 +349,8 @@
                                                            id="question_all_dnm1_{{ index }}"
                                                            checked
                                                            x-model="question_all_dnm_selection" />
-                                                    <label class="form-check-label" for="question_all_dnm1_{{ index }}">Attach to specific question(s):</label>
+                                                    <label class="form-check-label"
+                                                           for="question_all_dnm1_{{ index }}">Attach to specific question(s):</label>
                                                 </div>
                                                 <div x-show="question_all_dnm_selection === 'choose_q'"
                                                      class="ms-4 border-start ps-3">
@@ -357,7 +362,8 @@
                                                                        type="checkbox"
                                                                        value="{{ qidx }}"
                                                                        id="qidx_{{ qidx }}_{{ index }}">
-                                                                <label class="form-check-label" for="qidx_{{ qidx }}_{{ index }}">{{ qlabel_html | safe }}</label>
+                                                                <label class="form-check-label"
+                                                                       for="qidx_{{ qidx }}_{{ index }}">{{ qlabel_html | safe }}</label>
                                                             </div>
                                                         {% endfor %}
                                                     </fieldset>

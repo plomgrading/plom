@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
@@ -284,7 +284,7 @@ class ModifyDefaultLimitView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         """Handle the POST request to change the default limit."""
-        new_limit = int(request.POST.get("limit"))
+        new_limit = int(request.POST.get("default_limit"))
 
         if new_limit > 0:
             Quota.set_default_limit(new_limit)

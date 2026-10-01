@@ -1,11 +1,11 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% load humanize %}
 {% block title %}
@@ -28,7 +28,8 @@
                 </div>
                 {% if user_is_manager or user_is_lead_marker %}
                     <p>
-                        <button class="btn btn-outline-danger"
+                        <button type="button"
+                                class="btn btn-outline-danger"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 hx-confirm="This will reset the task and mark any current annotations as out of date. Are you sure you wish to proceed?"
                                 hx-put="{% url 'reset_marking_task' task_pk %}"
@@ -36,8 +37,8 @@
                         &mdash; invalidates any existing marking and creates a new marking task.
                     </p>
                     <span class="dropdown">
-                        <button class="btn btn-outline-primary dropdown-toggle"
-                                type="button"
+                        <button type="button"
+                                class="btn btn-outline-primary dropdown-toggle"
                                 data-bs-toggle="dropdown"
                                 {% if not lead_markers or status == "Out Of Date" %}disabled{% endif %}
                                 aria-expanded="false">Reassign to lead marker</button>
@@ -57,8 +58,8 @@
                         </ul>
                     </span>
                     <span class="dropdown">
-                        <button class="btn btn-outline-primary dropdown-toggle"
-                                type="button"
+                        <button type="button"
+                                class="btn btn-outline-primary dropdown-toggle"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Reassign to marker</button>
@@ -103,12 +104,14 @@
                     {% endif %}
                 </div>
                 <p>
-                    <button hx-get="{% url 'progress_original_img_wrap' paper_number question_idx %}"
+                    <button type="button"
+                            hx-get="{% url 'progress_original_img_wrap' paper_number question_idx %}"
                             hx-target="#imageHere"
                             hx-replace="innerHTML"
                             class="btn btn-outline-secondary">Show original images</button>
                     {% if status == "Complete" %}
-                        <button hx-get="{% url 'progress_annotation_img_wrap' paper_number question_idx %}"
+                        <button type="button"
+                                hx-get="{% url 'progress_annotation_img_wrap' paper_number question_idx %}"
                                 hx-target="#imageHere"
                                 hx-replace="innerHTML"
                                 hx-trigger="load, click"
@@ -117,14 +120,15 @@
                 </p>
                 <span>
                     <span class="dropdown">
-                        <button class="btn btn-outline-primary dropdown-toggle"
-                                type="button"
+                        <button type="button"
+                                class="btn btn-outline-primary dropdown-toggle"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Add tag</button>
                         <ul class="dropdown-menu">
                             <li class="p-2">
-                                <button class="btn btn-outline-primary"
+                                <button type="button"
+                                        class="btn btn-outline-primary"
                                         data-bs-toggle="collapse"
                                         data-bs-target="#newTagForm"
                                         aria-expanded="false"
@@ -144,6 +148,7 @@
                     {% for tag_pk, tag_text in current_normal_tags.items %}
                         <span class="badge bg-primary align-middle">{{ tag_text }}
                             <button hx-delete="{% url 'marking_task_tag' task_pk tag_pk %}"
+                                    type="button"
                                     class="btn btn-primary p-0">
                                 <i class="bi bi-backspace"></i>
                             </button>
@@ -173,8 +178,8 @@
                 </p>
                 <span>
                     <span class="dropdown">
-                        <button class="btn btn-outline-primary dropdown-toggle"
-                                type="button"
+                        <button type="button"
+                                class="btn btn-outline-primary dropdown-toggle"
                                 {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Flag to user</button>
@@ -192,7 +197,8 @@
                     {% for tag_pk, tag_text in current_attn_tags.items %}
                         <span class="badge text-bg-warning align-middle">{{ tag_text }}
                             <button hx-delete="{% url 'marking_task_tag' task_pk tag_pk %}"
-                                    class="btn btn-warning p-0">
+                                    class="btn btn-warning p-0"
+                                    type="button">
                                 <i class="bi bi-backspace"></i>
                             </button>
                         </span>

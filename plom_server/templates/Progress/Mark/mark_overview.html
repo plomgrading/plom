@@ -1,12 +1,12 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2026 Andrew Rechnitzer
     Copyright (C) 2023, 2025 Colin B. Macdonald
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Marking Progress
 {% endblock title %}
@@ -67,12 +67,10 @@
                     {% endfor %}
                 </div>
                 <hr />
-                <!-- DELETE ME -->
             {% endfor %}
         {% endif %}
         <!-- table of all tasks -->
         {% if user_is_lead_marker or user_is_manager %}
-            <br />
             <br />
             {% include "Progress/Mark/all_marking_tasks_table_fragment.html" %}
         {% endif %}

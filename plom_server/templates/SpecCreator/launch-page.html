@@ -1,11 +1,11 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Create / modify assessment specification
 {% endblock title %}
@@ -26,7 +26,8 @@
         <div class="card">
             <div class="card-body">
                 <p>
-                    Plom needs a description of your assessment in <a href="https://toml.io/en/" target="_blank">.toml format</a>.
+                    Plom needs a description of your assessment in
+                    <a href="https://toml.io" target="_blank">.toml format</a>.
                     This can be complicated, so there are a few ways to do this:
                 </p>
                 <form enctype="multipart/form-data"
@@ -43,7 +44,7 @@
                         <a class="btn btn-primary" href="{% url 'gui_spec_builder' %}">GUI Spec Builder</a>.
                     </p>
                     <p>
-                        If you've prepared your &ldquo;specification&rdquo; elsewhere, you can
+                        If you have prepared your <q>specification</q> elsewhere, you can
                         <a class="btn btn-primary" href="{% url 'spec_upload' %}">Upload a <tt>.toml</tt> file</a>.
                     </p>
                     <p>Or you can edit specification in the box below.</p>
