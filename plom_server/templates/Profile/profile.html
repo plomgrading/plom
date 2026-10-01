@@ -1,12 +1,12 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2025 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% block title %}
     Profile - {{ user.username }}
@@ -68,7 +68,9 @@
                                     </small>
                                 </p>
                             </fieldset>
-                            <button type="submit" class="btn btn-secondary" name="todo_needed_or_not">Change groups</button>
+                            <button type="submit"
+                                    class="btn btn-secondary"
+                                    name="todo_needed_or_not">Change groups</button>
                         </form>
                     </div>
                 </div>
