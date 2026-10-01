@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Resetting feedback rules to "factory settings" would remove all rules, causing client crashes.
+* JQuery version mismatch was breaking parts of the Quota and Tags web interfaces.
 
 
 
