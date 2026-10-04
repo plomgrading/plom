@@ -63,6 +63,11 @@ class RubricDownloadForm(forms.Form):
 
         self.fields["question_filter"].choices = question_choices
 
+        # TODO: makes it bootstrap, but very wide..., instead I wrapped the whole thing in a d-flex div
+        # which is ok, but perhaps a bit too compact.
+        for field in self.fields:
+            self.fields[field].widget.attrs["class"] = "form-control"
+
 
 class RubricDiffForm(forms.Form):
     """Form for comparing two rubrics."""
