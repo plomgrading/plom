@@ -3,7 +3,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2026 Andrew Rechnitzer
-    Copyright (C) 2023, 2025 Colin B. Macdonald
+    Copyright (C) 2023, 2025-2026 Colin B. Macdonald
     Copyright (C) 2025 Bryan Tanady
     Copyright (C) 2026 Aidan Murphy
 {% endcomment %}
@@ -26,8 +26,8 @@
             There are {{ missing_task_count }} missing tasks.
             {% if user_is_manager %}
                 You may want to examine the
-                <a class="btn btn-outline-secondary btn-sm align-baseline"
-                   href="{% url 'scan_list_incomplete' %}">list of incomplete paper</a>.
+                <a class="btn btn-plain btn-sm align-baseline me-1"
+                   href="{% url 'scan_list_incomplete' %}">list of incomplete papers</a>.
             {% else %}
                 Use a manager account to examine the list of incomplete papers.
             {% endif %}

@@ -91,3 +91,17 @@ div.is_pdf_thumbnail:hover {
 .btn-plom-purple:active {
   background-color: light-dark(#9e9ee8, #6669bd) !important;
 }
+
+/* Custom buttons b/c btn-outline-secondary insufficiently constrasting */
+.btn-plain,
+.btn-outline-plain {
+  background-color: light-dark(#f2f2f2, #222) !important;
+  border-color: light-dark(#999, #666) !important;
+  color: var(--bs-black);
+}
+.btn-plain:hover,
+.btn-outline-plain:hover {
+  background-color: light-dark(#cacaca, #444) !important;
+  border-color: light-dark(#444, #888) !important;
+  color: var(--bs-black);
+}

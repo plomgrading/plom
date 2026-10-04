@@ -71,12 +71,12 @@
                     hx-delete="{% url 'rubric_delta_publish' %}"
                     hx-target="#publish_delta_success_msg"
                     hx-target-error="#publish_delta_error_msg"
-                    class="btn btn-outline-secondary">Unpublish all delta rubrics</button>
+                    class="btn btn-plain">Unpublish all delta rubrics</button>
             <button type="action"
                     hx-post="{% url 'rubric_delta_publish' %}"
                     hx-target="#publish_delta_success_msg"
                     hx-target-error="#publish_delta_error_msg"
-                    class="btn btn-outline-secondary">Re-publish all delta rubrics</button>
+                    class="btn btn-plain">Re-publish all delta rubrics</button>
             <span id="publish_delta_success_msg"
                   class="p-0 border-0 alert alert-success ms-2"></span>
             <span id="publish_delta_error_msg" class="p-0 border-0 alert alert-danger"></span>
