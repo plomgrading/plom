@@ -108,14 +108,14 @@
                             hx-get="{% url 'progress_original_img_wrap' paper_number question_idx %}"
                             hx-target="#imageHere"
                             hx-replace="innerHTML"
-                            class="btn btn-outline-secondary">Show original images</button>
+                            class="btn btn-plain">Show original images</button>
                     {% if status == "Complete" %}
                         <button type="button"
                                 hx-get="{% url 'progress_annotation_img_wrap' paper_number question_idx %}"
                                 hx-target="#imageHere"
                                 hx-replace="innerHTML"
                                 hx-trigger="load, click"
-                                class="btn btn-outline-secondary">Show annotation</button>
+                                class="btn btn-plain">Show annotation</button>
                     {% endif %}
                 </p>
                 <span>

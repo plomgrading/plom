@@ -174,7 +174,7 @@
                                  hx-target="this"
                                  hx-target-error="this"
                                  hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }});">
-                                <a class="btn btn-outline-secondary text-center w-100"
+                                <a class="btn btn-outline-plain text-center w-100"
                                    hx-put="{% url 'extralise_image' bundle_id index %}">Cast to extra page</a>
                             </div>
                         {% endif %}
@@ -197,7 +197,7 @@
                                  hx-target="this"
                                  hx-target-error="this"
                                  hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }});">
-                                <a class="btn btn-outline-secondary text-center w-100"
+                                <a class="btn btn-outline-plain text-center w-100"
                                    hx-post="{% url 'unknowify_image' bundle_id index %}">Cast to unknown page</a>
                             </div>
                             <div class="my-2">
@@ -223,7 +223,7 @@
                         {% elif current_page.status == "extra" %}
                             <!-- stuff unique to extra pages  -->
                             <div class="my-2">
-                                <a class="btn btn-outline-secondary w-100"
+                                <a class="btn btn-outline-plain w-100"
                                    href="{% url 'scan_compare_handwriting' bundle_id index %}"
                                    target="_blank"
                                    data-bs-toggle="tooltip"
@@ -236,7 +236,7 @@
                                      hx-target="this"
                                      hx-target-error="this"
                                      hx-on:htmx:after-request="onSuccessRefresh(event, {{ index }});">
-                                    <a class="btn btn-outline-secondary text-center w-100"
+                                    <a class="btn btn-outline-plain text-center w-100"
                                        hx-delete="{% url 'extralise_image' bundle_id index %}">Clear information</a>
                                 </div>
                             {% else %}
