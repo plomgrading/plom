@@ -97,12 +97,11 @@
         <div class="card-body">
             <form method="get" action={% url 'rubric_download' %} class="form-inline">
                 {% csrf_token %}
-                <div class="form-group mr-2">
-                    <button type="submit" class="btn btn-success mt-1">Download rubrics</button>
+                <div>
                     {{ rubric_download_form }}
+                    <button type="submit" class="btn btn-plain mt-1">Download rubrics</button>
                 </div>
             </form>
-            <p>Download current rubrics into a file.</p>
         </div>
     </div>
 {% endblock main_content %}
