@@ -6,6 +6,7 @@
 import csv
 import os
 from pathlib import Path
+from secrets import token_urlsafe
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
@@ -16,8 +17,6 @@ from django.http import HttpRequest
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
-
-from plom.common.misc_utils import generate_strong_password
 
 
 class AuthService:
@@ -291,7 +290,7 @@ class AuthService:
                 "group_names": user_dict["usergroups"].split(","),
             }
             if set_random_password:
-                kwarg_dict.update({"password": generate_strong_password()})
+                kwarg_dict.update({"password": token_urlsafe(40)})
             user_kwargs.append(kwarg_dict)
 
         users_added = []
