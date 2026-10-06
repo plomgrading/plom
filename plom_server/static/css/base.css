@@ -96,7 +96,7 @@ div.is_pdf_thumbnail:hover {
 .btn-plain {
   background-color: light-dark(#f2f2f2, #222) !important;
   border-color: light-dark(#999, #666) !important;
-  color: var(--bs-black);
+  color: light-dark(var(--bs-black), var(--bs-white));
 }
 
 /* The plain outline button should fit-in visually with other outline buttons.
@@ -104,7 +104,7 @@ div.is_pdf_thumbnail:hover {
    it paints yellow for example. */
 .btn-outline-plain {
   border-style: solid;
-  border-color: color-mix(in srgb, currentColor 66%, transparent);
+  border-color: color-mix(in srgb, currentColor 75%, transparent);
   color: inherit !important; /* take colour from the parent */
 }
 
@@ -112,5 +112,5 @@ div.is_pdf_thumbnail:hover {
 .btn-outline-plain:hover {
   background-color: light-dark(#cacaca, #444) !important;
   border-color: light-dark(#444, #888) !important;
-  color: var(--bs-black) !important;
+  color: light-dark(var(--bs-black), var(--bs-white)) !important;
 }
