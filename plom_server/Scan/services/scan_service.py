@@ -2060,6 +2060,10 @@ def huey_child_parse_qr_code(
 
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
+    # QR codes might be finishing too quickly, causing sqlite troubles, Issue #4306
+    # Slow things down a bit, up to half second per page of QR reading.
+    time.sleep(random.random() * 0.5)
+
     # Return the parsed QR codes for parent process to store in db
     return {
         "image_pk": image_pk,
