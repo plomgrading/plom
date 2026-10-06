@@ -627,7 +627,8 @@ class ScanService:
         codes = QRextract_corners(image_path, rotation=rotation)
         return codes
 
-    def read_qr_codes(self, bundle_pk: int) -> None:
+    @staticmethod
+    def read_qr_codes(bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
 
         Args:
@@ -1803,7 +1804,7 @@ def huey_parent_split_bundle_chore(
     HueyTaskTracker.transition_to_complete(tracker_pk)
     # if requested automatically queue qr-code reading
     if read_after:
-        ScanService().read_qr_codes(bundle_pk)
+        ScanService.read_qr_codes(bundle_pk)
     return True
 
 
@@ -1944,7 +1945,7 @@ def huey_child_get_page_images(
     with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
             if _debug_be_flaky:
-                log.debug("Huey debug, random sleep in task %d", task.id)
+                log.debug("Huey debug, random sleep in task %s", task.id)
                 time.sleep(random.random() * 4)
                 if random.random() < 0.04:
                     raise RuntimeError("Flaky simulated image split failure")
@@ -2011,7 +2012,7 @@ def huey_child_parse_qr_code(
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> dict[str, Any]:
-    """Huey task to parse QR codes, check QR errors, and save to database in the background.
+    """Huey task to parse QR codes, check QR errors.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
@@ -2042,7 +2043,7 @@ def huey_child_parse_qr_code(
     qr_data = ScanService.parse_qr_codes(image_path)
 
     if _debug_be_flaky:
-        log.debug("Huey debug, random sleep in task %d", task.id)
+        log.debug("Huey debug, random sleep in task %s", task.id)
         time.sleep(random.random() * 4)
         if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
