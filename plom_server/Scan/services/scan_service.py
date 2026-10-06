@@ -2012,7 +2012,7 @@ def huey_child_parse_qr_code(
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> dict[str, Any]:
-    """Huey task to parse QR codes, check QR errors, and save to database in the background.
+    """Huey task to parse QR codes, check QR errors.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
