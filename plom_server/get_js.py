@@ -143,17 +143,16 @@ table = [
         ],
     },
     {
-        # TODO: RC version, no release since Jan 2021, consider replacing
         "name": "select2",
         "license": "MIT",
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
-                "hash": "sha256-9yRP/2EFlblE92vzCA10469Ctd0jT48HnmmMw5rJZrA=",
+                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js",
+                "hash": "sha256-FWksJmZJ+8istOv7NF5+lJlIbZVRFIJBojXJ1i7qL1U=",
             },
             {
-                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
-                "hash": "sha256-zaSoHBhwFdle0scfGEFUCwggPN7F+ip9XRglo8IWb4w=",
+                "url": "https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css",
+                "hash": "sha256-XV4U1Ycwi10a159R6a6i+PRpsKArM19Vn1pLt1a4Fzc=",
             },
         ],
     },
