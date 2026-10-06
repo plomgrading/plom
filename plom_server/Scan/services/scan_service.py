@@ -1944,7 +1944,7 @@ def huey_child_get_page_images(
     with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
             if _debug_be_flaky:
-                log.debug("Huey debug, random sleep in task %d", task.id)
+                log.debug("Huey debug, random sleep in task %s", task.id)
                 time.sleep(random.random() * 4)
                 if random.random() < 0.04:
                     raise RuntimeError("Flaky simulated image split failure")
@@ -2042,7 +2042,7 @@ def huey_child_parse_qr_code(
     qr_data = ScanService.parse_qr_codes(image_path)
 
     if _debug_be_flaky:
-        log.debug("Huey debug, random sleep in task %d", task.id)
+        log.debug("Huey debug, random sleep in task %s", task.id)
         time.sleep(random.random() * 4)
         if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
