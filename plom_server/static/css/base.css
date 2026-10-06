@@ -93,15 +93,24 @@ div.is_pdf_thumbnail:hover {
 }
 
 /* Custom buttons b/c btn-outline-secondary insufficiently constrasting */
-.btn-plain,
-.btn-outline-plain {
+.btn-plain {
   background-color: light-dark(#f2f2f2, #222) !important;
   border-color: light-dark(#999, #666) !important;
   color: var(--bs-black);
 }
+
+/* The plain outline button should fit-in visually with other outline buttons.
+   It inherits its colour from from its parent: use it inside an alert-warning
+   it paints yellow for example. */
+.btn-outline-plain {
+  border-style: solid;
+  border-color: color-mix(in srgb, currentColor 66%, transparent);
+  color: inherit !important; /* take colour from the parent */
+}
+
 .btn-plain:hover,
 .btn-outline-plain:hover {
   background-color: light-dark(#cacaca, #444) !important;
   border-color: light-dark(#444, #888) !important;
-  color: var(--bs-black);
+  color: var(--bs-black) !important;
 }
