@@ -1844,35 +1844,34 @@ def huey_parent_read_qr_codes_chore(
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    task_list = [
-        huey_child_parse_qr_code(page.pk, _debug_be_flaky=_debug_be_flaky)
-        for page in bundle_obj.stagingimage_set.all()
+    # TODO: maybe needs some tweaks for prefetch
+    page_ids_and_paths = [
+        (staging_img.id, staging_img.baseimage.image_file.path)
+        for staging_img in bundle_obj.stagingimage_set.all()
     ]
 
+    n_tasks = len(page_ids_and_paths)
     # results = [X.get(blocking=True) for X in task_list]
 
-    n_tasks = len(task_list)
-    while True:
+    results = []
+    for i, (img_id, img_path) in enumerate(page_ids_and_paths):
         try:
-            results = [X.get() for X in task_list]
-        except huey.exceptions.TaskException as e:
-            log.error("Parent: child QR read chore failed with %s", str(e))
-            # TODO: what about the child tasks still running?
-            raise RuntimeError(f"child task failed QR read: {e}") from e
+            r = child_parse_qr_code(img_id, img_path, _debug_be_flaky=_debug_be_flaky)
+        except Exception as e:
+            log.error("Parent: QR read failed with %s", str(e))
+            raise RuntimeError(f"QR read failed: {e}") from e
+        results.append(r)
 
-        count = sum(1 for X in results if X is not None)
-
-        with transaction.atomic():
-            _task = ManageParseQRChore.objects.select_for_update().get(
-                bundle=bundle_obj
-            )
-            _task.completed_pages = count
-            _task.save()
-
-        if count == n_tasks:
-            break
-        else:
-            time.sleep(1)
+        count = sum(1 for X in results)
+        print(f"parent {task.id[:6]}: n_tasks={n_tasks}, count={count}")
+        if i % 20 == 0:
+            # only update progress every 10 pages
+            with transaction.atomic():
+                _task = ManageParseQRChore.objects.select_for_update().get(
+                    bundle=bundle_obj
+                )
+                _task.completed_pages = count
+                _task.save()
 
     with transaction.atomic():
         for X in results:
@@ -2004,46 +2003,29 @@ def huey_child_get_page_images(
     return rendered_page_info
 
 
-# The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
-def huey_child_parse_qr_code(
-    image_pk: int,
+def child_parse_qr_code(
+    image_id: int,
+    image_path: str | pathlib.Path,
     *,
     _debug_be_flaky: bool = False,
-    task: huey.api.Task | None = None,
 ) -> dict[str, Any]:
-    """Huey task to parse QR codes, check QR errors.
-
-    It is important to understand that running this function starts an
-    async task in queue that will run sometime in the future.
+    """Parse QR codes, check QR errors, return QR data.
 
     Args:
-        image_pk: primary key of the image
+        image_id: primary key of the image.
+        image_path: where to find the image data.
 
     Keyword Args:
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
-        task: includes our ID in the Huey process queue.  This is added
-            by the `context=True` in decorator: callers in our code should
-            not pass this in!
 
     Returns:
         Information about the QR codes.
     """
-    assert task is not None
-    log.debug("Huey debug, we are task %s with id %s", task, task.id)
-
-    staging_img = StagingImage.objects.get(pk=image_pk)
-    # TODO: Issue #3888 this `.path` assumes storage is local and will fail
-    # with a NotImplementedError when FileField uses remote storage.
-    # TODO: refactor the rotation stuff to work with FieldFile:
-    # image_fieldfile = staging_img.baseimage.image_file
-    image_path = staging_img.baseimage.image_file.path
-
     qr_data = ScanService.parse_qr_codes(image_path)
 
     if _debug_be_flaky:
-        log.debug("Huey debug, random sleep in task %s", task.id)
+        log.debug("Debug, random sleep reading QRs from image path %s", image_path)
         time.sleep(random.random() * 4)
         if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
@@ -2062,7 +2044,7 @@ def huey_child_parse_qr_code(
 
     # Return the parsed QR codes for parent process to store in db
     return {
-        "image_pk": image_pk,
+        "image_pk": image_id,
         "parsed_qr": qr_data,
         "rotation": rotation,
     }
