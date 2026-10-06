@@ -627,7 +627,8 @@ class ScanService:
         codes = QRextract_corners(image_path, rotation=rotation)
         return codes
 
-    def read_qr_codes(self, bundle_pk: int) -> None:
+    @staticmethod
+    def read_qr_codes(bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
 
         Args:
@@ -1803,7 +1804,7 @@ def huey_parent_split_bundle_chore(
     HueyTaskTracker.transition_to_complete(tracker_pk)
     # if requested automatically queue qr-code reading
     if read_after:
-        ScanService().read_qr_codes(bundle_pk)
+        ScanService.read_qr_codes(bundle_pk)
     return True
 
 
