@@ -627,6 +627,54 @@ class ScanService:
         codes = QRextract_corners(image_path, rotation=rotation)
         return codes
 
+    @classmethod
+    def parse_qr_code_w_rotate(
+        cls,
+        image_id: int,
+        image_path: str | pathlib.Path,
+        *,
+        _debug_be_flaky: bool = False,
+    ) -> dict[str, Any]:
+        """Parse QR codes, check QR errors, return QR data.
+
+        Args:
+            image_id: primary key of the image.
+            image_path: where to find the image data.
+
+        Keyword Args:
+            _debug_be_flaky: for debugging, all take a while and some
+                percentage will fail.
+
+        Returns:
+            Information about the QR codes.
+        """
+        qr_data = cls.parse_qr_codes(image_path)
+
+        if _debug_be_flaky:
+            log.debug("Debug, random sleep reading QRs from image path %s", image_path)
+            time.sleep(random.random() * 4)
+            if random.random() < 0.04:
+                raise RuntimeError("Flaky simulated QR read failure")
+
+        rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(qr_data)
+
+        # Andrew wanted to leave the possibility of re-introducing hard
+        # rotations in the future, such as `plom.scan.rotate_bitmap`.
+
+        # Re-read QR codes if the page image needs to be rotated
+        # This doesn't seem very efficient but its easy
+        if rotation and rotation != 0:
+            qr_data = cls.parse_qr_codes(image_path, rotation=rotation)
+
+            # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
+
+        # Return the parsed QR codes for parent process to store in db
+        return {
+            "image_pk": image_id,
+            "parsed_qr": qr_data,
+            "rotation": rotation,
+        }
+
     @staticmethod
     def read_qr_codes(bundle_pk: int) -> None:
         """Read QR codes of scanned pages in a bundle.
@@ -1856,7 +1904,9 @@ def huey_parent_read_qr_codes_chore(
     results = []
     for i, (img_id, img_path) in enumerate(page_ids_and_paths):
         try:
-            r = child_parse_qr_code(img_id, img_path, _debug_be_flaky=_debug_be_flaky)
+            r = ScanService.parse_qr_code_w_rotate(
+                img_id, img_path, _debug_be_flaky=_debug_be_flaky
+            )
         except Exception as e:
             log.error("Parent: QR read failed with %s", str(e))
             raise RuntimeError(f"QR read failed: {e}") from e
@@ -2001,50 +2051,3 @@ def huey_child_get_page_images(
 
     # TODO - return an error of some sort here if problems?
     return rendered_page_info
-
-
-def child_parse_qr_code(
-    image_id: int,
-    image_path: str | pathlib.Path,
-    *,
-    _debug_be_flaky: bool = False,
-) -> dict[str, Any]:
-    """Parse QR codes, check QR errors, return QR data.
-
-    Args:
-        image_id: primary key of the image.
-        image_path: where to find the image data.
-
-    Keyword Args:
-        _debug_be_flaky: for debugging, all take a while and some
-            percentage will fail.
-
-    Returns:
-        Information about the QR codes.
-    """
-    qr_data = ScanService.parse_qr_codes(image_path)
-
-    if _debug_be_flaky:
-        log.debug("Debug, random sleep reading QRs from image path %s", image_path)
-        time.sleep(random.random() * 4)
-        if random.random() < 0.04:
-            raise RuntimeError("Flaky simulated QR read failure")
-
-    rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(qr_data)
-
-    # Andrew wanted to leave the possibility of re-introducing hard
-    # rotations in the future, such as `plom.scan.rotate_bitmap`.
-
-    # Re-read QR codes if the page image needs to be rotated
-    # This doesn't seem very efficient but its easy
-    if rotation and rotation != 0:
-        qr_data = ScanService.parse_qr_codes(image_path, rotation=rotation)
-
-        # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
-
-    # Return the parsed QR codes for parent process to store in db
-    return {
-        "image_pk": image_id,
-        "parsed_qr": qr_data,
-        "rotation": rotation,
-    }
