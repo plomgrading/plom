@@ -1892,17 +1892,14 @@ def huey_parent_read_qr_codes_chore(
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    # TODO: maybe needs some tweaks for prefetch
-    page_ids_and_paths = [
-        (staging_img.id, staging_img.baseimage.image_file.path)
-        for staging_img in bundle_obj.stagingimage_set.all()
+    img_ids_and_paths = [
+        (s.id, s.baseimage.image_file.path)
+        for s in bundle_obj.stagingimage_set.select_related("baseimage").all()
     ]
 
-    n_tasks = len(page_ids_and_paths)
-    # results = [X.get(blocking=True) for X in task_list]
-
+    n_tasks = len(img_ids_and_paths)
     results = []
-    for i, (img_id, img_path) in enumerate(page_ids_and_paths):
+    for i, (img_id, img_path) in enumerate(img_ids_and_paths):
         try:
             r = ScanService.parse_qr_code_w_rotate(
                 img_id, img_path, _debug_be_flaky=_debug_be_flaky
