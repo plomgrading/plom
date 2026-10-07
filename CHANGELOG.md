@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.22.2] 2026-10-06
+
+### Changed
+ * temporarily slowing all QR reads to debug sqlite contention issues
+
+
+
 ## [0.22.1] 2026-10-01
 
 ### Added
@@ -1746,7 +1753,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.22.1...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.22.2...main
+[0.22.2]: https://gitlab.com/plom/plom/-/compare/v0.22.1...v0.22.2
 [0.22.1]: https://gitlab.com/plom/plom/-/compare/v0.22.0...v0.22.1
 [0.22.0]: https://gitlab.com/plom/plom/-/compare/v0.21.2...v0.22.0
 [0.21.2]: https://gitlab.com/plom/plom/-/compare/v0.21.1...v0.21.2
