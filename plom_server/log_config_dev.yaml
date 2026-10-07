@@ -43,7 +43,7 @@ loggers:
     - console
     propagate: true
     # debug is very spammy
-    level: INFO
+    level: DEBUG
   # django.template flags missing context variables when rendering templates
   # but it also flags {% if error_variable %} existence checks (pretty prevalent).
   # This floods the logs, so turn on selectively.
