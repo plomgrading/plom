@@ -1865,7 +1865,7 @@ def huey_parent_read_qr_codes_chore(
         count = sum(1 for X in results)
         print(f"parent {task.id[:6]}: n_tasks={n_tasks}, count={count}")
         if i % 20 == 0:
-            # only update progress every 10 pages
+            # only update progress every 20 pages
             with transaction.atomic():
                 _task = ManageParseQRChore.objects.select_for_update().get(
                     bundle=bundle_obj
