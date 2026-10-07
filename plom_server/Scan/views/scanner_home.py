@@ -307,9 +307,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
     def post(
         self, request: HttpRequest, *, bundle_id: int
     ) -> HttpResponseClientRefresh:
-        """Triggers a qr-code read."""
-        scanner = ScanService()
-        scanner.read_qr_codes(bundle_id)
+        """Triggers the start of QR-code reading in a background chore."""
+        ScanService.start_background_read_qr_codes(bundle_id)
         return HttpResponseClientRefresh()
 
     def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:

@@ -676,8 +676,8 @@ class ScanService:
         }
 
     @staticmethod
-    def read_qr_codes(bundle_pk: int) -> None:
-        """Read QR codes of scanned pages in a bundle.
+    def start_background_read_qr_codes(bundle_pk: int) -> None:
+        """Start a background job to read QR codes of scanned pages in a bundle.
 
         Args:
             bundle_pk: primary key of bundle DB object
@@ -989,7 +989,7 @@ class ScanService:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
-        self.read_qr_codes(bundle_obj.pk)
+        self.start_background_read_qr_codes(bundle_obj.pk)
 
     @classmethod
     def is_bundle_perfect(cls, bundle_pk: int) -> bool:
@@ -1852,7 +1852,7 @@ def huey_parent_split_bundle_chore(
     HueyTaskTracker.transition_to_complete(tracker_pk)
     # if requested automatically queue qr-code reading
     if read_after:
-        ScanService.read_qr_codes(bundle_pk)
+        ScanService.start_background_read_qr_codes(bundle_pk)
     return True
 
 
