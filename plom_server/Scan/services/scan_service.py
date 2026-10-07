@@ -658,9 +658,6 @@ class ScanService:
 
         rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(qr_data)
 
-        # Andrew wanted to leave the possibility of re-introducing hard
-        # rotations in the future, such as `plom.scan.rotate_bitmap`.
-
         # Re-read QR codes if the page image needs to be rotated
         # This doesn't seem very efficient but its easy
         if rotation and rotation != 0:
