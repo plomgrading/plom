@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+ * temporarily slowing all QR reads to debug sqlite contention issues
 
 ### Fixed
 
