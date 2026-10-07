@@ -668,7 +668,6 @@ class ScanService:
 
             # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
-        # Return the parsed QR codes for parent process to store in db
         return {
             "image_pk": image_id,
             "parsed_qr": qr_data,
