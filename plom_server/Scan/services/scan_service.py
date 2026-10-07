@@ -696,7 +696,7 @@ class ScanService:
             tracker_pk = x.pk
 
         log.info("starting the read_qr_codes_chore...")
-        res = huey_parent_read_qr_codes_chore(
+        res = huey_read_qr_codes_chore(
             bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
@@ -1856,8 +1856,8 @@ def huey_parent_split_bundle_chore(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="parentchores", context=True)
-def huey_parent_read_qr_codes_chore(
+@db_task(queue="chores", context=True)
+def huey_read_qr_codes_chore(
     bundle_pk: int,
     *,
     tracker_pk: int,
