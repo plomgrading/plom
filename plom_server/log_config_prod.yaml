@@ -9,11 +9,11 @@ formatters:
     format: "%(asctime)s [%(process)d] %(levelname)s %(name)s: %(message)s"
 handlers:
   console:
-    level: INFO
+    level: DEBUG
     class: logging.StreamHandler
     formatter: prepend_time
   file:
-    level: INFO
+    level: DEBUG
     # This isn't thread safe, i.e., logs will overwrite each other under
     # if gunicorn has a heavy request load
     class: logging.handlers.RotatingFileHandler
@@ -56,4 +56,4 @@ loggers:
     - console
     - file
     propagate: true
-    level: INFO
+    level: DEBUG
