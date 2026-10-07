@@ -1908,10 +1908,9 @@ def huey_parent_read_qr_codes_chore(
             raise RuntimeError(f"QR read failed: {e}") from e
         results.append(r)
 
-        count = sum(1 for X in results)
-        print(f"parent {task.id[:6]}: n_tasks={n_tasks}, count={count}")
-        if i % 20 == 0:
-            # only update progress every 20 pages
+        count = len(results)
+        if i % 20 == 0 or i >= (n_tasks - 1):
+            # only update progress every few pages or after last page
             with transaction.atomic():
                 _task = ManageParseQRChore.objects.select_for_update().get(
                     bundle=bundle_obj
