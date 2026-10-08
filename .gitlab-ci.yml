@@ -654,7 +654,7 @@ out-of-tree-scratch:
     - pwd
     - ls
     # workaround django can't find stuff in /usr/local https://bugzilla.redhat.com/show_bug.cgi?id=2506986
-    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.15/site-packages:/usr/local/lib64/python3.15/site-packages"'
     - pip install .
     - pwd
     - cd ${HOME}
