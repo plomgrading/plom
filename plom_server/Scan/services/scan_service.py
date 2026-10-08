@@ -627,9 +627,53 @@ class ScanService:
         codes = QRextract_corners(image_path, rotation=rotation)
         return codes
 
+    @classmethod
+    def parse_qr_code_w_rotate(
+        cls,
+        image_id: int,
+        image_path: str | pathlib.Path,
+        *,
+        _debug_be_flaky: bool = False,
+    ) -> dict[str, Any]:
+        """Parse QR codes, check QR errors, return QR data.
+
+        Args:
+            image_id: primary key of the image.
+            image_path: where to find the image data.
+
+        Keyword Args:
+            _debug_be_flaky: for debugging, all take a while and some
+                percentage will fail.
+
+        Returns:
+            Information about the QR codes.
+        """
+        qr_data = cls.parse_qr_codes(image_path)
+
+        if _debug_be_flaky:
+            log.debug("Debug, random sleep reading QRs from image path %s", image_path)
+            time.sleep(random.random() * 4)
+            if random.random() < 0.04:
+                raise RuntimeError("Flaky simulated QR read failure")
+
+        rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(qr_data)
+
+        # Re-read QR codes if the page image needs to be rotated
+        # This doesn't seem very efficient but its easy
+        if rotation and rotation != 0:
+            qr_data = cls.parse_qr_codes(image_path, rotation=rotation)
+
+            # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
+
+        return {
+            "image_pk": image_id,
+            "parsed_qr": qr_data,
+            "rotation": rotation,
+        }
+
     @staticmethod
-    def read_qr_codes(bundle_pk: int) -> None:
-        """Read QR codes of scanned pages in a bundle.
+    def start_background_read_qr_codes(bundle_pk: int) -> None:
+        """Start a background job to read QR codes of scanned pages in a bundle.
 
         Args:
             bundle_pk: primary key of bundle DB object
@@ -649,7 +693,7 @@ class ScanService:
             tracker_pk = x.pk
 
         log.info("starting the read_qr_codes_chore...")
-        res = huey_parent_read_qr_codes_chore(
+        res = huey_read_qr_codes_chore(
             bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
@@ -941,7 +985,7 @@ class ScanService:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
-        self.read_qr_codes(bundle_obj.pk)
+        self.start_background_read_qr_codes(bundle_obj.pk)
 
     @classmethod
     def is_bundle_perfect(cls, bundle_pk: int) -> bool:
@@ -1804,13 +1848,13 @@ def huey_parent_split_bundle_chore(
     HueyTaskTracker.transition_to_complete(tracker_pk)
     # if requested automatically queue qr-code reading
     if read_after:
-        ScanService.read_qr_codes(bundle_pk)
+        ScanService.start_background_read_qr_codes(bundle_pk)
     return True
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="parentchores", context=True)
-def huey_parent_read_qr_codes_chore(
+@db_task(queue="chores", context=True)
+def huey_read_qr_codes_chore(
     bundle_pk: int,
     *,
     tracker_pk: int,
@@ -1844,35 +1888,32 @@ def huey_parent_read_qr_codes_chore(
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    task_list = [
-        huey_child_parse_qr_code(page.pk, _debug_be_flaky=_debug_be_flaky)
-        for page in bundle_obj.stagingimage_set.all()
+    img_ids_and_paths = [
+        (s.id, s.baseimage.image_file.path)
+        for s in bundle_obj.stagingimage_set.select_related("baseimage").all()
     ]
 
-    # results = [X.get(blocking=True) for X in task_list]
-
-    n_tasks = len(task_list)
-    while True:
+    n_tasks = len(img_ids_and_paths)
+    results = []
+    for i, (img_id, img_path) in enumerate(img_ids_and_paths):
         try:
-            results = [X.get() for X in task_list]
-        except huey.exceptions.TaskException as e:
-            log.error("Parent: child QR read chore failed with %s", str(e))
-            # TODO: what about the child tasks still running?
-            raise RuntimeError(f"child task failed QR read: {e}") from e
-
-        count = sum(1 for X in results if X is not None)
-
-        with transaction.atomic():
-            _task = ManageParseQRChore.objects.select_for_update().get(
-                bundle=bundle_obj
+            r = ScanService.parse_qr_code_w_rotate(
+                img_id, img_path, _debug_be_flaky=_debug_be_flaky
             )
-            _task.completed_pages = count
-            _task.save()
+        except Exception as e:
+            log.error("Parent: QR read failed with %s", str(e))
+            raise RuntimeError(f"QR read failed: {e}") from e
+        results.append(r)
 
-        if count == n_tasks:
-            break
-        else:
-            time.sleep(1)
+        count = len(results)
+        if i % 20 == 0 or i >= (n_tasks - 1):
+            # only update progress every few pages or after last page
+            with transaction.atomic():
+                _task = ManageParseQRChore.objects.select_for_update().get(
+                    bundle=bundle_obj
+                )
+                _task.completed_pages = count
+                _task.save()
 
     with transaction.atomic():
         for X in results:
@@ -2002,71 +2043,3 @@ def huey_child_get_page_images(
 
     # TODO - return an error of some sort here if problems?
     return rendered_page_info
-
-
-# The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
-def huey_child_parse_qr_code(
-    image_pk: int,
-    *,
-    _debug_be_flaky: bool = False,
-    task: huey.api.Task | None = None,
-) -> dict[str, Any]:
-    """Huey task to parse QR codes, check QR errors.
-
-    It is important to understand that running this function starts an
-    async task in queue that will run sometime in the future.
-
-    Args:
-        image_pk: primary key of the image
-
-    Keyword Args:
-        _debug_be_flaky: for debugging, all take a while and some
-            percentage will fail.
-        task: includes our ID in the Huey process queue.  This is added
-            by the `context=True` in decorator: callers in our code should
-            not pass this in!
-
-    Returns:
-        Information about the QR codes.
-    """
-    assert task is not None
-    log.debug("Huey debug, we are task %s with id %s", task, task.id)
-
-    staging_img = StagingImage.objects.get(pk=image_pk)
-    # TODO: Issue #3888 this `.path` assumes storage is local and will fail
-    # with a NotImplementedError when FileField uses remote storage.
-    # TODO: refactor the rotation stuff to work with FieldFile:
-    # image_fieldfile = staging_img.baseimage.image_file
-    image_path = staging_img.baseimage.image_file.path
-
-    qr_data = ScanService.parse_qr_codes(image_path)
-
-    if _debug_be_flaky:
-        log.debug("Huey debug, random sleep in task %s", task.id)
-        time.sleep(random.random() * 4)
-        if random.random() < 0.04:
-            raise RuntimeError("Flaky simulated QR read failure")
-
-    rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(qr_data)
-
-    # Andrew wanted to leave the possibility of re-introducing hard
-    # rotations in the future, such as `plom.scan.rotate_bitmap`.
-
-    # Re-read QR codes if the page image needs to be rotated
-    # This doesn't seem very efficient but its easy
-    if rotation and rotation != 0:
-        qr_data = ScanService.parse_qr_codes(image_path, rotation=rotation)
-
-        # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
-
-    # QR codes might be finishing too quickly, causing sqlite troubles, Issue #4306
-    # Slow things down a bit, up to half second per page of QR reading.
-    time.sleep(random.random() * 0.5)
-
-    # Return the parsed QR codes for parent process to store in db
-    return {
-        "image_pk": image_pk,
-        "parsed_qr": qr_data,
-        "rotation": rotation,
-    }
