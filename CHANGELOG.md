@@ -6,22 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
-
-### Added
-
-### Removed
+## [0.22.3] 2026-10-08
 
 ### Changed
-
-### Fixed
+* QR reading now happens in a single Huey task, hopefully improving sqlite contention issues.
+* removed temporary waits during QR reads.
 
 
 
 ## [0.22.2] 2026-10-06
 
 ### Changed
- * temporarily slowing all QR reads to debug sqlite contention issues
+* temporarily slowing all QR reads to debug sqlite contention issues
 
 
 
@@ -1753,7 +1749,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.22.2...main
+[0.22.3]: https://gitlab.com/plom/plom/-/compare/v0.22.2...v0.22.3
 [0.22.2]: https://gitlab.com/plom/plom/-/compare/v0.22.1...v0.22.2
 [0.22.1]: https://gitlab.com/plom/plom/-/compare/v0.22.0...v0.22.1
 [0.22.0]: https://gitlab.com/plom/plom/-/compare/v0.21.2...v0.22.0
