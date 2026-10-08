@@ -91,6 +91,9 @@ div.is_pdf_thumbnail:hover {
 .btn-plom-purple:active {
   background-color: light-dark(#9e9ee8, #6669bd) !important;
 }
+.btn-plom-purple:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
 
 /* Custom buttons b/c btn-outline-secondary insufficiently constrasting */
 .btn-plain {
