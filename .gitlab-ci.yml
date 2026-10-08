@@ -617,7 +617,7 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:45
+  image: fedora:46
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
