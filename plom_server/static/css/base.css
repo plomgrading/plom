@@ -110,10 +110,10 @@ div.is_pdf_thumbnail:hover {
 
 /* Need these for tab-focus: rather annoyingly hardcoded instead of somehow
    inheriting somehow the `focus-ring` class... How? */
-.btn-plain:focus {
+.btn-plain:focus-visible {
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
-.btn-outline-plain:focus {
+.btn-outline-plain:focus-visible {
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
   /* otherwise, border disappears on tab focus */
   border-color: color-mix(in srgb, currentColor 75%, transparent);
