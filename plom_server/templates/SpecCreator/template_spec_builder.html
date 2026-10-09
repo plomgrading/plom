@@ -153,14 +153,17 @@
                                 class="btn btn-secondary m-2"
                                 name="which_action"
                                 value="validate">Validate</button>
-                        <button class="btn btn-plain m-2" @click="downloadtoml(the_toml)">
+                        <button class="btn btn-plain m-2"
+                                @click="downloadtoml(the_toml)"
+                                type="button">
                             download toml
-                            <icon class="bi bi-file-earmark-arrow-down"></icon>
+                            <i class="bi bi-file-earmark-arrow-down"></i>
                         </button>
                         <button class="btn btn-plain m-2"
-                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
+                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')"
+                                type="button">
                             copy to clipboard
-                            <icon class="bi bi-clipboard2-plus"></icon>
+                            <i class="bi bi-clipboard2-plus"></i>
                         </button>
                         <div class="mt-2" id="saving-status"></div>
                     </form>

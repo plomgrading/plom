@@ -1,12 +1,12 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2025 Philip D. Loewen
     Copyright (C) 2026 Aidan Murphy
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% block title %}
     Assessment Specification
 {% endblock title %}
@@ -23,11 +23,12 @@
                class="btn btn-secondary"
                href="{% url 'spec_download' %}">
                 Download <tt>.toml</tt>
-                <icon class="bi bi-file-earmark-arrow-down"></icon>
+                <i class="bi bi-file-earmark-arrow-down"></i>
             </a>
             <button class="btn btn-danger"
                     hx-confirm="Are you sure?"
-                    hx-delete="{% url 'spec_delete' %}">Delete specification</button>
+                    hx-delete="{% url 'spec_delete' %}"
+                    type="button">Delete specification</button>
             <a class="btn btn-warning" href="{% url 'creator_launch' %}">Modify specification</a>
         </div>
         <div class="card">
