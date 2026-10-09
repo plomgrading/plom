@@ -168,11 +168,13 @@
                href="{% url 'scan_get_bundle' bundle_id %}"
                title="Download bundle">
                 <i class="bi bi-download"></i></a>
-            <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
-               hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
-               hx-confirm="Are you sure?"
-               title="Delete bundle">
-                <i class="bi bi-trash"></i></a>
+            <button type="button"
+                    class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+                    hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
+                    hx-confirm="Are you sure?"
+                    title="Delete bundle">
+                <i class="bi bi-trash"></i>
+            </button>
         </div>
     </div>
     <div>

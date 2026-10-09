@@ -27,9 +27,10 @@
                 hx-post="{% url 'start_all_PDFs' %}"
                 hx-target="#pdf_table">Build All PDFs</button>
         {% if pdf_errors %}
-            <a class="btn btn-warning"
-               hx-post="{% url 'retry_all_PDFs' %}"
-               hx-target="#pdf_table">Retry All</a>
+            <button class="btn btn-warning"
+                    hx-post="{% url 'retry_all_PDFs' %}"
+                    hx-target="#pdf_table"
+                    type="button">Retry All</button>
         {% endif %}
         <button type="button"
                 class="btn btn-danger"
