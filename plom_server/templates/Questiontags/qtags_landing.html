@@ -90,26 +90,26 @@
             {% endfor %}
         </tbody>
     </table>
+    <h3 class="mt-4">Manage Tags</h3>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#createTagModal">Create Tag&hellip;</button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#editTagModal">Edit a Tag&hellip;</button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#deleteTagModal">Delete a Tag&hellip;</button>
+    <button type="button"
+            class="btn btn-secondary ms-4"
+            data-bs-toggle="modal"
+            data-bs-target="#importTagModal">Import Tags from CSV&hellip;</button>
     <a href="{% url 'download_question_tags' %}?format=csv&csv_type=tags"
-       class="btn btn-primary">Download Tags as CSV</a>
+       class="btn btn-secondary">Download Tags as CSV</a>
     <br />
-    <h3>Manage Tags</h3>
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#createTagModal">Create Tag</button>
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#editTagModal">Edit Tag</button>
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#deleteTagModal">Delete Tag</button>
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#importTagModal">Import Tag</button>
     <table class="table table-striped">
         <thead>
             <tr>

@@ -38,18 +38,18 @@
             <button class="btn btn-plain"
                     type="button"
                     data-bs-toggle="modal"
-                    data-bs-target="#modifyQuotaModal">Modify quota limit</button>
+                    data-bs-target="#modifyQuotaModal">Bulk modify quota limit&hellip;</button>
             <form action="{% url 'bulk_set_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-plain">Set Quota for All Markers</button>
+                <button type="submit" class="btn btn-plain">Set quota for all markers</button>
             </form>
             <form action="{% url 'bulk_unset_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-plain">Unset Quota for All Markers</button>
+                <button type="submit" class="btn btn-plain">Unset quota for all markers</button>
             </form>
             <a class="btn btn-plain ms-4" href="{% url 'users' %}">User account management</a>
             <button hx-post="{% url 'enableMarkers' %}" class="btn btn-outline-success">Enable all markers</button>

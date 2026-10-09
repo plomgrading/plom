@@ -55,16 +55,16 @@
                       method="post"
                       action="{% url 'modify_default_limit' %}">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <label for="default_limit">New Limit</label>
+                    <div>
+                        <label class="form-label" for="default_limit">New Limit</label>
                         <input type="number"
                                class="form-control"
                                id="default_limit"
                                name="default_limit"
                                required>
                     </div>
-                    <div>
-                        <button type="submit" class="btn btn-primary" style="margin-top: 10px">Set</button>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Set</button>
                     </div>
                 </form>
             </div>
@@ -92,13 +92,13 @@
                       method="post"
                       action="{% url 'edit_quota_limit' %}">
                     {% csrf_token %}
-                    <div class="form-group">
+                    <div>
                         <input type="hidden" id="username" name="username">
-                        <label for="limit">New Limit</label>
+                        <label class="form-label" for="limit">New Limit</label>
                         <input type="number" class="form-control" id="limit" name="limit" required>
                     </div>
-                    <div>
-                        <button type="submit" class="btn btn-primary" style="margin-top: 10px">Set</button>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Set</button>
                     </div>
                 </form>
             </div>
@@ -115,7 +115,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modifyQuotaModalLabel">Modify Quota Limit</h5>
+                <h5 class="modal-title" id="modifyQuotaModalLabel">Modify quota limit for multiple users</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
@@ -124,8 +124,8 @@
             <div class="modal-body">
                 <form id="modifyQuotaForm" method="post" action="{% url 'modify_quota' %}">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <label for="usersWithQuota">Select Users</label>
+                    <div>
+                        <label class="form-label" for="usersWithQuota">Select multiple users:</label>
                         <select id="usersWithQuota"
                                 name="users"
                                 class="form-control select2"
@@ -134,9 +134,11 @@
                             {% for user in users_with_quota_as_objects %}<option value="{{ user.pk }}">{{ user.username }}</option>{% endfor %}
                         </select>
                     </div>
-                    <button type="button" class="btn btn-warning" id="selectAllBtn">Select All Users</button>
-                    <div class="form-group mt-3">
-                        <label for="newLimit">New Limit</label>
+                    <button type="button"
+                            class="btn btn-plain mt-1"
+                            id="selectAllBtn">Select all users with quota</button>
+                    <div class="mt-3">
+                        <label class="form-label" for="newLimit">New Limit:</label>
                         <input type="number"
                                class="form-control"
                                id="newLimit"
