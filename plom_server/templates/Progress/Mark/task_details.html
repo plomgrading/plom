@@ -73,7 +73,8 @@
                                         <button class="dropdown-item"
                                                 hx-post="{% url 'reassign_marking_task' task_pk %}"
                                                 hx-vars="newUser: '{{ user.username }}'"
-                                                hx-target-error="#my-errors">{{ user.username }}</button>
+                                                hx-target-error="#my-errors"
+                                                type="button">{{ user.username }}</button>
                                     </li>
                                 {% endif %}
                             {% endfor %}

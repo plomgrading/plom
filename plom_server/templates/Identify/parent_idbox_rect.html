@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Andrew Rechnitzer
-    Copyright (C) 2025 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2025-2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
 {% block title %}
     Select ID box rectangles
@@ -27,7 +27,8 @@
                 <div class="alert alert-success w-50 d-flex align-items-center">
                     All ID-box rectangles are set:
                     <button hx-put="{% url 'id_prediction_launch' %}"
-                            class="btn btn-primary mx-2">Launch Auto-ID-Reader</button>
+                            class="btn btn-primary mx-2"
+                            type="button">Launch Auto-ID-Reader</button>
                 </div>
             {% endif %}
             <div class="row mb-4">

@@ -40,22 +40,27 @@
                 {% if unused_pages %}
                     <div class="mt-2">
                         <p>
-                            Notice that the solution spec does not use pages {{ unused_pages }}. Please double-check that those pages in your solutions are
+                            Notice that the solution spec does not use pages {{ unused_pages }}.
+                            Please double-check that those pages in your solutions are
                             not required.
                         </p>
                     </div>
                 {% endif %}
             </div>
             <div class="card-footer" x-data="{the_toml: `{{ soln_toml }}` }">
-                <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
+                <button class="btn btn-primary m-2"
+                        @click="downloadtoml(the_toml)"
+                        type="button">
                     download toml
                     <icon class="bi bi-file-earmark-arrow-down"></icon>
                 </button>
                 <button class="btn btn-danger"
                         hx-delete="{% url 'soln_spec' %}"
-                        hx-confirm="Are you sure?">remove solution spec</button>
+                        hx-confirm="Are you sure?"
+                        type="button">remove solution spec</button>
                 <p>
-                    Note that removing the solution spec will remove any solution source pdfs you have uploaded and render any built solution pdfs obsolete.
+                    Note that removing the solution spec will remove any solution source pdfs
+                    you have uploaded and render any built solution pdfs obsolete.
                 </p>
             </div>
         </div>
@@ -68,10 +73,12 @@
                 <div>
                     <ul>
                         <li>
-                            If your solutions have the same format as your test (same questions on same pages), then
+                            If your solutions have the same format as your test
+                            (same questions on same pages), then
                             <button hx-patch="{% url 'soln_spec' %}"
                                     hx-target="body"
-                                    class="btn btn-primary">insert similar toml</button>
+                                    class="btn btn-primary"
+                                    type="button">insert similar toml</button>
                             into the text-box below.
                         </li>
                         <li>

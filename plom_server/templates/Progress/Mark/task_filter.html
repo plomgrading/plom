@@ -187,13 +187,15 @@
                                                         <button hx-get="{% url 'progress_original_img_wrap' task_data.paper_number task_data.question %}"
                                                                 hx-target="#imageHere"
                                                                 hx-replace="innerHTML"
-                                                                class="btn btn-outline-info">orig</button>
+                                                                class="btn btn-outline-info"
+                                                                type="button">orig</button>
                                                     {% endif %}
                                                     {% if task_data.status == "Complete" %}
                                                         <button hx-get="{% url 'progress_annotation_img_wrap' task_data.paper_number task_data.question %}"
                                                                 hx-target="#imageHere"
                                                                 hx-replace="innerHTML"
-                                                                class="btn btn-outline-success">annot</button>
+                                                                class="btn btn-outline-success"
+                                                                type="button">annot</button>
                                                     {% endif %}
                                                 </td>
                                             </tr>

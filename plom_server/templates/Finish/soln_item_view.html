@@ -1,8 +1,8 @@
-<!--
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2025-2026 Colin B. Macdonald
--->
+{% endcomment %}
 <div class="card">
     <!-- pb-0 so we can sneak in the error div -->
     <div class="card-body pb-0">
@@ -20,7 +20,8 @@
                         hx-delete="{% url 'soln_source_upload' soln.version %}"
                         hx-confirm="Are you sure?"
                         hx-target="#card_ver{{ soln.version }}"
-                        hx-target-error="#error_msg_ver{{ soln.version }}">Delete</button>
+                        hx-target-error="#error_msg_ver{{ soln.version }}"
+                        type="button">Delete</button>
             </div>
         {% else %}
             <h5 class="card-title">
