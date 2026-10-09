@@ -48,10 +48,11 @@
                                 {% if user.username != username %}
                                     <li>
                                         <!-- we add the vars here to get this hx-post to look like a form post -->
-                                        <a hx-post="{% url 'reassign_marking_task' task_pk %}"
-                                           hx-vars="newUser: '{{ user.username }}'"
-                                           hx-target-error="#my-errors"
-                                           class="dropdown-item">{{ user.username }}</a>
+                                        <button class="dropdown-item"
+                                                hx-post="{% url 'reassign_marking_task' task_pk %}"
+                                                hx-vars="newUser: '{{ user.username }}'"
+                                                hx-target-error="#my-errors"
+                                                type="button">{{ user.username }}</button>
                                     </li>
                                 {% endif %}
                             {% endfor %}
@@ -69,10 +70,10 @@
                                 {% if user.username != username and user not in lead_markers %}
                                     <li>
                                         <!-- we add the vars here to get this hx-post to look like a form post -->
-                                        <a hx-post="{% url 'reassign_marking_task' task_pk %}"
-                                           hx-vars="newUser: '{{ user.username }}'"
-                                           hx-target-error="#my-errors"
-                                           class="dropdown-item">{{ user.username }}</a>
+                                        <button class="dropdown-item"
+                                                hx-post="{% url 'reassign_marking_task' task_pk %}"
+                                                hx-vars="newUser: '{{ user.username }}'"
+                                                hx-target-error="#my-errors">{{ user.username }}</button>
                                     </li>
                                 {% endif %}
                             {% endfor %}
@@ -138,9 +139,13 @@
                                 </button>
                             </li>
                             {% for tag_pk, tag_text in addable_normal_tags.items %}
-                                <li class="p-2">
-                                    <span hx-patch="{% url 'marking_task_tag' task_pk tag_pk %}"
-                                          class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"><i class="bi bi-plus-square pe-1"></i>{{ tag_text }}</span>
+                                <li class="p-1">
+                                    <button hx-patch="{% url 'marking_task_tag' task_pk tag_pk %}"
+                                            class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"
+                                            type="button">
+                                        <i class="bi bi-plus-square pe-1">
+                                        </i>{{ tag_text }}
+                                    </button>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -187,9 +192,12 @@
                             {% for user in addable_attn_marker %}
                                 <li class="p-2">
                                     <!-- we add the vars here to get this hx-post to look like a form post -->
-                                    <span hx-post="{% url 'create_marking_task_tag' task_pk %}"
-                                          hx-vars="newTagText: '@{{ user.username }}'"
-                                          class="badge text-bg-warning fs-6 align-middle dropdown-item py-2 text-start"><i class="bi bi-plus-square pe-2"></i>@{{ user.username }}</span>
+                                    <button hx-post="{% url 'create_marking_task_tag' task_pk %}"
+                                            hx-vars="newTagText: '@{{ user.username }}'"
+                                            class="badge text-bg-warning fs-6 align-middle dropdown-item py-2 text-start"
+                                            type="button">
+                                        <i class="bi bi-plus-square pe-2"></i>@{{ user.username }}
+                                    </button>
                                 </li>
                             {% endfor %}
                         </ul>
