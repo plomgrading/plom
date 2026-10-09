@@ -1,11 +1,11 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023 Andrew Rechnitzer
-    Copyright (C) 2023-2024 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2023-2024, 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
 {% block title %}
     Build Paper PDFs
@@ -44,9 +44,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <a class="btn btn-danger"
-                       hx-post="{% url 'delete_all_PDFs' %}"
-                       data-bs-dismiss="modal">Delete</a>
+                    <button type="button"
+                            class="btn btn-danger"
+                            hx-post="{% url 'delete_all_PDFs' %}"
+                            data-bs-dismiss="modal">Delete</button>
                 </div>
             </div>
         </div>
