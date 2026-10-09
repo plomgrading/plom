@@ -1,43 +1,43 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}i
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
-    Copyright (C) 2023 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2023, 2026 Colin B. Macdonald
+{% endcomment %}
 {% load static %}
+{% block title %}
+    Tag Info
+{% endblock title %}
 {% block page_heading %}
     Tag Info
 {% endblock page_heading %}
 {% block main_content %}
-    <body>
-        <section>
-            <p>Tag text: {{ tag.text }}</p>
-            <p>User: {{ tag.user }}</p>
-            <p>Time: {{ tag.time }}</p>
-            <p>
-                Associated codes:
-                {{ tag.task.first.code }}
-                {% for task in tag.task.all|slice:"1:" %}
-                    <!-- so that it doesn't end with a comma -->
-                    , {{ task.code }}
-                {% endfor %}
-            </p>
-            <p>Used: {{ tag.task.count }} times</p>
-            <form action="{% url 'tag_edit' tag.pk %}" method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <input type="submit" value="Save changes">
-            </form>
-        </section>
-        <br>
-        <section>
-            <div>
-                <a href="{% url 'tags_landing' %}">Back to all tags</a>
-                <button onclick="confirmDelete(event, '{% url 'tag_delete' tag.pk %}');"
-                        class="delete-button"
-                        style="float: right;
-                               margin-right: 2%">Delete tag</button>
-                <script>
+    <section>
+        <p>Tag text: {{ tag.text }}</p>
+        <p>User: {{ tag.user }}</p>
+        <p>Time: {{ tag.time }}</p>
+        <p>
+            Associated codes:
+            {{ tag.task.first.code }}
+            {% for task in tag.task.all|slice:"1:" %}
+                <!-- so that it doesn't end with a comma -->
+                , {{ task.code }}
+            {% endfor %}
+        </p>
+        <p>Used: {{ tag.task.count }} times</p>
+        <form action="{% url 'tag_edit' tag.pk %}" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input class="btn btn-primary" type="submit" value="Save changes">
+            <button class="btn btn-outline-danger ms-4"
+                    onclick="confirmDelete(event, '{% url 'tag_delete' tag.pk %}');"
+                    type="button">Delete tag</button>
+        </form>
+    </section>
+    <div class="mt-3">
+        <a href="{% url 'tags_landing' %}">Back to all tags</a>
+    </div>
+    <script>
                 function confirmDelete(event, url) {
                     event.preventDefault(); // Prevent the default click behavior
 
@@ -46,8 +46,5 @@
                         window.location.href = url;
                     }
                 }
-                </script>
-            </div>
-        </section>
-    </body>
+    </script>
 {% endblock main_content %}
