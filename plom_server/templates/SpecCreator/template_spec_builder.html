@@ -1,9 +1,9 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
-    Copyright (C) 2024 Colin B. Macdonald
--->
-{% extends "base/base.html" %}
+    Copyright (C) 2024, 2026 Colin B. Macdonald
+{% endcomment %}
 {% block title %}
     Build a template specification
 {% endblock title %}
@@ -153,11 +153,11 @@
                                 class="btn btn-secondary m-2"
                                 name="which_action"
                                 value="validate">Validate</button>
-                        <button class="btn btn-outline-secondary m-2" @click="downloadtoml(the_toml)">
+                        <button class="btn btn-plain m-2" @click="downloadtoml(the_toml)">
                             download toml
                             <icon class="bi bi-file-earmark-arrow-down"></icon>
                         </button>
-                        <button class="btn btn-outline-secondary m-2"
+                        <button class="btn btn-plain m-2"
                                 @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
                             copy to clipboard
                             <icon class="bi bi-clipboard2-plus"></icon>

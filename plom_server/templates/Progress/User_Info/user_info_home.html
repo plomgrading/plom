@@ -35,7 +35,7 @@
     </div>
     <div class="card w-100">
         <div class="card-body d-flex flex-wrap gap-2">
-            <button class="btn btn-primary"
+            <button class="btn btn-plain"
                     type="button"
                     data-bs-toggle="modal"
                     data-bs-target="#modifyQuotaModal">Modify quota limit</button>
@@ -43,18 +43,17 @@
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-primary">Set Quota for All Markers</button>
+                <button type="submit" class="btn btn-plain">Set Quota for All Markers</button>
             </form>
             <form action="{% url 'bulk_unset_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-secondary">Unset Quota for All Markers</button>
+                <button type="submit" class="btn btn-plain">Unset Quota for All Markers</button>
             </form>
-            <a class="btn btn-link" href="{% url 'users' %}">User account management</a>
+            <a class="btn btn-plain ms-4" href="{% url 'users' %}">User account management</a>
             <button hx-post="{% url 'enableMarkers' %}" class="btn btn-outline-success">Enable all markers</button>
-            <button hx-post="{% url 'disableMarkers' %}"
-                    class="btn btn-outline-secondary">Disable all markers</button>
+            <button hx-post="{% url 'disableMarkers' %}" class="btn btn-outline-plain">Disable all markers</button>
         </div>
         <div class="card-body">
             <div>
@@ -118,7 +117,7 @@
                         <td sorttable_customkey="{{ progress.quota_limit_or_zero }}">
                             {% if progress.has_quota_limit %}
                                 {{ progress.quota_limit }}
-                                <button class="btn btn-outline-primary ms-1"
+                                <button class="btn btn-outline-primary btn-sm ms-1"
                                         type="button"
                                         data-bs-toggle="modal"
                                         data-username="{{ username }}"
@@ -130,7 +129,7 @@
                                       style="display:inline"
                                       method="post">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-secondary">
+                                    <button type="submit" class="btn btn-plain btn-sm">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -139,13 +138,13 @@
                                       style="display:inline"
                                       method="post">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-primary">Enable</button>
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Enable</button>
                                 </form>
                             {% endif %}
                         </td>
                         <td>
                             <!-- TODO: hardcoded tag here, must match question_marking.py -->
-                            <a class="btn btn-primary"
+                            <a class="btn btn-primary btn-sm"
                                href="{% url 'progress_marking_task_filter' %}?username={{ username }}&the_tag=during_quota">
                                 view
                             </a>
@@ -153,10 +152,10 @@
                         <td>
                             {% if username in lead_marker_usernames %}
                                 <button hx-post="{% url 'toggleLeadMarker' username %}"
-                                        class="btn btn-success">demote</button>
+                                        class="btn btn-secondary btn-sm">demote</button>
                             {% else %}
                                 <button hx-post="{% url 'toggleLeadMarker' username %}"
-                                        class="btn btn-secondary">promote</button>
+                                        class="btn btn-plain btn-sm">promote</button>
                             {% endif %}
                         </td>
                     </tr>

@@ -25,7 +25,7 @@
                         {% with q_idx_to_pages|get_item:qidx as pages %}
                             {% for page_num in pages %}
                                 <a href="{% url 'question_clustering_select_rectangle' v qidx page_num %}"
-                                   class="btn btn-outline-secondary">
+                                   class="btn btn-plain">
                                     {{ q_label }}
                                     {% if pages|length > 1 %}
                                         &ndash; p {{ page_num }}

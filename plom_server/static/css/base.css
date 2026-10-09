@@ -91,3 +91,40 @@ div.is_pdf_thumbnail:hover {
 .btn-plom-purple:active {
   background-color: light-dark(#9e9ee8, #6669bd) !important;
 }
+.btn-plom-purple:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Custom buttons b/c btn-outline-secondary insufficiently constrasting */
+.btn-plain {
+  background-color: light-dark(#f2f2f2, #222) !important;
+  border-color: light-dark(#999, #666) !important;
+  color: light-dark(var(--bs-black), var(--bs-white));
+}
+
+/* The plain outline button should fit-in visually with other outline buttons.
+   It inherits its colour from from its parent: use it inside an alert-warning
+   it paints yellow for example. */
+.btn-outline-plain {
+  border-style: solid;
+  border-color: color-mix(in srgb, currentColor 75%, transparent);
+  color: inherit !important; /* take colour from the parent */
+}
+
+/* Need these for tab-focus: rather annoyingly hardcoded instead of somehow
+   inheriting somehow the `focus-ring` class... How? */
+.btn-plain:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+.btn-outline-plain:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  /* otherwise, border disappears on tab focus */
+  border-color: color-mix(in srgb, currentColor 75%, transparent);
+}
+
+.btn-plain:hover,
+.btn-outline-plain:hover {
+  background-color: light-dark(#cacaca, #444) !important;
+  border-color: light-dark(#444, #888) !important;
+  color: light-dark(var(--bs-black), var(--bs-white)) !important;
+}
