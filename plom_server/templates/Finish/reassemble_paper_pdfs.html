@@ -168,13 +168,11 @@ document.getElementById('nonreassembledPapersPie'),
                                x-model="last"
                                id="last-paper">
                     </div>
-                    {% if n_complete %}
-                        <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper=' + last"
-                           class="btn btn-primary">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a>
-                    {% else %}
-                        <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper=' + last"
-                           class="btn btn-warning-outline disabled">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a> warning - no papers reassembled
-                    {% endif %}
+                    <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper=' + last"
+                       class="btn btn-primary {% if not n_complete %}disabled{% endif %}">
+                        Download zip of reassembled papers from
+                        <span x-text="first"></span> to <span x-text="last"></span>
+                    </a>
                 </div>
             </details>
         </div>
