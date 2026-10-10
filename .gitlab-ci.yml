@@ -617,7 +617,7 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:44
+  image: fedora:46
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
@@ -633,6 +633,7 @@ out-of-tree-scratch:
           python3-tomlkit python3-pillow python3-tqdm
           python3-psycopg3 python3-PyMySQL
           python3-django python3-django-filter python3-django-tables2
+          python3-django-rest-framework
           python3-gunicorn python3-whitenoise
           python3-arrow
           python3-cryptography
@@ -646,6 +647,9 @@ out-of-tree-scratch:
           file python3-file-magic
           iproute
           git
+    # workaround: strange importlib error on _vender stuff inside, started in
+    # upgrade to Fedora 46, hopefully can be removed later (TODO).
+    - dnf remove -y python3-pkg-resources
     - pip --version
     - pip install git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
@@ -653,7 +657,7 @@ out-of-tree-scratch:
     - pwd
     - ls
     # workaround django can't find stuff in /usr/local https://bugzilla.redhat.com/show_bug.cgi?id=2506986
-    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.15/site-packages:/usr/local/lib64/python3.15/site-packages"'
     - pip install .
     - pwd
     - cd ${HOME}
