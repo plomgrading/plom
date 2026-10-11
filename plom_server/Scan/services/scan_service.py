@@ -1970,8 +1970,8 @@ def huey_child_get_page_images(
             not pass this in!
 
     Returns:
-        Information about the page image, including its file name,
-        thumbnail, hash etc.
+        List of information about each page image, including its
+        file name, thumbnail, hash etc.
     """
     import pymupdf
     from plom.scan import rotate
