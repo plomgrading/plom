@@ -10,7 +10,6 @@
 # Copyright (C) 2025 Deep Shah
 # Copyright (C) 2025 Jax Lim
 
-
 import hashlib
 import logging
 import os
@@ -22,7 +21,6 @@ import time
 from datetime import datetime
 from importlib.resources.abc import Traversable
 from io import BytesIO
-from math import ceil
 from pathlib import Path
 from textwrap import shorten
 from typing import Any
@@ -316,7 +314,6 @@ class ScanService:
     def split_and_save_bundle_images(
         bundle_pk: int,
         *,
-        number_of_chunks: int = 16,
         read_after: bool = False,
     ) -> None:
         """Read a PDF document and save page images to filesystem/database.
@@ -325,9 +322,6 @@ class ScanService:
             bundle_pk: StagingBundle object primary key
 
         Keyword Args:
-            number_of_chunks: the number of page-splitting jobs to run;
-                each huey-page-split-task will process approximately
-                number_of_pages_in_bundle / number_of_chunks pages.
             read_after: Automatically read the qr codes from the bundle after
                 upload+splitting is finished.
 
@@ -342,9 +336,8 @@ class ScanService:
                 status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
-        res = huey_parent_split_bundle_chore(
+        res = huey_split_bundle_chore(
             bundle_pk,
-            number_of_chunks,
             tracker_pk=tracker_pk,
             read_after=read_after,
             _debug_be_flaky=False,
@@ -1720,10 +1713,9 @@ class ScanService:
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="parentchores", context=True)
-def huey_parent_split_bundle_chore(
+@db_task(queue="chores", context=True)
+def huey_split_bundle_chore(
     bundle_pk: int,
-    number_of_chunks: int,
     *,
     tracker_pk: int,
     read_after: bool = False,
@@ -1737,9 +1729,6 @@ def huey_parent_split_bundle_chore(
 
     Args:
         bundle_pk: StagingBundle object primary key
-        number_of_chunks: the number of page-splitting jobs to run;
-            each huey-page-split-task will handle 1/number_of_chunks of the
-            pages in the bundle.
 
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
@@ -1758,6 +1747,10 @@ def huey_parent_split_bundle_chore(
         RuntimeError: child chore failed.
         AssertionError: unexpected situations, such as zero-length bundle.
     """
+    import pymupdf
+    from plom.scan import rotate
+    from PIL import Image
+
     assert task is not None
 
     pid = os.getpid()
@@ -1780,69 +1773,79 @@ def huey_parent_split_bundle_chore(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    # cut the list of all indices into chunks
-    chunk_length = ceil(bundle_length / number_of_chunks)
-    # be careful with 0/1 indexing here.
-    # pymupdf (which we use to process pdfs) 0-indexes pages within
-    # a pdf while we 1-index bundle-positions. So at some point
-    # in our code we need to add/subtract one to translate between
-    # these. We add one here to make sure "order" is 1-indexed.
-    all_bundle_orders = [ord + 1 for ord in range(bundle_length)]
-    order_chunks = [
-        all_bundle_orders[ord : ord + chunk_length]
-        for ord in range(0, bundle_length, chunk_length)
-    ]
+    with tempfile.TemporaryDirectory() as _tmpdir:
+        tmpdir = Path(_tmpdir)
+        print(tmpdir)
+        rendered_page_info = []
+        with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
+            for i, page in enumerate(pdf_doc):
+                order = i + 1
+                if _debug_be_flaky:
+                    log.debug("Huey debug, random sleep in task %s", task.id)
+                    time.sleep(random.random() * 1)
+                    if random.random() < 0.001:
+                        raise RuntimeError("Flaky simulated image split failure")
+                basename = f"page_{bundle_obj.pk:03}_{order:05}"
+                if bundle_obj.force_page_render:
+                    save_path = None
+                    msgs = ["Force render"]
+                else:
+                    # TODO: why does this need pdf_doc too?
+                    save_path, msgs = try_to_extract_image(
+                        page,
+                        pdf_doc,
+                        tmpdir,
+                        basename,
+                        bundle_obj.pdf_file,
+                        do_not_extract=False,
+                        add_metadata=True,
+                    )
+                if save_path is None:
+                    # log.info(f"{basename}: PyMuPDF render. No extract b/c: " + "; ".join(msgs))
+                    # TODO: log and consider storing in the StagingImage as well
+                    save_path = render_page_to_bitmap(
+                        page,
+                        tmpdir,
+                        basename,
+                        bundle_obj.pdf_file,
+                        add_metadata=True,
+                    )
 
-    # note that we index bundle images from zero,
-    with tempfile.TemporaryDirectory() as tmpdir:
-        task_list = [
-            huey_child_get_page_images(
-                bundle_pk,
-                ord_chnk,  # note pg is 1-indexed
-                pathlib.Path(tmpdir),
-                _debug_be_flaky=_debug_be_flaky,
-            )
-            for ord_chnk in order_chunks
-        ]
+                with open(save_path, "rb") as f:
+                    image_hash = hashlib.sha256(f.read()).hexdigest()
 
-        # results = [X.get(blocking=True) for X in task_list]
-        n_tasks = len(task_list)
-        while True:
-            # list items are None (if not completed) or list [dict of page info]
-            try:
-                result_chunks = [X.get() for X in task_list]
-            except huey.exceptions.TaskException as e:
-                log.error("Parent: child image split chore failed with %s", str(e))
-                # make an attempt to stop any remaining unqueued child tasks.
-                # note those already started probably will not stop.
-                for chore in task_list:
-                    log.info("Parent: trying to revoke child chore %s", chore)
-                    chore.revoke()
-                raise RuntimeError(f"child task failed image split: {e}") from e
+                # make sure we load with exif rotations if required
+                pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
+                size = 256, 256
+                pil_img.thumbnail(size, Image.Resampling.LANCZOS)
+                thumb_path = tmpdir / ("thumb-" + basename + ".png")
+                pil_img.save(thumb_path)
 
-            # remove all the nones to get list of completed tasks
-            not_none_result_chunks = [
-                chunk for chunk in result_chunks if chunk is not None
-            ]
-            completed_tasks = len(not_none_result_chunks)
-            # flatten that list of lists to get a list of rendered pages
-            results = [X for chunk in not_none_result_chunks for X in chunk]
-            rendered_page_count = len(results)
-
-            with transaction.atomic():
-                _task = PagesToImagesChore.objects.select_for_update().get(
-                    bundle=bundle_obj
+                rendered_page_info.append(
+                    {
+                        "order": order,
+                        "file_name": save_path.name,
+                        "file_path": str(save_path),
+                        "image_hash": image_hash,
+                        "thumb_name": thumb_path.name,
+                        "thumb_path": str(thumb_path),
+                    }
                 )
-                _task.completed_pages = rendered_page_count
-                _task.save()
 
-            if completed_tasks == n_tasks:
-                break
-            else:
-                time.sleep(1)
+                # TODO: not every page please
+                with transaction.atomic():
+                    _task = PagesToImagesChore.objects.select_for_update().get(
+                        bundle=bundle_obj
+                    )
+                    _task.completed_pages = order
+                    _task.save()
+                # TODO: I don't like how this reaches 100% but then lots of DB work
+                # still to do, see also read_qr
 
+        # don't interlace these writes so we can do an atomic operation
+        # (I think if we interleaved, we would not be able to update the progress?)
         with transaction.atomic():
-            for X in results:
+            for X in rendered_page_info:
                 with open(X["file_path"], "rb") as fh:
                     bimg = BaseImage.objects.create(
                         image_file=File(fh, name=X["file_name"]),
