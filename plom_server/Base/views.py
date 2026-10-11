@@ -79,7 +79,7 @@ class ServerStatusView(ManagerRequiredView):
         context = self.build_context()
         # TODO: need a service?
         queues = []
-        for queue_name in ("chores", "parentchores"):
+        for queue_name in ("chores",):
             # TODO: fails with KeyError if no such queue...
             queue = get_queue(queue_name)
             # state = "ok?"

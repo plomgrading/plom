@@ -33,6 +33,7 @@ from plom_server import __version__
 from plom_server.scripts.launch_plom_server import (
     launch_gunicorn_production_server_process,
     launch_django_dev_server_process,
+    launch_huey_processes,
 )
 
 # TODO: not a fan of global variables, and mypy needs this to be defined
@@ -253,15 +254,6 @@ def get_django_cmd_prefix() -> str:
     if os.environ.get("DJANGO_SETTINGS_MODULE"):
         return "django-admin"
     return "python3 manage.py"
-
-
-def launch_huey_processes() -> list[subprocess.Popen]:
-    """Launch the Huey-consumer for processing background chores."""
-    print("Launching Huey queues as background chores.")
-    return [
-        popen_django_manage_command("djangohuey --queue chores"),
-        popen_django_manage_command("djangohuey --queue parentchores"),
-    ]
 
 
 def _get_demo_num_questions() -> int:

@@ -20,9 +20,8 @@ log = logging.getLogger(__name__)
 
 
 # TODO: Using the @signal decorator did not work with both queues
-# from django_huey import signal
+# from django_huey import signal, but revisit this now that we have only one
 main_queue = get_queue("chores")
-parent_queue = get_queue("parentchores")
 
 
 class HueyTaskTracker(models.Model):
@@ -378,7 +377,6 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         # or perhaps this huey task is not being tracked by a one of our trackers
-        # (for example, it may have a parent task that is doing the tracking)
         log.warning(
             f" Task {task.id} {task.name} with args {task.args}"
             " has no HueyTaskTracker (or maybe its not supposed to?)"
@@ -405,63 +403,9 @@ def on_huey_task_interrupted(signal, task: huey.api.Task):
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         # or perhaps this huey task is not being tracked by a one of our trackers
-        # (for example, it may have a parent task that is doing the tracking)
         log.warning(
             f" Task {task.id} {task.name} with args {task.args}"
             " has no HueyTaskTracker (or maybe its not supposed to?)"
-        )
-        return
-
-    with transaction.atomic():
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.ERROR
-        msg = "Huey task was interrupted, perhaps by the OS?"
-        if task_obj.message:
-            msg += f" (prev: {task_obj.message})"
-        task_obj.message = msg
-        task_obj.save()
-
-
-@parent_queue.signal(huey.signals.SIGNAL_ERROR)
-def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
-    """Action to take when a Huey task fails.
-
-    This is slightly different from the regular one above b/c all parent tasks
-    should always have a tracker (but child tasks might not).
-    """
-    log.error(f"Error in task {task.id} {task.name} {task.args} - {exc}")
-
-    # Note: using filter except of a exception on DoesNotExist because I think
-    # the exception handling was rewinding some atomic transactions
-    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
-        # task has been deleted from underneath us, or did not exist yet b/c of race conditions
-        log.error(
-            f"Task {task.id} {task.name} with args {task.args}"
-            " does not have a HueyTaskTracker in the database."
-        )
-        return
-
-    with transaction.atomic():
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.ERROR
-        if task_obj.message:
-            task_obj.message = f"{exc} (prev: {task_obj.message})"
-        else:
-            task_obj.message = f"{exc}"
-        task_obj.save()
-
-
-@parent_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
-def on_huey_parent_task_interrupted(signal, task: huey.api.Task):
-    # TODO: this code is duplicated b/c @signal decorate did work for both queues
-    log.warning(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
-
-    # Note: using filter except of a exception on DoesNotExist because I think
-    # the exception handling was rewinding some atomic transactions
-    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
-        log.error(
-            f"Task {task.id} {task.name} with args {task.args}"
-            " does not have a HueyTaskTracker in the database."
         )
         return
 
