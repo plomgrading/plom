@@ -1961,6 +1961,8 @@ def huey_child_get_page_images(
         bundle_pk: bundle DB object's primary key
         order_list: a list of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
+
+    Keyword Args:
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
         task: includes our ID in the Huey process queue.  This is added
