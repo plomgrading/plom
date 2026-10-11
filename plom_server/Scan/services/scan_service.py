@@ -2023,12 +2023,7 @@ def huey_child_get_page_images(
             # make sure we load with exif rotations if required
             pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
             size = 256, 256
-            try:
-                _lanczos = Image.Resampling.LANCZOS
-            except AttributeError:
-                # TODO: Issue #2886: Deprecated, drop when minimum Pillow > 9.1.0
-                _lanczos = Image.LANCZOS  # type: ignore
-            pil_img.thumbnail(size, _lanczos)
+            pil_img.thumbnail(size, Image.Resampling.LANCZOS)
             thumb_path = basedir / ("thumb-" + basename + ".png")
             pil_img.save(thumb_path)
 
