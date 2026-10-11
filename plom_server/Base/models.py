@@ -396,6 +396,13 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
 @main_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
 def on_huey_task_interrupted(signal, task: huey.api.Task):
     log.info(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
+        task_obj.message = (
+            f"huey task was interrupted, perhaps by the OS? ({task_obj.message})"
+        )
+        task_obj.save()
 
 
 @parent_queue.signal(huey.signals.SIGNAL_ERROR)
@@ -428,3 +435,10 @@ def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
 def on_huey_parent_task_interrupted(signal, task: huey.api.Task):
     # TODO: this code is duplicated b/c @signal decorate did work for both queues
     log.info(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
+        task_obj.message = (
+            f"huey task was interrupted, perhaps by the OS? ({task_obj.message})"
+        )
+        task_obj.save()
