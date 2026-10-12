@@ -388,7 +388,10 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
     with transaction.atomic():
         task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
         task_obj.status = HueyTaskTracker.ERROR
-        task_obj.message = f"{exc} ({task_obj.message})"
+        if task_obj.message:
+            task_obj.message = f"{exc} (prev: {task_obj.message})"
+        else:
+            task_obj.message = f"{exc}"
         task_obj.save()
 
 
@@ -399,9 +402,10 @@ def on_huey_task_interrupted(signal, task: huey.api.Task):
     with transaction.atomic():
         task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
         task_obj.status = HueyTaskTracker.ERROR
-        task_obj.message = (
-            f"huey task was interrupted, perhaps by the OS? ({task_obj.message})"
-        )
+        msg = "Huey task was interrupted, perhaps by the OS?"
+        if task_obj.message:
+            msg += f" (prev: {task_obj.message})"
+        task_obj.message = msg
         task_obj.save()
 
 
@@ -427,7 +431,10 @@ def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
     with transaction.atomic():
         task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
         task_obj.status = HueyTaskTracker.ERROR
-        task_obj.message = exc
+        if task_obj.message:
+            task_obj.message = f"{exc} (prev: {task_obj.message})"
+        else:
+            task_obj.message = f"{exc}"
         task_obj.save()
 
 
@@ -438,7 +445,8 @@ def on_huey_parent_task_interrupted(signal, task: huey.api.Task):
     with transaction.atomic():
         task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
         task_obj.status = HueyTaskTracker.ERROR
-        task_obj.message = (
-            f"huey task was interrupted, perhaps by the OS? ({task_obj.message})"
-        )
+        msg = "Huey task was interrupted, perhaps by the OS?"
+        if task_obj.message:
+            msg += f" (prev: {task_obj.message})"
+        task_obj.message = msg
         task_obj.save()
