@@ -3,10 +3,14 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2025-2026 Colin Macdonald
+    Copyright (C) 2026 Aidan Murphy
 {% endcomment %}
 {% load static %}
 {% block card_content %}
-    <form method="post" action="">
+    <form hx-post="{% url 'create_multiple_users' %}"
+          hx-target="#passwordTarget"
+          hx-target-error="#passwordTarget"
+          hx-swap="innerHTML">
         {% csrf_token %}
         <div class="mb-3">
             {{ form.user_types.label }}

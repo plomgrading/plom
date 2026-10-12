@@ -4,10 +4,14 @@
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2025-2026 Colin Macdonald
+    Copyright (C) 2026 Aidan Murphy
 {% endcomment %}
 {% load static %}
 {% block card_content %}
-    <form method="post" action="">
+    <form hx-post="{% url 'create_single_user' %}"
+          hx-target="#passwordTarget"
+          hx-target-error="#passwordTarget"
+          hx-swap="innerHTML">
         {% csrf_token %}
         <div>
             {{ form.user_types.label }}
@@ -36,5 +40,4 @@
             <input class="btn btn-primary" type="submit" value="Create User">
         </p>
     </form>
-    {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 {% endblock card_content %}

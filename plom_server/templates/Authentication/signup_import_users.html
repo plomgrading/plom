@@ -1,7 +1,7 @@
 {% extends "Authentication/signup_base.html" %}
 {% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2024, 2026 Aidan Murphy
     Copyright (C) 2026 Colin B. Macdonald
 {% endcomment %}
 {% load static %}
@@ -36,8 +36,10 @@
         </details>
     </div>
     <form id="myform"
-          method="post"
-          action="{% url 'signup_import' %}"
+          hx-post="{% url 'create_import_users' %}"
+          hx-target="#passwordTarget"
+          hx-target-error="#passwordTarget"
+          hx-swap="innerHTML"
           enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-2">
