@@ -46,7 +46,13 @@
                                     <br />
                                     <small class="text-muted">change password</small>
                                 {% else %}
-                                    <a href="{% url 'reset_user_password' user_dict.user.username %}"
+                                    {% comment %}
+                                       use htmx to prevent page refresh from provisioning another password reset link.
+                                    {% endcomment %}
+                                    <a href="#"
+                                       hx-get="{% url 'reset_user_password' user_dict.user.username %}"
+                                       hx-target="body"
+                                       hx-swap="outerHTML"
                                        class="link-underline link-underline-opacity-25"
                                        disabled>
                                         <br />
