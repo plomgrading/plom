@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2026 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024, 2026 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
@@ -313,9 +313,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
     def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         """Triggers deletion of the bundle."""
-        scanner = ScanService()
         try:
-            scanner.remove_bundle_by_pk(bundle_id)
+            ScanService.remove_bundle_by_pk(bundle_id)
         except PlomBundleLockedException as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(

@@ -355,7 +355,8 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return PagesToImagesChore.objects.get(bundle=bundle_obj).completed_pages
 
-    def is_bundle_mid_splitting(self, bundle_pk: int) -> bool:
+    @staticmethod
+    def is_bundle_mid_splitting(bundle_pk: int) -> bool:
         """Check if the bundle with this id is currently in the midst of splitting its pages."""
         # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -374,14 +375,16 @@ class ScanService:
             return True
         return False
 
-    def are_bundles_mid_splitting(self) -> dict[str, bool]:
+    @classmethod
+    def are_bundles_mid_splitting(cls) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-split."""
         return {
-            bundle_obj.slug: self.is_bundle_mid_splitting(bundle_obj.pk)
+            bundle_obj.slug: cls.is_bundle_mid_splitting(bundle_obj.pk)
             for bundle_obj in StagingBundle.objects.all()
         }
 
-    def remove_bundle_by_pk(self, bundle_pk: int) -> None:
+    @classmethod
+    def remove_bundle_by_pk(cls, bundle_pk: int) -> None:
         """Remove a bundle PDF from the filesystem + database.
 
         Note - as side-effect this removes the associated images
@@ -399,11 +402,11 @@ class ScanService:
                 StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
             )
 
-            if self.is_bundle_mid_splitting(_bundle_obj.pk):
+            if cls.is_bundle_mid_splitting(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is upload / splitting. Wait until that is finished before removing it"
                 )
-            if self.is_bundle_mid_qr_read(_bundle_obj.pk):
+            if cls.is_bundle_mid_qr_read(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is mid qr read. Wait until that is finished before removing it"
                 )
@@ -828,7 +831,8 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return ManageParseQRChore.objects.get(bundle=bundle_obj).completed_pages
 
-    def is_bundle_mid_qr_read(self, bundle_pk: int) -> bool:
+    @staticmethod
+    def is_bundle_mid_qr_read(bundle_pk: int) -> bool:
         """Check if the bundle with this id is currently in the midst of reading QR codes."""
         # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -848,10 +852,11 @@ class ScanService:
             return True
         return False
 
-    def are_bundles_mid_qr_read(self) -> dict[str, bool]:
+    @classmethod
+    def are_bundles_mid_qr_read(cls) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read."""
         return {
-            bundle_obj.slug: self.is_bundle_mid_qr_read(bundle_obj.pk)
+            bundle_obj.slug: cls.is_bundle_mid_qr_read(bundle_obj.pk)
             for bundle_obj in StagingBundle.objects.all()
         }
 
