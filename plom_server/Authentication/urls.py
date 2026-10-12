@@ -7,12 +7,10 @@
 from django.urls import path
 
 from .signup_views import (
-    ImportUsers,
     ImportUsersCreation,
-    MultiUsersSignUp,
     MultiUsersCreation,
-    SingleUserSignUp,
     SingleUserCreation,
+    UserSignUp,
 )
 from .views import (
     LoginView,
@@ -23,17 +21,15 @@ from .views import (
 urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
-    path("signup/single/", SingleUserSignUp.as_view(), name="signup_single"),
+    path("signup/", UserSignUp.as_view(), name="signup_users"),
     path(
         "signup/single/create", SingleUserCreation.as_view(), name="create_single_user"
     ),
-    path("signup/multiple/", MultiUsersSignUp.as_view(), name="signup_multiple"),
     path(
         "signup/multiple/create",
         MultiUsersCreation.as_view(),
         name="create_multiple_users",
     ),
-    path("signup/import/", ImportUsers.as_view(), name="signup_import"),
     path(
         "signup/import/create",
         ImportUsersCreation.as_view(),

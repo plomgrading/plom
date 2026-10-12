@@ -19,7 +19,7 @@
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
-            <a class="btn btn-success" href="{% url 'signup_single' %}">Create new users</a>
+            <a class="btn btn-success" href="{% url 'signup_users' %}">Create new users</a>
         </div>
     </div>
     {% include "../base/alert_messages.html" with messages=messages %}

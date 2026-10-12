@@ -36,18 +36,27 @@ def _common_make_csv_tsv(userlist: list[dict[str, str]]) -> tuple[str, str]:
     return (csv_string, tsv_string)
 
 
-class SingleUserSignUp(AdminOrManagerRequiredView):
-    template_name = "Authentication/signup_single_user.html"
-    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
+class UserSignUp(AdminOrManagerRequiredView):
+    """A page to signup new users."""
 
     def get(self, request):
-        form = CreateSingleUserForm()
+        """Render the page."""
+        example_input_csv = (
+            "username,usergroups\n"
+            "ExampleName1,marker\n"
+            "ExampleName2,lead_marker\n"
+            "ExampleName14,scanner\n"
+            'ExampleName18,"marker,scanner"\n'
+            "exampleName37,manager"
+        )
         context = {
-            "form": form,
-            "current_page": "single",
-            "link_expiry_period": self.link_expiry_period,
+            "multiple_user_form": CreateMultiUsersForm(),
+            "single_user_form": CreateSingleUserForm(),
+            "example_input_csv": example_input_csv,
+            "valid_user_groups": AuthService.plom_user_groups_list,
+            "link_expiry_period": humanize_seconds(settings.PASSWORD_RESET_TIMEOUT),
         }
-        return render(request, self.template_name, context)
+        return render(request, "Authentication/signup_users.html", context)
 
 
 # we apply the decorator to the dispatch method, so it applies to all functions
@@ -98,20 +107,6 @@ class SingleUserCreation(AdminOrManagerRequiredView):
         return render(
             request, "Authentication/password_reset_link_modal_fragment.html", context
         )
-
-
-class MultiUsersSignUp(AdminOrManagerRequiredView):
-    template_name = "Authentication/signup_multiple_users.html"
-    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
-
-    def get(self, request):
-        form = CreateMultiUsersForm()
-        context = {
-            "form": form,
-            "current_page": "multiple",
-            "link_expiry_period": self.link_expiry_period,
-        }
-        return render(request, self.template_name, context)
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -177,31 +172,6 @@ class MultiUsersCreation(AdminOrManagerRequiredView):
         return render(
             request, "Authentication/password_reset_link_modal_fragment.html", context
         )
-
-
-class ImportUsers(AdminOrManagerRequiredView):
-    """Make many users from a formatted .csv file."""
-
-    template_name = "Authentication/signup_import_users.html"
-    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
-    example_csv = (
-        "username,usergroups\n"
-        "ExampleName1,marker\n"
-        "ExampleName2,lead_marker\n"
-        "ExampleName14,scanner\n"
-        'ExampleName18,"marker,scanner"\n'
-        "exampleName37,manager"
-    )
-    valid_user_groups = AuthService.plom_user_groups_list
-
-    def get(self, request):
-        context = {
-            "current_page": "import",
-            "link_expiry_period": self.link_expiry_period,
-            "example_input_csv": self.example_csv,
-            "valid_user_groups": self.valid_user_groups,
-        }
-        return render(request, self.template_name, context)
 
 
 @method_decorator(never_cache, name="dispatch")
