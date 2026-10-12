@@ -13,9 +13,11 @@
 
 import hashlib
 import logging
+import os
 import pathlib
 import random
 import tempfile
+import threading
 import time
 from datetime import datetime
 from importlib.resources.abc import Traversable
@@ -654,9 +656,11 @@ class ScanService:
         qr_data = cls.parse_qr_codes(image_path)
 
         if _debug_be_flaky:
-            log.debug("Debug, random sleep reading QRs from image path %s", image_path)
-            time.sleep(random.random() * 4)
-            if random.random() < 0.04:
+            log.debug(
+                "Huey debug, random sleep reading QRs from image path %s", image_path
+            )
+            time.sleep(random.random() * 2)
+            if random.random() < 0.01:
                 raise RuntimeError("Flaky simulated QR read failure")
 
         rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(qr_data)
@@ -1887,6 +1891,17 @@ def huey_read_qr_codes_chore(
     """
     assert task is not None
 
+    pid = os.getpid()
+    tid = threading.get_ident()
+    tname = threading.current_thread().name
+    log.debug(
+        "Huey worker pid=%d thread %s (%d): task %s: reading QR codes",
+        pid,
+        tname,
+        tid,
+        task.id,
+    )
+
     start_time = time.time()
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
@@ -1983,7 +1998,17 @@ def huey_child_get_page_images(
     from PIL import Image
 
     assert task is not None
-    log.debug("Huey debug, we are task %s with id %s", task, task.id)
+    pid = os.getpid()
+    tid = threading.get_ident()
+    tname = threading.current_thread().name
+    log.debug(
+        "Huey worker pid=%d thread %s (%d): task %s: splitting order list %s",
+        pid,
+        tname,
+        tid,
+        task.id,
+        order_list,
+    )
     # HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -1993,9 +2018,9 @@ def huey_child_get_page_images(
     with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
             if _debug_be_flaky:
-                log.debug("Huey debug, random sleep in task %s", task.id)
+                log.debug("Huey debug, random sleep page splitter: task %s", task.id)
                 time.sleep(random.random() * 4)
-                if random.random() < 0.04:
+                if random.random() < 0.001:
                     raise RuntimeError("Flaky simulated image split failure")
             basename = f"page_{bundle_obj.pk:03}_{order:05}"
             if bundle_obj.force_page_render:
