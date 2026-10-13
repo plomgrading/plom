@@ -6,6 +6,7 @@
 import csv
 import os
 from pathlib import Path
+from secrets import token_urlsafe
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
@@ -242,13 +243,20 @@ class AuthService:
         return user
 
     @classmethod
-    def create_users_from_csv(cls, f: Path | str | bytes) -> list[dict[str, str]]:
+    def create_users_from_csv(
+        cls, f: Path | str | bytes, *, set_random_password: bool = False
+    ) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.
 
         This is an atomic operation: either all users are created or all fail.
 
         Args:
             f: a path to the .csv file, or the bytes of a .csv file.
+
+        Keyword Args:
+            set_random_password: set a password for each created user and
+                activate their accounts.  If False (by default) password
+                reset links will be generated instead.
 
         Returns:
             A list of dicts containing information for each user, each entry
@@ -274,23 +282,36 @@ class AuthService:
                 f" it must contain: {required_fields}"
             )
 
+        # convert user list into kwargs for user creation function
+        # WET with create_user_and_add_to_groups(...)
+        user_kwargs = []
+        for user_dict in user_list:
+            kwarg_dict = {
+                "username": user_dict["username"],
+                "group_names": user_dict["usergroups"].split(","),
+            }
+            if set_random_password:
+                kwarg_dict.update({"password": token_urlsafe(40)})
+            user_kwargs.append(kwarg_dict)
+
         users_added = []
         # either all succeed or all fail
         with transaction.atomic():
-            for idx, user_dict in enumerate(user_list):
-                groups = user_dict["usergroups"].split(",")
+            for idx, user_kwarg_dict in enumerate(user_kwargs):
                 try:
-                    u, g = cls.create_user_and_add_to_groups(
-                        user_dict["username"], groups
-                    )
+                    u, g = cls.create_user_and_add_to_groups(**user_kwarg_dict)
                 except (ValueError, ObjectDoesNotExist, IntegrityError) as e:
                     raise type(e)(f"Error near row {idx + 1}: {e}")
-                user = User.objects.get(username=user_dict["username"])
+                user = User.objects.get(username=user_kwarg_dict["username"])
                 users_added.append(
                     {
                         "username": u,
                         "groups": g,
-                        "link": cls.generate_link(user),
+                        "link": (
+                            cls.generate_link(user)
+                            if not set_random_password
+                            else user_kwarg_dict["password"]
+                        ),
                     }
                 )
 

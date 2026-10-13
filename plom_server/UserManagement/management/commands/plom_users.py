@@ -24,10 +24,15 @@ class Command(BaseCommand):
 
         self.stdout.write(pformat(user_list, compact=True))
 
-    def handle_import(self, file_path: Path, *, set_password: bool = False) -> None:
+    def handle_import(
+        self, file_path: Path, *, set_random_password: bool = False
+    ) -> None:
         """Imports users from a csv file and display to stdout."""
         try:
-            new_user_list = AuthService.create_users_from_csv(file_path)
+            new_user_list = AuthService.create_users_from_csv(
+                file_path,
+                set_random_password=set_random_password,
+            )
         except (IntegrityError, ObjectDoesNotExist, KeyError) as e:
             raise CommandError(e)
 
@@ -90,6 +95,14 @@ class Command(BaseCommand):
                 Should contain fields "username", "usergroups".
             """,
         )
+        import_users.add_argument(
+            "--force-password",
+            action="store_true",
+            help="""
+                Activate created user accounts (with a randomly assigned
+                password).
+            """,
+        )
 
         sub.add_parser(
             "list",
@@ -101,7 +114,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["subcommand"] == "import":
-            self.handle_import(options["file"])
+            self.handle_import(
+                options["file"],
+                set_random_password=options["force_password"],
+            )
         elif options["subcommand"] == "create-password-reset-link":
             self.create_password_reset_link(options["uid"], options["port"] or "")
         elif options["subcommand"] == "list":
