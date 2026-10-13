@@ -129,7 +129,7 @@ class ScanBundleActions(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         try:
-            ScanService().remove_bundle_by_pk(bundle_id)
+            ScanService.remove_bundle_by_pk(bundle_id)
         except ObjectDoesNotExist:
             return _error_response(
                 f"No bundle id {bundle_id}",

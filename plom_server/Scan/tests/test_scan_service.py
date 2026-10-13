@@ -114,7 +114,7 @@ class ScanServiceTests(TestCase):
         bundle_path = pathlib.Path(bundle.pdf_file.path)
         self.assertTrue(bundle_path.exists())
         # now remove it using the scan services
-        ScanService().remove_bundle_by_pk(bundle.pk)
+        ScanService.remove_bundle_by_pk(bundle.pk)
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())

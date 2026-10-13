@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2026 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
 import logging
-from pathlib import Path
 import struct
 import subprocess
 import random
-from warnings import warn
 import uuid
+from pathlib import Path
+from warnings import warn
 
 import exif
 import pymupdf
@@ -457,15 +457,9 @@ def make_mucked_up_jpeg(f: Path, outname: Path) -> Path:
 
     angle = random.choice([90.5, 180.4, -90.3, -88, -1])
     msgs = [f"hard-rotate {angle}"]
-    try:
-        bilinear = PIL.Image.Resampling.BILINEAR
-    except AttributeError:
-        # Remove this workaround once minimum Pillow is 9.1.x
-        # pylint: disable=no-member
-        bilinear = PIL.Image.BILINEAR  # type: ignore
     img = img.rotate(
         angle,
-        resample=bilinear,
+        resample=PIL.Image.Resampling.BILINEAR,
         expand=True,
         fillcolor=(128, 128, 128, 0),
     )
