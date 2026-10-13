@@ -1760,6 +1760,18 @@ def huey_parent_split_bundle_chore(
     """
     assert task is not None
 
+    pid = os.getpid()
+    tid = threading.get_ident()
+    tname = threading.current_thread().name
+    log.debug(
+        "Huey worker pid=%d thread %s (%d): task %s: split bundle %d into page images",
+        pid,
+        tname,
+        tid,
+        task.id,
+        bundle_pk,
+    )
+
     start_time = time.time()
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
     bundle_length = bundle_obj.number_of_pages
