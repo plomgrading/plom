@@ -417,3 +417,26 @@ def on_huey_task_interrupted(signal, task: huey.api.Task):
             msg += f" (prev: {task_obj.message})"
         task_obj.message = msg
         task_obj.save()
+
+
+@main_queue.signal(huey.signals.SIGNAL_TIMEOUT)
+def on_huey_parent_task_timeout(signal, task: huey.api.Task):
+    log.error(f"Timeout for {task.id} - {task.name} {task.args}")
+
+    # Note: using filter except of a exception on DoesNotExist because I think
+    # the exception handling was rewinding some atomic transactions
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
+        log.error(
+            f"Task {task.id} {task.name} with args {task.args}"
+            " does not have a HueyTaskTracker in the database."
+        )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
+        msg = "Huey task timed out."
+        if task_obj.message:
+            msg += f" (prev: {task_obj.message})"
+        task_obj.message = msg
+        task_obj.save()
