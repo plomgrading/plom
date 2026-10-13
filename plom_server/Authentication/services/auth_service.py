@@ -255,7 +255,8 @@ class AuthService:
 
         Keyword Args:
             set_random_password: set a password for each created user and
-                activate their accounts.
+                activate their accounts.  If False (by default) password
+                reset links will be generated instead.
 
         Returns:
             A list of dicts containing information for each user, each entry
