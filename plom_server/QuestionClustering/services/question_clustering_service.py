@@ -2,6 +2,7 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2026 Colin B. Macdonald
 # Copyright (C) 2026 Deep Shah
+# Copyright (C) 2026 Aidan Murphy
 
 from collections import defaultdict
 from importlib import resources
@@ -1706,7 +1707,7 @@ class QuestionClusteringService:
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_cluster_single_qv(
     question_idx: int,
     version: int,

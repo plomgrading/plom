@@ -1713,7 +1713,7 @@ class ScanService:
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_split_bundle_chore(
     bundle_pk: int,
     *,
@@ -1877,7 +1877,7 @@ def huey_split_bundle_chore(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_read_qr_codes_chore(
     bundle_pk: int,
     *,

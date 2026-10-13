@@ -362,7 +362,7 @@ else:
 # Huey handles background tasks/processes which we call "chores".
 # PLOM_HUEY_WORKERS are low-level jobs such as extracting pages from
 # a bundle, reading the QR codes, and building versioned PDF files.
-_huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
+_num_huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
 
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
@@ -376,7 +376,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": _huey_workers,
+                "workers": _num_huey_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
@@ -389,6 +389,11 @@ DJANGO_HUEY = {
         },
     },
 }
+
+# This var is used as the default timeout for many individual asynchronous
+# huey jobs. A default timeout (seemingly) isn't a standard huey feature,
+# so we copy this variable manually into each "chore" definition.
+PLOM_HUEY_TIMEOUT = int(os.environ.get("PLOM_HUEY_TIMEOUT", 60 * 60))
 
 
 # DRF authentication and permissions

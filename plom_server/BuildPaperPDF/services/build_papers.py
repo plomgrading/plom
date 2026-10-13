@@ -47,7 +47,7 @@ log = logging.getLogger(__name__)
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_build_single_paper(
     papernum: int,
     spec: dict,
