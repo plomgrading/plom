@@ -105,7 +105,7 @@ class SingleUserCreation(AdminOrManagerRequiredView):
         ]
         context.update({"links": userlist})
         return render(
-            request, "Authentication/password_reset_link_modal_fragment.html", context
+            request, "Authentication/password_reset_link_fragment.html", context
         )
 
 
@@ -170,7 +170,7 @@ class MultiUsersCreation(AdminOrManagerRequiredView):
             }
         )
         return render(
-            request, "Authentication/password_reset_link_modal_fragment.html", context
+            request, "Authentication/password_reset_link_fragment.html", context
         )
 
 
@@ -227,5 +227,5 @@ class ImportUsersCreation(AdminOrManagerRequiredView):
         }
 
         return render(
-            request, "Authentication/password_reset_link_modal_fragment.html", context
+            request, "Authentication/password_reset_link_fragment.html", context
         )
