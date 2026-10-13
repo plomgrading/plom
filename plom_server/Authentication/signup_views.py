@@ -59,6 +59,12 @@ class UserSignUp(AdminOrManagerRequiredView):
         return render(request, "Authentication/signup_users.html", context)
 
 
+# This view is designed to present sensitive information.
+# It is important that any response rendering it uses https
+# response directives indicating that this template shouldn't
+# persist client side (via caching, or other methods).
+# As of 2026-10-11 Django offers a @never_cache decorator:
+# https://docs.djangoproject.com/en/6.1/topics/http/decorators/#django.views.decorators.cache.never_cache
 # we apply the decorator to the dispatch method, so it applies to all functions
 # in this class view.
 # https://docs.djangoproject.com/en/6.1/topics/class-based-views/intro/#decorating-the-class
@@ -109,6 +115,7 @@ class SingleUserCreation(AdminOrManagerRequiredView):
         )
 
 
+# sensitive info, don't cache
 @method_decorator(never_cache, name="dispatch")
 class MultiUsersCreation(AdminOrManagerRequiredView):
     """Create multiple users simultaneously.
@@ -174,6 +181,7 @@ class MultiUsersCreation(AdminOrManagerRequiredView):
         )
 
 
+# sensitive info, don't cache
 @method_decorator(never_cache, name="dispatch")
 class ImportUsersCreation(AdminOrManagerRequiredView):
     """Create users via import.

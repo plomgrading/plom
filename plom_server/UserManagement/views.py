@@ -135,7 +135,7 @@ class UserToggleLeadMarker(ManagerRequiredView):
         return HttpResponseClientRefresh()
 
 
-# https://docs.djangoproject.com/en/6.1/topics/class-based-views/intro/#decorating-the-class
+# sensitive info, don't cache
 @method_decorator(never_cache, name="dispatch")
 class PasswordResetPage(ManagerRequiredView):
     """View for displaying the password reset page."""
