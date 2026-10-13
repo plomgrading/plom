@@ -393,6 +393,8 @@ DJANGO_HUEY = {
 # This var is used as the default timeout for many individual asynchronous
 # huey jobs. A default timeout (seemingly) isn't a standard huey feature,
 # so we copy this variable manually into each "chore" definition.
+
+# This var doesn't affect thread or greenlet workers, only process workers
 PLOM_HUEY_TIMEOUT = int(os.environ.get("PLOM_HUEY_TIMEOUT", 60 * 60))
 
 
