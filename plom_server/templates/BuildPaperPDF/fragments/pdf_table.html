@@ -22,30 +22,34 @@
     <div>
         <a class="btn btn-primary {% if papers_built %}disabled{% endif %}"
            href="{% url 'configure_prenaming' %}">Adjust prenaming position</a>
-        <a class="btn btn-primary"
-           hx-post="{% url 'start_all_PDFs' %}"
-           hx-target="#pdf_table">Build All PDFs</a>
+        <button type="button"
+                class="btn btn-primary"
+                hx-post="{% url 'start_all_PDFs' %}"
+                hx-target="#pdf_table">Build All PDFs</button>
         {% if pdf_errors %}
-            <a class="btn btn-warning"
-               hx-post="{% url 'retry_all_PDFs' %}"
-               hx-target="#pdf_table">Retry All</a>
+            <button class="btn btn-warning"
+                    hx-post="{% url 'retry_all_PDFs' %}"
+                    hx-target="#pdf_table"
+                    type="button">Retry All</button>
         {% endif %}
-        <a class="btn btn-danger"
-           hx-post="{% url 'cancel_all_PDFs' %}"
-           hx-target="#pdf_table">Cancel All</a>
-        <a class="btn btn-danger"
-           data-bs-toggle="modal"
-           data-bs-target="#deleteBtnModal">Delete All PDFs</a>
+        <button type="button"
+                class="btn btn-danger"
+                hx-post="{% url 'cancel_all_PDFs' %}"
+                hx-target="#pdf_table">Cancel All</button>
+        <button type="button"
+                class="btn btn-danger"
+                data-bs-toggle="modal"
+                data-bs-target="#deleteBtnModal">Delete All PDFs</button>
         {% if zip_enabled %}
             <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
         {% else %}
-            <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
+            <button class="btn btn-warning" disabled type="button">Save as zip file (once build complete)</button>
         {% endif %}
     </div>
     <p class="mb-1">{{ message }}</p>
 </div>
 {% comment %}
-<a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a>
+<button type="button" class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a>
 {% endcomment %}
 <table class="table table-striped"
        {% if poll %} hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 0.5s" {% endif %}>
@@ -81,9 +85,10 @@
                 </td>
                 <td>
                     {% if not task.obsolete %}
-                        <a class="btn btn-warning"
-                           hx-post="{% url 'start_one_PDF' task.paper_number %}"
-                           hx-target="#pdf_table">Retry</a>
+                        <button type="button"
+                                class="btn btn-warning"
+                                hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                                hx-target="#pdf_table">Retry</button>
                     {% endif %}
                 </td>
             {% elif task.status == "Queued" or ask.status == "Starting" %}
@@ -100,9 +105,10 @@
             {% else %}
                 <td>{{ task.status }}</td>
                 <td>
-                    <a class="btn btn-primary"
-                       hx-post="{% url 'start_one_PDF' task.paper_number %}"
-                       hx-target="#pdf_table">Start</a>
+                    <button type="button"
+                            class="btn btn-primary"
+                            hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                            hx-target="#pdf_table">Start</button>
                 </td>
             {% endif %}
         </tr>

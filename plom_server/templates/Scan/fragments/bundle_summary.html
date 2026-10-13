@@ -1,4 +1,4 @@
-<!--
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
@@ -6,7 +6,7 @@
     Copyright (C) 2024 Winnie Cheung
     Copyright (C) 2025 Philip D. Loewen
     Copyright (C) 2025-2026 Aidan Murphy
--->
+{% endcomment %}
 <div class="card mt-2">
     <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
     <div class="card-body pb-0"
@@ -46,15 +46,17 @@
                 {% if not is_pushed and has_page_images and finished_reading_qr and is_perfect %}
                     &nbsp;
                     {% if n_collisions %}
-                        <button class="btn btn-danger disabled" disabled>Push</button>
+                        <button type="button" class="btn btn-danger disabled" disabled>Push</button>
                     {% elif n_incomplete == 0 %}
-                        <button class="btn btn-success"
+                        <button type="button"
+                                class="btn btn-success"
                                 hx-post="{% url 'scan_push_all' bundle_id %}"
                                 hx-target-error="#push_error_msgs"
                                 hx-indicator="#push_indicator"
                                 hx-disabled-elt="this">Push</button>
                     {% else %}
-                        <button class="btn btn-warning"
+                        <button type="button"
+                                class="btn btn-warning"
                                 hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
                                 hx-post="{% url 'scan_push_all' bundle_id %}"
                                 hx-target-error="#push_error_msgs"
@@ -158,9 +160,10 @@
                                 Known/Extra pages.
                             </li>
                         </ul>
-                        <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
-                           hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
-                           hx-confirm="Are you sure?">Remove bundle</a>
+                        <button type="button"
+                                class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+                                hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
+                                hx-confirm="Are you sure?">Remove bundle</button>
                     </details>
                 </div>
             {% endif %}
@@ -230,7 +233,9 @@
             {% endif %}
             <p>
                 Bundle <q>{{ slug }}</q> contains {{ total_pages }} page images ...
-                <button class="btn btn-light" x-on:click="show_summary =! show_summary">
+                <button type="button"
+                        class="btn btn-light"
+                        x-on:click="show_summary =! show_summary">
                     <i class="bi bi-chevron-down" x-show="!show_summary"></i>
                     <i class="bi bi-chevron-up" x-show="show_summary"></i>
                 </button>
@@ -259,6 +264,7 @@
                     {% for paper_dict in papers_info_list %}
                         {% if paper_dict.paper_number in incomplete_papers_list %}
                             <button id="paper-btn-{{ paper_dict.paper_number }}"
+                                    type="button"
                                     class="btn m-1 btn-warning"
                                     data-bs-toggle="tooltip"
                                     data-bs-placement="top"
@@ -267,7 +273,8 @@
                                 paper {{ paper_dict.paper_number }}
                             </button>
                         {% else %}
-                            <button class="btn m-1 btn-success"
+                            <button type="button"
+                                    class="btn m-1 btn-success"
                                     onclick="clickThumbnail({{ paper_dict.first_page_order }})">
                                 paper {{ paper_dict.paper_number }}
                             </button>

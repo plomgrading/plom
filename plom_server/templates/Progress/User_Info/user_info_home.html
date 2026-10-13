@@ -52,8 +52,12 @@
                 <button type="submit" class="btn btn-plain">Unset quota for all markers</button>
             </form>
             <a class="btn btn-plain ms-4" href="{% url 'users' %}">User account management</a>
-            <button hx-post="{% url 'enableMarkers' %}" class="btn btn-outline-success">Enable all markers</button>
-            <button hx-post="{% url 'disableMarkers' %}" class="btn btn-outline-plain">Disable all markers</button>
+            <button hx-post="{% url 'enableMarkers' %}"
+                    class="btn btn-outline-success"
+                    type="button">Enable all markers</button>
+            <button hx-post="{% url 'disableMarkers' %}"
+                    class="btn btn-outline-plain"
+                    type="button">Disable all markers</button>
         </div>
         <div class="card-body">
             <div>
@@ -152,10 +156,12 @@
                         <td>
                             {% if username in lead_marker_usernames %}
                                 <button hx-post="{% url 'toggleLeadMarker' username %}"
-                                        class="btn btn-secondary btn-sm">demote</button>
+                                        class="btn btn-secondary btn-sm"
+                                        type="button">demote</button>
                             {% else %}
                                 <button hx-post="{% url 'toggleLeadMarker' username %}"
-                                        class="btn btn-plain btn-sm">promote</button>
+                                        class="btn btn-plain btn-sm"
+                                        type="button">promote</button>
                             {% endif %}
                         </td>
                     </tr>

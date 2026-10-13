@@ -15,11 +15,14 @@
     <div class="card w-75">
         <div class="card-title">
             <button hx-post="{% url 'build_all_soln' %}"
-                    href=""
-                    class="btn btn-success m-2">Build all solutions (incl. outdated)</button>
+                    class="btn btn-success m-2"
+                    type="button">Build all solutions (incl. outdated)</button>
             <button hx-delete="{% url 'build_soln_cancel_queued' %}"
-                    class="btn btn-warning m-2">Cancel queued</button>
-            <button hx-delete="{% url 'build_all_soln' %}" class="btn btn-danger m-2">Delete all</button>
+                    class="btn btn-warning m-2"
+                    type="button">Cancel queued</button>
+            <button hx-delete="{% url 'build_all_soln' %}"
+                    class="btn btn-danger m-2"
+                    type="button">Delete all</button>
         </div>
         <div class="card-body">
             <ul>
@@ -123,24 +126,27 @@
                                            target="_blank"
                                            class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
                                         <button hx-put="{% url 'build_one_soln' row.paper_num %}"
-                                                class="btn btn-warning">
-                                            <i class="bi bi-exclamation-diamond-fill">
-                                                re-build soln
-                                            </i>
+                                                class="btn btn-warning"
+                                                type="button">
+                                            <i class="bi bi-exclamation-diamond-fill"></i>
+                                            re-build soln
                                         </button>
                                         <button hx-delete="{% url 'build_one_soln' row.paper_num %}"
-                                                class="btn btn-success">delete</button>
+                                                class="btn btn-success"
+                                                type="button">delete</button>
                                     {% else %}
                                         <a href="{% url 'build_one_soln' row.paper_num %}"
                                            target="_blank"
                                            class="btn btn-success">view</a>
                                         <button hx-delete="{% url 'build_one_soln' row.paper_num %}"
-                                                class="btn btn-warning">delete</button>
+                                                class="btn btn-warning"
+                                                type="button">delete</button>
                                     {% endif %}
                                 {% else %}
                                     {% if row.identified and row.build_soln_status != "Starting" and row.build_soln_status != "Queued" and row.build_soln_status != "Running" %}
                                         <button hx-post="{% url 'build_one_soln' row.paper_num %}"
-                                                class="btn btn-success">build soln</button>
+                                                class="btn btn-success"
+                                                type="button">build soln</button>
                                     {% else %}
                                         <!-- n/a -->
                                     {% endif %}

@@ -33,14 +33,17 @@
                         </li>
                     </ul>
                     <p>
-                        <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
+                        <button class="btn btn-primary m-2"
+                                @click="downloadtoml(the_toml)"
+                                type="button">
                             download toml
-                            <icon class="bi bi-file-earmark-arrow-down"></icon>
+                            <i class="bi bi-file-earmark-arrow-down"></i>
                         </button>
                         <button class="btn btn-primary m-2"
-                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
+                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')"
+                                type="button">
                             copy to clipboard
-                            <icon class="bi bi-clipboard2-plus"></icon>
+                            <i class="bi bi-clipboard2-plus"></i>
                         </button>
                         <a class="btn btn-primary m-2"
                            href="{% url 'soln_spec' %}">Return to solution specification page</a>

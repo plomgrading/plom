@@ -1,12 +1,12 @@
-<!--
+{% extends "base/base.html" %}
+{% comment %}
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2023-2026 Colin B. Macdonald
     Copyright (C) 2024 Aidan Murphy
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2025 Deep Shah
--->
-{% extends "base/base.html" %}
+{% endcomment %}
 {% load static %}
 {% load humanize %}
 {% block title %}
@@ -24,13 +24,14 @@
                     <h5 class="card-header d-flex justify-content-between align-items-center">
                         Rubric {{ latest_rubric.rid }},
                         revision {{ latest_rubric.revision }}.{{ latest_rubric.subrevision }}
-                        <a class="btn btn-outline-primary float-end"
-                           data-bs-toggle="modal"
-                           data-bs-target="#editModal"
-                           onclick="populateFields()">
+                        <button type="button"
+                                class="btn btn-outline-primary float-end"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editModal"
+                                onclick="populateFields()">
                             <i class="bi bi-pencil-square"></i>
                             Edit
-                        </a>
+                        </button>
                     </h5>
                     <div class="card-body">
                         <table class="table">

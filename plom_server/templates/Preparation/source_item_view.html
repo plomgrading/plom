@@ -29,11 +29,12 @@
                        target="_blank">Mock</a>
                 </div>
                 <div class="px-1 col">
-                    <a class="btn btn-danger"
-                       hx-delete="{% url 'prep_source_upload' src.version %}"
-                       hx-confirm="Are you sure?"
-                       hx-target="#card_ver{{ src.version }}"
-                       hx-target-error="#error_msg_ver{{ src.version }}">Delete</a>
+                    <button type="button"
+                            class="btn btn-danger"
+                            hx-delete="{% url 'prep_source_upload' src.version %}"
+                            hx-confirm="Are you sure?"
+                            hx-target="#card_ver{{ src.version }}"
+                            hx-target-error="#error_msg_ver{{ src.version }}">Delete</button>
                 </div>
             </div>
         {% else %}

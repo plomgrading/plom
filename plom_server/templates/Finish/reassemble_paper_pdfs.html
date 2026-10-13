@@ -18,12 +18,14 @@
     <div class="card w-75">
         <div class="card-title">
             <button hx-post="{% url 'reassemble_all_pdfs' %}"
-                    href=""
-                    class="btn btn-primary m-2">Reassemble all (incl. outdated)</button>
+                    class="btn btn-primary m-2"
+                    type="button">Reassemble all (incl. outdated)</button>
             <button hx-delete="{% url 'reassemble_cancel_queued' %}"
-                    class="btn btn-secondary m-2">Cancel queued</button>
+                    class="btn btn-secondary m-2"
+                    type="button">Cancel queued</button>
             <button hx-delete="{% url 'reassemble_all_pdfs' %}"
-                    class="btn btn-outline-danger m-2">Delete all</button>
+                    class="btn btn-outline-danger m-2"
+                    type="button">Delete all</button>
         </div>
         <div class="card-body">
             {% if partially_scanned_papers_abbrev_list %}
@@ -168,13 +170,11 @@ document.getElementById('nonreassembledPapersPie'),
                                x-model="last"
                                id="last-paper">
                     </div>
-                    {% if n_complete %}
-                        <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper=' + last"
-                           class="btn btn-primary">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a>
-                    {% else %}
-                        <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper=' + last"
-                           class="btn btn-warning-outline disabled">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a> warning - no papers reassembled
-                    {% endif %}
+                    <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper=' + last"
+                       class="btn btn-primary {% if not n_complete %}disabled{% endif %}">
+                        Download zip of reassembled papers from
+                        <span x-text="first"></span> to <span x-text="last"></span>
+                    </a>
                 </div>
             </details>
         </div>
@@ -255,10 +255,12 @@ document.getElementById('nonreassembledPapersPie'),
                                         <a href="{% url 'get_student_report' row.paper_num %}"
                                            target="_blank"
                                            class="btn btn-secondary">view report</a>
-                                        <button hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
-                                                class="btn btn-danger">delete</button>
-                                        <button hx-put="{% url 'reassemble_one_paper' row.paper_num %}"
-                                                class="btn btn-primary">delete and reassemble</button>
+                                        <button class="btn btn-danger"
+                                                hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
+                                                type="button">delete</button>
+                                        <button class="btn btn-primary"
+                                                hx-put="{% url 'reassemble_one_paper' row.paper_num %}"
+                                                type="button">delete and reassemble</button>
                                     {% else %}
                                         <a href="{% url 'reassemble_one_paper' row.paper_num %}"
                                            target="_blank"
@@ -266,13 +268,15 @@ document.getElementById('nonreassembledPapersPie'),
                                         <a href="{% url 'get_student_report' row.paper_num %}"
                                            target="_blank"
                                            class="btn btn-primary">view report</a>
-                                        <button hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
-                                                class="btn btn-danger">delete</button>
+                                        <button class="btn btn-danger"
+                                                hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
+                                                type="button">delete</button>
                                     {% endif %}
                                 {% else %}
                                     {% if row.identified and row.marked and row.reassembled_status != "Starting" and row.reassembled_status != "Queued" and row.reassembled_status != "Running" %}
-                                        <button hx-post="{% url 'reassemble_one_paper' row.paper_num %}"
-                                                class="btn btn-primary">reassemble</button>
+                                        <button class="btn btn-primary"
+                                                hx-post="{% url 'reassemble_one_paper' row.paper_num %}"
+                                                type="button">reassemble</button>
                                     {% else %}
                                         <!-- n/a -->
                                     {% endif %}
