@@ -52,16 +52,16 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css",
-                "hash": "sha256-AEMichyFVzMXWbxt2qy7aJsPBxXWiK7IK9BW0tW1zDs=",
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.css",
+                "hash": "sha256-YNpYiT7G8W7avaxPeaEN1zFRAQQHeC6QI2KG2w7nGZI=",
             },
             {
-                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff",
-                "hash": "sha256-9VUTt7WRy4SjuH/w406iTUgx1v7cIuVLkRymS1tUShU=",
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/fonts/bootstrap-icons.woff",
+                "hash": "sha256-JJKeikTaAnWI+DPU6CJA7nNL1lv5YrCLBUWvWKnOgPo=",
             },
             {
-                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff2",
-                "hash": "sha256-bHVxA2ShylYEJncW9tKJl7JjGf2weM8R4LQqtm/y6mE=",
+                "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/fonts/bootstrap-icons.woff2",
+                "hash": "sha256-K3aJdG+H4L7q4lM4vAId0lFcL28APz09Bk2HjTgLIVA=",
             },
         ],
     },
@@ -70,8 +70,8 @@ table = [
         "license": "0BSD",
         "files": [
             {
-                "url": "https://unpkg.com/htmx.org@2.0.10/dist/htmx.js",
-                "hash": "sha256-c5SYIE7T1Dejf9XKPRaxvaFOO5M1PqdEDH8Sm9C/k9U=",
+                "url": "https://unpkg.com/htmx.org@2.0.11/dist/htmx.js",
+                "hash": "sha256-MGEsp+PTuvQHSB8XmCgcRIHcuTOQqXItMozgcpAlBCY=",
             },
         ],
     },
@@ -90,9 +90,9 @@ table = [
         "license": "MIT",
         "files": [
             {
-                "url": "https://unpkg.com/alpinejs@3.15.12/dist/cdn.min.js",
+                "url": "https://unpkg.com/alpinejs@3.17.4/dist/cdn.min.js",
                 "filename": "alpine.js",
-                "hash": "sha256-V7N9fK6aJ9ll/a5K3MhEJF39xAfmVa7oXc//OggDaj8=",
+                "hash": "sha256-IyUZOUxsj9um82Kx2doWEG21E82/iZAR8A2qtAUd8xw=",
             },
         ],
     },
