@@ -23,6 +23,8 @@ from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 
 from plom.common.misc_utils import humanize_seconds
 from plom_server.Authentication.services import AuthService
@@ -133,6 +135,8 @@ class UserToggleLeadMarker(ManagerRequiredView):
         return HttpResponseClientRefresh()
 
 
+# sensitive info, don't cache
+@method_decorator(never_cache, name="dispatch")
 class PasswordResetPage(ManagerRequiredView):
     """View for displaying the password reset page."""
 

@@ -1,0 +1,190 @@
+{% extends "base/base.html" %}
+{% comment %}
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Brennen Chiu
+    Copyright (C) 2023-2026 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
+    Copyright (C) 2024, 2026 Aidan Murphy
+{% endcomment %}
+{% block title %}
+    Create users
+{% endblock title %}
+{% block page_heading %}
+    Create users
+{% endblock page_heading %}
+{% block main_content %}
+    <style>
+        table {
+        counter-reset: tableCount;
+        }
+        .counterCell:before {
+        content: counter(tableCount);
+        counter-increment: tableCount;
+        }
+        th,
+        td {
+        vertical-align: middle;
+        }
+    </style>
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-underline gap-4" role="tablist" id="pills-tab">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active"
+                            id="single-user-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#single-user-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="single-user-content"
+                            aria-selected="true">Single User</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="multiple-user-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#multiple-user-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="multiple-user-content"
+                            aria-selected="false">Multiple Users</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="import-user-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#import-user-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="import-user-content"
+                            aria-selected="false">Import Users from File</button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane show active"
+                     id="single-user-content"
+                     role="tabpanel"
+                     aria-labelledby="single-user-content"
+                     tabindex="0">
+                    <form hx-post="{% url 'create_single_user' %}"
+                          hx-target="#passwordTarget"
+                          hx-target-error="#passwordTarget"
+                          hx-swap="innerHTML">
+                        {% csrf_token %}
+                        <div>
+                            {{ single_user_form.user_types.label }}
+                            {{ single_user_form.user_types }}
+                            <p>
+                                <small class="text-muted">
+                                    (Some group choices imply others; read more about
+                                    <a href="https://plom.readthedocs.io/en/latest/marking.html#permissions-and-lead-markers">user groups in Plom&apos;s documentation</a>.)
+                                </small>
+                            </p>
+                        </div>
+                        <p class="mt-3">
+                            {{ single_user_form.username.label }}
+                            {{ single_user_form.username }}
+                            <button class="btn btn-secondary btn-sm align-baseline"
+                                    type="button"
+                                    id="generate-username"
+                                    onclick="insertRandomUsername('id_username')">Autogenerate</button>
+                        </p>
+                        <p>
+                            {{ single_user_form.email.label }}
+                            {{ single_user_form.email }}
+                            (as yet unused &mdash; might use in the future)
+                        </p>
+                        <p>
+                            <input class="btn btn-primary" type="submit" value="Create User">
+                        </p>
+                    </form>
+                </div>
+                <div class="tab-pane"
+                     id="multiple-user-content"
+                     role="tabpanel"
+                     aria-labelledby="multiple-user-content"
+                     tabindex="0">
+                    <form hx-post="{% url 'create_multiple_users' %}"
+                          hx-target="#passwordTarget"
+                          hx-target-error="#passwordTarget"
+                          hx-swap="innerHTML">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ multiple_user_form.user_types.label }}
+                            {{ multiple_user_form.user_types }}
+                        </div>
+                        {{ multiple_user_form.basic_or_funky_username.label }}
+                        {{ multiple_user_form.basic_or_funky_username }}
+                        <p class="mt-3 mb-1">How many users would you like to create?</p>
+                        {{ multiple_user_form.num_users }}
+                        <p class="mt-3">
+                            <input class="btn btn-primary" type="submit" value="Create">
+                        </p>
+                    </form>
+                </div>
+                <div class="tab-pane"
+                     id="import-user-content"
+                     role="tabpanel"
+                     aria-labelledby="import-user-content"
+                     tabindex="0">
+                    <p>
+                        Create many users via a <tt>.csv</tt> file.
+                    </p>
+                    <div class="m-2">
+                        <details>
+                            <summary>File requirements</summary>
+                            A valid <tt>.csv</tt> file must contain 2 columns:
+                            <ul>
+                                <!-- WET - see AuthService.create_users_from_csv -->
+                                <li>'username'</li>
+                                <li>'usergroups'. This can be one or more of:</li>
+                                <ul>
+                                    {% for group in valid_user_groups %}<li>{{ group }}</li>{% endfor %}
+                                </ul>
+                                each separated by a comma.
+                            </ul>
+                            <p>
+                                Here is a template:
+                                <button type="button"
+                                        class="btn btn-link"
+                                        onclick="downloadCSV(this)"
+                                        id="download-template"
+                                        data-downloadText='{{ example_input_csv }}'
+                                        data-filename="user_import_template.csv">
+                                    user_import_template.csv<i class="bi bi-download"></i>
+                                </button>
+                            </p>
+                        </details>
+                    </div>
+                    <form id="myform"
+                          hx-post="{% url 'create_import_users' %}"
+                          hx-target="#passwordTarget"
+                          hx-target-error="#passwordTarget"
+                          hx-swap="innerHTML"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <input class="form-control form-control-lg"
+                                   type="file"
+                                   name=".csv"
+                                   accept=".csv"
+                                   required
+                                   id="csv_file">
+                        </div>
+                        <p>
+                            <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+            <p>
+                <strong>Please note:</strong> user links will <em>expire</em>
+                in {{ link_expiry_period }}.
+            </p>
+        </div>
+    </div>
+    <div id="passwordTarget"></div>
+    <br />
+{% endblock main_content %}

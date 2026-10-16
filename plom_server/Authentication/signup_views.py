@@ -9,10 +9,11 @@ import csv
 from io import StringIO
 
 from django.conf import settings
-from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 
 from plom.common.misc_utils import humanize_seconds
 from plom_server.Base.base_group_views import AdminOrManagerRequiredView
@@ -35,29 +36,60 @@ def _common_make_csv_tsv(userlist: list[dict[str, str]]) -> tuple[str, str]:
     return (csv_string, tsv_string)
 
 
-class SingleUserSignUp(AdminOrManagerRequiredView):
-    template_name = "Authentication/signup_single_user.html"
-    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
+class UserSignUp(AdminOrManagerRequiredView):
+    """A page to signup new users."""
 
     def get(self, request):
-        form = CreateSingleUserForm()
+        """Render the page."""
+        example_input_csv = (
+            "username,usergroups\n"
+            "ExampleName1,marker\n"
+            "ExampleName2,lead_marker\n"
+            "ExampleName14,scanner\n"
+            'ExampleName18,"marker,scanner"\n'
+            "exampleName37,manager"
+        )
         context = {
-            "form": form,
-            "current_page": "single",
-            "link_expiry_period": self.link_expiry_period,
+            "multiple_user_form": CreateMultiUsersForm(),
+            "single_user_form": CreateSingleUserForm(),
+            "example_input_csv": example_input_csv,
+            "valid_user_groups": AuthService.plom_user_groups_list,
+            "link_expiry_period": humanize_seconds(settings.PASSWORD_RESET_TIMEOUT),
         }
-        return render(request, self.template_name, context)
+        return render(request, "Authentication/signup_users.html", context)
+
+
+# This view is designed to present sensitive information.
+# It is important that any response rendering it uses https
+# response directives indicating that this template shouldn't
+# persist client side (via caching, or other methods).
+# As of 2026-10-11 Django offers a @never_cache decorator:
+# https://docs.djangoproject.com/en/6.1/topics/http/decorators/#django.views.decorators.cache.never_cache
+# we apply the decorator to the dispatch method, so it applies to all functions
+# in this class view.
+# https://docs.djangoproject.com/en/6.1/topics/class-based-views/intro/#decorating-the-class
+@method_decorator(never_cache, name="dispatch")
+class SingleUserCreation(AdminOrManagerRequiredView):
+    """A view for handling single user creation.
+
+    This is separate from the rendering view because
+    we need to instruct the browser not to cache the response.
+    """
 
     def post(self, request):
         form = CreateSingleUserForm(request.POST)
         context = {
             "form": form,
             "current_page": "single",
-            "link_expiry_period": self.link_expiry_period,
+            "link_expiry_period": humanize_seconds(settings.PASSWORD_RESET_TIMEOUT),
         }
         if not form.is_valid():
-            context.update({"error": form.errors})
-            return render(request, self.template_name, context)
+            return render(
+                request,
+                "Authentication/password_reset_link_err.html",
+                {"error_html": str(form.errors)},
+                status=409,
+            )
 
         username = form.cleaned_data.get("username")
         user_email = form.cleaned_data.get("email")
@@ -78,32 +110,34 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
             }
         ]
         context.update({"links": userlist})
-        return render(request, self.template_name, context)
+        return render(
+            request, "Authentication/password_reset_link_fragment.html", context
+        )
 
 
-class MultiUsersSignUp(AdminOrManagerRequiredView):
-    template_name = "Authentication/signup_multiple_users.html"
-    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
+# sensitive info, don't cache
+@method_decorator(never_cache, name="dispatch")
+class MultiUsersCreation(AdminOrManagerRequiredView):
+    """Create multiple users simultaneously.
 
-    def get(self, request):
-        form = CreateMultiUsersForm()
-        context = {
-            "form": form,
-            "current_page": "multiple",
-            "link_expiry_period": self.link_expiry_period,
-        }
-        return render(request, self.template_name, context)
+    This is separate from the rendering view because
+    we need to instruct the browser not to cache the response.
+    """
 
     def post(self, request):
         form = CreateMultiUsersForm(request.POST)
         if not form.is_valid():
-            # yellow screen of death on dev, not sure on production
-            raise RuntimeError("Unexpectedly invalid form")
+            return render(
+                request,
+                "Authentication/password_reset_link_err.html",
+                {"error_html": str(form.errors)},
+                status=409,
+            )
 
         context = {
             "form": form,
             "current_page": "multiple",
-            "link_expiry_period": self.link_expiry_period,
+            "link_expiry_period": humanize_seconds(settings.PASSWORD_RESET_TIMEOUT),
         }
         num_users = form.cleaned_data.get("num_users")
         username_choices = form.cleaned_data.get("basic_or_funky_username")
@@ -118,7 +152,12 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
                 num_users, group_name=user_type
             )
         else:
-            raise RuntimeError("Tertium non datur: unexpected third choice!")
+            return render(
+                request,
+                "Authentication/password_reset_link_err.html",
+                {"error_html": "Tertium non datur: unexpected third choice!"},
+                status=400,
+            )
 
         _links_dict = AuthService().generate_password_reset_links_dict(
             request=request, username_list=[x[0] for x in users_and_groups]
@@ -137,72 +176,64 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
                 "csv": csv_string,
             }
         )
-        return render(request, self.template_name, context)
+        return render(
+            request, "Authentication/password_reset_link_fragment.html", context
+        )
 
 
-class ImportUsers(AdminOrManagerRequiredView):
-    """Make many users from a formatted .csv file."""
+# sensitive info, don't cache
+@method_decorator(never_cache, name="dispatch")
+class ImportUsersCreation(AdminOrManagerRequiredView):
+    """Create users via import.
 
-    template_name = "Authentication/signup_import_users.html"
-    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
-    example_csv = (
-        "username,usergroups\n"
-        "ExampleName1,marker\n"
-        "ExampleName2,lead_marker\n"
-        "ExampleName14,scanner\n"
-        'ExampleName18,"marker,scanner"\n'
-        "exampleName37,manager"
-    )
-    valid_user_groups = AuthService.plom_user_groups_list
-
-    def get(self, request):
-        context = {
-            "current_page": "import",
-            "link_expiry_period": self.link_expiry_period,
-            "example_input_csv": self.example_csv,
-            "valid_user_groups": self.valid_user_groups,
-        }
-        return render(request, self.template_name, context)
+    This is separate from the rendering view because
+    we need to instruct the browser not to cache the response.
+    """
 
     def post(self, request):
-        context = {
-            "current_page": "import",
-            "link_expiry_period": self.link_expiry_period,
-            "example_input_csv": self.example_csv,
-            "valid_user_groups": self.valid_user_groups,
-        }
-
         if request.FILES[".csv"].size > settings.MAX_FILE_SIZE:
-            messages.error(
+            msg = f"""
+                {request.FILES['.csv']} exceeds the
+                {settings.MAX_FILE_SIZE_DISPLAY} file size limit
+            """
+            return render(
                 request,
-                f"{request.FILES['.csv']} exceeds the "
-                f"{settings.MAX_FILE_SIZE_DISPLAY} file size limit",
+                "Authentication/password_reset_link_err.html",
+                {"error_html": msg},
+                status=400,
             )
-            return render(request, self.template_name, context)
         csv_bytes = request.FILES[".csv"].file.getvalue()
 
         try:
             userlist = AuthService.create_users_from_csv(csv_bytes)
         except (IntegrityError, KeyError, ValueError) as e:
-            messages.error(request, str(e))
-            return render(request, self.template_name, context)
-        except ObjectDoesNotExist as e:
-            messages.error(
+            return render(
                 request,
-                f"Problem with one or more rows in {request.FILES['.csv'].name}:\n"
-                f"{e}\n The valid usergroups are: {', '.join(self.valid_user_groups)}.",
+                "Authentication/password_reset_link_err.html",
+                {"error_html": e},
+                status=400,
             )
-            return render(request, self.template_name, context)
+        except ObjectDoesNotExist as e:
+            msg = f"""
+                Problem with one or more rows in {request.FILES['.csv'].name}:\n
+                {e}\n The valid usergroups are: {', '.join(AuthService.plom_user_groups_list)}.
+            """
+            return render(
+                request,
+                "Authentication/password_reset_link_err.html",
+                {"error_html": msg},
+                status=400,
+            )
 
         for u in userlist:
             u["groups"] = ", ".join(u["groups"])
         csv_string, tsv_string = _common_make_csv_tsv(userlist)
-        context.update(
-            {
-                "links": userlist,
-                "tsv": tsv_string,
-                "csv": csv_string,
-            }
-        )
+        context = {
+            "links": userlist,
+            "tsv": tsv_string,
+            "csv": csv_string,
+        }
 
-        return render(request, self.template_name, context)
+        return render(
+            request, "Authentication/password_reset_link_fragment.html", context
+        )

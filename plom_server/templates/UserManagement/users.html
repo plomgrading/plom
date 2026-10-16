@@ -19,7 +19,7 @@
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
-            <a class="btn btn-success" href="{% url 'signup_single' %}">Create new users</a>
+            <a class="btn btn-success" href="{% url 'signup_users' %}">Create new users</a>
         </div>
     </div>
     {% include "../base/alert_messages.html" with messages=messages %}
@@ -46,9 +46,14 @@
                                     <br />
                                     <small class="text-muted">change password</small>
                                 {% else %}
-                                    <a href="{% url 'reset_user_password' user_dict.user.username %}"
-                                       class="link-underline link-underline-opacity-25"
-                                       disabled>
+                                    {% comment %}
+                                       use htmx to prevent page refresh from provisioning another password reset link.
+                                    {% endcomment %}
+                                    <a href="#"
+                                       hx-get="{% url 'reset_user_password' user_dict.user.username %}"
+                                       hx-target="body"
+                                       hx-swap="outerHTML"
+                                       class="link-underline link-underline-opacity-25">
                                         <br />
                                         <small>change password</small></a>
                                 {% endif %}
