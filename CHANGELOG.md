@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+
+
+## Upcoming 0.22.4
+
+### Added
+
+### Removed
+
+### Changed
+
+### Fixed
 * "Prepare -> Reset" was broken by a recent change in how comments arestored in html files.
 
 
