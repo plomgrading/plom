@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import arrow
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
@@ -936,7 +937,7 @@ class ReassembleService:
 
 # The decorated function returns a ``huey.api.Result``
 # TODO: investigate "preserve=True" here if we want to wait on them?
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_reassemble_paper(
     paper_number: int,
     *,

@@ -9,6 +9,7 @@ from collections.abc import Iterator
 import logging
 from typing import Any
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 from django.db import transaction
@@ -27,7 +28,7 @@ log = logging.getLogger(__name__)
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_populate_whole_db(
     qv_map: dict[int, dict[int | str, int]],
     *,
@@ -94,7 +95,7 @@ def huey_populate_whole_db(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_evacuate_whole_db(
     *, tracker_pk: int, task: huey.api.Task | None = None
 ) -> bool:
@@ -132,7 +133,7 @@ def huey_evacuate_whole_db(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="chores", context=True)
+@db_task(queue="chores", context=True, timeout=settings.PLOM_HUEY_TIMEOUT)
 def huey_evacuate_then_populate_whole_db(
     qv_map: dict[int, dict[int | str, int]],
     *,
