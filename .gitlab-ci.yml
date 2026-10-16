@@ -823,7 +823,9 @@ minpy_mindeps_django_tests:
     - pip install pytest
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
-    - pip install -r requirements.txt.tempminima
+    # install min versions of all deps, including transitive floors, from pyproject.toml
+    - pip install uv
+    - uv pip install --resolution=lowest --python python3.11 -r pyproject.toml
     - pip install .
     # pip install plom-client
     # but we might need a more recent one if API recently changed
