@@ -14,8 +14,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Download Javascript dependencies and cache them somewhere in static."""
-        # TODO: hardcoding here not great: the first entry is the source code itself
-        # please don't write there (Issue #2932).
-        destdir = settings.STATICFILES_DIRS[1]
+        destdir = settings.PLOM_BASE_DIR / "plom_extra_static"
         Path(destdir).mkdir(exist_ok=True)
         download_javascript_and_css_to_static(destdir)

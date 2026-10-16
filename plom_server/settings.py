@@ -292,10 +292,7 @@ if __:
 # 2. "dynamic" static stuff written at runtime: extra pages, scrap pages, JS downloads, etc.
 # 3. optional system-wide dir (serve-only), e.g. distro-installed third-party JS/CSS;
 #    default FHS location, override with PLOM_SYSTEM_STATIC; skipped if absent.
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    PLOM_BASE_DIR / "plom_extra_static",
-]
+STATICFILES_DIRS = [BASE_DIR / "static", PLOM_BASE_DIR / "plom_extra_static"]
 _system_static = os.environ.get("PLOM_SYSTEM_STATIC", "/var/lib/plom/static")
 if Path(_system_static).exists():
     STATICFILES_DIRS.append(Path(_system_static))
