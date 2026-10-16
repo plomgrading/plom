@@ -767,6 +767,7 @@ newOS_newdeps_django_tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
     PIP_BREAK_SYSTEM_PACKAGES: 1
   stage: alt_build
+  needs: []
   image: ubuntu:24.04
   allow_failure: true
   before_script:
@@ -810,6 +811,7 @@ minpy_mindeps_django_tests:
     # ideally we'd test with OOTB pip so hide pip upgrade msg
     PIP_DISABLE_PIP_VERSION_CHECK: 1
   stage: alt_build
+  needs: []
   image: python:3.11
   before_script:
     # Note: Python image based on Debian (can install deps)
