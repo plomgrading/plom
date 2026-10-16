@@ -287,16 +287,18 @@ if __:
     WHITENOISE_STATIC_PREFIX = f"/{STATIC_URL}"  # no prefix
     STATIC_URL = f"{__}/{STATIC_URL}"
 
-# These are the "source" dirs for static files.  The first one might be readonly (Issue #2932)
-# Second one is a hack to get some oxymoronic "dynamic" static stuff: see extra pages, scrap
-# pages, javascript downloads, etc).
-STATICFILES_DIRS = [BASE_DIR / "static", PLOM_BASE_DIR / "plom_extra_static"]
-# Optional system-wide static dir (serve-only), default FHS, override with PLOM_SYSTEM_STATIC.
-_system_static = os.environ.get("PLOM_SYSTEM_STATIC")
-if _system_static:
+# These are the "source" dirs for static files, searched in order:
+# 1. shipped with the source code; probably readonly (Issue #2932)
+# 2. "dynamic" static stuff written at runtime: extra pages, scrap pages, JS downloads, etc.
+# 3. optional system-wide dir (serve-only), e.g. distro-installed third-party JS/CSS;
+#    default FHS location, override with PLOM_SYSTEM_STATIC; skipped if absent.
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+    PLOM_BASE_DIR / "plom_extra_static",
+]
+_system_static = os.environ.get("PLOM_SYSTEM_STATIC", "/var/lib/plom/static")
+if Path(_system_static).exists():
     STATICFILES_DIRS.append(Path(_system_static))
-elif Path("/var/lib/plom/static").exists():
-    STATICFILES_DIRS.append(Path("/var/lib/plom/static"))
 # Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)
