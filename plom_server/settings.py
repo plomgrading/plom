@@ -291,6 +291,12 @@ if __:
 # Second one is a hack to get some oxymoronic "dynamic" static stuff: see extra pages, scrap
 # pages, javascript downloads, etc).
 STATICFILES_DIRS = [BASE_DIR / "static", PLOM_BASE_DIR / "plom_extra_static"]
+# Optional system-wide static dir (serve-only), default FHS, override with PLOM_SYSTEM_STATIC.
+_system_static = os.environ.get("PLOM_SYSTEM_STATIC")
+if _system_static:
+    STATICFILES_DIRS.append(Path(_system_static))
+elif Path("/var/lib/plom/static").exists():
+    STATICFILES_DIRS.append(Path("/var/lib/plom/static"))
 # Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)
