@@ -2,6 +2,7 @@
 # Copyright (C) 2025-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
+import argparse
 import hashlib
 import re
 import shutil
@@ -293,4 +294,14 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
 
 
 if __name__ == "__main__":
-    download_javascript_and_css_to_static()
+    parser = argparse.ArgumentParser(
+        description="Download vendored Javascript/CSS for local static caching."
+    )
+    parser.add_argument(
+        "destdir",
+        nargs="?",
+        default=None,
+        help="target directory (default: plom_extra_static)",
+    )
+    args = parser.parse_args()
+    download_javascript_and_css_to_static(args.destdir)
