@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* Background chores automatically timeout after a certain time (currently 60 minutes by default).
+* Decreased total number of Huey jobs by default (by removal of parent workers), leads to lower server resource usage.
+* Background chores for splitting PDF files are simplified, removing the parent-child structure.
 
 ### Fixed
 
