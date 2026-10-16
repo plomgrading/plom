@@ -825,7 +825,7 @@ minpy_mindeps_django_tests:
   script:
     # install min versions of all deps, including transitive floors, from pyproject.toml
     - pip install uv
-    - uv pip install --resolution=lowest --system -r pyproject.toml
+    - uv pip install --resolution=lowest-direct --system -r pyproject.toml
     - pip install .
     # pip install plom-client
     # but we might need a more recent one if API recently changed
