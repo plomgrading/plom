@@ -360,12 +360,9 @@ else:
 
 # Django Huey configuration
 # Huey handles background tasks/processes which we call "chores".
-# PLOM_HUEY_PARENT_WORKERS controls how many simultaneous bundle processing
-# chores can happen (additional bundles will queue).
-# PLOM_HUEY_WORKERS are lower-level jobs such as extracting several pages from
-# a bundle and reading the QR codes.
+# PLOM_HUEY_WORKERS are low-level jobs such as extracting pages from
+# a bundle, reading the QR codes, and building versioned PDF files.
 _huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
-_huey_parent_workers = int(os.environ.get("PLOM_HUEY_PARENT_WORKERS", 2))
 
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
@@ -380,25 +377,6 @@ DJANGO_HUEY = {
             "utc": True,
             "consumer": {
                 "workers": _huey_workers,
-                "worker_type": "process",
-                "initial_delay": 0.1,
-                "backoff": 1.15,
-                "max_delay": 10.0,
-                "scheduler_interval": 60,
-                "periodic": False,
-                "check_worker_health": True,
-                "health_check_interval": 300,
-            },
-        },
-        "parentchores": {
-            "huey_class": "huey.SqliteHuey",
-            "filename": PLOM_BASE_DIR / "hueydb-parentchores.sqlite3",
-            "results": True,
-            "store_none": False,
-            "immediate": False,
-            "utc": True,
-            "consumer": {
-                "workers": _huey_parent_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,

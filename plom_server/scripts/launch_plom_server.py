@@ -125,11 +125,10 @@ def get_django_cmd_prefix() -> str:
 
 
 def launch_huey_processes() -> list[subprocess.Popen]:
-    """Launch the Huey-consumer for processing background chores."""
-    print("Launching Huey queues as background chores.")
+    """Launch the Huey consumer for performing background chores."""
+    print("Launching Huey consumer for performing background chores.")
     return [
         popen_django_manage_command("djangohuey --queue chores"),
-        popen_django_manage_command("djangohuey --queue parentchores"),
     ]
 
 
