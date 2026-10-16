@@ -287,10 +287,11 @@ if __:
     WHITENOISE_STATIC_PREFIX = f"/{STATIC_URL}"  # no prefix
     STATIC_URL = f"{__}/{STATIC_URL}"
 
-# These are the "source" dirs for static files, searched in order:
-# 1. shipped with the source code; probably readonly (Issue #2932)
+# There are three "source" dirs for static files, searched in order:
+# 1. shipped with the source code; likely readonly
 # 2. "dynamic" static stuff written at runtime: extra pages, scrap pages, JS downloads, etc.
-# 3. optional system-wide dir (serve-only), e.g. distro-installed third-party JS/CSS;
+#    This directory will generally be created later, and you may see harmless warnings before that happens.
+# 3. optional system-wide dir, e.g. distro-installed third-party JS/CSS;
 #    default FHS location, override with PLOM_SYSTEM_STATIC; skipped if absent.
 STATICFILES_DIRS = [BASE_DIR / "static", PLOM_BASE_DIR / "plom_extra_static"]
 _system_static = os.environ.get("PLOM_SYSTEM_STATIC", "/var/lib/plom/static")
