@@ -111,6 +111,7 @@ class PageDataService:
         question_index: int | None = None,
         include_idpage: bool = False,
         include_dnmpages: bool = True,
+        _include_pagenames: bool = True,
     ) -> list[dict[str, Any]]:
         """Return a list of metadata for all pages in a paper.
 
@@ -128,6 +129,9 @@ class PageDataService:
                 request (default: False)
             include_dnmpages (bool): whether to include any DNM pages in
                 this request (default: True)
+            _include_pagenames: temporary (?) means to include or not the
+                "pagenames", which are a bit hacky and perhaps need
+                refactoring.
 
         Returns:
             list, e.g. [
@@ -194,17 +198,17 @@ class PageDataService:
                 prefix = "dnm"
             else:
                 raise NotImplementedError(f"Page type {type(page)} not handled")
-            pages_metadata.append(
-                {
-                    "pagename": f"{prefix}{page.page_number}",
-                    "md5": page.image.baseimage.image_hash,
-                    "included": included,
-                    "order": page.page_number,
-                    "id": page.image.pk,
-                    "orientation": page.image.rotation,
-                    "server_path": str(page.image.baseimage.image_file.path),
-                }
-            )
+            d = {
+                "md5": page.image.baseimage.image_hash,
+                "included": included,
+                "order": page.page_number,
+                "id": page.image.pk,
+                "orientation": page.image.rotation,
+                "server_path": str(page.image.baseimage.image_file.path),
+            }
+            if _include_pagenames:
+                d["pagename"] = f"{prefix}{page.page_number}"
+            pages_metadata.append(d)
 
         # make a dict which counts how many mobile pages for each
         # question as we iterate through the list. We use this so that
@@ -218,25 +222,25 @@ class PageDataService:
 
         for page in mobile_pages:
             qidx = page.question_index
-            question_mobile_page_count.setdefault(qidx, 0)
-            question_mobile_page_count[qidx] += 1
-            if qidx == MobilePage.DNM_qidx:
-                pagename = f"ednm.{question_mobile_page_count[qidx]}"
-            else:
-                pagename = f"e{qidx}.{question_mobile_page_count[qidx]}"
-            pages_metadata.append(
-                {
-                    "pagename": pagename,
-                    "md5": page.image.baseimage.image_hash,
-                    "included": qidx == question_index,
-                    # WARNING - HACKERY HERE vvvvvvvv
-                    "order": len(pages_metadata) + 1,
-                    # WARNING - HACKERY HERE ^^^^^^^^
-                    "id": page.image.pk,
-                    "orientation": page.image.rotation,
-                    "server_path": str(page.image.baseimage.image_file.path),
-                }
-            )
+            d = {
+                "md5": page.image.baseimage.image_hash,
+                "included": qidx == question_index,
+                # WARNING - HACKERY HERE vvvvvvvv
+                "order": len(pages_metadata) + 1,
+                # WARNING - HACKERY HERE ^^^^^^^^
+                "id": page.image.pk,
+                "orientation": page.image.rotation,
+                "server_path": str(page.image.baseimage.image_file.path),
+            }
+            if _include_pagenames:
+                question_mobile_page_count.setdefault(qidx, 0)
+                question_mobile_page_count[qidx] += 1
+                if qidx == MobilePage.DNM_qidx:
+                    pagename = f"ednm.{question_mobile_page_count[qidx]}"
+                else:
+                    pagename = f"e{qidx}.{question_mobile_page_count[qidx]}"
+                d["pagename"] = pagename
+            pages_metadata.append(d)
 
         return pages_metadata
 
