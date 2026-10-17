@@ -294,9 +294,9 @@ if __:
 # 3. optional system-wide dir, e.g. distro-installed third-party JS/CSS;
 #    default FHS location, override with PLOM_SYSTEM_STATIC; skipped if absent.
 STATICFILES_DIRS = [BASE_DIR / "static", PLOM_BASE_DIR / "plom_extra_static"]
-_system_static = os.environ.get("PLOM_SYSTEM_STATIC", "/var/lib/plom/static")
-if Path(_system_static).exists():
-    STATICFILES_DIRS.append(Path(_system_static))
+PLOM_SYSTEM_STATIC = os.environ.get("PLOM_SYSTEM_STATIC", "/var/lib/plom/static")
+if Path(PLOM_SYSTEM_STATIC).exists():
+    STATICFILES_DIRS.append(Path(PLOM_SYSTEM_STATIC))
 # Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"
 # Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)
