@@ -13,79 +13,6 @@ from plom_server.Papers.services import SpecificationService
 from plom_server.Papers.models import FixedPage, Image, MobilePage
 
 
-@transaction.atomic
-def get_question_pages_list(papernum: int, question_index: int) -> list[dict[str, Any]]:
-    """Return a list of objects describing pages in a paper related to a question.
-
-    Args:
-        papernum: paper number.
-        question_index: which question.
-    """
-    # get all the question pages of the paper that have images - prefetch the related image
-    question_pages = (
-        FixedPage.objects.filter(
-            paper__paper_number=papernum,
-            image__isnull=False,
-            question_index=question_index,
-            page_type=FixedPage.QUESTIONPAGE,
-        )
-        .order_by("page_number")
-        .prefetch_related("image", "image__baseimage")
-    )
-    # Papers/models/paper_structure.py claims MobilePages have no order,
-    # so sort by id, which is their creation order.
-    mobile_pages = (
-        MobilePage.objects.filter(
-            paper__paper_number=papernum, question_index=question_index
-        )
-        .order_by("pk")  # TODO: or order_by("image__bundle_order")?
-        .prefetch_related("image", "image__baseimage")
-    )
-
-    page_list = []
-    for page in question_pages:
-        page_list.append(
-            {
-                "id": page.image.pk,
-                "md5": page.image.baseimage.image_hash,
-                "orientation": page.image.rotation,
-                "server_path": str(page.image.baseimage.image_file.path),
-                "included": True,
-                "order": page.page_number,
-                # For Future us vvvvv ?
-                # "img_height": image.height, "img_width": image.width,
-                # For Future us ^^^^^ ?
-                # We may wish to also pass height/width info
-                # if we do so then we need to confirm how django automagically computes
-                # these for the imagefield - they are raw image height/width before any
-                # exif or plom rotations. So will need to document precisely what these
-                # are for any consumers of this API.
-            }
-        )
-    # Note: MobilePages are ordered only by their id, as documented in
-    # Papers/models/structure.py
-    for page in mobile_pages:
-        image = page.image
-        assert image is not None  # mobile pages will always have images
-        page_list.append(
-            {
-                "id": image.pk,
-                "md5": image.baseimage.image_hash,
-                "orientation": image.rotation,
-                "server_path": image.baseimage.image_file.path,
-                "included": True,
-                # BEGIN HACKERY
-                "order": len(page_list) + 1,
-                # END HACKERY
-                # For Future us vvvvv ?
-                # "img_height": image.height, "img_width": image.width,
-                # For Future us ^^^^^ ?
-            }
-        )
-
-    return page_list
-
-
 class PageDataService:
     """Class to encapsulate functions for selecting page data and sending it to the client."""
 
@@ -209,6 +136,14 @@ class PageDataService:
             if _include_pagenames:
                 d["pagename"] = f"{prefix}{page.page_number}"
             pages_metadata.append(d)
+
+        # TODO: for future consideration:
+        # "img_height": image.height, "img_width": image.width,
+        # We may wish to also pass height/width info
+        # if we do so then we need to confirm how django automagically computes
+        # these for the imagefield - they are raw image height/width before any
+        # exif or plom rotations. So will need to document precisely what these
+        # are for any consumers of this API.
 
         # make a dict which counts how many mobile pages for each
         # question as we iterate through the list. We use this so that
