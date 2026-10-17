@@ -187,12 +187,11 @@ def download_file(url: str, save_to: Path, *, filename: str | None = None) -> No
 
 
 def check_present(f: Path, hash: str | None = None) -> None:
-    """Verify an existing file's hash, or raise if it is missing."""
-    if f.exists():
-        print(f" * {f}")
-        check_file(f, hash=hash)
-    else:
-        raise ValueError(f"missing {f}")
+    """Verify an existing file's hash, or raise KeyError if it is missing."""
+    if not f.exists():
+        raise KeyError(f"missing {f}")
+    print(f" * {f}")
+    check_file(f, hash=hash)
 
 
 def check_or_download_file(
