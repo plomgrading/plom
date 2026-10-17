@@ -189,8 +189,10 @@ def download_file(url: str, save_to: Path, *, filename: str | None = None) -> No
 def check_present(f: Path, hash: str | None = None) -> None:
     """Verify an existing file's hash, or raise KeyError if it is missing."""
     if not f.exists():
+        print(f" X {f}")
+
         raise KeyError(f"missing {f}")
-    print(f" * {f}")
+    print(f" - {f}")
     check_file(f, hash=hash)
 
 
@@ -203,7 +205,7 @@ def check_or_download_file(
     """
     f = save_to / filename
     if f.exists():
-        print(f" * {f}")
+        print(f" - {f}")
     else:
         print(f"Downloading {f}...")
         download_file(url, save_to, filename=filename)
@@ -221,7 +223,7 @@ def check_or_download_and_unzip(save_to, filename, zipurl, hash):
     """If file exists, check if hash, else download it by downloading and unpacking a zip."""
     f = save_to / filename
     if f.exists():
-        print(f" * {f}")
+        print(f" - {f}")
     else:
         print(f"Downloading {f}...")
         with tempfile.TemporaryDirectory() as _td:
@@ -232,30 +234,28 @@ def check_or_download_and_unzip(save_to, filename, zipurl, hash):
     check_file(f, hash=hash)
 
 
-def check_file(f, hash: str | None = None):
-    """Check if a file matches a hash and echo info to stdout."""
+def check_file(f, hash: str | None = None) -> None:
+    """Raise ValueError if a file does not match a hash, or echo sha256 is hash unknown."""
     with f.open("rb") as fh:
         c = fh.read()
         sha256 = "sha256-" + b64encode(hashlib.sha256(c).digest()).decode("utf-8")
         sha384 = "sha384-" + b64encode(hashlib.sha384(c).digest()).decode("utf-8")
     if hash is None:
-        print(f"    {sha256}")
+        print(f"   {sha256}")
     elif hash.startswith("sha384-"):
         if hash != sha384:
             raise ValueError(
-                f"   Downloaded sha384 for {f} does not match records!\n"
+                f"Downloaded sha384 for {f} does not match records!\n"
                 f"   - records:  {hash}\n"
                 f"   - download: {sha384}"
             )
-        print(f"    {sha384}")
     else:
         if hash != sha256:
             raise ValueError(
-                f"   Downloaded sha256 for {f} does not match records!\n"
+                f"Downloaded sha256 for {f} does not match records!\n"
                 f"   - records:  {hash}\n"
                 f"   - download: {sha256}"
             )
-        print(f"   {sha256}")
 
 
 def download_javascript_and_css_to_static(
@@ -276,7 +276,10 @@ def download_javascript_and_css_to_static(
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
     static_css_fonts.mkdir(exist_ok=True)
-    print("Checking/downloading vendored JavaScript and CSS:")
+    if check_only:
+        print("Checking for vendored JavaScript and CSS:")
+    else:
+        print("Checking/downloading vendored JavaScript and CSS:")
     for row in table:
         assert isinstance(row, dict)
         if row.get("files"):
