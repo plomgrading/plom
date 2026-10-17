@@ -139,11 +139,15 @@ class MarkTask(APIView):
         400 for a poorly formatted request, such as invalid task code.
         If you're not in the "marker" group, you'll get a 403 error.
 
-        On of the returned values is the task id.  For convenience, the tags
+        One of the returned values is the task id.  For convenience, the tags
         and the "page data" are also returned.  The page data is in the same
         format as the `/pagedata/{papernum}/context/{questionidx}` endpoint.
         The return values might change in the future: it would seem more
         standard to return only the task id.
+
+        Currently, to be consistent with older API revisions, we strip out
+        the `included=False` rows.  This could change in the future; you
+        should probably do the same at your end.
         """
         calling_user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -178,7 +182,6 @@ class MarkTask(APIView):
             except RuntimeError as e:
                 return _error_response(e, status.HTTP_409_CONFLICT)
 
-            # TODO: this never had page labels before, could have "omit_page_labels: bool"
             pagedata = PageDataService.get_question_pages_metadata(
                 papernum,
                 question_index=question_idx,
@@ -186,6 +189,7 @@ class MarkTask(APIView):
                 include_dnmpages=True,
                 _include_pagenames=False,
             )
+            pagedata = [x for x in pagedata if x["included"]]
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([pagedata, tags, task.pk])
 
