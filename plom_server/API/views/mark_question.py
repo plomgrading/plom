@@ -184,6 +184,7 @@ class MarkTask(APIView):
                 question_index=question_idx,
                 include_idpage=False,
                 include_dnmpages=True,
+                _include_pagenames=False,
             )
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([pagedata, tags, task.pk])
