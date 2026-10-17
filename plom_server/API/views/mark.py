@@ -290,6 +290,7 @@ class MgetPageDataQuestionInContext(APIView):
                 question_index=questionidx,
                 include_idpage=True,
                 include_dnmpages=True,
+                _include_pagenames=True,  # TODO: used by client in some cases
             )
         except ObjectDoesNotExist as e:
             return _error_response(
