@@ -103,9 +103,9 @@ class PageDataService:
         offset = min(all_page_numbers) - 1
         return page_number - offset
 
+    @staticmethod
     @transaction.atomic
     def get_question_pages_metadata(
-        self,
         papernum: int,
         *,
         question_index: int | None = None,

@@ -279,15 +279,13 @@ class MgetPageDataQuestionInContext(APIView):
         self, request: Request, *, papernum: int, questionidx: int | None = None
     ) -> Response:
         """Get page metadata for a paper optionally with a question highlighted."""
-        service = PageDataService()
-
         try:
             # we need include_idpage here b/c this APIView Class serves two different
             # API calls: one of which wants all pages.  Its also documented above that
             # callers who don't want to see the ID page (generally b/c Plom does
             # anonymous grading) should filter this out.  This is the current behaviour
             # of the Plom Client UI tool.
-            page_metadata = service.get_question_pages_metadata(
+            pagedata = PageDataService.get_question_pages_metadata(
                 papernum,
                 question_index=questionidx,
                 include_idpage=True,
@@ -297,7 +295,7 @@ class MgetPageDataQuestionInContext(APIView):
             return _error_response(
                 f"Paper {papernum} does not exist: {e}", status.HTTP_409_CONFLICT
             )
-        return Response(page_metadata, status=status.HTTP_200_OK)
+        return Response(pagedata, status=status.HTTP_200_OK)
 
 
 # GET: /MK/images/{image_id}/{hash}
