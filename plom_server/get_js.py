@@ -186,6 +186,15 @@ def download_file(url: str, save_to: Path, *, filename: str | None = None) -> No
             f.write(chunk)
 
 
+def check_present(f: Path, hash: str | None = None) -> None:
+    """Verify an existing file's hash, or raise if it is missing."""
+    if f.exists():
+        print(f" * {f}")
+        check_file(f, hash=hash)
+    else:
+        raise ValueError(f"missing {f}")
+
+
 def check_or_download_file(
     url: str, save_to: Path, filename: str, *, hash: str | None = None
 ) -> None:
@@ -250,8 +259,13 @@ def check_file(f, hash: str | None = None):
         print(f"   {sha256}")
 
 
-def download_javascript_and_css_to_static(destdir: None | str = None):
-    """Download javascript to for static caching."""
+def download_javascript_and_css_to_static(
+    destdir: None | str = None, *, check_only: bool = False
+):
+    """Download javascript to for static caching.
+
+    With ``check_only``, only check existence and hashes; never download.
+    """
     if destdir is None:
         # Note: defaults to same dir mentioned in plom_server/settings.py
         destdir = "plom_extra_static"
@@ -284,12 +298,23 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
                     where = static_css_fonts
                 else:
                     raise RuntimeError(f"unexpected filetype: {f}")
-                check_or_download_file(f["url"], where, filename, hash=f.get("hash"))
+                if check_only:
+                    check_present(where / filename, hash=f.get("hash"))
+                else:
+                    check_or_download_file(
+                        f["url"], where, filename, hash=f.get("hash")
+                    )
         elif row.get("zip"):
             # special case for zip
-            check_or_download_and_unzip(
-                static_js, row["filename"], row["zip"], row.get("hash")
-            )
+            if check_only:
+                check_present(static_js / row["filename"], hash=row.get("hash"))
+            else:
+                check_or_download_and_unzip(
+                    static_js,
+                    row["filename"],
+                    row["zip"],
+                    row.get("hash"),
+                )
         else:
             raise RuntimeError(f"unexpected format in row {row}")
 
@@ -304,5 +329,10 @@ if __name__ == "__main__":
         default=None,
         help="target directory (default: plom_extra_static)",
     )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="only check existence and hashes; do not download",
+    )
     args = parser.parse_args()
-    download_javascript_and_css_to_static(args.destdir)
+    download_javascript_and_css_to_static(args.destdir, check_only=args.check_only)
