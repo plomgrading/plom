@@ -105,7 +105,7 @@ class PageDataService:
 
     @staticmethod
     @transaction.atomic
-    def get_question_pages_metadata(
+    def get_pagedata(
         papernum: int,
         *,
         question_index: int | None = None,

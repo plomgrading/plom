@@ -182,7 +182,7 @@ class MarkTask(APIView):
             except RuntimeError as e:
                 return _error_response(e, status.HTTP_409_CONFLICT)
 
-            pagedata = PageDataService.get_question_pages_metadata(
+            pagedata = PageDataService.get_pagedata(
                 papernum,
                 question_index=question_idx,
                 include_idpage=False,

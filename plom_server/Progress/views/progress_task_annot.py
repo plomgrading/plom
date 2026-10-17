@@ -158,7 +158,7 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
 
     def get(self, request, paper: int, question: int):
         """Render a fragment of HTML with the images for particular question."""
-        img_list = PageDataService.get_question_pages_metadata(
+        img_list = PageDataService.get_pagedata(
             paper, question_index=question, _include_pagenames=False
         )
         img_list = [x for x in img_list if x["included"]]

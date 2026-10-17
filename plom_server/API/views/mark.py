@@ -285,7 +285,7 @@ class MgetPageDataQuestionInContext(APIView):
             # callers who don't want to see the ID page (generally b/c Plom does
             # anonymous grading) should filter this out.  This is the current behaviour
             # of the Plom Client UI tool.
-            pagedata = PageDataService.get_question_pages_metadata(
+            pagedata = PageDataService.get_pagedata(
                 papernum,
                 question_index=questionidx,
                 include_idpage=True,
