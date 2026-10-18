@@ -16,9 +16,13 @@ from plom_server.Papers.models import Paper
 from plom_server.Papers.services import PaperInfoService
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 from plom_server.Mark.services import QuestionMarkingService, PageDataService
+from plom_server.TestingSupport.utils import config_test
+
+# TODO: some mess here about our custom config_test and the pytest.fixture stuff...
 
 
 @pytest.mark.usefixtures("marking_test_setup")
+@config_test({"test_spec": "demo"})
 class TestMarkQuestionAPI:
 
     @pytest.fixture(autouse=True)
@@ -85,7 +89,7 @@ class TestMarkQuestionAPI:
             b. If attempting to claim an assigned task return a 409 (CONFLICT) status.
         """
         # mock PageDataService that provides question_data
-        dummy_question_data: dict[str, Any] = {"a": 1, "b": 2}
+        dummy_question_data = [{"a": 1, "b": 2, "included": True}]
 
         mocker.patch.object(
             PageDataService,
