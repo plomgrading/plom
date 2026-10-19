@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* The `plomgrading/server` container now contains the "static" javascript and css dependencies baked in.
 
 ### Removed
 
