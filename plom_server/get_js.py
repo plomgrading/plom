@@ -1,7 +1,9 @@
+#!/usr/bin/env -S python3 -u
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025-2026 Colin B. Macdonald
 # Copyright (C) 2026 Aidan Murphy
 
+import argparse
 import hashlib
 import re
 import shutil
@@ -173,7 +175,7 @@ table = [
 
 def download_file(url: str, save_to: Path, *, filename: str | None = None) -> None:
     """Download a file from a URL."""
-    r = requests.get(url)
+    r = requests.get(url, timeout=60)
     if filename is None:
         if "Content-Disposition" in r.headers.keys():
             filename = re.findall("filename=(.+)", r.headers["Content-Disposition"])[0]
@@ -182,6 +184,16 @@ def download_file(url: str, save_to: Path, *, filename: str | None = None) -> No
     with open(save_to / filename, "wb") as f:
         for chunk in r.iter_content(chunk_size=1024):
             f.write(chunk)
+
+
+def check_present(f: Path, hash: str | None = None) -> None:
+    """Verify an existing file's hash, or raise KeyError if it is missing."""
+    if not f.exists():
+        print(f" X {f}")
+
+        raise KeyError(f"missing {f}")
+    print(f" - {f}")
+    check_file(f, hash=hash)
 
 
 def check_or_download_file(
@@ -193,7 +205,7 @@ def check_or_download_file(
     """
     f = save_to / filename
     if f.exists():
-        print(f" * {f}")
+        print(f" - {f}")
     else:
         print(f"Downloading {f}...")
         download_file(url, save_to, filename=filename)
@@ -211,7 +223,7 @@ def check_or_download_and_unzip(save_to, filename, zipurl, hash):
     """If file exists, check if hash, else download it by downloading and unpacking a zip."""
     f = save_to / filename
     if f.exists():
-        print(f" * {f}")
+        print(f" - {f}")
     else:
         print(f"Downloading {f}...")
         with tempfile.TemporaryDirectory() as _td:
@@ -222,34 +234,37 @@ def check_or_download_and_unzip(save_to, filename, zipurl, hash):
     check_file(f, hash=hash)
 
 
-def check_file(f, hash: str | None = None):
-    """Check if a file matches a hash and echo info to stdout."""
+def check_file(f, hash: str | None = None) -> None:
+    """Raise ValueError if a file does not match a hash, or echo sha256 is hash unknown."""
     with f.open("rb") as fh:
         c = fh.read()
         sha256 = "sha256-" + b64encode(hashlib.sha256(c).digest()).decode("utf-8")
         sha384 = "sha384-" + b64encode(hashlib.sha384(c).digest()).decode("utf-8")
     if hash is None:
-        print(f"    {sha256}")
+        print(f"   {sha256}")
     elif hash.startswith("sha384-"):
         if hash != sha384:
             raise ValueError(
-                f"   Downloaded sha384 for {f} does not match records!\n"
+                f"Downloaded sha384 for {f} does not match records!\n"
                 f"   - records:  {hash}\n"
                 f"   - download: {sha384}"
             )
-        print(f"    {sha384}")
     else:
         if hash != sha256:
             raise ValueError(
-                f"   Downloaded sha256 for {f} does not match records!\n"
+                f"Downloaded sha256 for {f} does not match records!\n"
                 f"   - records:  {hash}\n"
                 f"   - download: {sha256}"
             )
-        print(f"   {sha256}")
 
 
-def download_javascript_and_css_to_static(destdir: None | str = None):
-    """Download javascript to for static caching."""
+def download_javascript_and_css_to_static(
+    destdir: None | str = None, *, check_only: bool = False
+):
+    """Download javascript to for static caching.
+
+    With ``check_only``, only check existence and hashes; never download.
+    """
     if destdir is None:
         # Note: defaults to same dir mentioned in plom_server/settings.py
         destdir = "plom_extra_static"
@@ -261,7 +276,10 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
     static_css_fonts.mkdir(exist_ok=True)
-    print("Checking/downloading vendored JavaScript and CSS:")
+    if check_only:
+        print("Checking for vendored JavaScript and CSS:")
+    else:
+        print("Checking/downloading vendored JavaScript and CSS:")
     for row in table:
         assert isinstance(row, dict)
         if row.get("files"):
@@ -282,15 +300,41 @@ def download_javascript_and_css_to_static(destdir: None | str = None):
                     where = static_css_fonts
                 else:
                     raise RuntimeError(f"unexpected filetype: {f}")
-                check_or_download_file(f["url"], where, filename, hash=f.get("hash"))
+                if check_only:
+                    check_present(where / filename, hash=f.get("hash"))
+                else:
+                    check_or_download_file(
+                        f["url"], where, filename, hash=f.get("hash")
+                    )
         elif row.get("zip"):
             # special case for zip
-            check_or_download_and_unzip(
-                static_js, row["filename"], row["zip"], row.get("hash")
-            )
+            if check_only:
+                check_present(static_js / row["filename"], hash=row.get("hash"))
+            else:
+                check_or_download_and_unzip(
+                    static_js,
+                    row["filename"],
+                    row["zip"],
+                    row.get("hash"),
+                )
         else:
             raise RuntimeError(f"unexpected format in row {row}")
 
 
 if __name__ == "__main__":
-    download_javascript_and_css_to_static()
+    parser = argparse.ArgumentParser(
+        description="Download vendored Javascript/CSS for local static caching."
+    )
+    parser.add_argument(
+        "destdir",
+        nargs="?",
+        default=None,
+        help="target directory (default: plom_extra_static)",
+    )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="only check existence and hashes; do not download",
+    )
+    args = parser.parse_args()
+    download_javascript_and_css_to_static(args.destdir, check_only=args.check_only)
