@@ -299,6 +299,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 PLOM_STATICFILES_LOCAL = os.environ.get(
     "PLOM_STATICFILES_DIR_LOCAL", PLOM_BASE_DIR / "plom_extra_static"
 )
+# Note this default location is also referred to in the Containerfile
 PLOM_STATICFILES_SYSTEM = os.environ.get(
     "PLOM_STATICFILES_DIR_SYSTEM", "/var/lib/plom/static"
 )
