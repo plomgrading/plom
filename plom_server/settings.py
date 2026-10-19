@@ -302,8 +302,8 @@ PLOM_STATIC_DIR_LOCAL = os.environ.get(
 PLOM_STATIC_DIR_SYSTEM = os.environ.get(
     "PLOM_STATIC_DIR_SYSTEM", "/var/lib/plom/static"
 )
-# if Path(PLOM_STATIC_DIR_LOCAL).exists():  # TODO: maybe silences warnings?
-STATICFILES_DIRS.append(Path(PLOM_STATIC_DIR_LOCAL))
+if Path(PLOM_STATIC_DIR_LOCAL).exists():
+    STATICFILES_DIRS.append(Path(PLOM_STATIC_DIR_LOCAL))
 if Path(PLOM_STATIC_DIR_SYSTEM).exists():
     STATICFILES_DIRS.append(Path(PLOM_STATIC_DIR_SYSTEM))
 
