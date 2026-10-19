@@ -291,21 +291,21 @@ if __:
 # 1. shipped with the source code; likely readonly
 # 2. "dynamic" static stuff written at runtime: extra pages, scrap pages, JS downloads, etc.
 #    Defaults to `plom_extra_static/` inside the base dir but can be overridden with env var
-#    PLOM_STATIC_DIR_LOCAL.  Will generally be created "later", and you may see harmless
+#    PLOM_STATICFILES_LOCAL.  Will generally be created "later", and you may see harmless
 #    warnings before that happens.
 # 3. optional system-wide dir, e.g. distro-installed third-party JS/CSS;
-#    default FHS location, override with PLOM_STATIC_DIR_SYSTEM; skipped if absent.
+#    default FHS location, override with PLOM_STATICFILES_SYSTEM; skipped if absent.
 STATICFILES_DIRS = [BASE_DIR / "static"]
-PLOM_STATIC_DIR_LOCAL = os.environ.get(
-    "PLOM_STATIC_DIR_LOCAL", PLOM_BASE_DIR / "plom_extra_static"
+PLOM_STATICFILES_LOCAL = os.environ.get(
+    "PLOM_STATICFILES_DIR_LOCAL", PLOM_BASE_DIR / "plom_extra_static"
 )
-PLOM_STATIC_DIR_SYSTEM = os.environ.get(
-    "PLOM_STATIC_DIR_SYSTEM", "/var/lib/plom/static"
+PLOM_STATICFILES_SYSTEM = os.environ.get(
+    "PLOM_STATICFILES_DIR_SYSTEM", "/var/lib/plom/static"
 )
-if Path(PLOM_STATIC_DIR_LOCAL).exists():
-    STATICFILES_DIRS.append(Path(PLOM_STATIC_DIR_LOCAL))
-if Path(PLOM_STATIC_DIR_SYSTEM).exists():
-    STATICFILES_DIRS.append(Path(PLOM_STATIC_DIR_SYSTEM))
+if Path(PLOM_STATICFILES_LOCAL).exists():
+    STATICFILES_DIRS.append(Path(PLOM_STATICFILES_LOCAL))
+if Path(PLOM_STATICFILES_SYSTEM).exists():
+    STATICFILES_DIRS.append(Path(PLOM_STATICFILES_SYSTEM))
 
 # Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = PLOM_BASE_DIR / "staticfiles"

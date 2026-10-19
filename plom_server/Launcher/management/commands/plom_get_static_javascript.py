@@ -15,13 +15,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Download Javascript dependencies and cache them somewhere in static."""
         # If a system-wide static dir is present and up to date, nothing to do.
-        system_static = settings.PLOM_STATIC_DIR_SYSTEM
+        system_static = settings.PLOM_STATICFILES_SYSTEM
         if system_static and Path(system_static).exists():
             try:
                 download_javascript_and_css_to_static(system_static, check_only=True)
                 return
             except KeyError:
                 pass
-        destdir = settings.PLOM_STATIC_DIR_LOCAL
+        destdir = settings.PLOM_STATICFILES_LOCAL
         Path(destdir).mkdir(exist_ok=True)
         download_javascript_and_css_to_static(destdir)
