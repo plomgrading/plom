@@ -46,6 +46,10 @@ COPY . /src
 WORKDIR /src
 RUN pip install --no-cache-dir .
 
+# Pre-populate js/css so the running container is more self-contained
+RUN mkdir -p /var/lib/plom/static && \
+    python3 plom_server/get_js.py /var/lib/plom/static
+
 EXPOSE 41984
 
 RUN mkdir /exam
