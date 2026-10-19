@@ -175,7 +175,7 @@ table = [
 
 def download_file(url: str, save_to: Path, *, filename: str | None = None) -> None:
     """Download a file from a URL."""
-    r = requests.get(url)
+    r = requests.get(url, timeout=60)
     if filename is None:
         if "Content-Disposition" in r.headers.keys():
             filename = re.findall("filename=(.+)", r.headers["Content-Disposition"])[0]
