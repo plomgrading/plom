@@ -19,7 +19,7 @@ from plom_server.Base.base_group_views import LeadMarkerOrManagerView
 from plom_server.Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
-    page_data,
+    PageDataService,
     mark_task,
 )
 from plom_server.Papers.services import SpecificationService
@@ -154,8 +154,15 @@ class AnnotationImageView(LeadMarkerOrManagerView):
 
 
 class OriginalImageWrapView(LeadMarkerOrManagerView):
-    def get(self, request, paper, question):
-        img_list = page_data.get_question_pages_list(paper, question)
+    """View to the images of a particular question."""
+
+    def get(self, request, paper: int, question: int):
+        """Render a fragment of HTML with the images for particular question."""
+        img_list = PageDataService.get_pagedata(
+            paper, question_index=question, _include_pagenames=False
+        )
+        img_list = [x for x in img_list if x["included"]]
+
         # update this to include an angle which is (-1)*orientation - for css transforms
         for X in img_list:
             X.update({"angle": -X["orientation"]})

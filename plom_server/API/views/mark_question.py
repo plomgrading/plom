@@ -22,8 +22,12 @@ from plom.common.exceptions import (
     PlomQuotaLimitExceeded,
 )
 
-from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
-from plom_server.Mark.services import mark_task, page_data
+from plom_server.Mark.services import (
+    QuestionMarkingService,
+    MarkingTaskService,
+    PageDataService,
+    mark_task,
+)
 from plom_server.Progress.services import UserInfoService
 from plom_server.Papers.services import PaperInfoService, ImageBundleService
 from .utils import _error_response
@@ -134,6 +138,16 @@ class MarkTask(APIView):
         be made: you're claiming the task regardless of what version it is.
         400 for a poorly formatted request, such as invalid task code.
         If you're not in the "marker" group, you'll get a 403 error.
+
+        One of the returned values is the task id.  For convenience, the tags
+        and the "page data" are also returned.  The page data is in the same
+        format as the `/pagedata/{papernum}/context/{questionidx}` endpoint.
+        The return values might change in the future: it would seem more
+        standard to return only the task id.
+
+        Currently, to be consistent with older API revisions, we strip out
+        the `included=False` rows.  This could change in the future; you
+        should probably do the same at your end.
         """
         calling_user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -168,9 +182,16 @@ class MarkTask(APIView):
             except RuntimeError as e:
                 return _error_response(e, status.HTTP_409_CONFLICT)
 
-            question_data = page_data.get_question_pages_list(papernum, question_idx)
+            pagedata = PageDataService.get_pagedata(
+                papernum,
+                question_index=question_idx,
+                include_idpage=False,
+                include_dnmpages=True,
+                _include_pagenames=False,
+            )
+            pagedata = [x for x in pagedata if x["included"]]
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
-            return Response([question_data, tags, task.pk])
+            return Response([pagedata, tags, task.pk])
 
     # DELETE: /MK/tasks/{code}
     def delete(self, request: Request, *, code: str) -> Response:

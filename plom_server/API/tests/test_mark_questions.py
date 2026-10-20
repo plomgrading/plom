@@ -15,13 +15,14 @@ from rest_framework.test import APIClient
 from plom_server.Papers.models import Paper
 from plom_server.Papers.services import PaperInfoService
 from plom_server.Mark.models import MarkingTask, MarkingTaskTag
-from plom_server.Mark.services import (
-    page_data,
-    QuestionMarkingService,
-)
+from plom_server.Mark.services import QuestionMarkingService, PageDataService
+from plom_server.TestingSupport.utils import config_test
+
+# TODO: some mess here about our custom config_test and the pytest.fixture stuff...
 
 
 @pytest.mark.usefixtures("marking_test_setup")
+@config_test({"test_spec": "demo"})
 class TestMarkQuestionAPI:
 
     @pytest.fixture(autouse=True)
@@ -80,18 +81,19 @@ class TestMarkQuestionAPI:
     ) -> None:
         """Test PATCH: /MK/tasks/{code} with valid code.
 
-        This test implicitly enforces question_data is obtained from page_data.get_question_pages_list.
+        This test implicitly enforces the data is obtained from
+        PageDataService.get_pagedata.
 
         This test verifies:
             a. On success, the API returns [question_data, tags, task.pk] and 200 status.
             b. If attempting to claim an assigned task return a 409 (CONFLICT) status.
         """
-        # mock page_data.get_question_pages_list that provides question_data
-        dummy_question_data: dict[str, Any] = {"a": 1, "b": 2}
+        # mock PageDataService that provides question_data
+        dummy_question_data = [{"a": 1, "b": 2, "included": True}]
 
         mocker.patch.object(
-            page_data,
-            page_data.get_question_pages_list.__name__,
+            PageDataService,
+            PageDataService.get_pagedata.__name__,
             return_value=dummy_question_data,
         )
 
