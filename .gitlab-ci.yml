@@ -30,8 +30,10 @@
 
 image: docker:29.6.1
 
+# The mtu stuff is for Issue #4317
 services:
   - docker:29.6.1-dind
+    command: ["--mtu=1360"]
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
