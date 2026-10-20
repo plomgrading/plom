@@ -625,10 +625,10 @@ out-of-tree-scratch:
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview texlive-charter texlive-exam texlive-preprint
           python3-devel
-          python3-passlib python3-pyqt6
+          python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
-          python3-seaborn python3-pandas python3-requests-toolbelt
+          python3-seaborn python3-pandas
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
           python3-psycopg3 python3-PyMySQL
@@ -720,10 +720,10 @@ fedora-django-tests:
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview texlive-charter texlive-exam texlive-preprint
-          python3-passlib python3-pyqt6
+          python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
-          python3-seaborn python3-pandas python3-requests-toolbelt
+          python3-seaborn python3-pandas
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
           python3-psycopg3 python3-PyMySQL
@@ -767,6 +767,7 @@ newOS_newdeps_django_tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
     PIP_BREAK_SYSTEM_PACKAGES: 1
   stage: alt_build
+  needs: []
   image: ubuntu:24.04
   allow_failure: true
   before_script:
@@ -810,6 +811,7 @@ minpy_mindeps_django_tests:
     # ideally we'd test with OOTB pip so hide pip upgrade msg
     PIP_DISABLE_PIP_VERSION_CHECK: 1
   stage: alt_build
+  needs: []
   image: python:3.11
   before_script:
     # Note: Python image based on Debian (can install deps)
@@ -823,7 +825,9 @@ minpy_mindeps_django_tests:
     - pip install pytest
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
-    - pip install -r requirements.txt.tempminima
+    # install min versions of all deps, including transitive floors, from pyproject.toml
+    - pip install uv
+    - uv pip install --resolution=lowest-direct --system -r pyproject.toml
     - pip install .
     # pip install plom-client
     # but we might need a more recent one if API recently changed
