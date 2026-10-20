@@ -8,6 +8,7 @@ import hashlib
 import re
 import shutil
 import tempfile
+import time
 from base64 import b64encode
 from pathlib import Path
 
@@ -319,6 +320,9 @@ def download_javascript_and_css_to_static(
                 )
         else:
             raise RuntimeError(f"unexpected format in row {row}")
+
+        # Does this help with Issue #4317?
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":
