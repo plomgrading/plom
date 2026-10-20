@@ -28,12 +28,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:29.6.1
+image: docker:29
 
-# The mtu stuff is for Issue #4317
 services:
-  - docker:29.6.1-dind
-    command: ["--mtu=1360"]
+  - docker:29-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
