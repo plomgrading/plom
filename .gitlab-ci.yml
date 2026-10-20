@@ -28,10 +28,12 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:29.6.1
+image: docker:29
 
+# mtu hack might help with Issue #4317
 services:
-  - docker:29.6.1-dind
+  - name: docker:29-dind
+    command: ["--mtu=1360"]
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
