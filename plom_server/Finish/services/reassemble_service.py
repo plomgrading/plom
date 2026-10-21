@@ -425,8 +425,10 @@ class ReassembleService:
                 "last_update_humanised": None,
                 "reassembled_status": HueyTaskTracker.TO_DO.label,
                 "reassembled_message": "",
+                "reassembled_filesize": None,
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
+                "report_filesize": None,
                 "outdated": False,
                 "obsolete": None,
             }
@@ -474,10 +476,16 @@ class ReassembleService:
             # TODO: is always True
             status[task.paper.paper_number]["obsolete"] = task.obsolete
             if task.status == HueyTaskTracker.COMPLETE:
+                status[task.paper.paper_number][
+                    "reassembled_filesize"
+                ] = task.pdf_file.size
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number]["reassembled_time_humanised"] = (
                     arrow.get(task.last_update).humanize()
                 )
+                status[task.paper.paper_number][
+                    "report_filesize"
+                ] = task.report_pdf_file.size
 
         # do last round of updates
         for pn in status:
