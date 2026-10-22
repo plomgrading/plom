@@ -132,6 +132,8 @@ document.getElementById('nonreassembledPapersPie'),
                 {% elif n_complete %}
                     <i class="bi bi-exclamation-diamond-fill text-warning"></i> not all papers reassembled
                 {% endif %}
+                <br />
+                <small class="text-muted">(unzipped size {{ decompressed_reassembled_zip_size|filesizeformat }})</small>
             {% endif %}
             <!-- TODO: unpleasantly nested quotes by the_url: some way to fix that? -->
             <details class="my-2"

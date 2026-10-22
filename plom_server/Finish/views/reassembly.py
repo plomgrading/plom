@@ -77,9 +77,17 @@ class ReassemblePapersView(ManagerRequiredView):
             partially_scanned_papers
         )
 
+        decompressed_reassembled_zip_size = 0
+        for p in all_paper_status:
+            if p["reassembled_filesize"] is not None:
+                decompressed_reassembled_zip_size += p["reassembled_filesize"]
+            if p["report_filesize"] is not None:
+                decompressed_reassembled_zip_size += p["report_filesize"]
+
         context.update(
             {
                 "papers": all_paper_status,
+                "decompressed_reassembled_zip_size": decompressed_reassembled_zip_size,
                 "partially_scanned_papers": partially_scanned_papers,
                 "partially_scanned_papers_abbrev_list": partially_scanned_papers_abbrev_list,
                 "n_papers": n_papers,
