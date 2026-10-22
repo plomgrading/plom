@@ -617,7 +617,7 @@ out-of-tree-scratch:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:44
+  image: fedora:46
   # when: manual
   before_script:
     - dnf install -y --setopt=install_weak_deps=False
@@ -625,14 +625,15 @@ out-of-tree-scratch:
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview texlive-charter texlive-exam texlive-preprint
           python3-devel
-          python3-passlib python3-pyqt6
+          python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
-          python3-seaborn python3-pandas python3-requests-toolbelt
+          python3-seaborn python3-pandas
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
           python3-psycopg3 python3-PyMySQL
           python3-django python3-django-filter python3-django-tables2
+          python3-django-rest-framework
           python3-gunicorn python3-whitenoise
           python3-arrow
           python3-cryptography
@@ -646,6 +647,9 @@ out-of-tree-scratch:
           file python3-file-magic
           iproute
           git
+    # workaround: strange importlib error on _vender stuff inside, started in
+    # upgrade to Fedora 46, hopefully can be removed later (TODO).
+    - dnf remove -y python3-pkg-resources
     - pip --version
     - pip install git+https://gitlab.com/plom/plom-client.git@$PLOMCLIENT_BRANCHNAME
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
@@ -653,7 +657,7 @@ out-of-tree-scratch:
     - pwd
     - ls
     # workaround django can't find stuff in /usr/local https://bugzilla.redhat.com/show_bug.cgi?id=2506986
-    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages"'
+    - 'export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.15/site-packages:/usr/local/lib64/python3.15/site-packages"'
     - pip install .
     - pwd
     - cd ${HOME}
@@ -716,10 +720,10 @@ fedora-django-tests:
           gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview texlive-charter texlive-exam texlive-preprint
-          python3-passlib python3-pyqt6
+          python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
-          python3-seaborn python3-pandas python3-requests-toolbelt
+          python3-seaborn python3-pandas
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
           python3-psycopg3 python3-PyMySQL
@@ -763,6 +767,7 @@ newOS_newdeps_django_tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
     PIP_BREAK_SYSTEM_PACKAGES: 1
   stage: alt_build
+  needs: []
   image: ubuntu:24.04
   allow_failure: true
   before_script:
@@ -806,6 +811,7 @@ minpy_mindeps_django_tests:
     # ideally we'd test with OOTB pip so hide pip upgrade msg
     PIP_DISABLE_PIP_VERSION_CHECK: 1
   stage: alt_build
+  needs: []
   image: python:3.11
   before_script:
     # Note: Python image based on Debian (can install deps)
@@ -819,7 +825,9 @@ minpy_mindeps_django_tests:
     - pip install pytest
     - pip install git+https://gitlab.com/plom/plom-common.git@$PLOMCOMMON_BRANCHNAME
   script:
-    - pip install -r requirements.txt.tempminima
+    # install min versions of all deps, including transitive floors, from pyproject.toml
+    - pip install uv
+    - uv pip install --resolution=lowest-direct --system -r pyproject.toml
     - pip install .
     # pip install plom-client
     # but we might need a more recent one if API recently changed
