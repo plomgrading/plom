@@ -31,6 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+
+
+## [0.22.4] 2026-10-23
+
+### Added
+
+### Removed
+
+### Changed
+
+### Fixed
 * "Prepare -> Reset" was broken by a recent change in how comments arestored in html files.
 
 
@@ -1778,7 +1790,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.22.3...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.22.4...022x
+[0.22.4]: https://gitlab.com/plom/plom/-/compare/v0.22.3...v0.22.4
 [0.22.3]: https://gitlab.com/plom/plom/-/compare/v0.22.2...v0.22.3
 [0.22.2]: https://gitlab.com/plom/plom/-/compare/v0.22.1...v0.22.2
 [0.22.1]: https://gitlab.com/plom/plom/-/compare/v0.22.0...v0.22.1
